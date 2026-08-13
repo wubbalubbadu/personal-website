@@ -5,6 +5,15 @@ import { ChangeEvent, useEffect, useRef, useState } from "react";
 type Mode = "beat" | "drone";
 
 type PitchMatch = { center: number; period: number; frequency: number; clarity: number };
+type PresetKind = "beep" | "bark" | "fart" | "kick" | "snare" | "hat" | "cowbell" | "airhorn" | "wow";
+
+const presets: { kind: PresetKind; icon: string; name: string }[] = [
+  { kind: "beep", icon: "●", name: "Beep" }, { kind: "bark", icon: "♩", name: "Dog bark" },
+  { kind: "fart", icon: "〰", name: "Tiny fart" }, { kind: "kick", icon: "◉", name: "Kick" },
+  { kind: "snare", icon: "✳", name: "Snare" }, { kind: "hat", icon: "✺", name: "Hi-hat" },
+  { kind: "cowbell", icon: "◇", name: "Cowbell" }, { kind: "airhorn", icon: "!", name: "Air horn" },
+  { kind: "wow", icon: "↗", name: "Plot twist" },
+];
 
 function formatTime(seconds: number) {
   if (!Number.isFinite(seconds)) return "0:00";
@@ -111,6 +120,33 @@ function trimSilence(context: AudioContext, source: AudioBuffer) {
   return trimmed;
 }
 
+function makePreset(context: AudioContext, kind: PresetKind) {
+  const lengths: Record<PresetKind, number> = { beep: .22, bark: .36, fart: .5, kick: .32, snare: .24, hat: .12, cowbell: .32, airhorn: .52, wow: .5 };
+  const length = Math.floor(context.sampleRate * lengths[kind]);
+  const buffer = context.createBuffer(1, length, context.sampleRate);
+  const data = buffer.getChannelData(0);
+  let phase = 0;
+  let filteredNoise = 0;
+  for (let i = 0; i < length; i++) {
+    const t = i / context.sampleRate;
+    const x = i / length;
+    const noise = Math.random() * 2 - 1;
+    filteredNoise = filteredNoise * .82 + noise * .18;
+    let sample = 0;
+    if (kind === "beep") sample = Math.sin(2 * Math.PI * 660 * t) * Math.exp(-t * 14);
+    if (kind === "kick") { const f = 48 + 130 * Math.exp(-t * 22); phase += 2 * Math.PI * f / context.sampleRate; sample = Math.sin(phase) * Math.exp(-t * 13); }
+    if (kind === "snare") sample = (noise * .8 + Math.sin(2 * Math.PI * 185 * t) * .25) * Math.exp(-t * 18);
+    if (kind === "hat") sample = (noise - filteredNoise) * Math.exp(-t * 42);
+    if (kind === "cowbell") sample = (Math.sin(2 * Math.PI * 540 * t) + Math.sin(2 * Math.PI * 800 * t) * .65) * Math.exp(-t * 11) * .65;
+    if (kind === "bark") { const pulse = x < .48 ? Math.sin(Math.PI * x / .48) : Math.sin(Math.PI * (x - .48) / .52) * .7; const f = 185 - 70 * x; sample = (Math.sin(2 * Math.PI * f * t) * .48 + filteredNoise * .7) * Math.max(0, pulse); }
+    if (kind === "fart") { const f = 72 + Math.sin(t * 65) * 13 + filteredNoise * 8; phase += 2 * Math.PI * f / context.sampleRate; sample = (Math.sin(phase) + Math.sin(phase * 2.03) * .38 + filteredNoise * .3) * Math.sin(Math.PI * x) * .65; }
+    if (kind === "airhorn") sample = (Math.sin(2 * Math.PI * 311 * t) + Math.sin(2 * Math.PI * 392 * t) * .7 + Math.sin(2 * Math.PI * 466 * t) * .45) * Math.min(1, t * 45) * Math.exp(-t * 2.2) * .42;
+    if (kind === "wow") { const f = 240 + x * 640; phase += 2 * Math.PI * f / context.sampleRate; sample = Math.sin(phase) * Math.sin(Math.PI * x) * .75; }
+    data[i] = sample * Math.max(0, Math.min(1, i / 32, (length - i - 1) / 64));
+  }
+  return buffer;
+}
+
 export default function Home() {
   const [mode, setMode] = useState<Mode>("beat");
   const [bpm, setBpm] = useState(92);
@@ -172,6 +208,16 @@ export default function Home() {
     const file = event.target.files?.[0];
     if (file) await loadSound(await file.arrayBuffer(), file.name);
     event.target.value = "";
+  }
+
+  function choosePreset(kind: PresetKind, name: string) {
+    stop();
+    const buffer = makePreset(getContext(), kind);
+    bufferRef.current = buffer;
+    setSoundName(name);
+    setDuration(buffer.duration);
+    setMode("beat");
+    setStatus(`${name} is in the tin. Press play!`);
   }
 
   async function toggleRecording() {
@@ -293,7 +339,9 @@ export default function Home() {
           <div className="sound-panel">
             <span className="step">1</span>
             <h3>Choose your sound</h3>
-            <p>Upload a tiny audio moment or record one right here. Nothing leaves your browser.</p>
+            <p>Upload a tiny audio moment, record one, or grab a sound from the tin. Nothing leaves your browser.</p>
+            <aside className={`recording-tip ${mode}`}><b>{mode === "beat" ? "For a clean beat:" : "For a smooth drone:"}</b>{mode === "beat" ? " Make one short, punchy sound such as “beep,” a clap, or a tap. Leave a little silence after it." : " Hold one clear note or vowel steadily for 1–3 seconds. Avoid words, wobbling pitch, or background noise."}</aside>
+            <div className="preset-wrap"><small>pick from the sound tin</small><div className="presets">{presets.map((preset) => <button key={preset.kind} className={soundName === preset.name ? "selected" : ""} onClick={() => choosePreset(preset.kind, preset.name)}><i>{preset.icon}</i><span>{preset.name}</span></button>)}</div></div>
             <div className="sound-actions">
               <label className="button primary"><input type="file" accept="audio/*" onChange={pickFile} />↑ Upload audio</label>
               <span>or</span>
