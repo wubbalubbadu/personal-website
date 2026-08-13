@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import "./spark.css";
-import "./memory.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Within | Your personal companion",
-  description: "A warm personal workspace for your time, ideas, and wellbeing.",
+  title: "cookie | small things, baked with care",
+  description: "A digital cookie tin of useful, playful, and slightly odd tiny tools.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
