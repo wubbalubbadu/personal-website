@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+type Message = { id: string; userText: string; assistantText: string; createdAt: number };
+type Proposal = { id: string; messageId: string; category: string; title: string; details: string; status: string; createdAt: number };
 
 const skills = [
   { icon: "✶", name: "Ideas", meta: "12 thoughts", color: "lilac" },
@@ -19,6 +22,10 @@ export default function Home() {
   const [view, setView] = useState("Week");
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [history, setHistory] = useState<Message[]>([]);
+  const [proposals, setProposals] = useState<Proposal[]>([]);
   const [done, setDone] = useState<string[]>([]);
   const [sparkOpen, setSparkOpen] = useState(false);
   const [sparkIndex, setSparkIndex] = useState(0);
@@ -30,10 +37,31 @@ export default function Home() {
   ];
   const spark = sparks[sparkIndex % sparks.length];
 
-  function submit() {
+  async function loadState() {
+    const response = await fetch("/api/state");
+    if (!response.ok) return;
+    const data = await response.json() as { messages: Message[]; proposals: Proposal[] };
+    setHistory(data.messages);
+    setProposals(data.proposals);
+  }
+
+  useEffect(() => { loadState(); }, []);
+
+  async function submit() {
     if (!message.trim()) return;
-    setSent(true);
-    setMessage("");
+    setBusy(true); setError(""); setSent(false);
+    try {
+      const response = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: message }) });
+      const data = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(data.error || "Unable to reach your companion");
+      setMessage(""); setSent(true); await loadState();
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Something went wrong"); }
+    finally { setBusy(false); }
+  }
+
+  async function decide(id: string, status: "approved" | "rejected") {
+    await fetch("/api/proposals", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status }) });
+    setProposals(v => v.map(p => p.id === id ? { ...p, status } : p));
   }
 
   return (
@@ -65,9 +93,20 @@ export default function Home() {
           <div className="askcopy">
             <label htmlFor="companion">What’s on your mind?</label>
             <textarea id="companion" value={message} onChange={(e) => {setMessage(e.target.value); setSent(false)}} placeholder="Tell me anything. A plan, an idea, what happened yesterday…" />
-            <div className="askactions"><button className="mic" aria-label="Record voice">●</button><span>{sent ? "Got it. I’ll help you sort that out." : "You can speak naturally. I’ll organize it with you."}</span><button className="send" onClick={submit}>Send <b>↑</b></button></div>
+            <div className="askactions"><button className="mic" aria-label="Record voice">●</button><span>{error || (busy ? "Thinking and organizing…" : sent ? "Saved. Review what I noticed below." : "You can speak naturally. I’ll organize it with you.")}</span><button className="send" disabled={busy} onClick={submit}>{busy ? "Working" : "Send"} <b>↑</b></button></div>
           </div>
         </section>
+
+        {(proposals.some(p => p.status === "pending") || history.length > 0) && <section className="memory-row">
+          {proposals.some(p => p.status === "pending") && <section className="panel reviewbox">
+            <div className="panelhead"><div><p className="eyebrow">Review before saving</p><h3>Here’s what I noticed</h3></div><span>{proposals.filter(p => p.status === "pending").length} pending</span></div>
+            {proposals.filter(p => p.status === "pending").map(p => <article className="proposal" key={p.id}><span className={`category ${p.category}`}>{p.category}</span><div><strong>{p.title}</strong>{p.details && <small>{p.details}</small>}</div><button onClick={() => decide(p.id, "rejected")} aria-label="Reject">×</button><button className="approve" onClick={() => decide(p.id, "approved")}>Approve</button></article>)}
+          </section>}
+          {history.length > 0 && <section className="panel historybox">
+            <div className="panelhead"><div><p className="eyebrow">Conversation memory</p><h3>Recent check-ins</h3></div><span>Saved privately</span></div>
+            {history.slice(0, 3).map(m => <article className="memory" key={m.id}><time>{new Date(m.createdAt).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</time><p><b>You</b> {m.userText}</p><p><b>Within</b> {m.assistantText}</p></article>)}
+          </section>}
+        </section>}
 
         <div className="grid">
           <section className="panel day">
