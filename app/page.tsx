@@ -72,33 +72,21 @@ function findStablePitch(buffer: AudioBuffer): PitchMatch | null {
 function makeDroneBuffer(context: AudioContext, source: AudioBuffer, match: PitchMatch) {
   const input = source.getChannelData(0);
   const period = Math.max(2, Math.round(match.period));
-  const wantedLength = Math.floor(source.sampleRate * 0.32);
-  const cycleCount = Math.max(8, Math.round(wantedLength / period));
-  const loopLength = cycleCount * period;
-  const output = context.createBuffer(1, loopLength, source.sampleRate);
+  const output = context.createBuffer(1, period, source.sampleRate);
   const wave = output.getChannelData(0);
-  const firstSample = Math.max(0, Math.min(input.length - loopLength, match.center - Math.floor(loopLength / 2)));
+  const cycles = 8;
+  const firstCycle = Math.max(0, Math.min(input.length - period * cycles, match.center - Math.floor(period * cycles / 2)));
   let mean = 0;
-  for (let i = 0; i < loopLength; i++) {
-    wave[i] = input[firstSample + i];
-    mean += wave[i] / loopLength;
+  for (let phase = 0; phase < period; phase++) {
+    for (let cycle = 0; cycle < cycles; cycle++) wave[phase] += input[firstCycle + cycle * period + phase] / cycles;
+    mean += wave[phase] / period;
   }
   let peak = 0;
-  for (let i = 0; i < loopLength; i++) {
+  for (let i = 0; i < period; i++) {
     wave[i] -= mean;
     peak = Math.max(peak, Math.abs(wave[i]));
   }
-  const crossfade = Math.min(Math.floor(source.sampleRate * 0.07), Math.floor(loopLength / 3));
-  for (let i = 0; i < crossfade; i++) {
-    const mix = i / crossfade;
-    const head = wave[i];
-    const tailIndex = loopLength - crossfade + i;
-    const tail = wave[tailIndex];
-    const blend = tail * (1 - mix) + head * mix;
-    wave[i] = blend;
-    wave[tailIndex] = blend;
-  }
-  if (peak) for (let i = 0; i < loopLength; i++) wave[i] = wave[i] / peak * 0.68;
+  if (peak) for (let i = 0; i < period; i++) wave[i] = wave[i] / peak * 0.72;
   return output;
 }
 
