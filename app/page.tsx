@@ -4,10 +4,111 @@ import { ChangeEvent, useEffect, useRef, useState } from "react";
 
 type Mode = "beat" | "drone";
 
+type PitchMatch = { center: number; period: number; frequency: number; clarity: number };
+
 function formatTime(seconds: number) {
   if (!Number.isFinite(seconds)) return "0:00";
   const mins = Math.floor(seconds / 60);
   return `${mins}:${Math.floor(seconds % 60).toString().padStart(2, "0")}`;
+}
+
+function noteName(frequency: number) {
+  const midi = Math.round(69 + 12 * Math.log2(frequency / 440));
+  const notes = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"];
+  return `${notes[((midi % 12) + 12) % 12]}${Math.floor(midi / 12) - 1}`;
+}
+
+function findStablePitch(buffer: AudioBuffer): PitchMatch | null {
+  const source = buffer.getChannelData(0);
+  const sampleRate = buffer.sampleRate;
+  const frameSize = Math.min(4096, 2 ** Math.floor(Math.log2(source.length)));
+  if (frameSize < 512) return null;
+  const hop = Math.floor(frameSize / 4);
+  const minLag = Math.floor(sampleRate / 1000);
+  const maxLag = Math.min(Math.floor(sampleRate / 55), Math.floor(frameSize / 2));
+  const candidates: PitchMatch[] = [];
+
+  for (let start = 0; start + frameSize < source.length; start += hop) {
+    let energy = 0;
+    for (let i = 0; i < frameSize; i++) energy += source[start + i] ** 2;
+    const rms = Math.sqrt(energy / frameSize);
+    if (rms < 0.025) continue;
+    let bestLag = 0;
+    let bestCorrelation = 0;
+    for (let lag = minLag; lag <= maxLag; lag++) {
+      let cross = 0;
+      let left = 0;
+      let right = 0;
+      const count = frameSize - lag;
+      for (let i = 0; i < count; i += 2) {
+        const a = source[start + i];
+        const b = source[start + i + lag];
+        cross += a * b;
+        left += a * a;
+        right += b * b;
+      }
+      const correlation = cross / Math.sqrt(left * right || 1);
+      if (correlation > bestCorrelation) {
+        bestCorrelation = correlation;
+        bestLag = lag;
+      }
+    }
+    if (bestCorrelation > 0.55 && bestLag) {
+      candidates.push({ center: start + Math.floor(frameSize / 2), period: bestLag, frequency: sampleRate / bestLag, clarity: bestCorrelation });
+    }
+  }
+
+  if (!candidates.length) return null;
+  return candidates.reduce((best, candidate, index) => {
+    const nearby = candidates.slice(Math.max(0, index - 2), index + 3);
+    const stability = nearby.reduce((score, other) => score + Math.abs(Math.log2(other.frequency / candidate.frequency)), 0) / nearby.length;
+    const score = candidate.clarity - stability * 2;
+    const bestNearby = candidates.slice(Math.max(0, candidates.indexOf(best) - 2), candidates.indexOf(best) + 3);
+    const bestStability = bestNearby.reduce((total, other) => total + Math.abs(Math.log2(other.frequency / best.frequency)), 0) / bestNearby.length;
+    return score > best.clarity - bestStability * 2 ? candidate : best;
+  });
+}
+
+function makeDroneBuffer(context: AudioContext, source: AudioBuffer, match: PitchMatch) {
+  const input = source.getChannelData(0);
+  const period = Math.max(2, Math.round(match.period));
+  const output = context.createBuffer(1, period, source.sampleRate);
+  const wave = output.getChannelData(0);
+  const cycles = 8;
+  const firstCycle = Math.max(0, Math.min(input.length - period * cycles, match.center - Math.floor(period * cycles / 2)));
+  let mean = 0;
+  for (let phase = 0; phase < period; phase++) {
+    for (let cycle = 0; cycle < cycles; cycle++) wave[phase] += input[firstCycle + cycle * period + phase] / cycles;
+    mean += wave[phase] / period;
+  }
+  let peak = 0;
+  for (let i = 0; i < period; i++) {
+    wave[i] -= mean;
+    peak = Math.max(peak, Math.abs(wave[i]));
+  }
+  if (peak) for (let i = 0; i < period; i++) wave[i] = wave[i] / peak * 0.72;
+  return output;
+}
+
+function trimSilence(context: AudioContext, source: AudioBuffer) {
+  let peak = 0;
+  for (let channel = 0; channel < source.numberOfChannels; channel++) {
+    const data = source.getChannelData(channel);
+    for (let i = 0; i < data.length; i++) peak = Math.max(peak, Math.abs(data[i]));
+  }
+  const threshold = peak * 0.035;
+  let start = 0;
+  let end = source.length;
+  const first = source.getChannelData(0);
+  while (start < end && Math.abs(first[start]) < threshold) start++;
+  while (end > start && Math.abs(first[end - 1]) < threshold) end--;
+  const padding = Math.floor(source.sampleRate * 0.015);
+  start = Math.max(0, start - padding);
+  end = Math.min(source.length, end + padding);
+  if (end - start < 32 || (start === 0 && end === source.length)) return source;
+  const trimmed = context.createBuffer(source.numberOfChannels, end - start, source.sampleRate);
+  for (let channel = 0; channel < source.numberOfChannels; channel++) trimmed.copyToChannel(source.getChannelData(channel).slice(start, end), channel);
+  return trimmed;
 }
 
 export default function Home() {
@@ -23,6 +124,7 @@ export default function Home() {
   const bufferRef = useRef<AudioBuffer | null>(null);
   const timerRef = useRef<number | null>(null);
   const sourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const activeSourcesRef = useRef(new Set<AudioBufferSourceNode>());
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const beatRef = useRef(0);
@@ -37,6 +139,8 @@ export default function Home() {
     timerRef.current = null;
     sourceRef.current?.stop();
     sourceRef.current = null;
+    activeSourcesRef.current.forEach((source) => { try { source.stop(); } catch {} });
+    activeSourcesRef.current.clear();
     setIsPlaying(false);
     setActiveBeat(-1);
     setStatus(bufferRef.current ? "Ready when you are" : "Drop in a sound to begin");
@@ -52,10 +156,12 @@ export default function Home() {
   async function loadSound(data: ArrayBuffer, name: string) {
     stop();
     try {
-      const decoded = await getContext().decodeAudioData(data.slice(0));
-      bufferRef.current = decoded;
+      const context = getContext();
+      const decoded = await context.decodeAudioData(data.slice(0));
+      const trimmed = trimSilence(context, decoded);
+      bufferRef.current = trimmed;
       setSoundName(name);
-      setDuration(decoded.duration);
+      setDuration(trimmed.duration);
       setStatus("Sound loaded. Give it a spin.");
     } catch {
       setStatus("I couldn’t read that audio file. Try MP3, WAV, or M4A.");
@@ -106,9 +212,12 @@ export default function Home() {
     const gain = context.createGain();
     source.buffer = buffer;
     gain.gain.setValueAtTime(0.85, context.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + Math.min(buffer.duration, 0.42));
+    gain.gain.setValueAtTime(0.85, context.currentTime + Math.max(0, buffer.duration - 0.025));
+    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + buffer.duration);
     source.connect(gain).connect(context.destination);
-    source.start(0, 0, Math.min(buffer.duration, 0.5));
+    activeSourcesRef.current.add(source);
+    source.onended = () => activeSourcesRef.current.delete(source);
+    source.start();
     setActiveBeat(beatRef.current % 4);
     beatRef.current += 1;
   }
@@ -129,16 +238,23 @@ export default function Home() {
       timerRef.current = window.setInterval(playBeat, 60000 / bpm);
       setStatus(`Ticking at ${bpm} BPM`);
     } else {
+      setStatus("Finding the steadiest pitch…");
+      const match = findStablePitch(buffer);
+      if (!match) {
+        setIsPlaying(false);
+        setStatus("I couldn’t find a steady pitch. Try holding one note a little longer.");
+        return;
+      }
       const source = context.createBufferSource();
       const gain = context.createGain();
-      source.buffer = buffer;
+      source.buffer = makeDroneBuffer(context, buffer, match);
       source.loop = true;
       gain.gain.setValueAtTime(0, context.currentTime);
       gain.gain.linearRampToValueAtTime(0.55, context.currentTime + 0.15);
       source.connect(gain).connect(context.destination);
       source.start();
       sourceRef.current = source;
-      setStatus("Drifting on a continuous loop");
+      setStatus(`Holding ${noteName(match.frequency)} · ${Math.round(match.frequency)} Hz`);
     }
   }
 
