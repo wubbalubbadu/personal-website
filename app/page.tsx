@@ -20,6 +20,15 @@ export default function Home() {
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
   const [done, setDone] = useState<string[]>([]);
+  const [sparkOpen, setSparkOpen] = useState(false);
+  const [sparkIndex, setSparkIndex] = useState(0);
+  const sparks = [
+    { kind: "English recall", icon: "A·", title: "Think of or think about?", body: "Complete this aloud: I was waiting for Codex when I suddenly ___ an idea for the app.", answer: "thought of" },
+    { kind: "Pick up a thread", icon: "∿", title: "Your attention system", body: "You wanted ideas to stay separate from tasks. What would make an idea worth revisiting a month later?", answer: "Say what comes to mind" },
+    { kind: "Tiny reset", icon: "✶", title: "Look away for twenty seconds", body: "Find the farthest thing you can see. Let your eyes rest there, then take one slow breath.", answer: "Done" },
+    { kind: "Just for fun", icon: "?", title: "A two-minute curiosity", body: "If your week had a weather forecast, what would today be and what is arriving tomorrow?", answer: "Tell me your forecast" },
+  ];
+  const spark = sparks[sparkIndex % sparks.length];
 
   function submit() {
     if (!message.trim()) return;
@@ -36,6 +45,7 @@ export default function Home() {
           <button className="nav"><span>□</span> Calendar</button>
           <button className="nav"><span>✓</span> Tasks <b>6</b></button>
           <button className="nav"><span>○</span> Inbox <i>2</i></button>
+          <button className="nav spark-nav" onClick={() => setSparkOpen(true)}><span>✶</span> Fill a moment</button>
         </nav>
         <p className="eyebrow">Your spaces</p>
         <nav>
@@ -91,6 +101,17 @@ export default function Home() {
           <button className="open">Open {view.toLowerCase()} view →</button>
         </section>
       </section>
+      <button className="floating-spark" onClick={() => setSparkOpen(true)}><span>✶</span><div><strong>Fill a moment</strong><small>Something small while you wait</small></div></button>
+      {sparkOpen && <div className="sparkbackdrop" onClick={() => setSparkOpen(false)}>
+        <section className="sparkmodal" onClick={(e) => e.stopPropagation()} aria-modal="true" role="dialog" aria-label="Fill a moment">
+          <button className="close" onClick={() => setSparkOpen(false)}>×</button>
+          <p className="eyebrow">A SMALL POCKET OF TIME</p>
+          <div className="sparkicon">{spark.icon}</div>
+          <small>{spark.kind}</small><h3>{spark.title}</h3><p>{spark.body}</p>
+          <button className="sparkanswer">{spark.answer}</button>
+          <div className="sparkfooter"><button onClick={() => setSparkOpen(false)}>Not now</button><span>1 of 1</span><button onClick={() => setSparkIndex(v => v + 1)}>Try another →</button></div>
+        </section>
+      </div>}
     </main>
   );
 }
