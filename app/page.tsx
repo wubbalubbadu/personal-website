@@ -6,6 +6,8 @@ type Mode = "beat" | "drone";
 
 type PitchMatch = { center: number; period: number; frequency: number; clarity: number };
 type PresetKind = "beep" | "bark" | "fart" | "kick" | "snare" | "hat" | "cowbell" | "airhorn" | "wow";
+type DroneTone = "soft" | "warm" | "organ";
+const noteOptions = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"];
 
 const presets: { kind: PresetKind; icon: string; name: string }[] = [
   { kind: "beep", icon: "●", name: "Beep" }, { kind: "bark", icon: "♩", name: "Dog bark" },
@@ -25,6 +27,24 @@ function noteName(frequency: number) {
   const midi = Math.round(69 + 12 * Math.log2(frequency / 440));
   const notes = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"];
   return `${notes[((midi % 12) + 12) % 12]}${Math.floor(midi / 12) - 1}`;
+}
+
+function noteFrequency(note: string, octave: number) {
+  const midi = (octave + 1) * 12 + noteOptions.indexOf(note);
+  return 440 * 2 ** ((midi - 69) / 12);
+}
+
+function makeDroneTone(context: AudioContext, frequency: number, tone: DroneTone) {
+  const period = Math.max(2, Math.round(context.sampleRate / frequency));
+  const output = context.createBuffer(1, period, context.sampleRate);
+  const wave = output.getChannelData(0);
+  for (let i = 0; i < period; i++) {
+    const phase = 2 * Math.PI * i / period;
+    if (tone === "soft") wave[i] = Math.sin(phase) * .62;
+    if (tone === "warm") wave[i] = (Math.sin(phase) + Math.sin(phase * 2) * .28 + Math.sin(phase * 3) * .13) * .48;
+    if (tone === "organ") wave[i] = (Math.sin(phase) + Math.sin(phase * 2) * .42 + Math.sin(phase * 4) * .18) * .42;
+  }
+  return output;
 }
 
 function findStablePitch(buffer: AudioBuffer): PitchMatch | null {
@@ -156,6 +176,9 @@ export default function Home() {
   const [isRecording, setIsRecording] = useState(false);
   const [status, setStatus] = useState("Drop in a sound to begin");
   const [activeBeat, setActiveBeat] = useState(-1);
+  const [droneNote, setDroneNote] = useState("A");
+  const [droneOctave, setDroneOctave] = useState(3);
+  const [droneTone, setDroneTone] = useState<DroneTone>("warm");
   const contextRef = useRef<AudioContext | null>(null);
   const bufferRef = useRef<AudioBuffer | null>(null);
   const timerRef = useRef<number | null>(null);
@@ -195,6 +218,18 @@ export default function Home() {
       const context = getContext();
       const decoded = await context.decodeAudioData(data.slice(0));
       const trimmed = trimSilence(context, decoded);
+      if (mode === "drone") {
+        const match = findStablePitch(trimmed);
+        if (!match) {
+          setStatus("I couldn’t find a steady note. Hum one pitch for 1–3 seconds.");
+          return;
+        }
+        const midi = Math.round(69 + 12 * Math.log2(match.frequency / 440));
+        setDroneNote(noteOptions[((midi % 12) + 12) % 12]);
+        setDroneOctave(Math.max(1, Math.min(6, Math.floor(midi / 12) - 1)));
+        setStatus(`Found ${noteName(match.frequency)}. Pick a voice, then press play.`);
+        return;
+      }
       bufferRef.current = trimmed;
       setSoundName(name);
       setDuration(trimmed.duration);
@@ -244,7 +279,7 @@ export default function Home() {
       };
       recorder.start();
       setIsRecording(true);
-      setStatus("Recording… tap again when you’re done");
+      setStatus(mode === "drone" ? "Listening for your note… hold it steady" : "Recording… tap again when you’re done");
     } catch {
       setStatus("Microphone access was blocked.");
     }
@@ -274,7 +309,7 @@ export default function Home() {
   async function play() {
     if (isPlaying) return stop();
     const buffer = bufferRef.current;
-    if (!buffer) {
+    if (mode === "beat" && !buffer) {
       setStatus("Add a sound first");
       return;
     }
@@ -288,22 +323,17 @@ export default function Home() {
       setStatus(`Ticking at ${bpm} BPM`);
     } else {
       setStatus("Finding the steadiest pitch…");
-      const match = findStablePitch(buffer);
-      if (!match) {
-        setIsPlaying(false);
-        setStatus("I couldn’t find a steady pitch. Try holding one note a little longer.");
-        return;
-      }
+      const frequency = noteFrequency(droneNote, droneOctave);
       const source = context.createBufferSource();
       const gain = context.createGain();
-      source.buffer = makeDroneBuffer(context, buffer, match);
+      source.buffer = makeDroneTone(context, frequency, droneTone);
       source.loop = true;
       gain.gain.setValueAtTime(0, context.currentTime);
       gain.gain.linearRampToValueAtTime(0.55, context.currentTime + 0.15);
       source.connect(gain).connect(context.destination);
       source.start();
       sourceRef.current = source;
-      setStatus(`Holding ${noteName(match.frequency)} · ${Math.round(match.frequency)} Hz`);
+      setStatus(`Holding ${droneNote}${droneOctave} · ${Math.round(frequency)} Hz`);
     }
   }
 
@@ -338,20 +368,7 @@ export default function Home() {
           <div className="tape">COOKIE&apos;S TOOL No. 1</div>
           <div className="sound-panel">
             <span className="step">1</span>
-            <h3>Choose your sound</h3>
-            <p>Upload a tiny audio moment, record one, or grab a sound from the tin. Nothing leaves your browser.</p>
-            <aside className={`recording-tip ${mode}`}><b>{mode === "beat" ? "For a clean beat:" : "For a smooth drone:"}</b>{mode === "beat" ? " Make one short, punchy sound such as “beep,” a clap, or a tap. Leave a little silence after it." : " Hold one clear note or vowel steadily for 1–3 seconds. Avoid words, wobbling pitch, or background noise."}</aside>
-            <div className="preset-wrap"><small>pick from the sound tin</small><div className="presets">{presets.map((preset) => <button key={preset.kind} className={soundName === preset.name ? "selected" : ""} onClick={() => choosePreset(preset.kind, preset.name)}><i>{preset.icon}</i><span>{preset.name}</span></button>)}</div></div>
-            <div className="sound-actions">
-              <label className="button primary"><input type="file" accept="audio/*" onChange={pickFile} />↑ Upload audio</label>
-              <span>or</span>
-              <button className={`button record ${isRecording ? "recording" : ""}`} onClick={toggleRecording}><b>●</b>{isRecording ? "Stop recording" : "Record a sound"}</button>
-            </div>
-            <div className={`sound-file ${soundName ? "loaded" : ""}`}>
-              <span className="file-icon">♫</span>
-              <div><strong>{soundName || "No sound yet"}</strong><small>{soundName ? `${formatTime(duration)} · ready to loop` : "MP3, WAV, M4A, or microphone"}</small></div>
-              {soundName && <button aria-label="Remove sound" onClick={() => { stop(); bufferRef.current = null; setSoundName(""); setDuration(0); }}>×</button>}
-            </div>
+            {mode === "beat" ? <><h3>Choose a beat sound</h3><p>Upload a tiny audio moment, record one, or grab a sound from the tin.</p><aside className="recording-tip"><b>For a clean beat:</b> Make one short, punchy sound such as “beep,” a clap, or a tap. Leave a little silence after it.</aside><div className="preset-wrap"><small>pick from the sound tin</small><div className="presets">{presets.map((preset) => <button key={preset.kind} className={soundName === preset.name ? "selected" : ""} onClick={() => choosePreset(preset.kind, preset.name)}><i>{preset.icon}</i><span>{preset.name}</span></button>)}</div></div><div className="sound-actions"><label className="button primary"><input type="file" accept="audio/*" onChange={pickFile} />↑ Upload audio</label><span>or</span><button className={`button record ${isRecording ? "recording" : ""}`} onClick={toggleRecording}><b>●</b>{isRecording ? "Stop recording" : "Record a sound"}</button></div><div className={`sound-file ${soundName ? "loaded" : ""}`}><span className="file-icon">♫</span><div><strong>{soundName || "No sound yet"}</strong><small>{soundName ? `${formatTime(duration)} · ready to loop` : "MP3, WAV, M4A, or microphone"}</small></div>{soundName && <button aria-label="Remove sound" onClick={() => { stop(); bufferRef.current = null; setSoundName(""); setDuration(0); }}>×</button>}</div></> : <><h3>Build a steady drone</h3><p>Choose the exact note and voice. This drone is separate from your metronome sound.</p><aside className="recording-tip drone"><b>Know the note?</b> Set it below. If not, hum one clear pitch for 1–3 seconds and Cookie will find it.</aside><div className="drone-pickers"><label>note<select value={droneNote} onChange={(e) => { stop(); setDroneNote(e.target.value); }}>{noteOptions.map(note => <option key={note}>{note}</option>)}</select></label><label>octave<select value={droneOctave} onChange={(e) => { stop(); setDroneOctave(Number(e.target.value)); }}>{[1,2,3,4,5,6].map(octave => <option key={octave}>{octave}</option>)}</select></label></div><small className="picker-label">choose a drone voice</small><div className="tone-pickers">{([['soft','Soft sine'],['warm','Warm hum'],['organ','Tiny organ']] as [DroneTone,string][]).map(([tone,label]) => <button className={droneTone === tone ? "selected" : ""} key={tone} onClick={() => { stop(); setDroneTone(tone); }}>{label}</button>)}</div><button className={`button hum-button ${isRecording ? "recording" : ""}`} onClick={toggleRecording}><b>●</b>{isRecording ? "Stop and detect" : "Hum to find my note"}</button><p className="privacy-note">Your humming stays on this device.</p></>}
           </div>
 
           <div className="controls-panel">
