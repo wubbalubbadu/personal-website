@@ -172,7 +172,8 @@ export default function Home() {
   const [bpm, setBpm] = useState(92);
   const [soundName, setSoundName] = useState("");
   const [duration, setDuration] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [beatPlaying, setBeatPlaying] = useState(false);
+  const [dronePlaying, setDronePlaying] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [status, setStatus] = useState("Drop in a sound to begin");
   const [activeBeat, setActiveBeat] = useState(-1);
@@ -193,16 +194,25 @@ export default function Home() {
     return contextRef.current;
   }
 
-  function stop() {
+  function stopBeat() {
     if (timerRef.current !== null) window.clearInterval(timerRef.current);
     timerRef.current = null;
-    sourceRef.current?.stop();
-    sourceRef.current = null;
     activeSourcesRef.current.forEach((source) => { try { source.stop(); } catch {} });
     activeSourcesRef.current.clear();
-    setIsPlaying(false);
+    setBeatPlaying(false);
     setActiveBeat(-1);
-    setStatus(bufferRef.current ? "Ready when you are" : "Drop in a sound to begin");
+  }
+
+  function stopDrone() {
+    try { sourceRef.current?.stop(); } catch {}
+    sourceRef.current = null;
+    setDronePlaying(false);
+  }
+
+  function stop() {
+    stopBeat();
+    stopDrone();
+    setStatus("Ready when you are");
   }
 
   useEffect(() => () => {
@@ -213,7 +223,7 @@ export default function Home() {
   }, []);
 
   async function loadSound(data: ArrayBuffer, name: string) {
-    stop();
+    if (mode === "beat") stopBeat(); else stopDrone();
     try {
       const context = getContext();
       const decoded = await context.decodeAudioData(data.slice(0));
@@ -246,7 +256,7 @@ export default function Home() {
   }
 
   function choosePreset(kind: PresetKind, name: string) {
-    stop();
+    stopBeat();
     const buffer = makePreset(getContext(), kind);
     bufferRef.current = buffer;
     setSoundName(name);
@@ -307,7 +317,8 @@ export default function Home() {
   }
 
   async function play() {
-    if (isPlaying) return stop();
+    if (mode === "beat" && beatPlaying) { stopBeat(); setStatus(dronePlaying ? `Drone is still holding ${droneNote}${droneOctave}` : "Beat stopped"); return; }
+    if (mode === "drone" && dronePlaying) { stopDrone(); setStatus(beatPlaying ? `Beat is still ticking at ${bpm} BPM` : "Drone stopped"); return; }
     const buffer = bufferRef.current;
     if (mode === "beat" && !buffer) {
       setStatus("Add a sound first");
@@ -315,8 +326,8 @@ export default function Home() {
     }
     const context = getContext();
     await context.resume();
-    setIsPlaying(true);
     if (mode === "beat") {
+      setBeatPlaying(true);
       beatRef.current = 0;
       playBeat();
       timerRef.current = window.setInterval(playBeat, 60000 / bpm);
@@ -333,13 +344,14 @@ export default function Home() {
       source.connect(gain).connect(context.destination);
       source.start();
       sourceRef.current = source;
+      setDronePlaying(true);
       setStatus(`Holding ${droneNote}${droneOctave} · ${Math.round(frequency)} Hz`);
     }
   }
 
   function changeMode(next: Mode) {
-    stop();
     setMode(next);
+    setStatus(next === "beat" ? (beatPlaying ? `Ticking at ${bpm} BPM` : "Choose a beat sound") : (dronePlaying ? `Holding ${droneNote}${droneOctave}` : "Choose a note and drone voice"));
   }
 
   return (
@@ -366,27 +378,25 @@ export default function Home() {
 
         <div className="tool-card">
           <div className="tape">COOKIE&apos;S TOOL No. 1</div>
+          <div className="mode-first"><span className="step">1</span><div><h3>What are you making?</h3><p>Build one layer, then switch over to add the other. Both can play together.</p></div><div className="mode-tabs" role="group" aria-label="Choose a sound layer"><button className={mode === "beat" ? "active" : ""} onClick={() => changeMode("beat")}><span>× · × · ×</span><strong>Beat</strong><small>Short sounds at a tempo</small></button><button className={mode === "drone" ? "active" : ""} onClick={() => changeMode("drone")}><span>〰〰〰</span><strong>Drone</strong><small>One continuous note</small></button></div></div>
           <div className="sound-panel">
-            <span className="step">1</span>
-            {mode === "beat" ? <><h3>Choose a beat sound</h3><p>Upload a tiny audio moment, record one, or grab a sound from the tin.</p><aside className="recording-tip"><b>For a clean beat:</b> Make one short, punchy sound such as “beep,” a clap, or a tap. Leave a little silence after it.</aside><div className="preset-wrap"><small>pick from the sound tin</small><div className="presets">{presets.map((preset) => <button key={preset.kind} className={soundName === preset.name ? "selected" : ""} onClick={() => choosePreset(preset.kind, preset.name)}><i>{preset.icon}</i><span>{preset.name}</span></button>)}</div></div><div className="sound-actions"><label className="button primary"><input type="file" accept="audio/*" onChange={pickFile} />↑ Upload audio</label><span>or</span><button className={`button record ${isRecording ? "recording" : ""}`} onClick={toggleRecording}><b>●</b>{isRecording ? "Stop recording" : "Record a sound"}</button></div><div className={`sound-file ${soundName ? "loaded" : ""}`}><span className="file-icon">♫</span><div><strong>{soundName || "No sound yet"}</strong><small>{soundName ? `${formatTime(duration)} · ready to loop` : "MP3, WAV, M4A, or microphone"}</small></div>{soundName && <button aria-label="Remove sound" onClick={() => { stop(); bufferRef.current = null; setSoundName(""); setDuration(0); }}>×</button>}</div></> : <><h3>Build a steady drone</h3><p>Choose the exact note and voice. This drone is separate from your metronome sound.</p><aside className="recording-tip drone"><b>Know the note?</b> Set it below. If not, hum one clear pitch for 1–3 seconds and Cookie will find it.</aside><div className="drone-pickers"><label>note<select value={droneNote} onChange={(e) => { stop(); setDroneNote(e.target.value); }}>{noteOptions.map(note => <option key={note}>{note}</option>)}</select></label><label>octave<select value={droneOctave} onChange={(e) => { stop(); setDroneOctave(Number(e.target.value)); }}>{[1,2,3,4,5,6].map(octave => <option key={octave}>{octave}</option>)}</select></label></div><small className="picker-label">choose a drone voice</small><div className="tone-pickers">{([['soft','Soft sine'],['warm','Warm hum'],['organ','Tiny organ']] as [DroneTone,string][]).map(([tone,label]) => <button className={droneTone === tone ? "selected" : ""} key={tone} onClick={() => { stop(); setDroneTone(tone); }}>{label}</button>)}</div><button className={`button hum-button ${isRecording ? "recording" : ""}`} onClick={toggleRecording}><b>●</b>{isRecording ? "Stop and detect" : "Hum to find my note"}</button><p className="privacy-note">Your humming stays on this device.</p></>}
+            <span className="step">2</span>
+            {mode === "beat" ? <><h3>Choose a beat sound</h3><p>Upload a tiny audio moment, record one, or grab a sound from the tin.</p><aside className="recording-tip"><b>For a clean beat:</b> Make one short, punchy sound such as “beep,” a clap, or a tap. Leave a little silence after it.</aside><div className="preset-wrap"><small>pick from the sound tin</small><div className="presets">{presets.map((preset) => <button key={preset.kind} className={soundName === preset.name ? "selected" : ""} onClick={() => choosePreset(preset.kind, preset.name)}><i>{preset.icon}</i><span>{preset.name}</span></button>)}</div></div><div className="sound-actions"><label className="button primary"><input type="file" accept="audio/*" onChange={pickFile} />↑ Upload audio</label><span>or</span><button className={`button record ${isRecording ? "recording" : ""}`} onClick={toggleRecording}><b>●</b>{isRecording ? "Stop recording" : "Record a sound"}</button></div><div className={`sound-file ${soundName ? "loaded" : ""}`}><span className="file-icon">♫</span><div><strong>{soundName || "No sound yet"}</strong><small>{soundName ? `${formatTime(duration)} · ready to loop` : "MP3, WAV, M4A, or microphone"}</small></div>{soundName && <button aria-label="Remove sound" onClick={() => { stopBeat(); bufferRef.current = null; setSoundName(""); setDuration(0); }}>×</button>}</div></> : <><h3>Build a steady drone</h3><p>Choose the exact note and voice. This drone is separate from your metronome sound.</p><aside className="recording-tip drone"><b>Know the note?</b> Set it below. If not, hum one clear pitch for 1–3 seconds and Cookie will find it.</aside><div className="drone-pickers"><label>note<select value={droneNote} onChange={(e) => { stopDrone(); setDroneNote(e.target.value); }}>{noteOptions.map(note => <option key={note}>{note}</option>)}</select></label><label>octave<select value={droneOctave} onChange={(e) => { stopDrone(); setDroneOctave(Number(e.target.value)); }}>{[1,2,3,4,5,6].map(octave => <option key={octave}>{octave}</option>)}</select></label></div><small className="picker-label">choose a drone voice</small><div className="tone-pickers">{([['soft','Soft sine'],['warm','Warm hum'],['organ','Tiny organ']] as [DroneTone,string][]).map(([tone,label]) => <button className={droneTone === tone ? "selected" : ""} key={tone} onClick={() => { stopDrone(); setDroneTone(tone); }}>{label}</button>)}</div><button className={`button hum-button ${isRecording ? "recording" : ""}`} onClick={toggleRecording}><b>●</b>{isRecording ? "Stop and detect" : "Hum to find my note"}</button><p className="privacy-note">Your humming stays on this device.</p></>}
           </div>
 
           <div className="controls-panel">
-            <div className="control-head"><span className="step">2</span><div><h3>Shape the loop</h3><p>Pick a style, set the pace, then press play.</p></div></div>
-            <div className="mode-tabs" role="group" aria-label="Playback style">
-              <button className={mode === "beat" ? "active" : ""} onClick={() => changeMode("beat")}><span>× · × · ×</span><strong>Beat</strong><small>A crisp metronome tick</small></button>
-              <button className={mode === "drone" ? "active" : ""} onClick={() => changeMode("drone")}><span>〰〰〰</span><strong>Drone</strong><small>One endless sound bed</small></button>
-            </div>
+            <div className="control-head"><span className="step">3</span><div><h3>{mode === "beat" ? "Set the pace" : "Start the drone"}</h3><p>{mode === "beat" ? "Choose a tempo, then start this layer." : "Start this layer, then switch to Beat if you want both."}</p></div></div>
             <div className={`tempo ${mode === "drone" ? "disabled" : ""}`}>
               <label htmlFor="bpm">tempo</label><output>{bpm}<small>BPM</small></output>
-              <input id="bpm" type="range" min="40" max="220" value={bpm} onChange={(e) => { stop(); setBpm(Number(e.target.value)); }} disabled={mode === "drone"} />
+              <input id="bpm" type="range" min="40" max="220" value={bpm} onChange={(e) => { stopBeat(); setBpm(Number(e.target.value)); }} disabled={mode === "drone"} />
               <div><span>slow &amp; gooey</span><span>quick &amp; crispy</span></div>
             </div>
             <div className="transport">
-              <button className={`play ${isPlaying ? "playing" : ""}`} onClick={play} aria-label={isPlaying ? "Stop" : "Play"}>{isPlaying ? "■" : "▶"}</button>
+              <button className={`play ${(mode === "beat" ? beatPlaying : dronePlaying) ? "playing" : ""}`} onClick={play} aria-label={(mode === "beat" ? beatPlaying : dronePlaying) ? `Stop ${mode}` : `Play ${mode}`}>{(mode === "beat" ? beatPlaying : dronePlaying) ? "■" : "▶"}</button>
               <div className="beat-dots" aria-label="Four beat indicator">{[0,1,2,3].map((beat) => <i className={activeBeat === beat ? "on" : ""} key={beat} />)}</div>
               <p>{status}</p>
             </div>
+            <div className="layer-status"><span className={beatPlaying ? "on" : ""}>Beat {beatPlaying ? "on" : "off"}</span><span className={dronePlaying ? "on" : ""}>Drone {dronePlaying ? "on" : "off"}</span></div>
           </div>
         </div>
       </section>
