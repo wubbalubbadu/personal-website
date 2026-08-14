@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "cookie | small things, baked with care",
-  description: "A digital cookie tin of useful, playful, and slightly odd tiny tools.",
+  title: "Long Tone | Flute Practice Studio",
+  description: "An interactive flute score viewer with focused practice tools.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
