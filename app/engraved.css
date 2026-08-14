@@ -1,0 +1,9 @@
+.score-paper.engraved{width:min(1120px,100%);min-width:800px;min-height:900px;padding:38px 54px 70px;background:#fff;overflow:visible}
+.osmd-score{position:relative;z-index:1;width:100%;min-height:780px}
+.osmd-score svg{display:block;width:100%!important;height:auto!important;overflow:visible}
+.score-loading,.score-error{padding:80px 20px;text-align:center;font:italic 14px Georgia,serif;color:var(--muted)}
+.score-error{color:#a33d30}
+.score-paper.engraved .ink{z-index:8}
+.tool.pending{background:#f1eee2;color:#786f52}
+.statusbar button{border:0;background:transparent;cursor:pointer;font-size:12px}
+@media(max-width:950px){.score-paper.engraved{min-width:760px;padding:30px 38px 60px}}
