@@ -2,9 +2,9 @@ import Link from "next/link";
 import "./cookie-home.css";
 
 const projects = [
-  {title:"Long Tone", label:"FLUTE STUDIO", note:"Interactive sheet music, playback, drones, rhythm helpers, fingering, and teaching markup.", href:"/long-tone", color:"sage", mark:"♫", action:"Open project"},
+  {title:"Cookie Flute Studio", label:"MUSIC VIEWER + PRACTICE HELPER", note:"Interactive sheet music, playback, drones, rhythm helpers, fingering, and teaching markup.", href:"/flute-studio", color:"sage", mark:"♫", action:"Open project"},
   {title:"Beat Kitchen", label:"RHYTHM LAB", note:"A compact place for rhythm experiments and practice loops.", color:"peach", mark:"◫", action:"Prototype shelf"},
-  {title:"Drone Jar", label:"TONE TOOL", note:"Pitch matching and interval practice. Currently included inside Long Tone.", color:"blue", mark:"◉", action:"Inside Long Tone"},
+  {title:"Drone Jar", label:"TONE TOOL", note:"Pitch matching and interval practice. Currently included inside Cookie Flute Studio.", color:"blue", mark:"◉", action:"Inside Flute Studio"},
   {title:"Next bake", label:"EMPTY TIN", note:"Space for the next small teaching tool or musical experiment.", color:"cream", mark:"＋", action:"Coming later"},
 ];
 
