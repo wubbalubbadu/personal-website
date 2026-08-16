@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Long Tone | Flute Practice Studio",
-  description: "An interactive flute score viewer with focused practice tools.",
+  title: "cookie | project tin",
+  description: "A box of small, useful, playful music projects.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
