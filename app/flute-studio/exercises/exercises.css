@@ -1,0 +1,46 @@
+.exercise-hub{height:100vh;overflow-y:auto;background:#f5f5f7;color:#292a33;padding:64px 24px 96px;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",Inter,Arial,sans-serif;scrollbar-gutter:stable}
+.exercise-hub__content{width:min(980px,100%);margin:0 auto}
+.exercise-hub__header{padding:50px 4px 40px}
+.exercise-hub__header>p:first-child{margin:0 0 8px;color:#678956;font-size:12px;font-weight:720;letter-spacing:.08em;text-transform:uppercase}
+.exercise-hub__header>div{display:flex;align-items:baseline;gap:13px}
+.exercise-hub__header h1{margin:0;font-size:42px;line-height:1;font-weight:780;letter-spacing:-.045em}
+.exercise-hub__header>div>span{color:#85868e;font-size:15px}
+.exercise-hub__intro{max-width:600px;margin:16px 0 0;color:#72747c;font-size:15px;line-height:1.55}
+.exercise-hub__section-heading{margin:0 4px 14px;display:flex;align-items:end;justify-content:space-between}
+.exercise-hub__section-heading h2{margin:0 0 4px;font-size:24px;line-height:1.1;font-weight:750;letter-spacing:-.025em}
+.exercise-hub__section-heading p{margin:0;color:#85868e;font-size:13px}
+.exercise-hub__list{overflow:hidden;border:1px solid rgba(41,42,51,.08);border-radius:22px;background:white;box-shadow:0 1px 0 rgba(0,0,0,.04),0 12px 34px rgba(41,42,51,.035)}
+.exercise-hub__row{min-height:112px;margin-left:20px;padding:16px 20px 16px 0;border-bottom:1px solid #e4e4e7;display:grid;grid-template-columns:64px minmax(0,1fr) auto;align-items:center;gap:16px;color:#292a33;text-decoration:none}
+.exercise-hub__row:last-child{border-bottom:0}
+.exercise-hub__row--available{transition:background-color .16s ease}
+.exercise-hub__row--available:hover{margin-left:0;padding-left:20px;background:#f8faf7}
+.exercise-hub__row--available:focus-visible{margin-left:0;padding-left:20px;outline:3px solid rgba(103,137,86,.35);outline-offset:-3px}
+.exercise-hub__icon{width:60px;height:60px;border-radius:16px;display:grid;place-items:center;color:white;font-size:26px;font-weight:700;box-shadow:inset 0 1px 0 rgba(255,255,255,.24)}
+.exercise-hub__icon--cactus{background:linear-gradient(145deg,#81a46e,#557747)}
+.exercise-hub__icon--pink{background:linear-gradient(145deg,#f5b1fa,#d77cdf)}
+.exercise-hub__icon--slate{background:linear-gradient(145deg,#8c99a2,#5d6871)}
+.exercise-hub__copy{min-width:0;display:block}
+.exercise-hub__copy strong,.exercise-hub__copy span,.exercise-hub__copy small{display:block}
+.exercise-hub__copy strong{font-size:18px;line-height:1.2;font-weight:620;letter-spacing:-.01em}
+.exercise-hub__copy span{max-width:610px;margin-top:5px;color:#72747c;font-size:14px;line-height:1.4}
+.exercise-hub__copy small{margin-top:7px;color:#678956;font-size:11px;font-weight:670}
+.exercise-hub__action{min-width:58px;height:32px;padding:0 14px;border-radius:16px;display:grid;place-items:center;background:#e5ece1;color:#46633d;font-size:13px;font-weight:700;white-space:nowrap}
+.exercise-hub__action--muted{background:#ececef;color:#8b8c93;font-size:12px;font-weight:620}
+
+@media(max-width:760px){
+  .exercise-hub{padding:0 16px calc(92px + env(safe-area-inset-bottom));scrollbar-gutter:auto}
+  .exercise-hub__header{padding:42px 4px 34px}
+  .exercise-hub__header h1{font-size:36px}
+  .exercise-hub__header>div{display:block}
+  .exercise-hub__header>div>span{display:block;margin-top:7px;font-size:13px}
+  .exercise-hub__intro{margin-top:14px;font-size:14px}
+  .exercise-hub__row{min-height:106px;margin-left:14px;padding:14px 13px 14px 0;grid-template-columns:54px minmax(0,1fr);gap:12px}
+  .exercise-hub__row--available:hover,.exercise-hub__row--available:focus-visible{margin-left:0;padding-left:14px}
+  .exercise-hub__icon{width:52px;height:52px;border-radius:14px;font-size:23px}
+  .exercise-hub__copy strong{font-size:16px}
+  .exercise-hub__copy span{font-size:12px}
+  .exercise-hub__copy small{font-size:10px}
+  .exercise-hub__action{grid-column:2;justify-self:start;min-width:0;height:27px;margin-top:-7px;padding:0 11px;font-size:11px}
+}
+
+@media(prefers-reduced-motion:reduce){.exercise-hub__row--available{transition:none}}

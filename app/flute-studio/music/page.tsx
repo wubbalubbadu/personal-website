@@ -1,6 +1,8 @@
 "use client";
 
 import {useEffect,useMemo,useState} from "react";
+import Link from "next/link";
+import {useRouter} from "next/navigation";
 import {difficultyLevels,musicCategories,musicLibrary,type Difficulty,type MusicCategory} from "../../../content/music-library";
 import "./library.css";
 
@@ -8,6 +10,7 @@ const labels:Record<string,string>={all:"All",exercise:"Exercises",repertoire:"R
 const symbols:Record<string,string>={exercise:"♩",repertoire:"♫",etude:"𝄞",method:"≋","warm-up":"◌"};
 
 export default function MusicLibrary(){
+  const router=useRouter();
   const [query,setQuery]=useState("");
   const [category,setCategory]=useState<MusicCategory>("all");
   const [difficulty,setDifficulty]=useState<Difficulty>("all");
@@ -20,14 +23,14 @@ export default function MusicLibrary(){
   const items=useMemo(()=>musicLibrary.filter(item=>(category==="all"||item.category===category)&&(difficulty==="all"||item.difficulty===difficulty)&&(!favoritesOnly||favorites.includes(item.id))&&`${item.title} ${item.composer} ${item.key} ${item.techniques.join(" ")}`.toLowerCase().includes(query.toLowerCase())),[query,category,difficulty,favoritesOnly,favorites]);
   function favorite(id:string){const next=favorites.includes(id)?favorites.filter(item=>item!==id):[...favorites,id];setFavorites(next);localStorage.setItem("cookie:music-favorites",JSON.stringify(next));window.dispatchEvent(new Event("cookie:favorites-updated"))}
 
-  return <main className="library-shell"><aside className="library-nav"><a href="/" className="studio-logo"><span>◒</span><b>Cookie</b><small>FLUTE STUDIO</small></a><nav><a href="/flute-studio"><i>⌂</i>Home</a><a className="active" href="/flute-studio/music"><i>♫</i>Library</a><a href="/flute-studio/exercises/scales"><i>◎</i>Scales</a><a href="/flute-studio#practice"><i>✓</i>Practice</a></nav><div className="library-note"><b>{musicLibrary.length}</b><span>materials catalogued</span></div></aside>
+  return <main className="library-shell">
     <section className="library-main" onScroll={event=>setCompact(event.currentTarget.scrollTop>42)}>
-      <header className={compact?"library-header compact":"library-header"}><div className="compact-nav"><a href="/flute-studio" aria-label="Back to studio">‹</a><strong>Library</strong><button aria-label="Library options">•••</button></div><div className="large-title"><h1>Library</h1><span>{musicLibrary.length} materials</span></div></header>
+      <header className={compact?"library-header compact":"library-header"}><div className="compact-nav"><Link href="/flute-studio" aria-label="Back to studio">‹</Link><strong>Library</strong><button aria-label="Library options">•••</button></div><div className="large-title"><h1>Library</h1><span>{musicLibrary.length} materials</span></div></header>
       <div className="library-content">
         <div className="search-filter"><label className="library-search"><span>⌕</span><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search music"/><kbd>{items.length}</kbd></label><button className={filterOpen||difficulty!=="all"||favoritesOnly?"filter-trigger active":"filter-trigger"} onClick={()=>setFilterOpen(true)} aria-label="Open library filters"><span>☷</span></button></div>
         <div className="category-tabs" aria-label="Music categories">{musicCategories.map(value=><button key={value} className={category===value?"active":""} onClick={()=>setCategory(value)}>{labels[value]}</button>)}</div>
         <div className="collection-heading"><div><h2>{category==="all"?"All music":labels[category]}</h2><p>{difficulty==="all"?"Sorted for quick browsing":labels[difficulty]}</p></div><span>{items.length}</span></div>
-        <section className="library-list">{items.map((item,index)=><article className={item.viewerPath?"library-row openable":"library-row"} key={item.id} role={item.viewerPath?"link":undefined} tabIndex={item.viewerPath?0:undefined} onClick={()=>{if(item.viewerPath)location.href=item.viewerPath}} onKeyDown={event=>{if(item.viewerPath&&(event.key==="Enter"||event.key===" "))location.href=item.viewerPath}}><div className={`music-symbol tone-${index%4}`} aria-hidden="true">{symbols[item.category]}</div><div className="row-copy"><h3>{item.title}</h3><p>{item.composer} · {labels[item.difficulty]} · {item.key}</p></div><button className={favorites.includes(item.id)?"row-favorite saved":"row-favorite"} aria-label={`${favorites.includes(item.id)?"Remove":"Save"} ${item.title}`} onClick={event=>{event.stopPropagation();favorite(item.id)}}>{favorites.includes(item.id)?"♥":"♡"}</button><span className={item.viewerPath?"row-action":"row-action disabled"}>{item.viewerPath?"Open":"Soon"}</span></article>)}</section>
+        <section className="library-list">{items.map((item,index)=><article className={item.viewerPath?"library-row openable":"library-row"} key={item.id} role={item.viewerPath?"link":undefined} tabIndex={item.viewerPath?0:undefined} onClick={()=>{if(item.viewerPath)router.push(item.viewerPath)}} onKeyDown={event=>{if(item.viewerPath&&(event.key==="Enter"||event.key===" "))router.push(item.viewerPath)}}><div className={`music-symbol tone-${index%4}`} aria-hidden="true">{symbols[item.category]}</div><div className="row-copy"><h3>{item.title}</h3><p>{item.composer} · {labels[item.difficulty]} · {item.key}</p></div><button className={favorites.includes(item.id)?"row-favorite saved":"row-favorite"} aria-label={`${favorites.includes(item.id)?"Remove":"Save"} ${item.title}`} onClick={event=>{event.stopPropagation();favorite(item.id)}}>{favorites.includes(item.id)?"♥":"♡"}</button><span className={item.viewerPath?"row-action":"row-action disabled"}>{item.viewerPath?"Open":"Soon"}</span></article>)}</section>
         {!items.length&&<div className="no-results"><span>♫</span><b>No matching music</b><p>Change the filters or try another search.</p></div>}
       </div>
     </section>
