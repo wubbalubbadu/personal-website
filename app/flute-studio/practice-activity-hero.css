@@ -655,6 +655,7 @@ button.day-cell:focus-visible {
 
 /* Calendar details use the same light floating-surface language as filters. */
 .day-popover{background:rgba(255,255,255,.97);color:#292a33;border:1px solid #dedfd9;box-shadow:0 14px 38px rgba(41,42,51,.17);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}.day-popover-heading{border-bottom-color:#e4e4e7}.day-popover-heading span{color:#58794b}.day-popover li+li{border-top-color:#e4e4e7}.day-popover li span{color:#777980}.day-popover li p{color:#4f5158}.day-popover-empty{color:#777980}
+.day-popover{animation:calendarPopoverReveal .18s ease-out both}@keyframes calendarPopoverReveal{from{opacity:0;margin-top:5px}to{opacity:1;margin-top:0}}@media(prefers-reduced-motion:reduce){.day-popover{animation:none}}
 
 .month-calendar > footer {
   min-height: 18px;
