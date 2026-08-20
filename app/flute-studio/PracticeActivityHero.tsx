@@ -24,6 +24,7 @@ export default function PracticeActivityHero(){
   const [selectedDay,setSelectedDay]=useState<string|null>(null);
   const [done,setDone]=useState<boolean[]>(initialPlan.map(()=>false));
   const [planNote,setPlanNote]=useState("");
+  const [customPlan,setCustomPlan]=useState<string[]>([]);
   useEffect(()=>{
     const update=()=>setSessions(readSessions());
     update();
@@ -31,10 +32,11 @@ export default function PracticeActivityHero(){
       const saved=localStorage.getItem("cookie:practice-plan");
       if(saved){
         const parsed=JSON.parse(saved);
-        if(Array.isArray(parsed))setDone(initialPlan.map((_,index)=>Boolean(parsed[index])));
+        if(Array.isArray(parsed))setDone(parsed.map(Boolean));
       }
     }catch{/* Keep the default plan when stored data is invalid. */}
-    setPlanNote(localStorage.getItem("cookie:practice-plan-note")??"");
+    setPlanNote("");
+    try{const custom=JSON.parse(localStorage.getItem("cookie:practice-plan-custom")??"[]");if(Array.isArray(custom))setCustomPlan(custom.filter(item=>typeof item==="string"))}catch{/* Ignore invalid custom plan data. */}
     window.addEventListener("cookie:practice-updated",update);
     return()=>window.removeEventListener("cookie:practice-updated",update);
   },[]);
@@ -64,6 +66,7 @@ export default function PracticeActivityHero(){
       return next;
     });
   }
+  function addFocus(){const value=planNote.trim();if(!value)return;setCustomPlan(current=>{const next=[...current,value];localStorage.setItem("cookie:practice-plan-custom",JSON.stringify(next));return next});setDone(current=>{const next=[...current,false];localStorage.setItem("cookie:practice-plan",JSON.stringify(next));return next});setPlanNote("")}
   return <div className="practice-activity-hero" id="practice">
     <section className="dashboard-card activity-summary" aria-labelledby="activity-title">
       <header className="dashboard-card-heading">
@@ -108,10 +111,10 @@ export default function PracticeActivityHero(){
       <header className="dashboard-card-heading">
         <span className="dashboard-card-icon plan-icon" aria-hidden="true">✓</span>
         <h2 id="plan-title">Practice plan</h2>
-        <b className="plan-count">{done.filter(Boolean).length} of {initialPlan.length}</b>
+        <b className="plan-count">{done.filter(Boolean).length} of {initialPlan.length+customPlan.length}</b>
       </header>
-      <div className="plan-list">{initialPlan.map((item,index)=><label key={item} className={done[index]?"done":""}><input type="checkbox" checked={done[index]} onChange={()=>check(index)}/><span aria-hidden="true">✓</span><b>{item}</b></label>)}</div>
-      <label className="plan-note-line"><span aria-hidden="true">＋</span><input value={planNote} onChange={event=>{setPlanNote(event.target.value);localStorage.setItem("cookie:practice-plan-note",event.target.value)}} placeholder="Write another focus…" aria-label="Add a note to today's practice plan"/></label>
+      <div className="plan-list">{[...initialPlan,...customPlan].map((item,index)=><label key={`${item}-${index}`} className={done[index]?"done":""}><input type="checkbox" checked={Boolean(done[index])} onChange={()=>check(index)}/><span aria-hidden="true">✓</span><b>{item}</b></label>)}</div>
+      <label className="plan-note-line"><span aria-hidden="true">＋</span><input value={planNote} onChange={event=>setPlanNote(event.target.value)} onKeyDown={event=>{if(event.key==="Enter"){event.preventDefault();addFocus()}}} placeholder="Write another focus…" aria-label="Add a task to today's practice plan"/></label>
     </section>
   </div>;
 }

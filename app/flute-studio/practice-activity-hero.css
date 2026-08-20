@@ -750,3 +750,5 @@ button.day-cell:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .day-cell { transition: none; }
 }
+
+.plan-note-line:focus-within{box-shadow:none}.plan-note-line input:focus{outline:0}

@@ -108,7 +108,7 @@ export default function PracticeToolDock() {
 
   const [bpm, setBpm] = useState(76);
   const [metro, setMetro] = useState(false);
-  const [accent, setAccent] = useState(true);
+  const accent = false;
   const [tapHint, setTapHint] = useState("Tap a steady pulse");
 
   const [reading, setReading] = useState<PitchReading>({
@@ -120,7 +120,7 @@ export default function PracticeToolDock() {
   });
   const [signalActive, setSignalActive] = useState(false);
   const [listening, setListening] = useState(false);
-  const [tunerMessage, setTunerMessage] = useState("Tap Listen, then play a sustained note");
+  const [tunerMessage, setTunerMessage] = useState("");
 
   const [note, setNote] = useState("A");
   const [octave, setOctave] = useState(4);
@@ -257,7 +257,7 @@ export default function PracticeToolDock() {
     };
     // scheduleMetronome intentionally restarts the pulse when tempo or accent changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bpm, accent, metro]);
+  }, [bpm, metro]);
 
   const tapTempo = () => {
     const now = performance.now();
@@ -514,13 +514,7 @@ export default function PracticeToolDock() {
               />
               <div className="metro-options">
                 <button className="tap-tempo-button" onClick={tapTempo}>Tap tempo</button>
-                <label>
-                  <span>Accent beat 1</span>
-                  <input type="checkbox" checked={accent} onChange={(event) => setAccent(event.target.checked)} />
-                  <i aria-hidden="true" />
-                </label>
               </div>
-              <p className="tap-hint">{tapHint}</p>
               <button className={`primary-tool-button ${metro ? "is-running" : ""}`} onClick={toggleMetro}>
                 <span aria-hidden="true">{metro ? "■" : "▶"}</span>
                 {metro ? "Stop metronome" : "Start metronome"}
@@ -558,6 +552,7 @@ export default function PracticeToolDock() {
                 <span><small>OCTAVE</small><b>{octave}</b></span>
                 <button aria-label="Higher octave" onClick={() => setOctave(Math.min(6, octave + 1))}>+</button>
               </div>
+              {drones.length>0&&<div className="drone-active-inline"><span>Playing</span>{drones.map(pitch=><b key={pitch}>{pitch}</b>)}<button onClick={stopAllDrones}>Stop all</button></div>}
               <button className={`primary-tool-button ${drones.includes(selectedDrone) ? "is-running" : ""}`} onClick={toggleDrone}>
                 <span aria-hidden="true">{drones.includes(selectedDrone) ? "■" : "▶"}</span>
                 {drones.includes(selectedDrone) ? `Stop ${selectedDrone}` : `Play ${selectedDrone}`}
@@ -565,15 +560,6 @@ export default function PracticeToolDock() {
             </section>
           </div>
 
-          {drones.length > 0 && (
-            <footer>
-              <div>
-                <span>Playing</span>
-                {drones.map((pitch) => <b key={pitch}>{pitch}</b>)}
-              </div>
-              <button onClick={stopAllDrones}>Stop all drones</button>
-            </footer>
-          )}
         </section>
       )}
     </>
