@@ -24,7 +24,7 @@ const exercises:readonly Exercise[]=[
     icon:"◎",
     tone:"cactus",
     href:"/flute-studio/exercises/scales",
-    action:"Open",
+    action:"›",
   },
   {
     title:"Long-tone Ladder",
