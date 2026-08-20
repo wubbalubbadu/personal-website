@@ -78,3 +78,5 @@
   .saved-home-section .saved-home-card{margin-left:var(--studio-row-inset)!important;padding-right:13px!important}
 }
 @media(prefers-reduced-motion:reduce){.saved-home-section .saved-home-card{transition:none!important}}
+
+.saved-home-grid{border:1px solid #e1e2df}.saved-home-section .saved-home-card>span{width:48px!important;height:48px!important;border-radius:13px!important;background:#e6ede2!important;color:#435841!important;font-size:20px!important;box-shadow:none!important}

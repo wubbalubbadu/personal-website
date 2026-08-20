@@ -592,3 +592,6 @@
   .metro-options label i,
   .metro-options label i::after { transition: none; }
 }
+
+/* Pastel Quick Tools palette, overriding the retired solid-green theme. */
+.dock-launcher{background:#fff!important;color:#292a33!important;border:1px solid #dedfd9!important}.dock-launcher>span:first-child{color:#b268b8!important}.practice-dock>header{height:62px!important;background:#fff!important;color:#292a33!important}.practice-dock>header small{color:#85868e!important}.dock-tool{background:#fff!important}.tuner-icon{background:#dcebd9!important;color:#3f5d39!important}.metronome-icon{background:#f2e8d3!important;color:#765d2e!important}.drone-icon{background:#f7e1f8!important;color:#68466b!important}.dock-tool>button,.dock-tools>section>button{background:#292a33!important;color:#fff!important}.dock-tool[data-requested="true"]{background:#fbf3fc!important;border-color:#e9c6ec!important}
