@@ -2,3 +2,6 @@
 @media(max-width:760px){.home-quick-tools{margin-bottom:30px}.quick-tool-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.quick-tool{min-height:84px;border-radius:17px;padding:12px;grid-template-columns:42px minmax(0,1fr) 12px;gap:10px}.quick-tool>span{width:42px;height:42px}.quick-tool b{font-size:16px}.quick-tool small{font-size:12px}}
 @media(max-width:480px){.quick-tool-grid{grid-template-columns:1fr}.quick-tool{min-height:76px}}
 @media(prefers-reduced-motion:reduce){.quick-tool{transition:none}}
+
+/* Deliberate multi-row tool grid with equal-width tiles. */
+.quick-tool-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.quick-tool.soon{cursor:default;opacity:.68}.quick-tool.soon>i{width:auto;font-size:10px;font-weight:700;letter-spacing:.05em}@media(max-width:1040px){.quick-tool-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:760px){.quick-tool-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:480px){.quick-tool-grid{grid-template-columns:1fr}}

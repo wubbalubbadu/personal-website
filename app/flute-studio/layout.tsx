@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./studio-shared.css";
 import "./ios-theme.css";
 import "./studio-shell.css";
+import "./viewer-fixes.css";
 import PracticeToolDock from "./PracticeToolDock";
 import PracticeSessionTimer from "./PracticeSessionTimer";
 import PracticeRecorder from "./PracticeRecorder";
