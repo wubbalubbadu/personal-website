@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./studio-shared.css";
-import "./studio-overrides.css";
 import "./ios-theme.css";
 import PracticeToolDock from "./PracticeToolDock";
 import SavedMusicHome from "./SavedMusicHome";
