@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {useEffect,useState} from "react";
 import HomeQuickTools from "./HomeQuickTools";
 import PracticeActivityHero from "./PracticeActivityHero";
@@ -17,14 +16,14 @@ export default function StudioHome(){
   function check(index:number){const next=done.map((value,i)=>i===index?!value:value);setDone(next);localStorage.setItem("cookie:practice-plan",JSON.stringify(next))}
   return <main className="studio-shell">
     <section className="studio-main" onScroll={event=>setCompact(event.currentTarget.scrollTop>42)}>
-      <header className={compact?"home-header compact":"home-header"}><div className="home-compact-nav"><span/><strong>Home</strong><Link href="/flute-studio/music" aria-label="Search library">⌕</Link></div><div className="home-large-title"><div><p>{welcome.date}</p><h1>{welcome.greeting}</h1></div><Link className="header-library-link" href="/flute-studio/music">Browse library</Link></div></header>
+      <header className={compact?"home-header compact":"home-header"}><div className="home-compact-nav"><span/><strong>Home</strong><a href="/flute-studio/music" aria-label="Search library">⌕</a></div><div className="home-large-title"><div><p>{welcome.date}</p><h1>{welcome.greeting}</h1></div><a className="header-library-link" href="/flute-studio/music">Browse library</a></div></header>
       <div className="home-content">
         <section className="studio-hero"><PracticeActivityHero/></section>
         <HomeQuickTools/>
         <div className="home-layout"><div className="studio-left">
-          <section className="home-section recent-section"><header><div><h2>Continue practicing</h2><p>Pick up where you left off</p></div><Link href="/flute-studio/music">See all</Link></header><Link className="continue-row" href="/flute-studio/music/mystery-of-love"><span className="continue-icon">♫</span><div><h3>Mystery of Love</h3><p>Sufjan Stevens · Repertoire · E minor</p></div><span className="continue-action">Open</span></Link></section>
+          <section className="home-section recent-section"><header><div><h2>Continue practicing</h2><p>Pick up where you left off</p></div><a href="/flute-studio/music">See all</a></header><a className="continue-row" href="/flute-studio/music/mystery-of-love"><span className="continue-icon">♫</span><div><h3>Mystery of Love</h3><p>Sufjan Stevens · Repertoire · E minor</p></div><span className="continue-action">Open</span></a></section>
           <SavedMusicHome/>
-          <section className="home-section"><header><div><h2>Exercises</h2><p>Focused work for today</p></div><Link href="/flute-studio/exercises">View exercises</Link></header><div className="home-inset-list"><Link href="/flute-studio/exercises/scales"><span className="exercise-symbol green">◎</span><div><b>Scale Studio</b><small>Choose key, range, and articulation</small></div><i>›</i></Link><Link href="/flute-studio/exercises"><span className="exercise-symbol pink">◌</span><div><b>Long-tone Ladder</b><small>Tone · 8 minutes</small></div><i>›</i></Link><Link href="/flute-studio/exercises"><span className="exercise-symbol gray">♩</span><div><b>Chromatic Thirds</b><small>Technique · 12 minutes</small></div><i>›</i></Link></div></section>
+          <section className="home-section"><header><div><h2>Exercises</h2><p>Focused work for today</p></div><a href="/flute-studio/exercises">View exercises</a></header><div className="home-inset-list"><a href="/flute-studio/exercises/scales"><span className="exercise-symbol green">◎</span><div><b>Scale Studio</b><small>Choose key, range, and articulation</small></div><i>›</i></a><a href="/flute-studio/exercises"><span className="exercise-symbol pink">◌</span><div><b>Long-tone Ladder</b><small>Tone · 8 minutes</small></div><i>›</i></a><a href="/flute-studio/exercises"><span className="exercise-symbol gray">♩</span><div><b>Chromatic Thirds</b><small>Technique · 12 minutes</small></div><i>›</i></a></div></section>
         </div><aside className="practice-panel" id="practice"><header><span>Today</span><b>{done.filter(Boolean).length} of {initialPlan.length}</b></header><h2>Practice plan</h2><p className="plan-intro">Keep the session small and specific.</p><div className="plan-list">{initialPlan.map((item,index)=><label key={item} className={done[index]?"done":""}><input type="checkbox" checked={done[index]} onChange={()=>check(index)}/><span>✓</span><b>{item}</b></label>)}</div><button>＋ Add an item</button><small>Saved on this device</small></aside></div>
       </div>
     </section>

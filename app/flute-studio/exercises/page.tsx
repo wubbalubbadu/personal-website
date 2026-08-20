@@ -1,5 +1,4 @@
 import type {Metadata} from "next";
-import Link from "next/link";
 import "./exercises.css";
 
 export const metadata:Metadata={
@@ -78,9 +77,9 @@ export default function ExercisesPage(){
           </div>
           <div className="exercise-hub__list">
             {exercises.map(exercise=>exercise.href?
-              <Link className="exercise-hub__row exercise-hub__row--available" href={exercise.href} key={exercise.title}>
+              <a className="exercise-hub__row exercise-hub__row--available" href={exercise.href} key={exercise.title}>
                 <ExerciseContent exercise={exercise}/>
-              </Link>:
+              </a>:
               <article className="exercise-hub__row" key={exercise.title}>
                 <ExerciseContent exercise={exercise}/>
               </article>

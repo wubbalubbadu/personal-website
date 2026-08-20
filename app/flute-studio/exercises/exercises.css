@@ -44,3 +44,72 @@
 }
 
 @media(prefers-reduced-motion:reduce){.exercise-hub__row--available{transition:none}}
+
+/* Shared Cookie Studio hierarchy and inset-row interaction. */
+.exercise-hub{
+  --studio-font:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Arial,sans-serif;
+  --studio-page-title:42px;
+  --studio-section-title:24px;
+  --studio-row-title:18px;
+  --studio-meta:14px;
+  --studio-action:14px;
+  --studio-row-inset:18px;
+  --studio-row-hover:#f4f7f2;
+  font-family:var(--studio-font)!important;
+}
+.exercise-hub__header h1{
+  font-family:var(--studio-font)!important;
+  font-size:var(--studio-page-title)!important;
+  line-height:1.04!important;
+  font-weight:760!important;
+  letter-spacing:-.04em!important;
+}
+.exercise-hub__section-heading h2{
+  font-family:var(--studio-font)!important;
+  font-size:var(--studio-section-title)!important;
+  line-height:1.15!important;
+  font-weight:700!important;
+  letter-spacing:-.025em!important;
+}
+.exercise-hub__header>div>span,.exercise-hub__intro,.exercise-hub__section-heading p,.exercise-hub__copy span,.exercise-hub__copy small{
+  font-family:var(--studio-font)!important;
+  font-size:var(--studio-meta)!important;
+  font-weight:400!important;
+  letter-spacing:0!important;
+}
+.exercise-hub__copy strong{
+  font-family:var(--studio-font)!important;
+  font-size:var(--studio-row-title)!important;
+  line-height:1.25!important;
+  font-weight:600!important;
+  letter-spacing:-.01em!important;
+}
+.exercise-hub__action{
+  min-width:58px;
+  height:34px;
+  border-radius:17px;
+  padding:0 14px;
+  font-family:var(--studio-font)!important;
+  font-size:var(--studio-action)!important;
+  font-weight:600!important;
+  letter-spacing:0!important;
+}
+.exercise-hub__list{border-radius:20px!important}
+.exercise-hub__row{
+  margin-left:var(--studio-row-inset)!important;
+  transition:background-color .16s ease,margin-left .16s ease,padding-left .16s ease!important;
+}
+.exercise-hub__row--available:hover,.exercise-hub__row--available:focus-visible{
+  margin-left:0!important;
+  padding-left:var(--studio-row-inset)!important;
+  background:var(--studio-row-hover)!important;
+  transform:none!important;
+  box-shadow:none!important;
+}
+@media(max-width:760px){
+  .exercise-hub{--studio-page-title:36px;--studio-row-inset:14px}
+  .exercise-hub__header h1{font-size:var(--studio-page-title)!important}
+  .exercise-hub__copy strong{font-size:var(--studio-row-title)!important}
+  .exercise-hub__header>div>span,.exercise-hub__intro,.exercise-hub__section-heading p,.exercise-hub__copy span,.exercise-hub__copy small{font-size:var(--studio-meta)!important}
+  .exercise-hub__action{grid-column:2;min-width:58px;height:34px;margin-top:-7px;padding:0 14px;font-size:var(--studio-action)!important}
+}

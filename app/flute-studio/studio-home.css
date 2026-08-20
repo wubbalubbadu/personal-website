@@ -2,3 +2,88 @@
 @media(max-width:900px){.home-layout{grid-template-columns:1fr;gap:34px}.practice-panel{position:static}.studio-hero{height:auto!important}.home-header{top:64px!important}}
 @media(max-width:760px){.studio-main{padding:0 16px 105px!important}.home-header{top:0!important}.home-large-title{height:105px}.home-large-title h1{font-size:32px!important}.header-library-link{display:none}.studio-hero{margin-bottom:30px!important}.home-layout,.studio-left{gap:30px}.continue-row{grid-template-columns:54px minmax(0,1fr) 54px;padding:13px}.continue-icon{width:50px;height:50px;border-radius:12px}.continue-row h3{font-size:16px}.continue-row p{font-size:12px}.home-inset-list>a{margin-left:14px;padding-right:13px}.practice-panel{padding:19px!important}}
 .studio-main>header.home-header{height:auto!important;margin:0 auto!important;padding:0!important;top:0!important}.studio-main>header.home-header h1{font-size:38px!important}.studio-hero{height:auto!important;min-height:286px}.plan-list input{display:none!important}@media(max-width:760px){.studio-main>header.home-header h1{font-size:32px!important}}
+
+/* Shared Cookie Studio type and interaction system. These rules intentionally
+   follow the legacy theme overrides. */
+.studio-shell{
+  --studio-font:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Arial,sans-serif;
+  --studio-page-title:42px;
+  --studio-section-title:24px;
+  --studio-row-title:18px;
+  --studio-meta:14px;
+  --studio-action:14px;
+  --studio-row-inset:18px;
+  --studio-row-hover:#f4f7f2;
+  --studio-radius:20px;
+  font-family:var(--studio-font)!important;
+}
+.home-large-title h1,.studio-main>header.home-header h1{
+  font-family:var(--studio-font)!important;
+  font-size:var(--studio-page-title)!important;
+  line-height:1.04!important;
+  font-weight:760!important;
+  letter-spacing:-.04em!important;
+}
+.home-section>header h2,.saved-home-section .section-title h2{
+  font-family:var(--studio-font)!important;
+  font-size:var(--studio-section-title)!important;
+  line-height:1.15!important;
+  font-weight:700!important;
+  letter-spacing:-.025em!important;
+}
+.home-section>header p,.saved-home-section .section-title p,.continue-row p,.home-inset-list small{
+  font-family:var(--studio-font)!important;
+  font-size:var(--studio-meta)!important;
+  line-height:1.35!important;
+  font-weight:400!important;
+  letter-spacing:0!important;
+}
+.home-section>header>a,.saved-home-section .section-title>a,.header-library-link,.continue-action{
+  font-family:var(--studio-font)!important;
+  font-size:var(--studio-action)!important;
+  font-weight:600!important;
+  letter-spacing:0!important;
+}
+.header-library-link{height:34px!important;border-radius:17px!important;padding:0 14px!important}
+.continue-row h3,.home-inset-list b{
+  font-family:var(--studio-font)!important;
+  font-size:var(--studio-row-title)!important;
+  line-height:1.25!important;
+  font-weight:600!important;
+  letter-spacing:-.01em!important;
+}
+.continue-row,.home-inset-list>a{
+  transition:background-color .16s ease,margin-left .16s ease,padding-left .16s ease!important;
+}
+.continue-row{
+  margin-left:var(--studio-row-inset);
+  padding-left:0!important;
+  border-radius:var(--studio-radius)!important;
+  box-shadow:0 1px 0 rgba(0,0,0,.05)!important;
+}
+.continue-row:hover,.continue-row:focus-visible,.home-inset-list>a:hover,.home-inset-list>a:focus-visible{
+  margin-left:0!important;
+  padding-left:var(--studio-row-inset)!important;
+  background:var(--studio-row-hover)!important;
+  transform:none!important;
+  box-shadow:none!important;
+}
+.continue-row:focus-visible,.home-inset-list>a:focus-visible{
+  outline:3px solid rgba(103,137,86,.35);
+  outline-offset:-3px;
+}
+.continue-row:hover,.continue-row:focus-visible{box-shadow:0 1px 0 rgba(0,0,0,.05)!important}
+.home-inset-list{border-radius:var(--studio-radius)!important}
+.continue-action{
+  min-width:58px;
+  height:34px!important;
+  border-radius:17px!important;
+  padding:0 14px;
+}
+@media(max-width:760px){
+  .studio-shell{--studio-page-title:36px;--studio-row-inset:14px}
+  .home-large-title h1,.studio-main>header.home-header h1{font-size:var(--studio-page-title)!important}
+  .continue-row h3,.home-inset-list b{font-size:var(--studio-row-title)!important}
+  .continue-row p,.home-inset-list small{font-size:var(--studio-meta)!important}
+}
+@media(prefers-reduced-motion:reduce){.continue-row,.home-inset-list>a{transition:none!important}}

@@ -17,8 +17,8 @@ function itemTypeLabel(type:PracticeSession["itemType"]){return type.replace("-"
 
 export default function PracticeActivityHero(){
   const todayKey=dateKey(new Date());
-  const [sessions,setSessions]=useState<PracticeSession[]>([]),[monthOffset,setMonthOffset]=useState(0),[selectedDay,setSelectedDay]=useState<string|null>(todayKey);
-  useEffect(()=>{const update=()=>setSessions(readSessions());update();window.addEventListener("cookie:practice-updated",update);return()=>window.removeEventListener("cookie:practice-updated",update)},[]);
+  const [sessions,setSessions]=useState<PracticeSession[]>([]),[monthOffset,setMonthOffset]=useState(0),[selectedDay,setSelectedDay]=useState<string|null>(null);
+  useEffect(()=>{const update=()=>setSessions(readSessions());update();setSelectedDay(dateKey(new Date()));window.addEventListener("cookie:practice-updated",update);return()=>window.removeEventListener("cookie:practice-updated",update)},[]);
   const data=useMemo(()=>{
     const today=new Date(),todayStart=new Date(today.getFullYear(),today.getMonth(),today.getDate()).getTime(),weekStart=todayStart-6*dayMs,minutes=(list:PracticeSession[])=>Math.round(list.reduce((n,s)=>n+s.durationSeconds,0)/60),byDay=new Map<string,number>(),sessionsByDay=new Map<string,PracticeSession[]>();
     sessions.forEach(session=>{

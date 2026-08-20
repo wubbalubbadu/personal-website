@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {useEffect,useState} from "react";
 import {usePathname} from "next/navigation";
 import "./studio-navigation.css";
@@ -23,13 +22,16 @@ function destinationIsActive(destination:Destination,pathname:string,hash:string
 export default function StudioNavigation(){
   const pathname=usePathname();
   const [hash,setHash]=useState("");
-  const [selectedKey,setSelectedKey]=useState<Destination["key"]|null>(null);
 
   useEffect(()=>{
-    const syncHash=()=>{setHash(window.location.hash);setSelectedKey(null)};
+    const syncHash=()=>setHash(window.location.hash);
     syncHash();
     window.addEventListener("hashchange",syncHash);
-    return()=>window.removeEventListener("hashchange",syncHash);
+    window.addEventListener("popstate",syncHash);
+    return()=>{
+      window.removeEventListener("hashchange",syncHash);
+      window.removeEventListener("popstate",syncHash);
+    };
   },[pathname]);
 
   function openTools(){
@@ -38,23 +40,22 @@ export default function StudioNavigation(){
 
   return <header className="studio-navigation">
     <div className="studio-navigation__inner">
-      <Link className="studio-navigation__brand" href="/flute-studio" onClick={()=>{setSelectedKey("home");setHash("")}} aria-label="Cookie Flute Studio home">
+      <a className="studio-navigation__brand" href="/flute-studio" aria-label="Cookie Flute Studio home">
         <span className="studio-navigation__brand-mark" aria-hidden="true">♫</span>
         <span>Cookie Flute Studio</span>
-      </Link>
+      </a>
       <nav className="studio-navigation__tabs" aria-label="Studio navigation">
         {destinations.map(destination=>{
-          const active=selectedKey?selectedKey===destination.key:destinationIsActive(destination,pathname,hash);
-          return <Link
+          const active=destinationIsActive(destination,pathname,hash);
+          return <a
             key={destination.key}
             href={destination.href}
             className={active?"studio-navigation__tab is-active":"studio-navigation__tab"}
             aria-current={active?"page":undefined}
-            onClick={()=>{setSelectedKey(destination.key);setHash(destination.key==="practice"?"#practice":"")}}
           >
             <span className="studio-navigation__tab-icon" aria-hidden="true">{destination.icon}</span>
             <span>{destination.label}</span>
-          </Link>;
+          </a>;
         })}
       </nav>
       <div className="studio-navigation__actions">
