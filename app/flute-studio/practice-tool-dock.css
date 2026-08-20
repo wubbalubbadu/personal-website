@@ -4,6 +4,9 @@
   -webkit-font-smoothing: antialiased;
 }
 
+/* Match the shared Cookie Studio surface and interaction system. */
+.dock-launcher{height:48px;border:1px solid #d9dfd5;background:rgba(255,255,255,.94);color:#292a33;font-size:14px;font-weight:650;box-shadow:0 10px 30px rgba(41,42,51,.14);transition:background-color .16s ease,transform .16s ease,box-shadow .16s ease}.dock-launcher:hover{background:#f0f5ed;transform:translateY(-1px);box-shadow:0 13px 34px rgba(41,42,51,.17)}.dock-launcher>i{border-color:#fff;background:#678956}.practice-dock{background:rgba(245,245,247,.97);border-color:#dfe1dd;border-radius:22px;box-shadow:0 24px 70px rgba(41,42,51,.2);animation:dock-enter .18s ease-out}.practice-dock>header{min-height:62px;background:rgba(255,255,255,.9);padding-inline:20px}.practice-dock>header strong{font-size:17px;font-weight:700}.practice-dock>header small{font-size:12px}.dock-tools{gap:12px;padding:12px;background:transparent}.dock-tool{min-height:366px;padding:18px;border:1px solid #e1e2df;border-radius:18px;background:#fff}.dock-tool-heading small{font-size:11px;letter-spacing:.04em}.dock-tool-heading strong{font-size:16px;font-weight:680}.dock-tool-icon{border-radius:11px}.dock-tool[data-requested="true"]{background:#fbf3fc;border-color:#e9c6ec;box-shadow:inset 0 0 0 1px rgba(244,159,255,.28)}@keyframes dock-enter{from{opacity:0;transform:translateY(8px) scale(.985)}}@media(prefers-reduced-motion:reduce){.practice-dock{animation:none}.dock-launcher{transition:none}}
+
 .dock-launcher {
   position: fixed;
   z-index: 180;

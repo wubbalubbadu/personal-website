@@ -74,3 +74,6 @@
   .row-action{height:34px!important;font-size:var(--studio-action)!important}
 }
 @media(prefers-reduced-motion:reduce){.library-row{transition:none!important}}
+
+/* The Library follows the same stable page frame as Exercises. */
+.library-shell{height:auto;min-height:100vh;background:#f5f5f7}.library-main{height:auto;min-height:100vh;overflow:visible;padding:64px 24px 130px!important}.library-content{max-width:980px}.library-page-header{padding:50px 4px 40px}.library-page-header>p:first-child{margin:0 0 8px;color:#58794b;font-size:13px;font-weight:700}.library-page-header>div{display:flex;align-items:baseline;gap:13px}.library-page-header h1{margin:0;font-size:42px;line-height:1.04;font-weight:760;letter-spacing:-.04em}.library-page-header>div span{color:#85868e;font-size:15px}.library-page-intro{margin:13px 0 0;color:#696b73;font-size:16px;line-height:1.5}.library-list{border:1px solid #e1e2df;box-shadow:0 1px 0 #0000000a}.search-filter{margin-bottom:0}@media(max-width:650px){.library-main{padding:54px 14px 105px!important}.library-page-header{padding:38px 4px 26px}.library-page-header h1{font-size:36px}}

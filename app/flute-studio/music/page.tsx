@@ -14,16 +14,15 @@ export default function MusicLibrary(){
   const [favorites,setFavorites]=useState<string[]>([]);
   const [favoritesOnly,setFavoritesOnly]=useState(false);
   const [filterOpen,setFilterOpen]=useState(false);
-  const [compact,setCompact]=useState(false);
 
   useEffect(()=>{const saved=localStorage.getItem("cookie:music-favorites");if(saved)setFavorites(JSON.parse(saved));const params=new URLSearchParams(location.search),initial=params.get("category");if(musicCategories.includes(initial as MusicCategory))setCategory(initial as MusicCategory);if(params.get("favorites")==="1")setFavoritesOnly(true)},[]);
   const items=useMemo(()=>musicLibrary.filter(item=>(category==="all"||item.category===category)&&(difficulty==="all"||item.difficulty===difficulty)&&(!favoritesOnly||favorites.includes(item.id))&&`${item.title} ${item.composer} ${item.key} ${item.techniques.join(" ")}`.toLowerCase().includes(query.toLowerCase())),[query,category,difficulty,favoritesOnly,favorites]);
   function favorite(id:string){const next=favorites.includes(id)?favorites.filter(item=>item!==id):[...favorites,id];setFavorites(next);localStorage.setItem("cookie:music-favorites",JSON.stringify(next));window.dispatchEvent(new Event("cookie:favorites-updated"))}
 
   return <main className="library-shell">
-    <section className="library-main" onScroll={event=>setCompact(event.currentTarget.scrollTop>42)}>
-      <header className={compact?"library-header compact":"library-header"}><div className="compact-nav"><a href="/flute-studio" aria-label="Back to studio">‹</a><strong>Library</strong><button aria-label="Library options">•••</button></div><div className="large-title"><h1>Library</h1><span>{musicLibrary.length} materials</span></div></header>
+    <section className="library-main">
       <div className="library-content">
+        <header className="library-page-header"><p>Music</p><div><h1>Library</h1><span>{musicLibrary.length} materials</span></div><p className="library-page-intro">Search, filter, and save music for practice.</p></header>
         <div className="search-filter"><label className="library-search"><span>⌕</span><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search music"/><kbd>{items.length}</kbd></label><button className={filterOpen||difficulty!=="all"||favoritesOnly?"filter-trigger active":"filter-trigger"} onClick={()=>setFilterOpen(true)} aria-label="Open library filters"><span>☷</span></button></div>
         <div className="category-tabs" aria-label="Music categories">{musicCategories.map(value=><button key={value} className={category===value?"active":""} onClick={()=>setCategory(value)}>{labels[value]}</button>)}</div>
         <div className="collection-heading"><div><h2>{favoritesOnly?"Saved music":category==="all"?"All music":labels[category]}</h2>{difficulty!=="all"&&<p>{labels[difficulty]}</p>}</div><span>{items.length}</span></div>

@@ -23,6 +23,7 @@ export default function PracticeActivityHero(){
   const [focusedDay,setFocusedDay]=useState<string|null>(null);
   const [selectedDay,setSelectedDay]=useState<string|null>(null);
   const [done,setDone]=useState<boolean[]>(initialPlan.map(()=>false));
+  const [planNote,setPlanNote]=useState("");
   useEffect(()=>{
     const update=()=>setSessions(readSessions());
     update();
@@ -33,6 +34,7 @@ export default function PracticeActivityHero(){
         if(Array.isArray(parsed))setDone(initialPlan.map((_,index)=>Boolean(parsed[index])));
       }
     }catch{/* Keep the default plan when stored data is invalid. */}
+    setPlanNote(localStorage.getItem("cookie:practice-plan-note")??"");
     window.addEventListener("cookie:practice-updated",update);
     return()=>window.removeEventListener("cookie:practice-updated",update);
   },[]);
@@ -109,6 +111,7 @@ export default function PracticeActivityHero(){
         <b className="plan-count">{done.filter(Boolean).length} of {initialPlan.length}</b>
       </header>
       <div className="plan-list">{initialPlan.map((item,index)=><label key={item} className={done[index]?"done":""}><input type="checkbox" checked={done[index]} onChange={()=>check(index)}/><span aria-hidden="true">✓</span><b>{item}</b></label>)}</div>
+      <label className="plan-note-line"><span aria-hidden="true">＋</span><input value={planNote} onChange={event=>{setPlanNote(event.target.value);localStorage.setItem("cookie:practice-plan-note",event.target.value)}} placeholder="Write another focus…" aria-label="Add a note to today's practice plan"/></label>
     </section>
   </div>;
 }

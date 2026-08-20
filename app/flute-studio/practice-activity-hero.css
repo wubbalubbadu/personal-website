@@ -66,6 +66,8 @@
   display: block;
 }
 
+.plan-note-line{min-height:48px;padding:0 4px;display:grid;grid-template-columns:30px 1fr;align-items:center;border-top:1px solid #e4e4e7;color:#678956}.plan-note-line>span{font-size:18px;text-align:center}.plan-note-line input{width:100%;height:46px;border:0;outline:0;background:transparent;color:#292a33;font:500 14px/1.3 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif}.plan-note-line input::placeholder{color:#96989f}.plan-note-line:focus-within{box-shadow:inset 0 -2px #678956}
+
 .activity-stats b {
   font-size: 22px !important;
   font-weight: 760 !important;
