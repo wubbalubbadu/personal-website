@@ -87,3 +87,32 @@
   .continue-row p,.home-inset-list small{font-size:var(--studio-meta)!important}
 }
 @media(prefers-reduced-motion:reduce){.continue-row,.home-inset-list>a{transition:none!important}}
+
+/* Full-width lower content after the practice plan moved into the dashboard. */
+.home-layout{display:block!important}
+.home-section>header{align-items:center!important}
+.home-section>header h2>a,.saved-home-section .section-title h2>a{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  color:inherit;
+  text-decoration:none;
+}
+.home-section>header h2>a>span,.saved-home-section .section-title h2>a>span{
+  color:#85868e;
+  font-size:26px;
+  line-height:.8;
+  font-weight:400;
+  transition:transform .16s ease,color .16s ease;
+}
+.home-section>header h2>a:hover>span,.home-section>header h2>a:focus-visible>span,
+.saved-home-section .section-title h2>a:hover>span,.saved-home-section .section-title h2>a:focus-visible>span{
+  color:#506f43;
+  transform:translateX(2px);
+}
+.home-section>header h2>a:focus-visible,.saved-home-section .section-title h2>a:focus-visible{
+  outline:3px solid rgba(103,137,86,.3);
+  outline-offset:4px;
+  border-radius:5px;
+}
+@media(prefers-reduced-motion:reduce){.home-section>header h2>a>span,.saved-home-section .section-title h2>a>span{transition:none}}

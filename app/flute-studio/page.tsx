@@ -6,25 +6,21 @@ import PracticeActivityHero from "./PracticeActivityHero";
 import SavedMusicHome from "./SavedMusicHome";
 import "./studio-home.css";
 
-const initialPlan=["Warm up with long tones","Work measures 9–16","Finish with one slow run"];
-
 export default function StudioHome(){
-  const [done,setDone]=useState<boolean[]>([false,false,false]);
   const [compact,setCompact]=useState(false);
   const [welcome,setWelcome]=useState({date:"YOUR STUDIO",greeting:"Welcome back, Haylie."});
-  useEffect(()=>{const saved=localStorage.getItem("cookie:practice-plan");if(saved)setDone(JSON.parse(saved));const today=new Date();setWelcome({date:today.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"}),greeting:`Good ${today.getHours()<12?"morning":today.getHours()<18?"afternoon":"evening"}, Haylie.`})},[]);
-  function check(index:number){const next=done.map((value,i)=>i===index?!value:value);setDone(next);localStorage.setItem("cookie:practice-plan",JSON.stringify(next))}
+  useEffect(()=>{const today=new Date();setWelcome({date:today.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"}),greeting:`Good ${today.getHours()<12?"morning":today.getHours()<18?"afternoon":"evening"}, Haylie.`})},[]);
   return <main className="studio-shell">
     <section className="studio-main" onScroll={event=>setCompact(event.currentTarget.scrollTop>42)}>
-      <header className={compact?"home-header compact":"home-header"}><div className="home-compact-nav"><span/><strong>Home</strong><a href="/flute-studio/music" aria-label="Search library">⌕</a></div><div className="home-large-title"><div><p>{welcome.date}</p><h1>{welcome.greeting}</h1></div><a className="header-library-link" href="/flute-studio/music">Browse library</a></div></header>
+      <header className={compact?"home-header compact":"home-header"}><div className="home-compact-nav"><span/><strong>Home</strong><span/></div><div className="home-large-title"><div><p>{welcome.date}</p><h1>{welcome.greeting}</h1></div></div></header>
       <div className="home-content">
         <section className="studio-hero"><PracticeActivityHero/></section>
         <HomeQuickTools/>
         <div className="home-layout"><div className="studio-left">
-          <section className="home-section recent-section"><header><div><h2>Continue practicing</h2><p>Pick up where you left off</p></div><a href="/flute-studio/music">See all</a></header><a className="continue-row" href="/flute-studio/music/mystery-of-love"><span className="continue-icon">♫</span><div><h3>Mystery of Love</h3><p>Sufjan Stevens · Repertoire · E minor</p></div><span className="continue-action">Open</span></a></section>
+          <section className="home-section recent-section"><header><h2><a href="/flute-studio/music">Continue practicing <span aria-hidden="true">›</span></a></h2></header><a className="continue-row" href="/flute-studio/music/mystery-of-love"><span className="continue-icon">♫</span><div><h3>Mystery of Love</h3><p>Sufjan Stevens · Repertoire · E minor</p></div><span className="continue-action">Open</span></a></section>
           <SavedMusicHome/>
-          <section className="home-section"><header><div><h2>Exercises</h2><p>Focused work for today</p></div><a href="/flute-studio/exercises">View exercises</a></header><div className="home-inset-list"><a href="/flute-studio/exercises/scales"><span className="exercise-symbol green">◎</span><div><b>Scale Studio</b><small>Choose key, range, and articulation</small></div><i>›</i></a><a href="/flute-studio/exercises"><span className="exercise-symbol pink">◌</span><div><b>Long-tone Ladder</b><small>Tone · 8 minutes</small></div><i>›</i></a><a href="/flute-studio/exercises"><span className="exercise-symbol gray">♩</span><div><b>Chromatic Thirds</b><small>Technique · 12 minutes</small></div><i>›</i></a></div></section>
-        </div><aside className="practice-panel" id="practice"><header><span>Today</span><b>{done.filter(Boolean).length} of {initialPlan.length}</b></header><h2>Practice plan</h2><p className="plan-intro">Keep the session small and specific.</p><div className="plan-list">{initialPlan.map((item,index)=><label key={item} className={done[index]?"done":""}><input type="checkbox" checked={done[index]} onChange={()=>check(index)}/><span>✓</span><b>{item}</b></label>)}</div><button>＋ Add an item</button><small>Saved on this device</small></aside></div>
+          <section className="home-section"><header><h2><a href="/flute-studio/exercises">Exercises <span aria-hidden="true">›</span></a></h2></header><div className="home-inset-list"><a href="/flute-studio/exercises/scales"><span className="exercise-symbol green">◎</span><div><b>Scale Studio</b><small>Choose key, range, and articulation</small></div><i>›</i></a><a href="/flute-studio/exercises"><span className="exercise-symbol pink">◌</span><div><b>Long-tone Ladder</b><small>Tone · 8 minutes</small></div><i>›</i></a><a href="/flute-studio/exercises"><span className="exercise-symbol gray">♩</span><div><b>Chromatic Thirds</b><small>Technique · 12 minutes</small></div><i>›</i></a></div></section>
+        </div></div>
       </div>
     </section>
   </main>
