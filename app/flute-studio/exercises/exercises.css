@@ -54,7 +54,7 @@
   --studio-font:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Arial,sans-serif;
   --studio-page-title:42px;
   --studio-section-title:24px;
-  --studio-row-title:18px;
+  --studio-row-title:16px;
   --studio-meta:14px;
   --studio-action:14px;
   --studio-row-inset:18px;
@@ -75,11 +75,20 @@
   font-weight:700!important;
   letter-spacing:-.025em!important;
 }
-.exercise-hub__header>div>span,.exercise-hub__intro,.exercise-hub__section-heading p,.exercise-hub__copy span,.exercise-hub__copy small{
+.exercise-hub__header>div>span,.exercise-hub__section-heading p,.exercise-hub__copy span,.exercise-hub__copy small{
   font-family:var(--studio-font)!important;
   font-size:var(--studio-meta)!important;
   font-weight:400!important;
   letter-spacing:0!important;
+}
+.exercise-hub__intro{
+  font-family:var(--studio-font)!important;
+  max-width:680px!important;
+  margin:16px 0 0!important;
+  color:#6d6f76!important;
+  font-size:16px!important;
+  line-height:1.55!important;
+  font-weight:400!important;
 }
 .exercise-hub__copy strong{
   font-family:var(--studio-font)!important;
@@ -114,6 +123,7 @@
   .exercise-hub{--studio-page-title:36px;--studio-row-inset:14px}
   .exercise-hub__header h1{font-size:var(--studio-page-title)!important}
   .exercise-hub__copy strong{font-size:var(--studio-row-title)!important}
-  .exercise-hub__header>div>span,.exercise-hub__intro,.exercise-hub__section-heading p,.exercise-hub__copy span,.exercise-hub__copy small{font-size:var(--studio-meta)!important}
+  .exercise-hub__header>div>span,.exercise-hub__section-heading p,.exercise-hub__copy span,.exercise-hub__copy small{font-size:var(--studio-meta)!important}
+  .exercise-hub__intro{font-size:14px!important;margin-top:14px!important}
   .exercise-hub__action{grid-column:2;min-width:58px;height:34px;margin-top:-7px;padding:0 14px;font-size:var(--studio-action)!important}
 }

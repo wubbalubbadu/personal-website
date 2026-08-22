@@ -1,1 +1,24 @@
 .cookie-pet-wrap{position:fixed;z-index:155;right:28px;bottom:94px;width:64px;height:64px;touch-action:none;user-select:none}.cookie-pet{position:relative;width:60px;height:60px;border-radius:48% 52% 46% 54%;background:#d9a24d;border:3px solid #ba8135;box-shadow:0 8px 22px #292a3328,inset -5px -6px 0 #c78e3c;cursor:grab;animation:cookieBob 3.8s ease-in-out infinite}.cookie-pet:active{cursor:grabbing;animation:none}.cookie-pet:focus-visible{outline:3px solid #f49fff;outline-offset:3px}.cookie-pet .chip{position:absolute;width:7px;height:7px;border-radius:50%;background:#6c4429}.cookie-pet .c1{left:14px;top:11px}.cookie-pet .c2{right:11px;top:17px}.cookie-pet .c3{left:9px;bottom:14px}.cookie-pet .c4{right:12px;bottom:9px}.cookie-pet .c5{left:27px;top:6px}.cookie-pet .eye{position:absolute;top:28px;width:4px;height:5px;border-radius:50%;background:#292a33}.cookie-pet .eye.left{left:20px}.cookie-pet .eye.right{right:19px}.cookie-pet .smile{position:absolute;left:25px;top:36px;width:10px;height:5px;border-bottom:2px solid #292a33;border-radius:0 0 9px 9px}.cookie-pet-bubble{position:absolute;right:9px;bottom:72px;width:max-content;max-width:180px;border-radius:14px 14px 3px 14px;background:#292a33;color:white;padding:9px 12px;font-size:13px;font-weight:600;box-shadow:0 8px 22px #292a3324;animation:bubbleIn .16s ease}.cookie-pet-bubble:after{content:"";position:absolute;right:3px;bottom:-6px;border:7px solid transparent;border-top-color:#292a33;border-right:0}@keyframes cookieBob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-5px) rotate(2deg)}}@keyframes bubbleIn{from{opacity:0;transform:translateY(5px) scale(.97)}}@media(max-width:760px){.cookie-pet-wrap{display:none}}@media(prefers-reduced-motion:reduce){.cookie-pet{animation:none}}
+
+.cookie-pomodoro{position:absolute;right:9px;bottom:72px;width:220px;background:rgba(255,255,255,.97);border:1px solid #dedfd9;border-radius:20px;box-shadow:0 14px 38px rgba(41,42,51,.17);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);padding:16px;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",Inter,Arial,sans-serif;color:#292a33;animation:cookiePomodoroReveal .18s ease-out both}
+.cookie-pomodoro>header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cookie-pomodoro>header strong{font-size:14px;font-weight:700;letter-spacing:-.01em}
+.cookie-pomodoro>header button{width:26px;height:26px;border:0;border-radius:50%;background:transparent;color:#8b8d94;font-size:17px;line-height:1;cursor:pointer}
+.cookie-pomodoro>header button:hover{background:#f1f1f4;color:#292a33}
+.cookie-pomodoro-mode{display:inline-flex;height:24px;padding:0 11px;border-radius:12px;align-items:center;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:#dcebd9;color:#3f5d39}
+.cookie-pomodoro-mode.break{background:#f7e1f8;color:#68466b}
+.cookie-pomodoro-clock{margin:12px 0 0;font-size:40px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;text-align:center}
+.cookie-pomodoro-duration{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px}
+.cookie-pomodoro-duration span{min-width:52px;text-align:center;font-size:12px;font-weight:600;color:#5a5c63;font-variant-numeric:tabular-nums}
+.cookie-pomodoro-duration button{width:24px;height:24px;border:1px solid #e2e2e6;border-radius:50%;background:#fff;color:#5a5c63;font-size:14px;line-height:1;cursor:pointer;display:grid;place-items:center}
+.cookie-pomodoro-duration button:hover:not(:disabled){background:#f1f1f4}
+.cookie-pomodoro-duration button:disabled{opacity:.35;cursor:default}
+.cookie-pomodoro-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.cookie-pomodoro-actions button{height:40px;border-radius:12px;border:0;display:grid;place-items:center;cursor:pointer}
+.cookie-pomodoro-reset{background:#f1f1f4;color:#5a5c63}
+.cookie-pomodoro-reset:hover{background:#e6e6ea}
+.cookie-pomodoro-primary{background:#678956;color:white}
+.cookie-pomodoro-primary:hover{background:#557747}
+.cookie-pomodoro>small{display:block;margin-top:11px;text-align:center;font-size:11px;color:#85868e}
+@keyframes cookiePomodoroReveal{from{opacity:0;transform:translateY(6px) scale(.98)}}
+@media(prefers-reduced-motion:reduce){.cookie-pomodoro{animation:none}}

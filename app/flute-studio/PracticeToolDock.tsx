@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
+import {useLanguage} from "./i18n/LanguageContext";
 import "./practice-tool-dock.css";
 
 type ToolKey = "tuner" | "metronome" | "drone";
@@ -102,14 +103,16 @@ function pitchFromBuffer(buffer: Float32Array, sampleRate: number) {
 }
 
 export default function PracticeToolDock() {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const [requestedTool, setRequestedTool] = useState<ToolKey | null>(null);
+  const [focusedTool, setFocusedTool] = useState<ToolKey | "all">("all");
 
   const [bpm, setBpm] = useState(76);
   const [metro, setMetro] = useState(false);
   const accent = false;
-  const [tapHint, setTapHint] = useState("Tap a steady pulse");
+  const [tapHint, setTapHint] = useState("");
 
   const [reading, setReading] = useState<PitchReading>({
     name: "A",
@@ -158,7 +161,7 @@ export default function PracticeToolDock() {
     frame.current = null;
     setListening(false);
     setSignalActive(false);
-    setTunerMessage("Listening stopped");
+    setTunerMessage(t.toolDock.listeningStopped);
   };
 
   const stopMetronome = () => {
@@ -195,6 +198,7 @@ export default function PracticeToolDock() {
       const tool = (event as CustomEvent<{ tool?: ToolKey }>).detail?.tool;
       if (tool !== "tuner" && tool !== "metronome" && tool !== "drone") return;
       setRequestedTool(tool);
+      setFocusedTool(tool);
       setOpen(true);
     };
     window.addEventListener("cookie:open-practice-tools", openRequestedTool as EventListener);
@@ -266,13 +270,13 @@ export default function PracticeToolDock() {
     else tapTimes.current = [...tapTimes.current.slice(-5), now];
 
     if (tapTimes.current.length < 2) {
-      setTapHint("Keep tapping");
+      setTapHint(t.toolDock.keepTapping);
       return;
     }
     const intervals = tapTimes.current.slice(1).map((time, index) => time - tapTimes.current[index]);
     const nextBpm = Math.round(60000 / median(intervals));
     setBpm(Math.max(40, Math.min(220, nextBpm)));
-    setTapHint(`${tapTimes.current.length} taps averaged`);
+    setTapHint(t.toolDock.tapsAveraged(tapTimes.current.length));
   };
 
   const toggleDrone = () => {
@@ -306,7 +310,7 @@ export default function PracticeToolDock() {
       return;
     }
     if (!navigator.mediaDevices?.getUserMedia) {
-      setTunerMessage("Microphone input is not available in this browser");
+      setTunerMessage(t.toolDock.micNotAvailable);
       return;
     }
 
@@ -338,7 +342,7 @@ export default function PracticeToolDock() {
       lastSignal.current = 0;
       setListening(true);
       setSignalActive(false);
-      setTunerMessage("Listening for a clear, sustained note");
+      setTunerMessage(t.toolDock.listeningForNote);
 
       const loop = (timestamp: number) => {
         if (timestamp - lastAnalysis.current >= 42) {
@@ -374,12 +378,12 @@ export default function PracticeToolDock() {
                 midi,
               });
               setSignalActive(true);
-              setTunerMessage(Math.abs(cents) <= 4 ? "In tune" : cents < 0 ? "A little flat" : "A little sharp");
+              setTunerMessage(Math.abs(cents) <= 4 ? t.toolDock.inTune : cents < 0 ? t.toolDock.littleFlat : t.toolDock.littleSharp);
               lastSignal.current = performance.now();
             }
           } else if (lastSignal.current && performance.now() - lastSignal.current > 1050) {
             setSignalActive(false);
-            setTunerMessage("Play a clearer sustained note");
+            setTunerMessage(t.toolDock.playClearer);
             candidateMidi.current = null;
             candidateCount.current = 0;
             pitchHistory.current = [];
@@ -391,7 +395,7 @@ export default function PracticeToolDock() {
     } catch {
       setListening(false);
       setSignalActive(false);
-      setTunerMessage("Microphone access was not available");
+      setTunerMessage(t.toolDock.micAccessDenied);
     }
   };
 
@@ -421,8 +425,8 @@ export default function PracticeToolDock() {
         onClick={() => setOpen((current) => !current)}
       >
         <span aria-hidden="true">⌁</span>
-        <span>{open ? "Hide tools" : "Practice tools"}</span>
-        {(listening || metro || drones.length > 0) && <i aria-label="A practice tool is running" />}
+        <span>{open ? t.toolDock.hideTools : t.toolDock.practiceTools}</span>
+        {(listening || metro || drones.length > 0) && <i aria-label={t.toolDock.toolRunning} />}
       </button>
 
       {open && (
@@ -430,7 +434,7 @@ export default function PracticeToolDock() {
           id="practice-console"
           className="practice-dock"
           style={{ transform: `translate(${pos.x}px, ${pos.y}px)` }}
-          aria-label="Practice tools"
+          aria-label={t.toolDock.practiceTools}
         >
           <header
             onPointerDown={onPointerDown}
@@ -440,12 +444,12 @@ export default function PracticeToolDock() {
           >
             <div>
               <span className="dock-grip" aria-hidden="true" />
-              <strong>Practice tools</strong>
-              <small>Drag to move</small>
+              <strong>{t.toolDock.practiceTools}</strong>
+              <small>{t.toolDock.dragToMove}</small>
             </div>
             <button
               type="button"
-              aria-label="Close practice tools"
+              aria-label={t.toolDock.close}
               onPointerDown={(event) => event.stopPropagation()}
               onClick={() => setOpen(false)}
             >
@@ -453,21 +457,35 @@ export default function PracticeToolDock() {
             </button>
           </header>
 
-          <div className="dock-tools">
+          <nav className="dock-tabs" aria-label={t.toolDock.showOneTool}>
+            {(["all", "tuner", "metronome", "drone"] as const).map((key) => (
+              <button
+                key={key}
+                type="button"
+                className={focusedTool === key ? "selected" : ""}
+                onClick={() => setFocusedTool(key)}
+              >
+                {key === "all" ? t.toolDock.allTools : key === "tuner" ? t.toolDock.tunerLabel : key === "metronome" ? t.toolDock.metronomeLabel : t.toolDock.droneLabel}
+              </button>
+            ))}
+          </nav>
+
+          <div className="dock-tools" data-single={focusedTool === "all" ? undefined : ""}>
             <section
               ref={tunerSection}
               className="dock-tool dock-tool-tuner"
               data-requested={requestedTool === "tuner" || undefined}
+              hidden={focusedTool !== "all" && focusedTool !== "tuner"}
               tabIndex={-1}
             >
               <div className="dock-tool-heading">
                 <span className="dock-tool-icon tuner-icon" aria-hidden="true">⌁</span>
-                <div><small>TUNER</small><strong>Pitch center</strong></div>
+                <div><small>{t.toolDock.tunerLabel}</small><strong>{t.toolDock.pitchCenter}</strong></div>
               </div>
 
               <div className={`tuner-reading ${tunerTone}`} aria-live="polite">
                 <div className="tuner-note"><b>{reading.name}</b><sup>{reading.octave}</sup></div>
-                <span>{signalActive ? `${reading.hz.toFixed(1)} Hz` : "Last stable pitch"}</span>
+                <span>{signalActive ? `${reading.hz.toFixed(1)} Hz` : t.toolDock.lastStablePitch}</span>
               </div>
 
               <div className={`cents-ruler ${tunerTone}`} style={rulerStyle}>
@@ -483,7 +501,7 @@ export default function PracticeToolDock() {
               <p className="tuner-status">{tunerMessage}</p>
               <button className={`primary-tool-button ${listening ? "is-running" : ""}`} onClick={tuner}>
                 <span aria-hidden="true">{listening ? "■" : "●"}</span>
-                {listening ? "Stop listening" : "Listen"}
+                {listening ? t.toolDock.stopListening : t.toolDock.listen}
               </button>
             </section>
 
@@ -491,21 +509,22 @@ export default function PracticeToolDock() {
               ref={metroSection}
               className="dock-tool dock-tool-metronome"
               data-requested={requestedTool === "metronome" || undefined}
+              hidden={focusedTool !== "all" && focusedTool !== "metronome"}
               tabIndex={-1}
             >
               <div className="dock-tool-heading">
                 <span className="dock-tool-icon metronome-icon" aria-hidden="true">♩</span>
-                <div><small>METRONOME</small><strong>Steady pulse</strong></div>
+                <div><small>{t.toolDock.metronomeLabel}</small><strong>{t.toolDock.steadyPulse}</strong></div>
               </div>
 
               <div className="tempo-stepper">
-                <button aria-label="Decrease tempo" onClick={() => setBpm(Math.max(40, bpm - 1))}>−</button>
-                <div><b>{bpm}</b><span>BPM</span></div>
-                <button aria-label="Increase tempo" onClick={() => setBpm(Math.min(220, bpm + 1))}>+</button>
+                <button aria-label={t.toolDock.decreaseTempo} onClick={() => setBpm(Math.max(40, bpm - 1))}>−</button>
+                <div><b>{bpm}</b><span>{t.toolDock.bpm}</span></div>
+                <button aria-label={t.toolDock.increaseTempo} onClick={() => setBpm(Math.min(220, bpm + 1))}>+</button>
               </div>
               <input
                 className="tempo-slider"
-                aria-label="Tempo"
+                aria-label={t.toolDock.tempoAria}
                 type="range"
                 min="40"
                 max="220"
@@ -513,11 +532,11 @@ export default function PracticeToolDock() {
                 onChange={(event) => setBpm(Number(event.target.value))}
               />
               <div className="metro-options">
-                <button className="tap-tempo-button" onClick={tapTempo}>Tap tempo</button>
+                <button className="tap-tempo-button" onClick={tapTempo}>{t.toolDock.tapTempo}</button>
               </div>
               <button className={`primary-tool-button ${metro ? "is-running" : ""}`} onClick={toggleMetro}>
                 <span aria-hidden="true">{metro ? "■" : "▶"}</span>
-                {metro ? "Stop metronome" : "Start metronome"}
+                {metro ? t.toolDock.stopMetronome : t.toolDock.startMetronome}
               </button>
             </section>
 
@@ -525,17 +544,18 @@ export default function PracticeToolDock() {
               ref={droneSection}
               className="dock-tool dock-tool-drone"
               data-requested={requestedTool === "drone" || undefined}
+              hidden={focusedTool !== "all" && focusedTool !== "drone"}
               tabIndex={-1}
             >
               <div className="dock-tool-heading">
                 <span className="dock-tool-icon drone-icon" aria-hidden="true">◉</span>
-                <div><small>DRONE</small><strong>Pitch pipe</strong></div>
+                <div><small>{t.toolDock.droneLabel}</small><strong>{t.toolDock.pitchPipe}</strong></div>
               </div>
 
               <div className="selected-pitch" aria-live="polite">
                 <span>{note}</span><sup>{octave}</sup>
               </div>
-              <div className="pitch-choices" aria-label="Select drone note">
+              <div className="pitch-choices" aria-label={t.toolDock.selectDroneNote}>
                 {pitches.map((pitch) => (
                   <button
                     key={pitch}
@@ -548,18 +568,17 @@ export default function PracticeToolDock() {
                 ))}
               </div>
               <div className="octave-stepper">
-                <button aria-label="Lower octave" onClick={() => setOctave(Math.max(3, octave - 1))}>−</button>
-                <span><small>OCTAVE</small><b>{octave}</b></span>
-                <button aria-label="Higher octave" onClick={() => setOctave(Math.min(6, octave + 1))}>+</button>
+                <button aria-label={t.toolDock.lowerOctave} onClick={() => setOctave(Math.max(3, octave - 1))}>−</button>
+                <span><small>{t.toolDock.octave}</small><b>{octave}</b></span>
+                <button aria-label={t.toolDock.higherOctave} onClick={() => setOctave(Math.min(6, octave + 1))}>+</button>
               </div>
-              {drones.length>0&&<div className="drone-active-inline"><span>Playing</span>{drones.map(pitch=><b key={pitch}>{pitch}</b>)}<button onClick={stopAllDrones}>Stop all</button></div>}
+              {drones.length>0&&<div className="drone-active-inline"><span>{t.toolDock.playing}</span>{drones.map(pitch=><b key={pitch}>{pitch}</b>)}<button onClick={stopAllDrones}>{t.toolDock.stopAll}</button></div>}
               <button className={`primary-tool-button ${drones.includes(selectedDrone) ? "is-running" : ""}`} onClick={toggleDrone}>
                 <span aria-hidden="true">{drones.includes(selectedDrone) ? "■" : "▶"}</span>
-                {drones.includes(selectedDrone) ? `Stop ${selectedDrone}` : `Play ${selectedDrone}`}
+                {drones.includes(selectedDrone) ? t.toolDock.stopDrone(selectedDrone) : t.toolDock.playDrone(selectedDrone)}
               </button>
             </section>
           </div>
-
         </section>
       )}
     </>

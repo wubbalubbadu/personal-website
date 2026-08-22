@@ -29,7 +29,7 @@
   .studio-navigation{top:auto;bottom:0;height:calc(68px + env(safe-area-inset-bottom));border-top:1px solid rgba(41,42,51,.12);border-bottom:0;background:rgba(251,251,249,.9)}
   .studio-navigation__inner{padding:6px 10px env(safe-area-inset-bottom);display:block}
   .studio-navigation__brand,.studio-navigation__actions{display:none}
-  .studio-navigation__tabs{height:62px;display:grid;grid-template-columns:repeat(4,1fr);gap:2px}
+  .studio-navigation__tabs{height:62px;display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
   .studio-navigation__tab{height:58px;padding:4px 2px 3px;display:grid;place-items:center;align-content:center;gap:3px;border-radius:13px;font-size:10px;font-weight:560}
   .studio-navigation__tab::after{display:none}
   .studio-navigation__tab:hover{background:transparent}

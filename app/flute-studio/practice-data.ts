@@ -1,4 +1,4 @@
-export type PracticeSession={id:string;itemId:string;itemType:"repertoire"|"exercise"|"etude"|"method"|"warm-up";title:string;startedAt:string;endedAt:string;durationSeconds:number;reflection:string};
+export type PracticeSession={id:string;itemId:string;itemType:"repertoire"|"exercise"|"etude"|"method"|"warm-up"|"focus";title:string;startedAt:string;endedAt:string;durationSeconds:number;reflection:string};
 export type ActivePractice={itemId:string;itemType:PracticeSession["itemType"];title:string;startedAt:string};
 export const sessionsKey="cookie:practice-sessions:v1";
 export const activeKey="cookie:active-practice:v1";

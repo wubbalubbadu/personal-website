@@ -2,6 +2,7 @@
 
 import { PointerEvent, useEffect, useRef, useState } from "react";
 import type { OpenSheetMusicDisplay as OSMDType } from "opensheetmusicdisplay";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 const pitchClasses = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"];
 const semitones: Record<string, number> = { C:0,"C♯":1,D:2,"E♭":3,E:4,F:5,"F♯":6,G:7,"A♭":8,A:9,"B♭":10,B:11 };
@@ -12,13 +13,75 @@ const mysteryScoreEvents = Array.from({length:4},()=>eventPhrase).flat();
 const mysteryMeasureStarts = Array.from({length:4},(_,group)=>[0,7,9,13].map(index=>index+group*15)).flat();
 export type ScoreViewerConfig={title:string;composer:string;asset:string;id:string;backHref:string;pitches:(string|null)[];events:{p:string|null;d:number}[];measureStarts:number[];subtitle?:string};
 const mysteryConfig:ScoreViewerConfig={title:"Mystery of Love",composer:"Sufjan Stevens",asset:"/mystery-of-love.mxl",id:"mystery-of-love",backHref:"/flute-studio/music",pitches:mysteryScoreSequence,events:mysteryScoreEvents,measureStarts:mysteryMeasureStarts};
-const fingeringKeys:Record<string,string[]>={C4:["L1","REb"],D4:["T","L1","L2","L3","R1","R2","R3"],E4:["T","L1","L2","L3","R1","R2","REb"],"F♯4":["T","L1","L2","L3","R2","REb"],F4:["T","L1","L2","L3","R1","REb"],G4:["T","L1","L2","L3","REb"],A4:["T","L1","L2","REb"],B4:["T","L1","REb"],C5:["L1","REb"],D5:["T","L2","L3","R1","R2","R3"],E5:["T","L1","L2","L3","R1","R2","REb"],F5:["T","L1","L2","L3","R1","REb"],"F♯5":["T","L1","L2","L3","R2","REb"],G5:["T","L1","L2","L3","REb"],A5:["T","L1","L2","REb"],B5:["T","L1","REb"],C6:["L1","REb"],D6:["T","L2","L3","R1","R2","R3"],E6:["T","L1","L2","L3","R1","R2","REb"],"F♯6":["T","L1","L2","L3","R2","REb"],G6:["T","L1","L2","L3","REb"]};
+/**
+ * Standard closed-hole Boehm flute fingerings, covering the full chromatic
+ * scale across the octaves this app can render. Octaves 4 and 5 share a
+ * fingering, as on a real flute — the register change comes from air speed,
+ * not the fingers. Octave 6 genuinely uses different (harmonic) fingerings,
+ * and altissimo notes above G6 vary enough by player/flute that they're left
+ * out rather than guessed.
+ *
+ * Keys: T=thumb, L1-3=left hand index/middle/ring, R1-3=right hand
+ * index/middle/ring, LP=left-pinky G♯ key, REb=right-pinky Eb/D♯ key (a Boehm
+ * quirk: every note from E up through B needs this key closed, or an "easy"
+ * alternate Eb fingering that skips the right hand entirely), RC=right-pinky
+ * low-C footjoint key, RCs=right-pinky low-C♯ footjoint key.
+ */
+const octave12Fingerings:Record<string,string[]>={
+  C:["T","L1","L2","L3","R1","R2","R3","RC"],
+  "C♯":["T","L1","L2","L3","R1","R2","R3","RCs"],
+  D:["T","L1","L2","L3","R1","R2","R3"],
+  "D♯":["T","L1","L2","L3","REb"],
+  E:["T","L1","L2","L3","R1","R2","REb"],
+  F:["T","L1","L2","L3","R1","REb"],
+  "F♯":["T","L1","L2","L3","R3","REb"],
+  G:["T","L1","L2","L3","REb"],
+  "G♯":["T","L1","L2","L3","LP","REb"],
+  A:["T","L1","L2","REb"],
+  "A♯":["T","L1","R1","REb"],
+  B:["T","L1","REb"],
+};
+const octave3Fingerings:Record<string,string[]>={
+  C:["T","L1","L2","L3","R1","R2","R3","RC"],
+  "C♯":["T","L1","L2","L3","R1","R2","R3","RCs"],
+  D:["T","L2","L3"],
+  "D♯":["T","L2","L3","REb"],
+  E:["T","L1","L2","R1","R2","REb"],
+  F:["T","L1","L2","L3","R1","REb"],
+  "F♯":["T","L1","L3","R3","REb"],
+  G:["L1","L2","L3","REb"],
+  "G♯":["T","L1","L2","L3","LP","REb"],
+};
+const solfegeNames:Record<string,string>={C:"Do",D:"Re",E:"Mi",F:"Fa","F♯":"Fi",G:"Sol",A:"La",B:"Ti"};
+function fingeringsFor(pitch:string){
+  const match=pitch.match(/^([A-G]♯?)(\d)$/);
+  if(!match)return [];
+  const [,letter,octave]=match;
+  const table=octave==="6"?octave3Fingerings:octave12Fingerings;
+  return table[letter]??[];
+}
 type RhythmMode = "off"|"counts"|"bars";
-function fingeringOn(pitch:string,key:string){return (fingeringKeys[pitch]??[]).includes(key)}
+type NoteDisplay = "off"|"names"|"solfege";
+function fingeringOn(pitch:string,key:string){return fingeringsFor(pitch).includes(key)}
 function measureForEvent(index:number,measureStarts:number[]){let result=1;measureStarts.forEach((start,i)=>{if(start<=index)result=i+1});return result}
+function clampTip(x:number,y:number,width:number,height:number,anchor:"below"|"above"){
+  const pad=12;
+  const maxLeft=Math.max(pad,window.innerWidth-width-pad);
+  const maxTop=Math.max(pad,window.innerHeight-height-pad);
+  let left=x+14;
+  if(left>maxLeft)left=Math.max(pad,x-14-width);
+  left=Math.min(Math.max(left,pad),maxLeft);
+  let top=anchor==="above"?y-height-14:y+14;
+  top=Math.min(Math.max(top,pad),maxTop);
+  return {left,top};
+}
 function overlay(root:HTMLDivElement,className:string,text:string,x:number,y:number){const item=document.createElement("span");item.className=`practice-overlay ${className}`;item.textContent=text;item.style.left=`${x}px`;item.style.top=`${y}px`;root.appendChild(item)}
-function placePracticeOverlays(root:HTMLDivElement,scoreEvents:{p:string|null;d:number}[],measureStarts:number[]){root.querySelectorAll(".practice-overlay").forEach(n=>n.remove());const rootBox=root.getBoundingClientRect(),all=[...root.querySelectorAll<SVGGElement>(".vf-stavenote[data-event]")];for(let measure=1;measure<=measureStarts.length;measure++){const group=all.filter(n=>Number(n.dataset.measure)===measure);if(!group.length)continue;const start=measureStarts[measure-1],ancestor=group[0].closest<SVGGElement>(".vf-measure"),measureBox=ancestor?.getBoundingClientRect(),groupBottom=Math.max(...group.map(n=>n.getBoundingClientRect().bottom)),labelLane=(measureBox?.bottom??groupBottom)-rootBox.top+18,countLane=labelLane+24;group.forEach(note=>{const index=Number(note.dataset.event),event=scoreEvents[index],box=note.getBoundingClientRect(),x=box.left-rootBox.left+box.width/2;if(event?.p){overlay(root,"note-name-marker",event.p.replace(/\d/,""),x,labelLane);if(event.p.includes("♯"))overlay(root,"accidental-marker","♯",x,box.top-rootBox.top-18)}let onset=0;for(let i=start;i<index;i++)onset+=scoreEvents[i]?.d??0;const sixteenth=Math.round(onset);overlay(root,"count-marker",`${Math.floor(sixteenth/4)+1}${["","e","+","a"][sixteenth%4]}`,x,countLane)});let onset=0;const anchors=group.map((node,i)=>{const eventIndex=start+i,box=node.getBoundingClientRect(),anchor={t:onset,x:box.left-rootBox.left+box.width/2};onset+=scoreEvents[eventIndex]?.d||0;return anchor}),right=measureBox?measureBox.right-rootBox.left:anchors.at(-1)!.x+34;anchors.push({t:16,x:right});const top=(measureBox?.top??Math.min(...group.map(n=>n.getBoundingClientRect().top)))-rootBox.top-7;for(let beat=0;beat<4;beat++){const target=beat*4,left=[...anchors].reverse().find(a=>a.t<=target)??anchors[0],next=anchors.find(a=>a.t>=target)??anchors.at(-1)!,ratio=next.t===left.t?0:(target-left.t)/(next.t-left.t);overlay(root,"beat-stick","",left.x+(next.x-left.x)*ratio,top)}}}
+function placePracticeOverlays(root:HTMLDivElement,scoreEvents:{p:string|null;d:number}[],measureStarts:number[]){root.querySelectorAll(".practice-overlay").forEach(n=>n.remove());const rootBox=root.getBoundingClientRect(),all=[...root.querySelectorAll<SVGGElement>(".vf-stavenote[data-event]")];for(let measure=1;measure<=measureStarts.length;measure++){const group=all.filter(n=>Number(n.dataset.measure)===measure);if(!group.length)continue;const start=measureStarts[measure-1],ancestor=group[0].closest<SVGGElement>(".vf-measure"),measureBox=ancestor?.getBoundingClientRect(),groupBottom=Math.max(...group.map(n=>n.getBoundingClientRect().bottom)),labelLane=(measureBox?.bottom??groupBottom)-rootBox.top+18,countLane=labelLane+24;group.forEach(note=>{const index=Number(note.dataset.event),event=scoreEvents[index],box=note.getBoundingClientRect(),x=box.left-rootBox.left+box.width/2;if(event?.p){const letter=event.p.replace(/\d/,"");overlay(root,"note-name-marker",letter,x,labelLane);overlay(root,"solfege-marker",solfegeNames[letter]??letter,x,labelLane);if(event.p.includes("♯"))overlay(root,"accidental-marker","♯",x,box.top-rootBox.top-18)}let onset=0;for(let i=start;i<index;i++)onset+=scoreEvents[i]?.d??0;const sixteenth=Math.round(onset);overlay(root,"count-marker",`${Math.floor(sixteenth/4)+1}${["","e","+","a"][sixteenth%4]}`,x,countLane)});let onset=0;const anchors=group.map((node,i)=>{const eventIndex=start+i,box=node.getBoundingClientRect(),anchor={t:onset,x:box.left-rootBox.left+box.width/2};onset+=scoreEvents[eventIndex]?.d||0;return anchor}),right=measureBox?measureBox.right-rootBox.left:anchors.at(-1)!.x+34;anchors.push({t:16,x:right});const top=(measureBox?.top??Math.min(...group.map(n=>n.getBoundingClientRect().top)))-rootBox.top-7;for(let beat=0;beat<4;beat++){const target=beat*4,left=[...anchors].reverse().find(a=>a.t<=target)??anchors[0],next=anchors.find(a=>a.t>=target)??anchors.at(-1)!,ratio=next.t===left.t?0:(target-left.t)/(next.t-left.t);overlay(root,"beat-stick","",left.x+(next.x-left.x)*ratio,top)}}}
 function addTheoryTargets(root:HTMLDivElement){const targets:[[string,string],...[string,string][]]=[[".vf-clef","Treble clef: the curl circles the G line. Flute music is normally written in this clef."],[".vf-keysignature","Key signature: one sharp means every F is played as F-sharp unless an accidental changes it."],[".vf-timesignature","Time signature: the top number gives beats per measure; the bottom number identifies the beat value."],[".vf-stavetie","Tie: hold the connected notes as one continuous sound. Do not tongue the second note."]];targets.forEach(([selector,text])=>root.querySelectorAll<SVGElement>(selector).forEach(node=>{node.dataset.theory=text;node.classList.add("theory-target")}))}
+
+type ScoreNote={id:string;kind:"text"|"sticky";x:number;y:number;text:string};
+function notesStorageKey(id:string){return `cookie:${id}:notes`}
+function readNotes(id:string):ScoreNote[]{try{const saved=JSON.parse(localStorage.getItem(notesStorageKey(id))??"[]");return Array.isArray(saved)?saved:[]}catch{return []}}
 
 function prepareScore(xml: string,title:string) {
   const document = new DOMParser().parseFromString(xml, "application/xml");
@@ -28,13 +91,42 @@ function prepareScore(xml: string,title:string) {
 }
 
 export function ScoreViewer({config=mysteryConfig}:{config?:ScoreViewerConfig}) {
+  const {t}=useLanguage();
   const {title,composer,asset,id,backHref,pitches:scoreSequence,events:scoreEvents,measureStarts}=config;
   const scoreRef = useRef<HTMLDivElement>(null); const canvasRef = useRef<HTMLCanvasElement>(null); const osmdRef = useRef<OSMDType | null>(null);
   const audioRef = useRef<AudioContext | null>(null); const dronesRef = useRef(new Map<string,OscillatorNode>()); const playbackTimers=useRef<number[]>([]); const playbackNodes=useRef<OscillatorNode[]>([]); const metroRef = useRef<number | null>(null); const metroBeat=useRef(0); const metroTaps=useRef<number[]>([]); const drawing = useRef(false); const inkHistory=useRef<string[]>([]); const inkIndex=useRef(-1);
-  const [loading,setLoading]=useState(true); const [error,setError]=useState(""); const [bpm,setBpm]=useState(76); const [startMeasure,setStartMeasure]=useState(1); const [playing,setPlaying]=useState(false); const [metro,setMetro]=useState(false); const [accent,setAccent]=useState(true); const [activeDrones,setActiveDrones]=useState<string[]>([]); const [dronePitch,setDronePitch]=useState("G"); const [droneOctave,setDroneOctave]=useState(4); const [picker,setPicker]=useState(false); const [annotating,setAnnotating]=useState(false); const [inkColor,setInkColor]=useState("#e45d46"); const [eraser,setEraser]=useState(false); const [historyTick,setHistoryTick]=useState(0); const [noteNames,setNoteNames]=useState(false); const [accidentals,setAccidentals]=useState(false); const [tonguing,setTonguing]=useState(false); const [fingering,setFingering]=useState(false); const [rhythmMode,setRhythmMode]=useState<RhythmMode>("off"); const [zoom,setZoom]=useState(.8); const [magnify,setMagnify]=useState(1); const [fingerTip,setFingerTip]=useState<{pitch:string;x:number;y:number}|null>(null); const [theoryTip,setTheoryTip]=useState<{text:string;x:number;y:number}|null>(null); const [favorite,setFavorite]=useState(false);
+  const [loading,setLoading]=useState(true); const [error,setError]=useState(""); const [bpm,setBpm]=useState(76); const [startMeasure,setStartMeasure]=useState(1); const [playing,setPlaying]=useState(false); const [metro,setMetro]=useState(false); const [accent]=useState(true); const [activeDrones,setActiveDrones]=useState<string[]>([]); const [dronePitch,setDronePitch]=useState("G"); const [droneOctave,setDroneOctave]=useState(4); const [picker,setPicker]=useState(false); const [annotating,setAnnotating]=useState(false); const [inkColor,setInkColor]=useState("#e45d46"); const [eraser,setEraser]=useState(false); const [historyTick,setHistoryTick]=useState(0); const [noteDisplay,setNoteDisplay]=useState<NoteDisplay>("off"); const [accidentals,setAccidentals]=useState(false); const [tonguing,setTonguing]=useState(false); const [fingering,setFingering]=useState(false); const [rhythmMode,setRhythmMode]=useState<RhythmMode>("off"); const [zoom,setZoom]=useState(.8); const [magnify,setMagnify]=useState(1); const [fingerTip,setFingerTip]=useState<{pitch:string;x:number;y:number}|null>(null); const [theoryTip,setTheoryTip]=useState<{text:string;x:number;y:number}|null>(null); const [favorite,setFavorite]=useState(false);
+  function cycleNoteDisplay(){setNoteDisplay(current=>current==="off"?"names":current==="names"?"solfege":"off")}
+  function cycleRhythm(){setRhythmMode(current=>current==="off"?"counts":current==="counts"?"bars":"off")}
 
-  useEffect(()=>{const saved=JSON.parse(localStorage.getItem("cookie:music-favorites")||"[]") as string[];setFavorite(saved.includes(id));let mounted=true; async function load(){ try { setLoading(true); const {OpenSheetMusicDisplay}=await import("opensheetmusicdisplay"); if(!mounted||!scoreRef.current)return; scoreRef.current.replaceChildren(); const osmd=new OpenSheetMusicDisplay(scoreRef.current,{backend:"svg",autoResize:true,drawTitle:false,drawComposer:false,drawingParameters:"compacttight"}); osmd.setOptions({pageFormat:"Endless",drawMeasureNumbers:true,drawPartNames:false,drawMetronomeMarks:true}); osmd.OnXMLRead = xml=>prepareScore(xml,title); osmd.zoom=zoom; await osmd.load(asset,title); osmd.EngravingRules.MinimumDistanceBetweenSystems=12; osmd.render(); osmdRef.current=osmd; scoreRef.current.querySelectorAll<SVGGElement>(".vf-stavenote").forEach((node,index)=>{node.dataset.event=String(index);node.dataset.measure=String(measureForEvent(index,measureStarts));const pitch=scoreSequence[index];if(pitch)node.dataset.pitch=pitch});placePracticeOverlays(scoreRef.current,scoreEvents,measureStarts);addTheoryTargets(scoreRef.current);setLoading(false); } catch(e){setError(e instanceof Error?e.message:"The score could not be engraved.");setLoading(false);} } load(); return()=>{mounted=false};},[]);
-  useEffect(()=>{const root=scoreRef.current;if(!root)return;root.classList.toggle("show-note-names",noteNames);root.classList.toggle("show-accidentals",accidentals);root.dataset.rhythm=rhythmMode},[noteNames,accidentals,rhythmMode,loading]);
+  const [notes,setNotes]=useState<ScoreNote[]>([]);
+  const notesRef=useRef<ScoreNote[]>([]);
+  const noteDrag=useRef<{id:string;startX:number;startY:number;origX:number;origY:number}|null>(null);
+  useEffect(()=>{notesRef.current=notes},[notes]);
+  useEffect(()=>{setNotes(readNotes(id))},[id]);
+  function persistNotes(next:ScoreNote[]){setNotes(next);notesRef.current=next;localStorage.setItem(notesStorageKey(id),JSON.stringify(next))}
+  function addScoreNote(kind:"text"|"sticky"){const note:ScoreNote={id:crypto.randomUUID(),kind,x:60+notes.length*16,y:60+notes.length*16,text:""};persistNotes([...notes,note])}
+  function updateScoreNoteText(noteId:string,text:string){persistNotes(notes.map(n=>n.id===noteId?{...n,text}:n))}
+  function removeScoreNote(noteId:string){persistNotes(notes.filter(n=>n.id!==noteId))}
+  function noteDown(event:React.PointerEvent<HTMLDivElement>,note:ScoreNote){
+    if((event.target as HTMLElement).tagName==="TEXTAREA"||(event.target as HTMLElement).closest("button"))return;
+    noteDrag.current={id:note.id,startX:event.clientX,startY:event.clientY,origX:note.x,origY:note.y};
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+  function noteMove(event:React.PointerEvent<HTMLDivElement>){
+    if(!noteDrag.current)return;
+    const {id:noteId,startX,startY,origX,origY}=noteDrag.current;
+    const dx=(event.clientX-startX)/magnify,dy=(event.clientY-startY)/magnify;
+    setNotes(current=>current.map(n=>n.id===noteId?{...n,x:origX+dx,y:origY+dy}:n));
+  }
+  function noteUp(){
+    if(!noteDrag.current)return;
+    noteDrag.current=null;
+    persistNotes(notesRef.current);
+  }
+
+  useEffect(()=>{const saved=JSON.parse(localStorage.getItem("cookie:music-favorites")||"[]") as string[];setFavorite(saved.includes(id));let mounted=true; async function load(){ try { setLoading(true); const {OpenSheetMusicDisplay}=await import("opensheetmusicdisplay"); if(!mounted||!scoreRef.current)return; scoreRef.current.replaceChildren(); const osmd=new OpenSheetMusicDisplay(scoreRef.current,{backend:"svg",autoResize:true,drawTitle:false,drawComposer:false,drawingParameters:"compacttight"}); osmd.setOptions({pageFormat:"Endless",drawMeasureNumbers:true,drawPartNames:false,drawMetronomeMarks:true}); osmd.OnXMLRead = xml=>prepareScore(xml,title); osmd.zoom=zoom; await osmd.load(asset,title); osmd.EngravingRules.MinimumDistanceBetweenSystems=12; osmd.render(); osmdRef.current=osmd; scoreRef.current.querySelectorAll<SVGGElement>(".vf-stavenote").forEach((node,index)=>{node.dataset.event=String(index);node.dataset.measure=String(measureForEvent(index,measureStarts));const pitch=scoreSequence[index];if(pitch)node.dataset.pitch=pitch});placePracticeOverlays(scoreRef.current,scoreEvents,measureStarts);addTheoryTargets(scoreRef.current);setLoading(false); } catch(e){setError(e instanceof Error?e.message:t.scoreViewer.engravingFailed);setLoading(false);} } load(); return()=>{mounted=false};},[]);
+  useEffect(()=>{const root=scoreRef.current;if(!root)return;root.dataset.noteDisplay=noteDisplay;root.classList.toggle("show-accidentals",accidentals);root.dataset.rhythm=rhythmMode},[noteDisplay,accidentals,rhythmMode,loading]);
   useEffect(()=>{ if(!osmdRef.current)return; osmdRef.current.zoom=zoom; osmdRef.current.render();window.setTimeout(()=>{if(!scoreRef.current)return;scoreRef.current.querySelectorAll<SVGGElement>(".vf-stavenote").forEach((node,index)=>{node.dataset.event=String(index);node.dataset.measure=String(measureForEvent(index,measureStarts));const pitch=scoreSequence[index];if(pitch)node.dataset.pitch=pitch});placePracticeOverlays(scoreRef.current,scoreEvents,measureStarts);addTheoryTargets(scoreRef.current)},0) },[zoom]);
   useEffect(()=>()=>{if(metroRef.current)window.clearInterval(metroRef.current);playbackTimers.current.forEach(window.clearTimeout);dronesRef.current.forEach(o=>{try{o.stop()}catch{}});audioRef.current?.close()},[]);
   const audio=()=>audioRef.current??(audioRef.current=new AudioContext());
@@ -62,13 +154,55 @@ export function ScoreViewer({config=mysteryConfig}:{config?:ScoreViewerConfig}) 
   function scoreClick(e:React.MouseEvent<HTMLDivElement>){const node=(e.target as Element).closest<SVGGElement>(".vf-stavenote[data-pitch]");if(!node||annotating)return;const match=node.dataset.pitch!.match(/^([A-G][♯♭]?)(\d)$/);if(!match)return;setStartMeasure(Number(node.dataset.measure)||1);setDronePitch(match[1]);setDroneOctave(+match[2]);toggleDrone(match[1],+match[2])}
   function toggleFavorite(){const saved=JSON.parse(localStorage.getItem("cookie:music-favorites")||"[]") as string[],next=saved.includes(id)?saved.filter(item=>item!==id):[...saved,id];localStorage.setItem("cookie:music-favorites",JSON.stringify(next));setFavorite(next.includes(id));window.dispatchEvent(new Event("cookie:favorites-updated"))}
   return <main className="app-shell" style={{"--viewer-magnify":magnify,"--score-composer":`"${composer}"`} as React.CSSProperties}>
-    <section className="workspace"><header className="topbar"><div><a className="back" href={backHref} aria-label="Back" title="Back">‹</a><strong>{title}</strong></div><div><button className={favorite?"viewer-star active has-tip":"viewer-star has-tip"} data-tip={favorite?"Remove from saved music":"Save music"} aria-label={favorite?"Remove from saved music":"Save music"} onClick={toggleFavorite}>{favorite?"★":"☆"}</button><button className="icon-btn has-tip" data-tip="Share score" aria-label="Share score">↗</button><button className="icon-btn has-tip" data-tip="More actions" aria-label="More actions">•••</button></div></header>
-      <div className="practice-bar"><div className="tool-group"><button data-tip="Show pitch letters beneath notes" className={noteNames?"tool on has-tip":"tool has-tip"} onClick={()=>setNoteNames(!noteNames)}><span>A♭</span>Note names</button><button data-tip="Show a colored ♯ above implied F-sharps" className={accidentals?"tool on has-tip":"tool has-tip"} onClick={()=>setAccidentals(!accidentals)}><span>♯</span>Accidentals</button><button data-tip="Tonguing overlay is paused for now" className="tool disabled has-tip" disabled><span>•</span>Tonguing</button><div className="rhythm-hover"><button className={rhythmMode!=="off"?"tool on":"tool"} onClick={()=>setRhythmMode(rhythmMode==="off"?"counts":"off")}><span>▥</span>Rhythm</button><div className="rhythm-pop"><strong>Rhythm display</strong><button className={rhythmMode==="off"?"selected":""} onClick={()=>setRhythmMode("off")}>Off</button><button className={rhythmMode==="counts"?"selected":""} onClick={()=>setRhythmMode("counts")}>1 e + a counts</button><button className={rhythmMode==="bars"?"selected":""} onClick={()=>setRhythmMode("bars")}>Beat sticks</button></div></div><button data-tip="Activate, then hover over a note" className={fingering?"tool on has-tip":"tool has-tip"} onClick={()=>setFingering(!fingering)}><span>●○</span>Fingering</button><button data-tip="Draw teaching notes on the page" className={annotating?"tool on coral has-tip":"tool has-tip"} onClick={()=>setAnnotating(!annotating)}><span>✎</span>Mark up</button></div>
-        <div className="transport"><button data-tip={`Starts from the last clicked note's measure: ${startMeasure}`} className={playing?"score-play active has-tip":"score-play has-tip"} onClick={togglePlayback}>{playing?"■ Stop":"▶ Play"}</button><div className="tempo"><input aria-label="Tempo" type="range" min="40" max="220" value={bpm} onChange={e=>setBpm(+e.target.value)}/><span><b>{bpm}</b> BPM</span></div><div className="metro-hover"><button data-tip="Steady click at the selected tempo" className={metro?"audio-tool active has-tip":"audio-tool has-tip"} onClick={toggleMetro}><span>♩</span>Metronome</button><div className="metro-pop"><strong>Metronome</strong><button className="viewer-tap-tempo" onClick={tapTempo}>Tap tempo</button><label className="accent-switch"><input type="checkbox" checked={accent} onChange={e=>setAccent(e.target.checked)}/><span/>Accent beat 1</label></div></div><div className="drone-wrap"><button data-tip="Click score notes to toggle independent drones" className={activeDrones.length?"audio-tool active has-tip":"audio-tool has-tip"} onClick={()=>setPicker(!picker)}><span>◉</span>Drone <b>{activeDrones.length?activeDrones.join("+"):"off"}</b></button>{picker&&<div className="drone-pop chromatic"><strong>Choose a drone pitch</strong><div className="pitch-grid">{pitchClasses.map(n=><button className={n===dronePitch?"selected":""} key={n} onClick={()=>setDronePitch(n)}>{n}</button>)}</div><label>Octave <select value={droneOctave} onChange={e=>setDroneOctave(+e.target.value)}>{[3,4,5,6].map(o=><option key={o}>{o}</option>)}</select></label><button className="start-drone" onClick={()=>toggleDrone(dronePitch,droneOctave)}>{activeDrones.includes(`${dronePitch}${droneOctave}`)?"Stop":"Start"} {dronePitch}{droneOctave}</button>{activeDrones.length>0&&<div className="active-drone-list">{activeDrones.map(n=><button key={n} onClick={()=>toggleDrone(n.slice(0,-1),+n.slice(-1))}>{n} ×</button>)}<button onClick={stopAllDrones}>Stop all</button></div>}<small>Click any score note to add or remove that drone.</small></div>}</div></div></div>
-      {annotating&&<div className="markup-row"><button onClick={undoInk} disabled={inkIndex.current<=0}>↶ Undo</button><button onClick={redoInk} disabled={inkIndex.current>=inkHistory.current.length-1}>↷ Redo</button><span className="divider"/>{["#e45d46","#2e6fb0","#3b7a57","#242623"].map(c=><button aria-label={`Use ${c}`} key={c} className={inkColor===c&&!eraser?"swatch chosen":"swatch"} style={{background:c}} onClick={()=>{setInkColor(c);setEraser(false)}}/>)}<button className={eraser?"eraser chosen":"eraser"} onClick={()=>setEraser(true)}>⌫ Eraser</button><button className="clear" onClick={clearInk}>Clear page</button><small>Markup is saved automatically.</small><i>{historyTick>=0?"":""}</i></div>}
-      <div className="score-scroll"><div className="score-paper engraved"><div className="custom-score-heading"><h1>{title}</h1></div>{loading&&<div className="score-loading">Engraving score…</div>}{error&&<div className="score-error">{error}</div>}<div ref={scoreRef} className="osmd-score" onMouseMove={scoreMove} onMouseLeave={()=>{setFingerTip(null);setTheoryTip(null)}} onClick={scoreClick}/><canvas ref={canvasRef} width="1600" height="2200" className={annotating?"ink active":"ink"} onPointerDown={begin} onPointerMove={draw} onPointerUp={saveInk} onPointerCancel={saveInk}/></div></div>
-      <footer className="statusbar"><span className="viewer-zoom-group"><b>Reflow</b><button onClick={()=>setZoom(Math.max(.55,zoom-.1))}>−</button>{Math.round(zoom*100)}%<button onClick={()=>setZoom(Math.min(1.25,zoom+.1))}>＋</button><b>Magnify</b><button onClick={()=>setMagnify(Math.max(.75,magnify-.1))}>−</button>{Math.round(magnify*100)}%<button onClick={()=>setMagnify(Math.min(1.5,magnify+.1))}>＋</button></span></footer>
-    </section>{theoryTip&&<div className="theory-tip" style={{left:theoryTip.x+14,top:theoryTip.y+14}}><small>MUSIC THEORY</small><p>{theoryTip.text}</p></div>}{fingerTip&&<div className="flute-tip wfg full" style={{left:fingerTip.x+14,top:fingerTip.y-145}}><strong>{fingerTip.pitch}</strong><div className="full-flute-chart"><span className="thumb-keys"><i className={fingeringOn(fingerTip.pitch,"TBb")?"flute-key thumb-bb pressed":"flute-key thumb-bb"}/><i className={fingeringOn(fingerTip.pitch,"T")?"flute-key thumb-main pressed":"flute-key thumb-main"}/></span><i className={fingeringOn(fingerTip.pitch,"LP")?"flute-key left-pinky pressed":"flute-key left-pinky"}/><span className="main-keys">{[1,2,3].map(n=><i key={`l${n}`} className={fingeringOn(fingerTip.pitch,`L${n}`)?"flute-key round pressed":"flute-key round"}/>)}<i/>{[1,2,3].map(n=><i key={`r${n}`} className={fingeringOn(fingerTip.pitch,`R${n}`)?"flute-key round pressed":"flute-key round"}/>)}</span><span className="trill-keys"><i className={fingeringOn(fingerTip.pitch,"TR1")?"flute-key trill pressed":"flute-key trill"}/><i className={fingeringOn(fingerTip.pitch,"TR2")?"flute-key trill pressed":"flute-key trill"}/></span><span className="right-pinky-cluster"><i className={fingeringOn(fingerTip.pitch,"RB")?"flute-key b-key pressed":"flute-key b-key"}/><i className={fingeringOn(fingerTip.pitch,"RC")?"flute-key c-key pressed":"flute-key c-key"}/><i className={fingeringOn(fingerTip.pitch,"RCs")?"flute-key cs-key pressed":"flute-key cs-key"}/><i className={fingeringOn(fingerTip.pitch,"REb")?"flute-key eb-key pressed":"flute-key eb-key"}/></span></div><small>thumb · left pinky · left hand | right hand · trill keys · B / C / C♯ / E♭</small></div>}</main>
+    <section className="workspace"><header className="topbar"><div><a className="back" href={backHref} aria-label={t.scoreViewer.back} title={t.scoreViewer.back}>‹</a><strong>{title}</strong></div><div><button className={favorite?"viewer-star active has-tip":"viewer-star has-tip"} data-tip={favorite?t.scoreViewer.removeFromSaved:t.scoreViewer.saveMusic} aria-label={favorite?t.scoreViewer.removeFromSaved:t.scoreViewer.saveMusic} onClick={toggleFavorite}>
+      <svg viewBox="0 0 20 20" width="19" height="19" fill={favorite?"currentColor":"none"} stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"><path d="M10 2.8l2.2 4.55 5 .73-3.6 3.53.85 4.99L10 14.2l-4.45 2.4.85-4.99L2.8 8.08l5-.73L10 2.8z"/></svg>
+    </button><button className="icon-btn has-tip" data-tip={t.scoreViewer.shareScore} aria-label={t.scoreViewer.shareScore}>↗</button><button className="icon-btn has-tip" data-tip={t.scoreViewer.moreActions} aria-label={t.scoreViewer.moreActions}>•••</button></div></header>
+      <div className="practice-bar"><div className="tool-group">
+        <button data-tip={t.scoreViewer.noteDisplayTip} className={noteDisplay!=="off"?"tool on has-tip":"tool has-tip"} onClick={cycleNoteDisplay}><span>A♭</span>{noteDisplay==="off"?t.scoreViewer.noteDisplay:noteDisplay==="names"?t.scoreViewer.noteNames:t.scoreViewer.solfege}</button>
+        <button data-tip={t.scoreViewer.rhythmDisplay} className={rhythmMode!=="off"?"tool on has-tip":"tool has-tip"} onClick={cycleRhythm}><span>▥</span>{rhythmMode==="off"?t.scoreViewer.rhythm:rhythmMode==="counts"?t.scoreViewer.rhythmCountsShort:t.scoreViewer.rhythmBarsShort}</button>
+        <button data-tip={t.scoreViewer.accidentalsTip} className={accidentals?"tool on has-tip":"tool has-tip"} onClick={()=>setAccidentals(!accidentals)}><span>♯</span>{t.scoreViewer.accidentals}</button>
+        <button data-tip={t.scoreViewer.tonguingTip} className="tool disabled has-tip" disabled><span>•</span>{t.scoreViewer.tonguing}</button>
+        <button data-tip={t.scoreViewer.fingeringTip} className={fingering?"tool on has-tip":"tool has-tip"} onClick={()=>setFingering(!fingering)}><span>●○</span>{t.scoreViewer.fingering}</button>
+        <button data-tip={t.scoreViewer.markUpTip} className={annotating?"tool on coral has-tip":"tool has-tip"} onClick={()=>setAnnotating(!annotating)}><span>✎</span>{t.scoreViewer.markUp}</button>
+      </div>
+        <div className="transport"><button data-tip={t.scoreViewer.playTip(startMeasure)} className={playing?"score-play active has-tip":"score-play has-tip"} onClick={togglePlayback}>{playing?t.scoreViewer.stop:t.scoreViewer.play}</button><div className="tempo"><input aria-label={t.scoreViewer.tempoAria} type="range" min="40" max="220" value={bpm} onChange={e=>setBpm(+e.target.value)}/><span><b>{bpm}</b> {t.scoreViewer.bpm}</span><button className="tap-tempo-btn has-tip" data-tip={t.scoreViewer.tapTempo} aria-label={t.scoreViewer.tapTempo} onClick={tapTempo}>⟳</button></div>
+          <button data-tip={t.scoreViewer.metronomeTip} className={metro?"audio-tool active has-tip":"audio-tool has-tip"} onClick={toggleMetro}><span>♩</span>{t.scoreViewer.metronome}</button>
+          <div className="transport-menu">
+            <button data-tip={t.scoreViewer.droneTip} className={activeDrones.length?"audio-tool active has-tip":"audio-tool has-tip"} onClick={()=>setPicker(o=>!o)}><span>◉</span>{t.scoreViewer.drone} <b>{activeDrones.length?activeDrones.join("+"):t.scoreViewer.droneOff}</b></button>
+            {picker&&<>
+              <div className="transport-menu-backdrop" onClick={()=>setPicker(false)}/>
+              <div className="transport-pop">
+                <div className="pitch-grid">{pitchClasses.map(n=><button className={n===dronePitch?"selected":""} key={n} onClick={()=>setDronePitch(n)}>{n}</button>)}</div>
+                <label className="octave-row">{t.scoreViewer.octave} <select value={droneOctave} onChange={e=>setDroneOctave(+e.target.value)}>{[3,4,5,6].map(o=><option key={o}>{o}</option>)}</select></label>
+                <button className="transport-pop-primary" onClick={()=>toggleDrone(dronePitch,droneOctave)}>{activeDrones.includes(`${dronePitch}${droneOctave}`)?t.scoreViewer.stopWord:t.scoreViewer.start} {dronePitch}{droneOctave}</button>
+                {activeDrones.length>0&&<div className="active-drone-list">{activeDrones.map(n=><button key={n} onClick={()=>toggleDrone(n.slice(0,-1),+n.slice(-1))}>{n} ×</button>)}<button onClick={stopAllDrones}>{t.scoreViewer.stopAll}</button></div>}
+                <small>{t.scoreViewer.droneHint}</small>
+              </div>
+            </>}
+          </div>
+        </div></div>
+      {annotating&&<div className="markup-row"><button onClick={undoInk} disabled={inkIndex.current<=0}>{t.scoreViewer.undo}</button><button onClick={redoInk} disabled={inkIndex.current>=inkHistory.current.length-1}>{t.scoreViewer.redo}</button><span className="divider"/>{["#e45d46","#2e6fb0","#3b7a57","#242623"].map(c=><button aria-label={t.scoreViewer.useColor(c)} key={c} className={inkColor===c&&!eraser?"swatch chosen":"swatch"} style={{background:c}} onClick={()=>{setInkColor(c);setEraser(false)}}/>)}<button className={eraser?"eraser chosen":"eraser"} onClick={()=>setEraser(true)}>{t.scoreViewer.eraser}</button><span className="divider"/><button className="has-tip" data-tip={t.scoreViewer.addTextTip} onClick={()=>addScoreNote("text")}>{t.scoreViewer.addText}</button><button className="has-tip" data-tip={t.scoreViewer.addStickyTip} onClick={()=>addScoreNote("sticky")}>{t.scoreViewer.addSticky}</button><button className="clear" onClick={clearInk}>{t.scoreViewer.clearPage}</button><small>{t.scoreViewer.markupSaved}</small><i>{historyTick>=0?"":""}</i></div>}
+      <div className="score-scroll"><div className="score-paper engraved"><div className="custom-score-heading"><h1>{title}</h1></div>{loading&&<div className="score-loading">{t.scoreViewer.engraving}</div>}{error&&<div className="score-error">{error}</div>}<div ref={scoreRef} className="osmd-score" onMouseMove={scoreMove} onMouseLeave={()=>{setFingerTip(null);setTheoryTip(null)}} onClick={scoreClick}/><canvas ref={canvasRef} width="1600" height="2200" className={annotating?"ink active":"ink"} onPointerDown={begin} onPointerMove={draw} onPointerUp={saveInk} onPointerCancel={saveInk}/>
+        {notes.map(note=><div key={note.id} className={note.kind==="sticky"?"score-note sticky":"score-note text"} style={{left:note.x,top:note.y}} onPointerDown={e=>noteDown(e,note)} onPointerMove={noteMove} onPointerUp={noteUp} onPointerCancel={noteUp}>
+          <button type="button" className="score-note__remove" aria-label={t.scoreViewer.deleteNote} onClick={()=>removeScoreNote(note.id)}>×</button>
+          <textarea value={note.text} onChange={e=>updateScoreNoteText(note.id,e.target.value)} placeholder={t.scoreViewer.notePlaceholder}/>
+        </div>)}
+      </div></div>
+      <footer className="statusbar"><span className="viewer-zoom-group"><b>{t.scoreViewer.reflow}</b><button onClick={()=>setZoom(Math.max(.55,zoom-.1))}>−</button>{Math.round(zoom*100)}%<button onClick={()=>setZoom(Math.min(1.25,zoom+.1))}>＋</button><b>{t.scoreViewer.magnify}</b><button onClick={()=>setMagnify(Math.max(.75,magnify-.1))}>−</button>{Math.round(magnify*100)}%<button onClick={()=>setMagnify(Math.min(1.5,magnify+.1))}>＋</button></span></footer>
+    </section>{theoryTip&&<div className="theory-tip" style={clampTip(theoryTip.x,theoryTip.y,280,150,"below")}><small>{t.scoreViewer.musicTheory}</small><p>{theoryTip.text}</p></div>}{fingerTip&&<div className="flute-tip finger-chart" style={clampTip(fingerTip.x,fingerTip.y,340,255,"above")}><strong>{fingerTip.pitch.replace(/\d/,"")}<sup>{fingerTip.pitch.match(/\d/)?.[0]}</sup></strong><div className="finger-diagram">
+        <div className="finger-diagram__group"><span className="finger-diagram__dot-wrap"><i className={fingeringOn(fingerTip.pitch,"T")?"finger-dot pressed":"finger-dot"}/><small>T</small></span></div>
+        <span className="finger-diagram__divider"/>
+        <div className="finger-diagram__group">{[1,2,3].map(n=><span key={`l${n}`} className="finger-diagram__dot-wrap"><i className={fingeringOn(fingerTip.pitch,`L${n}`)?"finger-dot pressed":"finger-dot"}/><small>{n}</small></span>)}{fingeringOn(fingerTip.pitch,"LP")&&<span className="finger-diagram__dot-wrap"><i className="finger-dot pressed small"/><small>G♯</small></span>}</div>
+        <span className="finger-diagram__divider"/>
+        <div className="finger-diagram__group">{[1,2,3].map(n=><span key={`r${n}`} className="finger-diagram__dot-wrap"><i className={fingeringOn(fingerTip.pitch,`R${n}`)?"finger-dot pressed":"finger-dot"}/><small>{n}</small></span>)}</div>
+        <span className="finger-diagram__divider"/>
+        <div className="finger-diagram__group">
+          <span className="finger-diagram__dot-wrap"><i className={fingeringOn(fingerTip.pitch,"REb")?"finger-dot pressed small":"finger-dot small"}/><small>E♭</small></span>
+          {fingeringOn(fingerTip.pitch,"RCs")?
+            <span className="finger-diagram__dot-wrap"><i className="finger-dot pressed"/><small>C♯</small></span>:
+            <span className="finger-diagram__dot-wrap"><i className={fingeringOn(fingerTip.pitch,"RC")?"finger-dot pressed":"finger-dot"}/><small>C</small></span>}
+        </div>
+      </div><small className="finger-diagram__legend">{t.scoreViewer.fingerChartCaption}</small></div>}</main>
 }
 
 export default function MysteryOfLovePage(){return <ScoreViewer/>}
