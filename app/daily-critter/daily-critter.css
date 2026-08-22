@@ -1,0 +1,62 @@
+.critter-page{min-height:100vh;background:#f5f0e6;color:#282821;padding:24px 20px 60px}
+.critter-shell{max-width:560px;margin:0 auto}
+.critter-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+.critter-nav a{color:#496e5c;text-decoration:none;font:600 12px Georgia,serif;letter-spacing:.05em}
+.critter-nav a:hover{text-decoration:underline}
+.critter-streak{font-size:11px;color:#807d73;letter-spacing:.05em}
+.critter-streak b{color:#e45d46}
+
+.critter-card{position:relative;border:1px solid #cbc5b8;border-radius:20px;background:#fbf8f1;padding:30px 26px;overflow:hidden}
+.critter-card.rarity-uncommon{border-color:#9db8c9;background:linear-gradient(180deg,#fbf8f1,#f2f6f7)}
+.critter-card.rarity-rare{border-color:#e0b95c;background:linear-gradient(160deg,#fffaf0,#fbf1da);box-shadow:0 0 0 1px #f0d99b inset}
+
+.rarity-badge{display:inline-flex;align-items:center;gap:5px;font:700 9px/1 Georgia,serif;letter-spacing:.14em;text-transform:uppercase;padding:5px 10px;border-radius:999px;background:#ece7da;color:#817b6c}
+.rarity-badge.uncommon{background:#d6e2e2;color:#426365}
+.rarity-badge.rare{background:#f0d99b;color:#8a6412}
+
+.critter-eyebrow{margin:0 0 6px;font-size:9px;letter-spacing:.18em;color:#496e5c;font-weight:750}
+.critter-emoji{font-size:64px;line-height:1;margin:10px 0 6px}
+.critter-name{margin:0 0 2px;font:400 34px/1.05 Georgia,serif}
+.critter-latin{margin:0 0 10px;font:italic 13px Georgia,serif;color:#807d73}
+.critter-region{margin:0 0 20px;font:italic 13px/1.5 Georgia,serif;color:#716f66}
+
+.critter-facts{list-style:none;margin:0 0 24px;padding:0;display:grid;gap:9px}
+.critter-facts li{font-size:13px;line-height:1.5;color:#3d3c34}
+
+.critter-missions h2{margin:0 0 12px;font:600 13px Georgia,serif;letter-spacing:.04em;color:#282821}
+.mission-list{list-style:none;margin:0 0 8px;padding:0;display:grid;gap:8px}
+.mission-item{width:100%;font:inherit;text-align:left;display:flex;align-items:flex-start;gap:10px;border:1px solid #ded8c9;border-radius:12px;background:#fffdf7;padding:12px 14px;cursor:pointer;transition:background .15s,border-color .15s}
+.mission-item:hover{border-color:#b7c9bd}
+.mission-item.done{background:#e9f0e9;border-color:#96b3a1}
+.mission-check{width:18px;height:18px;flex:0 0 18px;border-radius:6px;border:1.5px solid #a9a79d;display:grid;place-items:center;font-size:11px;margin-top:1px;color:#496e5c}
+.mission-item.done .mission-check{background:#496e5c;border-color:#496e5c;color:#fff}
+.mission-text{font-size:13px;line-height:1.5;color:#3d3c34}
+
+.critter-complete{margin:22px 0;border-radius:14px;background:#496e5c;color:#fff;padding:16px 18px;text-align:center}
+.critter-complete p{margin:0;font:600 13px Georgia,serif}
+.critter-complete span{display:block;margin-top:4px;font-size:11px;opacity:.85;font-weight:400}
+
+.critter-vision{margin-top:26px;padding-top:22px;border-top:1px solid #e4dfd0}
+.vision-toggle{border:1px solid #496e5c;background:#fff;color:#496e5c;font:600 12px Georgia,serif;padding:10px 16px;border-radius:999px;cursor:pointer}
+.vision-toggle:hover{background:#496e5c;color:#fff}
+.vision-frame{position:relative;border-radius:14px;overflow:hidden;background:#000}
+.vision-frame video{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}
+.vision-stop{position:absolute;top:10px;right:10px;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:11px;padding:6px 12px;border-radius:999px;cursor:pointer}
+.vision-error{margin:10px 0 0;font-size:12px;color:#a4432f}
+.vision-note{margin:12px 0 0;font:italic 12px/1.5 Georgia,serif;color:#807d73}
+
+.critter-dex-link{display:block;text-align:center;margin-top:24px;font-size:12px;color:#496e5c;text-decoration:none;letter-spacing:.04em}
+.critter-dex-link:hover{text-decoration:underline}
+
+.critterdex-header{margin-bottom:20px}
+.critterdex-header h1{margin:0 0 6px;font:400 30px Georgia,serif}
+.critterdex-header p{margin:0;color:#716f66;font-size:12px}
+.critterdex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.dex-tile{border:1px solid #cbc5b8;border-radius:12px;background:#fbf8f1;padding:14px;text-align:center}
+.dex-tile.locked{opacity:.55}
+.dex-tile .tile-emoji{font-size:30px;display:block;margin-bottom:6px}
+.dex-tile .tile-name{font-size:11px;font-weight:600;line-height:1.3}
+.dex-tile .tile-rarity{display:block;margin-top:4px;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:#a9a79d}
+.dex-tile.locked .tile-name{color:#a9a79d}
+
+@media(max-width:480px){.critter-card{padding:24px 18px}.critter-name{font-size:28px}}
