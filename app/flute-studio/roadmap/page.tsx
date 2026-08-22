@@ -1,133 +1,85 @@
 "use client";
 
-import {useEffect,useMemo,useState} from "react";
+import {useState} from "react";
 import "./roadmap.css";
 
-type Status="not-yet"|"exploring"|"comfortable";
-type Skill={id:string;title:string;prompt:string;stage:string};
+type Skill={title:string;description:string;stage:string};
 type Group={id:string;title:string;description:string;tone:string;skills:Skill[]};
 
-const statusOptions:readonly {id:Status;label:string}[]=[
-  {id:"not-yet",label:"Not yet"},
-  {id:"exploring",label:"Exploring"},
-  {id:"comfortable",label:"Comfortable"},
-];
+const journey=[
+  {level:"1",title:"Beginner",summary:"Build a reliable setup and make clear, connected sounds.",skills:["Posture and breath","Centered tone","Single tonguing and slurs","Simple rhythms","One-octave scales"]},
+  {level:"2",title:"Developing",summary:"Connect registers and add more control to phrases and fingers.",skills:["Register connection","Crescendo and decrescendo","Early vibrato","Minor scales and arpeggios","Trill fingerings"]},
+  {level:"3",title:"Intermediate",summary:"Play with greater fluency, color, accuracy, and rhythmic range.",skills:["Two-octave scales","Intonation awareness","Mixed articulations","Ornaments","Double tonguing"]},
+  {level:"4",title:"Advanced",summary:"Shape a mature sound across the full flute range and varied styles.",skills:["Tone color","Extreme dynamics","Complex rhythm and meter","Multiple tonguing","Style and interpretation"]},
+  {level:"5",title:"Explore",summary:"Use contemporary sounds as an optional branch of flute playing.",skills:["Harmonics","Flutter tongue","Air sounds and key clicks","Singing and playing","Multiphonics and quarter-tones"]},
+] as const;
 
+const s=(title:string,description:string,stage:string):Skill=>({title,description,stage});
 const groups:readonly Group[]=[
-  {id:"foundation",title:"Air & foundation",description:"Start here to understand how the player creates and sustains sound.",tone:"sage",skills:[
-    {id:"posture",title:"Balance and posture",prompt:"How do you set up the flute and release unnecessary tension?",stage:"Foundation"},
-    {id:"breath",title:"Breathing and air support",prompt:"Can you describe where you breathe and how you keep the air moving?",stage:"Foundation"},
-    {id:"tone",title:"Centered tone",prompt:"Can you start a clear, steady note in the low and middle registers?",stage:"Foundation"},
-    {id:"long-tone",title:"Long tones",prompt:"Have you practiced sustaining one pitch while listening for steadiness?",stage:"Foundation"},
-    {id:"decrescendo",title:"Decrescendo and release",prompt:"Can you taper a note without the pitch rising or the sound collapsing?",stage:"Developing"},
-    {id:"range",title:"Register connection",prompt:"Can you move between low, middle, and high registers without forcing?",stage:"Developing"},
+  {id:"foundation",title:"Air & foundation",description:"How breath, balance, and embouchure create a steady flute sound.",tone:"sage",skills:[
+    s("Balance and posture","Set up the flute with comfortable alignment and as little extra tension as possible.","Beginner"),
+    s("Breathing and air support","Plan full, quiet breaths and keep the air moving through the phrase.","Beginner"),
+    s("Centered tone","Start and sustain a clear note in the low and middle registers.","Beginner"),
+    s("Long tones","Sustain pitches while listening for steadiness, resonance, and pitch.","Beginner"),
+    s("Decrescendo and release","Taper a note without letting the pitch rise or the sound collapse.","Developing"),
+    s("Register connection","Move between low, middle, and high registers without forcing the sound.","Developing"),
   ]},
-  {id:"expression",title:"Sound & expression",description:"Listen for control, flexibility, and musical intention rather than one ideal sound.",tone:"pink",skills:[
-    {id:"dynamics",title:"Dynamic control",prompt:"Can you change volume while keeping a stable tone and pitch?",stage:"Developing"},
-    {id:"vibrato",title:"Vibrato",prompt:"Have you explored controlled air pulses and varied vibrato speed or width?",stage:"Developing"},
-    {id:"intonation",title:"Intonation awareness",prompt:"Do you adjust pitch by listening rather than only watching a tuner?",stage:"Developing"},
-    {id:"color",title:"Tone color",prompt:"Can you intentionally make the sound warmer, clearer, softer, or more focused?",stage:"Advanced"},
-    {id:"phrase",title:"Phrasing and breath planning",prompt:"Can you choose phrase direction and breaths before playing?",stage:"Developing"},
+  {id:"expression",title:"Sound & expression",description:"Control pitch, dynamics, color, vibrato, and the direction of a phrase.",tone:"pink",skills:[
+    s("Dynamic control","Change volume while keeping the tone and pitch stable.","Developing"),
+    s("Vibrato","Use controlled air pulses and vary vibrato speed and width for the phrase.","Developing"),
+    s("Intonation awareness","Hear pitch tendencies and adjust with air direction, support, and embouchure.","Developing"),
+    s("Tone color","Intentionally make the sound warmer, clearer, softer, or more focused.","Advanced"),
+    s("Phrasing and breath planning","Choose phrase direction and breathing places before playing.","Developing"),
   ]},
-  {id:"articulation",title:"Articulation",description:"Check clarity, variety, and coordination between air, tongue, and fingers.",tone:"sand",skills:[
-    {id:"single-tongue",title:"Single tonguing",prompt:"Can you begin notes with a clear, light tongue and continuous air?",stage:"Foundation"},
-    {id:"slur",title:"Slurs and legato",prompt:"Can you connect notes without bumps or unintended accents?",stage:"Foundation"},
-    {id:"staccato",title:"Staccato and detaché",prompt:"Can you vary note length without stopping the air harshly?",stage:"Developing"},
-    {id:"mixed-articulation",title:"Mixed articulation patterns",prompt:"Can you coordinate changing slur and tongue patterns at a steady tempo?",stage:"Developing"},
-    {id:"multiple-tongue",title:"Double and triple tonguing",prompt:"Have you practiced balanced front and back syllables?",stage:"Advanced"},
+  {id:"articulation",title:"Articulation",description:"Coordinate air, tongue, and fingers for clear and varied note shapes.",tone:"sand",skills:[
+    s("Single tonguing","Begin notes with a light tongue while the air continues to move.","Beginner"),
+    s("Slurs and legato","Connect notes without bumps, gaps, or unintended accents.","Beginner"),
+    s("Staccato and detaché","Vary note length without stopping the air harshly.","Developing"),
+    s("Mixed articulation patterns","Coordinate changing slur and tongue patterns at a steady tempo.","Intermediate"),
+    s("Double and triple tonguing","Balance the front and back syllables at increasing speeds.","Intermediate to advanced"),
   ]},
-  {id:"fingers",title:"Fingers & patterns",description:"Use familiar patterns to reveal coordination, key knowledge, and fluency.",tone:"blue",skills:[
-    {id:"coordination",title:"Finger coordination",prompt:"Can you keep fingers close to the keys and move them together cleanly?",stage:"Foundation"},
-    {id:"trills",title:"Finger trills",prompt:"Do you know common trill fingerings, and can you trill without gripping?",stage:"Developing"},
-    {id:"major-scales",title:"Major scales",prompt:"Which major scales can you play from memory, and over what range?",stage:"Foundation → Advanced"},
-    {id:"minor-scales",title:"Minor scales",prompt:"Which natural, harmonic, and melodic minor forms are familiar?",stage:"Developing"},
-    {id:"chromatic",title:"Chromatic scale",prompt:"Can you play a smooth chromatic scale through your comfortable range?",stage:"Developing"},
-    {id:"arpeggios",title:"Arpeggios",prompt:"Can you hear and play major, minor, and dominant-seventh patterns?",stage:"Developing"},
-    {id:"thirds",title:"Scales in thirds",prompt:"Have you practiced interval patterns beyond stepwise scales?",stage:"Advanced"},
+  {id:"fingers",title:"Fingers & patterns",description:"Develop efficient finger motion through scales, trills, and recurring patterns.",tone:"blue",skills:[
+    s("Finger coordination","Keep fingers close to the keys and move related fingers together cleanly.","Beginner"),
+    s("Finger trills","Learn common trill fingerings and trill without gripping the flute.","Developing"),
+    s("Major scales","Expand from one octave to two octaves and eventually the full practical range.","Beginner to advanced"),
+    s("Minor scales","Learn natural, harmonic, and melodic minor forms.","Developing"),
+    s("Chromatic scale","Connect chromatic fingerings smoothly through the comfortable range.","Developing"),
+    s("Arpeggios","Hear and play major, minor, and dominant-seventh patterns.","Developing"),
+    s("Scales in thirds","Practice interval patterns beyond stepwise scales.","Advanced"),
   ]},
-  {id:"reading",title:"Reading & musicianship",description:"Separate reading knowledge from physical flute technique during the conversation.",tone:"lavender",skills:[
-    {id:"pulse",title:"Pulse and subdivisions",prompt:"Can you maintain a pulse and count eighths, sixteenths, triplets, and dotted rhythms?",stage:"Foundation → Advanced"},
-    {id:"meter",title:"Meter",prompt:"Which simple, compound, mixed, or changing meters have you played?",stage:"Foundation → Advanced"},
-    {id:"keys",title:"Keys and accidentals",prompt:"Which key signatures feel familiar, and how do you handle accidentals?",stage:"Foundation → Advanced"},
-    {id:"sight-reading",title:"Sight-reading",prompt:"How do you scan key, meter, rhythm, range, and breaths before starting?",stage:"Developing"},
-    {id:"ornaments",title:"Trills and ornaments",prompt:"Have you played grace notes, trills, mordents, or turns in context?",stage:"Developing"},
+  {id:"reading",title:"Reading & musicianship",description:"Connect notation, rhythm, harmony, listening, and musical style.",tone:"lavender",skills:[
+    s("Pulse and subdivisions","Maintain a pulse while reading eighths, sixteenths, triplets, and dotted rhythms.","Beginner to advanced"),
+    s("Meter","Progress from simple and compound meter to mixed and changing meters.","Beginner to advanced"),
+    s("Keys and accidentals","Recognize key signatures and respond accurately to written accidentals.","Beginner to advanced"),
+    s("Sight-reading","Scan key, meter, rhythm, range, and breaths before starting.","Developing"),
+    s("Trills and ornaments","Play grace notes, trills, mordents, and turns in musical context.","Intermediate"),
   ]},
-  {id:"extended",title:"Extended techniques",description:"A preview branch for later exploration, not a requirement for general flute playing.",tone:"coral",skills:[
-    {id:"harmonics",title:"Harmonics",prompt:"Have you produced overtones from a lower fingering and compared their color?",stage:"Introduction"},
-    {id:"flutter",title:"Flutter tonguing",prompt:"Have you tried tongue-rolled or throat-produced flutter tonguing?",stage:"Introduction"},
-    {id:"air-sounds",title:"Air sounds",prompt:"Have you explored pitched and unpitched air sounds?",stage:"Exploration"},
-    {id:"sing-play",title:"Singing and playing",prompt:"Have you sustained a sung pitch while playing another note?",stage:"Exploration"},
-    {id:"pitch-bend",title:"Pitch bends and quarter-tones",prompt:"Have you explored lip bends or alternate fingerings for pitch inflection?",stage:"Exploration"},
-    {id:"percussive",title:"Key clicks and tongue effects",prompt:"Have you explored key clicks, key slaps, tongue pizzicato, or tongue ram?",stage:"Exploration"},
-    {id:"multiphonics",title:"Multiphonics",prompt:"Have you used a tested fingering to produce more than one pitch?",stage:"Advanced exploration"},
-    {id:"whistle-jet",title:"Whistle tones and jet whistle",prompt:"Have you explored very soft whistle tones or covered-embouchure jet effects?",stage:"Advanced exploration"},
+  {id:"extended",title:"Extended techniques",description:"An optional branch for exploring the contemporary sound world of the flute.",tone:"coral",skills:[
+    s("Harmonics","Produce overtones from a lower fingering and compare their color and pitch.","Introduction"),
+    s("Flutter tonguing","Explore tongue-rolled or throat-produced flutter tonguing.","Introduction"),
+    s("Air sounds","Create pitched and unpitched air sounds with controlled airflow.","Explore"),
+    s("Singing and playing","Sustain a sung pitch while playing another flute pitch.","Explore"),
+    s("Pitch bends and quarter-tones","Use lip bends and alternate fingerings for pitch inflection.","Explore"),
+    s("Key clicks and tongue effects","Explore key clicks, key slaps, tongue pizzicato, and tongue ram.","Explore"),
+    s("Multiphonics","Use tested fingerings and voicing to produce more than one pitch.","Advanced exploration"),
+    s("Whistle tones and jet whistle","Explore very soft whistle tones and covered-embouchure jet effects.","Advanced exploration"),
   ]},
 ];
-
-const storageKey="cookie:technique-roadmap-v1";
 
 export default function TechniqueRoadmapPage(){
-  const [statuses,setStatuses]=useState<Record<string,Status>>({});
   const [activeGroup,setActiveGroup]=useState(groups[0].id);
-  const [notes,setNotes]=useState("");
-  const [ready,setReady]=useState(false);
-
-  useEffect(()=>{
-    try{const saved=localStorage.getItem(storageKey);if(saved){const data=JSON.parse(saved);setStatuses(data.statuses??{});setNotes(data.notes??"");}}catch{}
-    setReady(true);
-  },[]);
-  useEffect(()=>{if(ready)localStorage.setItem(storageKey,JSON.stringify({statuses,notes}));},[statuses,notes,ready]);
-
-  const allSkills=useMemo(()=>groups.flatMap(group=>group.skills),[]);
-  const reviewed=Object.keys(statuses).length;
-  const comfortable=Object.values(statuses).filter(value=>value==="comfortable").length;
   const current=groups.find(group=>group.id===activeGroup)??groups[0];
-
-  function setStatus(id:string,status:Status){setStatuses(previous=>({...previous,[id]:status}));}
-  function reset(){if(window.confirm("Clear this technique check-in and start again?")){setStatuses({});setNotes("");}}
-
-  return <main className="roadmap-page">
-    <div className="roadmap-page__content">
-      <header className="roadmap-header">
-        <p>Teacher guide</p>
-        <div><h1>Technique roadmap</h1><span>{reviewed} of {allSkills.length} discussed</span></div>
-        <p className="roadmap-header__intro">Use this as a conversation guide for a trial lesson. Mark what the player remembers today without assigning them a fixed level.</p>
-      </header>
-
-      <section className="roadmap-overview" aria-label="Check-in overview">
-        <div><span>Discussed</span><strong>{reviewed}</strong></div>
-        <div><span>Comfortable today</span><strong>{comfortable}</strong></div>
-        <div><span>Still to explore</span><strong>{allSkills.length-reviewed}</strong></div>
-        <button type="button" onClick={reset}>Reset check-in</button>
-      </section>
-
-      <nav className="roadmap-path" aria-label="Technique areas">
-        {groups.map((group,index)=>{
-          const count=group.skills.filter(skill=>statuses[skill.id]).length;
-          return <button key={group.id} type="button" className={`${activeGroup===group.id?"active ":""}${group.tone}`} onClick={()=>setActiveGroup(group.id)}>
-            <span>{index+1}</span><div><strong>{group.title}</strong><small>{count}/{group.skills.length} discussed</small></div>
-          </button>;
-        })}
-      </nav>
-
-      <section className={`roadmap-panel ${current.tone}`} aria-labelledby="roadmap-group-title">
-        <header><div><p>{current.id==="extended"?"Optional exploration":"Technique area"}</p><h2 id="roadmap-group-title">{current.title}</h2><span>{current.description}</span></div></header>
-        <div className="roadmap-skill-list">
-          {current.skills.map(skill=><article className="roadmap-skill" key={skill.id}>
-            <div className="roadmap-skill__copy"><small>{skill.stage}</small><h3>{skill.title}</h3><p>{skill.prompt}</p></div>
-            <div className="roadmap-status" role="group" aria-label={`${skill.title} status`}>
-              {statusOptions.map(option=><button key={option.id} type="button" aria-pressed={statuses[skill.id]===option.id} onClick={()=>setStatus(skill.id,option.id)}>{option.label}</button>)}
-            </div>
-          </article>)}
-        </div>
-      </section>
-
-      <section className="roadmap-notes">
-        <label htmlFor="roadmap-notes"><span>Trial lesson notes</span><small>What returned easily? What needs rebuilding? What did the student enjoy?</small></label>
-        <textarea id="roadmap-notes" value={notes} onChange={event=>setNotes(event.target.value)} placeholder="Write observations and possible next steps…"/>
-      </section>
-
-      <footer className="roadmap-sources"><p>This roadmap is a teaching prompt, not an examination or diagnosis. Its progression is adapted from the National Flute Association Selected Flute Repertoire and Studies level criteria, with an extended-technique preview informed by Emi Ferguson’s flute resource.</p><div><a href="https://www.nfaonline.org/resources-publications/publications/selected-flute-repertoire-and-studies---history" target="_blank" rel="noreferrer">NFA guide</a><a href="https://www.emiferguson.com/flutes-extendedtechniques" target="_blank" rel="noreferrer">Extended techniques source</a></div></footer>
-    </div>
-  </main>;
+  return <main className="roadmap-page"><div className="roadmap-page__content">
+    <header className="roadmap-header"><p>Flute learning path</p><h1>Technique roadmap</h1><p className="roadmap-header__intro">See how flute skills build over time, then open any area to explore what comes next.</p></header>
+    <section className="roadmap-journey" aria-labelledby="roadmap-journey-title">
+      <header><p>Big picture</p><h2 id="roadmap-journey-title">From first sound to advanced exploration</h2></header>
+      <ol>{journey.map(step=><li key={step.level}><div className="roadmap-journey__number">{step.level}</div><div className="roadmap-journey__copy"><h3>{step.title}</h3><p>{step.summary}</p><ul>{step.skills.map(skill=><li key={skill}>{skill}</li>)}</ul></div></li>)}</ol>
+    </section>
+    <section className="roadmap-explore" aria-labelledby="roadmap-explore-title">
+      <header><p>Explore by area</p><h2 id="roadmap-explore-title">Choose a technique family</h2></header>
+      <nav className="roadmap-path" aria-label="Technique areas">{groups.map((group,index)=><button key={group.id} type="button" aria-pressed={activeGroup===group.id} className={`${activeGroup===group.id?"active ":""}${group.tone}`} onClick={()=>setActiveGroup(group.id)}><span>{index+1}</span><strong>{group.title}</strong></button>)}</nav>
+      <section className={`roadmap-panel ${current.tone}`} aria-labelledby="roadmap-group-title"><header><div><p>{current.id==="extended"?"Optional exploration":"Technique area"}</p><h2 id="roadmap-group-title">{current.title}</h2><span>{current.description}</span></div></header><div className="roadmap-skill-list">{current.skills.map(skill=><article className="roadmap-skill" key={skill.title}><small>{skill.stage}</small><h3>{skill.title}</h3><p>{skill.description}</p></article>)}</div></section>
+    </section>
+    <footer className="roadmap-sources"><p>The sequence is a flexible learning path, not a fixed level or examination. It is informed by the National Flute Association repertoire level criteria and Emi Ferguson’s extended-technique resource.</p><div><a href="https://www.nfaonline.org/resources-publications/publications/selected-flute-repertoire-and-studies---history" target="_blank" rel="noreferrer">NFA guide</a><a href="https://www.emiferguson.com/flutes-extendedtechniques" target="_blank" rel="noreferrer">Extended techniques source</a></div></footer>
+  </div></main>;
 }

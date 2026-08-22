@@ -6,9 +6,9 @@ const quickItems = [
   {kind:"tool",id:"tuner",icon:"⌁",title:"Tuner",detail:"Check pitch",tone:"green"},
   {kind:"tool",id:"metronome",icon:"♩",title:"Metronome",detail:"Set or tap tempo",tone:"sand"},
   {kind:"tool",id:"drone",icon:"◉",title:"Drone",detail:"Hold reference pitches",tone:"pink"},
+  {kind:"link",href:"/flute-studio/roadmap",icon:"↗",title:"Technique roadmap",detail:"Explore your learning path",tone:"pink"},
   {kind:"link",href:"/flute-studio/music",icon:"♫",title:"Browse music",detail:"Repertoire and etudes",tone:"sage"},
   {kind:"link",href:"/flute-studio/exercises",icon:"◎",title:"Exercises",detail:"Scales and studies",tone:"mist"},
-  {kind:"link",href:"/flute-studio/roadmap",icon:"↗",title:"Technique roadmap",detail:"Guide a skills check-in",tone:"pink"},
   {kind:"link",href:"https://www.wfg.woodwind.org/flute/",icon:"●○",title:"Fingering chart",detail:"Standard flute fingerings",tone:"sage"},
   {kind:"soon",icon:"↟",title:"Trill chart",detail:"Coming next",tone:"sand"},
 ] as const;
