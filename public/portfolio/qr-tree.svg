@@ -1,0 +1,12 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="900" fill="#DFF0A5"/>
+  <g fill="#172019">
+    <path d="M82 108h252v252H82V108Zm52 52v148h148V160H134Zm38 38h72v72h-72v-72Z"/>
+    <path d="M82 540h252v252H82V540Zm52 52v148h148V592H134Zm38 38h72v72h-72v-72Z"/>
+    <path d="M866 108h252v252H866V108Zm52 52v148h148V160H918Zm38 38h72v72h-72v-72Z"/>
+    <path d="M414 108h72v72h-72zM510 108h72v72h-72zM606 108h72v72h-72zM702 108h72v168h-72zM390 228h72v72h-72zM510 228h72v72h-72zM606 204h72v72h-72zM390 348h72v72h-72zM486 324h72v72h-72zM582 348h72v72h-72zM678 324h72v72h-72zM774 372h72v72h-72zM870 420h72v72h-72zM966 396h72v72h-72zM1062 444h72v72h-72zM390 492h72v72h-72zM486 468h72v72h-72zM582 516h72v72h-72zM702 492h72v72h-72zM798 516h72v72h-72zM390 636h72v72h-72zM486 612h72v72h-72zM582 660h72v72h-72zM678 636h72v72h-72zM774 684h72v72h-72zM870 612h72v72h-72zM966 708h72v72h-72zM1062 612h72v72h-72z"/>
+  </g>
+  <g transform="translate(650 165)"><path d="M220 520h112V294h-112v226Z" fill="#74533B"/><path d="M244 520h40V294h-40v226Z" fill="#98714C"/><path d="M76 300h120v-96h104v-92h118v100h96v112H402v98H286v-78H174v74H62V300h14Z" fill="#4D8C45"/><path d="M120 252h96v-92h104v-76h70v76h80v104h-86v82H280v-70H170v72H92v-96h28Z" fill="#76B85D"/><path d="M226 294h94v64h-94z" fill="#93CC6E"/></g>
+  <path d="M552 438c38-56 70-84 116-116" stroke="#FBFBF7" stroke-width="16" stroke-linecap="round" stroke-dasharray="2 32"/><path d="m640 286 39 31-43 24" stroke="#FBFBF7" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="82" y="854" fill="#172019" font-family="Arial, sans-serif" font-size="24" letter-spacing="4">QR TREE · EARLY CONCEPT</text>
+</svg>

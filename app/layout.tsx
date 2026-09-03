@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "cookie | project tin",
-  description: "A box of small, useful, playful music projects.",
+  title: "Haylie Wu | Software and flute",
+  description: "Projects, performances, and experiments by Haylie Wu.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
