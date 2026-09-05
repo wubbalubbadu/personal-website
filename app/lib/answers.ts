@@ -1,8 +1,14 @@
 export type AnswerNode =
   | { kind: "text"; value: string }
-  | { kind: "linkList"; items: { label: string; href: string; note?: string }[] }
-  | { kind: "video"; youtube: string; start?: number; caption?: string }
-  | { kind: "image"; src: string; alt: string; href?: string };
+  | { kind: "linkList"; items: { label: string; href: string; note?: string }[] };
+
+export type CanvasSpec =
+  | { kind: "resume" }
+  | { kind: "timeline" }
+  | { kind: "tech" }
+  | { kind: "projects" }
+  | { kind: "project"; slug: string }
+  | { kind: "flute" };
 
 export type Intent = {
   id: string;
@@ -10,9 +16,11 @@ export type Intent = {
   chip: string;
   /** Text that appears as the visitor's bubble when the box is clicked. */
   ask: string;
-  /** Haylie's scripted reply, rendered top to bottom. */
+  /** Haylie's scripted reply in the chat. Short when there's a canvas. */
   answer: AnswerNode[];
-  /** Candidate intent ids to surface after this answer (see nextChips). */
+  /** If set, opens this artifact in the canvas panel. */
+  canvas?: CanvasSpec;
+  /** Candidate intent ids to surface after this answer. */
   followUps: string[];
 };
 
@@ -24,17 +32,58 @@ export const GREETING: AnswerNode[] = [
   },
 ];
 
-export const ROOT_CHIPS = [
-  "background",
-  "why-both",
-  "tech-stack",
-  "projects",
-  "flute",
-  "resume",
-  "contact",
-];
+/** Big buttons on the home screen. */
+export const PRIMARY_CHIPS = ["projects", "experience", "resume"];
+/** Small chips under them. */
+export const SECONDARY_CHIPS = ["background", "why-both", "tech-stack", "flute", "looking-for", "contact"];
+export const ROOT_CHIPS = [...PRIMARY_CHIPS, ...SECONDARY_CHIPS];
 
 export const INTENTS: Record<string, Intent> = {
+  projects: {
+    id: "projects",
+    chip: "Projects",
+    ask: "What have you built?",
+    answer: [
+      {
+        kind: "text",
+        value:
+          "A mix of big and small. Cookie Flute Studio is my current build, plus experiments like a 3D QR code and a cat-emoji data-structure visualizer, and earlier full-stack work for Northwestern students. Open one on the right.",
+      },
+    ],
+    canvas: { kind: "projects" },
+    followUps: ["cookie-flute-studio", "qr-tree", "cat-structures", "market", "skuy"],
+  },
+
+  experience: {
+    id: "experience",
+    chip: "Timeline",
+    ask: "Show me your timeline.",
+    answer: [
+      {
+        kind: "text",
+        value:
+          "Here's how the two tracks have run side by side since 2021. Software on the left, flute on the right. Early 2024 is where I doubled down on playing.",
+      },
+    ],
+    canvas: { kind: "timeline" },
+    followUps: ["resume", "why-both", "projects"],
+  },
+
+  resume: {
+    id: "resume",
+    chip: "Résumé",
+    ask: "Can I see your résumé?",
+    answer: [
+      {
+        kind: "text",
+        value:
+          "It's on the right. Filter it by any technology to see where I used it, or download the PDF.",
+      },
+    ],
+    canvas: { kind: "resume" },
+    followUps: ["experience", "tech-stack", "contact"],
+  },
+
   background: {
     id: "background",
     chip: "Background",
@@ -46,7 +95,7 @@ export const INTENTS: Record<string, Intent> = {
           "I studied computer science at Northwestern. Along the way I interned as a software engineer at MathWorks, worked on NetLogo Web at Northwestern's Center for Connected Learning, and was lead backend engineer at SKUY, a student startup. I've kept building software since then, and I'm now doing a master's at New England Conservatory while continuing my dev work.",
       },
     ],
-    followUps: ["why-both", "tech-stack", "resume"],
+    followUps: ["experience", "tech-stack", "resume"],
   },
 
   "why-both": {
@@ -60,7 +109,7 @@ export const INTENTS: Record<string, Intent> = {
           "At the start of 2024 I made a deliberate choice. I wanted to give intensive flute training everything I had, do competitions, and find out how good my playing could get. Since then I've won competitions, entered New England Conservatory on scholarship, and played festivals. But I never stopped building software or sharpening my skills. I want both, and I've built my life so I don't have to choose.",
       },
     ],
-    followUps: ["flute", "background"],
+    followUps: ["experience", "flute", "background"],
   },
 
   "tech-stack": {
@@ -71,88 +120,56 @@ export const INTENTS: Record<string, Intent> = {
       {
         kind: "text",
         value:
-          "Languages: Python, TypeScript/JavaScript, Java, C++, SQL, MATLAB. Frontend in React and Next.js, plus React Native for mobile. Backend in Node/Express, Flask, PostgreSQL, MongoDB, and Firebase. I've shipped on AWS (S3, Lambda, API Gateway, DynamoDB) and Heroku, with Git and GitHub Actions for CI/CD. Recent work leans into TypeScript, Next.js, and the Web Audio API.",
+          "The short version is on the right. I work mostly in TypeScript and Python, React and Next.js on the frontend, Node, Flask, and Postgres on the backend, deployed on AWS.",
       },
     ],
+    canvas: { kind: "tech" },
     followUps: ["projects", "resume"],
-  },
-
-  projects: {
-    id: "projects",
-    chip: "Projects",
-    ask: "What have you built?",
-    answer: [
-      {
-        kind: "text",
-        value:
-          "Four to look at. Cookie Flute Studio is my current build, a real-time practice platform for flutists with score-following pitch feedback. QR Tree turns a scannable QR code into a rotatable 3D object and back. Market and SKUY are earlier full-stack work: a secondhand marketplace and a mobile community app, both for Northwestern students. More are on the way. Pick one below.",
-      },
-    ],
-    followUps: ["cookie-flute-studio", "qr-tree", "market", "skuy"],
   },
 
   "cookie-flute-studio": {
     id: "cookie-flute-studio",
     chip: "Cookie Flute Studio",
     ask: "Tell me about Cookie Flute Studio.",
-    answer: [
-      {
-        kind: "text",
-        value:
-          "My current build, designed and developed solo. It uses Next.js, TypeScript, the Web Audio API, MusicXML, and a serverless AWS backend (S3, Lambda, API Gateway, DynamoDB). A score-following engine matches live-audio pitch detection against parsed MusicXML for per-note intonation feedback. There's also repertoire management, score annotation, practice tracking, and an insights engine that surfaces recurring problem passages. It's still in active development.",
-      },
-      { kind: "linkList", items: [{ label: "Open Cookie Flute Studio", href: "/flute-studio" }] },
-    ],
-    followUps: ["qr-tree", "market", "skuy", "projects"],
+    answer: [{ kind: "text", value: "My current build. Details and a link are on the right." }],
+    canvas: { kind: "project", slug: "cookie-flute-studio" },
+    followUps: ["qr-tree", "cat-structures", "market", "skuy"],
   },
 
   "qr-tree": {
     id: "qr-tree",
     chip: "QR Tree",
     ask: "Tell me about QR Tree.",
-    answer: [
-      {
-        kind: "text",
-        value:
-          "A solo experiment, in progress. It turns a scannable QR code into a blocky, Minecraft-style tree you can rotate in 3D, then collapses it back into a readable 2D code. The hard part is the constraint I'm still working through: making the transformation playful without destroying the information that keeps the code scannable.",
-      },
-      {
-        kind: "image",
-        src: "/portfolio/qr-tree.svg",
-        alt: "Concept sketch of a QR code growing into a blocky tree",
-      },
-    ],
-    followUps: ["cookie-flute-studio", "market", "skuy", "projects"],
+    answer: [{ kind: "text", value: "A 3D QR code experiment, in progress. It's on the right." }],
+    canvas: { kind: "project", slug: "qr-tree" },
+    followUps: ["cookie-flute-studio", "cat-structures", "market", "skuy"],
+  },
+
+  "cat-structures": {
+    id: "cat-structures",
+    chip: "Cat-emoji data structures",
+    ask: "Tell me about the cat-emoji data structures.",
+    answer: [{ kind: "text", value: "A small teaching toy. Take a look on the right." }],
+    canvas: { kind: "project", slug: "cat-structures" },
+    followUps: ["cookie-flute-studio", "qr-tree", "market", "skuy"],
   },
 
   market: {
     id: "market",
     chip: "Market",
     ask: "Tell me about Market.",
-    answer: [
-      {
-        kind: "text",
-        value:
-          "Full-stack, built with Julia Chu. Archived. A marketplace for Northwestern students to buy, sell, and request secondhand items. We worked across the whole thing: listings, search, accounts, image uploads, authentication, and the API behind them.",
-      },
-      { kind: "image", src: "/portfolio/market.png", alt: "Market app interface" },
-    ],
-    followUps: ["cookie-flute-studio", "qr-tree", "skuy", "projects"],
+    answer: [{ kind: "text", value: "An archived marketplace I built with Julia Chu. It's on the right." }],
+    canvas: { kind: "project", slug: "market" },
+    followUps: ["cookie-flute-studio", "qr-tree", "cat-structures", "skuy"],
   },
 
   skuy: {
     id: "skuy",
     chip: "SKUY",
     ask: "Tell me about SKUY.",
-    answer: [
-      {
-        kind: "text",
-        value:
-          "Lead backend engineer on a student startup of about 15 engineers, from 2022 to 2024. React Native, Flask, PostgreSQL, Python, Firebase. It's a mobile community and news app built around Northwestern student life. I built APIs for communities and posts, scraping pipelines that fed a news feed for 1,000+ users, cut initial load about 35% with pagination and lazy loading, and ran a PostgreSQL to Firebase migration. I also owned deployment and onboarding.",
-      },
-      { kind: "image", src: "/portfolio/skuy.png", alt: "SKUY app interface" },
-    ],
-    followUps: ["cookie-flute-studio", "qr-tree", "market", "projects"],
+    answer: [{ kind: "text", value: "A student startup where I led the backend. Details on the right." }],
+    canvas: { kind: "project", slug: "skuy" },
+    followUps: ["cookie-flute-studio", "qr-tree", "cat-structures", "market"],
   },
 
   flute: {
@@ -163,37 +180,25 @@ export const INTENTS: Record<string, Intent> = {
       {
         kind: "text",
         value:
-          "I'm doing a master's in flute performance and music technology at New England Conservatory, on scholarship, preparing for young-artist competitions. Over the last two years I've won competitions and played festivals. Competitions are where the practice goes: onto a stage, under pressure, where it can be heard.",
-      },
-      { kind: "video", youtube: "ya3cFeMKD14", start: 649, caption: "Competition performance" },
-      { kind: "text", value: "I also post playing on TikTok and Douyin." },
-      {
-        kind: "linkList",
-        items: [
-          { label: "@wubulubadudu on TikTok", href: "https://www.tiktok.com/@wubulubadudu" },
-          {
-            label: "Douyin",
-            href: "https://www.douyin.com/user/MS4wLjABAAAANmZhGUqfg9pD4Rt3zrGjNp2Zv9hmMoyigTUdx-7VOjI?from_tab_name=main",
-          },
-        ],
+          "I'm doing a master's in flute performance and music technology at New England Conservatory, on scholarship, preparing for young-artist competitions. Over the last two years I've won competitions and played festivals. A performance is on the right.",
       },
     ],
-    followUps: ["why-both", "background"],
+    canvas: { kind: "flute" },
+    followUps: ["experience", "why-both", "background"],
   },
 
-  resume: {
-    id: "resume",
-    chip: "Résumé",
-    ask: "Can I see your résumé?",
+  "looking-for": {
+    id: "looking-for",
+    chip: "What I'm looking for",
+    ask: "What kind of role are you looking for?",
     answer: [
       {
         kind: "text",
         value:
-          "Here's my résumé. Short version: a B.S. in Computer Science from Northwestern, and now a master's in flute at New England Conservatory. Software engineering internships at MathWorks and Northwestern's Center for Connected Learning, and lead backend engineer at SKUY. Dates, tech, and detail are in the PDF.",
+          "I'm looking for a new-grad software engineering role where I can take on unfamiliar problems and grow quickly. I care about building interfaces people actually enjoy using, and I want to work with a team that cares about that too.",
       },
-      { kind: "linkList", items: [{ label: "Open résumé (PDF)", href: "/haylie-wu-resume.pdf" }] },
     ],
-    followUps: ["background", "contact"],
+    followUps: ["resume", "projects", "contact"],
   },
 
   contact: {
@@ -212,30 +217,16 @@ export const INTENTS: Record<string, Intent> = {
         ],
       },
     ],
-    followUps: ["resume"],
+    followUps: ["resume", "looking-for"],
   },
 };
 
 /**
- * TODO(haylie): pick the navigation model. This decides which suggestion boxes
- * appear after each answer, which sets how the whole page feels to move through.
+ * TODO(haylie): pick the navigation model for the follow-up chips.
  *
- * `intentId` — the answer that was just shown.
- * `asked`    — every intent id the visitor has already opened this session.
- * returns    — ordered intent ids for the chip row ("menu" = jump back to root).
- *
- * Three options to choose between:
- *
- *   1. Curated (current): show this answer's `followUps`, then "menu".
- *      Tight, guided, feels like a decision tree. Can feel narrow.
- *
- *   2. Full menu: always return ROOT_CHIPS (optionally minus `asked`).
- *      Nothing is ever more than one click away; less of a "conversation".
- *
- *   3. Curated + fill: `followUps` first, then top up from unused ROOT_CHIPS
- *      up to ~5 total, then "menu". A middle ground.
- *
- * Try each and keep the one that reads best.
+ *   1. Curated (current): this answer's `followUps`, then "menu".
+ *   2. Full menu: always ROOT_CHIPS.
+ *   3. Curated + fill: followUps, then top up from unused ROOT_CHIPS to ~5.
  */
 export function nextChips(intentId: string, asked: string[]): string[] {
   const intent = INTENTS[intentId];

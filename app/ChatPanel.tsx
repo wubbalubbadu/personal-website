@@ -1,9 +1,19 @@
 "use client";
 
 import { type RefObject, useCallback, useEffect, useRef, useState } from "react";
-import { AnswerNode, GREETING, INTENTS, nextChips, ROOT_CHIPS } from "./lib/answers";
+import {
+  AnswerNode,
+  GREETING,
+  INTENTS,
+  nextChips,
+  PRIMARY_CHIPS,
+  SECONDARY_CHIPS,
+} from "./lib/answers";
+import { CanvasTab, tabFromSpec } from "./lib/canvas";
+import Canvas from "./canvas/Canvas";
 
 type Msg = { id: string; role: "visitor" | "haylie"; nodes: AnswerNode[] };
+type ChipView = "root" | { chips: string[] };
 
 function usePrefersReducedMotion() {
   const [reduced, setReduced] = useState(false);
@@ -17,67 +27,23 @@ function usePrefersReducedMotion() {
   return reduced;
 }
 
-function LazyVideo({ youtube, start, caption }: { youtube: string; start?: number; caption?: string }) {
-  const ref = useRef<HTMLElement>(null);
-  const [show, setShow] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || show) return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setShow(true);
-          io.disconnect();
-        }
-      },
-      { rootMargin: "300px" },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [show]);
-  const src = `https://www.youtube-nocookie.com/embed/${youtube}${start ? `?start=${start}` : ""}`;
-  return (
-    <figure className="node-video" ref={ref}>
-      {show ? (
-        <iframe
-          src={src}
-          title={caption ?? "Performance video"}
-          loading="lazy"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowFullScreen
-        />
-      ) : (
-        <div className="node-video__ph" aria-hidden="true" />
-      )}
-      {caption ? <figcaption>{caption}</figcaption> : null}
-    </figure>
-  );
-}
-
 function NodeView({ node }: { node: AnswerNode }) {
   if (node.kind === "text") return <p className="node-text">{node.value}</p>;
-  if (node.kind === "linkList")
-    return (
-      <ul className="node-links">
-        {node.items.map((item) => {
-          const external = item.href.startsWith("http");
-          return (
-            <li key={item.href}>
-              <a href={item.href} target={external ? "_blank" : undefined} rel={external ? "noreferrer" : undefined}>
-                {item.label}
-              </a>
-              {item.note ? <span className="node-links__note">{item.note}</span> : null}
-            </li>
-          );
-        })}
-      </ul>
-    );
-  if (node.kind === "image") {
-    const img = <img src={node.src} alt={node.alt} loading="lazy" />;
-    return <div className="node-image">{node.href ? <a href={node.href}>{img}</a> : img}</div>;
-  }
-  if (node.kind === "video") return <LazyVideo youtube={node.youtube} start={node.start} caption={node.caption} />;
-  return null;
+  return (
+    <ul className="node-links">
+      {node.items.map((item) => {
+        const external = item.href.startsWith("http");
+        return (
+          <li key={item.href}>
+            <a href={item.href} target={external ? "_blank" : undefined} rel={external ? "noreferrer" : undefined}>
+              {item.label}
+            </a>
+            {item.note ? <span className="node-links__note">{item.note}</span> : null}
+          </li>
+        );
+      })}
+    </ul>
+  );
 }
 
 function Bubble({ msg, logRef }: { msg: Msg; logRef: RefObject<HTMLDivElement | null> }) {
@@ -110,9 +76,11 @@ const greetingMsg = (): Msg => ({ id: "greet", role: "haylie", nodes: GREETING }
 
 export default function ChatPanel() {
   const [thread, setThread] = useState<Msg[]>(() => [greetingMsg()]);
-  const [chips, setChips] = useState<string[]>(ROOT_CHIPS);
+  const [view, setView] = useState<ChipView>("root");
   const [asked, setAsked] = useState<string[]>([]);
   const [typing, setTyping] = useState(false);
+  const [tabs, setTabs] = useState<CanvasTab[]>([]);
+  const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
   const reduced = usePrefersReducedMotion();
 
@@ -125,6 +93,11 @@ export default function ChatPanel() {
     scrollDown();
   }, [thread, typing, scrollDown]);
 
+  const openTab = useCallback((tab: CanvasTab) => {
+    setTabs((prev) => (prev.some((t) => t.id === tab.id) ? prev : [...prev, tab]));
+    setActiveTabId(tab.id);
+  }, []);
+
   const ask = useCallback(
     (intentId: string) => {
       const intent = INTENTS[intentId];
@@ -134,7 +107,7 @@ export default function ChatPanel() {
         ...t,
         { id: `${intentId}-q-${stamp}`, role: "visitor", nodes: [{ kind: "text", value: intent.ask }] },
       ]);
-      setChips([]);
+      setView({ chips: [] });
       setTyping(true);
       const nextAsked = asked.includes(intentId) ? asked : [...asked, intentId];
       window.setTimeout(
@@ -142,18 +115,19 @@ export default function ChatPanel() {
           setTyping(false);
           setThread((t) => [...t, { id: `${intentId}-a-${Date.now()}`, role: "haylie", nodes: intent.answer }]);
           setAsked(nextAsked);
-          setChips(nextChips(intentId, nextAsked));
+          setView({ chips: nextChips(intentId, nextAsked) });
+          if (intent.canvas) openTab(tabFromSpec(intent.canvas));
         },
         reduced ? 0 : 460,
       );
     },
-    [asked, reduced],
+    [asked, reduced, openTab],
   );
 
   const onChip = useCallback(
     (id: string) => {
       if (id === "menu") {
-        setChips(ROOT_CHIPS);
+        setView("root");
         return;
       }
       ask(id);
@@ -163,41 +137,103 @@ export default function ChatPanel() {
 
   const reset = useCallback(() => {
     setThread([greetingMsg()]);
-    setChips(ROOT_CHIPS);
+    setView("root");
     setAsked([]);
     setTyping(false);
+    setTabs([]);
+    setActiveTabId(null);
   }, []);
 
+  const closeTab = useCallback(
+    (id: string) => {
+      setTabs((prev) => prev.filter((t) => t.id !== id));
+      setActiveTabId((cur) => {
+        if (cur !== id) return cur;
+        const remaining = tabs.filter((t) => t.id !== id);
+        return remaining[remaining.length - 1]?.id ?? null;
+      });
+    },
+    [tabs],
+  );
+
+  const collapse = useCallback(() => {
+    setTabs([]);
+    setActiveTabId(null);
+  }, []);
+
+  const openProject = useCallback(
+    (slug: string) => {
+      openTab(tabFromSpec(slug ? { kind: "project", slug } : { kind: "projects" }));
+    },
+    [openTab],
+  );
+
+  const split = tabs.length > 0;
+
   return (
-    <section className="chat-device">
-      <header className="chat-head">
-        <span className="chat-head__id">Haylie Wu</span>
-        <span className="chat-head__meta">Portfolio</span>
-        <button type="button" className="chat-head__clr" onClick={reset} aria-label="Start over">
-          CLR
-        </button>
-      </header>
-
-      <div className="chat-log" ref={logRef} role="log" aria-live="polite">
-        {thread.map((msg) => (
-          <Bubble key={msg.id} msg={msg} logRef={logRef} />
-        ))}
-        {typing ? (
-          <div className="bubble bubble--haylie bubble--typing" aria-hidden="true">
-            <i />
-            <i />
-            <i />
-          </div>
-        ) : null}
-      </div>
-
-      <div className="chip-row" role="group" aria-label="Suggested questions">
-        {chips.map((id) => (
-          <button type="button" key={id} className="chip" onClick={() => onChip(id)}>
-            {id === "menu" ? "Menu" : INTENTS[id].chip}
+    <div className={`workbench${split ? " is-split" : ""}`}>
+      <section className="chat-device">
+        <header className="chat-head">
+          <span className="chat-head__id">Haylie Wu</span>
+          <span className="chat-head__meta">Portfolio</span>
+          <button type="button" className="chat-head__clr" onClick={reset} aria-label="Start over">
+            CLR
           </button>
-        ))}
-      </div>
-    </section>
+        </header>
+
+        <div className="chat-log" ref={logRef} role="log" aria-live="polite">
+          {thread.map((msg) => (
+            <Bubble key={msg.id} msg={msg} logRef={logRef} />
+          ))}
+          {typing ? (
+            <div className="bubble bubble--haylie bubble--typing" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+            </div>
+          ) : null}
+        </div>
+
+        <div className="chip-dock">
+          {view === "root" ? (
+            <>
+              <div className="chip-row chip-row--primary">
+                {PRIMARY_CHIPS.map((id) => (
+                  <button type="button" key={id} className="chip chip--primary" onClick={() => onChip(id)}>
+                    {INTENTS[id].chip}
+                  </button>
+                ))}
+              </div>
+              <div className="chip-row">
+                {SECONDARY_CHIPS.map((id) => (
+                  <button type="button" key={id} className="chip" onClick={() => onChip(id)}>
+                    {INTENTS[id].chip}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="chip-row">
+              {view.chips.map((id) => (
+                <button type="button" key={id} className="chip" onClick={() => onChip(id)}>
+                  {id === "menu" ? "Menu" : INTENTS[id].chip}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {split ? (
+        <Canvas
+          tabs={tabs}
+          activeId={activeTabId}
+          onSelect={setActiveTabId}
+          onClose={closeTab}
+          onCollapse={collapse}
+          onOpenProject={openProject}
+        />
+      ) : null}
+    </div>
   );
 }
