@@ -43,16 +43,6 @@ export default function TimelineView() {
 
       <div className="tl-track">
         {sorted.map((ev) => {
-          if (ev.kind === "milestone" && ev.id === "pivot-2024") {
-            return (
-              <div key={ev.id} className="tl-pivot">
-                <span className="tl-pivot-year">Early 2024</span>
-                <p>
-                  <strong>{ev.title}.</strong> {ev.detail}
-                </p>
-              </div>
-            );
-          }
           const span = ev.end && ev.end !== ev.start ? `${ev.start}–${ev.end}` : `${ev.start}`;
           return (
             <div

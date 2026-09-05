@@ -77,6 +77,7 @@ const greetingMsg = (): Msg => ({ id: "greet", role: "haylie", nodes: GREETING }
 export default function ChatPanel() {
   const [thread, setThread] = useState<Msg[]>(() => [greetingMsg()]);
   const [view, setView] = useState<ChipView>("root");
+  const [moreOpen, setMoreOpen] = useState(false);
   const [asked, setAsked] = useState<string[]>([]);
   const [typing, setTyping] = useState(false);
   const [tabs, setTabs] = useState<CanvasTab[]>([]);
@@ -128,6 +129,12 @@ export default function ChatPanel() {
     (id: string) => {
       if (id === "menu") {
         setView("root");
+        setMoreOpen(false);
+        return;
+      }
+      const target = INTENTS[id]?.navigate;
+      if (target) {
+        window.location.href = target;
         return;
       }
       ask(id);
@@ -138,6 +145,7 @@ export default function ChatPanel() {
   const reset = useCallback(() => {
     setThread([greetingMsg()]);
     setView("root");
+    setMoreOpen(false);
     setAsked([]);
     setTyping(false);
     setTabs([]);
@@ -194,34 +202,33 @@ export default function ChatPanel() {
           ) : null}
         </div>
 
-        <div className="chip-dock">
+        <nav className="chip-dock" aria-label="Suggested questions">
           {view === "root" ? (
             <>
-              <div className="chip-row chip-row--primary">
-                {PRIMARY_CHIPS.map((id) => (
-                  <button type="button" key={id} className="chip chip--primary" onClick={() => onChip(id)}>
-                    {INTENTS[id].chip}
-                  </button>
-                ))}
-              </div>
-              <div className="chip-row">
-                {SECONDARY_CHIPS.map((id) => (
-                  <button type="button" key={id} className="chip" onClick={() => onChip(id)}>
-                    {INTENTS[id].chip}
-                  </button>
-                ))}
-              </div>
-            </>
-          ) : (
-            <div className="chip-row">
-              {view.chips.map((id) => (
+              {PRIMARY_CHIPS.map((id) => (
                 <button type="button" key={id} className="chip" onClick={() => onChip(id)}>
-                  {id === "menu" ? "Menu" : INTENTS[id].chip}
+                  {INTENTS[id].chip}
                 </button>
               ))}
-            </div>
+              {moreOpen
+                ? SECONDARY_CHIPS.map((id) => (
+                    <button type="button" key={id} className="chip" onClick={() => onChip(id)}>
+                      {INTENTS[id].chip}
+                    </button>
+                  ))
+                : null}
+              <button type="button" className="chip chip--toggle" onClick={() => setMoreOpen((v) => !v)}>
+                {moreOpen ? "Less" : "More"}
+              </button>
+            </>
+          ) : (
+            view.chips.map((id) => (
+              <button type="button" key={id} className="chip" onClick={() => onChip(id)}>
+                {id === "menu" ? "Menu" : INTENTS[id].chip}
+              </button>
+            ))
           )}
-        </div>
+        </nav>
       </section>
 
       {split ? (

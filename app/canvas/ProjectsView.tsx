@@ -15,74 +15,59 @@ export default function ProjectsView({
     if (!project) return <div className="pj-empty">Project not found.</div>;
     return (
       <article className="pj-detail">
-        <div className="pj-detail-head">
-          <h2>{project.name}</h2>
-          <span className={`pj-status pj-status--${project.status.replace(/\s+/g, "-").toLowerCase()}`}>{project.status}</span>
-        </div>
-        <dl className="pj-meta">
-          <div>
-            <dt>Role</dt>
-            <dd>{project.role}</dd>
-          </div>
-          <div>
-            <dt>Year</dt>
-            <dd>{project.year}</dd>
-          </div>
-        </dl>
+        <h2>{project.name}</h2>
+        <p className="pj-detail-meta">
+          {project.role} · {project.year} · {project.status}
+        </p>
         {project.image ? (
           <div className="pj-shot">
             <img src={project.image} alt={`${project.name} preview`} loading="lazy" />
           </div>
         ) : null}
         <p className="pj-body">{project.detail}</p>
-        <div className="pj-chiprow">
-          {project.tech.map((tech) => (
-            <span key={tech} className="pj-chip">
-              {tech}
-            </span>
-          ))}
-        </div>
+        <p className="pj-tech">{project.tech.join("  ·  ")}</p>
         {project.links?.length ? (
-          <div className="pj-links">
+          <p className="pj-links">
             {project.links.map((link) => (
               <a key={link.href} href={link.href} target={link.href.startsWith("http") ? "_blank" : undefined} rel="noreferrer">
                 {link.label}
               </a>
             ))}
-          </div>
+          </p>
         ) : null}
         <button type="button" className="pj-back" onClick={() => onOpenProject("")}>
-          All projects
+          ← All projects
         </button>
       </article>
     );
   }
 
   return (
-    <div className="pj-gallery">
-      {projects.map((project) => (
-        <button type="button" key={project.slug} className={`pj-card pj-card--${project.size}`} onClick={() => onOpenProject(project.slug)}>
-          {project.image ? (
-            <span className="pj-card-shot" style={{ backgroundImage: `url(${project.image})` }} />
-          ) : (
-            <span className="pj-card-shot pj-card-shot--blank">{project.name.slice(0, 1)}</span>
-          )}
-          <span className="pj-card-body">
-            <span className="pj-card-title">
-              {project.name}
-              <span className={`pj-status pj-status--${project.status.replace(/\s+/g, "-").toLowerCase()}`}>{project.status}</span>
+    <ul className="pj-list">
+      {projects.map((project) => {
+        const inner = (
+          <>
+            <span className="pj-item-name">{project.name}</span>
+            <span className="pj-item-blurb">{project.blurb}</span>
+            <span className="pj-item-meta">
+              {project.year} · {project.status} · {project.tech.join(", ")}
             </span>
-            <span className="pj-card-blurb">{project.blurb}</span>
-            <span className="pj-chiprow">
-              {project.tech.slice(0, 4).map((tech) => (
-                <span key={tech} className="pj-chip">
-                  {tech}
-                </span>
-              ))}
-            </span>
-          </span>
-        </button>
-      ))}
-    </div>
+          </>
+        );
+        return (
+          <li key={project.slug} className="pj-item">
+            {project.externalHref ? (
+              <a className="pj-item-btn" href={project.externalHref}>
+                {inner}
+              </a>
+            ) : (
+              <button type="button" className="pj-item-btn" onClick={() => onOpenProject(project.slug)}>
+                {inner}
+              </button>
+            )}
+          </li>
+        );
+      })}
+    </ul>
   );
 }

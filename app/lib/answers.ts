@@ -20,6 +20,8 @@ export type Intent = {
   answer: AnswerNode[];
   /** If set, opens this artifact in the canvas panel. */
   canvas?: CanvasSpec;
+  /** If set, selecting this chip navigates here instead of answering in chat. */
+  navigate?: string;
   /** Candidate intent ids to surface after this answer. */
   followUps: string[];
 };
@@ -131,8 +133,8 @@ export const INTENTS: Record<string, Intent> = {
     id: "cookie-flute-studio",
     chip: "Cookie Flute Studio",
     ask: "Tell me about Cookie Flute Studio.",
-    answer: [{ kind: "text", value: "My current build. Details and a link are on the right." }],
-    canvas: { kind: "project", slug: "cookie-flute-studio" },
+    answer: [{ kind: "text", value: "It's easiest to just look. Opening it now." }],
+    navigate: "/flute-studio",
     followUps: ["qr-tree", "cat-structures", "market", "skuy"],
   },
 

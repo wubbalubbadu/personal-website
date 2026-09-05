@@ -10,6 +10,8 @@ export type Project = {
   detail: string;
   image?: string;
   links?: { label: string; href: string }[];
+  /** If set, selecting this project navigates here instead of opening a detail view. */
+  externalHref?: string;
 };
 
 export const projects: Project[] = [
@@ -24,7 +26,7 @@ export const projects: Project[] = [
     blurb: "A real-time practice platform for flutists with score-following pitch feedback.",
     detail:
       "It uses Next.js, TypeScript, the Web Audio API, MusicXML, and a serverless AWS backend (S3, Lambda, API Gateway, DynamoDB). A score-following engine matches live-audio pitch detection against parsed MusicXML for per-note intonation feedback. There's also repertoire management, score annotation, practice tracking, and an insights engine that surfaces recurring problem passages. It's still in active development.",
-    links: [{ label: "Open Cookie Flute Studio", href: "/flute-studio" }],
+    externalHref: "/flute-studio",
   },
   {
     slug: "qr-tree",
@@ -47,7 +49,7 @@ export const projects: Project[] = [
     year: "2026",
     role: "Solo",
     tech: ["TypeScript", "SVG"],
-    blurb: "Visualizes CS data structures with cat emojis 🐱 — stacks, queues, trees, graphs.",
+    blurb: "Visualizes CS data structures with cat emojis 🐱. Stacks, queues, trees, graphs.",
     detail:
       "A small teaching toy: watch a stack, queue, linked list, or binary tree operate step by step, with each node drawn as a cat emoji. Push, pop, enqueue, traverse — the cats move so the operation is obvious.",
   },

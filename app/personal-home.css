@@ -182,51 +182,33 @@ body {
 .chip-dock {
   border-top: 1px solid #ecece4;
   background: #f7f7f2;
-  padding: 13px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-}
-.chip-row {
+  padding: 12px 14px;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 2px 4px;
 }
 .chip {
-  border: 1px solid #d7d7cd;
-  background: #fff;
-  border-radius: 11px;
-  padding: 8px 13px;
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  padding: 7px 10px;
   font: inherit;
-  font-size: 12.5px;
+  font-size: 13px;
   line-height: 1;
-  color: #33362d;
+  color: #4a4d42;
   cursor: pointer;
-  transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease;
+  transition: background 0.14s ease, color 0.14s ease;
 }
 .chip:hover {
-  background: #eef0e9;
-  border-color: #26352e;
-}
-.chip:active {
-  transform: scale(0.96);
+  background: #e7e9e0;
+  color: #23261f;
 }
 .chip:focus-visible {
   outline: 2px solid #26352e;
-  outline-offset: 2px;
+  outline-offset: 1px;
 }
-.chip--primary {
-  background: #26352e;
-  color: #f4f4ee;
-  border-color: #26352e;
-  font-size: 13.5px;
-  padding: 11px 17px;
-  border-radius: 13px;
-  font-weight: 500;
-}
-.chip--primary:hover {
-  background: #33473d;
-  border-color: #33473d;
+.chip--toggle {
+  color: #8c8c81;
 }
 
 .home-noscript {
