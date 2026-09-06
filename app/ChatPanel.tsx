@@ -1,19 +1,30 @@
 "use client";
 
-import { type RefObject, useCallback, useEffect, useRef, useState } from "react";
-import {
-  AnswerNode,
-  GREETING,
-  INTENTS,
-  nextChips,
-  PRIMARY_CHIPS,
-  SECONDARY_CHIPS,
-} from "./lib/answers";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AnswerNode, GREETING, INTENTS, nextChips } from "./lib/answers";
 import { CanvasTab, tabFromSpec } from "./lib/canvas";
 import Canvas from "./canvas/Canvas";
 
-type Msg = { id: string; role: "visitor" | "haylie"; nodes: AnswerNode[] };
+type Msg = { id: string; role: "visitor" | "haylie"; nodes: AnswerNode[]; fresh?: boolean };
 type ChipView = "root" | { chips: string[] };
+
+const ROOT: string[] = ["projects", "experience", "resume", "background", "flute", "contact"];
+const KEYS: Record<string, string> = {
+  projects: "p",
+  experience: "t",
+  resume: "r",
+  background: "b",
+  flute: "f",
+  contact: "c",
+  "why-both": "w",
+  "tech-stack": "s",
+  "looking-for": "g",
+  "cookie-flute-studio": "1",
+  "qr-tree": "2",
+  "cat-structures": "3",
+  market: "4",
+  skuy: "5",
+};
 
 function usePrefersReducedMotion() {
   const [reduced, setReduced] = useState(false);
@@ -46,28 +57,33 @@ function NodeView({ node }: { node: AnswerNode }) {
   );
 }
 
-function Bubble({ msg, logRef }: { msg: Msg; logRef: RefObject<HTMLDivElement | null> }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [past, setPast] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    const root = logRef.current;
-    if (!el || !root) return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        const rootTop = root.getBoundingClientRect().top;
-        setPast(entry.intersectionRatio < 0.2 && entry.boundingClientRect.top < rootTop + 48);
-      },
-      { root, threshold: [0, 0.2, 1] },
+function Message({ msg, reduced }: { msg: Msg; reduced: boolean }) {
+  if (msg.role === "visitor") {
+    return (
+      <div className="msg msg--visitor">
+        <span className="msg__who">You</span>
+        {msg.nodes.map((node, i) => (
+          <NodeView key={i} node={node} />
+        ))}
+      </div>
     );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [logRef]);
+  }
   return (
-    <div ref={ref} className={`bubble bubble--${msg.role}${past ? " is-past" : ""}`}>
-      {msg.nodes.map((node, i) => (
-        <NodeView key={i} node={node} />
-      ))}
+    <div className="msg msg--haylie">
+      <span className="msg__who">
+        <b>Haylie</b> · now
+      </span>
+      <div className="msg__body">
+        {msg.nodes.map((node, i) => (
+          <div
+            key={i}
+            className={msg.fresh && !reduced ? "reveal" : undefined}
+            style={msg.fresh && !reduced ? { animationDelay: `${i * 90}ms` } : undefined}
+          >
+            <NodeView node={node} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -77,22 +93,17 @@ const greetingMsg = (): Msg => ({ id: "greet", role: "haylie", nodes: GREETING }
 export default function ChatPanel() {
   const [thread, setThread] = useState<Msg[]>(() => [greetingMsg()]);
   const [view, setView] = useState<ChipView>("root");
-  const [moreOpen, setMoreOpen] = useState(false);
-  const [asked, setAsked] = useState<string[]>([]);
   const [typing, setTyping] = useState(false);
   const [tabs, setTabs] = useState<CanvasTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
+  const busyRef = useRef(false);
   const reduced = usePrefersReducedMotion();
 
-  const scrollDown = useCallback(() => {
+  useEffect(() => {
     const el = logRef.current;
     if (el) el.scrollTo({ top: el.scrollHeight, behavior: reduced ? "auto" : "smooth" });
-  }, [reduced]);
-
-  useEffect(() => {
-    scrollDown();
-  }, [thread, typing, scrollDown]);
+  }, [thread, typing, reduced]);
 
   const openTab = useCallback((tab: CanvasTab) => {
     setTabs((prev) => (prev.some((t) => t.id === tab.id) ? prev : [...prev, tab]));
@@ -102,39 +113,40 @@ export default function ChatPanel() {
   const ask = useCallback(
     (intentId: string) => {
       const intent = INTENTS[intentId];
-      if (!intent) return;
+      if (!intent || busyRef.current) return;
+      if (intent.navigate) {
+        window.location.href = intent.navigate;
+        return;
+      }
+      busyRef.current = true;
       const stamp = Date.now();
       setThread((t) => [
-        ...t,
+        ...t.map((m) => ({ ...m, fresh: false })),
         { id: `${intentId}-q-${stamp}`, role: "visitor", nodes: [{ kind: "text", value: intent.ask }] },
       ]);
       setView({ chips: [] });
       setTyping(true);
-      const nextAsked = asked.includes(intentId) ? asked : [...asked, intentId];
       window.setTimeout(
         () => {
           setTyping(false);
-          setThread((t) => [...t, { id: `${intentId}-a-${Date.now()}`, role: "haylie", nodes: intent.answer }]);
-          setAsked(nextAsked);
-          setView({ chips: nextChips(intentId, nextAsked) });
+          setThread((t) => [
+            ...t,
+            { id: `${intentId}-a-${Date.now()}`, role: "haylie", nodes: intent.answer, fresh: true },
+          ]);
+          setView({ chips: nextChips(intentId, []) });
           if (intent.canvas) openTab(tabFromSpec(intent.canvas));
+          busyRef.current = false;
         },
-        reduced ? 0 : 460,
+        reduced ? 0 : 420 + Math.min(JSON.stringify(intent.answer).length, 360),
       );
     },
-    [asked, reduced, openTab],
+    [reduced, openTab],
   );
 
   const onChip = useCallback(
     (id: string) => {
       if (id === "menu") {
         setView("root");
-        setMoreOpen(false);
-        return;
-      }
-      const target = INTENTS[id]?.navigate;
-      if (target) {
-        window.location.href = target;
         return;
       }
       ask(id);
@@ -142,31 +154,26 @@ export default function ChatPanel() {
     [ask],
   );
 
-  const reset = useCallback(() => {
-    setThread([greetingMsg()]);
-    setView("root");
-    setMoreOpen(false);
-    setAsked([]);
-    setTyping(false);
+  const collapse = useCallback(() => {
     setTabs([]);
     setActiveTabId(null);
   }, []);
 
-  const closeTab = useCallback(
-    (id: string) => {
-      setTabs((prev) => prev.filter((t) => t.id !== id));
-      setActiveTabId((cur) => {
-        if (cur !== id) return cur;
-        const remaining = tabs.filter((t) => t.id !== id);
-        return remaining[remaining.length - 1]?.id ?? null;
-      });
-    },
-    [tabs],
-  );
-
-  const collapse = useCallback(() => {
+  const reset = useCallback(() => {
+    setThread([greetingMsg()]);
+    setView("root");
+    setTyping(false);
     setTabs([]);
     setActiveTabId(null);
+    busyRef.current = false;
+  }, []);
+
+  const closeTab = useCallback((id: string) => {
+    setTabs((prev) => {
+      const remaining = prev.filter((t) => t.id !== id);
+      setActiveTabId((cur) => (cur === id ? (remaining[remaining.length - 1]?.id ?? null) : cur));
+      return remaining;
+    });
   }, []);
 
   const openProject = useCallback(
@@ -176,71 +183,105 @@ export default function ChatPanel() {
     [openTab],
   );
 
+  const chipIds = view === "root" ? ROOT : view.chips;
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (tabs.length) collapse();
+        else setView("root");
+        return;
+      }
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+      const hit = chipIds.find((id) => KEYS[id] === e.key.toLowerCase());
+      if (hit) {
+        e.preventDefault();
+        onChip(hit);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [chipIds, tabs.length, collapse, onChip]);
+
   const split = tabs.length > 0;
 
   return (
-    <div className={`workbench${split ? " is-split" : ""}`}>
-      <section className="chat-device">
-        <header className="chat-head">
-          <span className="chat-head__id">Haylie Wu</span>
-          <span className="chat-head__meta">Portfolio</span>
-          <button type="button" className="chat-head__clr" onClick={reset} aria-label="Start over">
-            CLR
-          </button>
-        </header>
-
-        <div className="chat-log" ref={logRef} role="log" aria-live="polite">
-          {thread.map((msg) => (
-            <Bubble key={msg.id} msg={msg} logRef={logRef} />
-          ))}
-          {typing ? (
-            <div className="bubble bubble--haylie bubble--typing" aria-hidden="true">
-              <i />
-              <i />
-              <i />
-            </div>
-          ) : null}
+    <div className="win" data-canvas={split ? "open" : "closed"}>
+      <div className="win-bar">
+        <div className="win-lights">
+          <button type="button" className="win-close" onClick={collapse} aria-label="Close panel" />
+          <i className="y" aria-hidden="true" />
+          <i className="g" aria-hidden="true" />
         </div>
+        <span className="win-title">haylie.dev</span>
+        <div className="win-tools">
+          <button type="button" className="win-reset" onClick={reset} aria-label="Start over" title="Start over">
+            ⟲
+          </button>
+          <span className="win-status">● READY</span>
+        </div>
+      </div>
 
-        <nav className="chip-dock" aria-label="Suggested questions">
-          {view === "root" ? (
-            <>
-              {PRIMARY_CHIPS.map((id) => (
-                <button type="button" key={id} className="chip" onClick={() => onChip(id)}>
-                  {INTENTS[id].chip}
+      <div className="win-body">
+        <section className="chat-col">
+          <div className="chat-log" ref={logRef} role="log" aria-live="polite">
+            {thread.map((msg) => (
+              <Message key={msg.id} msg={msg} reduced={reduced} />
+            ))}
+            {typing ? (
+              <div className="msg msg--haylie msg--typing" aria-hidden="true">
+                <i />
+                <i />
+                <i />
+              </div>
+            ) : null}
+          </div>
+
+          <nav className="toc" aria-label="Ask about">
+            {chipIds.map((id) =>
+              id === "menu" ? (
+                <button type="button" key="menu" className="toc-item toc-item--back" onClick={() => onChip("menu")}>
+                  <span className="toc-key" aria-hidden="true">
+                    ⏎
+                  </span>
+                  <span className="toc-label">Back to menu</span>
+                  <span className="toc-go" aria-hidden="true" />
                 </button>
-              ))}
-              {moreOpen
-                ? SECONDARY_CHIPS.map((id) => (
-                    <button type="button" key={id} className="chip" onClick={() => onChip(id)}>
-                      {INTENTS[id].chip}
-                    </button>
-                  ))
-                : null}
-              <button type="button" className="chip chip--toggle" onClick={() => setMoreOpen((v) => !v)}>
-                {moreOpen ? "Less" : "More"}
-              </button>
-            </>
-          ) : (
-            view.chips.map((id) => (
-              <button type="button" key={id} className="chip" onClick={() => onChip(id)}>
-                {id === "menu" ? "Menu" : INTENTS[id].chip}
-              </button>
-            ))
-          )}
-        </nav>
-      </section>
+              ) : (
+                <button type="button" key={id} className="toc-item" onClick={() => onChip(id)}>
+                  <span className="toc-key" aria-hidden="true">
+                    {KEYS[id] ?? ""}
+                  </span>
+                  <span className="toc-label">{INTENTS[id].chip}</span>
+                  <span className="toc-go" aria-hidden="true">
+                    →
+                  </span>
+                </button>
+              ),
+            )}
+          </nav>
+        </section>
 
-      {split ? (
-        <Canvas
-          tabs={tabs}
-          activeId={activeTabId}
-          onSelect={setActiveTabId}
-          onClose={closeTab}
-          onCollapse={collapse}
-          onOpenProject={openProject}
-        />
-      ) : null}
+        <section className="canvas-col" aria-hidden={!split}>
+          {split ? (
+            <Canvas
+              tabs={tabs}
+              activeId={activeTabId}
+              onSelect={setActiveTabId}
+              onClose={closeTab}
+              onCollapse={collapse}
+              onOpenProject={openProject}
+            />
+          ) : null}
+        </section>
+      </div>
+
+      <div className="win-foot">
+        <span>HAYLIE WU — SOFTWARE + FLUTE</span>
+        <a href="mailto:hayliewu0709@gmail.com">SAY HI ↗</a>
+      </div>
     </div>
   );
 }

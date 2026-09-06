@@ -28,7 +28,6 @@ export default function TimelineView() {
         >
           Software
         </button>
-        <span className="tl-head-spacer" />
         <button
           type="button"
           className={`tl-head tl-head--music${track === "music" ? " is-on" : ""}`}
@@ -51,14 +50,11 @@ export default function TimelineView() {
               onMouseEnter={() => setHover(ev.id)}
               onMouseLeave={() => setHover(null)}
             >
-              <div className="tl-node">
-                <span className="tl-dot" />
+              <span className="tl-dot" aria-hidden="true" />
+              <div className="tl-entry">
                 <span className="tl-year">{span}</span>
-              </div>
-              <div className="tl-card">
-                <span className="tl-kind">{ev.kind === "education" ? "Education" : ev.kind === "role" ? "Work" : "Milestone"}</span>
-                <strong>{ev.title}</strong>
-                <p>{ev.detail}</p>
+                <strong className="tl-title">{ev.title}</strong>
+                <span className="tl-detail">{ev.detail}</span>
               </div>
             </div>
           );
