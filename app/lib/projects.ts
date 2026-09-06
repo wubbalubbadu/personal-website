@@ -40,6 +40,7 @@ export const projects: Project[] = [
     detail:
       "It turns a scannable QR code into a blocky, Minecraft-style tree you can rotate in 3D, then collapses it back into a readable 2D code. The hard part is the constraint I'm still working through: making the transformation playful without destroying the information that keeps the code scannable.",
     image: "/portfolio/qr-tree.svg",
+    externalHref: "/qr-tree",
   },
   {
     slug: "cat-structures",

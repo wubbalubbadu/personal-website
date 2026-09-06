@@ -1,0 +1,102 @@
+.qrt-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.4rem;
+  padding: 2.5rem 1.25rem 3.5rem;
+  background:
+    radial-gradient(120% 90% at 50% 0%, #faf5ef 0%, #f2e9e4 55%, #ece0d7 100%);
+  color: #4a4038;
+  font-family: var(--font-geist-sans, system-ui, sans-serif);
+  text-align: center;
+}
+
+.qrt-nav {
+  position: absolute;
+  top: 1.25rem;
+  left: 1.5rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+}
+.qrt-nav a {
+  color: #9a8c7e;
+  text-decoration: none;
+}
+.qrt-nav a:hover {
+  color: #6f6154;
+}
+
+.qrt-head {
+  max-width: 30rem;
+}
+.qrt-head h1 {
+  margin: 0 0 0.4rem;
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #3c332c;
+}
+.qrt-head p {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: #8a7c6d;
+}
+
+.qrt {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.qrt-canvas {
+  width: min(78vmin, 30rem);
+  height: min(78vmin, 30rem);
+  touch-action: none;
+  cursor: grab;
+  border-radius: 20px;
+}
+.qrt-canvas:active {
+  cursor: grabbing;
+}
+
+.qrt-toggle {
+  appearance: none;
+  border: none;
+  background: none;
+  color: #9a8c7e;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  padding: 0.35rem 0.5rem;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+.qrt-toggle:hover {
+  color: #5c4f42;
+}
+
+.qrt-foot {
+  font-size: 0.8rem;
+  color: #a1937f;
+  max-width: 26rem;
+}
+
+.qrt-noscript svg {
+  width: min(70vmin, 20rem);
+  height: auto;
+  background: #fff;
+  padding: 16px;
+  border-radius: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qrt-canvas {
+    cursor: default;
+  }
+}
