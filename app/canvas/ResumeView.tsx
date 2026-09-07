@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { resume, resumeTechTags } from "../lib/resume";
 
-export default function ResumeView() {
+export default function ResumeView({ onOpenProjects }: { onOpenProjects?: () => void }) {
   const [filter, setFilter] = useState<string | null>(null);
   const [peek, setPeek] = useState<string | null>(null);
 
@@ -53,6 +53,25 @@ export default function ResumeView() {
       </div>
 
       <section className="rz-section">
+        <span className="rz-label">Education</span>
+        {resume.education.map((ed) => (
+          <article key={ed.school} className="rz-role">
+            <div className="rz-role-head">
+              <strong>{ed.degree}</strong>
+              <span className="rz-role-when">
+                {ed.start} – {ed.end}
+              </span>
+            </div>
+            <div className="rz-role-org">
+              {ed.school}
+              {ed.detail ? <span className="rz-role-loc"> · {ed.detail}</span> : null}
+              {ed.gpa ? <span className="rz-role-loc"> · GPA {ed.gpa}</span> : null}
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <section className="rz-section">
         <span className="rz-label">Experience</span>
         {resume.experience.map((role) => (
           <article key={role.org} className={`rz-role${roleDimmed(role.tech) ? " is-dim" : ""}`}>
@@ -83,22 +102,32 @@ export default function ResumeView() {
       </section>
 
       <section className="rz-section">
-        <span className="rz-label">Education</span>
-        {resume.education.map((ed) => (
-          <article key={ed.school} className="rz-role">
+        <span className="rz-label">Projects</span>
+        {resume.projects.map((project) => (
+          <article key={project.name} className={`rz-role${roleDimmed(project.tech) ? " is-dim" : ""}`}>
             <div className="rz-role-head">
-              <strong>{ed.degree}</strong>
-              <span className="rz-role-when">
-                {ed.start} – {ed.end}
-              </span>
+              <strong>{project.name}</strong>
             </div>
-            <div className="rz-role-org">
-              {ed.school}
-              {ed.detail ? <span className="rz-role-loc"> · {ed.detail}</span> : null}
-              {ed.gpa ? <span className="rz-role-loc"> · GPA {ed.gpa}</span> : null}
+            <div className="rz-role-org">{project.blurb}</div>
+            <ul>
+              {project.bullets.map((b, i) => (
+                <li key={i}>{b}</li>
+              ))}
+            </ul>
+            <div className="rz-chiprow">
+              {project.tech.map((tech) => (
+                <span key={tech} className={`rz-chip${active === tech ? " is-hit" : ""}`}>
+                  {tech}
+                </span>
+              ))}
             </div>
           </article>
         ))}
+        {onOpenProjects ? (
+          <button type="button" className="rz-more" onClick={onOpenProjects}>
+            See more projects →
+          </button>
+        ) : null}
       </section>
 
       <section className="rz-section">

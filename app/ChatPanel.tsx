@@ -317,8 +317,10 @@ export default function ChatPanel() {
       </div>
 
       <div className="win-foot">
-        <span>HAYLIE WU — SOFTWARE + FLUTE</span>
-        <a href="mailto:hayliewu0709@gmail.com">SAY HI ↗</a>
+        <span>HAYLIE WU · SOFTWARE + FLUTE</span>
+        <button type="button" className="win-foot-hi" onClick={() => onChip("contact")}>
+          SAY HI ↗
+        </button>
       </div>
     </div>
   );

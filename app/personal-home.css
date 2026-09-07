@@ -90,13 +90,10 @@ body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  /* closed = just the chat; open = chat + panel. The window grows; the chat
-     column keeps its size (Claude-desktop style). Both transition. */
-  width: min(760px, calc(100vw - 32px));
-  transition: width 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
-}
-.win[data-canvas="open"] {
-  width: min(1264px, calc(100vw - 32px));
+  /* The window shrink-wraps its children, so it grows as the panel eases open
+     (no width transition on .win itself — Chrome can't interpolate min()). */
+  width: fit-content;
+  max-width: calc(100vw - 24px);
 }
 
 .win-bar {
@@ -177,13 +174,12 @@ body {
   min-height: 0;
 }
 
-/* Fills whatever the window leaves after the panel, capped at a comfortable
-   width — so on a roomy screen it stays put while the panel slides in beside it,
-   and on a tight screen it eases narrower instead of snapping. */
+/* Fixed, comfortable width. The window grows around it as the panel opens, so
+   the conversation itself never resizes (Claude-desktop style). */
 .chat-col {
-  flex: 1 1 auto;
+  flex: none;
+  width: min(640px, calc(100vw - 26px));
   min-width: 0;
-  max-width: 760px;
   display: flex;
   flex-direction: column;
   border-right: 1px solid transparent;
@@ -354,29 +350,34 @@ body {
   border-style: dashed;
 }
 
-/* interactive phrases inside a chat message — clickable, but no underline */
+/* interactive phrases inside a chat message — clickable, no underline: a quiet
+   inline highlight that warms up on hover */
 .chat-inlink {
   appearance: none;
   border: 0;
-  background: transparent;
-  padding: 0;
-  margin: 0;
   font: inherit;
   font-weight: 500;
   color: var(--pine);
   cursor: pointer;
   line-height: inherit;
   text-decoration: none;
-  transition: color 0.15s;
+  background: var(--pine-wash);
+  padding: 1px 4px;
+  margin: 0 -1px;
+  border-radius: 5px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition: color 0.15s, background 0.15s;
 }
 .chat-inlink:hover,
 .chat-inlink:focus-visible {
   color: var(--amber);
+  background: rgba(176, 111, 40, 0.14);
   outline: none;
 }
 
 .canvas-col {
-  flex: 0 0 auto;
+  flex: none;
   width: 0;
   overflow: hidden;
   background: var(--panel);
@@ -384,11 +385,11 @@ body {
   transition: width 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 .win[data-canvas="open"] .canvas-col {
-  width: min(504px, 44vw);
+  width: 600px;
 }
 .canvas-col .canvas {
   flex: none;
-  width: min(504px, 44vw);
+  width: 600px;
 }
 
 .win-foot {
@@ -403,23 +404,35 @@ body {
   color: var(--ink-38);
   flex: none;
 }
-.win-foot a {
+.win-foot a,
+.win-foot-hi {
   color: var(--amber);
   text-decoration: none;
 }
+.win-foot-hi {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+.win-foot-hi:hover {
+  color: var(--ink);
+}
 
-/* Phone: not enough width for side by side, so stack — panel eases open by
-   height instead of width, still smooth. */
-@media (max-width: 700px) {
-  .win,
-  .win[data-canvas="open"] {
-    width: calc(100vw - 20px);
+/* Not enough width for chat + a 600px panel side by side, so stack. Panel eases
+   open by height instead of width, still smooth. */
+@media (max-width: 1264px) {
+  .win {
+    width: calc(100vw - 24px);
   }
   .win-body {
     flex-direction: column;
   }
   .chat-col {
-    max-width: none;
+    width: 100%;
   }
   .win[data-canvas="open"] .chat-col {
     border-right: 0;
@@ -431,14 +444,14 @@ body {
     transition: max-height 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
   }
   .win[data-canvas="open"] .canvas-col {
-    max-height: 78vh;
+    max-height: 80vh;
   }
   .canvas-col .canvas {
     width: 100%;
   }
   .chat-log {
-    min-height: 300px;
-    max-height: 52vh;
+    min-height: 320px;
+    max-height: 56vh;
   }
 }
 

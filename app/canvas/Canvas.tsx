@@ -81,8 +81,8 @@ export default function Canvas({
 
       {active ? (
         <div className="canvas-body" key={active.id}>
-          {active.spec.kind === "resume" ? <ResumeView /> : null}
-          {active.spec.kind === "timeline" ? <TimelineView /> : null}
+          {active.spec.kind === "resume" ? <ResumeView onOpenProjects={() => onOpenProject("")} /> : null}
+          {active.spec.kind === "timeline" ? <TimelineView onOpenProjects={() => onOpenProject("")} /> : null}
           {active.spec.kind === "tech" ? <TechView /> : null}
           {active.spec.kind === "flute" ? <FluteView /> : null}
           {active.spec.kind === "projects" || active.spec.kind === "project" ? (

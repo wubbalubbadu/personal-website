@@ -6,6 +6,8 @@ export type TimelineEvent = {
   start: number;
   end?: number;
   kind?: "role" | "education" | "milestone";
+  /** When true, the row is a button that opens the projects list. */
+  opensProjects?: boolean;
 };
 
 /** Time axis for the center spine. */
@@ -67,12 +69,14 @@ export const timelineEvents: TimelineEvent[] = [
     kind: "role",
   },
   {
-    id: "cookie",
+    id: "building",
     track: "software",
-    title: "Cookie Flute Studio",
-    detail: "Real-time practice platform for flutists. Next.js, Web Audio API, MusicXML, serverless AWS.",
+    title: "Still building and learning",
+    detail:
+      "Shipping side projects, most recently Cookie Flute Studio and a learning log I'm turning into an interactive textbook.",
     start: 2026,
     kind: "role",
+    opensProjects: true,
   },
 
   {

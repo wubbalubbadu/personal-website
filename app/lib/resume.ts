@@ -18,12 +18,20 @@ export type ResumeEducation = {
   gpa?: string;
 };
 
+export type ResumeProject = {
+  name: string;
+  blurb: string;
+  tech: string[];
+  bullets: string[];
+};
+
 export type Resume = {
   name: string;
   tagline: string;
   contact: { email: string; phone: string; linkedin: string; github: string };
   experience: ResumeRole[];
   education: ResumeEducation[];
+  projects: ResumeProject[];
   skills: Record<string, string[]>;
   pdf: string;
 };
@@ -38,19 +46,6 @@ export const resume: Resume = {
     github: "github.com/wubbalubbadu",
   },
   experience: [
-    {
-      org: "Cookie Flute Studio",
-      role: "Creator",
-      start: "2026",
-      end: "Present",
-      track: "software",
-      tech: ["Next.js", "TypeScript", "Web Audio API", "MusicXML", "AWS"],
-      bullets: [
-        "Real-time score-following engine aligning autocorrelation pitch detection from live audio with parsed MusicXML for per-note intonation feedback.",
-        "Full-stack practice platform: repertoire management, score annotation, practice tracking, serverless AWS pipeline (S3, Lambda, API Gateway, DynamoDB).",
-        "Practice-insights engine that aggregates note-level pitch data across sessions to surface recurring problem passages.",
-      ],
-    },
     {
       org: "MathWorks",
       role: "Software Engineer Intern",
@@ -120,6 +115,18 @@ export const resume: Resume = {
       gpa: "3.98",
     },
   ],
+  projects: [
+    {
+      name: "Cookie Flute Studio",
+      blurb: "Real-time practice platform for flutists.",
+      tech: ["Next.js", "TypeScript", "Web Audio API", "MusicXML", "AWS"],
+      bullets: [
+        "Real-time score-following engine aligning autocorrelation pitch detection from live audio with parsed MusicXML for per-note intonation feedback.",
+        "Full-stack practice platform: repertoire management, score annotation, practice tracking, serverless AWS pipeline (S3, Lambda, API Gateway, DynamoDB).",
+        "Practice-insights engine that aggregates note-level pitch data across sessions to surface recurring problem passages.",
+      ],
+    },
+  ],
   skills: {
     Languages: ["Python", "TypeScript", "JavaScript", "Java", "C++", "SQL", "MATLAB"],
     Frontend: ["React", "Next.js", "React Native", "Svelte"],
@@ -130,5 +137,8 @@ export const resume: Resume = {
 };
 
 export const resumeTechTags: string[] = Array.from(
-  new Set(resume.experience.flatMap((role) => role.tech)),
+  new Set([
+    ...resume.experience.flatMap((role) => role.tech),
+    ...resume.projects.flatMap((project) => project.tech),
+  ]),
 ).sort((a, b) => a.localeCompare(b));

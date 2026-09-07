@@ -307,13 +307,33 @@
 }
 .rz-skillrow {
   display: flex;
+  align-items: baseline;
   gap: 14px;
-  padding: 5px 0;
+  padding: 6px 0;
   font-size: 13px;
 }
+.rz-skillrow .rz-chiprow {
+  margin-top: 0;
+}
 .rz-skillgroup {
+  flex: none;
   min-width: 92px;
   font-weight: 500;
+}
+.rz-more {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  margin-top: 12px;
+  padding: 0;
+  font-family: var(--font-pix);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--amber);
+}
+.rz-more:hover {
+  color: var(--ink);
 }
 
 /* ---- timeline ---- */
@@ -361,6 +381,34 @@
 }
 .tl-row.is-dim {
   opacity: 0.42;
+}
+.tl-row--link {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  width: 100%;
+  text-align: inherit;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+.tl-row--link:hover,
+.tl-row--link:focus-visible {
+  background: var(--pine-wash);
+  outline: none;
+}
+.tl-row--link .tl-title::after {
+  content: " ↗";
+  color: var(--ink-38);
+  font-weight: 400;
+}
+.tl-row--link:hover .tl-title {
+  color: var(--amber);
+}
+.tl-row--link:hover .tl-title::after {
+  color: var(--amber);
 }
 .tl-entry {
   padding: 9px 20px;
