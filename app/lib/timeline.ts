@@ -76,14 +76,6 @@ export const timelineEvents: TimelineEvent[] = [
   },
 
   {
-    id: "pivot-2024",
-    track: "music",
-    title: "Went all-in on flute",
-    detail: "Chose intensive conservatory-track training and competitions to find my ceiling as a player.",
-    start: 2024,
-    kind: "milestone",
-  },
-  {
     id: "atlantic",
     track: "music",
     title: "Atlantic Music Festival",

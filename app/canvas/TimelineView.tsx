@@ -6,14 +6,9 @@ import { timelineEvents } from "../lib/timeline";
 const sorted = [...timelineEvents].sort((a, b) => a.start - b.start || (a.track === "software" ? -1 : 1));
 
 export default function TimelineView() {
-  const [hover, setHover] = useState<string | null>(null);
+  // Only the explicit track filter dims rows — hovering never does, so the text
+  // stays readable while you scan it.
   const [track, setTrack] = useState<"software" | "music" | null>(null);
-
-  const dim = (id: string, evTrack: "software" | "music") => {
-    if (track) return track !== evTrack;
-    if (hover) return hover !== id;
-    return false;
-  };
 
   return (
     <div className="tl">
@@ -21,20 +16,14 @@ export default function TimelineView() {
         <button
           type="button"
           className={`tl-head tl-head--software${track === "software" ? " is-on" : ""}`}
-          onMouseEnter={() => setTrack("software")}
-          onMouseLeave={() => setTrack(null)}
-          onFocus={() => setTrack("software")}
-          onBlur={() => setTrack(null)}
+          onClick={() => setTrack((t) => (t === "software" ? null : "software"))}
         >
           Software
         </button>
         <button
           type="button"
           className={`tl-head tl-head--music${track === "music" ? " is-on" : ""}`}
-          onMouseEnter={() => setTrack("music")}
-          onMouseLeave={() => setTrack(null)}
-          onFocus={() => setTrack("music")}
-          onBlur={() => setTrack(null)}
+          onClick={() => setTrack((t) => (t === "music" ? null : "music"))}
         >
           Flute
         </button>
@@ -43,13 +32,9 @@ export default function TimelineView() {
       <div className="tl-track">
         {sorted.map((ev) => {
           const span = ev.end && ev.end !== ev.start ? `${ev.start}–${ev.end}` : `${ev.start}`;
+          const dim = track !== null && track !== ev.track;
           return (
-            <div
-              key={ev.id}
-              className={`tl-row tl-row--${ev.track}${dim(ev.id, ev.track) ? " is-dim" : ""}`}
-              onMouseEnter={() => setHover(ev.id)}
-              onMouseLeave={() => setHover(null)}
-            >
+            <div key={ev.id} className={`tl-row tl-row--${ev.track}${dim ? " is-dim" : ""}`}>
               <span className="tl-dot" aria-hidden="true" />
               <div className="tl-entry">
                 <span className="tl-year">{span}</span>

@@ -1,29 +1,28 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AnswerNode, GREETING, INTENTS, nextChips } from "./lib/answers";
+import "./canvas.css";
+import { AnswerNode, CHIP_GROUPS, GREETING, INTENTS, nextChips, ROOT_CHIPS } from "./lib/answers";
 import { CanvasTab, tabFromSpec } from "./lib/canvas";
 import Canvas from "./canvas/Canvas";
 
 type Msg = { id: string; role: "visitor" | "haylie"; nodes: AnswerNode[]; fresh?: boolean };
 type ChipView = "root" | { chips: string[] };
 
-const ROOT: string[] = ["projects", "experience", "resume", "background", "flute", "contact"];
 const KEYS: Record<string, string> = {
-  projects: "p",
+  background: "b",
   experience: "t",
   resume: "r",
-  background: "b",
-  flute: "f",
-  contact: "c",
-  "why-both": "w",
+  projects: "p",
   "tech-stack": "s",
+  "why-both": "w",
+  flute: "f",
   "looking-for": "g",
+  contact: "c",
   "cookie-flute-studio": "1",
-  "qr-tree": "2",
-  "cat-structures": "3",
-  market: "4",
-  skuy: "5",
+  "learning-log": "2",
+  market: "3",
+  skuy: "4",
 };
 
 function usePrefersReducedMotion() {
@@ -38,8 +37,33 @@ function usePrefersReducedMotion() {
   return reduced;
 }
 
-function NodeView({ node }: { node: AnswerNode }) {
+function NodeView({ node, onAsk }: { node: AnswerNode; onAsk: (id: string) => void }) {
   if (node.kind === "text") return <p className="node-text">{node.value}</p>;
+
+  if (node.kind === "rich") {
+    return (
+      <p className="node-text">
+        {node.segments.map((seg, i) => {
+          if ("intent" in seg) {
+            return (
+              <button type="button" key={i} className="chat-inlink" onClick={() => onAsk(seg.intent)}>
+                {seg.text}
+              </button>
+            );
+          }
+          if ("href" in seg) {
+            return (
+              <a key={i} href={seg.href} target="_blank" rel="noreferrer" className="chat-inlink">
+                {seg.text}
+              </a>
+            );
+          }
+          return <span key={i}>{seg.text}</span>;
+        })}
+      </p>
+    );
+  }
+
   return (
     <ul className="node-links">
       {node.items.map((item) => {
@@ -57,13 +81,13 @@ function NodeView({ node }: { node: AnswerNode }) {
   );
 }
 
-function Message({ msg, reduced }: { msg: Msg; reduced: boolean }) {
+function Message({ msg, reduced, onAsk }: { msg: Msg; reduced: boolean; onAsk: (id: string) => void }) {
   if (msg.role === "visitor") {
     return (
       <div className="msg msg--visitor">
         <span className="msg__who">You</span>
         {msg.nodes.map((node, i) => (
-          <NodeView key={i} node={node} />
+          <NodeView key={i} node={node} onAsk={onAsk} />
         ))}
       </div>
     );
@@ -80,7 +104,7 @@ function Message({ msg, reduced }: { msg: Msg; reduced: boolean }) {
             className={msg.fresh && !reduced ? "reveal" : undefined}
             style={msg.fresh && !reduced ? { animationDelay: `${i * 90}ms` } : undefined}
           >
-            <NodeView node={node} />
+            <NodeView node={node} onAsk={onAsk} />
           </div>
         ))}
       </div>
@@ -137,7 +161,7 @@ export default function ChatPanel() {
           if (intent.canvas) openTab(tabFromSpec(intent.canvas));
           busyRef.current = false;
         },
-        reduced ? 0 : 420 + Math.min(JSON.stringify(intent.answer).length, 360),
+        reduced ? 0 : 380 + Math.min(JSON.stringify(intent.answer).length, 320),
       );
     },
     [reduced, openTab],
@@ -183,7 +207,7 @@ export default function ChatPanel() {
     [openTab],
   );
 
-  const chipIds = view === "root" ? ROOT : view.chips;
+  const chipIds = view === "root" ? ROOT_CHIPS : view.chips;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -206,6 +230,8 @@ export default function ChatPanel() {
   }, [chipIds, tabs.length, collapse, onChip]);
 
   const split = tabs.length > 0;
+  const atRoot = view === "root";
+  const followUps = view === "root" ? [] : view.chips;
 
   return (
     <div className="win" data-canvas={split ? "open" : "closed"}>
@@ -228,7 +254,7 @@ export default function ChatPanel() {
         <section className="chat-col">
           <div className="chat-log" ref={logRef} role="log" aria-live="polite">
             {thread.map((msg) => (
-              <Message key={msg.id} msg={msg} reduced={reduced} />
+              <Message key={msg.id} msg={msg} reduced={reduced} onAsk={onChip} />
             ))}
             {typing ? (
               <div className="msg msg--haylie msg--typing" aria-hidden="true">
@@ -239,29 +265,41 @@ export default function ChatPanel() {
             ) : null}
           </div>
 
-          <nav className="toc" aria-label="Ask about">
-            {chipIds.map((id) =>
-              id === "menu" ? (
-                <button type="button" key="menu" className="toc-item toc-item--back" onClick={() => onChip("menu")}>
-                  <span className="toc-key" aria-hidden="true">
-                    ⏎
-                  </span>
-                  <span className="toc-label">Back to menu</span>
-                  <span className="toc-go" aria-hidden="true" />
-                </button>
-              ) : (
-                <button type="button" key={id} className="toc-item" onClick={() => onChip(id)}>
-                  <span className="toc-key" aria-hidden="true">
-                    {KEYS[id] ?? ""}
-                  </span>
-                  <span className="toc-label">{INTENTS[id].chip}</span>
-                  <span className="toc-go" aria-hidden="true">
-                    →
-                  </span>
-                </button>
-              ),
-            )}
-          </nav>
+          <div className="asks" aria-label="Suggested questions">
+            {atRoot
+              ? CHIP_GROUPS.map((group) => (
+                  <div className="asks-group" key={group.label}>
+                    <span className="asks-label">{group.label}</span>
+                    <div className="asks-row">
+                      {group.ids.map((id) => (
+                        <button type="button" key={id} className="ask-pill" onClick={() => onChip(id)}>
+                          {INTENTS[id].ask}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              : followUps.length
+                ? (
+                    <div className="asks-group">
+                      <span className="asks-label">Keep going</span>
+                      <div className="asks-row">
+                        {followUps.map((id) =>
+                          id === "menu" ? (
+                            <button type="button" key="menu" className="ask-pill ask-pill--back" onClick={() => onChip("menu")}>
+                              ↺ all topics
+                            </button>
+                          ) : (
+                            <button type="button" key={id} className="ask-pill" onClick={() => onChip(id)}>
+                              {INTENTS[id].ask}
+                            </button>
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  )
+                : null}
+          </div>
         </section>
 
         <section className="canvas-col" aria-hidden={!split}>

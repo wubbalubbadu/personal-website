@@ -83,7 +83,6 @@ body {
 }
 
 .win {
-  width: min(620px, 100%);
   background: var(--paper);
   border: 1px solid var(--rule);
   border-radius: 16px;
@@ -91,10 +90,13 @@ body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  /* closed = just the chat; open = chat + panel. The window grows; the chat
+     column keeps its size (Claude-desktop style). Both transition. */
+  width: min(760px, calc(100vw - 32px));
   transition: width 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 .win[data-canvas="open"] {
-  width: min(1060px, 96vw);
+  width: min(1264px, calc(100vw - 32px));
 }
 
 .win-bar {
@@ -171,19 +173,19 @@ body {
 }
 
 .win-body {
-  display: grid;
-  grid-template-columns: 1fr 0fr;
-  transition: grid-template-columns 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+  display: flex;
   min-height: 0;
 }
-.win[data-canvas="open"] .win-body {
-  grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
-}
 
+/* Fills whatever the window leaves after the panel, capped at a comfortable
+   width — so on a roomy screen it stays put while the panel slides in beside it,
+   and on a tight screen it eases narrower instead of snapping. */
 .chat-col {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 760px;
   display: flex;
   flex-direction: column;
-  min-width: 0;
   border-right: 1px solid transparent;
 }
 .win[data-canvas="open"] .chat-col {
@@ -193,12 +195,12 @@ body {
 .chat-log {
   flex: 1;
   overflow-y: auto;
-  padding: 24px 24px 12px;
+  padding: 24px 24px 14px;
   display: flex;
   flex-direction: column;
-  gap: 19px;
-  min-height: 372px;
-  max-height: 540px;
+  gap: 20px;
+  min-height: 400px;
+  max-height: min(600px, 66vh);
 }
 
 .msg {
@@ -300,87 +302,93 @@ body {
   }
 }
 
-.toc {
+/* suggested-question pills */
+.asks {
   border-top: 1px solid var(--rule);
+  flex: none;
+  padding: 14px 24px 16px;
   display: flex;
   flex-direction: column;
-  flex: none;
+  gap: 13px;
+  max-height: 232px;
+  overflow-y: auto;
 }
-.toc-item {
-  position: relative;
-  appearance: none;
-  border: 0;
-  border-bottom: 1px solid var(--rule-soft);
-  background: transparent;
-  text-align: left;
-  display: grid;
-  grid-template-columns: 16px 1fr auto;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 24px;
-  cursor: pointer;
-  color: var(--ink);
-  font-family: var(--font-ui);
-  font-size: 15px;
-  transition: background 0.18s;
+.asks-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
 }
-.toc-item:last-child {
-  border-bottom: 0;
-}
-.toc-key {
+.asks-label {
   font-family: var(--font-pix);
-  font-size: 10px;
+  font-size: 8px;
+  letter-spacing: 0.15em;
   color: var(--ink-38);
-  transition: color 0.18s;
 }
-.toc-go {
-  color: var(--ink-38);
-  transition: transform 0.18s, color 0.18s;
+.asks-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
-.toc-item::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: var(--pine);
-  transform: scaleY(0);
-  transform-origin: top;
-  transition: transform 0.2s;
+.ask-pill {
+  appearance: none;
+  border: 1px solid var(--rule);
+  background: transparent;
+  border-radius: 999px;
+  padding: 6px 13px;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  line-height: 1.25;
+  color: var(--ink-70);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
-.toc-item:hover,
-.toc-item:focus-visible {
+.ask-pill:hover,
+.ask-pill:focus-visible {
+  border-color: var(--pine);
+  color: var(--ink);
   background: var(--pine-wash);
   outline: none;
 }
-.toc-item:hover::before,
-.toc-item:focus-visible::before {
-  transform: scaleY(1);
-}
-.toc-item:hover .toc-key,
-.toc-item:focus-visible .toc-key {
-  color: var(--amber);
-}
-.toc-item:hover .toc-go,
-.toc-item:focus-visible .toc-go {
-  transform: translateX(3px);
-  color: var(--ink);
-}
-.toc-item--back {
+.ask-pill--back {
   color: var(--ink-50);
-  font-size: 13px;
+  border-style: dashed;
+}
+
+/* interactive phrases inside a chat message — clickable, but no underline */
+.chat-inlink {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  font-weight: 500;
+  color: var(--pine);
+  cursor: pointer;
+  line-height: inherit;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.chat-inlink:hover,
+.chat-inlink:focus-visible {
+  color: var(--amber);
+  outline: none;
 }
 
 .canvas-col {
-  display: flex;
-  min-width: 0;
+  flex: 0 0 auto;
+  width: 0;
+  overflow: hidden;
   background: var(--panel);
-  opacity: 0;
-  transition: opacity 0.34s 0.08s;
+  display: flex;
+  transition: width 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 .win[data-canvas="open"] .canvas-col {
-  opacity: 1;
+  width: min(504px, 44vw);
+}
+.canvas-col .canvas {
+  flex: none;
+  width: min(504px, 44vw);
 }
 
 .win-foot {
@@ -400,20 +408,37 @@ body {
   text-decoration: none;
 }
 
-@media (max-width: 720px) {
+/* Phone: not enough width for side by side, so stack — panel eases open by
+   height instead of width, still smooth. */
+@media (max-width: 700px) {
+  .win,
   .win[data-canvas="open"] {
-    width: 100%;
+    width: calc(100vw - 20px);
   }
-  .win[data-canvas="open"] .win-body {
-    grid-template-columns: 1fr;
+  .win-body {
+    flex-direction: column;
+  }
+  .chat-col {
+    max-width: none;
   }
   .win[data-canvas="open"] .chat-col {
     border-right: 0;
     border-bottom: 1px solid var(--rule);
   }
+  .canvas-col {
+    width: 100% !important;
+    max-height: 0;
+    transition: max-height 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .win[data-canvas="open"] .canvas-col {
+    max-height: 78vh;
+  }
+  .canvas-col .canvas {
+    width: 100%;
+  }
   .chat-log {
-    min-height: 0;
-    max-height: 300px;
+    min-height: 300px;
+    max-height: 52vh;
   }
 }
 
@@ -421,9 +446,7 @@ body {
   .win,
   .win-body,
   .reveal,
-  .toc-item,
-  .toc-item::before,
-  .toc-go,
+  .ask-pill,
   .msg--typing i,
   .canvas-col {
     transition-duration: 0.001s !important;

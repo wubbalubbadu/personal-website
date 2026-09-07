@@ -1,3 +1,5 @@
+const TIKTOKS = ["7500666071444196651", "7538083046537317646"];
+
 export default function FluteView() {
   return (
     <div className="fl">
@@ -11,6 +13,23 @@ export default function FluteView() {
         />
       </div>
       <p className="fl-caption">Competition performance</p>
+
+      <p className="fl-caption fl-caption--sec">More clips</p>
+      <div className="fl-tiktoks">
+        {TIKTOKS.map((id) => (
+          <div className="fl-tiktok-wrap" key={id}>
+            <iframe
+              className="fl-tiktok"
+              src={`https://www.tiktok.com/embed/v2/${id}`}
+              title={`TikTok clip ${id}`}
+              loading="lazy"
+              allow="encrypted-media; fullscreen"
+              scrolling="no"
+            />
+          </div>
+        ))}
+      </div>
+
       <div className="fl-links">
         <a href="https://www.tiktok.com/@wubulubadudu" target="_blank" rel="noreferrer">
           @wubulubadudu on TikTok

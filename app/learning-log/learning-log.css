@@ -1,0 +1,912 @@
+/* ===================================================================
+   Learning Log — self-contained styles.
+   Design language borrowed from the site: warm paper, pine + amber
+   accents, Space Grotesk / Silkscreen. Tokens are scoped to .ll so this
+   route never collides with the home page's :root.
+   =================================================================== */
+
+/* the root layout's globals.css pins html/body to overflow:hidden; this route
+   scrolls normally like the rest of the site */
+html,
+body {
+  height: auto !important;
+  overflow: auto !important;
+}
+
+.ll {
+  --ground: #e3e5df;
+  --paper: #eff0eb;
+  --panel: #f6f7f2;
+  --card: #fbfbf8;
+  --ink: #1a1e1b;
+  --ink-70: rgba(26, 30, 27, 0.7);
+  --ink-50: rgba(26, 30, 27, 0.5);
+  --ink-38: rgba(26, 30, 27, 0.38);
+  --rule: rgba(26, 30, 27, 0.13);
+  --rule-soft: rgba(26, 30, 27, 0.06);
+  --pine: #2f5d50;
+  --pine-wash: rgba(47, 93, 80, 0.09);
+  --amber: #b06f28;
+  --amber-wash: rgba(176, 111, 40, 0.1);
+  --warn: #b0472b;
+  --warn-wash: rgba(176, 71, 43, 0.09);
+  --shadow: 0 42px 90px -34px rgba(20, 32, 26, 0.42), 0 10px 26px -14px rgba(20, 32, 26, 0.2);
+  --font-ui: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-pix: "Silkscreen", "Space Grotesk", ui-monospace, monospace;
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+
+  min-height: 100vh;
+  background-color: var(--ground);
+  background-image: radial-gradient(circle, var(--rule-soft) 1px, transparent 1.4px);
+  background-size: 26px 26px;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ll:not([data-theme="light"]) {
+    --ground: #0d0f0d;
+    --paper: #171a16;
+    --panel: #1c201b;
+    --card: #20241f;
+    --ink: #e8eae3;
+    --ink-70: rgba(232, 234, 227, 0.7);
+    --ink-50: rgba(232, 234, 227, 0.5);
+    --ink-38: rgba(232, 234, 227, 0.36);
+    --rule: rgba(232, 234, 227, 0.15);
+    --rule-soft: rgba(232, 234, 227, 0.07);
+    --pine: #7aae9a;
+    --pine-wash: rgba(122, 174, 154, 0.13);
+    --amber: #d7a05d;
+    --amber-wash: rgba(215, 160, 93, 0.12);
+    --warn: #e08b6b;
+    --warn-wash: rgba(224, 139, 107, 0.12);
+    --shadow: 0 42px 100px -30px rgba(0, 0, 0, 0.72), 0 10px 30px -12px rgba(0, 0, 0, 0.5);
+  }
+}
+
+.ll * {
+  box-sizing: border-box;
+}
+
+/* ---- shell -------------------------------------------------------- */
+
+.ll-top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px clamp(16px, 4vw, 40px);
+  background: color-mix(in srgb, var(--ground) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--rule);
+}
+.ll-back {
+  font-size: 13px;
+  color: var(--ink-50);
+  text-decoration: none;
+}
+.ll-back:hover {
+  color: var(--ink);
+}
+.ll-top__crumb {
+  font-size: 13px;
+  color: var(--ink-70);
+  display: flex;
+  gap: 7px;
+  align-items: baseline;
+  min-width: 0;
+}
+.ll-top__crumb b {
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ll-top__spacer {
+  flex: 1;
+}
+.ll-modes {
+  display: flex;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.ll-modes button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ink-50);
+  font: inherit;
+  font-size: 12px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.ll-modes button.is-on {
+  background: var(--pine);
+  color: #fff;
+}
+:root .ll:not([data-theme="light"]) .ll-modes button.is-on {
+  color: #0d0f0d;
+}
+.ll-progress-chip {
+  font-family: var(--font-pix);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  color: var(--pine);
+  white-space: nowrap;
+}
+
+/* ---- course landing -------------------------------------------------- */
+
+.ll-landing {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: clamp(40px, 9vw, 96px) clamp(20px, 5vw, 40px) 120px;
+}
+.ll-eyebrow {
+  font-family: var(--font-pix);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--amber);
+  margin: 0 0 18px;
+}
+.ll-landing h1 {
+  font-size: clamp(30px, 6vw, 46px);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin: 0 0 10px;
+}
+.ll-landing__src {
+  font-size: 14px;
+  color: var(--ink-50);
+  margin: 0 0 22px;
+}
+.ll-landing__about {
+  font-size: 16px;
+  line-height: 1.62;
+  color: var(--ink-70);
+  margin: 0 0 44px;
+  max-width: 60ch;
+}
+.ll-unit {
+  margin-bottom: 40px;
+}
+.ll-unit__head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.ll-unit__n {
+  font-family: var(--font-pix);
+  font-size: 10px;
+  color: var(--ink-38);
+}
+.ll-unit__head h2 {
+  font-size: 20px;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.ll-unit__blurb {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-50);
+  margin: 0 0 18px;
+  max-width: 62ch;
+}
+.ll-chapters {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.ll-chapter-card {
+  position: relative;
+  width: 100%;
+  text-align: left;
+  appearance: none;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  background: var(--card);
+  padding: 16px 18px;
+  cursor: pointer;
+  display: grid;
+  gap: 5px;
+  transition: border-color 0.16s, transform 0.16s;
+}
+.ll-chapter-card:hover {
+  border-color: var(--pine);
+  transform: translateY(-1px);
+}
+.ll-chapter-card__title {
+  font-size: 15px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.ll-chapter-card__title small {
+  font-family: var(--font-pix);
+  font-size: 8px;
+  color: var(--ink-38);
+  letter-spacing: 0.1em;
+}
+.ll-chapter-card__sum {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-50);
+}
+.ll-chapter-card__bar {
+  margin-top: 6px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--rule-soft);
+  overflow: hidden;
+}
+.ll-chapter-card__bar i {
+  display: block;
+  height: 100%;
+  background: var(--pine);
+  transition: width 0.3s;
+}
+
+/* ---- reader ----------------------------------------------------------- */
+
+.ll-reader {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: clamp(28px, 6vw, 60px) clamp(20px, 5vw, 40px) 160px;
+}
+.ll-reader__h {
+  margin: 0 0 4px;
+  font-size: clamp(24px, 5vw, 34px);
+  letter-spacing: -0.02em;
+}
+.ll-reader__sum {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-70);
+  margin: 0 0 8px;
+  max-width: 60ch;
+}
+.ll-slide-sec {
+  padding: 30px 0;
+  border-top: 1px solid var(--rule);
+}
+.ll-slide-sec:first-of-type {
+  border-top: 0;
+}
+.ll-slide-sec > h3 {
+  font-size: 19px;
+  letter-spacing: -0.01em;
+  margin: 0 0 4px;
+}
+.ll-slide-sec__lede {
+  font-size: 14px;
+  color: var(--amber);
+  margin: 0 0 16px;
+}
+
+/* ---- slides --------------------------------------------------------- */
+
+.ll-slides {
+  min-height: calc(100vh - 54px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(20px, 4vw, 44px) clamp(16px, 4vw, 40px) 96px;
+}
+.ll-slide-card {
+  width: min(760px, 100%);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  padding: clamp(24px, 4vw, 42px);
+  flex: 1;
+}
+.ll-slide-card__kicker {
+  font-family: var(--font-pix);
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  color: var(--ink-38);
+  margin: 0 0 14px;
+}
+.ll-slide-card__h {
+  font-size: clamp(22px, 4vw, 30px);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  margin: 0 0 6px;
+}
+.ll-slide-card__lede {
+  font-size: 15px;
+  color: var(--amber);
+  margin: 0 0 22px;
+}
+.ll-slide-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 12px;
+  background: color-mix(in srgb, var(--ground) 90%, transparent);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--rule);
+}
+.ll-slide-nav button {
+  appearance: none;
+  border: 1px solid var(--rule);
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  padding: 7px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.ll-slide-nav button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.ll-slide-nav__count {
+  font-family: var(--font-pix);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--ink-50);
+  min-width: 96px;
+  text-align: center;
+}
+.ll-slide-dots {
+  position: fixed;
+  top: 62px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 5px;
+  max-width: 80vw;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.ll-slide-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--rule);
+}
+.ll-slide-dots i.is-here {
+  background: var(--pine);
+}
+.ll-slide-dots i.is-done {
+  background: var(--amber);
+}
+
+/* ---- blocks -------------------------------------------------------- */
+
+.ll-body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.ll-body p {
+  font-size: 15px;
+  line-height: 1.66;
+  margin: 0;
+  color: var(--ink);
+}
+.ll-body p + p {
+  margin-top: 10px;
+}
+.ll-body code {
+  font-family: var(--font-pix);
+  font-size: 0.82em;
+  background: var(--rule-soft);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+.ll-body em {
+  font-style: italic;
+}
+/* KaTeX — inherit the ink colour, add breathing room for display math */
+.ll .katex {
+  color: var(--ink);
+  font-size: 1.04em;
+}
+.ll-math-inline {
+  white-space: nowrap;
+}
+.ll-math-block {
+  display: block;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 0;
+}
+.ll-math-block .katex-display {
+  margin: 0;
+}
+.ll .katex .base {
+  color: inherit;
+}
+/* malformed formulae render in this colour instead of crashing */
+.ll .katex-error {
+  color: var(--warn) !important;
+}
+
+.ll-heading {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 6px 0 0;
+}
+
+.ll-keypoints {
+  border-left: 2px solid var(--rule);
+  padding-left: 16px;
+}
+.ll-keypoints.t-result {
+  border-left-color: var(--pine);
+}
+.ll-keypoints.t-warn {
+  border-left-color: var(--warn);
+}
+.ll-keypoints__t {
+  font-family: var(--font-pix);
+  font-size: 9px;
+  letter-spacing: 0.13em;
+  color: var(--ink-50);
+  margin: 0 0 8px;
+}
+.ll-keypoints.t-result .ll-keypoints__t {
+  color: var(--pine);
+}
+.ll-keypoints.t-warn .ll-keypoints__t {
+  color: var(--warn);
+}
+.ll-keypoints ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 7px;
+}
+.ll-keypoints li {
+  font-size: 14px;
+  line-height: 1.6;
+  padding-left: 16px;
+  position: relative;
+}
+.ll-keypoints li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ink-38);
+}
+
+.ll-formula {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 14px 18px;
+}
+.ll-formula__tex {
+  line-height: 1.4;
+}
+.ll-formula__cap {
+  font-size: 12px;
+  color: var(--ink-50);
+  margin-top: 10px;
+  line-height: 1.5;
+}
+
+.ll-aside {
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--amber-wash);
+  padding: 13px 15px;
+}
+.ll-aside.v-analogy {
+  background: var(--amber-wash);
+}
+.ll-aside.v-note,
+.ll-aside.v-aside {
+  background: var(--pine-wash);
+}
+.ll-aside.v-intuition {
+  background: var(--rule-soft);
+}
+.ll-aside__t {
+  font-family: var(--font-pix);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  color: var(--ink-50);
+  margin: 0 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ll-aside__body {
+  font-size: 13.5px;
+  line-height: 1.62;
+  color: var(--ink-70);
+}
+.ll-aside__toggle {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  padding: 0;
+  color: inherit;
+}
+.ll-aside__toggle .ll-aside__t {
+  margin: 0;
+}
+.ll-aside[data-folded="true"] .ll-aside__body {
+  display: none;
+}
+.ll-aside__chev {
+  margin-left: auto;
+  transition: transform 0.16s;
+}
+.ll-aside[data-folded="false"] .ll-aside__chev {
+  transform: rotate(90deg);
+}
+
+.ll-discussion {
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  background: var(--panel);
+  padding: 16px 18px;
+}
+.ll-discussion__t {
+  font-family: var(--font-pix);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--pine);
+  margin: 0 0 12px;
+}
+.ll-qa {
+  border-top: 1px solid var(--rule-soft);
+  padding: 12px 0;
+}
+.ll-qa:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+.ll-qa__q {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  gap: 9px;
+  line-height: 1.5;
+}
+.ll-qa__q::before {
+  content: "Q";
+  font-family: var(--font-pix);
+  font-size: 9px;
+  color: var(--amber);
+  flex: none;
+  margin-top: 3px;
+}
+.ll-qa__a {
+  margin: 9px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 7px;
+}
+.ll-qa__a li {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--ink-70);
+  list-style: none;
+  position: relative;
+}
+.ll-qa__a li::before {
+  content: "";
+  position: absolute;
+  left: -13px;
+  top: 0.6em;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--ink-38);
+}
+.ll-qa[hidden] .ll-qa__a {
+  display: none;
+}
+
+.ll-quiz {
+  border: 1px dashed var(--rule);
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+.ll-quiz__p {
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0 0 12px;
+  line-height: 1.55;
+}
+.ll-quiz__choices {
+  display: grid;
+  gap: 8px;
+}
+.ll-quiz__choice {
+  appearance: none;
+  text-align: left;
+  border: 1px solid var(--rule);
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13.5px;
+  line-height: 1.5;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.14s, background 0.14s;
+}
+.ll-quiz__choice:hover {
+  border-color: var(--ink-38);
+}
+.ll-quiz__choice.is-correct {
+  border-color: var(--pine);
+  background: var(--pine-wash);
+}
+.ll-quiz__choice.is-wrong {
+  border-color: var(--warn);
+  background: var(--warn-wash);
+}
+.ll-quiz__explain {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-70);
+  border-left: 2px solid var(--pine);
+  padding-left: 12px;
+}
+
+/* ---- figures ----------------------------------------------------- */
+
+.ll-figure {
+  margin: 0;
+}
+.ll-figure svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+}
+.ll-figure figcaption,
+.ll-widget__cap {
+  font-size: 12px;
+  color: var(--ink-50);
+  margin-top: 8px;
+  line-height: 1.5;
+}
+.ll-fig-ink {
+  stroke: var(--ink);
+}
+.ll-fig-pine {
+  stroke: var(--pine);
+}
+.ll-fig-amber {
+  fill: var(--amber);
+}
+.ll-fig-label {
+  fill: var(--ink-50);
+  font-family: var(--font-ui);
+  font-size: 11px;
+}
+
+/* ---- widgets --------------------------------------------------- */
+
+.ll-widget {
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--card);
+  padding: 16px;
+}
+.ll-widget__canvas {
+  width: 100%;
+  display: block;
+  border-radius: 8px;
+  background: var(--panel);
+  touch-action: none;
+}
+.ll-widget__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-top: 12px;
+}
+.ll-widget__control {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11px;
+  color: var(--ink-50);
+  flex: 1;
+  min-width: 140px;
+}
+.ll-widget__control span b {
+  color: var(--ink);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.ll-widget input[type="range"] {
+  width: 100%;
+  accent-color: var(--pine);
+}
+.ll-btn {
+  appearance: none;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.ll-btn:hover {
+  border-color: var(--ink-38);
+}
+.ll-btn.is-live {
+  background: var(--pine);
+  color: #fff;
+  border-color: var(--pine);
+}
+:root .ll:not([data-theme="light"]) .ll-btn.is-live {
+  color: #0d0f0d;
+}
+.ll-chiprow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ll-chip {
+  appearance: none;
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--ink-70);
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.ll-chip.is-on {
+  border-color: var(--pine);
+  background: var(--pine-wash);
+  color: var(--ink);
+}
+.ll-widget__note {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-50);
+  margin: 10px 0 0;
+}
+.ll-widget__readout {
+  font-family: var(--font-pix);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--pine);
+  margin-top: 10px;
+}
+
+/* step sequencer */
+.ll-seq {
+  border-collapse: separate;
+  border-spacing: 4px;
+}
+.ll-seq th {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-50);
+  text-align: right;
+  padding-right: 8px;
+  white-space: nowrap;
+}
+.ll-seq-cell {
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  background: var(--panel);
+  cursor: pointer;
+  padding: 0;
+  display: block;
+  transition: background 0.1s, border-color 0.1s;
+}
+.ll-seq-cell.is-beat {
+  border-color: var(--ink-38);
+}
+.ll-seq-cell.is-on {
+  background: var(--amber);
+  border-color: var(--amber);
+}
+.ll-seq-cell.is-head {
+  box-shadow: 0 0 0 2px var(--pine);
+}
+.ll-seq-cell:hover {
+  border-color: var(--pine);
+}
+
+/* ---- understood toggle ----------------------------------------- */
+
+.ll-understood {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 26px;
+  appearance: none;
+  border: 1px solid var(--rule);
+  background: var(--card);
+  color: var(--ink-50);
+  font: inherit;
+  font-size: 13px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.ll-understood.is-on {
+  border-color: var(--pine);
+  background: var(--pine-wash);
+  color: var(--ink);
+}
+.ll-understood i {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  display: grid;
+  place-items: center;
+  font-size: 9px;
+}
+.ll-understood.is-on i {
+  background: var(--pine);
+  border-color: var(--pine);
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ll * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .ll-top__crumb .ll-top__unit {
+    display: none;
+  }
+  .ll-formula__tex {
+    font-size: 15px;
+  }
+}
