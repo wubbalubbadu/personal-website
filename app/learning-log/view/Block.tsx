@@ -21,6 +21,8 @@ import GuidanceScale from "../widgets/GuidanceScale";
 import RtfCalc from "../widgets/RtfCalc";
 import VqQuantize from "../widgets/VqQuantize";
 import PerplexityLab from "../widgets/PerplexityLab";
+import PositionalEncoding from "../widgets/PositionalEncoding";
+import PerfRnnTokens from "../widgets/PerfRnnTokens";
 import type { WidgetId } from "../content/types";
 
 export function Blocks({ blocks }: { blocks: Block[] }) {
@@ -203,5 +205,9 @@ function Widget({ id }: { id: WidgetId }) {
       return <VqQuantize />;
     case "perplexity-lab":
       return <PerplexityLab />;
+    case "positional-encoding":
+      return <PositionalEncoding />;
+    case "perf-rnn-tokens":
+      return <PerfRnnTokens />;
   }
 }

@@ -44,28 +44,25 @@ export const GREETING: AnswerNode[] = [
     ],
   },
   {
-    kind: "text",
-    value:
-      "I've spent several years working in software across pretty different environments. At MathWorks, I worked in a large production codebase, where I shipped features and designed a parser-combinator system for structured Excel test data. I was also hired as a software engineer at Northwestern's Center for Connected Learning, where I worked on NetLogo Web and built developer- and user-facing tools, including a new CodeMirror-based editor. And at an early-stage startup, I was the lead backend engineer, so I had much broader ownership across the backend, deployment, performance, and onboarding. At Northwestern, I was also a research intern working on approximation algorithms for scheduling.",
-  },
-  {
     kind: "rich",
     segments: [
       {
-        text: "After finishing undergrad at Northwestern University, I decided to spend two years training intensively in flute performance while studying music technology at New England Conservatory. It was a very intentional decision to take this window of my life to push my playing as far as I could. At the same time, I've continued building software, I'm still shipping projects, and I'm now ",
+        text: "I finished my computer science degree at Northwestern, then spent two years training intensively in flute performance at New England Conservatory. I've kept building software the whole time, and I'm passionate about ",
       },
-      { text: "looking to return to software engineering full-time", intent: "looking-for" },
+      { text: "building", intent: "projects" },
+      { text: " and " },
+      { text: "learning new technologies", intent: "learning-log" },
       { text: "." },
     ],
   },
-  { kind: "text", value: "Ask me anything, or start with one of these." },
+  { kind: "text", value: "Here are some starting points." },
 ];
 
 /** Suggestion pills, grouped, shown at the root of the conversation. */
 export const CHIP_GROUPS: { label: string; ids: string[] }[] = [
   { label: "About me", ids: ["background", "experience", "resume"] },
   { label: "My work", ids: ["projects", "tech-stack"] },
-  { label: "Ask me", ids: ["why-both", "flute", "looking-for", "contact"] },
+  { label: "Ask me", ids: ["flute", "contact"] },
 ];
 export const ROOT_CHIPS = CHIP_GROUPS.flatMap((g) => g.ids);
 
@@ -97,7 +94,7 @@ export const INTENTS: Record<string, Intent> = {
       },
     ],
     canvas: { kind: "timeline" },
-    followUps: ["resume", "why-both", "projects"],
+    followUps: ["resume", "projects"],
   },
 
   resume: {
@@ -126,27 +123,17 @@ export const INTENTS: Record<string, Intent> = {
       {
         kind: "text",
         value:
-          "I did a double degree at Northwestern in computer science and flute performance, and I'm now at New England Conservatory on scholarship for a master's in flute performance and music technology. Carrying both at once has been the theme of everything I do.",
+          "I've spent several years working in software across pretty different environments. At MathWorks I worked in a large production codebase, where I shipped features, two of which went out in a public MATLAB release, and designed a parser-combinator system for structured Excel test data. At an early-stage startup I was the lead backend engineer, with broad ownership across the backend, deployment, performance, and onboarding. There I cut initial load time by about a third and ran a full database migration without breaking existing users.",
       },
       {
         kind: "text",
         value:
-          "My first real engineering role was leading the backend at SKUY, a student startup that grew to around fifteen engineers. I built the Flask and PostgreSQL APIs and the scraping pipelines behind a news feed that served more than a thousand students, cut initial load time by about a third by reworking pagination and lazy loading, and ran a full PostgreSQL to Firebase migration with a path that didn't break existing users. I also owned releases and onboarded new engineers.",
+          "I also built developer- and user-facing tools for NetLogo Web at Northwestern's Center for Connected Learning, and did a research internship there on approximation algorithms for scheduling.",
       },
       {
         kind: "text",
         value:
-          "At MathWorks I designed a 2D parser-combinator architecture in Simulink that composes reusable parsers to validate messy Excel test data, with multi-error handling and inline diagnostics, and rebuilt the MATLAB test framework's initialization as a centralized async layer that cut startup latency by roughly 30%. Two of my features shipped in a public MATLAB release.",
-      },
-      {
-        kind: "text",
-        value:
-          "For almost two years I worked on NetLogo Web at Northwestern's Center for Connected Learning, where I shipped a new TypeScript code editor on CodeMirror 6 to replace the legacy one, built a drawing tool for custom simulation shapes, and contributed to an in-editor GPT-4 assistant, with the whole test and deploy pipeline automated through GitHub Actions. Before that I did a research internship on approximation algorithms for scheduling, advised by Prof. Samir Khuller.",
-      },
-      {
-        kind: "text",
-        value:
-          "These days most of my building goes into Cookie Flute Studio, a real-time practice platform for flutists. Its score-following engine lines up live pitch detection with the sheet music for per-note intonation feedback, and an insights layer aggregates that across sessions to surface the passages you keep missing.",
+          "After finishing undergrad at Northwestern University, I decided to spend two years training intensively in flute performance at New England Conservatory. It was a very intentional decision to take this window of my life to push my playing as far as I could. At the same time, I've continued building software, and I'm still shipping projects.",
       },
       {
         kind: "rich",
@@ -158,25 +145,6 @@ export const INTENTS: Record<string, Intent> = {
       },
     ],
     followUps: ["experience", "tech-stack", "resume"],
-  },
-
-  "why-both": {
-    id: "why-both",
-    chip: "Why software and flute?",
-    ask: "Why software and flute?",
-    answer: [
-      {
-        kind: "text",
-        value:
-          "Because I genuinely love both, and I got tired of being told to pick one. In early 2024 I decided to find out how far my playing could actually go, so I went all in on training, competitions, and festivals. It paid off: I placed at the Pappoutsakis Competition, got into New England Conservatory on a full scholarship, and performed at the National Flute Association convention. And I never put the code down, I was shipping features the whole time.",
-      },
-      {
-        kind: "text",
-        value:
-          "Software isn't a side thing for me. I'm building toward a software engineering career, I lean toward backend and full-stack work, and I stay on top of new tools and frameworks as they come out. Music happens to be the domain I know best, so a lot of my projects live near it, but the engineering is the point. The two feed each other more than people expect, and I've set my life up so the answer to \"software or flute\" can just be yes.",
-      },
-    ],
-    followUps: ["experience", "flute", "background"],
   },
 
   "tech-stack": {
@@ -198,8 +166,8 @@ export const INTENTS: Record<string, Intent> = {
     id: "cookie-flute-studio",
     chip: "Cookie Flute Studio",
     ask: "Tell me about Cookie Flute Studio.",
-    answer: [{ kind: "text", value: "Easiest to just show you. Opening it now." }],
-    navigate: "/flute-studio",
+    answer: [{ kind: "text", value: "A real-time practice tool I'm building for flutists. Here's the rundown, and there's a link to open it." }],
+    canvas: { kind: "project", slug: "cookie-flute-studio" },
     followUps: ["learning-log", "market", "skuy"],
   },
 
@@ -242,21 +210,7 @@ export const INTENTS: Record<string, Intent> = {
       },
     ],
     canvas: { kind: "flute" },
-    followUps: ["experience", "why-both", "background"],
-  },
-
-  "looking-for": {
-    id: "looking-for",
-    chip: "What I'm looking for",
-    ask: "What kind of role are you looking for?",
-    answer: [
-      {
-        kind: "text",
-        value:
-          "A new-grad software engineering role where I can take on unfamiliar problems and grow quickly. I care about building interfaces people actually enjoy using, and I want to work with a team that cares about that too.",
-      },
-    ],
-    followUps: ["resume", "projects", "contact"],
+    followUps: ["experience", "background"],
   },
 
   contact: {
@@ -275,7 +229,7 @@ export const INTENTS: Record<string, Intent> = {
         ],
       },
     ],
-    followUps: ["resume", "looking-for"],
+    followUps: ["resume"],
   },
 };
 

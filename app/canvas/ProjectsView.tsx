@@ -3,6 +3,23 @@
 import { CanvasSpec } from "../lib/answers";
 import { getProject, projects } from "../lib/projects";
 
+function AudioTracks({ tracks }: { tracks: { label: string; src: string }[] }) {
+  return (
+    <div className="pj-audio">
+      {tracks.map((track) => (
+        <figure key={track.src} className="pj-audio-track">
+          <figcaption>{track.label}</figcaption>
+          {/* instrumental music, no captions track */}
+          {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+          <audio controls preload="none" src={track.src}>
+            <a href={track.src}>Download {track.label}</a>
+          </audio>
+        </figure>
+      ))}
+    </div>
+  );
+}
+
 export default function ProjectsView({
   spec,
   onOpenProject,
@@ -24,7 +41,32 @@ export default function ProjectsView({
             <img src={project.image} alt={`${project.name} preview`} loading="lazy" />
           </div>
         ) : null}
-        <p className="pj-body">{project.detail}</p>
+        {project.detail.split("\n\n").map((para, i) => (
+          <p key={i} className="pj-body">
+            {para}
+          </p>
+        ))}
+        {project.audio?.length ? <AudioTracks tracks={project.audio} /> : null}
+        {project.items?.length ? (
+          <ul className="pj-items">
+            {project.items.map((item) => (
+              <li key={item.name} className="pj-sub">
+                <p className="pj-sub-name">
+                  {item.href ? (
+                    <a href={item.href} target={item.href.startsWith("http") ? "_blank" : undefined} rel="noreferrer">
+                      {item.name}
+                    </a>
+                  ) : (
+                    item.name
+                  )}
+                </p>
+                {item.blurb ? <p className="pj-sub-blurb">{item.blurb}</p> : null}
+                {item.audio?.length ? <AudioTracks tracks={item.audio} /> : null}
+                {item.tech?.length ? <p className="pj-sub-tech">{item.tech.join("  ·  ")}</p> : null}
+              </li>
+            ))}
+          </ul>
+        ) : null}
         <p className="pj-tech">{project.tech.join("  ·  ")}</p>
         {project.links?.length ? (
           <p className="pj-links">

@@ -68,7 +68,18 @@ export type FigureId =
   | "musiclm-stages"
   | "stable-audio-arch"
   | "next-token-dist"
-  | "bengio-arch";
+  | "bengio-arch"
+  | "rnn-unrolled"
+  | "pos-enc-clock"
+  | "skewing"
+  | "voice-serialization"
+  | "anticipation-interleave"
+  | "remi-vs-midi"
+  | "modality-spectrum"
+  | "vertical-flatten"
+  | "unified-arch"
+  | "v2m-two-branch"
+  | "v2m-three-levels";
 
 /** Interactive demos in `widgets/`. */
 export type WidgetId =
@@ -87,7 +98,9 @@ export type WidgetId =
   | "guidance-scale"
   | "rtf-calc"
   | "vq-quantize"
-  | "perplexity-lab";
+  | "perplexity-lab"
+  | "positional-encoding"
+  | "perf-rnn-tokens";
 
 export type Slide = {
   id: string;

@@ -1,16 +1,18 @@
 import type { Unit } from "./types";
 
 /**
- * Unit 6 — "Symbolic Generation" (course §4).
+ * Unit 6 — "Symbolic Generation" (course §4.1).
  *
- * Back to symbolic music (notes, not waveforms) and the language-model
- * machinery that generates it. Two chapters:
- *   1. language-models — the LM framing: predict-next-token, the chain rule,
- *      n-grams and the curse of dimensionality, the distributed-representation
- *      idea that fixes it.
- *   2. bengio-2003 — "A Neural Probabilistic Language Model": architecture,
- *      training (NLL, why log), evaluation (NLL / cross-entropy / perplexity),
- *      the class-discussion numbers, and the 2003 experiment.
+ * The language-model foundations behind generating symbolic music. Three
+ * chapters:
+ *   1. language-models — predict-next-token, the chain rule, n-grams and the
+ *      curse of dimensionality, distributed representations.
+ *   2. bengio-2003 — "A Neural Probabilistic Language Model".
+ *   3. transformer — RNN / seq2seq background, then the Transformer: attention,
+ *      positional encodings, the O(n^2) cost, and what music adds.
+ *
+ * The music-specific models (§4.2 Performance RNN / Music Transformer /
+ * Anticipatory, §4.3 REMI / cross-modal) are in `symbolic-music-models.ts`.
  *
  * Transcribed from lecture notes (mixed zh/en).
  */
@@ -18,7 +20,7 @@ export const symbolicGenerationUnit: Unit = {
   id: "symbolic-generation",
   title: "Symbolic Generation",
   blurb:
-    "Generating music as symbols — notes, durations, event tokens — with the same language-model machinery used for text. Starting where language modelling itself started: n-grams, the curse of dimensionality, and Bengio's 2003 neural LM.",
+    "The language-model machinery for generating symbolic music. Where language modelling started — n-grams, the curse of dimensionality, Bengio's neural LM — and then the Transformer: attention, positional encodings, and what it costs.",
   chapters: [
     {
       id: "language-models",
@@ -364,6 +366,239 @@ export const symbolicGenerationUnit: Unit = {
                 "**Hidden units help** — 5-gram, no hidden 310 → with hidden 268.",
                 "**Interpolating with a trigram still helps** — 276 → 252. \"The fact that simple averaging helps suggests the neural net and the trigram make errors in *different* places.\"",
                 "**Direct input→output connections** — converge faster (10 vs 20 epochs) but slightly worse final PPL. Without them the hidden layer is a tighter bottleneck, which may force better generalisation.",
+              ],
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      id: "transformer",
+      title: "The Transformer",
+      summary:
+        "Bengio's model has a fixed context window. RNNs promise unbounded history but pack it into a finite vector. The Transformer drops recurrence entirely: context is attention, order comes from positional encodings, and the price is O(n^2).",
+      slides: [
+        {
+          id: "rnn-background",
+          title: "From a fixed window to recurrence",
+          lede: "Mikolov+ 2010, Sutskever 2011, Sundermeyer+ 2012, Karpathy 2015.",
+          blocks: [
+            {
+              type: "keypoints",
+              items: [
+                "**The problem with Bengio'03** — it only sees a fixed window of $N-1$ words. If something important sits outside that window, the model has already lost it.",
+                "**RNNs** update a hidden state recursively, so in principle they can carry an unbounded history.",
+              ],
+            },
+            {
+              type: "figure",
+              figure: "rnn-unrolled",
+              caption: "N-gram: fixed lookup. Recurrent: a state that feeds back into itself. Unrolled: the same cell applied step by step, each step predicting the next token.",
+            },
+          ],
+        },
+
+        {
+          id: "bidirectional",
+          title: "Bidirectional RNNs",
+          blocks: [
+            {
+              type: "keypoints",
+              items: [
+                "**Not for generation** — predicting the next token must not peek at the future, so a bidirectional model can't do next-token prediction.",
+                "**For understanding tasks** (classification, named-entity recognition, QA) a bidirectional RNN uses context from *both* sides and does better.",
+                "That idea evolves directly into BERT's masked language modelling.",
+              ],
+            },
+          ],
+        },
+
+        {
+          id: "seq2seq",
+          title: "Sequence to sequence",
+          lede: "Sutskever+ 2014. Support arbitrary x → y tasks.",
+          blocks: [
+            {
+              type: "formula",
+              tex: "P_\\theta(y_i \\mid y_{<i},\\, \\operatorname{Enc}_\\phi(x))",
+              caption: "$\\operatorname{Enc}_\\phi$ (e.g. a bidirectional RNN) compresses the input sequence into one fixed vector; the decoder is a language model conditioned on it.",
+            },
+            {
+              type: "keypoints",
+              items: [
+                "This turns **unconditional generation** into **conditional language modelling** — the frame for translation, summarisation, QA, dialogue.",
+                "Applications: speech recognition ($x$ = audio, $y$ = transcript); machine translation ($x$ = Chinese, $y$ = Arabic).",
+              ],
+            },
+            {
+              type: "aside",
+              variant: "intuition",
+              title: "The bottleneck",
+              text: "The encoder has to squeeze the entire input into a single fixed-dimension vector before the decoder sees any of it. It is like reading all of War and Peace and then summarising it in one number. Information is necessarily lost. This bottleneck is exactly what attention was invented to remove.",
+            },
+          ],
+        },
+
+        {
+          id: "the-bet",
+          title: "The Transformer's bet",
+          lede: "Vaswani+ 2017. RNNs have infinite context in theory, very finite context in practice.",
+          blocks: [
+            {
+              type: "prose",
+              text: "**The intuition:** an RNN is forced to pack an infinite context into a finite state vector, and that vector fills up.",
+            },
+            {
+              type: "keypoints",
+              title: "The Transformer's answer",
+              items: [
+                "**Drop recurrence** — context is built *entirely* from attention.",
+                "**Train in parallel** — an RNN must unroll step by step; a Transformer processes all positions at once.",
+                "**Positional encoding** — so the model still knows the order.",
+                "**Split encoder and decoder** — the encoder does self-attention; the decoder does self-attention *and* cross-attention onto the encoder's output.",
+              ],
+            },
+            {
+              type: "aside",
+              variant: "note",
+              title: "The professor's framing",
+              text: "Attention's essence is not \"a smarter mechanism.\" It is \"I stop trying to compress an infinite amount of context into a finite representation.\"",
+            },
+          ],
+        },
+
+        {
+          id: "attention",
+          title: "Attention",
+          blocks: [
+            {
+              type: "prose",
+              text: "Learn the **relevance** between $M$ outputs and $N$ inputs. Every output can attend to any input position.",
+            },
+            {
+              type: "formula",
+              tex: "\\operatorname{Attention}(Q, K, V) = \\operatorname{softmax}\\!\\left( \\frac{QK^{\\top}}{\\sqrt{d_k}} \\right) V",
+              caption: "Scaled dot-product attention. Several of these run in parallel as multi-head attention, then their outputs are concatenated and projected.",
+            },
+          ],
+        },
+
+        {
+          id: "pos-enc-idea",
+          title: "Positional encodings — the idea",
+          lede: "Attention is permutation-invariant, so order has to be injected.",
+          blocks: [
+            {
+              type: "keypoints",
+              title: "Naive attempts",
+              items: [
+                "**Integer position** ($0, 1, 2, \\dots$) — unbounded, and no sense of *relative* distance.",
+                "**Normalise to $[0, 1]$ by sequence length** — but \"position 0.5\" is token 5 in a length-10 sequence and token 50 in a length-100 one, so the model never learns a consistent sense of position.",
+              ],
+            },
+            {
+              type: "formula",
+              tex: "PE_{(pos,\\, 2i)} = \\sin\\!\\big(pos / 10000^{2i/d_{\\text{model}}}\\big) \\qquad PE_{(pos,\\, 2i+1)} = \\cos\\!\\big(pos / 10000^{2i/d_{\\text{model}}}\\big)",
+              caption: "The fix: not one number, but a vector whose dimensions are sine/cosine waves at $J$ different frequencies.",
+            },
+          ],
+        },
+
+        {
+          id: "pos-enc-clock",
+          title: "Positional encodings — the clock",
+          blocks: [
+            {
+              type: "figure",
+              figure: "pos-enc-clock",
+              caption: "A clock encodes an instant with three hands at three periods: seconds (60 s, fast), minutes (60 min, medium), hours (12 h, slow). Every instant is a unique combination.",
+            },
+            {
+              type: "keypoints",
+              items: [
+                "Positional encoding does the same, with \"time\" → \"sequence position\" and \"hands\" → \"sine waves\".",
+                "**High-frequency waves** turn fast, so they encode fine position differences — \"the previous token\" vs \"this token\".",
+                "**Low-frequency waves** turn slowly (hundreds of tokens per cycle), so they encode coarse position — \"start of the sentence\" vs \"end\".",
+                "For a repeating sequence like [day, night, day, night], some coordinate of the encoding ends up looking like $[0, 1, 0, 1]$.",
+              ],
+            },
+            {
+              type: "widget",
+              widget: "positional-encoding",
+              caption: "Slide the position and watch the sine coordinates. Fast dimensions flip every step; slow ones barely move.",
+            },
+          ],
+        },
+
+        {
+          id: "complexity",
+          title: "What it costs",
+          blocks: [
+            {
+              type: "keypoints",
+              title: "Per-layer cost ($n$ = sequence length, $d$ = dim, $k$ = kernel, $r$ = restricted window)",
+              items: [
+                "**Self-attention** — compute $O(n^2 d)$, sequential ops $O(1)$, max path length $O(1)$.",
+                "**Recurrent** — $O(n d^2)$, $O(n)$, $O(n)$.",
+                "**Convolutional** — $O(k n d^2)$, $O(1)$, $O(\\log_k n)$.",
+                "**Restricted self-attention** — $O(r n d)$, $O(1)$, $O(n/r)$.",
+              ],
+            },
+            {
+              type: "aside",
+              variant: "note",
+              title: "The professor on O(n^2)",
+              text: "If you accept that any token can be relevant to any other token, O(n^2) is the information-theoretically unavoidable price. Every O(n) attention variant (Linformer, Performer, ...) is doing an approximation — assuming some token-pair dependencies can be ignored. Fine for specific tasks; lossy in the general case.",
+            },
+            {
+              type: "keypoints",
+              title: "Impact",
+              items: [
+                "It created a consistent, predictable relationship between scale and performance — **scaling laws**.",
+                "Despite the S4 / Mamba recurrent revival, the Transformer is still the dominant architecture in every applied field.",
+              ],
+            },
+          ],
+        },
+
+        {
+          id: "discussion",
+          title: "Class discussion",
+          blocks: [
+            {
+              type: "discussion",
+              qa: [
+                {
+                  q: "The three ways a Transformer uses multi-head attention.",
+                  a: [
+                    "**Cross-attention (encoder-decoder)** — decoder queries × encoder keys/values, so the decoder sees the whole input while generating each output token.",
+                    "**Self-attention (encoder)** — encoder queries × encoder keys/values, so every input position integrates the whole input.",
+                    "**Masked self-attention (decoder)** — decoder queries × decoder keys/values up to the current step, so position $i$ only sees $\\le i$.",
+                  ],
+                },
+                {
+                  q: "In Bengio'03 the word embeddings are learned with the model. Transformer embeddings are learned too — so why is the positional encoding a fixed formula?",
+                  a: [
+                    "The \"right\" positional encoding is knowable **a priori** — we know sequence order matters, whether or not sinusoids are the best way to express it — so it can be handed to the model as an inductive bias.",
+                    "Word *meanings* are not knowable a priori, so they have to be learned.",
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+
+        {
+          id: "music-challenges",
+          title: "What music adds",
+          blocks: [
+            {
+              type: "keypoints",
+              tone: "warn",
+              items: [
+                "**Symbolic music is non-uniform in time.** In text one word is one token. Music has rhythm, note durations, and several notes sounding at once — how do you even tokenise it? This is the core design question of a music LM.",
+                "**Very long sequences.** A 3-minute song at fine granularity can be tens of thousands of tokens. How does the model learn long-range structure — the verse / chorus / bridge shape?",
               ],
             },
           ],

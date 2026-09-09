@@ -3,11 +3,12 @@ import { jukeboxChapter } from "./jukebox";
 import { musicAudioGenUnit } from "./music-audio-generation";
 import { sunoLectureUnit } from "./suno-lecture";
 import { symbolicGenerationUnit } from "./symbolic-generation";
+import { symbolicMusicModelsUnit } from "./symbolic-music-models";
 import type { Course } from "./types";
 
 /**
  * Notes from CMU's deep-learning-for-music course, rebuilt as an interactive
- * guide. Six units so far:
+ * guide. Seven units so far:
  *   1. Music Theory Fundamentals — the vocabulary (notes, scales, chords,
  *      rhythm, timbre) the rest of the course assumes. (Lecture 0.)
  *   2. Digital Audio — how a continuous pressure wave becomes an array, and how
@@ -20,8 +21,10 @@ import type { Course } from "./types";
  *      models (VQ-VAE, then MusicGen).
  *   5. Suno — a guest lecture (course §3): a survey of why ML in music, how the
  *      architectures evolved, and the reality of running a product at scale.
- *   6. Symbolic Generation (course §4): language models and Bengio's 2003
- *      neural LM.
+ *   6. Symbolic Generation (course §4.1): n-grams, Bengio's 2003 neural LM, and
+ *      the Transformer.
+ *   7. Symbolic Music Models (course §4.2-4.3): Performance RNN, Music
+ *      Transformer, Anticipatory, REMI, and unified cross-modal translation.
  */
 export const aiMusic: Course = {
   id: "ai-music",
@@ -941,5 +944,6 @@ export const aiMusic: Course = {
     musicAudioGenUnit,
     sunoLectureUnit,
     symbolicGenerationUnit,
+    symbolicMusicModelsUnit,
   ],
 };

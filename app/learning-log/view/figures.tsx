@@ -54,6 +54,28 @@ export function Figure({ id }: { id: FigureId }): ReactNode {
       return <NextTokenDist />;
     case "bengio-arch":
       return <BengioArch />;
+    case "rnn-unrolled":
+      return <RnnUnrolled />;
+    case "pos-enc-clock":
+      return <PosEncClock />;
+    case "skewing":
+      return <Skewing />;
+    case "voice-serialization":
+      return <VoiceSerialization />;
+    case "anticipation-interleave":
+      return <AnticipationInterleave />;
+    case "remi-vs-midi":
+      return <RemiVsMidi />;
+    case "modality-spectrum":
+      return <ModalitySpectrum />;
+    case "vertical-flatten":
+      return <VerticalFlatten />;
+    case "unified-arch":
+      return <UnifiedArch />;
+    case "v2m-two-branch":
+      return <V2mTwoBranch />;
+    case "v2m-three-levels":
+      return <V2mThreeLevels />;
   }
 }
 
@@ -852,6 +874,382 @@ function BengioArch() {
       <path d="M260,40 l0,-16 m-4,6 l4,-6 l4,6" className="ll-fig-pine" fill="none" strokeWidth="1.2" />
       <text x={260} y={18} textAnchor="middle" className="ll-fig-label" style={{ fontWeight: 600 }}>softmax  →  P(w(i) | context)</text>
       <text x={382} y={54} className="ll-fig-label" style={{ fontSize: 9 }}>U: h &#215; |V|</text>
+    </svg>
+  );
+}
+
+/** N-gram lookup, a recurrent cell with a self-loop, and the same cell unrolled. */
+function RnnUnrolled() {
+  const w = 520;
+  const stack = (ox: number, title: string, loop: boolean) => (
+    <g>
+      <text x={ox + 33} y={16} textAnchor="middle" className="ll-fig-label" style={{ fontWeight: 600 }}>{title}</text>
+      {["lookup", "transform", "predict"].map((t, i) => (
+        <g key={t}>
+          <rect x={ox} y={26 + i * 34} width={66} height={24} rx="5" fill="none" className="ll-fig-ink" strokeWidth="1.2" />
+          <text x={ox + 33} y={42 + i * 34} textAnchor="middle" className="ll-fig-label" style={{ fontSize: 9 }}>{t}</text>
+          {i < 2 ? <path d={`M${ox + 33},${50 + i * 34} l0,10 m-3,-4 l3,4 l3,-4`} className="ll-fig-pine" fill="none" strokeWidth="1.2" /> : null}
+        </g>
+      ))}
+      {loop ? (
+        <path d={`M${ox + 66},${72} C ${ox + 96},${72} ${ox + 96},${38} ${ox + 66},${38}`} stroke="var(--amber)" fill="none" strokeWidth="1.4" />
+      ) : null}
+    </g>
+  );
+  return (
+    <svg viewBox={`0 0 ${w} 180`} xmlns="http://www.w3.org/2000/svg" role="img" aria-label="An n-gram lookup stack, a recurrent cell with a feedback loop, and the recurrent cell unrolled across time steps">
+      {stack(14, "N-gram", false)}
+      {stack(120, "Recurrent", true)}
+      <text x={370} y={16} textAnchor="middle" className="ll-fig-label" style={{ fontWeight: 600 }}>Recurrent (unrolled)</text>
+      {["I", "hate", "this", "movie"].map((tok, i) => {
+        const x = 250 + i * 62;
+        return (
+          <g key={i}>
+            <text x={x + 20} y={44} textAnchor="middle" className="ll-fig-label" style={{ fontSize: 9 }}>{tok}</text>
+            <path d={`M${x + 20},48 l0,10 m-3,-4 l3,4 l3,-4`} className="ll-fig-pine" fill="none" strokeWidth="1.1" />
+            <rect x={x} y={60} width={40} height={22} rx="5" fill="none" className="ll-fig-ink" strokeWidth="1.2" />
+            <text x={x + 20} y={75} textAnchor="middle" className="ll-fig-label" style={{ fontSize: 9 }}>RNN</text>
+            {i < 3 ? <path d={`M${x + 40},71 l22,0 m-5,-4 l5,4 l-5,4`} className="ll-fig-pine" fill="none" strokeWidth="1.1" /> : null}
+            <path d={`M${x + 20},82 l0,12 m-3,-4 l3,4 l3,-4`} className="ll-fig-pine" fill="none" strokeWidth="1.1" />
+            <text x={x + 20} y={106} textAnchor="middle" className="ll-fig-label" style={{ fontSize: 9 }}>predict</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/** Positional encoding as clock hands: three periods, one unique combination. */
+function PosEncClock() {
+  const w = 520;
+  const cx = 110;
+  const cy = 90;
+  const hand = (angleDeg: number, len: number, color: string, wide: number) => {
+    const a = ((angleDeg - 90) * Math.PI) / 180;
+    return <line x1={cx} y1={cy} x2={cx + len * Math.cos(a)} y2={cy + len * Math.sin(a)} stroke={color} strokeWidth={wide} strokeLinecap="round" />;
+  };
+  return (
+    <svg viewBox={`0 0 ${w} 180`} xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A clock with three hands at three periods, analogous to positional encoding sine waves at three frequencies">
+      <circle cx={cx} cy={cy} r={62} fill="none" className="ll-fig-ink" strokeWidth="1.3" />
+      {Array.from({ length: 12 }, (_, i) => {
+        const a = ((i * 30 - 90) * Math.PI) / 180;
+        return <line key={i} x1={cx + 56 * Math.cos(a)} y1={cy + 56 * Math.sin(a)} x2={cx + 62 * Math.cos(a)} y2={cy + 62 * Math.sin(a)} className="ll-fig-ink" strokeWidth="1" opacity="0.5" />;
+      })}
+      {hand(300, 30, "var(--ink)", 2.4)}
+      {hand(120, 44, "var(--pine)", 1.8)}
+      {hand(210, 56, "var(--amber)", 1.2)}
+      <circle cx={cx} cy={cy} r={3} className="ll-fig-amber" />
+
+      <text x={210} y={44} className="ll-fig-label" style={{ fontWeight: 600 }}>three periods = three frequencies</text>
+      <g>
+        <line x1={210} y1={64} x2={234} y2={64} stroke="var(--ink)" strokeWidth="2.4" />
+        <text x={242} y={68} className="ll-fig-label" style={{ fontSize: 10 }}>hour hand — slow — coarse position</text>
+      </g>
+      <g>
+        <line x1={210} y1={86} x2={234} y2={86} stroke="var(--pine)" strokeWidth="1.8" />
+        <text x={242} y={90} className="ll-fig-label" style={{ fontSize: 10 }}>minute hand — medium</text>
+      </g>
+      <g>
+        <line x1={210} y1={108} x2={234} y2={108} stroke="var(--amber)" strokeWidth="1.2" />
+        <text x={242} y={112} className="ll-fig-label" style={{ fontSize: 10 }}>second hand — fast — fine position</text>
+      </g>
+      <text x={210} y={140} className="ll-fig-label" style={{ fontSize: 9 }}>every instant is a unique combination of the three</text>
+    </svg>
+  );
+}
+
+/** Music Transformer skewing: pad a zero column, reshape, slice. */
+function Skewing() {
+  const w = 520;
+  const cell = 15;
+  const L = 5;
+  const grid = (ox: number, cols: number, title: string, fill: (r: number, c: number) => number) => (
+    <g>
+      <text x={ox + (cols * cell) / 2} y={14} textAnchor="middle" className="ll-fig-label" style={{ fontWeight: 600 }}>{title}</text>
+      {Array.from({ length: L }, (_, r) =>
+        Array.from({ length: cols }, (_, c) => (
+          <rect
+            key={`${r}-${c}`}
+            x={ox + c * cell}
+            y={22 + r * cell}
+            width={cell - 1.5}
+            height={cell - 1.5}
+            rx="1.5"
+            fill={fill(r, c) === 1 ? "var(--pine)" : fill(r, c) === 2 ? "var(--amber)" : "none"}
+            opacity={fill(r, c) ? 0.5 : 1}
+            stroke="var(--rule)"
+            strokeWidth="0.75"
+          />
+        )),
+      )}
+    </g>
+  );
+  return (
+    <svg viewBox={`0 0 ${w} 118`} xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Skewing: a diagonal band of relative distances is padded, reshaped, and sliced into the query-key grid">
+      {grid(24, L, "QEᵀ (diagonal)", (r, c) => (c >= r ? 2 : 0))}
+      <path d="M118,64 l16,0 m-5,-4 l5,4 l-5,4" className="ll-fig-pine" fill="none" strokeWidth="1.3" />
+      {grid(150, L + 1, "pad + reshape", (r, c) => (c === 0 ? 1 : c - 1 >= r - 1 ? 2 : 0))}
+      <path d="M258,64 l16,0 m-5,-4 l5,4 l-5,4" className="ll-fig-pine" fill="none" strokeWidth="1.3" />
+      {grid(290, L, "slice → Sʳᵉˡ", () => 2)}
+      <text x={400} y={64} className="ll-fig-label" style={{ fontSize: 9 }}>no (L, L, D) tensor</text>
+      <text x={400} y={78} className="ll-fig-label" style={{ fontSize: 9 }}>O(L²D) → O(LD)</text>
+    </svg>
+  );
+}
+
+/** SATB voices: flattening (column by column) vs delay (staggered). */
+function VoiceSerialization() {
+  const w = 520;
+  const cell = 22;
+  const T = 5;
+  const voices = ["S", "A", "T", "B"];
+  const panel = (ox: number, title: string, val: (t: number, v: number) => string, note: string) => (
+    <g>
+      <text x={ox + (T * cell) / 2} y={14} textAnchor="middle" className="ll-fig-label" style={{ fontWeight: 600 }}>{title}</text>
+      {voices.map((vn, v) => (
+        <text key={vn} x={ox - 8} y={26 + v * cell + 14} textAnchor="end" className="ll-fig-label" style={{ fontSize: 9 }}>{vn}</text>
+      ))}
+      {voices.map((_, v) =>
+        Array.from({ length: T }, (_, t) => {
+          const s = val(t, v);
+          return (
+            <g key={`${t}-${v}`}>
+              <rect x={ox + t * cell} y={26 + v * cell} width={cell - 2} height={cell - 2} rx="2" fill={s === "∅" ? "none" : "var(--pine)"} opacity={s === "∅" ? 1 : 0.14} stroke="var(--rule)" strokeWidth="0.75" />
+              <text x={ox + t * cell + cell / 2 - 1} y={26 + v * cell + cell / 2 + 3} textAnchor="middle" className="ll-fig-label" style={{ fontSize: 8 }}>{s}</text>
+            </g>
+          );
+        }),
+      )}
+      <text x={ox + (T * cell) / 2} y={40 + voices.length * cell} textAnchor="middle" className="ll-fig-label" style={{ fontSize: 9 }}>{note}</text>
+    </g>
+  );
+  return (
+    <svg viewBox={`0 0 ${w} 150`} xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Flattening emits all four voices per timestep; delay shifts each voice one step later so each stays continuous">
+      {panel(40, "flattening", (t, v) => String(t * 4 + v + 1), "emit order, column by column")}
+      {panel(300, "delay", (t, v) => (t - v >= 0 ? String(t - v + 1) : "∅"), "each voice a continuous stream")}
+    </svg>
+  );
+}
+
+/** Anticipation: a control token spliced in delta seconds before it fires. */
+function AnticipationInterleave() {
+  const w = 520;
+  const y = 60;
+  const sk = 400;
+  const delta = 120;
+  return (
+    <svg viewBox={`0 0 ${w} 108`} xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A control token for time s_k is inserted delta seconds earlier, right after the first event at or past s_k minus delta">
+      <line x1={20} y1={y} x2={w - 16} y2={y} className="ll-fig-ink" strokeWidth="1.2" />
+      <path d={`M${w - 16},${y} l-8,-4 l0,8 z`} className="ll-fig-amber" />
+      {[60, 130, 200, 270, 330, 440].map((x, i) => (
+        <circle key={i} cx={x} cy={y} r={4} className="ll-fig-pine" />
+      ))}
+      <text x={40} y={y + 20} className="ll-fig-label" style={{ fontSize: 9 }}>events</text>
+
+      {/* fire time */}
+      <line x1={sk} y1={y - 22} x2={sk} y2={y + 8} stroke="var(--amber)" strokeWidth="1.3" strokeDasharray="3 2" />
+      <text x={sk} y={y - 26} textAnchor="middle" className="ll-fig-label" style={{ fontSize: 9 }}>sₖ (fires)</text>
+
+      {/* insertion point */}
+      <rect x={sk - delta - 10} y={y - 30} width={20} height={16} rx="3" fill="none" stroke="var(--amber)" strokeWidth="1.3" />
+      <text x={sk - delta} y={y - 18} textAnchor="middle" className="ll-fig-label" style={{ fontSize: 8 }}>uₖ</text>
+      <path d={`M${sk - delta},${y - 14} l0,10 m-3,-4 l3,4 l3,-4`} stroke="var(--amber)" fill="none" strokeWidth="1.2" />
+
+      <path d={`M${sk - 4},${y + 20} l${-delta + 8},0 m6,-4 l-6,4 l6,4`} stroke="var(--amber)" fill="none" strokeWidth="1.2" />
+      <text x={sk - delta / 2} y={y + 34} textAnchor="middle" className="ll-fig-label" style={{ fontSize: 9, fill: "var(--amber)" }}>anticipation interval δ</text>
+    </svg>
+  );
+}
+
+/** MIDI-like event vocab vs REMI's beat-aware vocab. */
+function RemiVsMidi() {
+  const w = 520;
+  const row = (y: number, left: string, right: string, changed: boolean) => (
+    <g>
+      <rect x={16} y={y} width={210} height={26} rx="5" fill="none" className="ll-fig-ink" strokeWidth="1.1" opacity="0.7" />
+      <text x={121} y={y + 17} textAnchor="middle" className="ll-fig-label" style={{ fontSize: 9.5 }}>{left}</text>
+      <path d={`M232,${y + 13} l24,0 m-6,-4 l6,4 l-6,4`} className="ll-fig-pine" fill="none" strokeWidth="1.2" />
+      <rect x={262} y={y} width={244} height={26} rx="5" fill={changed ? "var(--pine)" : "none"} opacity={changed ? 0.12 : 1} stroke={changed ? "var(--pine)" : "var(--ink)"} strokeWidth="1.1" />
+      <text x={384} y={y + 17} textAnchor="middle" className="ll-fig-label" style={{ fontSize: 9.5, fontWeight: changed ? 600 : 400 }}>{right}</text>
+    </g>
+  );
+  return (
+    <svg viewBox={`0 0 ${w} 196`} xmlns="http://www.w3.org/2000/svg" role="img" aria-label="REMI keeps Note-On, replaces Note-Off with Note Duration, Time-Shift with Bar plus Position, and adds Tempo and Chord events">
+      <text x={121} y={14} textAnchor="middle" className="ll-fig-label" style={{ fontWeight: 600, fill: "var(--amber)" }}>MIDI-LIKE</text>
+      <text x={384} y={14} textAnchor="middle" className="ll-fig-label" style={{ fontWeight: 600, fill: "var(--amber)" }}>REMI</text>
+      {row(22, "Note-On (0–127)", "Note-On (unchanged)", false)}
+      {row(56, "Note-Off (0–127)", "Note Duration (1–64 · 32nds)", true)}
+      {row(90, "Time-Shift (10–1000 ms)", "Bar + Position (k / 16)", true)}
+      {row(124, "—", "Tempo Class + Tempo Value", true)}
+      {row(158, "—", "Chord (12 roots × 5 qualities)", true)}
+    </svg>
+  );
+}
+
+/** The four music modalities and the MIR task on each link. */
+function ModalitySpectrum() {
+  const w = 520;
+  const mods = ["Score Image", "Notation", "MIDI", "Audio"];
+  const links = ["OMR", "perf. model", "AMT"];
+  const bw = 104;
+  const gap = (w - 24 - mods.length * bw) / (mods.length - 1);
+  return (
+    <svg viewBox={`0 0 ${w} 112`} xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Score image, notation, MIDI and audio in a row, with OMR, performance modelling and AMT labelling the links between them">
+      {mods.map((m, i) => {
+        const x = 12 + i * (bw + gap);
+        return (
+          <g key={m}>
+            <rect x={x} y={40} width={bw} height={30} rx="7" fill="none" className="ll-fig-ink" strokeWidth="1.3" />
+            <text x={x + bw / 2} y={59} textAnchor="middle" className="ll-fig-label" style={{ fontWeight: 600, fontSize: 10 }}>{m}</text>
+            {i < mods.length - 1 ? (
+              <g>
+                <path d={`M${x + bw + 4},55 l${gap - 8},0`} stroke="var(--amber)" fill="none" strokeWidth="1.3" />
+                <path d={`M${x + bw + gap - 4},55 l-6,-3 l0,6 z`} fill="var(--amber)" />
+                <path d={`M${x + bw + 4},55 l6,-3 l0,6 z`} fill="var(--amber)" />
+                <text x={x + bw + gap / 2} y={22} textAnchor="middle" className="ll-fig-label" style={{ fontSize: 8 }}>{links[i]}</text>
+              </g>
+            ) : null}
+          </g>
+        );
+      })}
+      <text x={w / 2} y={96} textAnchor="middle" className="ll-fig-label" style={{ fontSize: 9 }}>continuous on a modal spectrum · MIDI → Audio is synthesis</text>
+    </svg>
+  );
+}
+
+/** Score-image patches: row-major flattening vs vertical-first. */
+function VerticalFlatten() {
+  const w = 520;
+  const R = 4;
+  const C = 6;
+  const cell = 20;
+  const panel = (ox: number, title: string, order: (r: number, c: number) => number, note: string) => (
+    <g>
+      <text x={ox + (C * cell) / 2} y={14} textAnchor="middle" className="ll-fig-label" style={{ fontWeight: 600 }}>{title}</text>
+      {Array.from({ length: R }, (_, r) =>
+        Array.from({ length: C }, (_, c) => (
+          <g key={`${r}-${c}`}>
+            <rect x={ox + c * cell} y={22 + r * cell} width={cell - 2} height={cell - 2} rx="2" fill="var(--pine)" opacity={0.06 + 0.03 * order(r, c)} stroke="var(--rule)" strokeWidth="0.75" />
+            <text x={ox + c * cell + cell / 2 - 1} y={22 + r * cell + cell / 2 + 3} textAnchor="middle" className="ll-fig-label" style={{ fontSize: 8 }}>{order(r, c)}</text>
+          </g>
+        )),
+      )}
+      <text x={ox + (C * cell) / 2} y={38 + R * cell} textAnchor="middle" className="ll-fig-label" style={{ fontSize: 9 }}>{note}</text>
+    </g>
+  );
+  return (
+    <svg viewBox={`0 0 ${w} 140`} xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Row-major flattening reads left to right then down; vertical-first reads top to bottom then across, matching how a staff system is read">
+      {panel(40, "row-major", (r, c) => r * C + c + 1, "left → right, then down")}
+      {panel(320, "vertical-first", (r, c) => c * R + r + 1, "top → bottom, then across")}
+    </svg>
+  );
+}
+
+/** The two-direction unified translation model. */
+function UnifiedArch() {
+  const w = 520;
+  const lane = (oy: number, dir: string, src: string, tgt: string) => (
+    <g>
+      <text x={12} y={oy + 4} className="ll-fig-label" style={{ fontWeight: 600, fill: "var(--amber)" }}>{dir}</text>
+      {[
+        [40, src],
+        [130, "encoder"],
+        [222, "decoder"],
+        [314, "sub-decoder"],
+        [420, tgt],
+      ].map(([x, label], i) => (
+        <g key={i}>
+          <rect x={x as number} y={oy + 12} width={i === 3 ? 82 : 76} height={26} rx="6" fill="none" stroke={i === 3 ? "var(--pine)" : "var(--ink)"} strokeWidth="1.2" />
+          <text x={(x as number) + (i === 3 ? 41 : 38)} y={oy + 29} textAnchor="middle" className="ll-fig-label" style={{ fontSize: 9, fontWeight: 600 }}>{label as string}</text>
+        </g>
+      ))}
+      {[116, 208, 300, 406].map((x, i) => (
+        <path key={i} d={`M${x},${oy + 25} l${i === 3 ? 12 : 14},0 m-5,-4 l5,4 l-5,4`} className="ll-fig-pine" fill="none" strokeWidth="1.2" />
+      ))}
+    </g>
+  );
+  return (
+    <svg viewBox={`0 0 ${w} 130`} xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two identical encoder-decoder transformers: an image-to-audio direction and an audio-to-image direction, each with a sub-decoder for multi-codebook output">
+      {lane(14, "I2A", "image", "audio")}
+      {lane(74, "A2I", "audio", "image")}
+    </svg>
+  );
+}
+
+/** VidMusician: one video, a slow semantic stream and a fast rhythm stream,
+ *  injected into a frozen MusicGen at two different attention sites. */
+function V2mTwoBranch() {
+  const w = 560;
+  const box = (x: number, y: number, label: string, ww: number, hh = 30) => (
+    <g>
+      <rect x={x} y={y} width={ww} height={hh} rx="6" fill="none" className="ll-fig-ink" strokeWidth="1.2" />
+      <text x={x + ww / 2} y={y + hh / 2 + 3.5} textAnchor="middle" className="ll-fig-label" style={{ fontSize: 9, fontWeight: 600 }}>{label}</text>
+    </g>
+  );
+  const arr = (x: number, y: number, len: number) => (
+    <path d={`M${x},${y} l${len},0 m-5,-4 l5,4 l-5,4`} className="ll-fig-pine" fill="none" strokeWidth="1.3" />
+  );
+  return (
+    <svg viewBox={`0 0 ${w} 202`} xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Video splits into a 1 fps CLIP CLS stream through T5 plus LoRA that cross-attends into a frozen MusicGen, and a 25 fps CLIP patch stream turned into a 1 minus cosine similarity signal that enters via in-attention; MusicGen outputs audio">
+      {box(8, 82, "video", 52, 34)}
+
+      {/* split bus */}
+      <path d="M60,99 h13 M73,45 V153 M73,45 h15 M73,153 h15" className="ll-fig-pine" fill="none" strokeWidth="1.3" />
+
+      {/* semantic branch */}
+      <text x={90} y={20} className="ll-fig-label" style={{ fontSize: 8.5, fontWeight: 700, fill: "var(--amber)", letterSpacing: "0.08em" }}>SEMANTIC · SLOW</text>
+      {box(90, 30, "1 fps · CLIP [CLS]", 120)}
+      {arr(210, 45, 16)}
+      {box(228, 30, "T5 + LoRA", 78)}
+      {arr(306, 45, 66)}
+      <text x={339} y={40} textAnchor="middle" className="ll-fig-label" style={{ fontSize: 8, fill: "var(--amber)" }}>cross-attn</text>
+
+      {/* rhythm branch */}
+      {box(90, 138, "25 fps · CLIP patches", 120)}
+      {arr(210, 153, 16)}
+      {box(228, 138, "1 − cos sim", 78)}
+      {arr(306, 153, 66)}
+      <text x={339} y={172} textAnchor="middle" className="ll-fig-label" style={{ fontSize: 8, fill: "var(--amber)" }}>in-attn</text>
+      <text x={90} y={198} className="ll-fig-label" style={{ fontSize: 8.5, fontWeight: 700, fill: "var(--amber)", letterSpacing: "0.08em" }}>RHYTHM · FRAME-RATE</text>
+
+      {/* frozen backbone */}
+      <rect x={372} y={24} width={122} height={154} rx="8" fill="none" className="ll-fig-ink" strokeWidth="1.4" strokeDasharray="5 3" />
+      <text x={433} y={96} textAnchor="middle" className="ll-fig-label" style={{ fontSize: 11, fontWeight: 700 }}>MusicGen</text>
+      <text x={433} y={112} textAnchor="middle" className="ll-fig-label" style={{ fontSize: 8.5 }}>frozen</text>
+
+      {arr(496, 101, 12)}
+      {box(514, 84, "audio", 40, 34)}
+    </svg>
+  );
+}
+
+/** VeM: the three-level video parse, each level feeding the same latent music
+ *  diffusion model. */
+function V2mThreeLevels() {
+  const w = 540;
+  const row = (ry: number, tag: string, input: string, attr: string) => (
+    <g>
+      <text x={6} y={ry + 27} className="ll-fig-label" style={{ fontSize: 8, fontWeight: 700, fill: "var(--amber)", letterSpacing: "0.06em" }}>{tag}</text>
+      <rect x={70} y={ry + 5} width={196} height={34} rx="6" fill="none" className="ll-fig-ink" strokeWidth="1.2" />
+      <text x={168} y={ry + 26} textAnchor="middle" className="ll-fig-label" style={{ fontSize: 9, fontWeight: 600 }}>{input}</text>
+      <path d={`M266,${ry + 22} l16,0 m-5,-4 l5,4 l-5,4`} className="ll-fig-pine" fill="none" strokeWidth="1.3" />
+      <rect x={288} y={ry + 5} width={150} height={34} rx="6" fill="none" className="ll-fig-ink" strokeWidth="1.2" />
+      <text x={363} y={ry + 26} textAnchor="middle" className="ll-fig-label" style={{ fontSize: 9, fontWeight: 600 }}>{attr}</text>
+      <path d={`M438,${ry + 22} l14,0 m-5,-4 l5,4 l-5,4`} className="ll-fig-pine" fill="none" strokeWidth="1.3" />
+    </g>
+  );
+  return (
+    <svg viewBox={`0 0 ${w} 222`} xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Three parse levels feed one latent music diffusion model: global caption and emotion tags set theme and instrumentation, per-shot caption timing and MAViL set section and local mood, transition intersect beat sets accents on the cuts; the diffusion model outputs audio">
+      {row(16, "GLOBAL", "caption + emotion tags", "theme + instrumentation")}
+      {row(78, "STORYBOARD", "per-shot caption, timing, MAViL", "section + local mood")}
+      {row(140, "FRAME", "transition ∩ beat", "accents on the cuts")}
+
+      <rect x={452} y={21} width={80} height={162} rx="8" fill="none" className="ll-fig-ink" strokeWidth="1.4" />
+      <text x={492} y={102} textAnchor="middle" className="ll-fig-label" style={{ fontSize: 9.5, fontWeight: 700 }} transform="rotate(-90 492 102)">latent music diffusion</text>
+
+      <path d="M492,183 l0,14 m-4,-5 l4,5 l4,-5" className="ll-fig-pine" fill="none" strokeWidth="1.3" />
+      <rect x={462} y={197} width={60} height={22} rx="6" fill="none" className="ll-fig-ink" strokeWidth="1.2" />
+      <text x={492} y={211} textAnchor="middle" className="ll-fig-label" style={{ fontSize: 9, fontWeight: 600 }}>audio</text>
     </svg>
   );
 }

@@ -140,6 +140,18 @@ body {
   color: var(--pine);
   white-space: nowrap;
 }
+.ll-note-src {
+  font-family: var(--font-pix);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  color: var(--ink-50);
+  white-space: nowrap;
+  text-decoration: none;
+  border-bottom: 1px solid var(--amber);
+}
+.ll-note-src:hover {
+  color: var(--pine);
+}
 
 /* ---- course landing -------------------------------------------------- */
 
@@ -254,6 +266,114 @@ body {
   height: 100%;
   background: var(--pine);
   transition: width 0.3s;
+}
+
+/* ---- logs index + reading list -------------------------------------- */
+.ll-crumb-btn {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: inherit;
+  cursor: pointer;
+}
+.ll-crumb-btn:hover {
+  color: var(--pine);
+}
+.ll-log-back {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  margin: 0 0 20px;
+  font-family: var(--font-pix);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--ink-50);
+  cursor: pointer;
+}
+.ll-log-back:hover {
+  color: var(--pine);
+}
+.ll-logs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.ll-log-card {
+  width: 100%;
+  text-align: left;
+  appearance: none;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--card);
+  padding: 20px 22px;
+  cursor: pointer;
+  display: grid;
+  gap: 7px;
+  transition: border-color 0.16s, transform 0.16s;
+}
+.ll-log-card:hover {
+  border-color: var(--pine);
+  transform: translateY(-1px);
+}
+.ll-log-card__title {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.ll-log-card__title small {
+  font-family: var(--font-pix);
+  font-size: 8px;
+  color: var(--ink-38);
+  letter-spacing: 0.1em;
+  font-weight: 400;
+}
+.ll-log-card__sum {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-50);
+}
+.ll-readings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 20px;
+}
+.ll-reading {
+  border-left: 2px solid var(--rule);
+  padding-left: 14px;
+}
+.ll-reading__t {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+.ll-reading__t a {
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--amber);
+}
+.ll-reading__meta {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--ink-50);
+}
+.ll-reading__note {
+  margin: 7px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-70);
+  max-width: 68ch;
 }
 
 /* ---- reader ----------------------------------------------------------- */
