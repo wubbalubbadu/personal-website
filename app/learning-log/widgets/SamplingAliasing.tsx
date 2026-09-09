@@ -7,31 +7,20 @@ import { makeTone, resume, type ToneVoice } from "../audio/engine";
  * Sampling & aliasing. A continuous sine (pine) is sampled at f_s (amber dots).
  * Below Nyquist the dots trace a *different*, lower sine — the alias — which you
  * can also hear.
- *
- * ┌───────────────────────────────────────────────────────────────────┐
- * │  YOUR TURN — implement `aliasedFrequency` (see the TODO below).     │
- * │  It is the heart of the Nyquist story and ~4 lines. The widget      │
- * │  renders now, but the alias overlay + alias playback stay inert     │
- * │  until this returns the folded frequency.                          │
- * └───────────────────────────────────────────────────────────────────┘
  */
 
 /**
  * The frequency a listener actually perceives when a `trueHz` sine is sampled at
- * `fs`. Sampling replicates the spectrum every `fs`; anything above the Nyquist
- * frequency (fs / 2) folds back down into 0…fs/2.
+ * `fs`. Sampling replicates the spectrum every `fs`, so first reduce `trueHz`
+ * into 0…fs; anything that lands in the upper half (above the Nyquist frequency
+ * fs / 2) reflects back down into 0…fs/2.
  *
- * TODO(you): finish the fold.
- *   The line below already reduces trueHz into 0…fs (spectrum is fs-periodic).
- *   What's missing: if `m` landed in the upper half (m > fs / 2) it should
- *   *reflect* back down — replace it with `fs - m`. Then return `m`.
- * Example once done: aliasedFrequency(30000, 44100) === 14100
- *                    aliasedFrequency(400,   44100) === 400   (already below Nyquist)
+ *   aliasedFrequency(30000, 44100) === 14100   (folded)
+ *   aliasedFrequency(400,   44100) === 400     (already below Nyquist)
  */
 export function aliasedFrequency(trueHz: number, fs: number): number {
   const m = ((trueHz % fs) + fs) % fs;
-  // TODO(you): fold `m` down when it is above the Nyquist frequency (fs / 2)
-  return m;
+  return m > fs / 2 ? fs - m : m;
 }
 
 const W = 520;
@@ -119,9 +108,7 @@ export default function SamplingAliasing() {
       <p className="ll-widget__readout">
         {aliased
           ? `↯ ALIASED — ${trueHz} Hz is sampled as ${Math.round(alias)} Hz`
-          : trueHz > nyquist
-            ? `above Nyquist but aliasedFrequency() isn't folding yet — implement it`
-            : `clean — ${trueHz} Hz is below Nyquist (${nyquist} Hz)`}
+          : `clean — ${trueHz} Hz is at or below Nyquist (${nyquist} Hz)`}
       </p>
       <p className="ll-widget__note">
         Tones are shifted into a hearable octave for playback; the point is the pitch relationship, not the absolute frequency.

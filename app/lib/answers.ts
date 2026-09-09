@@ -36,16 +36,29 @@ export const GREETING: AnswerNode[] = [
   {
     kind: "rich",
     segments: [
-      { text: "Hi! I'm Haylie Wu. I'm a " },
-      { text: "software developer", intent: "experience" },
-      { text: " and a " },
-      { text: "flutist", intent: "flute" },
-      { text: ". I studied computer science at Northwestern, and I'm now doing a master's in flute at New England Conservatory while I keep " },
-      { text: "shipping software projects", intent: "projects" },
+      { text: "Hi, I'm Haylie. I'm a " },
+      { text: "software engineer", intent: "experience" },
+      { text: " with a background that combines computer science and high-level " },
+      { text: "music performance", intent: "flute" },
       { text: "." },
     ],
   },
-  { kind: "text", value: "Ask me anything, here are some starting points." },
+  {
+    kind: "text",
+    value:
+      "I've spent several years working in software across pretty different environments. At MathWorks, I worked in a large production codebase, where I shipped features and designed a parser-combinator system for structured Excel test data. I was also hired as a software engineer at Northwestern's Center for Connected Learning, where I worked on NetLogo Web and built developer- and user-facing tools, including a new CodeMirror-based editor. And at an early-stage startup, I was the lead backend engineer, so I had much broader ownership across the backend, deployment, performance, and onboarding. At Northwestern, I was also a research intern working on approximation algorithms for scheduling.",
+  },
+  {
+    kind: "rich",
+    segments: [
+      {
+        text: "After finishing undergrad at Northwestern University, I decided to spend two years training intensively in flute performance while studying music technology at New England Conservatory. It was a very intentional decision to take this window of my life to push my playing as far as I could. At the same time, I've continued building software, I'm still shipping projects, and I'm now ",
+      },
+      { text: "looking to return to software engineering full-time", intent: "looking-for" },
+      { text: "." },
+    ],
+  },
+  { kind: "text", value: "Ask me anything, or start with one of these." },
 ];
 
 /** Suggestion pills, grouped, shown at the root of the conversation. */

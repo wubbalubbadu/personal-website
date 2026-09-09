@@ -1,15 +1,27 @@
 import { musicTheoryUnit } from "./music-theory";
+import { jukeboxChapter } from "./jukebox";
+import { musicAudioGenUnit } from "./music-audio-generation";
+import { sunoLectureUnit } from "./suno-lecture";
+import { symbolicGenerationUnit } from "./symbolic-generation";
 import type { Course } from "./types";
 
 /**
  * Notes from CMU's deep-learning-for-music course, rebuilt as an interactive
- * guide. Three units so far:
+ * guide. Six units so far:
  *   1. Music Theory Fundamentals — the vocabulary (notes, scales, chords,
  *      rhythm, timbre) the rest of the course assumes. (Lecture 0.)
  *   2. Digital Audio — how a continuous pressure wave becomes an array, and how
  *      the Fourier family lets us see it as frequency over time.
  *   3. Latent Generation — why modern generative models work in a learned latent
- *      space instead of on raw pixels/samples, and what that costs.
+ *      space instead of on raw pixels/samples, what that costs, and Jukebox as
+ *      the worked example.
+ *   4. Music Audio Generation — the two families that actually make music audio:
+ *      latent diffusion (Stable Diffusion, then Stable Audio) and codec language
+ *      models (VQ-VAE, then MusicGen).
+ *   5. Suno — a guest lecture (course §3): a survey of why ML in music, how the
+ *      architectures evolved, and the reality of running a product at scale.
+ *   6. Symbolic Generation (course §4): language models and Bengio's 2003
+ *      neural LM.
  */
 export const aiMusic: Course = {
   id: "ai-music",
@@ -922,7 +934,12 @@ export const aiMusic: Course = {
             },
           ],
         },
+        jukeboxChapter,
       ],
     },
+
+    musicAudioGenUnit,
+    sunoLectureUnit,
+    symbolicGenerationUnit,
   ],
 };

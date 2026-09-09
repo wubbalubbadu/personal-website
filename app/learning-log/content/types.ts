@@ -51,7 +51,24 @@ export type FigureId =
   | "rate-distortion-triangle"
   | "melody-arc"
   | "bright-dark-axis"
-  | "song-layers";
+  | "song-layers"
+  | "vqvae-quantize"
+  | "jukebox-cascade-flow"
+  | "ldm-architecture"
+  | "diffusion-chain"
+  | "perceptual-vs-semantic"
+  | "timing-conditioning"
+  | "codec-vs-ldm"
+  | "straight-through-estimator"
+  | "vqvae2-hierarchy"
+  | "rvq-residual"
+  | "codebook-interleaving"
+  | "musicgen-arch"
+  | "gen-music-timeline"
+  | "musiclm-stages"
+  | "stable-audio-arch"
+  | "next-token-dist"
+  | "bengio-arch";
 
 /** Interactive demos in `widgets/`. */
 export type WidgetId =
@@ -65,7 +82,12 @@ export type WidgetId =
   | "waveform-timbre"
   | "adsr"
   | "chord-functions"
-  | "rhythm-grid";
+  | "rhythm-grid"
+  | "jukebox-cascade"
+  | "guidance-scale"
+  | "rtf-calc"
+  | "vq-quantize"
+  | "perplexity-lab";
 
 export type Slide = {
   id: string;

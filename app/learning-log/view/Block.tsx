@@ -16,6 +16,11 @@ import WaveformTimbre from "../widgets/WaveformTimbre";
 import Adsr from "../widgets/Adsr";
 import ChordFunctions from "../widgets/ChordFunctions";
 import RhythmGrid from "../widgets/RhythmGrid";
+import JukeboxCascade from "../widgets/JukeboxCascade";
+import GuidanceScale from "../widgets/GuidanceScale";
+import RtfCalc from "../widgets/RtfCalc";
+import VqQuantize from "../widgets/VqQuantize";
+import PerplexityLab from "../widgets/PerplexityLab";
 import type { WidgetId } from "../content/types";
 
 export function Blocks({ blocks }: { blocks: Block[] }) {
@@ -188,5 +193,15 @@ function Widget({ id }: { id: WidgetId }) {
       return <ChordFunctions />;
     case "rhythm-grid":
       return <RhythmGrid />;
+    case "jukebox-cascade":
+      return <JukeboxCascade />;
+    case "guidance-scale":
+      return <GuidanceScale />;
+    case "rtf-calc":
+      return <RtfCalc />;
+    case "vq-quantize":
+      return <VqQuantize />;
+    case "perplexity-lab":
+      return <PerplexityLab />;
   }
 }
