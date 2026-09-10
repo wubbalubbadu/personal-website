@@ -19,8 +19,8 @@ export default function StudioHome(){
   return <main className="studio-shell">
     <section className="studio-main">
       <div className="home-content">
-        <DailyDiscovery/>
         <HomeQuickTools/>
+        <DailyDiscovery/>
         <section className="studio-hero"><PracticeActivityHero/></section>
         <div className="home-layout"><div className="studio-left">
           <section className="home-section recent-section"><header><h2><a href="/flute-studio/music">{t.home.continuePracticing} <span aria-hidden="true">›</span></a></h2></header><div className="home-music-list"><MusicRow item={mystery} saved={favorites.includes(mystery.id)} onToggleSave={toggleMysteryFavorite} detail={t.home.mysteryDetail}/></div></section>

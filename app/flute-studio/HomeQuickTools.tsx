@@ -4,8 +4,9 @@ import {useLanguage} from "./i18n/LanguageContext";
 import "./home-quick-tools.css";
 
 export default function HomeQuickTools(){
-  const {t}=useLanguage();
+  const {t,lang}=useLanguage();
   const quickItems = [
+    {kind:"link",href:"/flute-studio/embouchure",icon:"◌",title:lang==="zh"?"身体与吹口":"Body & embouchure",detail:lang==="zh"?"探索模型":"Explore the model",tone:"mist"},
     {kind:"tool",id:"tuner",icon:"⌁",title:t.quickTools.tuner,detail:t.quickTools.tunerDetail,tone:"green"},
     {kind:"tool",id:"metronome",icon:"♩",title:t.quickTools.metronome,detail:t.quickTools.metronomeDetail,tone:"sand"},
     {kind:"tool",id:"drone",icon:"◉",title:t.quickTools.drone,detail:t.quickTools.droneDetail,tone:"pink"},
@@ -21,7 +22,7 @@ export default function HomeQuickTools(){
   }
 
   return <section className="home-quick-tools" aria-labelledby="quick-tools-title">
-    <header><h2 id="quick-tools-title">{t.quickTools.title}</h2></header>
+    <header><h2 id="quick-tools-title">{lang==="zh"?"工具与资源":"Tools & resources"}</h2></header>
     <div className="quick-tool-grid">
       {quickItems.map((item,index)=>item.kind==="link"?
         <a key={item.href} className={`quick-tool ${item.tone}`} href={item.href} target={item.href.startsWith("http")?"_blank":undefined} rel={item.href.startsWith("http")?"noreferrer":undefined}>
