@@ -206,7 +206,20 @@ export const INTENTS: Record<string, Intent> = {
       {
         kind: "text",
         value:
-          "I'm doing my master's in flute performance and music technology at New England Conservatory on a full scholarship, and I'm deep in the young-artist competition circuit. The last couple of years brought a prize at the Pappoutsakis Competition, a spot at the National Flute Association convention, and a summer at the Atlantic Music Festival. There's some playing on the right.",
+          "I'm doing my master's in flute performance at New England Conservatory on a scholarship, and I'm deep in the young-artist competition circuit.",
+      },
+      {
+        kind: "rich",
+        segments: [
+          { text: "There's competition footage and a few clips on the right, plus my " },
+          { text: "music résumé", href: "/haylie-wu-music-resume.pdf" },
+          { text: "." },
+        ],
+      },
+      {
+        kind: "text",
+        value:
+          "Away from competitions, I've built an audience for classical music online. Around 240k followers across TikTok, Douyin, WeChat Channels, and RedNote, with 10M+ likes on the short-form videos. Most of it is repertoire I arrange and produce my own accompaniment tracks for. I'm passionate about making classical music feel approachable to people who don't already listen to it.",
       },
     ],
     canvas: { kind: "flute" },
