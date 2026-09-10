@@ -1,0 +1,38 @@
+.workbench__surface {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+.workbench__viewport {
+  position: relative;
+  min-width: 0;
+}
+
+.workbench__panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 26px;
+  border-left: 1px solid var(--border);
+  font-size: var(--text-meta);
+}
+
+.workbench__scrubber {
+  padding: 22px 4px 0;
+}
+
+@media (max-width: 760px) {
+  .workbench__surface {
+    grid-template-columns: 1fr;
+  }
+  .workbench__panel {
+    border-left: 0;
+    border-top: 1px solid var(--border);
+    padding: 22px;
+  }
+}

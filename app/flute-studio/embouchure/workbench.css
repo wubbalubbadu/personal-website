@@ -1,1 +1,131 @@
-.emb-workbench{max-width:1260px;margin:0 auto;padding:34px 28px 110px;color:#243640;font-family:Arial,sans-serif}.emb-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}.emb-heading a{font-size:14px;color:#466775}.emb-heading h1{font-size:32px;font-weight:500;letter-spacing:-1px;margin:9px 0}.emb-heading>span{font-size:14px;color:#687980}.emb-surface{display:grid;grid-template-columns:minmax(0,1fr) 280px;background:#f1f5f6;border:1px solid #d8e2e5;border-radius:18px;overflow:hidden}.emb-model{position:relative;min-width:0}.emb-canvas{height:510px;touch-action:none}.emb-canvas canvas{display:block}.emb-model-top{position:absolute;left:24px;right:24px;top:20px;display:flex;justify-content:space-between;align-items:center;font-size:14px}.emb-workbench button{cursor:pointer;background:#fff;border:1px solid #cbd8dd;padding:9px 13px;border-radius:8px;color:#29434e;font-size:14px}.emb-workbench button:hover{background:#e4eef1}.emb-workbench button:focus-visible,.emb-workbench input:focus-visible{outline:3px solid #39829b;outline-offset:3px}.emb-key{display:flex;gap:20px;position:absolute;left:24px;bottom:49px;font-size:14px}.emb-key span{display:flex;align-items:center;gap:7px}.emb-key i{width:10px;height:10px;border-radius:50%}.emb-gesture{position:absolute;left:24px;bottom:10px;font-size:13px;color:#6f8087}.emb-detail{background:#fff;padding:28px;display:flex;flex-direction:column;align-items:flex-start;border-left:1px solid #d8e2e5;font-size:14px;gap:12px}.emb-note{font-size:64px;line-height:1;font-weight:500;letter-spacing:-3px}.emb-detail p{margin:0;line-height:1.6}.emb-cue{border-top:1px solid #dce5e8;padding-top:16px;margin-top:4px}.emb-cue h2{font-size:24px;font-weight:500;margin:0 0 9px}.emb-temperature{color:#477884}.emb-detail label{display:flex;align-items:center;gap:8px;margin-top:8px}.emb-detail .emb-play{background:#285e72;color:#fff;border-color:#285e72;width:100%}.emb-range{padding:24px 0}.emb-range-heading{display:flex;justify-content:space-between;margin-bottom:16px;font-size:16px}.emb-range-heading span{font-size:14px;color:#657a84}.emb-range input[type=range]{width:100%;accent-color:#285e72}.emb-notes{display:flex;gap:5px;flex-wrap:wrap;margin-top:16px}.emb-notes button{min-width:48px;padding:9px 7px}.emb-notes .selected{background:#285e72;color:#fff}.emb-notes .pivot{border-bottom:3px solid #b85868}.emb-footnote{font-size:14px;line-height:1.6;max-width:780px;color:#617780}.emb-workbench input{accent-color:#285e72}@media(max-width:760px){.emb-workbench{padding:22px 14px 100px}.emb-heading{align-items:flex-start;gap:12px}.emb-heading h1{font-size:26px}.emb-heading>span{max-width:95px}.emb-surface{grid-template-columns:1fr}.emb-canvas{height:380px}.emb-detail{border-left:0;border-top:1px solid #d8e2e5;padding:22px}.emb-note{font-size:48px}.emb-key{gap:12px;left:15px;font-size:12px}.emb-range-heading{gap:20px}.emb-range-heading span{max-width:140px}.emb-gesture{left:15px;font-size:12px}}
+/* Simulation — inner content only. The page header is <StudioPage>; the
+   viewport / panel / scrubber frame is <Workbench>. These rules style what
+   lives inside those regions, on tokens, no !important. */
+
+.emb button {
+  cursor: pointer;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  padding: 9px 13px;
+  border-radius: var(--r-sm);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-meta);
+}
+.emb button:hover {
+  background: var(--surface-hover);
+}
+.emb button:focus-visible,
+.emb input:focus-visible {
+  outline: 3px solid rgba(103, 137, 86, 0.4);
+  outline-offset: 3px;
+}
+.emb input {
+  accent-color: var(--accent);
+}
+
+.emb-canvas {
+  height: 510px;
+  touch-action: none;
+}
+.emb-canvas canvas {
+  display: block;
+}
+
+.emb-viewport-top {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  top: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+.emb-alert {
+  position: absolute;
+  left: 24px;
+  bottom: 20px;
+  margin: 0;
+  color: #b3261e;
+  font-size: var(--text-meta);
+}
+
+.emb-note {
+  font-size: 60px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -3px;
+}
+.emb-cue {
+  align-self: stretch;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  margin-top: 4px;
+}
+.emb-cue span {
+  color: var(--ink-muted);
+}
+.emb-cue h2 {
+  margin: 6px 0 0;
+  font-size: var(--text-section);
+  font-weight: 600;
+}
+.emb-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+.emb-play {
+  align-self: stretch;
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.emb-play:hover {
+  background: var(--accent-ink);
+}
+.emb-secondary {
+  align-self: stretch;
+}
+
+.emb-range-heading {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  font-size: var(--text-row-title);
+}
+.emb-range-heading span {
+  color: var(--ink-muted);
+  font-size: var(--text-meta);
+}
+.emb-range input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+.emb-notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 16px;
+}
+.emb-notes button {
+  min-width: 46px;
+  padding: 9px 7px;
+}
+.emb-notes .selected {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.emb-notes .pivot {
+  border-bottom: 3px solid #b85868;
+}
+
+@media (max-width: 760px) {
+  .emb-canvas {
+    height: 380px;
+  }
+  .emb-note {
+    font-size: 46px;
+  }
+}

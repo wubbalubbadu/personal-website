@@ -5,6 +5,8 @@ import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFExporter} from 'three/addons/exporters/GLTFExporter.js';
 import {createModel} from './model';
 import {MIN_NOTE,MAX_NOTE,noteName} from './poses';
+import StudioPage from '../components/StudioPage';
+import Workbench from '../components/Workbench';
 import './workbench.css';
 import StaffNote from './StaffNote';
 
@@ -34,11 +36,34 @@ export default function EmbouchurePage(){
    return()=>{cancelAnimationFrame(frame);resize.disconnect();controls.dispose();scene.traverse(o=>{if(o instanceof THREE.Mesh){o.geometry.dispose();const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach(m=>m.dispose());}});renderer.dispose();renderer.domElement.remove();};
  },[]);
  const choose=(n:number)=>{setPlaying(false);setNote(n);};
- return <main className="emb-workbench">
-  <header className="emb-heading"><div><a href="/flute-studio">Tools</a><h1>Embouchure</h1></div></header>
-  <div className="emb-surface"><section className="emb-model"><div ref={host} className="emb-canvas"/>{error&&<p role="alert">{error}</p>}<div className="emb-model-top"><button onClick={()=>reset.current()}>Reset view</button></div></section>
-  <aside className="emb-detail"><strong className="emb-note">{noteName(note)}</strong><StaffNote midi={note}/><div className="emb-cue"><span>Vowel</span><h2>{note<76?'Ah / oh':note<88?'Eh → ee':'Ee'}</h2></div><label><input type="checkbox" checked={showAir} onChange={e=>setShowAir(e.target.checked)}/> Airflow</label><button className="emb-play" onClick={()=>{if(playing){setPlaying(false);}else{direction.current=1;setNote(MIN_NOTE);setPlaying(true);}}}>{playing?'Pause':'Play scale'}</button><button onClick={()=>exportModel.current()}>Download model</button></aside></div>
-  <section className="emb-range" aria-label="Flute note selection"><div className="emb-range-heading"><label htmlFor="emb-note-range">Note</label><span>B3–D7</span></div><input id="emb-note-range" type="range" min={MIN_NOTE} max={MAX_NOTE} value={note} aria-valuetext={noteName(note)} onChange={e=>choose(Number(e.target.value))}/><div className="emb-notes">{Array.from({length:MAX_NOTE-MIN_NOTE+1},(_,i)=>i+MIN_NOTE).map(n=><button key={n} className={`${n===note?'selected ':''}${n===76||n===88?'pivot':''}`} aria-pressed={n===note} onClick={()=>choose(n)}>{noteName(n)}</button>)}</div></section>
-
- </main>;
+ return <StudioPage
+  title="Simulation"
+  eyebrow="Body & sound"
+  intro="A side cutaway of the lips, jaw, tongue, and air stream, and how they shift as the pitch climbs. Drag to look around. Authored as a teaching aid, not a physiological model."
+  backHref="/flute-studio"
+  width="wide"
+ >
+  <div className="emb">
+   <Workbench
+    viewport={<>
+     <div ref={host} className="emb-canvas"/>
+     {error&&<p role="alert" className="emb-alert">{error}</p>}
+     <div className="emb-viewport-top"><button type="button" onClick={()=>reset.current()}>Reset view</button></div>
+    </>}
+    panel={<>
+     <strong className="emb-note">{noteName(note)}</strong>
+     <StaffNote midi={note}/>
+     <div className="emb-cue"><span>Vowel</span><h2>{note<76?'Ah / oh':note<88?'Eh → ee':'Ee'}</h2></div>
+     <label className="emb-check"><input type="checkbox" checked={showAir} onChange={e=>setShowAir(e.target.checked)}/> Airflow</label>
+     <button type="button" className="emb-play" onClick={()=>{if(playing){setPlaying(false);}else{direction.current=1;setNote(MIN_NOTE);setPlaying(true);}}}>{playing?'Pause':'Play scale'}</button>
+     <button type="button" className="emb-secondary" onClick={()=>exportModel.current()}>Download model</button>
+    </>}
+    scrubber={<section className="emb-range" aria-label="Flute note selection">
+     <div className="emb-range-heading"><label htmlFor="emb-note-range">Note</label><span>B3–D7</span></div>
+     <input id="emb-note-range" type="range" min={MIN_NOTE} max={MAX_NOTE} value={note} aria-valuetext={noteName(note)} onChange={e=>choose(Number(e.target.value))}/>
+     <div className="emb-notes">{Array.from({length:MAX_NOTE-MIN_NOTE+1},(_,i)=>i+MIN_NOTE).map(n=><button type="button" key={n} className={`${n===note?'selected ':''}${n===76||n===88?'pivot':''}`} aria-pressed={n===note} onClick={()=>choose(n)}>{noteName(n)}</button>)}</div>
+    </section>}
+   />
+  </div>
+ </StudioPage>;
 }

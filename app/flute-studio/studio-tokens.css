@@ -1,0 +1,69 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   The studio's visual language, in one place.
+
+   Restyling later = editing these values, not hunting selectors across 25 files.
+   Scoped to .studio-route (the wrapper in flute-studio/layout.tsx) so nothing
+   leaks to the main site. New components read these vars instead of hardcoding
+   hexes; old pages get migrated onto them whenever they're next touched.
+
+   Values here are the CURRENT look, extracted — not a new design.
+   ───────────────────────────────────────────────────────────────────────────── */
+.studio-route {
+  /* type */
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  --text-page-title: 42px;
+  --text-section: 24px;
+  --text-row-title: 16px;
+  --text-body: 15px;
+  --text-meta: 14px;
+  --text-eyebrow: 12px;
+
+  /* ink */
+  --ink: #292a33;
+  --ink-muted: #72747c;
+  --ink-faint: #98999f;
+
+  /* ground + surfaces */
+  --ground: #f5f5f7;
+  --surface: #ffffff;
+  --surface-hover: #f4f7f2;
+  --border: #e4e4e7;
+  --border-strong: #d9d9dd;
+
+  /* accent — sage green */
+  --accent: #678956;
+  --accent-ink: #46633d;
+  --accent-tint: #e5ece1;
+
+  /* icon tones */
+  --tone-sage-bg: #dcebd9;   --tone-sage-ink: #3f5d39;
+  --tone-pink-bg: #f7e1f8;   --tone-pink-ink: #68466b;
+  --tone-slate-bg: #e6e8eb;  --tone-slate-ink: #4f5962;
+  --tone-sand-bg: #f1e7d6;   --tone-sand-ink: #6b5a3a;
+
+  /* geometry — ONE radius scale. Don't introduce values outside it. */
+  --r-sm: 8px;    /* inputs, tight controls */
+  --r-md: 12px;   /* buttons, chips, icon tiles */
+  --r-lg: 16px;   /* cards, lists, panels */
+  --r-pill: 999px;/* only true pills */
+
+  --radius-card: var(--r-lg);
+  --radius-icon: var(--r-md);
+  --radius-pill: var(--r-pill);
+  --shadow-card: 0 1px 0 rgba(0, 0, 0, .05);
+
+  /* rhythm */
+  --gap: 16px;
+  --page-pad: 28px;
+  --content-width: 1120px;
+  --content-width-narrow: 980px;
+  --row-inset: 18px;
+}
+
+@media (max-width: 760px) {
+  .studio-route {
+    --text-page-title: 36px;
+    --page-pad: 16px;
+    --row-inset: 14px;
+  }
+}

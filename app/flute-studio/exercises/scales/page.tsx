@@ -1,6 +1,6 @@
 "use client";
 
-import {ScoreViewer,type ScoreViewerConfig} from "../../music/mystery-of-love/page";
+import {ScoreViewer,type ScoreViewerConfig} from "../../components/ScoreViewer";
 
 const cMajor=["C4","D4","E4","F4","G4","A4","B4","C5","D5","E5","F5","G5","A5","B5","C6","B5","A5","G5","F5","E5","D5","C5","B4","A4","G4","F4","E4","D4","C4"];
 const gMajor=["G4","A4","B4","C5","D5","E5","F♯5","G5","A5","B5","C6","D6","E6","F♯6","G6","F♯6","E6","D6","C6","B5","A5","G5","F♯5","E5","D5","C5","B4","A4","G4"];

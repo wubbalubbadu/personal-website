@@ -1,88 +1,68 @@
 "use client";
 
-import {useLanguage} from "../i18n/LanguageContext";
-import "./exercises.css";
+import { useLanguage } from "../i18n/LanguageContext";
+import StudioPage from "../components/StudioPage";
+import { ResourceList, ResourceRow } from "../components/ResourceList";
 
-type Exercise={
-  title:string;
-  description:string;
-  detail:string;
-  icon:string;
-  tone:"cactus"|"pink"|"slate";
-  href?:string;
-  action:string;
-};
+export default function ExercisesHub() {
+  const { t } = useLanguage();
 
-function ExerciseContent({exercise}:{exercise:Exercise}){
-  return <>
-    <span className={`exercise-hub__icon exercise-hub__icon--${exercise.tone}`} aria-hidden="true">{exercise.icon}</span>
-    <span className="exercise-hub__copy">
-      <strong>{exercise.title}</strong>
-      <span>{exercise.description}</span>
-      <small>{exercise.detail}</small>
-    </span>
-    <span className={exercise.href?"exercise-hub__action":"exercise-hub__action exercise-hub__action--muted"}>{exercise.action}</span>
-  </>;
-}
-
-export default function ExercisesHub(){
-  const {t}=useLanguage();
-  const exercises:readonly Exercise[]=[
+  const exercises = [
     {
-      title:t.exercises.scaleStudioTitle,
-      description:t.exercises.scaleStudioDescription,
-      detail:t.exercises.scaleStudioDetail,
-      icon:"◎",
-      tone:"cactus",
-      href:"/flute-studio/exercises/scales",
-      action:"›",
+      title: t.exercises.scaleStudioTitle,
+      desc: t.exercises.scaleStudioDescription,
+      meta: t.exercises.scaleStudioDetail,
+      icon: "◎",
+      tone: "sage" as const,
+      href: "/flute-studio/exercises/scales",
     },
     {
-      title:t.exercises.longToneTitle,
-      description:t.exercises.longToneDescription,
-      detail:t.exercises.longToneDetail,
-      icon:"◌",
-      tone:"pink",
-      action:t.exercises.comingSoon,
+      title: t.exercises.longToneTitle,
+      desc: t.exercises.longToneDescription,
+      meta: t.exercises.longToneDetail,
+      icon: "◌",
+      tone: "pink" as const,
     },
     {
-      title:t.exercises.chromaticTitle,
-      description:t.exercises.chromaticDescription,
-      detail:t.exercises.chromaticDetail,
-      icon:"♩",
-      tone:"slate",
-      action:t.exercises.comingSoon,
+      title: t.exercises.chromaticTitle,
+      desc: t.exercises.chromaticDescription,
+      meta: t.exercises.chromaticDetail,
+      icon: "♩",
+      tone: "slate" as const,
     },
   ];
 
-  return <main className="exercise-hub">
-      <div className="exercise-hub__content">
-        <header className="exercise-hub__header">
-          <p>{t.exercises.eyebrow}</p>
-          <div>
-            <h1>{t.exercises.title}</h1>
-          </div>
-          <p className="exercise-hub__intro">{t.exercises.intro}</p>
-        </header>
-
-        <section className="exercise-hub__section" aria-labelledby="exercise-focus-title">
-          <div className="exercise-hub__section-heading">
-            <div>
-              <h2 id="exercise-focus-title">{t.exercises.chooseFocus}</h2>
-              <p>{t.exercises.chooseFocusDetail}</p>
-            </div>
-          </div>
-          <div className="exercise-hub__list">
-            {exercises.map(exercise=>exercise.href?
-              <a className="exercise-hub__row exercise-hub__row--available" href={exercise.href} key={exercise.title}>
-                <ExerciseContent exercise={exercise}/>
-              </a>:
-              <article className="exercise-hub__row" key={exercise.title}>
-                <ExerciseContent exercise={exercise}/>
-              </article>
-            )}
-          </div>
-        </section>
-      </div>
-    </main>;
+  return (
+    <StudioPage
+      title={t.exercises.title}
+      eyebrow={t.exercises.eyebrow}
+      intro={t.exercises.intro}
+      backHref="/flute-studio"
+    >
+      <ResourceList
+        heading={
+          <>
+            <h2>{t.exercises.chooseFocus}</h2>
+            <p>{t.exercises.chooseFocusDetail}</p>
+          </>
+        }
+      >
+        {exercises.map((exercise) => (
+          <ResourceRow
+            key={exercise.title}
+            title={exercise.title}
+            desc={exercise.desc}
+            meta={exercise.meta}
+            icon={exercise.icon}
+            tone={exercise.tone}
+            href={exercise.href}
+            disabled={!exercise.href}
+            trailing={
+              exercise.href ? undefined : <span className="resource-chip">{t.exercises.comingSoon}</span>
+            }
+          />
+        ))}
+      </ResourceList>
+    </StudioPage>
+  );
 }
