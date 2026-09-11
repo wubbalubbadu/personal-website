@@ -24,6 +24,16 @@ export default function EmbouchurePage(){
    const scene=new THREE.Scene();scene.add(new THREE.HemisphereLight('#ffffff','#8d7477',2.5));const light=new THREE.DirectionalLight('#fff8ec',3);light.position.set(-2,4,7);scene.add(light);
    const camera=new THREE.PerspectiveCamera(34,1,.1,100);camera.position.set(-.5,.0,8.8);
    const controls=new OrbitControls(camera,renderer.domElement);controls.target.set(-.55,-.1,0);controls.enablePan=false;controls.minDistance=5;controls.maxDistance=12;controls.minAzimuthAngle=-.4;controls.maxAzimuthAngle=.4;controls.minPolarAngle=1.2;controls.maxPolarAngle=1.9;controls.enableDamping=true;
+   controls.enabled=false;
+   renderer.domElement.style.touchAction='pan-y';
+   container.tabIndex=0;
+   const activate=(active:boolean)=>{controls.enabled=active;renderer.domElement.style.touchAction=active?'none':'pan-y';container.dataset.active=String(active);};
+   const pointer=(event:PointerEvent)=>{activate(container.contains(event.target as Node));};
+   const focus=(event:FocusEvent)=>activate(container.contains(event.target as Node));
+   const escape=(event:KeyboardEvent)=>{if(event.key==='Escape'){activate(false);container.blur();}};
+   document.addEventListener('pointerdown',pointer,true);
+   document.addEventListener('focusin',focus);
+   document.addEventListener('keydown',escape);
    reset.current=()=>{camera.position.set(-.5,0,8.8);controls.target.set(-.55,-.1,0);controls.update();};
    const model=createModel();scene.add(model.root);
    exportModel.current=()=>{const exported=model.root.clone(true);exported.traverse(object=>{if(object instanceof THREE.Mesh && object.material instanceof THREE.ShaderMaterial){object.material=new THREE.MeshBasicMaterial({color:object.material.uniforms.color.value,transparent:true,opacity:.35,side:THREE.DoubleSide});}});new GLTFExporter().parse(exported,result=>{const blob=new Blob([result as ArrayBuffer],{type:'model/gltf-binary'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='cookie-embouchure.glb';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);},()=>setError('The model could not be exported. Please try again.'),{binary:true,onlyVisible:true});};
@@ -33,7 +43,7 @@ export default function EmbouchurePage(){
    function tick(now:number){const dt=Math.min((now-last)/1000,.05);last=now;if(animate.current){scaleTime+=dt;if(scaleTime>.55){scaleTime=0;setNote(n=>{if(n>=MAX_NOTE)direction.current=-1;if(n<=MIN_NOTE&&direction.current<0){animate.current=false;setPlaying(false);return MIN_NOTE;}return n+direction.current;});}}else scaleTime=0;
      current=reduced?target.current:THREE.MathUtils.damp(current,target.current,8,dt);model.update(current,reduced?0:now/1000,air.current);controls.update();renderer.render(scene,camera);frame=requestAnimationFrame(tick);
    }frame=requestAnimationFrame(tick);
-   return()=>{cancelAnimationFrame(frame);resize.disconnect();controls.dispose();scene.traverse(o=>{if(o instanceof THREE.Mesh){o.geometry.dispose();const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach(m=>m.dispose());}});renderer.dispose();renderer.domElement.remove();};
+   return()=>{document.removeEventListener('pointerdown',pointer,true);document.removeEventListener('focusin',focus);document.removeEventListener('keydown',escape);cancelAnimationFrame(frame);resize.disconnect();controls.dispose();scene.traverse(o=>{if(o instanceof THREE.Mesh){o.geometry.dispose();const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach(m=>m.dispose());}});renderer.dispose();renderer.domElement.remove();};
  },[]);
  const choose=(n:number)=>{setPlaying(false);setNote(n);};
  return <StudioPage

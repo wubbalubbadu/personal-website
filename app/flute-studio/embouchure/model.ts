@@ -24,8 +24,8 @@ export function createModel() {
     const skin=new THREE.Color('#d5aaa0'), rose=new THREE.Color('#be8c89');
     for(let i=0;i<base.length;i+=3){
       const x=base[i],y=base[i+1],front=THREE.MathUtils.smoothstep(x,-.35,.55);
-      if(lowerPart){const contact=THREE.MathUtils.smoothstep(x,-.1,.17)*(1-THREE.MathUtils.smoothstep(y,-.19,-.08));target[i]+=.23*front*(1-contact);target[i+1]+=(.16*(1-front)+.035*front)*(1-contact);}
-      else {target[i]+=.06*front;target[i+1]-=.045*front; if(x < -2.1 && y < .3)target[i]+=.13;}
+      if(lowerPart){const contact=THREE.MathUtils.smoothstep(x,-.1,.17)*(1-THREE.MathUtils.smoothstep(y,-.19,-.08));target[i]=Math.min(.833,x+(.08*(1-front)+.18*front)*(1-contact));target[i+1]+=(.30*(1-front)+.06*front)*(1-contact)-.025*contact;if(target[i]>.44)target[i+1]=Math.max(-.225,target[i+1]);}
+      else {target[i]+=.06*front;target[i+1]-=.015*front; if(x < -2.1 && y < .3)target[i]+=.13;}
       const c=skin.clone().lerp(rose,front*.85);colors.push(c.r,c.g,c.b);
     }
     mesh.geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
@@ -48,40 +48,48 @@ export function createModel() {
   const ring = new THREE.Shape();const start=2.16,end=Math.PI*2+.98;
   ring.absarc(0,0,.59,start,end,false);ring.absarc(0,0,.51,end,start,true);ring.closePath();
   const tube = new THREE.Mesh(new THREE.ExtrudeGeometry(ring,{depth:.46,bevelEnabled:true,bevelSize:.012,bevelThickness:.012,bevelSegments:2,curveSegments:64}),silver);tube.name='Tube wall and embouchure opening';flute.add(tube);
-  const plate=slab('Lip plate contact',[[-.13,-.46],[-.02,-.36],[.18,-.28],[.42,-.27],[.42,-.33],[.17,-.35],[-.03,-.43],[-.13,-.51],[-.13,-.46]],silver,.47);
-  const blowingEdge=slab('Blowing edge',[[1.04,-.285],[1.1,-.24],[1.34,-.26],[1.34,-.33],[1.12,-.32],[1.04,-.35],[1.04,-.285]],silver,.47);
+  const plate=slab('Lip plate contact',[[.12,-.34],[.25,-.285],[.42,-.27],[.42,-.33],[.27,-.35],[.12,-.39],[.12,-.34]],silver,.47);
+  const blowingEdge=slab('Blowing edge',[[1.04,-.285],[1.10,-.265],[1.16,-.29],[1.15,-.34],[1.09,-.36],[1.04,-.35],[1.04,-.285]],silver,.47);
   const instrument=new THREE.Group();instrument.name='Headjoint';instrument.position.set(.42,-.27,0);root.add(instrument);instrument.attach(flute);instrument.attach(plate);instrument.attach(blowingEdge);
   const air = new THREE.Group();air.name='Airflow';root.add(air);
   const warm=new THREE.Color('#e6a15c'),cool=new THREE.Color('#4e9fe2');
   const flowMaterial=new THREE.ShaderMaterial({transparent:true,depthWrite:false,side:THREE.DoubleSide,
     uniforms:{color:{value:warm.clone()},phase:{value:0},strength:{value:.48}},
     vertexShader:`varying vec2 flowUv;void main(){flowUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
-    fragmentShader:`uniform vec3 color;uniform float phase;uniform float strength;varying vec2 flowUv;void main(){float edge=pow(sin(flowUv.y*3.14159265),.65);float band=.76+.24*sin(flowUv.x*38.-phase*6.2831853);gl_FragColor=vec4(color,edge*band*strength);
+    fragmentShader:`uniform vec3 color;uniform float phase;uniform float strength;varying vec2 flowUv;void main(){float edge=pow(max(0.,sin(flowUv.y*3.14159265)),.65);float band=.52+.48*pow(.5+.5*sin(flowUv.x*38.-phase*6.2831853),2.);gl_FragColor=vec4(color,edge*band*strength);
 #include <colorspace_fragment>
 }`});
   function ribbon(name:string){const geo=new THREE.BufferGeometry();const positions=new Float32Array(81*2*3),uv=new Float32Array(81*2*2),indices=[];for(let i=0;i<=80;i++){uv.set([i/80,0,i/80,1],i*4);if(i<80){const j=i*2;indices.push(j,j+1,j+2,j+1,j+3,j+2);}}geo.setAttribute('position',new THREE.BufferAttribute(positions,3));geo.setAttribute('uv',new THREE.BufferAttribute(uv,2));geo.setIndex(indices);const mesh=new THREE.Mesh(geo,flowMaterial);mesh.name=name;mesh.frustumCulled=false;air.add(mesh);return geo;}
-  const mouthFlow=ribbon('Mouth air volume'),jetFlow=ribbon('Lip jet'),inFlow=ribbon('Flow into tube'),outFlow=ribbon('Flow over edge');
+  const mouthFlow=ribbon('Mouth air volume'),jetFlow=ribbon('Lip jet');
   function fill(geometry:THREE.BufferGeometry,curve:THREE.Curve<THREE.Vector3>,width:(u:number)=>number){const pos=geometry.attributes.position;for(let i=0;i<=80;i++){const u=i/80,p=curve.getPoint(u),tangent=curve.getTangent(u),normal=new THREE.Vector3(-tangent.y,tangent.x,0).normalize().multiplyScalar(width(u));pos.setXYZ(i*2,p.x+normal.x,p.y+normal.y,.58);pos.setXYZ(i*2+1,p.x-normal.x,p.y-normal.y,.58);}pos.needsUpdate=true;}
-  let phase=0,previousTime:number|undefined;
+  let phase=0,previousTime:number|undefined,speed=.4;
   function update(note:number,time:number,showAir:boolean){
     const {t}=poseAt(note);tongue.morphTargetInfluences![0]=t;
-    upper.morphTargetInfluences![0]=t;lower.morphTargetInfluences![0]=t;lowerTeeth.position.y=-.37+.16*t;
+    upper.morphTargetInfluences![0]=t;lower.morphTargetInfluences![0]=t;lowerTeeth.position.y=-.37+.30*t;lowerTeeth.position.x=-.37+.08*t;
     // Integrate velocity, rather than multiplying absolute time by a changing speed.
-    const dt=previousTime===undefined?0:Math.max(0,Math.min(.05,time-previousTime));previousTime=time;phase=(phase+dt*(.65+.75*t))%100;
+    const dt=previousTime===undefined?0:Math.max(0,Math.min(.05,time-previousTime));previousTime=time;
+    speed=THREE.MathUtils.damp(speed,.4+1.8*t,4,dt);phase=(phase+dt*speed)%100;
     flowMaterial.uniforms.phase.value=phase;flowMaterial.uniforms.color.value.copy(warm).lerp(cool,t);air.visible=showAir;
-    const outlet=new THREE.Vector3(.60+.23*t,.085-.005*t,.58);
-    instrument.rotation.z=.5*t;instrument.updateMatrixWorld(true);
-    const edge=instrument.localToWorld(new THREE.Vector3(1.065-.42,-.30+.27,.58));
-    const inEnd=instrument.localToWorld(new THREE.Vector3(.76-.42,-1.11+.27,.58));
-    const inControl=instrument.localToWorld(new THREE.Vector3(.90-.42,-.49+.27,.58));
-    // A gently changing exit tangent gives the low pose its downward channel.
+    const outlet=new THREE.Vector3(.60+.18*t,.085+.02*t,.58);
+    instrument.updateMatrixWorld(true);
+    // One flow envelope: downward into the bore, gradually becoming horizontal.
+    const angle=-1.15+1.11*t;
+    const direction=new THREE.Vector3(Math.cos(angle),Math.sin(angle),0);
+    let length=.80+.50*t;
+    // Stop at the inner wall instead of drawing airflow through solid metal.
+    for(let d=.01;d<=length;d+=.01){
+      const p=outlet.clone().addScaledVector(direction,d);
+      const radius=Math.hypot(p.x-.74,p.y+.77);
+      const angleAtTube=Math.atan2(p.y+.77,p.x-.74);
+      const throughOpening=angleAtTube>.98 && angleAtTube<2.16;
+      if(!throughOpening && p.y<-.255 && radius>.49 && radius<.64){length=Math.max(.02,d-.025);break;}
+    }
+    const end=outlet.clone().addScaledVector(direction,length);
     const mouth=new THREE.CatmullRomCurve3([new THREE.Vector3(-2.14+.05*t,-1.35,.58),new THREE.Vector3(-2.14+.05*t,-.15,.58),new THREE.Vector3(-1.8,.24+.20*t,.58),new THREE.Vector3(-1.3,.30+.24*t,.58),new THREE.Vector3(-.75,.30+.25*t,.58),new THREE.Vector3(-.14,.23,.58),outlet]);
-    fill(mouthFlow,mouth,u=>{const broad=.22-.10*t;return u<.48?THREE.MathUtils.lerp(.055,broad,THREE.MathUtils.smoothstep(u,.22,.48)):THREE.MathUtils.lerp(broad,.035-.01*t,THREE.MathUtils.smoothstep(u,.55,1));});
-    const jet=new THREE.CubicBezierCurve3(outlet,outlet.clone().add(new THREE.Vector3(.12,-.15*(1-t)-.01,.0)),edge.clone().add(new THREE.Vector3(-.10,.06,0)),edge);
-    fill(jetFlow,jet,()=>.028-.009*t);
-    fill(inFlow,new THREE.QuadraticBezierCurve3(edge,inControl,inEnd),u=>(.047-.02*t)*(1-u*.6));
-    fill(outFlow,new THREE.QuadraticBezierCurve3(edge,new THREE.Vector3(1.3,-.14,.58),new THREE.Vector3(1.76,-.1,.58)),u=>(.018+.021*t)*(1-u*.8));
-    // Keep the plate beneath the jaw at every pose.
+    const jetWidth=.067-.043*t;
+    fill(mouthFlow,mouth,u=>{const broad=.22-.10*t;return u<.48?THREE.MathUtils.lerp(.055,broad,THREE.MathUtils.smoothstep(u,.22,.48)):THREE.MathUtils.lerp(broad,jetWidth,THREE.MathUtils.smoothstep(u,.55,1));});
+    const jet=new THREE.LineCurve3(outlet,end);
+    fill(jetFlow,jet,u=>jetWidth*(1+.65*u)*Math.min(1,(1-u)*8));
 
   }
   return {root,update};

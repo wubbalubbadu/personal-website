@@ -26,7 +26,7 @@
 
 .emb-canvas {
   height: 510px;
-  touch-action: none;
+  touch-action: pan-y;
 }
 .emb-canvas canvas {
   display: block;
@@ -129,3 +129,8 @@
     font-size: 46px;
   }
 }
+
+.emb-canvas[data-active="true"] { touch-action: none; outline: 1px solid var(--border-strong); outline-offset: -1px; }
+
+/* The app root locks document scrolling; this route must have a bounded scrollport. */
+.studio-page:has(.emb) { height: 100dvh; min-height: 0; overflow-y: auto; }
