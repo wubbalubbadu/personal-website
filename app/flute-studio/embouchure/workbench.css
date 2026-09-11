@@ -1,27 +1,68 @@
-/* Simulation — inner content only. The page header is <StudioPage>; the
-   viewport / panel / scrubber frame is <Workbench>. These rules style what
-   lives inside those regions, on tokens, no !important. */
+/* Simulation — matches the rest of the studio's visual language directly
+   (same values as home-quick-tools.css / practice-tool-dock.css) rather than
+   the newer token system, so it doesn't stick out as the one page that looks
+   different. The page header is <StudioPage>; the viewport / panel frame is
+   <Workbench> (components/workbench.css) — these rules restyle that frame for
+   this page and style what lives inside it. */
 
+.emb {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Give the shared Workbench frame real padding and this page's own radius/shadow. */
+.emb .workbench__surface {
+  border: 1px solid #e1e2df;
+  border-radius: 20px;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+.emb .workbench__panel {
+  padding: 24px 24px 28px;
+  gap: 18px;
+  border-left: 1px solid #e1e2df;
+}
+
+/* Real page-level gutters — was sitting flush against the browser edge. */
+.studio-page:has(.emb) {
+  height: 100dvh;
+  min-height: 0;
+  overflow-y: auto;
+  padding-left: 40px;
+  padding-right: 40px;
+}
+@media (max-width: 760px) {
+  .studio-page:has(.emb) {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
+
+/* Exact values from practice-tool-dock.css's .dock-tool > button override —
+   the soft-tint pill, not the solid-green .primary-tool-button base rule. */
 .emb button {
   cursor: pointer;
-  background: var(--surface);
-  border: 1px solid var(--border-strong);
-  padding: 9px 13px;
-  border-radius: var(--r-sm);
-  color: var(--ink);
+  border: 1px solid #d7e1d2;
+  padding: 9px 14px;
+  border-radius: 12px;
+  background: #e7eee3;
+  color: #40553d;
   font: inherit;
-  font-size: var(--text-meta);
+  font-size: 12px;
+  font-weight: 680;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: background-color 0.16s ease, transform 0.16s ease;
 }
 .emb button:hover {
-  background: var(--surface-hover);
+  background: #dce8d7;
+  transform: translateY(-1px);
 }
 .emb button:focus-visible,
 .emb input:focus-visible {
   outline: 3px solid rgba(103, 137, 86, 0.4);
   outline-offset: 3px;
-}
-.emb input {
-  accent-color: var(--accent);
 }
 
 .emb-canvas {
@@ -40,85 +81,77 @@
   display: flex;
   justify-content: flex-end;
 }
-.emb-alert {
-  position: absolute;
-  left: 24px;
-  bottom: 20px;
-  margin: 0;
-  color: #b3261e;
-  font-size: var(--text-meta);
-}
 
 .emb-note {
-  font-size: 60px;
+  font-size: 48px;
   line-height: 1;
-  font-weight: 600;
-  letter-spacing: -3px;
-}
-.emb-cue {
-  align-self: stretch;
-  border-top: 1px solid var(--border);
-  padding-top: 16px;
-  margin-top: 4px;
-}
-.emb-cue span {
-  color: var(--ink-muted);
-}
-.emb-cue h2 {
-  margin: 6px 0 0;
-  font-size: var(--text-section);
-  font-weight: 600;
-}
-.emb-check {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 4px;
-}
-.emb-play {
-  align-self: stretch;
-  background: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
-}
-.emb-play:hover {
-  background: var(--accent-ink);
-}
-.emb-secondary {
-  align-self: stretch;
+  font-weight: 760;
+  letter-spacing: -0.045em;
+  color: #292a33;
 }
 
-.emb-range-heading {
+/* StaffNote's viewBox is a fixed 170x175 — its rendered height never
+   changes, so this just needs to match, not compensate for anything. */
+.emb-staff {
+  height: 175px;
+  overflow: visible;
+}
+
+/* Plain text — no tinted box, matches how the dock labels things. */
+.emb-cue {
+  align-self: stretch;
+  margin: 0;
+  color: #292a33;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.emb .emb-play {
+  align-self: stretch;
+  min-height: 39px;
+  margin-top: auto;
+  border-radius: 13px;
+}
+
+/* One line, one pointer that carries its own label — sits right under the staff. */
+.emb-range {
+  align-self: stretch;
+  width: 100%;
+}
+.emb-range-track {
+  position: relative;
+  padding-top: 4px;
+  margin-bottom: 26px;
+}
+/* Same as the dock's own tempo slider — native control, accent-color only. */
+.emb-range-track input[type="range"] {
+  display: block;
+  width: 100%;
+  height: 20px;
+  margin: 0;
+  accent-color: #678956;
+  cursor: pointer;
+}
+.emb-range-pointer {
+  position: absolute;
+  top: 100%;
+  transform: translateX(-50%);
+  margin-top: 8px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #678956;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.emb-range-ends {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 14px;
-  font-size: var(--text-row-title);
-}
-.emb-range-heading span {
-  color: var(--ink-muted);
-  font-size: var(--text-meta);
-}
-.emb-range input[type="range"] {
-  width: 100%;
-  accent-color: var(--accent);
-}
-.emb-notes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-top: 16px;
-}
-.emb-notes button {
-  min-width: 46px;
-  padding: 9px 7px;
-}
-.emb-notes .selected {
-  background: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
-}
-.emb-notes .pivot {
-  border-bottom: 3px solid #b85868;
+  font-size: 11px;
+  font-weight: 600;
+  color: #85868e;
 }
 
 @media (max-width: 760px) {
@@ -126,11 +159,11 @@
     height: 380px;
   }
   .emb-note {
-    font-size: 46px;
+    font-size: 40px;
+  }
+  .emb .workbench__panel {
+    padding: 18px;
   }
 }
 
-.emb-canvas[data-active="true"] { touch-action: none; outline: 1px solid var(--border-strong); outline-offset: -1px; }
-
-/* The app root locks document scrolling; this route must have a bounded scrollport. */
-.studio-page:has(.emb) { height: 100dvh; min-height: 0; overflow-y: auto; }
+.emb-canvas[data-active="true"] { touch-action: none; outline: 1px solid #dedfd9; outline-offset: -1px; }

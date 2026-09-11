@@ -1,0 +1,71 @@
+.saved-home-section {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+}
+.saved-home-section .section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  margin-bottom: 14px;
+}
+.saved-home-section .section-title h2 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.15;
+  font-weight: 700 !important;
+  letter-spacing: -0.025em;
+}
+.saved-home-section .section-title h2 > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #292a33;
+  text-decoration: none;
+  font-weight: 700;
+}
+.saved-home-section .section-title h2 > a > span {
+  color: #678956;
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 0.8;
+  transition: transform 0.16s ease;
+}
+.saved-home-section .section-title h2 > a:hover > span {
+  transform: translateX(3px);
+}
+.saved-home-section .section-title h2 > a:focus-visible {
+  outline: 3px solid rgba(103, 137, 86, 0.35);
+  outline-offset: 4px;
+  border-radius: 5px;
+}
+
+/* .saved-home-grid wraps <MusicRow> items — row styling itself lives in music-row.css */
+.saved-home-grid {
+  background: white;
+  border: 1px solid #e1e2df;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
+}
+
+.saved-empty {
+  min-height: 84px;
+  height: auto !important;
+  border: 0;
+  border-radius: 20px;
+  background: white;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 14px 18px;
+  color: #85868e;
+}
+.saved-empty > span {
+  font-size: 25px;
+  color: #c96fcf;
+}
+.saved-empty p {
+  font-size: 14px !important;
+  flex: 1;
+}

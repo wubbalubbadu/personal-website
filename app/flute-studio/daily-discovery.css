@@ -1,0 +1,36 @@
+.discovery-row{position:relative;margin:0 0 34px;display:grid;grid-template-columns:1fr 1fr;gap:16px;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Arial,sans-serif}
+
+/* A handful of quarter/eighth-note glyphs drift up and fade behind the cards. */
+.discovery-notes-fx{position:absolute;inset:-24px 0 auto 0;height:1px;overflow:visible;pointer-events:none;z-index:0}
+.discovery-notes-fx span{position:absolute;bottom:0;color:#67895626;font-size:20px;animation:discoveryNoteFloat 10s ease-in infinite}
+.discovery-notes-fx span:nth-child(1){left:4%;font-size:24px;animation-delay:0s}
+.discovery-notes-fx span:nth-child(2){left:20%;font-size:15px;animation-delay:1.4s;color:#d277d726}
+.discovery-notes-fx span:nth-child(3){left:38%;font-size:19px;animation-delay:2.8s}
+.discovery-notes-fx span:nth-child(4){left:58%;font-size:16px;animation-delay:4.2s;color:#d277d726}
+.discovery-notes-fx span:nth-child(5){left:74%;font-size:22px;animation-delay:5.6s}
+.discovery-notes-fx span:nth-child(6){left:90%;font-size:15px;animation-delay:7s;color:#d277d726}
+@keyframes discoveryNoteFloat{
+  0%{transform:translateY(0) rotate(-4deg);opacity:0}
+  12%{opacity:1}
+  85%{opacity:0}
+  100%{transform:translateY(-130px) rotate(8deg);opacity:0}
+}
+@media(prefers-reduced-motion:reduce){.discovery-notes-fx span{animation:none;opacity:0}}
+
+.discovery-card{position:relative;z-index:1;padding:16px 18px;border-radius:18px;display:flex;gap:12px;align-items:flex-start;background:#fff;border:1px solid #e7e8e4}
+.discovery-card.theory{background:linear-gradient(135deg,#f3f7f1,#fff)}
+.discovery-card.exercise{background:linear-gradient(135deg,#fbf1fa,#fff)}
+.discovery-card__icon{flex:0 0 auto;width:34px;height:34px;border-radius:11px;display:grid;place-items:center;font-size:16px;color:#fff}
+.discovery-card.theory .discovery-card__icon{background:linear-gradient(145deg,#81a46e,#557747)}
+.discovery-card.exercise .discovery-card__icon{background:linear-gradient(145deg,#f3b0f8,#d277d8)}
+.discovery-card__body{min-width:0}
+.discovery-card__label{margin:0 0 4px;font-size:10px;font-weight:720;letter-spacing:.08em;color:#678956}
+.discovery-card.exercise .discovery-card__label{color:#a668a6}
+.discovery-card__body strong{display:block;font-size:14px;font-weight:650;letter-spacing:-.01em;margin-bottom:2px}
+.discovery-card__body>span,.discovery-card__exercise-text{display:block;font-size:12.5px;line-height:1.45;color:#63656c}
+.discovery-card__cta{display:inline-block;margin-top:4px;font-size:12px;font-weight:650;color:#a668a6;text-decoration:none}
+.discovery-card__cta:hover{text-decoration:underline}
+
+@media(max-width:700px){
+  .discovery-row{grid-template-columns:1fr;gap:10px}
+}

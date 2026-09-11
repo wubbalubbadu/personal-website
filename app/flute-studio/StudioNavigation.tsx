@@ -10,6 +10,8 @@ function useDestinations(){
     {key:"home",label:t.nav.home,href:"/flute-studio",icon:"⌂"},
     {key:"music",label:t.nav.music,href:"/flute-studio/music",icon:"♫"},
     {key:"exercises",label:t.nav.exercises,href:"/flute-studio/exercises",icon:"◎"},
+    {key:"practice",label:t.nav.practice,href:"/flute-studio/practice",icon:"✓"},
+    {key:"settings",label:t.nav.settings,href:"/flute-studio/settings",icon:"⚙"},
   ] as const;
 }
 
@@ -54,7 +56,7 @@ export default function StudioNavigation(){
           <span aria-hidden="true">⌁</span>
           {t.nav.tools}
         </button>
-        <a className="studio-navigation__avatar" href="/flute-studio/settings" aria-label={t.nav.settings}>HW</a>
+        <span className="studio-navigation__avatar" role="img" aria-label={t.nav.avatarLabel}>HW</span>
       </div>
     </div>
   </header>;

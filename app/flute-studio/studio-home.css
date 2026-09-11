@@ -1,0 +1,143 @@
+.studio-shell {
+  height: 100vh;
+  background: #f5f5f7;
+  color: #292a33;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+}
+.studio-main {
+  height: 100vh;
+  overflow: auto;
+  padding: 104px 28px 130px;
+}
+.home-content {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.studio-hero {
+  height: auto;
+  min-height: 286px;
+  margin: 16px 0 46px;
+  background: transparent;
+}
+
+.home-layout {
+  display: block;
+}
+.studio-left {
+  min-width: 0;
+  display: grid;
+  gap: 42px;
+}
+
+/* Section headers — "Continue practicing ›" / "Exercises ›" */
+.home-section > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.home-section > header h2 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+.home-section > header h2 > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: inherit;
+  text-decoration: none;
+}
+.home-section > header h2 > a > span {
+  color: #85868e;
+  font-size: 26px;
+  line-height: 0.8;
+  font-weight: 400;
+  transition: transform 0.16s ease, color 0.16s ease;
+}
+.home-section > header h2 > a:hover > span,
+.home-section > header h2 > a:focus-visible > span {
+  color: #506f43;
+  transform: translateX(2px);
+}
+.home-section > header h2 > a:focus-visible {
+  outline: 3px solid rgba(103, 137, 86, 0.3);
+  outline-offset: 4px;
+  border-radius: 5px;
+}
+
+/* Inset row list — used by the Exercises section */
+.home-inset-list {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
+}
+.home-inset-list > a {
+  min-height: 78px;
+  margin-left: 18px;
+  padding: 10px 18px 10px 0;
+  border-bottom: 1px solid #e4e4e7;
+  display: grid;
+  grid-template-columns: 52px 1fr 20px;
+  gap: 13px;
+  align-items: center;
+  color: #292a33;
+  text-decoration: none;
+  transition: background-color 0.16s ease, margin-left 0.16s ease, padding-left 0.16s ease;
+}
+.home-inset-list > a:last-child {
+  border-bottom: 0;
+}
+.home-inset-list > a:hover,
+.home-inset-list > a:focus-visible {
+  margin-left: 0;
+  padding-left: 18px;
+  background: #f4f7f2;
+}
+.home-inset-list > a:focus-visible {
+  outline: 3px solid rgba(103, 137, 86, 0.35);
+  outline-offset: -3px;
+}
+.exercise-symbol {
+  width: 48px;
+  height: 48px;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  font-size: 21px;
+}
+.exercise-symbol.green { background: #dcebd9; color: #3f5d39; }
+.exercise-symbol.pink { background: #f7e1f8; color: #68466b; }
+.exercise-symbol.gray { background: #e6e8eb; color: #4f5962; }
+.home-inset-list b {
+  display: block;
+  font-size: 16px;
+  line-height: 1.25;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.home-inset-list small {
+  display: block;
+  margin-top: 4px;
+  font-size: 14px;
+  color: #85868e;
+}
+.home-inset-list i {
+  font: 27px/1 -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #bbbcc2;
+}
+
+@media (max-width: 760px) {
+  .studio-main { padding: 24px 16px 105px; }
+  .studio-hero { margin-bottom: 30px; }
+  .studio-left { gap: 30px; }
+  .home-inset-list > a { margin-left: 14px; padding-right: 13px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-inset-list > a { transition: none; }
+  .home-section > header h2 > a > span { transition: none; }
+}
