@@ -2,41 +2,49 @@ import * as THREE from 'three';
 
 const smooth=(v:number)=>THREE.MathUtils.smoothstep(v,0,1);
 /** Authored flute-phrase cues, not measured muscle activation. */
-export function breathPose(phase:number){
- const p=THREE.MathUtils.clamp(phase,0,1),inhale=p<.25;
- const exhale=THREE.MathUtils.clamp((p-.25)/.75,0,1);
- const volume=inhale?smooth(p/.25):1-smooth(exhale);
- return {inhale,volume,ribs:inhale?volume:1-smooth(Math.pow(exhale,1.4)),
-  abdomen:inhale?0:smooth(exhale/.48)*(1-smooth((exhale-.90)/.10)),
-  diaphragm:inhale?volume:Math.pow(1-exhale,1.6)};
+export function breathPose(fullness:number,inhale=true){
+ const volume=smooth(THREE.MathUtils.clamp(fullness,0,1));
+ return {inhale,volume,ribs:volume,
+  abdomen:inhale?0:.35+.65*(1-volume),
+  diaphragm:inhale?.85:.45*volume};
 }
 
 export function createBreathingModel(){
  const root=new THREE.Group();root.name='Breathing anatomy';
- const blue=new THREE.Color('#6099b5'),red=new THREE.Color('#bc6069');
- const material=(color:string,opacity=1)=>new THREE.MeshStandardMaterial({color,roughness:.65,metalness:0,transparent:opacity<1,opacity,depthWrite:opacity===1,side:THREE.DoubleSide});
- const bone=material('#ede8db'),lungMat=material('#dba7a2',.78),bellyMat=material('#6099b5',.85),diaphMat=material('#6099b5');
- const ribMuscle=material('#6099b5',.50);
+ const blue=new THREE.Color('#3999bd'),red=new THREE.Color('#d74b57');
+ const material=(color:string,opacity=1)=>new THREE.MeshStandardMaterial({color,roughness:.65,metalness:0,transparent:false,alphaHash:opacity<1,opacity,depthWrite:true,side:THREE.DoubleSide});
+ const bone=material('#ede8db'),lungMat=material('#dba7a2',.46),diaphMat=material('#9f647e');
+ // Only the two separated lung shells blend; opaque tissue writes depth normally.
+ lungMat.alphaHash=false;lungMat.transparent=true;lungMat.depthWrite=false;lungMat.side=THREE.FrontSide;
+ const ribPivots:{group:THREE.Group,side:number}[]=[];
  const sphere=(name:string,mat:THREE.Material,x:number,y:number,z:number,sx:number,sy:number,sz:number)=>{
   const m=new THREE.Mesh(new THREE.SphereGeometry(1,40,28),mat);m.name=name;m.position.set(x,y,z);m.scale.set(sx,sy,sz);root.add(m);return m;
  };
- // A narrow posterior column anchors the ribs without hiding the organs.
- for(let i=0;i<12;i++)sphere('Vertebra',bone,0,1.95-i*.29,-.47,.12,.10,.10);
+ // The torso supplies orientation; omit exposed vertebrae from this teaching view.
  const ribs=new THREE.Group();ribs.name='Rib cage';root.add(ribs);
  for(let i=0;i<10;i++){
   const width=.65+.50*Math.sin((i+1)/12*Math.PI),height=1.75-i*.24;
   for(const side of [-1,1]){
+   const pivot=new THREE.Group();pivot.position.set(side*.10,height,-.57);ribs.add(pivot);ribPivots.push({group:pivot,side});
    const points=[];
    for(let j=0;j<=40;j++){
     const a=j/40*Math.PI;
-    points.push(new THREE.Vector3(side*(.10+width*Math.sin(a)),height-.19*Math.sin(a)-.17*j/40,-.46+.99*j/40));
+    points.push(new THREE.Vector3(side*width*Math.sin(a),-.19*Math.sin(a)-.17*j/40,1.24*j/40));
    }
    const curve=new THREE.CatmullRomCurve3(points);
-   const rib=new THREE.Mesh(new THREE.TubeGeometry(curve,48,.041,8,false),bone);ribs.add(rib);
-   if(i<8){const muscle=new THREE.Mesh(new THREE.TubeGeometry(curve,48,.074,8,false),ribMuscle);muscle.position.y=-.095;ribs.add(muscle);}
+   const ribGeometry=new THREE.TubeGeometry(curve,48,1,8,false);
+   const rp=ribGeometry.attributes.position;
+   // Broad, thin bone bands instead of circular pipes.
+   for(let k=0;k<rp.count;k++){
+    const center=curve.getPointAt(Math.floor(k/9)/48);
+    const dx=rp.getX(k)-center.x,dy=rp.getY(k)-center.y,dz=rp.getZ(k)-center.z;
+    rp.setXYZ(k,center.x+dx*.023,center.y+dy*.062,center.z+dz*.023);
+   }
+   ribGeometry.computeVertexNormals();
+   const rib=new THREE.Mesh(ribGeometry,bone);rib.name='Rigid rib';if(i>=7){const lowerBone=bone.clone();lowerBone.transparent=true;lowerBone.opacity=.45;lowerBone.depthWrite=false;lowerBone.side=THREE.FrontSide;rib.material=lowerBone;}pivot.add(rib);
   }
  }
- const sternum=sphere('Sternum',bone,0,.88,.55,.075,.82,.06);ribs.add(sternum);
+ const sternum=sphere('Sternum',bone,0,.88,.70,.075,.82,.06);ribs.add(sternum);
  const lungs=new THREE.Group();lungs.name='Lungs';root.add(lungs);
  for(const side of [-1,1]){
   const shape=new THREE.Shape();shape.moveTo(.14,-.48);shape.bezierCurveTo(.45,-.36,.83,-.43,.98,-.55);shape.bezierCurveTo(1.12,.05,.90,1.45,.51,1.81);shape.bezierCurveTo(.28,1.98,.16,1.32,.16,.88);shape.bezierCurveTo(.30,.53,.05,.12,.14,-.48);
@@ -56,28 +64,103 @@ export function createBreathingModel(){
   const mesh=new THREE.Mesh(geo,mat);mesh.name=name;root.add(mesh);
   return {mesh,rest:new Float32Array(pos)};
  }
- const diaphragm=surface('Diaphragm',diaphMat,(u,v)=>{const a=u*Math.PI*2,r=v;return new THREE.Vector3(1.08*r*Math.cos(a),-.79+.51*(1-r*r),.83*r*Math.sin(a));});
- const belly=surface('Abdominal wall',bellyMat,(u,v)=>{const a=(u-.5)*Math.PI;const w=.88-.22*v;return new THREE.Vector3(w*Math.sin(a),-.83-1.40*v,.08+(.55+.20*Math.sin(v*Math.PI))*Math.cos(a));});
- const arrows:THREE.ArrowHelper[]=[];
- for(let i=0;i<5;i++){const arrow=new THREE.ArrowHelper(new THREE.Vector3(0,1,0),new THREE.Vector3(),.4,0x627f91,.11,.07);root.add(arrow);arrows.push(arrow);}
- function update(phase:number,time:number){
-  const p=breathPose(phase),v=p.volume;
-  ribs.scale.set(1+.085*p.ribs,1+.025*p.ribs,1+.065*p.ribs);
-  lungs.scale.set(1+.07*v,1+.14*v,1+.1*v);lungs.position.y=-.21*v;
+ const diaphragm=surface('Diaphragm',diaphMat,(u,v)=>{const a=u*Math.PI*2,r=v;return new THREE.Vector3(1.00*r*Math.cos(a),-.79+.65*(1-r*r),.64*r*Math.sin(a));});
+ // One continuous neck-to-hip surface. The front opening exposes the chest;
+ // the solid back, shoulders and waist make orientation readable during rotation.
+ const skin=material('#d5aaa0');
+ skin.transparent=true;skin.opacity=.25;skin.depthWrite=false;skin.side=THREE.FrontSide;
+ // Localized abdominal glow, independent of the rest of the body shell.
+ const bellyGlow={color:{value:new THREE.Color()},strength:{value:0}};
+ skin.onBeforeCompile=shader=>{
+  shader.uniforms.bellyGlow=bellyGlow.color;shader.uniforms.bellyStrength=bellyGlow.strength;
+  shader.vertexShader='varying vec3 tissuePosition;\n'+shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\n tissuePosition=position;');
+  shader.fragmentShader='varying vec3 tissuePosition; uniform vec3 bellyGlow; uniform float bellyStrength;\n'+shader.fragmentShader.replace('#include <emissivemap_fragment>',`#include <emissivemap_fragment>
+   float region=exp(-pow((tissuePosition.y+1.45)/.55,2.0)-pow(tissuePosition.x/.85,2.0))*smoothstep(0.0,.45,tissuePosition.z);
+   totalEmissiveRadiance+=bellyGlow*bellyStrength*region;
+   diffuseColor.a=mix(.22,.72,region);`);
+ };
+
+ const profile=[[-2.65,.86,.44],[-2.35,1.16,.55],[-1.85,1.20,.57],[-1.25,1.08,.54],[-.65,1.17,.65],[.2,1.37,.80],[1.15,1.43,.80],[1.85,1.48,.68],[2.15,1.24,.55],[2.38,.49,.39],[2.75,.36,.34],[2.9,.34,.32]];
+ const contour=(y:number)=>{
+  let i=0;while(i<profile.length-2&&profile[i+1][0]<y)i++;
+  const a=profile[i],b=profile[i+1],before=profile[Math.max(0,i-1)],after=profile[Math.min(profile.length-1,i+2)];
+  const h=b[0]-a[0],t=(y-a[0])/h;
+  return [1,2].map(k=>{
+   const m0=(b[k]-before[k])/(b[0]-before[0])*h,m1=(after[k]-a[k])/(after[0]-a[0])*h;
+   return (2*t*t*t-3*t*t+1)*a[k]+(t*t*t-2*t*t+t)*m0+(-2*t*t*t+3*t*t)*b[k]+(t*t*t-t*t)*m1;
+  });
+ };
+ const positions:number[]=[],indices:number[]=[],rows=100,cols=100;
+ for(let i=0;i<=rows;i++){
+  const y=2.9-i/rows*5.55,[w,d]=contour(y);
+  // Curved opening narrows into the neck and blends into the upper abdomen.
+  const opening=y>-.98&&y<2.18 ? 1.10*Math.pow(Math.sin(Math.PI*(y+.98)/3.16),.35):0;
+  for(let j=0;j<=cols;j++){
+   const angle=opening+j/cols*(Math.PI*2-2*opening);
+   positions.push(w*Math.sin(angle),y,d*Math.cos(angle));
+  }
+ }
+ for(let i=0;i<rows;i++)for(let j=0;j<cols;j++){const k=i*(cols+1)+j;indices.push(k,k+cols+1,k+1,k+1,k+cols+1,k+cols+2);}
+ const torsoGeo=new THREE.BufferGeometry();torsoGeo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));torsoGeo.setIndex(indices);torsoGeo.computeVertexNormals();
+ const torso=new THREE.Mesh(torsoGeo,skin);torso.name='Torso with chest cutaway';root.add(torso);
+ const belly={mesh:torso,rest:new Float32Array(positions)};
+ // A small inset navel makes the front abdomen identifiable at a glance.
+ const navel=sphere('Navel',material('#ac8077'),0,-1.64,.573,.038,.05,.012);
+ // Flat, camera-facing cues retain a visible shaft even when the motion
+ // points toward the viewer. Their offset keeps them outside the anatomy.
+ const arrows:THREE.Mesh[]=[];
+ const arrowShape=new THREE.Shape();arrowShape.moveTo(-.026,0);arrowShape.lineTo(.026,0);arrowShape.lineTo(.026,.28);arrowShape.lineTo(.105,.28);arrowShape.lineTo(0,.43);arrowShape.lineTo(-.105,.28);arrowShape.lineTo(-.026,.28);arrowShape.closePath();
+ for(let i=0;i<12;i++){
+  const mat=new THREE.MeshBasicMaterial({color:'#557788',transparent:true,opacity:.9,depthWrite:false,side:THREE.DoubleSide});
+  const arrow=new THREE.Mesh(new THREE.ShapeGeometry(arrowShape),mat);arrow.name='Movement cue';root.add(arrow);arrows.push(arrow);
+ }
+ function update(fullness:number,time:number,inhale=true,camera?:THREE.Camera){
+  const p=breathPose(fullness,inhale),v=p.volume;
+  // Each bone moves about its posterior attachment without scaling or bending.
+  ribPivots.forEach(({group,side})=>{group.rotation.set(-.07*v,0,side*.14*v);});
+  sternum.position.y=.88+.065*v;sternum.position.z=.70+.018*v;
+  lungs.scale.set(.73+.095*v,.85+.12*v,.68+.10*v);lungs.position.y=.10-.14*v;
   const dp=diaphragm.mesh.geometry.attributes.position;
-  for(let i=0;i<dp.count;i++){const x=diaphragm.rest[i*3],y=diaphragm.rest[i*3+1],z=diaphragm.rest[i*3+2];const center=(y+.79)/.51;dp.setXYZ(i,x*(1+.065*v),y-.42*v*center,z*(1+.065*v));}
+  for(let i=0;i<dp.count;i++){const x=diaphragm.rest[i*3],y=diaphragm.rest[i*3+1],z=diaphragm.rest[i*3+2];const center=(y+.79)/.65;dp.setXYZ(i,x*(1+.065*v),y-.546*v*center,z*(1+.065*v));}
   dp.needsUpdate=true;diaphragm.mesh.geometry.computeVertexNormals();
   const bp=belly.mesh.geometry.attributes.position;
-  for(let i=0;i<bp.count;i++){const x=belly.rest[i*3],y=belly.rest[i*3+1],z=belly.rest[i*3+2],weight=Math.sin(Math.PI*((-.83-y)/1.4));bp.setXYZ(i,x*(1+.045*v),y,z+.21*v*weight);}
+  for(let i=0;i<bp.count;i++){
+   const x=belly.rest[i*3],y=belly.rest[i*3+1],z=belly.rest[i*3+2];
+   const weight=Math.exp(-Math.pow((y+1.40)/.63,2))*Math.max(0,z/.65);
+   bp.setXYZ(i,x,y,z+.24*v*weight);
+  }
+  navel.position.z=.573+.22*v;
   bp.needsUpdate=true;belly.mesh.geometry.computeVertexNormals();
-  bellyMat.color.copy(blue).lerp(red,p.abdomen);diaphMat.color.copy(blue).lerp(red,p.diaphragm);ribMuscle.color.copy(blue).lerp(red,p.inhale?v:p.diaphragm*.65);
-  const dir=p.inhale?1:-1,pulse=.035*Math.sin(time*3.8),length=.43+pulse;
-  arrows[0].position.set(-1.26,.55,.65);arrows[0].setDirection(new THREE.Vector3(-dir,dir*.14,0).normalize());
-  arrows[1].position.set(1.26,.55,.65);arrows[1].setDirection(new THREE.Vector3(dir,dir*.14,0).normalize());
-  arrows[2].position.set(0,-.45-.42*v,.78);arrows[2].setDirection(new THREE.Vector3(0,-dir,0));
-  arrows[3].position.set(-.80-dir*.12,-1.51,.73+.15*v);arrows[3].setDirection(new THREE.Vector3(dir,0,0).multiplyScalar(-1));
-  arrows[4].position.set(.80+dir*.12,-1.51,.73+.15*v);arrows[4].setDirection(new THREE.Vector3(dir,0,0));
-  arrows.forEach(a=>a.setLength(length,.13,.09));
+  // Preserve the tissue's base color. Emissive shading adds an activity cue
+  // without extra transparent shells or camera-dependent blending order.
+  const activity=(mat:THREE.MeshStandardMaterial,amount:number)=>{
+   mat.emissive.copy(blue).lerp(red,amount);mat.emissiveIntensity=.65+.22*Math.sin(time*2.2);
+  };
+  bellyGlow.color.value.copy(blue).lerp(red,p.abdomen);bellyGlow.strength.value=1.1+.35*Math.sin(time*2.2);activity(diaphMat,p.diaphragm);
+  const dir=p.inhale?1:-1,travel=(time*.45)%1;
+  // Diaphragm cues originate on its upper surface, not below it on the belly.
+  const diaphragmY=-.79+(.65-.546*v)*(1-Math.pow(.36/(1+.065*v),2)-Math.pow(.30/(.64*(1+.065*v)),2));
+  const rotation=camera?.quaternion??new THREE.Quaternion();
+  const right=new THREE.Vector3(1,0,0).applyQuaternion(rotation),up=new THREE.Vector3(0,1,0).applyQuaternion(rotation),toward=new THREE.Vector3(0,0,1).applyQuaternion(rotation);
+  // Anchors and outward vectors belong to the anatomy, not the camera.
+  // Only the flat arrow face billboards; its heading is the projected motion.
+  const anchors=[[-1.22,.70,.32],[1.22,.70,.32],[-.36,diaphragmY,.30],[.36,diaphragmY,.30],[-.50,-1.48,.51+.20*v],[.50,-1.48,.51+.20*v]];
+  const outward=[[-.95,.12,.30],[.95,.12,.30],[0,-1,0],[0,-1,0],[-.30,0,.95],[.30,0,.95]];
+  arrows.forEach((a,i)=>{
+   const lane=Math.floor(i/2),step=(travel+(i%2)/2)%1;
+   const normal=new THREE.Vector3(...outward[lane] as [number,number,number]).normalize();
+   const direction=normal.clone().multiplyScalar(dir);
+   a.position.set(...anchors[lane] as [number,number,number]);
+   const offset=dir>0?.08+.16*step:.59-.16*step;
+   a.position.addScaledVector(normal,offset).addScaledVector(toward,.10);
+   let dx=direction.dot(right),dy=direction.dot(up);
+   // A near head-on cue uses a small outward fan instead of becoming a dot.
+   if(Math.hypot(dx,dy)<.18){dx=(lane%2===0?-1:1)*dir*.25;dy=0;}
+   const angle=Math.atan2(-dx,dy);
+   a.quaternion.copy(rotation).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),angle));
+   a.scale.setScalar(.8);
+   (a.material as THREE.MeshBasicMaterial).opacity=.35+.6*Math.sin(Math.PI*step);
+  });
   root.updateMatrixWorld(true);
  }
  update(0,0);return {root,update};
