@@ -1,8 +1,17 @@
-.studio-navigation{position:fixed;z-index:220;top:0;left:0;right:0;height:64px;border-bottom:1px solid rgba(41,42,51,.11);background:rgba(251,251,249,.88);color:#292a33;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",Inter,Arial,sans-serif;backdrop-filter:saturate(180%) blur(22px);-webkit-backdrop-filter:saturate(180%) blur(22px)}
+.studio-navigation{position:fixed;z-index:220;top:0;left:0;right:0;height:64px;border-bottom:1px solid rgba(41,42,51,.08);background:rgba(255,255,255,.86);color:#292a33;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",Inter,Arial,sans-serif;backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px)}
 .studio-navigation__inner{width:100%;height:100%;padding:0 28px;display:flex;align-items:center;gap:30px}
 .studio-navigation__brand{height:44px;display:flex;align-items:center;gap:11px;color:inherit;text-decoration:none;font-size:15px;font-weight:720;letter-spacing:-.02em;white-space:nowrap}
-.studio-navigation__brand-mark{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:#678956;color:white;font-size:18px;box-shadow:0 5px 14px rgba(70,99,61,.18)}
+/* An actual cookie — same colors/chip-dot motif as the floating CookiePet mascot, so the brand mark and the pet read as the same character. */
+.studio-navigation__brand-mark{position:relative;flex-shrink:0;width:32px;height:32px;border-radius:48% 52% 46% 54%;background:#d9a24d;border:2px solid #ba8135;box-shadow:inset -3px -4px 0 #c78e3c}
+.studio-navigation__brand-mark .crumb{position:absolute;width:4px;height:4px;border-radius:50%;background:#6c4429}
+.studio-navigation__brand-mark .c1{left:8px;top:7px}
+.studio-navigation__brand-mark .c2{right:6px;top:12px}
+.studio-navigation__brand-mark .c3{left:12px;bottom:6px}
 .studio-navigation__tabs{align-self:stretch;display:flex;align-items:center;gap:3px}
+/* The brand mark already links home, so the Home tab would be redundant here
+   — but mobile hides the brand mark and uses this tab bar for everything,
+   so it comes back at the ≤760px breakpoint below. */
+.studio-navigation__tab[data-key="home"]{display:none}
 .studio-navigation__tab{position:relative;height:100%;padding:0 15px;display:flex;align-items:center;gap:7px;color:#6f7178;text-decoration:none;font-size:13px;font-weight:570;transition:color .16s ease,background-color .16s ease}
 .studio-navigation__tab::after{content:"";position:absolute;left:14px;right:14px;bottom:0;height:2px;border-radius:2px 2px 0 0;background:#678956;opacity:0;transform:scaleX(.55);transition:opacity .16s ease,transform .16s ease}
 .studio-navigation__tab:hover{color:#292a33;background:rgba(103,137,86,.06)}
@@ -26,11 +35,12 @@
 }
 
 @media(max-width:760px){
-  .studio-navigation{top:auto;bottom:0;height:calc(68px + env(safe-area-inset-bottom));border-top:1px solid rgba(41,42,51,.12);border-bottom:0;background:rgba(251,251,249,.9)}
+  .studio-navigation{top:auto;bottom:0;height:calc(68px + env(safe-area-inset-bottom));border-top:1px solid rgba(41,42,51,.08);border-bottom:0;background:rgba(255,255,255,.9)}
   .studio-navigation__inner{padding:6px 10px env(safe-area-inset-bottom);display:block}
   .studio-navigation__brand,.studio-navigation__actions{display:none}
   .studio-navigation__tabs{height:62px;display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
   .studio-navigation__tab{height:58px;padding:4px 2px 3px;display:grid;place-items:center;align-content:center;gap:3px;border-radius:13px;font-size:10px;font-weight:560}
+  .studio-navigation__tab[data-key="home"]{display:grid}
   .studio-navigation__tab::after{display:none}
   .studio-navigation__tab:hover{background:transparent}
   .studio-navigation__tab.is-active{background:#e5ece1;color:#46633d}

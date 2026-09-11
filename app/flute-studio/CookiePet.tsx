@@ -47,7 +47,6 @@ export default function CookiePet(){
         <strong>{t.pomodoro.title}</strong>
         <button type="button" aria-label={t.pomodoro.close} onClick={()=>setOpen(false)}>×</button>
       </header>
-      <div className={`cookie-pomodoro-mode ${mode}`}>{mode==="focus"?t.pomodoro.focus:t.pomodoro.breakLabel}</div>
       <div className="cookie-pomodoro-clock">{formatClock(remaining)}</div>
       {canEditDuration&&<div className="cookie-pomodoro-duration">
         <button type="button" aria-label={t.pomodoro.decreaseFocus} onClick={()=>adjustFocusMinutes(-5)} disabled={focusMinutes<=minFocusMinutes}>−</button>

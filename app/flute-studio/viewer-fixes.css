@@ -35,5 +35,7 @@
 /* Editorial score heading with a dedicated author line and breathing room. */
 .workspace .custom-score-heading{margin:14px 0 104px!important}.workspace .custom-score-heading h1{margin:0!important}.workspace .custom-score-heading h1::after{content:var(--score-composer);display:block;margin-top:14px;color:#85868e;font:400 13px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;letter-spacing:0}
 
-/* The same shared row container appears on Home and in Library. */
-.home-music-list,.saved-home-grid,.library-list{overflow:hidden!important;border:1px solid #e1e2df!important;border-radius:20px!important;background:#fff!important;box-shadow:0 1px 0 rgba(0,0,0,.05)!important}
+/* The same shared row container appears on Home and in Library. One shared
+   rule so their border/shadow treatment can't drift apart again — if a card
+   container like this needs its look changed, change it here, not per-file. */
+.home-music-list,.saved-home-grid,.library-list{overflow:hidden!important;border:0!important;border-radius:20px!important;background:#fff!important;box-shadow:0 10px 30px rgba(41,42,51,.08)!important}

@@ -12,9 +12,9 @@ inconsistent, it's because it *isn't* using these values. Check here first.
 |---|---|---|
 | Ink | `#292a33` | Primary text |
 | Muted | `#71747e` / `#85868e` | Secondary text, meta lines |
-| Canvas | `#f5f5f7` | Page background |
+| Canvas | `#fff` | Page background (was `#f5f5f7` — dropped so it doesn't fight card shadows or the header) |
 | Card | `#ffffff` | Surface background |
-| Border | `#dedfd9` / `#e4e4e7` / `#e1e2df` | Card and row borders |
+| Border | none | Cards don't use borders anymore — separation comes from shadow only (`0 10px 30px rgba(41,42,51,.08)` resting). Watch for `ios-theme.css`, a legacy layer that still has `!important` padding/background rules for `.studio-main`/`.library-main`/`.scale-main` — new page-level CSS has to mark its own rule `!important` too or it silently loses. |
 | Accent | `#678956` | Primary green — links, active states, icons |
 | Accent (dark) | `#46633d` / `#40553d` | Accent text on tinted surfaces |
 | Accent (tint) | `#e4ecdf` / `#e7eee3` / `#e5ece1` | Soft button/badge fills |
@@ -82,6 +82,16 @@ reach for 22–24px, not an arbitrary new number.
 | `0 9px 28px rgba(41,42,51,.03–.10)` | Row/tile hover or card resting state (varies by page, always this family) |
 | `0 24px 70–80px rgba(41,42,51,.2–.22)` | The floating practice-tools dock only — nothing else should float this hard |
 
+## Page layout
+
+Every route's main container uses the same top/side padding, so content sits
+the same distance from the fixed 64px header everywhere: `padding: 64px 24px
+<bottom>` (bottom varies by page length — 130px on longer pages, 96px on
+short ones like Exercises). Mobile (`≤760px`): `24px 16px <bottom>`.
+Applies to `.studio-main`, `.library-main`, `.exercise-hub`, `.practice-page`,
+`.settings-page`. If a page's content still looks flush against the header,
+check `ios-theme.css` first — it's the usual cause (see Border note above).
+
 ## Buttons
 
 Two flavors, and only two:
@@ -101,12 +111,25 @@ This is what "Tap tempo," "Start metronome," "Play A4" actually are —
 *not* solid green. Solid green (`.primary-tool-button`'s base rule) exists
 in the CSS but is overridden everywhere it's used. Don't reach for it.
 
-**Dark (rare — used for active/selected states only):**
+**Filter/category tabs — one recipe everywhere (Library, Exercises, and the
+practice-tools dock all use this exact pattern):**
 ```css
+/* rest */
+background: #f1f1f4;
+color: #5a5c63;
+font-size: 12px;
+text-transform: uppercase;
+letter-spacing: .02em;
+font-weight: 650;
+
+/* active */
 background: #292a33;
 color: #fff;
 ```
-Seen on: active category tab, active dock tab.
+This dark active state is specific to tab/chip *selection* — it's not the
+general "active state" color for buttons in general (those stay soft-tint
+green, see above). Don't use `#292a33` on anything that isn't a selected
+tab/chip.
 
 ## Cards & Rows
 

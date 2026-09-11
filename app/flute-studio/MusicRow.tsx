@@ -4,7 +4,7 @@ import type {MusicItem} from "../../content/music-library";
 import {useLanguage} from "./i18n/LanguageContext";
 import "./music-row.css";
 
-const symbols:Record<MusicItem["category"],string>={exercise:"♩",repertoire:"♫",etude:"𝄞",method:"≋","warm-up":"◌"};
+const symbols:Record<MusicItem["category"],string>={exercise:"♩",repertoire:"♫",etude:"𝄞",pop:"★"};
 
 export default function MusicRow({item,saved,onToggleSave,detail}:{item:MusicItem;saved:boolean;onToggleSave:()=>void;detail?:string}){
   const {t}=useLanguage();

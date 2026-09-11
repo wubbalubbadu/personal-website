@@ -1,17 +1,22 @@
 .studio-shell {
+  /* background comes from ios-theme.css's --canvas token (!important, wins
+     over anything set here) — not redeclared to avoid a dead duplicate. */
   height: 100vh;
-  background: #f5f5f7;
   color: #292a33;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
 }
 .studio-main {
   height: 100vh;
   overflow: auto;
-  padding: 104px 28px 130px;
+  /* !important: ios-theme.css (legacy) still targets .studio-main with its
+     own !important padding at a couple of breakpoints — this has to win
+     the same way .library-main's own rule already does. */
+  padding: 64px 24px 130px !important;
 }
 .home-content {
   max-width: 1120px;
   margin: 0 auto;
+  padding-top: 28px;
 }
 
 .studio-hero {
@@ -132,7 +137,7 @@
 }
 
 @media (max-width: 760px) {
-  .studio-main { padding: 24px 16px 105px; }
+  .studio-main { padding: 24px 16px 105px !important; }
   .studio-hero { margin-bottom: 30px; }
   .studio-left { gap: 30px; }
   .home-inset-list > a { margin-left: 14px; padding-right: 13px; }

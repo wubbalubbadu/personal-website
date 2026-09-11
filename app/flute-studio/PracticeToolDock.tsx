@@ -445,10 +445,10 @@ export default function PracticeToolDock() {
             <div>
               <span className="dock-grip" aria-hidden="true" />
               <strong>{t.toolDock.practiceTools}</strong>
-              <small>{t.toolDock.dragToMove}</small>
             </div>
             <button
               type="button"
+              className="dock-close"
               aria-label={t.toolDock.close}
               onPointerDown={(event) => event.stopPropagation()}
               onClick={() => setOpen(false)}
@@ -480,7 +480,7 @@ export default function PracticeToolDock() {
             >
               <div className="dock-tool-heading">
                 <span className="dock-tool-icon tuner-icon" aria-hidden="true">⌁</span>
-                <div><small>{t.toolDock.tunerLabel}</small><strong>{t.toolDock.pitchCenter}</strong></div>
+                <strong>{t.toolDock.tunerLabel}</strong>
               </div>
 
               <div className={`tuner-reading ${tunerTone}`} aria-live="polite">
@@ -514,7 +514,7 @@ export default function PracticeToolDock() {
             >
               <div className="dock-tool-heading">
                 <span className="dock-tool-icon metronome-icon" aria-hidden="true">♩</span>
-                <div><small>{t.toolDock.metronomeLabel}</small><strong>{t.toolDock.steadyPulse}</strong></div>
+                <strong>{t.toolDock.metronomeLabel}</strong>
               </div>
 
               <div className="tempo-stepper">
@@ -549,7 +549,7 @@ export default function PracticeToolDock() {
             >
               <div className="dock-tool-heading">
                 <span className="dock-tool-icon drone-icon" aria-hidden="true">◉</span>
-                <div><small>{t.toolDock.droneLabel}</small><strong>{t.toolDock.pitchPipe}</strong></div>
+                <strong>{t.toolDock.droneLabel}</strong>
               </div>
 
               <div className="selected-pitch" aria-live="polite">

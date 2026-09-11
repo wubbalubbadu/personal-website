@@ -74,22 +74,31 @@ export default function PracticeActivityHero(){
   }
   function addFocus(){const value=planNote.trim();if(!value)return;setCustomPlan(current=>{const next=[...current,value];localStorage.setItem("cookie:practice-plan-custom",JSON.stringify(next));return next});setDone(current=>{const next=[...current,false];localStorage.setItem("cookie:practice-plan",JSON.stringify(next));return next});setPlanNote("")}
   return <div className="practice-activity-hero" id="practice">
-    <section className="dashboard-card activity-summary" aria-labelledby="activity-title">
-      <header className="dashboard-card-heading">
-        <span className="dashboard-card-icon activity-icon" aria-hidden="true">↗</span>
-        <h2 id="activity-title">{t.activity.practiceActivity}</h2>
-      </header>
-      <div className="activity-stats">
-        <article><b>{data.todayMinutes}</b><span>{t.activity.minutesToday}</span></article>
-        <article><b>{data.weekMinutes}</b><span>{t.activity.minutesThisWeek}</span></article>
-        <article><b>{data.streak.current}</b><span>{t.activity.currentStreak}</span></article>
-        <article><b>{data.streak.longest}</b><span>{t.activity.bestStreak}</span></article>
+    <section className="dashboard-card activity-plan-card" aria-labelledby="activity-title">
+      <div className="activity-plan-card__section">
+        <header className="dashboard-card-heading">
+          <h2 id="activity-title">{t.activity.practiceActivity}</h2>
+        </header>
+        <div className="activity-stats">
+          <article><b>{data.todayMinutes}</b><span>{t.activity.minutesToday}</span></article>
+          <article><b>{data.weekMinutes}</b><span>{t.activity.minutesThisWeek}</span></article>
+          <article><b>{data.streak.current}</b><span>{t.activity.currentStreak}</span></article>
+          <article><b>{data.streak.longest}</b><span>{t.activity.bestStreak}</span></article>
+        </div>
+      </div>
+      <div className="activity-plan-card__section">
+        <header className="dashboard-card-heading" aria-labelledby="plan-title">
+          <h2 id="plan-title">{t.activity.practicePlan}</h2>
+          <b className="plan-count">{t.activity.planCount(done.filter(Boolean).length,initialPlan.length+customPlan.length)}</b>
+        </header>
+        <div className="plan-list">{[...initialPlan,...customPlan].map((item,index)=><label key={`${item}-${index}`} className={done[index]?"done":""}><input type="checkbox" checked={Boolean(done[index])} onChange={()=>check(index)}/><span aria-hidden="true">✓</span><b>{item}</b></label>)}</div>
+        <label className="plan-note-line"><span aria-hidden="true">＋</span><input value={planNote} onChange={event=>setPlanNote(event.target.value)} onKeyDown={event=>{if(event.key==="Enter"){event.preventDefault();addFocus()}}} placeholder={t.activity.addFocusPlaceholder} aria-label={t.activity.addFocusAria}/></label>
       </div>
     </section>
 
     <section className="dashboard-card month-calendar" aria-labelledby="calendar-title">
       <header className="dashboard-card-heading calendar-card-heading">
-        <div><span className="dashboard-card-icon calendar-icon" aria-hidden="true">▦</span><h2 id="calendar-title">{t.activity.calendar}</h2></div>
+        <div><h2 id="calendar-title">{t.activity.calendar}</h2></div>
         <nav aria-label={t.activity.calendarMonthAria}>
           <button type="button" onClick={()=>moveMonth(-1)} aria-label={t.activity.previousMonth}>‹</button>
           <button type="button" onClick={()=>moveMonth(1)} disabled={monthOffset===0} aria-label={t.activity.nextMonth}>›</button>
@@ -102,10 +111,10 @@ export default function PracticeActivityHero(){
           if(!date)return <div className="calendar-cell empty" key={`empty-${index}`} aria-hidden="true"/>;
           const key=dateKey(date),dayMinutes=Math.round(data.byDay.get(key)??0),isSelected=key===selectedDay,isVisible=key===visibleDay,daySessions=data.sessionsByDay.get(key)??[],dayTotal=daySessions.reduce((total,session)=>total+session.durationSeconds,0),tooltipId=`practice-day-${key}`;
           return <div className="calendar-cell" key={key} onMouseEnter={()=>setHoveredDay(key)} onMouseLeave={()=>setHoveredDay(current=>current===key?null:current)}>
-            <button type="button" className={`day-cell level-${level(dayMinutes)}${isSelected?" selected":""}`} onClick={()=>setSelectedDay(current=>current===key?null:key)} onFocus={()=>setFocusedDay(key)} onBlur={()=>setFocusedDay(current=>current===key?null:current)} onKeyDown={event=>{if(event.key==="Escape"){setSelectedDay(null);setHoveredDay(null);event.currentTarget.blur()}}} aria-pressed={isSelected} aria-describedby={isVisible?tooltipId:undefined} aria-label={`${date.toLocaleDateString(lang==="zh"?"zh-CN":undefined,{weekday:"long",month:"long",day:"numeric"})}: ${t.activity.minutesPracticedLabel(dayMinutes)}`}><span>{date.getDate()}</span><i aria-hidden="true"/></button>
+            <button type="button" className={`day-cell level-${level(dayMinutes)}${isSelected?" selected":""}`} onClick={()=>setSelectedDay(current=>current===key?null:key)} onFocus={()=>setFocusedDay(key)} onBlur={()=>setFocusedDay(current=>current===key?null:current)} onKeyDown={event=>{if(event.key==="Escape"){setSelectedDay(null);setHoveredDay(null);event.currentTarget.blur()}}} aria-pressed={isSelected} aria-describedby={isVisible?tooltipId:undefined} aria-label={`${date.toLocaleDateString(lang==="zh"?"zh-CN":undefined,{weekday:"long",month:"long",day:"numeric"})}: ${t.activity.minutesPracticedLabel(dayMinutes)}`}><span>{date.getDate()}</span></button>
             {isVisible?<div className="day-popover" id={tooltipId} role="tooltip">
               <div className="day-popover-heading"><strong>{date.toLocaleDateString(lang==="zh"?"zh-CN":undefined,{weekday:"short",month:"short",day:"numeric"})}</strong><span>{daySessions.length?durationLabel(dayTotal,t):t.activity.noPractice}</span></div>
-              {daySessions.length?<ul>{daySessions.map(session=><li key={session.id}><div><strong>{session.title}</strong><span>{itemTypeLabel(session.itemType,t)} · {durationLabel(session.durationSeconds,t)}</span></div>{session.reflection?.trim()?<p>{session.reflection.trim()}</p>:null}</li>)}</ul>:<p className="day-popover-empty">{t.activity.nothingLogged}</p>}
+              {daySessions.length?<ul>{daySessions.map(session=><li key={session.id}><div><strong>{session.title}</strong><span>{itemTypeLabel(session.itemType,t)} · {durationLabel(session.durationSeconds,t)}</span></div>{session.reflection?.trim()?<p>{session.reflection.trim()}</p>:null}</li>)}</ul>:null}
             </div>:null}
           </div>;
         })}
@@ -113,14 +122,5 @@ export default function PracticeActivityHero(){
       <footer><span>{t.activity.minutesFooterLabel}</span><div><span>{t.activity.none}</span><i className="level-0"/><i className="level-1"/><i className="level-2"/><i className="level-3"/><i className="level-4"/><span>{t.activity.more}</span></div></footer>
     </section>
 
-    <section className="dashboard-card practice-plan-card" aria-labelledby="plan-title">
-      <header className="dashboard-card-heading">
-        <span className="dashboard-card-icon plan-icon" aria-hidden="true">✓</span>
-        <h2 id="plan-title">{t.activity.practicePlan}</h2>
-        <b className="plan-count">{t.activity.planCount(done.filter(Boolean).length,initialPlan.length+customPlan.length)}</b>
-      </header>
-      <div className="plan-list">{[...initialPlan,...customPlan].map((item,index)=><label key={`${item}-${index}`} className={done[index]?"done":""}><input type="checkbox" checked={Boolean(done[index])} onChange={()=>check(index)}/><span aria-hidden="true">✓</span><b>{item}</b></label>)}</div>
-      <label className="plan-note-line"><span aria-hidden="true">＋</span><input value={planNote} onChange={event=>setPlanNote(event.target.value)} onKeyDown={event=>{if(event.key==="Enter"){event.preventDefault();addFocus()}}} placeholder={t.activity.addFocusPlaceholder} aria-label={t.activity.addFocusAria}/></label>
-    </section>
   </div>;
 }

@@ -8,6 +8,7 @@ import StudioPage from '../components/StudioPage';
 import Workbench from '../components/Workbench';
 import './workbench.css';
 import StaffNote from './StaffNote';
+import Breathing from './Breathing';
 
 // Short, register-specific embouchure cues. Thresholds match poses.ts (E5=76, E6=88).
 function guidance(note: number) {
@@ -16,7 +17,7 @@ function guidance(note: number) {
   return 'Tongue and lower lip move forward, air very fast across — eee';
 }
 
-export default function EmbouchurePage(){
+function Embouchure(){
  const host=useRef<HTMLDivElement>(null), target=useRef(76), animate=useRef(false), direction=useRef(1), reset=useRef(()=>{});
  const [note,setNote]=useState(76),[playing,setPlaying]=useState(false);
  useEffect(()=>{target.current=note;},[note]);
@@ -51,12 +52,7 @@ export default function EmbouchurePage(){
  },[]);
  const choose=(n:number)=>{setPlaying(false);setNote(n);};
  const pointerPct=(note-MIN_NOTE)/(MAX_NOTE-MIN_NOTE)*100;
- return <StudioPage
-  title="Inside the embouchure"
-  backHref="/flute-studio"
-  width="wide"
- >
-  <div className="emb">
+ return <div>
    <Workbench
     viewport={<>
      <div ref={host} className="emb-canvas"/>
@@ -76,6 +72,19 @@ export default function EmbouchurePage(){
      <button type="button" className="emb-play" onClick={()=>{if(playing){setPlaying(false);}else{direction.current=1;setNote(MIN_NOTE);setPlaying(true);}}}><span aria-hidden="true">{playing?'❚❚':'▶'}</span>{playing?'Pause':'Play scale'}</button>
     </>}
    />
+  </div>
+;
+}
+
+export default function EmbouchurePage(){
+ const [view,setView]=useState<'embouchure'|'breathing'>('embouchure');
+ return <StudioPage title="Body & embouchure" backHref="/flute-studio" width="wide">
+  <div className="emb">
+   <nav className="body-model-nav" aria-label="Body models">
+    <button type="button" aria-pressed={view==='embouchure'} onClick={()=>setView('embouchure')}>Embouchure</button>
+    <button type="button" aria-pressed={view==='breathing'} onClick={()=>setView('breathing')}>Breathing</button>
+   </nav>
+   {view==='embouchure'?<Embouchure/>:<Breathing/>}
   </div>
  </StudioPage>;
 }

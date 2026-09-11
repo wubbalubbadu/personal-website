@@ -6,7 +6,7 @@ import taffanel from "./taffanel-gaubert-no-1/metadata.json";
 import syrinx from "./syrinx/metadata.json";
 import scales from "./scale-studio/metadata.json";
 
-export const musicCategories=["all","exercise","repertoire","etude","method","warm-up"] as const;
+export const musicCategories=["all","exercise","repertoire","etude","pop"] as const;
 export const difficultyLevels=["all","beginner","early-intermediate","intermediate","advanced"] as const;
 export type MusicCategory=typeof musicCategories[number];
 export type Difficulty=typeof difficultyLevels[number];

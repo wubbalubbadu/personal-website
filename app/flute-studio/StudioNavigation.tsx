@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {usePathname} from "next/navigation";
 import {useLanguage} from "./i18n/LanguageContext";
 import "./studio-navigation.css";
@@ -27,35 +28,30 @@ export default function StudioNavigation(){
   const {t}=useLanguage();
   const destinations=useDestinations();
 
-  function openTools(){
-    window.dispatchEvent(new CustomEvent("cookie:open-practice-tools",{detail:{tool:"tuner"}}));
-  }
-
   return <header className="studio-navigation">
     <div className="studio-navigation__inner">
-      <a className="studio-navigation__brand" href="/flute-studio" aria-label={t.nav.brandHome}>
-        <span className="studio-navigation__brand-mark" aria-hidden="true">♫</span>
+      <Link className="studio-navigation__brand" href="/flute-studio" aria-label={t.nav.brandHome}>
+        <span className="studio-navigation__brand-mark" aria-hidden="true">
+          <i className="crumb c1"/><i className="crumb c2"/><i className="crumb c3"/>
+        </span>
         <span>{t.nav.brand}</span>
-      </a>
+      </Link>
       <nav className="studio-navigation__tabs" aria-label="Studio navigation">
         {destinations.map(destination=>{
           const active=destinationIsActive(destination,pathname);
-          return <a
+          return <Link
             key={destination.key}
+            data-key={destination.key}
             href={destination.href}
             className={active?"studio-navigation__tab is-active":"studio-navigation__tab"}
             aria-current={active?"page":undefined}
           >
             <span className="studio-navigation__tab-icon" aria-hidden="true">{destination.icon}</span>
             <span>{destination.label}</span>
-          </a>;
+          </Link>;
         })}
       </nav>
       <div className="studio-navigation__actions">
-        <button className="studio-navigation__tools" type="button" onClick={openTools}>
-          <span aria-hidden="true">⌁</span>
-          {t.nav.tools}
-        </button>
         <span className="studio-navigation__avatar" role="img" aria-label={t.nav.avatarLabel}>HW</span>
       </div>
     </div>

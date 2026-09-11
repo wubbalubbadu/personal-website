@@ -1,5 +1,5 @@
-.settings-page{max-width:640px;margin:0 auto;padding:88px 20px 130px}
-.settings-header{margin-bottom:28px}
+.settings-page{max-width:640px;margin:0 auto;padding:64px 24px 130px}
+.settings-header{margin:24px 0 28px}
 .settings-header p{font-size:12px;font-weight:720;letter-spacing:.08em;text-transform:uppercase;color:#678956;margin:0 0 8px}
 .settings-header h1{font-size:42px;line-height:1.04;font-weight:780;letter-spacing:-.04em;margin:0;color:#292a33}
 .settings-back{display:inline-flex;align-items:center;gap:4px;color:#506f43;text-decoration:none;font-size:14px;font-weight:650;margin-bottom:14px}

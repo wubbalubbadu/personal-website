@@ -1,0 +1,284 @@
+/* Bigger, border-free cards that replace the old Theory-lesson / Exercise-of-
+   the-day pair — same general proportions, but each one previews real
+   content instead of showing an icon. No border anywhere (the page is white
+   now), so separation comes from a soft shadow + a per-card tinted stage. */
+
+.home-preview-grid {
+  margin: 0 0 42px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+}
+
+.preview-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 22px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(41, 42, 51, 0.08);
+  text-decoration: none;
+  color: #292a33;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.preview-card:hover,
+.preview-card:focus-visible {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 38px rgba(41, 42, 51, 0.13);
+}
+.preview-card:focus-visible {
+  outline: 3px solid rgba(103, 137, 86, 0.4);
+  outline-offset: 2px;
+}
+
+.preview-card__stage {
+  height: 190px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+.preview-card__copy {
+  padding: 16px 20px 20px;
+}
+.preview-card__copy b {
+  display: block;
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+.preview-card__copy small {
+  display: block;
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #71747e;
+}
+
+/* Embouchure — the 3D canvas fills the stage. */
+.preview-card--embouchure .preview-card__stage {
+  background: radial-gradient(120% 140% at 30% 20%, #eef3ec, #e6e8eb);
+}
+.preview-3d {
+  width: 100%;
+  height: 100%;
+}
+.preview-3d canvas {
+  display: block;
+}
+
+/* Roadmap — a small row of numbered stage pills. */
+.preview-card--roadmap .preview-card__stage {
+  background: linear-gradient(160deg, #fbf1fa, #fdf7fc);
+  padding: 0 22px;
+}
+.roadmap-preview {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+}
+.roadmap-preview li {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  opacity: calc(1 - var(--i) * 0.12);
+}
+.roadmap-preview li::before {
+  content: "";
+  position: absolute;
+}
+.roadmap-preview span {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #d277d8;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  transition: transform 0.22s ease;
+  transition-delay: calc(var(--i) * 0.05s);
+}
+/* Hover — the stage pills hop, one after another, like walking the path. */
+.preview-card--roadmap:hover .roadmap-preview span {
+  transform: translateY(-4px);
+}
+.roadmap-preview em {
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 600;
+  color: #68466b;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* Exercises — a compact preview list. */
+.preview-card--exercises .preview-card__stage {
+  background: linear-gradient(160deg, #f3f7f1, #f8faf7);
+  align-items: stretch;
+  padding: 20px 22px;
+}
+.exercises-preview {
+  list-style: none;
+  margin: auto 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.exercises-preview li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #40553d;
+  transition: transform 0.22s ease;
+  transition-delay: calc(var(--i) * 0.05s);
+}
+/* Hover — rows step in from the left, one after another. */
+.preview-card--exercises:hover .exercises-preview li {
+  transform: translateX(4px);
+}
+.exercises-preview i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+.exercises-preview i.green { background: #7fa06f; }
+.exercises-preview i.pink { background: #d98ed3; }
+.exercises-preview i.gray { background: #9aa0a8; }
+
+/* Continue practicing — ONE shared card (not three differently-tinted
+   tiles); each of the three sections is told apart by a small colored dot,
+   not a different background, so it reads as one unit. */
+.continue-panel {
+  margin: 0 0 42px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(41, 42, 51, 0.08);
+  overflow: hidden;
+}
+.continue-section {
+  min-height: 108px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-decoration: none;
+  color: #292a33;
+  border-left: 1px solid #eeefec;
+  transition: background-color 0.16s ease;
+}
+.continue-section:first-child { border-left: 0; }
+.continue-section:hover,
+.continue-section:focus-visible {
+  background: #f8faf7;
+}
+.continue-section:focus-visible {
+  outline: 3px solid rgba(103, 137, 86, 0.4);
+  outline-offset: -3px;
+}
+.continue-section p {
+  margin: 0 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 720;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #85868e;
+}
+.continue-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+.continue-dot.tone-pink { background: #d98ed3; }
+.continue-dot.tone-green { background: #7fa06f; }
+.continue-dot.tone-sage { background: #8a9d84; }
+.continue-section b {
+  display: block;
+  font-size: 16px;
+  font-weight: 640;
+  letter-spacing: -0.01em;
+}
+.continue-section small {
+  display: block;
+  margin-top: 3px;
+  font-size: 13px;
+  color: #71747e;
+}
+
+@media (max-width: 700px) {
+  .continue-panel { grid-template-columns: 1fr; }
+  .continue-section { border-left: 0; border-top: 1px solid #eeefec; }
+  .continue-section:first-child { border-top: 0; }
+}
+
+/* Browse music — a loosely fanned stack of track chips. */
+.preview-card--music .preview-card__stage {
+  background: linear-gradient(160deg, #eef3ea, #f6f8f4);
+}
+.music-preview {
+  position: relative;
+  width: 76%;
+  height: 68%;
+}
+.music-preview__swatch {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 6px 16px rgba(41, 42, 51, 0.1);
+  padding: 12px 14px;
+  transform: rotate(calc((var(--i) - 1.5) * 4deg)) translateY(calc(var(--i) * 2px));
+  transition: transform 0.2s ease;
+}
+.preview-card--music:hover .music-preview__swatch {
+  transform: rotate(calc((var(--i) - 1.5) * 9deg)) translateY(calc(var(--i) * -3px)) translateX(calc((var(--i) - 1.5) * 14px));
+}
+.music-preview__swatch b {
+  display: block;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.music-preview__swatch span {
+  display: block;
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: #85868e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 900px) {
+  .home-preview-grid { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .preview-card, .music-preview__swatch { transition: none; }
+}

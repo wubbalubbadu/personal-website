@@ -1,16 +1,18 @@
 "use client";
 
+import {useState} from "react";
 import {useLanguage} from "../i18n/LanguageContext";
 import "./exercises.css";
 
-type Exercise={
-  title:string;
-  description:string;
-  detail:string;
-  icon:string;
-  tone:"cactus"|"pink"|"slate";
-  href?:string;
-  action:string;
+type Category = "technique" | "tone" | "breathing" | "articulation";
+type Exercise = {
+  title: string;
+  detail: string;
+  icon: string;
+  tone: "cactus" | "pink" | "slate";
+  category: Category;
+  href?: string;
+  action: string;
 };
 
 function ExerciseContent({exercise}:{exercise:Exercise}){
@@ -18,7 +20,6 @@ function ExerciseContent({exercise}:{exercise:Exercise}){
     <span className={`exercise-hub__icon exercise-hub__icon--${exercise.tone}`} aria-hidden="true">{exercise.icon}</span>
     <span className="exercise-hub__copy">
       <strong>{exercise.title}</strong>
-      <span>{exercise.description}</span>
       <small>{exercise.detail}</small>
     </span>
     <span className={exercise.href?"exercise-hub__action":"exercise-hub__action exercise-hub__action--muted"}>{exercise.action}</span>
@@ -27,33 +28,67 @@ function ExerciseContent({exercise}:{exercise:Exercise}){
 
 export default function ExercisesHub(){
   const {t}=useLanguage();
+  const [category,setCategory]=useState<Category|"all">("all");
+  const categories:{key:Category|"all";label:string}[]=[
+    {key:"all",label:t.exercises.categoryAll},
+    {key:"technique",label:t.exercises.categoryTechnique},
+    {key:"tone",label:t.exercises.categoryTone},
+    {key:"breathing",label:t.exercises.categoryBreathing},
+    {key:"articulation",label:t.exercises.categoryArticulation},
+  ];
   const exercises:readonly Exercise[]=[
     {
       title:t.exercises.scaleStudioTitle,
-      description:t.exercises.scaleStudioDescription,
       detail:t.exercises.scaleStudioDetail,
       icon:"◎",
       tone:"cactus",
+      category:"technique",
       href:"/flute-studio/exercises/scales",
       action:"›",
     },
     {
-      title:t.exercises.longToneTitle,
-      description:t.exercises.longToneDescription,
-      detail:t.exercises.longToneDetail,
-      icon:"◌",
-      tone:"pink",
-      action:t.exercises.comingSoon,
-    },
-    {
       title:t.exercises.chromaticTitle,
-      description:t.exercises.chromaticDescription,
       detail:t.exercises.chromaticDetail,
       icon:"♩",
       tone:"slate",
+      category:"technique",
+      action:t.exercises.comingSoon,
+    },
+    {
+      title:t.exercises.longToneTitle,
+      detail:t.exercises.longToneDetail,
+      icon:"◌",
+      tone:"pink",
+      category:"tone",
+      action:t.exercises.comingSoon,
+    },
+    {
+      title:t.exercises.extendedTitle,
+      detail:t.exercises.extendedDetail,
+      icon:"≈",
+      tone:"pink",
+      category:"tone",
+      action:t.exercises.comingSoon,
+    },
+    {
+      title:t.exercises.breathingTitle,
+      detail:t.exercises.breathingDetail,
+      icon:"○",
+      tone:"cactus",
+      category:"breathing",
+      href:"/flute-studio/embouchure",
+      action:"›",
+    },
+    {
+      title:t.exercises.articulationTitle,
+      detail:t.exercises.articulationDetail,
+      icon:"‥",
+      tone:"slate",
+      category:"articulation",
       action:t.exercises.comingSoon,
     },
   ];
+  const shown=category==="all"?exercises:exercises.filter(exercise=>exercise.category===category);
 
   return <main className="exercise-hub">
       <div className="exercise-hub__content">
@@ -65,15 +100,13 @@ export default function ExercisesHub(){
           <p className="exercise-hub__intro">{t.exercises.intro}</p>
         </header>
 
-        <section className="exercise-hub__section" aria-labelledby="exercise-focus-title">
-          <div className="exercise-hub__section-heading">
-            <div>
-              <h2 id="exercise-focus-title">{t.exercises.chooseFocus}</h2>
-              <p>{t.exercises.chooseFocusDetail}</p>
-            </div>
-          </div>
+        <div className="exercise-hub__tabs" role="tablist" aria-label={t.exercises.title}>
+          {categories.map(item=><button key={item.key} type="button" role="tab" aria-selected={category===item.key} className={category===item.key?"active":""} onClick={()=>setCategory(item.key)}>{item.label}</button>)}
+        </div>
+
+        <section className="exercise-hub__section" aria-label={t.exercises.title}>
           <div className="exercise-hub__list">
-            {exercises.map(exercise=>exercise.href?
+            {shown.map(exercise=>exercise.href?
               <a className="exercise-hub__row exercise-hub__row--available" href={exercise.href} key={exercise.title}>
                 <ExerciseContent exercise={exercise}/>
               </a>:
