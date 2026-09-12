@@ -1,0 +1,87 @@
+/* Uses DESIGN.md's Library typography, soft tool controls, and white surfaces. */
+.scale-reader__chapter { padding:16px 24px; color:#71747e; font-size:14px; background:white; display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.scale-reader__chapter>div { display:flex; align-items:baseline; flex-wrap:wrap; gap:8px 16px; }
+.scale-reader__chapter strong { color:#292a33; font-size:18px; font-weight:650; }
+.scale-reader__chapter .scale-book__customize { flex-shrink:0; }
+.scale-reader__tempo { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.scale-reader .scale-book__panel { overflow-y:auto; }
+.scale-reader .scale-book__panel fieldset { border:0!important; background:none; border-radius:0; padding:0; }
+.scale-book__ranges label,.scale-book__line-option { display:flex; gap:10px; align-items:center; min-height:44px; cursor:pointer; }
+.scale-book__ranges legend { margin-bottom:8px; }
+.scale-reader .scale-book__panel input { appearance:none; flex:0 0 18px; width:18px; height:18px; margin:0; border:0!important; border-radius:6px; background:#eaecef; cursor:pointer; }
+.scale-reader .scale-book__panel input:checked { background:#678956; box-shadow:inset 0 0 0 5px #e7eee3; }
+.scale-reader .scale-book__panel input[type="radio"] { border-radius:50%; }
+.scale-reader .scale-book__panel input:focus-visible { outline:2px solid #678956; outline-offset:3px; }
+.scale-reader .scale-book__panel { padding:20px; }
+.scale-reader .scale-book__panel-body { gap:18px; margin-top:18px; }
+.scale-reader .scale-book__key-field { position:relative; }
+.scale-reader .scale-book__key-actions { position:absolute; right:0; top:-24px; margin:0; gap:12px; }
+.scale-reader .scale-book__keys { margin-top:6px; grid-template-columns:repeat(4,1fr); gap:0 8px; }
+.scale-reader .scale-book__keys label { min-height:34px; gap:7px; }
+.scale-reader .scale-book__ranges label { min-height:34px; }
+.scale-book__order { display:flex; gap:18px; margin-top:8px; }
+.scale-book__order label { display:flex; align-items:center; gap:7px; min-height:34px; }
+.scale-book__tempos summary { font-weight:600; cursor:pointer; padding:4px 0; }
+.scale-book__tempos[open] summary { margin-bottom:8px; }
+.scale-book { max-width:1400px; margin:0 auto; padding:64px 24px 130px; color:#292a33; font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Arial,sans-serif; }
+.scale-book__header { display:flex; align-items:center; justify-content:space-between; gap:20px; }
+.scale-book__back { color:#71747e; font-size:14px; text-decoration:none; }
+.scale-book h1 { margin:12px 0 0; font-size:42px; line-height:1.04; font-weight:780; letter-spacing:-.04em; }
+.scale-book button { font-family:inherit; cursor:pointer; }
+.scale-book button:disabled { opacity:.35; cursor:default; }
+.scale-book button:focus-visible,.scale-book a:focus-visible,.scale-book select:focus-visible,.scale-book input:focus-visible { outline:3px solid #678956; outline-offset:3px; }
+.scale-book__customize { display:flex; align-items:center; gap:12px; padding:12px 16px; background:#e7eee3; color:#40553d; border:1px solid #d7e1d2; border-radius:12px; font-size:14px; font-weight:680; }
+.scale-book__customize:hover { background:#dce8d7; }
+.scale-book__chapter { margin:38px 0 22px; display:flex; align-items:baseline; flex-wrap:wrap; gap:12px 20px; }
+.scale-book__chapter h2 { margin:0; font-size:24px; line-height:1.15; font-weight:700; letter-spacing:-.025em; }
+.scale-book__chapter p { margin:0; color:#71747e; font-size:14px; }
+.scale-book__paper { background:#fff; border-radius:20px; box-shadow:0 8px 28px rgba(41,42,51,.055); padding:12px 28px; }
+.scale-book__scale { padding:22px 0 12px; border-bottom:1px solid #eeeef0; scroll-margin-top:90px; }
+.scale-book__scale:last-child { border-bottom:0; }
+.scale-book__scale-heading { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:0 8px; }
+.scale-book__scale h3 { margin:0; font-size:20px; font-weight:700; letter-spacing:-.02em; }
+.scale-book__metronome { display:flex; align-items:center; gap:2px; }
+.scale-book__metronome button { border:0; border-radius:12px; background:transparent; color:#71747e; min-width:40px; min-height:40px; font-size:16px; }
+.scale-book__metronome button:hover { background:#f1f1f4; }
+.scale-book__tempo { font-size:14px; font-variant-numeric:tabular-nums; min-width:60px; text-align:center; white-space:nowrap; }
+.scale-book__metronome .scale-book__play { background:#e7eee3; color:#40553d; margin-left:8px; font-size:12px; }
+.scale-book__metronome .scale-book__play[aria-pressed="true"] { background:#dce8d7; box-shadow:inset 0 0 0 2px #678956; }
+.scale-book__scale[data-playing] h3 { color:#46633d; }
+.scale-book__notation { min-height:138px; padding-top:4px; }
+.scale-book__notation>div { width:100%; min-height:130px; }
+.scale-book__notation svg { display:block; }
+.scale-book__empty { padding:36px 8px; color:#71747e; font-size:14px; }
+.scale-book__panel { position:fixed; inset:80px 16px 16px auto; margin:0; width:340px; max-width:calc(100vw - 32px); max-height:calc(100dvh - 96px); height:fit-content; padding:24px; border:0; border-radius:22px; color:#292a33; background:white; box-shadow:0 9px 28px rgba(41,42,51,.1); }
+.scale-book__panel::backdrop { background:rgba(41,42,51,.16); }
+.scale-book__panel>header { display:flex; align-items:center; justify-content:space-between; }
+.scale-book__panel h2 { margin:0; font-size:20px; font-weight:700; letter-spacing:-.02em; }
+.scale-book__panel>header button { border:0; background:#f1f1f4; border-radius:12px; width:40px; height:40px; color:#5a5c63; font-size:24px; }
+.scale-book__panel-body { display:grid; gap:28px; margin-top:28px; font-size:14px; }
+.scale-book__type { display:flex; justify-content:space-between; gap:12px; }
+.scale-book__type>span { color:#71747e; }
+.scale-book__type strong { font-weight:600; }
+.scale-book__panel fieldset { padding:0; margin:0; border:0; min-width:0; }
+.scale-book__panel legend { font-weight:600; padding:0; }
+.scale-book__key-actions { display:flex; gap:16px; margin:12px 0; }
+.scale-book__key-actions button { background:none; border:0; color:#46633d; font-size:14px; padding:4px 0; }
+.scale-book__keys { display:grid; grid-template-columns:repeat(3,1fr); column-gap:12px; }
+.scale-book__keys label { display:flex; gap:10px; align-items:center; min-height:44px; cursor:pointer; }
+.scale-book__keys input { width:16px; height:16px; margin:0; accent-color:#678956; }
+.scale-book__range { display:grid; gap:12px; font-weight:600; }
+.scale-book__range select { width:100%; padding:12px; border:0; border-radius:12px; background:#f1f1f4; color:#292a33; font-family:inherit; font-size:14px; font-weight:400; }
+@media(max-width:760px){
+  .scale-book { padding:24px 16px 130px; }
+  .scale-book h1 { font-size:36px; }
+  .scale-book__chapter { margin-top:28px; }
+  .scale-book__paper { padding:4px 8px; }
+  .scale-book__scale-heading { padding:0 4px; }
+  .scale-book__scale h3 { font-size:16px; }
+  .scale-book__metronome button { min-width:36px; min-height:44px; }
+  .scale-book__panel { top:76px; }
+}
+@media print {
+  .studio-navigation,.scale-book__customize,.scale-book__back,.scale-book__panel,.scale-book__metronome button { display:none!important; }
+  .scale-book { padding:0; max-width:none; }
+  .scale-book__paper { padding:0; box-shadow:none; }
+  .scale-book__scale { break-inside:avoid; }
+}

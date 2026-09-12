@@ -1,25 +1,70 @@
 "use client";
 
-import {useState} from "react";
+import {useEffect,useState} from "react";
 import {useLanguage} from "../i18n/LanguageContext";
 import "./roadmap.css";
 
+const STORAGE_KEY="cookie:roadmap-learned";
+
 export default function TechniqueRoadmapPage(){
   const {t}=useLanguage();
-  const {journey,groups}=t.roadmap;
-  const [activeGroup,setActiveGroup]=useState(groups[0].id);
-  const current=groups.find(group=>group.id===activeGroup)??groups[0];
+  const {regions}=t.roadmap;
+  const [learned,setLearned]=useState<string[]>([]);
+  const [active,setActive]=useState<{region:string;skill:string}|null>(null);
+
+  useEffect(()=>{
+    try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");if(Array.isArray(saved))setLearned(saved);}catch{}
+  },[]);
+
+  function toggle(id:string){
+    setLearned(prev=>{
+      const next=prev.includes(id)?prev.filter(x=>x!==id):[...prev,id];
+      try{localStorage.setItem(STORAGE_KEY,JSON.stringify(next));}catch{}
+      return next;
+    });
+  }
+
+  const totalSkills=regions.reduce((sum,region)=>sum+region.skills.length,0);
+  const activeRegion=active?regions.find(r=>r.id===active.region):null;
+  const activeSkill=activeRegion?.skills.find(s=>s.id===active?.skill);
+
   return <main className="roadmap-page"><div className="roadmap-page__content">
-    <header className="roadmap-header"><p>{t.roadmap.eyebrow}</p><h1>{t.roadmap.title}</h1><p className="roadmap-header__intro">{t.roadmap.intro}</p></header>
-    <section className="roadmap-journey" aria-labelledby="roadmap-journey-title">
-      <header><p>{t.roadmap.bigPicture}</p><h2 id="roadmap-journey-title">{t.roadmap.bigPictureTitle}</h2></header>
-      <ol>{journey.map(step=><li key={step.level}><div className="roadmap-journey__number">{step.level}</div><div className="roadmap-journey__copy"><h3>{step.title}</h3><p>{step.summary}</p><ul>{step.skills.map(skill=><li key={skill}>{skill}</li>)}</ul></div></li>)}</ol>
-    </section>
-    <section className="roadmap-explore" aria-labelledby="roadmap-explore-title">
-      <header><p>{t.roadmap.exploreByArea}</p><h2 id="roadmap-explore-title">{t.roadmap.chooseFamily}</h2></header>
-      <nav className="roadmap-path" aria-label={t.roadmap.areasAria}>{groups.map((group,index)=><button key={group.id} type="button" aria-pressed={activeGroup===group.id} className={`${activeGroup===group.id?"active ":""}${group.tone}`} onClick={()=>setActiveGroup(group.id)}><span>{index+1}</span><strong>{group.title}</strong></button>)}</nav>
-      <section className={`roadmap-panel ${current.tone}`} aria-labelledby="roadmap-group-title"><header><div><p>{current.id==="extended"?t.roadmap.optionalExploration:t.roadmap.techniqueArea}</p><h2 id="roadmap-group-title">{current.title}</h2><span>{current.description}</span></div></header><div className="roadmap-skill-list">{current.skills.map(skill=><article className="roadmap-skill" key={skill.title}><small>{skill.stage}</small><h3>{skill.title}</h3><p>{skill.description}</p></article>)}</div></section>
-    </section>
-    <footer className="roadmap-sources"><p>{t.roadmap.sourcesText}</p><div><a href="https://www.nfaonline.org/resources-publications/publications/selected-flute-repertoire-and-studies---history" target="_blank" rel="noreferrer">{t.roadmap.nfaGuide}</a><a href="https://www.emiferguson.com/flutes-extendedtechniques" target="_blank" rel="noreferrer">{t.roadmap.extendedSource}</a></div></footer>
-  </div></main>;
+    <header className="roadmap-header">
+      <p>{t.roadmap.eyebrow}</p>
+      <div><h1>{t.roadmap.title}</h1></div>
+    </header>
+    <div className="roadmap-progress"><div className="roadmap-progress__track"><span style={{width:totalSkills?`${Math.round(learned.length/totalSkills*100)}%`:"0%"}}/></div><small>{t.roadmap.learnedCount(learned.length,totalSkills)}</small></div>
+    <div className="roadmap-map">
+      {regions.map(region=>{
+        const regionLearned=region.skills.filter(s=>learned.includes(s.id)).length;
+        return <section key={region.id} className={`roadmap-region ${region.tone}`}>
+          <header className="roadmap-region__header">
+            <div><h2>{region.title}</h2><p>{region.description}</p></div>
+            <span className="roadmap-region__count">{regionLearned}/{region.skills.length}</span>
+          </header>
+          <div className="roadmap-region__skills">
+            {region.skills.map(skill=>{
+              const isLearned=learned.includes(skill.id);
+              return <button key={skill.id} type="button" className={isLearned?"roadmap-node learned":"roadmap-node"} onClick={()=>setActive({region:region.id,skill:skill.id})}>
+                {isLearned&&<i className="roadmap-node__check" aria-hidden="true">✓</i>}
+                <span>{skill.title}</span>
+              </button>;
+            })}
+          </div>
+        </section>;
+      })}
+    </div>
+  </div>
+  {activeSkill&&activeRegion&&<div className="roadmap-detail-backdrop" onClick={()=>setActive(null)}>
+    <div className={`roadmap-detail ${activeRegion.tone}`} onClick={e=>e.stopPropagation()}>
+      <button type="button" className="roadmap-detail__close" onClick={()=>setActive(null)} aria-label={t.roadmap.close}>×</button>
+      <p className="roadmap-detail__region">{activeRegion.title}</p>
+      <h3>{activeSkill.title}</h3>
+      <p>{activeSkill.description}</p>
+      <button type="button" className={learned.includes(activeSkill.id)?"roadmap-detail__mark active":"roadmap-detail__mark"} onClick={()=>toggle(activeSkill.id)}>
+        {learned.includes(activeSkill.id)?`✓ ${t.roadmap.markUnlearned}`:t.roadmap.markLearned}
+      </button>
+    </div>
+  </div>}
+  </main>;
 }

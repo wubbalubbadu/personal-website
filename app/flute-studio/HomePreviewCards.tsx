@@ -8,7 +8,7 @@ import "./home-preview-cards.css";
 
 export default function HomePreviewCards(){
   const {t}=useLanguage();
-  const journey=t.roadmap.journey;
+  const regions=t.roadmap.regions;
   const tracks=musicLibrary.filter(item=>item.status==="published").slice(0,4);
   const exerciseRows=[
     {tone:"green",title:t.exercises.scaleStudioTitle},
@@ -24,9 +24,9 @@ export default function HomePreviewCards(){
 
     <Link className="preview-card preview-card--roadmap" href="/flute-studio/roadmap">
       <div className="preview-card__stage">
-        <ol className="roadmap-preview" aria-hidden="true">
-          {journey.map((step,index)=><li key={step.level} style={{"--i":index} as React.CSSProperties}><span>{step.level}</span><em>{step.title}</em></li>)}
-        </ol>
+        <ul className="roadmap-preview" aria-hidden="true">
+          {regions.map((region,index)=><li key={region.id} style={{"--i":index} as React.CSSProperties}><i className={region.tone}/><span>{region.title}</span></li>)}
+        </ul>
       </div>
       <div className="preview-card__copy"><b>{t.quickTools.roadmap}</b><small>{t.quickTools.roadmapDetail}</small></div>
     </Link>
