@@ -48,6 +48,20 @@ export default defineConfig(async () => {
       ? { watch: { useFsEvents: false, usePolling: true } }
       : undefined,
     plugins: [
+      {
+        name: "preserve-vinext-link-navigation",
+        enforce: "pre",
+        apply: "build",
+        transform(code, id) {
+          if (!id.replaceAll("\\", "/").endsWith("/vinext/dist/shims/link.js")) return;
+          // Preserve the navigation namespace through production chunking.
+          // The dynamic import otherwise loses its callable exports.
+          return 'import * as linkNavigation from "./navigation.js";\n' +
+            'import * as linkRscRequests from "../server/app-rsc-cache-busting.js";\n' +
+            code.replaceAll('import("./navigation.js")', 'Promise.resolve(linkNavigation)')
+              .replaceAll('import("../server/app-rsc-cache-busting.js")', 'Promise.resolve(linkRscRequests)');
+        },
+      },
       vinext(),
       sites(),
       cloudflare({
