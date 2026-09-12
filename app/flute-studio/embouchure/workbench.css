@@ -171,7 +171,9 @@
 .body-model-nav { display:flex; gap:8px; margin:0 0 18px; }
 .emb .body-model-nav button { background:transparent; border-color:transparent; color:#71766f; font-size:14px; }
 .emb .body-model-nav button[aria-pressed="true"] { background:#e7eee3; border-color:#d7e1d2; color:#40553d; }
-.breath-canvas { height:580px; }
+.workbench__viewport:has(.breath-canvas) { display:flex; background:#f1f5f6; }
+.breath-canvas { position:relative; flex:1; height:auto; min-height:580px; }
+.breath-canvas canvas { position:absolute; inset:0; }
 .breath-title { margin:0; font-size:28px; letter-spacing:-.035em; color:#292a33; }
 .breath-parts { width:100%; margin:8px 0; }
 .breath-parts div { padding:12px 0; border-bottom:1px solid #e7e8e4; }
@@ -184,4 +186,9 @@
 .breath-timeline { width:100%; font-size:12px; color:#626b68; margin-top:8px; }
 .breath-timeline input { display:block; width:100%; margin:12px 0 0; accent-color:#678956; }
 .breath-timing { display:flex; justify-content:space-between; width:100%; font-size:11px; color:#747b76; margin-top:-10px; }
-@media(max-width:760px){ .breath-canvas { height:460px; } }
+@media(max-width:760px){ .breath-canvas { min-height:460px; } }
+
+.breath-cycle { width:100%; max-width:260px; align-self:center; aspect-ratio:220/160; touch-action:none; cursor:pointer; }
+.breath-cycle svg { display:block; width:100%; height:100%; }
+.breath-cycle text { font:11px sans-serif; fill:#626b68; }
+.breath-cycle:focus-visible { outline:2px solid #678956; border-radius:12px; }

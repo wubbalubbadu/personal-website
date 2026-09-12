@@ -17,7 +17,7 @@ const semitones: Record<string, number> = { C:0,"C♯":1,D:2,"E♭":3,E:4,F:5,"F
  * line pulled out of a multi-voice/chord XML the auto-derivation doesn't
  * handle yet).
  */
-export type ScoreViewerConfig={title:string;composer:string;asset:string;id:string;backHref:string;backLabel?:string;pdfPath?:string;pitches?:(string|null)[];events?:{p:string|null;d:number}[];measureStarts?:number[];subtitle?:string};
+export type ScoreViewerConfig={title:string;composer:string;asset:string;id:string;backHref:string;backLabel?:string;pdfPath?:string;defaultTempo?:number;pitches?:(string|null)[];events?:{p:string|null;d:number;tied?:boolean}[];measureStarts?:number[];subtitle?:string};
 /**
  * Standard closed-hole Boehm flute fingerings, covering the full chromatic
  * scale across the octaves this app can render. Octaves 4 and 5 share a
@@ -81,6 +81,24 @@ function clampTip(x:number,y:number,width:number,height:number,anchor:"below"|"a
   return {left,top};
 }
 function overlay(root:HTMLDivElement,className:string,text:string,x:number,y:number){const item=document.createElement("span");item.className=`practice-overlay ${className}`;item.textContent=text;item.style.left=`${x}px`;item.style.top=`${y}px`;root.appendChild(item);return item}
+
+/**
+ * Places a label at `baseY`; if it collides with whatever this same `rows`
+ * tracker last placed on that row, drops to a second row a little further
+ * down instead of hiding it. A note's own name/solfège should stay visible
+ * even in a dense run where two labels can't fit side by side on one
+ * line — that's different from a count-marker landing off the beat grid,
+ * which has nothing meaningful to show in the first place. If a label
+ * collides even on the second row (rare — three-plus notes crowded into
+ * the same few pixels), it stays there rather than disappearing.
+ */
+function placeStackedLabel(root:HTMLDivElement,className:string,text:string,x:number,baseY:number,rowGap:number,rows:[number,number]){
+  const label=overlay(root,className,text,x,baseY),box=label.getBoundingClientRect();
+  if(box.left>=rows[0]+3){rows[0]=box.right;return}
+  label.style.top=`${baseY+rowGap}px`;
+  const moved=label.getBoundingClientRect();
+  rows[1]=Math.max(rows[1],moved.right);
+}
 /**
  * unitsPerBeat is how many exact integer `.d` units make one quarter-note
  * beat — 4 for hand-authored pieces (their d values are sixteenth-notes),
@@ -93,7 +111,7 @@ function overlay(root:HTMLDivElement,className:string,text:string,x:number,y:num
  * than that (a 32nd or 64th off-grid) gets no syllable at all rather than
  * a misleading/duplicate one.
  */
-function placePracticeOverlays(root:HTMLDivElement,scoreEvents:{p:string|null;d:number}[],measureStarts:number[],unitsPerBeat:number,keyAccidentals:Set<string>){root.querySelectorAll(".practice-overlay").forEach(n=>n.remove());const rootBox=root.getBoundingClientRect(),all=[...root.querySelectorAll<SVGGElement>(".vf-stavenote[data-event]")],step=unitsPerBeat/4;for(let measure=1;measure<=measureStarts.length;measure++){const group=all.filter(n=>Number(n.dataset.measure)===measure);if(!group.length)continue;const start=measureStarts[measure-1],ancestor=group[0].closest<SVGGElement>(".vf-measure"),measureBox=ancestor?.getBoundingClientRect(),groupBottom=Math.max(...group.map(n=>n.getBoundingClientRect().bottom)),labelLane=(measureBox?.bottom??groupBottom)-rootBox.top+18,countLane=labelLane+24;
+function placePracticeOverlays(root:HTMLDivElement,scoreEvents:{p:string|null;d:number}[],measureStarts:number[],unitsPerBeat:number,keyAccidentals:Set<string>){root.querySelectorAll(".practice-overlay").forEach(n=>n.remove());const rootBox=root.getBoundingClientRect(),all=[...root.querySelectorAll<SVGGElement>(".vf-stavenote[data-event]")],step=unitsPerBeat/4;for(let measure=1;measure<=measureStarts.length;measure++){const group=all.filter(n=>Number(n.dataset.measure)===measure);if(!group.length)continue;const start=measureStarts[measure-1],ancestor=group[0].closest<SVGGElement>(".vf-measure"),measureBox=ancestor?.getBoundingClientRect(),groupBottom=Math.max(...group.map(n=>n.getBoundingClientRect().bottom)),labelLane=(measureBox?.bottom??groupBottom)-rootBox.top+18,countLane=labelLane+32;
 // Two notes rendered close together (a fast run, or a note right after a
 // dotted/off-grid one that got no syllable of its own) can sit closer than
 // a label's own text is wide — labels would print on top of each other.
@@ -104,7 +122,7 @@ function placePracticeOverlays(root:HTMLDivElement,scoreEvents:{p:string|null;d:
 // ever visible at a time — see engraved.css's [data-note-display]) but are
 // tracked separately since only one of them being on-screen doesn't mean
 // they'd collide at the same x the same way.
-let lastNameRight=-Infinity,lastSolfegeRight=-Infinity,lastCountRight=-Infinity,lastLetter="";
+const nameRows:[number,number]=[-Infinity,-Infinity],solfegeRows:[number,number]=[-Infinity,-Infinity];let lastCountRight=-Infinity,lastLetter="";
 group.forEach(note=>{const index=Number(note.dataset.event),event=scoreEvents[index];
   // A grace note borrows its time from the note it decorates rather than
   // occupying a beat position of its own (deriveScoreEvents gives it
@@ -120,8 +138,8 @@ group.forEach(note=>{const index=Number(note.dataset.event),event=scoreEvents[in
     // this is only about pitch identity) so the space goes to notes that
     // actually need it instead of getting crowded out by their own echo.
     if(letter!==lastLetter){
-      const nameLabel=overlay(root,"note-name-marker",letter,x,labelLane),nameBox=nameLabel.getBoundingClientRect();if(nameBox.left<lastNameRight+3)nameLabel.remove();else lastNameRight=nameBox.right;
-      const solfegeLabel=overlay(root,"solfege-marker",solfegeNames[letter]??letter,x,labelLane),solfegeBox=solfegeLabel.getBoundingClientRect();if(solfegeBox.left<lastSolfegeRight+3)solfegeLabel.remove();else lastSolfegeRight=solfegeBox.right;
+      placeStackedLabel(root,"note-name-marker",letter,x,labelLane,15,nameRows);
+      placeStackedLabel(root,"solfege-marker",solfegeNames[letter]??letter,x,labelLane,15,solfegeRows);
       lastLetter=letter;
     }
     if(keyAccidentals.has(letter))overlay(root,"accidental-marker",letter.slice(1),x,box.top-rootBox.top-18);
@@ -190,7 +208,7 @@ export function ScoreViewer({config}:{config:ScoreViewerConfig}) {
   // against the legacy 4-units-per-beat grid; deriveScoreEvents works out
   // whatever grid the piece actually needs (see resolveUnitsPerWhole) and
   // overwrites this once the score loads.
-  const sequenceRef=useRef<{pitches:(string|null)[];events:{p:string|null;d:number}[];measureStarts:number[];unitsPerBeat:number;keyAccidentals:Set<string>}>({pitches:config.pitches??[],events:config.events??[],measureStarts:config.measureStarts??[],unitsPerBeat:4,keyAccidentals:new Set()});
+  const sequenceRef=useRef<{pitches:(string|null)[];events:{p:string|null;d:number;tied?:boolean}[];measureStarts:number[];unitsPerBeat:number;keyAccidentals:Set<string>}>({pitches:config.pitches??[],events:config.events??[],measureStarts:config.measureStarts??[],unitsPerBeat:4,keyAccidentals:new Set()});
   const scoreRef = useRef<HTMLDivElement>(null); const canvasRef = useRef<HTMLCanvasElement>(null); const osmdRef = useRef<OSMDType | null>(null);
   const audioRef = useRef<AudioContext | null>(null); const dronesRef = useRef(new Map<string,OscillatorNode>()); const playbackTimers=useRef<number[]>([]); const playbackNodes=useRef<OscillatorNode[]>([]); const metroRef = useRef<number | null>(null); const metroBeat=useRef(0); const metroTaps=useRef<number[]>([]); const drawing = useRef(false); const inkHistory=useRef<string[]>([]); const inkIndex=useRef(-1);
   // Logical (CSS-pixel) size of the ink canvas's drawing surface — set once
@@ -200,7 +218,7 @@ export function ScoreViewer({config}:{config:ScoreViewerConfig}) {
   // retina displays instead of a fixed-resolution bitmap getting stretched
   // to fit whatever size the paper turns out to be.
   const inkSizeRef = useRef({ w: 1600, h: 2200 });
-  const [loading,setLoading]=useState(true); const [error,setError]=useState(""); const [bpm,setBpm]=useState(76); const [startMeasure,setStartMeasure]=useState(1); const [playing,setPlaying]=useState(false); const [metro,setMetro]=useState(false); const [accent]=useState(true); const [activeDrones,setActiveDrones]=useState<string[]>([]); const [dronePitch,setDronePitch]=useState("G"); const [droneOctave,setDroneOctave]=useState(4); const [picker,setPicker]=useState(false); const [annotating,setAnnotating]=useState(false); const [inkColor,setInkColor]=useState("#e45d46"); const [eraser,setEraser]=useState(false);
+  const [loading,setLoading]=useState(true); const [error,setError]=useState(""); const [bpm,setBpm]=useState(config.defaultTempo??76); const [startMeasure,setStartMeasure]=useState(1); const [playing,setPlaying]=useState(false); const [metro,setMetro]=useState(false); const [accent]=useState(true); const [activeDrones,setActiveDrones]=useState<string[]>([]); const [dronePitch,setDronePitch]=useState("G"); const [droneOctave,setDroneOctave]=useState(4); const [picker,setPicker]=useState(false); const [annotating,setAnnotating]=useState(false); const [inkColor,setInkColor]=useState("#e45d46"); const [eraser,setEraser]=useState(false);
   // Whether the pencil/eraser is the selected tool right now — separate
   // from `annotating` (mark-up mode being on at all). Without this, the
   // canvas captured every pointer event the whole time mark-up was open:
@@ -329,7 +347,15 @@ export function ScoreViewer({config}:{config:ScoreViewerConfig}) {
   useEffect(()=>{if(picker&&activeDrones.length)stopAllDrones()},[picker]);
   function fluteTone(pitch:string,start:number,duration:number){const match=pitch.match(/^([A-G][♯♭]?)(\d)$/);if(!match)return;const c=audio(),fund=c.createOscillator(),gain=c.createGain(),vibrato=c.createOscillator(),vibGain=c.createGain(),frequency=droneFrequency(match[1],+match[2]);fund.type="sine";fund.frequency.value=frequency;vibrato.frequency.value=5.2;vibGain.gain.value=frequency*.004;vibrato.connect(vibGain);vibGain.connect(fund.frequency);gain.gain.setValueAtTime(.0001,start);gain.gain.exponentialRampToValueAtTime(.075,start+.035);gain.gain.setValueAtTime(.07,start+Math.max(.05,duration-.07));gain.gain.exponentialRampToValueAtTime(.0001,start+duration);fund.connect(gain).connect(c.destination);fund.start(start);vibrato.start(start);fund.stop(start+duration);vibrato.stop(start+duration);playbackNodes.current.push(fund,vibrato)}
   function stopPlayback(){playbackTimers.current.forEach(window.clearTimeout);playbackTimers.current=[];playbackNodes.current.forEach(o=>{try{o.stop()}catch{}});playbackNodes.current=[];scoreRef.current?.querySelectorAll(".playback-active").forEach(n=>n.classList.remove("playback-active"));setPlaying(false)}
-  function togglePlayback(){if(playing){stopPlayback();return}if(metroRef.current)window.clearInterval(metroRef.current);setPlaying(true);let cursor=0;const c=audio(),audioStart=c.currentTime+.08,seq=sequenceRef.current,unit=60000/bpm/seq.unitsPerBeat,nodes=scoreRef.current?.querySelectorAll<SVGGElement>(".vf-stavenote")||[],first=seq.measureStarts[startMeasure-1]||0;seq.events.slice(first).forEach((event,offset)=>{const index=first+offset,start=cursor;playbackTimers.current.push(window.setTimeout(()=>{nodes.forEach(n=>n.classList.remove("playback-active"));nodes[index]?.classList.add("playback-active")},start+80));if(event.p)fluteTone(event.p,audioStart+start/1000,Math.max(.09,event.d*unit/1000*.88));cursor+=event.d*unit});if(metro){const beatMs=60000/bpm;for(let time=0,beat=0;time<cursor;time+=beatMs,beat++)scheduleClick(audioStart+time/1000,accent&&beat%4===0)}playbackTimers.current.push(window.setTimeout(stopPlayback,cursor+160))}
+  function togglePlayback(){if(playing){stopPlayback();return}if(metroRef.current)window.clearInterval(metroRef.current);setPlaying(true);let cursor=0;const c=audio(),audioStart=c.currentTime+.08,seq=sequenceRef.current,unit=60000/bpm/seq.unitsPerBeat,nodes=scoreRef.current?.querySelectorAll<SVGGElement>(".vf-stavenote")||[],first=seq.measureStarts[startMeasure-1]||0,slice=seq.events.slice(first);
+    // A tie is two written notes, not one — the second is still its own
+    // event here (still gets its own beat position and highlight), but it
+    // isn't a fresh sound, it's the first note continuing. Summing each
+    // tie chain's total length once, backwards, means the chain's first
+    // note gets fluteTone'd for the whole combined duration and every
+    // note after it in the chain is skipped rather than re-attacking.
+    const soundUnits:number[]=new Array(slice.length);for(let i=slice.length-1;i>=0;i--)soundUnits[i]=slice[i].d+(i+1<slice.length&&slice[i+1].tied?soundUnits[i+1]:0);
+    slice.forEach((event,offset)=>{const index=first+offset,start=cursor;playbackTimers.current.push(window.setTimeout(()=>{nodes.forEach(n=>n.classList.remove("playback-active"));nodes[index]?.classList.add("playback-active")},start+80));if(event.p&&!event.tied)fluteTone(event.p,audioStart+start/1000,Math.max(.09,soundUnits[offset]*unit/1000*.88));cursor+=event.d*unit});if(metro){const beatMs=60000/bpm;for(let time=0,beat=0;time<cursor;time+=beatMs,beat++)scheduleClick(audioStart+time/1000,accent&&beat%4===0)}playbackTimers.current.push(window.setTimeout(stopPlayback,cursor+160))}
   function point(e:PointerEvent<HTMLCanvasElement>){const r=e.currentTarget.getBoundingClientRect(),{w,h}=inkSizeRef.current;return{x:(e.clientX-r.left)*w/r.width,y:(e.clientY-r.top)*h/r.height}}
   function begin(e:PointerEvent<HTMLCanvasElement>){if(!annotating||!inkActive)return;drawing.current=true;const p=point(e),c=e.currentTarget.getContext("2d");c?.beginPath();c?.moveTo(p.x,p.y);e.currentTarget.setPointerCapture(e.pointerId)}
   function draw(e:PointerEvent<HTMLCanvasElement>){if(!drawing.current||!annotating)return;const p=point(e),c=e.currentTarget.getContext("2d");if(!c)return;c.lineWidth=eraser?28:4;c.lineCap="round";c.lineJoin="round";c.globalCompositeOperation=eraser?"destination-out":"source-over";c.strokeStyle=inkColor;c.lineTo(p.x,p.y);c.stroke()}

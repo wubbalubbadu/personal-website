@@ -1,0 +1,16 @@
+{
+  "id": "gold-dust",
+  "title": "Gold Dust",
+  "composer": "NCT 127",
+  "category": "pop",
+  "difficulty": "early-intermediate",
+  "key": "C major",
+  "estimatedMinutes": 3,
+  "defaultTempo": 76,
+  "description": "A faster pop arrangement with quick sixteenth- and thirty-second-note runs.",
+  "techniques": ["finger technique", "tonguing"],
+  "status": "published",
+  "scorePath": "/music/gold-dust/score.mxl",
+  "viewerPath": "/flute-studio/music/gold-dust",
+  "pdfPath": "/music/gold-dust/score.pdf"
+}

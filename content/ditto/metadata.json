@@ -1,0 +1,16 @@
+{
+  "id": "ditto",
+  "title": "Ditto",
+  "composer": "NewJeans",
+  "category": "pop",
+  "difficulty": "beginner",
+  "key": "F♯ minor",
+  "estimatedMinutes": 3,
+  "defaultTempo": 135,
+  "description": "A nostalgic pop arrangement for phrasing and steady tone across a wide range.",
+  "techniques": ["phrasing", "dynamics"],
+  "status": "published",
+  "scorePath": "/music/ditto/score.mxl",
+  "viewerPath": "/flute-studio/music/ditto",
+  "pdfPath": "/music/ditto/score.pdf"
+}

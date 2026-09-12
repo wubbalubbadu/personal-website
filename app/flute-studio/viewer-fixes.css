@@ -60,3 +60,12 @@
 .workspace .back:hover{background:#f1f5ef!important}
 .workspace .back-arrow{font-size:26px!important;line-height:1!important}
 .workspace .back-label{font-size:14px!important;font-weight:500!important;color:#6f7178!important}
+
+/* The loading message used to sit in normal flow, directly above the score
+   container — but OSMD renders straight into that container as soon as
+   the file is parsed, which can finish before the loading flag itself
+   flips off. For that brief window both were on screen at once, so
+   removing the loading text let the (already fully rendered) score jump
+   upward to close the gap it left. An absolutely-positioned overlay never
+   occupies flow space in the first place, so there's nothing to close. */
+.workspace .score-loading{position:absolute!important;inset:0!important;display:flex!important;align-items:center!important;justify-content:center!important;color:#85868e!important;font-size:13px!important}

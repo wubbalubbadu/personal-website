@@ -112,16 +112,32 @@ function resolveUnitsPerWhole(osmd: OSMDType): number {
  * source instead of working around a shifted index downstream.
  *
  * Duration (`d`) is in `unitsPerBeat`-per-quarter-note units (see
- * resolveUnitsPerWhole above) — an exact integer, never rounded, so onset
- * tracking downstream (playback timing, rhythm-count labels) can't drift.
- * Grace notes get d=0 — they borrow time rather than occupying their own
- * beat.
+ * resolveUnitsPerWhole above). Grace notes get d=0 — they borrow time
+ * rather than occupying their own beat.
+ *
+ * A triplet (or anything else whose true length needs a factor of 3, which
+ * no power-of-two grid can hit exactly no matter how fine) is the one case
+ * resolveUnitsPerWhole can't make exact. Rather than round each such
+ * note's length in isolation — which is what silently produced the
+ * original "rhythm is wrong" bug, just a smaller-magnitude version of it —
+ * this tracks the note's TRUE running position (`exactOnset`, never
+ * rounded) alongside the discrete position implied by every duration
+ * handed out so far (`roundedOnset`), and derives each note's `d` as the
+ * difference between the newly-rounded true position and the previous
+ * one. A triplet's three notes might come out slightly uneven this way
+ * (e.g. 5,5,6 units instead of a "true" 5.33 each) — but the position
+ * right after the triplet, the next downbeat, is always exactly where it
+ * belongs, because it's a rounding of the real position rather than a sum
+ * of three already-rounded guesses compounding their own error. Good
+ * enough: nothing needs a labeled position inside the triplet itself, and
+ * the downbeats around it stay correct.
  */
 export function deriveScoreEvents(osmd: OSMDType) {
   const unitsPerWhole = resolveUnitsPerWhole(osmd);
   const pitches: (string | null)[] = [];
-  const events: { p: string | null; d: number }[] = [];
+  const events: { p: string | null; d: number; tied: boolean }[] = [];
   const measureStarts: number[] = [];
+  let exactOnset = 0, roundedOnset = 0;
 
   for (const measure of osmd.Sheet.SourceMeasures) {
     measureStarts.push(pitches.length);
@@ -129,15 +145,24 @@ export function deriveScoreEvents(osmd: OSMDType) {
       for (const voiceEntry of container.StaffEntries[0]?.VoiceEntries ?? []) {
         const note = voiceEntry.Notes[0];
         if (!note) continue;
-        const duration = note.IsGraceNote ? 0 : (Math.round(note.Length.RealValue * unitsPerWhole) || 1);
-        if (note.isRest()) {
-          pitches.push(null);
-          events.push({ p: null, d: duration });
-        } else {
-          const short = pitchFromHalfTone(note.halfTone);
-          pitches.push(short);
-          events.push({ p: short, d: duration });
-        }
+        const short = note.isRest() ? null : pitchFromHalfTone(note.halfTone);
+        if (note.IsGraceNote) { pitches.push(short); events.push({ p: short, d: 0, tied: false }); continue; }
+        // A tie is two separate written notes (that's how MusicXML/OSMD
+        // represent it — see .NoteTie/.Tie.StartNote), not one continuous
+        // one; nothing here merges them. So without this check, the second
+        // note plays back as a fresh attack — the note IS correctly read
+        // as tied for notation purposes (hover already showed that), the
+        // gap was purely on the playback side never asking. `tied` marks a
+        // note as continuing the sound of whatever came before it rather
+        // than starting a new one; togglePlayback uses it to skip the
+        // re-attack and extend the previous note's tone across it instead.
+        const tied = !!note.NoteTie && note.NoteTie.StartNote !== note;
+        exactOnset += note.Length.RealValue * unitsPerWhole;
+        const nextRounded = Math.round(exactOnset);
+        const duration = Math.max(1, nextRounded - roundedOnset);
+        roundedOnset = nextRounded;
+        pitches.push(short);
+        events.push({ p: short, d: duration, tied });
       }
     }
   }

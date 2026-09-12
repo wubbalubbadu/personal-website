@@ -18,7 +18,7 @@ export default function MusicLibrary(){
   const [filterOpen,setFilterOpen]=useState(false);
 
   useEffect(()=>{const saved=localStorage.getItem("cookie:music-favorites");if(saved)setFavorites(JSON.parse(saved));const params=new URLSearchParams(location.search),initial=params.get("category");if(musicCategories.includes(initial as MusicCategory))setCategory(initial as MusicCategory);if(params.get("favorites")==="1")setFavoritesOnly(true)},[]);
-  const items=useMemo(()=>musicLibrary.filter(item=>(category==="all"||item.category===category)&&(difficulty==="all"||item.difficulty===difficulty)&&(!favoritesOnly||favorites.includes(item.id))&&`${item.title} ${item.composer} ${item.key} ${item.techniques.join(" ")}`.toLowerCase().includes(query.toLowerCase())),[query,category,difficulty,favoritesOnly,favorites]);
+  const items=useMemo(()=>musicLibrary.filter(item=>(category==="all"||item.category===category)&&(difficulty==="all"||item.difficulty===difficulty)&&(!favoritesOnly||favorites.includes(item.id))&&`${item.title} ${item.composer} ${item.key} ${item.techniques.join(" ")}`.toLowerCase().includes(query.toLowerCase())).sort((a,b)=>a.title.localeCompare(b.title)),[query,category,difficulty,favoritesOnly,favorites]);
   function favorite(id:string){const next=favorites.includes(id)?favorites.filter(item=>item!==id):[...favorites,id];setFavorites(next);localStorage.setItem("cookie:music-favorites",JSON.stringify(next));window.dispatchEvent(new Event("cookie:favorites-updated"))}
   function pickOne(){const available=items.filter(item=>item.viewerPath);if(!available.length)return;const choice=available[Math.floor(Math.random()*available.length)];window.location.assign(choice.viewerPath!)}
 
