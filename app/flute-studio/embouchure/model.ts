@@ -59,18 +59,36 @@ export function createModel() {
     fragmentShader:`uniform vec3 color;uniform float phase;uniform float strength;varying vec2 flowUv;void main(){float edge=pow(max(0.,sin(flowUv.y*3.14159265)),.65);float band=.52+.48*pow(.5+.5*sin(flowUv.x*38.-phase*6.2831853),2.);gl_FragColor=vec4(color,edge*band*strength);
 #include <colorspace_fragment>
 }`});
-  function ribbon(name:string){const geo=new THREE.BufferGeometry();const positions=new Float32Array(81*2*3),uv=new Float32Array(81*2*2),indices=[];for(let i=0;i<=80;i++){uv.set([i/80,0,i/80,1],i*4);if(i<80){const j=i*2;indices.push(j,j+1,j+2,j+1,j+3,j+2);}}geo.setAttribute('position',new THREE.BufferAttribute(positions,3));geo.setAttribute('uv',new THREE.BufferAttribute(uv,2));geo.setIndex(indices);const mesh=new THREE.Mesh(geo,flowMaterial);mesh.name=name;mesh.frustumCulled=false;air.add(mesh);return geo;}
+  function ribbon(name:string,mat=flowMaterial){const geo=new THREE.BufferGeometry();const positions=new Float32Array(81*2*3),uv=new Float32Array(81*2*2),indices=[];for(let i=0;i<=80;i++){uv.set([i/80,0,i/80,1],i*4);if(i<80){const j=i*2;indices.push(j,j+1,j+2,j+1,j+3,j+2);}}geo.setAttribute('position',new THREE.BufferAttribute(positions,3));geo.setAttribute('uv',new THREE.BufferAttribute(uv,2));geo.setIndex(indices);const mesh=new THREE.Mesh(geo,mat);mesh.name=name;mesh.frustumCulled=false;air.add(mesh);return geo;}
   const mouthFlow=ribbon('Mouth air volume'),jetFlow=ribbon('Lip jet');
+  // A continuous translucent air field rather than separate streams.
+  const intakeMaterial=new THREE.ShaderMaterial({transparent:true,depthWrite:false,side:THREE.DoubleSide,
+    uniforms:{time:{value:0},strength:{value:0},color:{value:cool.clone()}},
+    vertexShader:`varying vec2 airUv;void main(){airUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+    fragmentShader:`varying vec2 airUv;uniform float time;uniform float strength;uniform vec3 color;
+    void main(){
+      vec2 p=vec2(airUv.x*2.4,(airUv.y-.5)*3.6);
+      float radius=length(p),angle=atan(p.y,p.x),drift=radius+time*.65;
+      float mist=.65+.18*sin(drift*5.+sin(angle*3.))+.12*sin(drift*9.-angle*2.);
+      float edge=(1.-smoothstep(.4,2.15,radius))*smoothstep(0.,.15,airUv.x)*smoothstep(0.,.12,airUv.y)*smoothstep(0.,.12,1.-airUv.y);
+      gl_FragColor=vec4(color,edge*mist*strength);
+      #include <colorspace_fragment>
+    }`});
+  const intakeField=new THREE.Mesh(new THREE.PlaneGeometry(2.4,3.6),intakeMaterial);
+  intakeField.name='Surrounding air gathering into mouth';air.add(intakeField);
   function fill(geometry:THREE.BufferGeometry,curve:THREE.Curve<THREE.Vector3>,width:(u:number)=>number){const pos=geometry.attributes.position;for(let i=0;i<=80;i++){const u=i/80,p=curve.getPoint(u),tangent=curve.getTangent(u),normal=new THREE.Vector3(-tangent.y,tangent.x,0).normalize().multiplyScalar(width(u));pos.setXYZ(i*2,p.x+normal.x,p.y+normal.y,.58);pos.setXYZ(i*2+1,p.x-normal.x,p.y-normal.y,.58);}pos.needsUpdate=true;}
   let phase=0,previousTime:number|undefined,speed=.4;
-  function update(note:number,time:number,showAir:boolean){
-    const {t}=poseAt(note);tongue.morphTargetInfluences![0]=t;
-    upper.morphTargetInfluences![0]=t;lower.morphTargetInfluences![0]=t;lowerTeeth.position.y=-.37+.30*t;lowerTeeth.position.x=-.37+.08*t;
+  function update(note:number,time:number,showAir:boolean,inhalation=0,inhaling=inhalation>.5){
+    const {t}=poseAt(note);
+    lower.position.y=-.24*inhalation; tongue.position.y=-.10*inhalation;
+    upper.scale.x=1+.018*inhalation;
+    tongue.morphTargetInfluences![0]=t;
+    upper.morphTargetInfluences![0]=t;lower.morphTargetInfluences![0]=t;lowerTeeth.position.y=-.37+.30*t-.24*inhalation;lowerTeeth.position.x=-.37+.08*t;
     // Integrate velocity, rather than multiplying absolute time by a changing speed.
     const dt=previousTime===undefined?0:Math.max(0,Math.min(.05,time-previousTime));previousTime=time;
-    speed=THREE.MathUtils.damp(speed,.4+1.8*t,4,dt);phase=(phase+dt*speed)%100;
-    flowMaterial.uniforms.phase.value=phase;flowMaterial.uniforms.color.value.copy(warm).lerp(cool,t);air.visible=showAir;
-    const outlet=new THREE.Vector3(.60+.18*t,.085+.02*t,.58);
+    speed=THREE.MathUtils.damp(speed,.4+1.8*t,4,dt);phase=(phase+dt*speed*(inhaling?-1:1))%100;
+    flowMaterial.uniforms.phase.value=phase;flowMaterial.uniforms.color.value.copy(warm).lerp(cool,Math.max(t,inhalation));air.visible=showAir;
+    const outlet=new THREE.Vector3(.60+.18*t,.085+.02*t-.10*inhalation,.58);
     instrument.updateMatrixWorld(true);
     // One flow envelope: downward into the bore, gradually becoming horizontal.
     const angle=-1.15+1.11*t;
@@ -85,11 +103,17 @@ export function createModel() {
       if(!throughOpening && p.y<-.255 && radius>.49 && radius<.64){length=Math.max(.02,d-.025);break;}
     }
     const end=outlet.clone().addScaledVector(direction,length);
+    if(inhalation>0)end.lerp(new THREE.Vector3(1.8,.18,.58),inhalation);
     const mouth=new THREE.CatmullRomCurve3([new THREE.Vector3(-2.14+.05*t,-1.35,.58),new THREE.Vector3(-2.14+.05*t,-.15,.58),new THREE.Vector3(-1.8,.24+.20*t,.58),new THREE.Vector3(-1.3,.30+.24*t,.58),new THREE.Vector3(-.75,.30+.25*t,.58),new THREE.Vector3(-.14,.23,.58),outlet]);
-    const jetWidth=.067-.043*t;
-    fill(mouthFlow,mouth,u=>{const broad=.22-.10*t;return u<.48?THREE.MathUtils.lerp(.055,broad,THREE.MathUtils.smoothstep(u,.22,.48)):THREE.MathUtils.lerp(broad,jetWidth,THREE.MathUtils.smoothstep(u,.55,1));});
+    const jetWidth=.067-.043*t+.10*inhalation;
+    fill(mouthFlow,mouth,u=>{const broad=.22-.10*t+.22*inhalation;return u<.48?THREE.MathUtils.lerp(.055+.055*inhalation,broad,THREE.MathUtils.smoothstep(u,.22,.48)):THREE.MathUtils.lerp(broad,jetWidth,THREE.MathUtils.smoothstep(u,.68,1));});
     const jet=new THREE.LineCurve3(outlet,end);
-    fill(jetFlow,jet,u=>jetWidth*(1+.65*u)*Math.min(1,(1-u)*8));
+    fill(jetFlow,jet,u=>jetWidth*(1+.65*u)*Math.min(1,(1-u)*8)*(inhaling?0:1-inhalation));
+    intakeField.position.set(outlet.x+1.2,outlet.y,.58);
+    intakeMaterial.uniforms.time.value=time;
+    intakeMaterial.uniforms.strength.value=.85*inhalation;
+    flowMaterial.uniforms.strength.value=.48+.16*inhalation;
+
 
   }
   return {root,update};

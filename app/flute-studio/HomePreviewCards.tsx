@@ -5,6 +5,7 @@ import Link from "next/link";
 import {musicLibrary} from "../../content/music-library";
 import EmbouchureMiniPreview from "./EmbouchureMiniPreview";
 import "./home-preview-cards.css";
+import "./breathing/breathing-lab.css";
 
 export default function HomePreviewCards(){
   const {t}=useLanguage();
@@ -22,13 +23,9 @@ export default function HomePreviewCards(){
       <div className="preview-card__copy"><b>{t.quickTools.embouchure}</b><small>{t.quickTools.embouchureDetail}</small></div>
     </Link>
 
-    <Link className="preview-card preview-card--roadmap" href="/flute-studio/roadmap">
-      <div className="preview-card__stage">
-        <ul className="roadmap-preview" aria-hidden="true">
-          {regions.map((region,index)=><li key={region.id} style={{"--i":index} as React.CSSProperties}><i className={region.tone}/><span>{region.title}</span></li>)}
-        </ul>
-      </div>
-      <div className="preview-card__copy"><b>{t.quickTools.roadmap}</b><small>{t.quickTools.roadmapDetail}</small></div>
+    <Link className="preview-card preview-card--breathing" href="/flute-studio/breathing">
+      <div className="preview-card__stage"><div className="breathing-preview" aria-hidden="true">8 · 8</div></div>
+      <div className="preview-card__copy"><b>Breathing Lab</b><small>Guided breaths, your rhythm.</small></div>
     </Link>
 
     <Link className="preview-card preview-card--exercises" href="/flute-studio/exercises">
@@ -48,5 +45,14 @@ export default function HomePreviewCards(){
       </div>
       <div className="preview-card__copy"><b>{t.quickTools.browseMusic}</b><small>{t.quickTools.browseMusicDetail}</small></div>
     </Link>
+    <Link className="preview-card preview-card--roadmap" href="/flute-studio/roadmap">
+      <div className="preview-card__stage">
+        <ul className="roadmap-preview" aria-hidden="true">
+          {regions.map((region,index)=><li key={region.id} style={{"--i":index} as React.CSSProperties}><i className={region.tone}/><span>{region.title}</span></li>)}
+        </ul>
+      </div>
+      <div className="preview-card__copy"><b>{t.quickTools.roadmap}</b><small>{t.quickTools.roadmapDetail}</small></div>
+    </Link>
+
   </section>;
 }

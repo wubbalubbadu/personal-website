@@ -71,12 +71,12 @@ export default function ExercisesHub(){
       action:t.exercises.comingSoon,
     },
     {
-      title:t.exercises.breathingTitle,
+      title:"Breathing Lab",
       detail:t.exercises.breathingDetail,
       icon:"○",
       tone:"cactus",
       category:"breathing",
-      href:"/flute-studio/embouchure",
+      href:"/flute-studio/breathing",
       action:"›",
     },
     {

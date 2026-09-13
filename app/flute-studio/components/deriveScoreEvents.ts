@@ -1,4 +1,6 @@
 import type { OpenSheetMusicDisplay as OSMDType } from "opensheetmusicdisplay";
+import { ArticulationEnum } from "opensheetmusicdisplay";
+import type { ArticulationMode } from "./notePatterns";
 
 // Same canonical 12-tone spelling the rest of the app already uses for
 // playback/drone/tuner lookups (see ScoreViewer's pitchClasses/semitones,
@@ -135,7 +137,7 @@ function resolveUnitsPerWhole(osmd: OSMDType): number {
 export function deriveScoreEvents(osmd: OSMDType) {
   const unitsPerWhole = resolveUnitsPerWhole(osmd);
   const pitches: (string | null)[] = [];
-  const events: { p: string | null; d: number; tied: boolean }[] = [];
+  const events: { p: string | null; d: number; tied: boolean; articulation: ArticulationMode; slurContinuation: boolean }[] = [];
   const measureStarts: number[] = [];
   let exactOnset = 0, roundedOnset = 0;
 
@@ -146,7 +148,7 @@ export function deriveScoreEvents(osmd: OSMDType) {
         const note = voiceEntry.Notes[0];
         if (!note) continue;
         const short = note.isRest() ? null : pitchFromHalfTone(note.halfTone);
-        if (note.IsGraceNote) { pitches.push(short); events.push({ p: short, d: 0, tied: false }); continue; }
+        if (note.IsGraceNote) { pitches.push(short); events.push({ p: short, d: 0, tied: false, articulation: "tongue", slurContinuation: false }); continue; }
         // A tie is two separate written notes (that's how MusicXML/OSMD
         // represent it — see .NoteTie/.Tie.StartNote), not one continuous
         // one; nothing here merges them. So without this check, the second
@@ -157,12 +159,18 @@ export function deriveScoreEvents(osmd: OSMDType) {
         // than starting a new one; togglePlayback uses it to skip the
         // re-attack and extend the previous note's tone across it instead.
         const tied = !!note.NoteTie && note.NoteTie.StartNote !== note;
+        // Slur wins over a printed articulation mark if a note somehow has
+        // both — a slurred note is legato regardless of what's under it.
+        const slur = note.NoteSlurs[0];
+        const hasMark = (kind: ArticulationEnum) => voiceEntry.Articulations.some(a => a.articulationEnum === kind);
+        const articulation: ArticulationMode = slur ? "slur" : hasMark(ArticulationEnum.staccato) ? "staccato" : hasMark(ArticulationEnum.tenuto) ? "tenuto" : "tongue";
+        const slurContinuation = !!slur && slur.StartNote !== note;
         exactOnset += note.Length.RealValue * unitsPerWhole;
         const nextRounded = Math.round(exactOnset);
         const duration = Math.max(1, nextRounded - roundedOnset);
         roundedOnset = nextRounded;
         pitches.push(short);
-        events.push({ p: short, d: duration, tied });
+        events.push({ p: short, d: duration, tied, articulation, slurContinuation });
       }
     }
   }

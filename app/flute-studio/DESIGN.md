@@ -131,6 +131,23 @@ general "active state" color for buttons in general (those stay soft-tint
 green, see above). Don't use `#292a33` on anything that isn't a selected
 tab/chip.
 
+**Icon buttons (star, download, share, more-actions, back-arrow):**
+```css
+background: transparent;
+border: 0;
+border-radius: 12px;
+width/height: 42px;
+color: inherit or #5a5c63;
+```
+Hover: `background: #f1f5ef`.
+
+**Close (×) buttons are the one exception to that hover** — same
+transparent, borderless shape, but *no* hover background change at all
+(see `.dock-close` in practice-tool-dock.css). A dismiss action doesn't
+get the same hover affordance as a persistent toolbar icon; don't add
+`:hover{background:...}` to a close button even though it looks like an
+icon button otherwise.
+
 ## Cards & Rows
 
 - **List row**: `min-height: 78px`, icon tile + title/meta stack + trailing

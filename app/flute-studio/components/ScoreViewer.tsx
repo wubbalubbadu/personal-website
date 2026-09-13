@@ -5,6 +5,7 @@ import type { MusicSheetCalculator, OpenSheetMusicDisplay as OSMDType } from "op
 import { useLanguage } from "../i18n/LanguageContext";
 import { useRecents } from "../lib/storage";
 import { deriveScoreEvents, resolveKeyAccidentals } from "./deriveScoreEvents";
+import type { ArticulationMode } from "./notePatterns";
 
 const pitchClasses = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"];
 const semitones: Record<string, number> = { C:0,"C♯":1,D:2,"E♭":3,E:4,F:5,"F♯":6,G:7,"A♭":8,A:9,"B♭":10,B:11 };
@@ -17,7 +18,7 @@ const semitones: Record<string, number> = { C:0,"C♯":1,D:2,"E♭":3,E:4,F:5,"F
  * line pulled out of a multi-voice/chord XML the auto-derivation doesn't
  * handle yet).
  */
-export type ScoreViewerConfig={title:string;composer:string;asset:string;id:string;backHref:string;backLabel?:string;pdfPath?:string;defaultTempo?:number;pitches?:(string|null)[];events?:{p:string|null;d:number;tied?:boolean}[];measureStarts?:number[];subtitle?:string;displayPitches?:(string|null)[];measureKeyAccidentals?:string[][]};
+export type ScoreViewerConfig={title:string;composer:string;asset:string;id:string;backHref:string;backLabel?:string;pdfPath?:string;defaultTempo?:number;pitches?:(string|null)[];events?:{p:string|null;d:number;tied?:boolean;articulation?:ArticulationMode;slurContinuation?:boolean}[];measureStarts?:number[];subtitle?:string;displayPitches?:(string|null)[];measureKeyAccidentals?:string[][];syllables?:(string|null)[]};
 /**
  * Standard closed-hole Boehm flute fingerings, covering the full chromatic
  * scale across the octaves this app can render. Octaves 4 and 5 share a
@@ -111,7 +112,7 @@ function placeStackedLabel(root:HTMLDivElement,className:string,text:string,x:nu
  * than that (a 32nd or 64th off-grid) gets no syllable at all rather than
  * a misleading/duplicate one.
  */
-function placePracticeOverlays(root:HTMLDivElement,scoreEvents:{p:string|null;d:number}[],measureStarts:number[],unitsPerBeat:number,keyAccidentals:Set<string>,displayPitches?:(string|null)[],measureKeys?:string[][],unmetered=false){root.querySelectorAll(".practice-overlay").forEach(n=>n.remove());const rootBox=root.getBoundingClientRect(),all=[...root.querySelectorAll<SVGGElement>(".vf-stavenote[data-event]")],step=unitsPerBeat/4;for(let measure=1;measure<=measureStarts.length;measure++){const group=all.filter(n=>Number(n.dataset.measure)===measure);if(!group.length)continue;const start=measureStarts[measure-1],ancestor=group[0].closest<SVGGElement>(".vf-measure"),measureBox=ancestor?.getBoundingClientRect(),groupBottom=Math.max(...group.map(n=>n.getBoundingClientRect().bottom)),labelLane=(measureBox?.bottom??groupBottom)-rootBox.top+18,countLane=labelLane+32;
+function placePracticeOverlays(root:HTMLDivElement,scoreEvents:{p:string|null;d:number}[],measureStarts:number[],unitsPerBeat:number,keyAccidentals:Set<string>,displayPitches?:(string|null)[],measureKeys?:string[][],unmetered=false,syllables?:(string|null)[]){root.querySelectorAll(".practice-overlay").forEach(n=>n.remove());const rootBox=root.getBoundingClientRect(),all=[...root.querySelectorAll<SVGGElement>(".vf-stavenote[data-event]")],step=unitsPerBeat/4;for(let measure=1;measure<=measureStarts.length;measure++){const group=all.filter(n=>Number(n.dataset.measure)===measure);if(!group.length)continue;const start=measureStarts[measure-1],ancestor=group[0].closest<SVGGElement>(".vf-measure"),measureBox=ancestor?.getBoundingClientRect(),groupBottom=Math.max(...group.map(n=>n.getBoundingClientRect().bottom)),labelLane=(measureBox?.bottom??groupBottom)-rootBox.top+18,countLane=labelLane+32;
 // Two notes rendered close together (a fast run, or a note right after a
 // dotted/off-grid one that got no syllable of its own) can sit closer than
 // a label's own text is wide — labels would print on top of each other.
@@ -144,6 +145,10 @@ group.forEach(note=>{const index=Number(note.dataset.event),event=scoreEvents[in
     }
     if(measureKeys?.[measure-1]?.includes(letter)??keyAccidentals.has(letter))overlay(root,"accidental-marker",letter.slice(1),x,box.top-rootBox.top-18);
   }
+  // Sits above the accidental lane (-18) rather than sharing it, so a
+  // tongued note with a key-signature accidental doesn't overlap its own
+  // syllable label.
+  if(syllables?.[index])overlay(root,"tonguing-marker",syllables[index]!,x,box.top-rootBox.top-34);
   if(unmetered)return;
   let onset=0;for(let i=start;i<index;i++)onset+=scoreEvents[i]?.d??0;
   if(onset%step===0){const label=overlay(root,"count-marker",`${Math.floor(onset/unitsPerBeat)+1}${["","e","+","a"][(onset/step)%4]}`,x,countLane),labelBox=label.getBoundingClientRect();if(labelBox.left<lastCountRight+3)label.remove();else lastCountRight=labelBox.right}
@@ -211,9 +216,9 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
   // against the legacy 4-units-per-beat grid; deriveScoreEvents works out
   // whatever grid the piece actually needs (see resolveUnitsPerWhole) and
   // overwrites this once the score loads.
-  const sequenceRef=useRef<{pitches:(string|null)[];events:{p:string|null;d:number;tied?:boolean}[];measureStarts:number[];unitsPerBeat:number;keyAccidentals:Set<string>}>({pitches:config.pitches??[],events:config.events??[],measureStarts:config.measureStarts??[],unitsPerBeat:4,keyAccidentals:new Set()});
+  const sequenceRef=useRef<{pitches:(string|null)[];events:{p:string|null;d:number;tied?:boolean;articulation?:ArticulationMode;slurContinuation?:boolean}[];measureStarts:number[];unitsPerBeat:number;keyAccidentals:Set<string>}>({pitches:config.pitches??[],events:config.events??[],measureStarts:config.measureStarts??[],unitsPerBeat:4,keyAccidentals:new Set()});
   const scoreRef = useRef<HTMLDivElement>(null); const canvasRef = useRef<HTMLCanvasElement>(null); const osmdRef = useRef<OSMDType | null>(null);
-  const audioRef = useRef<AudioContext | null>(null); const dronesRef = useRef(new Map<string,OscillatorNode>()); const playbackTimers=useRef<number[]>([]); const playbackNodes=useRef<OscillatorNode[]>([]); const metroRef = useRef<number | null>(null); const metroBeat=useRef(0); const metroTaps=useRef<number[]>([]); const drawing = useRef(false); const inkHistory=useRef<string[]>([]); const inkIndex=useRef(-1);
+  const audioRef = useRef<AudioContext | null>(null); const dronesRef = useRef(new Map<string,OscillatorNode>()); const playbackTimers=useRef<number[]>([]); const playbackNodes=useRef<OscillatorNode[]>([]); const playbackPosition=useRef<{audioStart:number;unit:number;from:number}|null>(null); const metroRef = useRef<number | null>(null); const metroBeat=useRef(0); const metroTaps=useRef<number[]>([]); const drawing = useRef(false); const inkHistory=useRef<string[]>([]); const inkIndex=useRef(-1);
   // Logical (CSS-pixel) size of the ink canvas's drawing surface — set once
   // the score has rendered, from the paper's actual size, not a fixed
   // constant. The canvas's real backing-store resolution is this times
@@ -230,7 +235,7 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
   // tool (below) is the only thing that turns this back on; placing a
   // text/sticky note turns it off, since what the user wants right after
   // placing one is to interact with it, not keep drawing.
-  const [inkActive,setInkActive]=useState(true); const [historyTick,setHistoryTick]=useState(0); const [noteDisplay,setNoteDisplay]=useState<NoteDisplay>("off"); const [accidentals,setAccidentals]=useState(false); const [tonguing,setTonguing]=useState(false); const [fingering,setFingering]=useState(false); const [rhythmMode,setRhythmMode]=useState<RhythmMode>("off"); const [zoom,setZoom]=useState(.8); const [magnify,setMagnify]=useState(1); const [fingerTip,setFingerTip]=useState<{pitch:string;x:number;y:number}|null>(null); const [theoryTip,setTheoryTip]=useState<{text:string;x:number;y:number}|null>(null); const [favorite,setFavorite]=useState(false);
+  const [inkActive,setInkActive]=useState(true); const [historyTick,setHistoryTick]=useState(0); const [noteDisplay,setNoteDisplay]=useState<NoteDisplay>("off"); const [accidentals,setAccidentals]=useState(false); const [tonguing,setTonguing]=useState(true); const [fingering,setFingering]=useState(false); const [rhythmMode,setRhythmMode]=useState<RhythmMode>("off"); const [zoom,setZoom]=useState(.8); const [magnify,setMagnify]=useState(1); const [fingerTip,setFingerTip]=useState<{pitch:string;x:number;y:number}|null>(null); const [theoryTip,setTheoryTip]=useState<{text:string;x:number;y:number}|null>(null); const [favorite,setFavorite]=useState(false);
   function cycleNoteDisplay(){setNoteDisplay(current=>current==="off"?"names":current==="names"?"solfege":"off")}
   function cycleRhythm(){setRhythmMode(current=>current==="off"?"counts":current==="counts"?"bars":"off")}
 
@@ -272,7 +277,7 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
     if(!root)return;
     const seq=sequenceRef.current;
     root.querySelectorAll<SVGGElement>(".vf-stavenote").forEach((node,index)=>{node.dataset.event=String(index);node.dataset.measure=String(measureForEvent(index,seq.measureStarts));const pitch=seq.pitches[index];if(pitch)node.dataset.pitch=pitch});
-    placePracticeOverlays(root,seq.events,seq.measureStarts,seq.unitsPerBeat,seq.keyAccidentals??new Set(),config.displayPitches,config.measureKeyAccidentals,unmetered);
+    placePracticeOverlays(root,seq.events,seq.measureStarts,seq.unitsPerBeat,seq.keyAccidentals??new Set(),config.displayPitches,config.measureKeyAccidentals,unmetered,config.syllables);
     addTheoryTargets(root);
   }
 
@@ -286,6 +291,13 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
       // extra/misplaced beat-sticks (right on first load, never on a later
       // resize, since by then only one run was ever still in flight).
       osmd.EngravingRules.MinimumDistanceBetweenSystems=12;
+      // Scale Studio's invisible measures end in a repeat barline every
+      // couple of beats — with the default 0 margin, the last note before
+      // it was rendering flush against the barline. This is a general
+      // per-measure margin, but it only becomes visible where a visible
+      // barline actually sits close to the last note, which in practice is
+      // just these repeat endings.
+      osmd.EngravingRules.MeasureRightMargin=0.6;
       if(unmetered){
         osmd.setOptions({drawMeasureNumbers:false,newSystemFromXML:true});
         osmd.EngravingRules.RenderTimeSignatures=false;
@@ -332,7 +344,7 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
       // this point, but nothing re-measured them).
       window.setTimeout(()=>{if(!mounted)return;syncNotesAndOverlays();setLoading(false)},0);
       } catch(e){setError(e instanceof Error?e.message:t.scoreViewer.engravingFailed);setLoading(false);} } load(); return()=>{mounted=false};},[]);
-  useEffect(()=>{const root=scoreRef.current;if(!root)return;root.dataset.noteDisplay=noteDisplay;root.classList.toggle("show-accidentals",accidentals);root.dataset.rhythm=rhythmMode},[noteDisplay,accidentals,rhythmMode,loading]);
+  useEffect(()=>{const root=scoreRef.current;if(!root)return;root.dataset.noteDisplay=noteDisplay;root.classList.toggle("show-accidentals",accidentals);root.dataset.rhythm=rhythmMode;root.dataset.tonguing=tonguing?"on":"off"},[noteDisplay,accidentals,rhythmMode,tonguing,loading]);
   useEffect(()=>{ if(!osmdRef.current)return; osmdRef.current.zoom=zoom; osmdRef.current.render();window.setTimeout(syncNotesAndOverlays,0) },[zoom]);
 
   // OSMD's autoResize option makes it silently rebuild its own SVG (fresh
@@ -382,6 +394,24 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
     // The active metronome follows its tempo without restarting other audio.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },[bpm,metro]);
+  useEffect(()=>{
+    if(!playing)return;
+    const pos=playbackPosition.current;
+    if(!pos)return;
+    const elapsedMs=(audio().currentTime-pos.audioStart)*1000,seq=sequenceRef.current;
+    let cursor=0,fromIndex=seq.events.length;
+    for(let i=pos.from;i<seq.events.length;i++){if(cursor>elapsedMs){fromIndex=i;break}cursor+=seq.events[i].d*pos.unit}
+    playbackTimers.current.forEach(window.clearTimeout);
+    playbackTimers.current=[];
+    scheduleNotes(fromIndex);
+    // Deliberately excludes `playing`: togglePlayback already calls
+    // scheduleNotes directly when Play is pressed, so reacting to `playing`
+    // here too would double-schedule every note the instant it flips true.
+    // The note already sounding when bpm changes rings out untouched (its
+    // oscillator is already committed to the audio graph); only notes from
+    // fromIndex onward pick up the new tempo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[bpm]);
   function scheduleClick(at:number,strong:boolean){const c=audio(),o=c.createOscillator(),g=c.createGain();o.frequency.value=strong?1250:850;g.gain.setValueAtTime(strong ? .11 : .055,at);g.gain.exponentialRampToValueAtTime(.0001,at+.06);o.connect(g).connect(c.destination);o.start(at);o.stop(at+.06);playbackNodes.current.push(o)}
   function click(){scheduleClick(audio().currentTime,accent&&metroBeat.current%4===0);metroBeat.current++}
   function toggleMetro(){if(metro){if(metroRef.current)window.clearInterval(metroRef.current);metroRef.current=null;setMetro(false)}else{metroBeat.current=0;click();metroRef.current=window.setInterval(click,60000/bpm);setMetro(true)}}
@@ -390,9 +420,28 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
   function toggleDrone(pitch=dronePitch,octave=droneOctave){const key=`${pitch}${octave}`,existing=dronesRef.current.get(key);if(existing){existing.stop();dronesRef.current.delete(key)}else{const c=audio(),o=c.createOscillator(),g=c.createGain();o.type="triangle";o.frequency.value=droneFrequency(pitch,octave);g.gain.value=.027;o.connect(g).connect(c.destination);o.start();dronesRef.current.set(key,o)}setActiveDrones([...dronesRef.current.keys()]);setPicker(false)}
   function stopAllDrones(){dronesRef.current.forEach(o=>o.stop());dronesRef.current.clear();setActiveDrones([]);setPicker(false)}
   useEffect(()=>{if(picker&&activeDrones.length)stopAllDrones()},[picker]);
-  function fluteTone(pitch:string,start:number,duration:number){const match=pitch.match(/^([A-G][♯♭]?)(\d)$/);if(!match)return;const c=audio(),fund=c.createOscillator(),gain=c.createGain(),vibrato=c.createOscillator(),vibGain=c.createGain(),frequency=droneFrequency(match[1],+match[2]);fund.type="sine";fund.frequency.value=frequency;vibrato.frequency.value=5.2;vibGain.gain.value=frequency*.004;vibrato.connect(vibGain);vibGain.connect(fund.frequency);gain.gain.setValueAtTime(.0001,start);gain.gain.exponentialRampToValueAtTime(.075,start+.035);gain.gain.setValueAtTime(.07,start+Math.max(.05,duration-.07));gain.gain.exponentialRampToValueAtTime(.0001,start+duration);fund.connect(gain).connect(c.destination);fund.start(start);vibrato.start(start);fund.stop(start+duration);vibrato.stop(start+duration);playbackNodes.current.push(fund,vibrato)}
-  function stopPlayback(){playbackTimers.current.forEach(window.clearTimeout);playbackTimers.current=[];playbackNodes.current.forEach(o=>{try{o.stop()}catch{}});playbackNodes.current=[];scoreRef.current?.querySelectorAll(".playback-active").forEach(n=>n.classList.remove("playback-active"));setPlaying(false)}
-  function togglePlayback(){if(playing){stopPlayback();return}if(metroRef.current)window.clearInterval(metroRef.current);setPlaying(true);let cursor=0;const c=audio(),audioStart=c.currentTime+.08,seq=sequenceRef.current,unit=60000/bpm/seq.unitsPerBeat,nodes=scoreRef.current?.querySelectorAll<SVGGElement>(".vf-stavenote")||[],first=seq.measureStarts[startMeasure-1]||0,slice=seq.events.slice(first);
+  function fluteTone(pitch:string,start:number,duration:number,peakGain=.075){const match=pitch.match(/^([A-G][♯♭]?)(\d)$/);if(!match)return;const c=audio(),fund=c.createOscillator(),gain=c.createGain(),vibrato=c.createOscillator(),vibGain=c.createGain(),frequency=droneFrequency(match[1],+match[2]);fund.type="sine";fund.frequency.value=frequency;vibrato.frequency.value=5.2;vibGain.gain.value=frequency*.004;vibrato.connect(vibGain);vibGain.connect(fund.frequency);gain.gain.setValueAtTime(.0001,start);gain.gain.exponentialRampToValueAtTime(peakGain,start+.035);gain.gain.setValueAtTime(peakGain*.933,start+Math.max(.05,duration-.07));gain.gain.exponentialRampToValueAtTime(.0001,start+duration);fund.connect(gain).connect(c.destination);fund.start(start);vibrato.start(start);fund.stop(start+duration);vibrato.stop(start+duration);playbackNodes.current.push(fund,vibrato)}
+  function stopPlayback(){playbackTimers.current.forEach(window.clearTimeout);playbackTimers.current=[];playbackNodes.current.forEach(o=>{try{o.stop()}catch{}});playbackNodes.current=[];playbackPosition.current=null;scoreRef.current?.querySelectorAll(".playback-active").forEach(n=>n.classList.remove("playback-active"));setPlaying(false)}
+  // Articulation only ever changes how long a note's own envelope rings,
+  // never the start-to-start spacing between notes (that stays `event.d*unit`
+  // regardless) — staccato fades out early to leave an audible gap, tenuto
+  // and slur ring through to the next onset, and a plain tongue note keeps
+  // the app's original .88 factor so pieces with no articulation data
+  // (Mystery of Love) play back exactly as before.
+  function articulationAudio(articulation:ArticulationMode|undefined,slurContinuation:boolean|undefined){
+    if(articulation==="staccato")return {factor:.5,peakGain:.075};
+    if(articulation==="tenuto"||articulation==="slur")return {factor:1,peakGain:articulation==="slur"&&slurContinuation?.045:.075};
+    return {factor:.88,peakGain:.075};
+  }
+  // Extracted from togglePlayback so a mid-playback bpm change (see the
+  // [bpm] effect above) can reschedule only the notes that haven't sounded
+  // yet, instead of the whole piece. Each note's delay is still an
+  // independent offset from one `audioStart` fixed at call time — never
+  // chained off a previous callback's actual fire time — which is what
+  // keeps this drift-free regardless of setTimeout jitter.
+  function scheduleNotes(fromIndex:number){
+    const c=audio(),audioStart=c.currentTime+.08,seq=sequenceRef.current,unit=60000/bpm/seq.unitsPerBeat,nodes=scoreRef.current?.querySelectorAll<SVGGElement>(".vf-stavenote")||[],slice=seq.events.slice(fromIndex);
+    let cursor=0;
     // A tie is two written notes, not one — the second is still its own
     // event here (still gets its own beat position and highlight), but it
     // isn't a fresh sound, it's the first note continuing. Summing each
@@ -400,7 +449,20 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
     // note gets fluteTone'd for the whole combined duration and every
     // note after it in the chain is skipped rather than re-attacking.
     const soundUnits:number[]=new Array(slice.length);for(let i=slice.length-1;i>=0;i--)soundUnits[i]=slice[i].d+(i+1<slice.length&&slice[i+1].tied?soundUnits[i+1]:0);
-    slice.forEach((event,offset)=>{const index=first+offset,start=cursor;playbackTimers.current.push(window.setTimeout(()=>{nodes.forEach(n=>n.classList.remove("playback-active"));nodes[index]?.classList.add("playback-active")},start+80));if(event.p&&!event.tied)fluteTone(event.p,audioStart+start/1000,Math.max(.09,soundUnits[offset]*unit/1000*.88));cursor+=event.d*unit});if(metro){const beatMs=60000/bpm;for(let time=0,beat=0;time<cursor;time+=beatMs,beat++)scheduleClick(audioStart+time/1000,accent&&beat%4===0)}playbackTimers.current.push(window.setTimeout(stopPlayback,cursor+160))}
+    slice.forEach((event,offset)=>{
+      const index=fromIndex+offset,start=cursor;
+      playbackTimers.current.push(window.setTimeout(()=>{nodes.forEach(n=>n.classList.remove("playback-active"));nodes[index]?.classList.add("playback-active")},start+80));
+      if(event.p&&!event.tied){
+        const pitch=event.p,{factor,peakGain}=articulationAudio(event.articulation,event.slurContinuation),absoluteStart=audioStart+start/1000,soundDuration=Math.max(.09,soundUnits[offset]*unit/1000*factor);
+        playbackTimers.current.push(window.setTimeout(()=>fluteTone(pitch,absoluteStart,soundDuration,peakGain),start));
+      }
+      cursor+=event.d*unit;
+    });
+    if(metro){const beatMs=60000/bpm;for(let time=0,beat=0;time<cursor;time+=beatMs,beat++){const at=audioStart+time/1000,strong=accent&&beat%4===0;playbackTimers.current.push(window.setTimeout(()=>scheduleClick(at,strong),time))}}
+    playbackTimers.current.push(window.setTimeout(stopPlayback,cursor+160));
+    playbackPosition.current={audioStart,unit,from:fromIndex};
+  }
+  function togglePlayback(){if(playing){stopPlayback();return}if(metroRef.current)window.clearInterval(metroRef.current);setPlaying(true);const seq=sequenceRef.current,first=seq.measureStarts[startMeasure-1]||0;scheduleNotes(first)}
   function point(e:PointerEvent<HTMLCanvasElement>){const r=e.currentTarget.getBoundingClientRect(),{w,h}=inkSizeRef.current;return{x:(e.clientX-r.left)*w/r.width,y:(e.clientY-r.top)*h/r.height}}
   function begin(e:PointerEvent<HTMLCanvasElement>){if(!annotating||!inkActive)return;drawing.current=true;const p=point(e),c=e.currentTarget.getContext("2d");c?.beginPath();c?.moveTo(p.x,p.y);e.currentTarget.setPointerCapture(e.pointerId)}
   function draw(e:PointerEvent<HTMLCanvasElement>){if(!drawing.current||!annotating)return;const p=point(e),c=e.currentTarget.getContext("2d");if(!c)return;c.lineWidth=eraser?28:4;c.lineCap="round";c.lineJoin="round";c.globalCompositeOperation=eraser?"destination-out":"source-over";c.strokeStyle=inkColor;c.lineTo(p.x,p.y);c.stroke()}
@@ -421,7 +483,7 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
         <button data-tip={t.scoreViewer.noteDisplayTip} className={noteDisplay!=="off"?"tool on has-tip":"tool has-tip"} onClick={cycleNoteDisplay}><span>A♭</span>{noteDisplay==="off"?t.scoreViewer.noteDisplay:noteDisplay==="names"?t.scoreViewer.noteNames:t.scoreViewer.solfege}</button>
         {!unmetered&&<button data-tip={t.scoreViewer.rhythmDisplay} className={rhythmMode!=="off"?"tool on has-tip":"tool has-tip"} onClick={cycleRhythm}><span>▥</span>{rhythmMode==="off"?t.scoreViewer.rhythm:rhythmMode==="counts"?t.scoreViewer.rhythmCountsShort:t.scoreViewer.rhythmBarsShort}</button>}
         <button data-tip={t.scoreViewer.accidentalsTip} className={accidentals?"tool on has-tip":"tool has-tip"} onClick={()=>setAccidentals(!accidentals)}><span>♯</span>{t.scoreViewer.accidentals}</button>
-        <button data-tip={t.scoreViewer.tonguingTip} className="tool disabled has-tip" disabled><span>•</span>{t.scoreViewer.tonguing}</button>
+        <button data-tip={t.scoreViewer.tonguingTip} className={tonguing?"tool on has-tip":"tool has-tip"} onClick={()=>setTonguing(!tonguing)}><span>•</span>{t.scoreViewer.tonguing}</button>
         <button data-tip={t.scoreViewer.fingeringTip} className={fingering?"tool on has-tip":"tool has-tip"} onClick={()=>setFingering(!fingering)}><span>●○</span>{t.scoreViewer.fingering}</button>
         <button data-tip={t.scoreViewer.markUpTip} className={annotating?"tool on coral has-tip":"tool has-tip"} onClick={()=>{const next=!annotating;setAnnotating(next);if(next)setInkActive(true)}}><span>✎</span>{t.scoreViewer.markUp}</button>
       </div>
