@@ -82,6 +82,8 @@ export function createModel() {
     const {t}=poseAt(note);
     lower.position.y=-.24*inhalation; tongue.position.y=-.10*inhalation;
     upper.scale.x=1+.018*inhalation;
+    // Give the opening lower lip clearance from the plate during inhalation.
+    instrument.position.set(.42+.08*inhalation,-.27-.34*inhalation,0);
     tongue.morphTargetInfluences![0]=t;
     upper.morphTargetInfluences![0]=t;lower.morphTargetInfluences![0]=t;lowerTeeth.position.y=-.37+.30*t-.24*inhalation;lowerTeeth.position.x=-.37+.08*t;
     // Integrate velocity, rather than multiplying absolute time by a changing speed.
