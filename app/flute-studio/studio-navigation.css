@@ -1,4 +1,4 @@
-.studio-navigation{position:fixed;z-index:220;top:0;left:0;right:0;height:64px;border-bottom:1px solid rgba(41,42,51,.08);background:rgba(255,255,255,.86);color:#292a33;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",Inter,Arial,sans-serif;backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px)}
+.studio-navigation{position:fixed;z-index:220;top:0;left:0;right:0;height:52px;border-bottom:1px solid rgba(41,42,51,.08);background:rgba(255,255,255,.86);color:#292a33;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",Inter,Arial,sans-serif;backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px)}
 .studio-navigation__inner{width:100%;height:100%;padding:0 28px;display:flex;align-items:center;gap:30px}
 .studio-navigation__brand{height:44px;display:flex;align-items:center;gap:11px;color:inherit;text-decoration:none;font-size:15px;font-weight:720;letter-spacing:-.02em;white-space:nowrap}
 /* An actual cookie — same colors/chip-dot motif as the floating CookiePet mascot, so the brand mark and the pet read as the same character. */

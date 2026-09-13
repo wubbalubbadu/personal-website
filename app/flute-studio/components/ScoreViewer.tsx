@@ -9,6 +9,7 @@ import type { ArticulationMode } from "./notePatterns";
 
 const pitchClasses = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"];
 const semitones: Record<string, number> = { C:0,"C♯":1,D:2,"E♭":3,E:4,F:5,"F♯":6,G:7,"A♭":8,A:9,"B♭":10,B:11 };
+const pageModeKey = "cookie:score-viewer:page-mode";
 
 /**
  * pitches/events/measureStarts are optional: omit them and ScoreViewer
@@ -217,7 +218,12 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
   // whatever grid the piece actually needs (see resolveUnitsPerWhole) and
   // overwrites this once the score loads.
   const sequenceRef=useRef<{pitches:(string|null)[];events:{p:string|null;d:number;tied?:boolean;articulation?:ArticulationMode;slurContinuation?:boolean}[];measureStarts:number[];unitsPerBeat:number;keyAccidentals:Set<string>}>({pitches:config.pitches??[],events:config.events??[],measureStarts:config.measureStarts??[],unitsPerBeat:4,keyAccidentals:new Set()});
-  const scoreRef = useRef<HTMLDivElement>(null); const canvasRef = useRef<HTMLCanvasElement>(null); const osmdRef = useRef<OSMDType | null>(null);
+  const scoreRef = useRef<HTMLDivElement>(null); const scoreScrollRef = useRef<HTMLDivElement>(null); const canvasRef = useRef<HTMLCanvasElement>(null); const osmdRef = useRef<OSMDType | null>(null);
+  // Scroll offsets (within .score-scroll's own content, not the viewport)
+  // where each computed "page" starts — see computePages(). Kept in a ref
+  // rather than state since only page TURNS need to re-render; the offsets
+  // themselves are consumed imperatively by goToPage/the scroll-snap effect.
+  const pageOffsetsRef = useRef<number[]>([0]);
   const audioRef = useRef<AudioContext | null>(null); const dronesRef = useRef(new Map<string,OscillatorNode>()); const playbackTimers=useRef<number[]>([]); const playbackNodes=useRef<OscillatorNode[]>([]); const playbackPosition=useRef<{audioStart:number;unit:number;from:number}|null>(null); const metroRef = useRef<number | null>(null); const metroBeat=useRef(0); const metroTaps=useRef<number[]>([]); const drawing = useRef(false); const inkHistory=useRef<string[]>([]); const inkIndex=useRef(-1);
   // Logical (CSS-pixel) size of the ink canvas's drawing surface — set once
   // the score has rendered, from the paper's actual size, not a fixed
@@ -227,6 +233,20 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
   // to fit whatever size the paper turns out to be.
   const inkSizeRef = useRef({ w: 1600, h: 2200 });
   const [loading,setLoading]=useState(true); const [error,setError]=useState(""); const [bpm,setBpm]=useState(config.defaultTempo??76); const [startMeasure,setStartMeasure]=useState(1); const [playing,setPlaying]=useState(false); const [metro,setMetro]=useState(false); const [accent]=useState(true); const [activeDrones,setActiveDrones]=useState<string[]>([]); const [dronePitch,setDronePitch]=useState("G"); const [droneOctave,setDroneOctave]=useState(4); const [picker,setPicker]=useState(false); const [annotating,setAnnotating]=useState(false); const [inkColor,setInkColor]=useState("#e45d46"); const [eraser,setEraser]=useState(false);
+  // Page-turn mode: false (free scroll) by default until the mount effect
+  // below picks a real default (stored preference, else viewport width) —
+  // starting false keeps first paint identical between server and client.
+  const [pageMode,setPageMode]=useState(false); const [pageIndex,setPageIndex]=useState(0); const [pageCount,setPageCount]=useState(1);
+  // Focus mode: hides the global nav/topbar/practice-bar and, where the
+  // platform allows it, requests real fullscreen — an iPad-PDF-reader-style
+  // "tap the page to read distraction-free" mode. See scoreClick below for
+  // the tap trigger and the effect further down for the fullscreen attempt.
+  const [focusMode,setFocusMode]=useState(false);
+  // computePages() can run from stale closures (the ResizeObserver/load
+  // effects only set up once, on mount) — a ref keeps it reading whichever
+  // mode is actually current instead of whatever pageMode was at mount.
+  const pageModeRef=useRef(pageMode);
+  useEffect(()=>{pageModeRef.current=pageMode},[pageMode]);
   // Whether the pencil/eraser is the selected tool right now — separate
   // from `annotating` (mark-up mode being on at all). Without this, the
   // canvas captured every pointer event the whole time mark-up was open:
@@ -280,6 +300,179 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
     placePracticeOverlays(root,seq.events,seq.measureStarts,seq.unitsPerBeat,seq.keyAccidentals??new Set(),config.displayPitches,config.measureKeyAccidentals,unmetered,config.syllables);
     addTheoryTargets(root);
   }
+
+  /**
+   * Splits the (still-continuous, still-Endless) engraving into viewport-
+   * sized "pages" purely by measuring rendered systems — no OSMD pagination
+   * involved, so it works the same for a 12-scale Scale Studio sheet or a
+   * two-line exercise. A system/line boundary is detected by left edge,
+   * not top: measures on the same line always advance left-to-right, so
+   * any measure whose left edge doesn't clear the previous one has wrapped
+   * to a new line. (Top alone is unreliable — a measure with a high note's
+   * ledger lines can start higher than its neighbor on the very same line,
+   * which read as a false new-system break.) Systems are then packed
+   * greedily into pages, closing a page as soon as the next system would
+   * overflow one screenful, so a page break always lands between systems
+   * rather than slicing through the middle of a scale.
+   */
+  function computePages(){
+    const root=scoreRef.current,scroller=scoreScrollRef.current;
+    if(!root||!scroller)return;
+    const scrollerBox=scroller.getBoundingClientRect();
+    const measures=[...root.querySelectorAll<SVGGElement>(".vf-measure")];
+    if(!measures.length){pageOffsetsRef.current=[0];setPageCount(1);return}
+    const boxes=measures.map(m=>{
+      const r=m.getBoundingClientRect();
+      return {left:r.left-scrollerBox.left,top:r.top-scrollerBox.top+scroller.scrollTop};
+    });
+    const systemTops:number[]=[];
+    let systemTop=Infinity,lastLeft=-Infinity;
+    boxes.forEach(({left,top})=>{
+      if(left<=lastLeft){systemTops.push(systemTop);systemTop=top}
+      else systemTop=Math.min(systemTop,top);
+      lastLeft=left;
+    });
+    systemTops.push(systemTop);
+    // A scale/exercise name is drawn as its own text element just above its
+    // system, not inside any .vf-measure box — pad a little so a page break
+    // can't land between a title and the system it belongs to.
+    const labelAllowance=24;
+    const pageHeight=scroller.clientHeight;
+    const offsets=[Math.max(0,systemTops[0]-labelAllowance)];
+    let pageStart=systemTops[0];
+    for(const top of systemTops){
+      if(top-pageStart>pageHeight){offsets.push(Math.max(0,top-labelAllowance));pageStart=top}
+    }
+    pageOffsetsRef.current=offsets;
+    setPageCount(offsets.length);
+    // OSMD's layout can still settle across a couple of passes after this
+    // file's own load effect first calls resync() (see the ResizeObserver
+    // comment below) — a later computePages() call can therefore land on
+    // slightly different page boundaries than the first one did. Snapping
+    // immediately (no animation) to whichever boundary the current scroll
+    // position is now closest to means that kind of late correction just
+    // silently re-aligns the view instead of leaving pageIndex/scroll out
+    // of sync until the user's next scroll happens to trigger settle().
+    if(pageModeRef.current)snapToPage("instant");
+    else setPageIndex(i=>Math.min(i,offsets.length-1));
+  }
+  function resync(){syncNotesAndOverlays();computePages()}
+  // Shared by computePages() (silent re-alignment after a late layout
+  // settle) and the scroll-settle effect below (a real user scroll/swipe) —
+  // finds whichever computed page offset the current scroll position is
+  // closest to and eases there, unless already close enough (<=4px) that
+  // nothing would visibly move.
+  function snapToPage(behavior:ScrollBehavior){
+    const scroller=scoreScrollRef.current,offsets=pageOffsetsRef.current;
+    if(!scroller||!offsets.length)return;
+    const top=scroller.scrollTop;
+    let nearest=0,best=Infinity;
+    offsets.forEach((offset,i)=>{const d=Math.abs(offset-top);if(d<best){best=d;nearest=i}});
+    if(best>4)scroller.scrollTo({top:offsets[nearest],behavior});
+    setPageIndex(nearest);
+  }
+  function goToPage(index:number){
+    const scroller=scoreScrollRef.current,offsets=pageOffsetsRef.current;
+    if(!scroller||!offsets.length)return;
+    const clamped=Math.max(0,Math.min(index,offsets.length-1));
+    scroller.scrollTo({top:offsets[clamped],behavior:"smooth"});
+    setPageIndex(clamped);
+  }
+  function togglePageMode(){
+    setPageMode(current=>{
+      const next=!current;
+      try{localStorage.setItem(pageModeKey,next?"pages":"scroll")}catch{/* Storage may be disabled. */}
+      return next;
+    });
+  }
+  function toggleFocusMode(){
+    setFocusMode(current=>{
+      const next=!current;
+      // Must run synchronously inside this same click/gesture call stack —
+      // that's what the Fullscreen API requires to allow the request at
+      // all. A rejection (unsupported, disallowed) is swallowed on purpose:
+      // fullscreen is a bonus layer here, not something the rest of focus
+      // mode depends on — the CSS-based chrome-hiding works either way.
+      if(next)document.querySelector(".app-shell")?.requestFullscreen?.().catch(()=>{});
+      else if(document.fullscreenElement)document.exitFullscreen?.().catch(()=>{});
+      return next;
+    });
+  }
+  // If the OS/browser exits fullscreen on its own (Esc, a swipe gesture),
+  // bring the app's own chrome back too rather than leaving the score
+  // expanded with no visible way to restore it.
+  useEffect(()=>{
+    function onFullscreenChange(){if(!document.fullscreenElement)setFocusMode(false)}
+    document.addEventListener("fullscreenchange",onFullscreenChange);
+    return()=>document.removeEventListener("fullscreenchange",onFullscreenChange);
+  },[]);
+  // Hiding/showing the topbar+practice-bar changes .score-scroll's height,
+  // not .osmd-score's width, so the width-driven ResizeObserver elsewhere
+  // in this file won't catch it — recompute pages explicitly whenever
+  // focus mode toggles. The class lives on <html> (not local JSX) because
+  // the global nav and PracticeToolDock this also needs to hide are
+  // siblings mounted outside this component's own tree (see layout.tsx).
+  useEffect(()=>{
+    document.documentElement.classList.toggle("score-focus-mode",focusMode);
+    computePages();
+    return()=>{document.documentElement.classList.remove("score-focus-mode")};
+  },[focusMode]);
+  // Phone keeps free scrolling (confirmed fine); tablet/desktop default to
+  // page-turning, since that's where "12 scales, endless scroll" hurts most.
+  // A stored explicit choice always wins over that width-based default.
+  useEffect(()=>{
+    try{
+      const stored=localStorage.getItem(pageModeKey);
+      if(stored==="pages"||stored==="scroll"){setPageMode(stored==="pages");return}
+    }catch{/* Storage may be disabled — fall through to the width default. */}
+    setPageMode(window.innerWidth>760);
+  },[]);
+  // A manual swipe/scroll while in page mode can leave the view between two
+  // pages — after scrolling settles, ease to whichever page boundary is
+  // closest so it still reads as "landing on a page" rather than stopping
+  // mid-system. Done in JS against the same computed offsets rather than
+  // CSS scroll-snap, since a snap-align target would need real DOM anchors
+  // injected into OSMD's own rendered SVG at exactly these positions.
+  useEffect(()=>{
+    const scroller=scoreScrollRef.current;
+    if(!scroller||!pageMode)return;
+    let timer=0;
+    function onScroll(){window.clearTimeout(timer);timer=window.setTimeout(()=>snapToPage("smooth"),160)}
+    scroller.addEventListener("scroll",onScroll);
+    snapToPage("smooth");
+    return()=>{scroller.removeEventListener("scroll",onScroll);window.clearTimeout(timer)};
+  },[pageMode]);
+
+  // Trackpad pinch (reported as a wheel event with ctrlKey) and iPad pinch
+  // (Safari's proprietary gesturestart/gesturechange) both drive `magnify`
+  // directly — pure CSS scale, no re-layout — never `zoom`, which re-runs
+  // osmd.render() and isn't safe to fire on every gesture tick. Attached
+  // once on mount rather than re-bound on every magnify change, so a fast
+  // gesture can't drop listeners mid-stream; magnifyRef mirrors the latest
+  // state since this effect's own closure would otherwise go stale.
+  const magnifyRef=useRef(magnify);
+  useEffect(()=>{magnifyRef.current=magnify},[magnify]);
+  useEffect(()=>{
+    const el=scoreScrollRef.current;
+    if(!el)return;
+    const clamp=(v:number)=>Math.max(.75,Math.min(1.5,v));
+    function onWheel(e:WheelEvent){
+      if(!e.ctrlKey)return;
+      e.preventDefault();
+      setMagnify(clamp(magnifyRef.current-e.deltaY*.01));
+    }
+    let gestureStartMagnify=1;
+    function onGestureStart(e:Event){gestureStartMagnify=magnifyRef.current;e.preventDefault()}
+    function onGestureChange(e:Event){e.preventDefault();setMagnify(clamp(gestureStartMagnify*(e as Event&{scale:number}).scale))}
+    el.addEventListener("wheel",onWheel,{passive:false});
+    el.addEventListener("gesturestart",onGestureStart);
+    el.addEventListener("gesturechange",onGestureChange);
+    return()=>{
+      el.removeEventListener("wheel",onWheel);
+      el.removeEventListener("gesturestart",onGestureStart);
+      el.removeEventListener("gesturechange",onGestureChange);
+    };
+  },[]);
 
   useEffect(()=>{const saved=JSON.parse(localStorage.getItem("cookie:music-favorites")||"[]") as string[];setFavorite(saved.includes(id));let mounted=true; async function load(){ try { if(unmetered&&!asset.includes("<note>")){setLoading(false);return;} setLoading(true); const {OpenSheetMusicDisplay}=await import("opensheetmusicdisplay"); if(!mounted||!scoreRef.current)return; scoreRef.current.replaceChildren(); const osmd=new OpenSheetMusicDisplay(scoreRef.current,{backend:"svg",autoResize:true,drawTitle:false,drawComposer:false,drawingParameters:"compacttight"}); osmd.setOptions({pageFormat:"Endless",drawMeasureNumbers:true,drawPartNames:false,drawMetronomeMarks:true}); osmd.OnXMLRead = xml=>prepareScore(xml,title); osmd.zoom=zoom; await osmd.load(asset,title); if(!mounted||!scoreRef.current)return;
       // React's Strict Mode runs this whole effect twice in dev (mount,
@@ -342,10 +535,16 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
       // too early is exactly what produced extra/misplaced beat-sticks on
       // first load (measures' note x-coordinates would shift slightly after
       // this point, but nothing re-measured them).
-      window.setTimeout(()=>{if(!mounted)return;syncNotesAndOverlays();setLoading(false)},0);
+      window.setTimeout(()=>{if(!mounted)return;resync();setLoading(false)},0);
       } catch(e){setError(e instanceof Error?e.message:t.scoreViewer.engravingFailed);setLoading(false);} } load(); return()=>{mounted=false};},[]);
   useEffect(()=>{const root=scoreRef.current;if(!root)return;root.dataset.noteDisplay=noteDisplay;root.classList.toggle("show-accidentals",accidentals);root.dataset.rhythm=rhythmMode;root.dataset.tonguing=tonguing?"on":"off"},[noteDisplay,accidentals,rhythmMode,tonguing,loading]);
-  useEffect(()=>{ if(!osmdRef.current)return; osmdRef.current.zoom=zoom; osmdRef.current.render();window.setTimeout(syncNotesAndOverlays,0) },[zoom]);
+  useEffect(()=>{ if(!osmdRef.current)return; osmdRef.current.zoom=zoom; osmdRef.current.render();window.setTimeout(resync,0) },[zoom]);
+  // Magnify is pure CSS (--viewer-magnify), so it never touches OSMD's own
+  // DOM — no re-tagging needed — but it does scale the scrollable content's
+  // real layout size, which shifts every page boundary computePages()
+  // recorded. getBoundingClientRect() forces a layout flush on demand, so
+  // (unlike the OSMD-render case above) no extra tick is needed here.
+  useEffect(()=>{if(osmdRef.current)computePages()},[magnify]);
 
   // OSMD's autoResize option makes it silently rebuild its own SVG (fresh
   // DOM nodes, none of our data-event/data-measure/data-pitch tags) any
@@ -371,14 +570,14 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
     const root=scoreRef.current;
     if(!root)return;
     const mountedAt=performance.now();
-    let timer=0,lastWidth=-1;
+    let timer=0,lastWidth:number|null=null;
     const observer=new ResizeObserver(entries=>{
       const width=entries[0]?.contentRect.width??root.clientWidth;
-      if(performance.now()-mountedAt<1000){lastWidth=width;return}
+      if(performance.now()-mountedAt<1000||lastWidth===null){lastWidth=width;return}
       if(Math.abs(width-lastWidth)<1)return;
       lastWidth=width;
       window.clearTimeout(timer);
-      timer=window.setTimeout(()=>{if(osmdRef.current)syncNotesAndOverlays()},150);
+      timer=window.setTimeout(()=>{if(osmdRef.current)resync()},150);
     });
     observer.observe(root);
     return()=>{window.clearTimeout(timer);observer.disconnect()};
@@ -472,12 +671,35 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
   function undoInk(){if(inkIndex.current>0)showHistory(inkIndex.current-1)} function redoInk(){if(inkIndex.current<inkHistory.current.length-1)showHistory(inkIndex.current+1)}
   function clearInk(){const canvas=canvasRef.current,{w,h}=inkSizeRef.current;canvas?.getContext("2d")?.clearRect(0,0,w,h);if(canvas)pushHistory(canvas.toDataURL())}
   function scoreMove(e:React.MouseEvent<HTMLDivElement>){const theory=(e.target as Element).closest<SVGElement>("[data-theory]");setTheoryTip(theory?{text:theory.dataset.theory!,x:e.clientX,y:e.clientY}:null);const node=(e.target as Element).closest<SVGGElement>(".vf-stavenote[data-pitch]");if(!node){setFingerTip(null);return}const pitch=node.dataset.pitch!;if(fingering)setFingerTip({pitch,x:e.clientX,y:e.clientY})}
-  function scoreClick(e:React.MouseEvent<HTMLDivElement>){const node=(e.target as Element).closest<SVGGElement>(".vf-stavenote[data-pitch]");if(!node||annotating)return;const match=node.dataset.pitch!.match(/^([A-G][♯♭]?)(\d)$/);if(!match)return;setStartMeasure(Number(node.dataset.measure)||1);setDronePitch(match[1]);setDroneOctave(+match[2]);toggleDrone(match[1],+match[2])}
+  function scoreClick(e:React.MouseEvent<HTMLDivElement>){
+    if(annotating)return;
+    const node=(e.target as Element).closest<SVGGElement>(".vf-stavenote[data-pitch]");
+    // A click that isn't on a note falls through here — rather than doing
+    // nothing, it toggles focus mode, matching how iPad PDF readers treat a
+    // tap on empty page background. A tap ON a note keeps its existing
+    // meaning (drone toggle) unchanged, so the two gestures never conflict.
+    if(!node){toggleFocusMode();return}
+    const match=node.dataset.pitch!.match(/^([A-G][♯♭]?)(\d)$/);
+    if(!match)return;
+    setStartMeasure(Number(node.dataset.measure)||1);setDronePitch(match[1]);setDroneOctave(+match[2]);toggleDrone(match[1],+match[2]);
+  }
   function toggleFavorite(){const saved=JSON.parse(localStorage.getItem("cookie:music-favorites")||"[]") as string[],next=saved.includes(id)?saved.filter(item=>item!==id):[...saved,id];localStorage.setItem("cookie:music-favorites",JSON.stringify(next));setFavorite(next.includes(id));window.dispatchEvent(new Event("cookie:favorites-updated"))}
   return <main className="app-shell" style={{"--viewer-magnify":magnify,"--score-composer":`"${composer}"`} as React.CSSProperties}>
-    <section className="workspace"><header className="topbar"><div><a className="back" href={backHref} aria-label={backLabel?`${t.scoreViewer.back}: ${backLabel}`:t.scoreViewer.back} title={backLabel||t.scoreViewer.back}><span className="back-arrow" aria-hidden="true">‹</span>{backLabel&&<span className="back-label">{backLabel}</span>}</a><strong>{title}</strong></div><div><button className={favorite?"viewer-star active has-tip":"viewer-star has-tip"} data-tip={favorite?t.scoreViewer.removeFromSaved:t.scoreViewer.saveMusic} aria-label={favorite?t.scoreViewer.removeFromSaved:t.scoreViewer.saveMusic} onClick={toggleFavorite}>
+    <section className="workspace">
+      <nav className="tool-rail" aria-label={t.scoreViewer.toolRail}>
+        <span className="tool-rail-toolbar">{toolbar}</span>
+        <div className="tool-group">
+          <button data-tip={t.scoreViewer.noteDisplayTip} className={noteDisplay!=="off"?"tool on has-tip":"tool has-tip"} onClick={cycleNoteDisplay}><span>A♭</span>{noteDisplay==="off"?t.scoreViewer.noteDisplay:noteDisplay==="names"?t.scoreViewer.noteNames:t.scoreViewer.solfege}</button>
+          {!unmetered&&<button data-tip={t.scoreViewer.rhythmDisplay} className={rhythmMode!=="off"?"tool on has-tip":"tool has-tip"} onClick={cycleRhythm}><span>▥</span>{rhythmMode==="off"?t.scoreViewer.rhythm:rhythmMode==="counts"?t.scoreViewer.rhythmCountsShort:t.scoreViewer.rhythmBarsShort}</button>}
+          <button data-tip={t.scoreViewer.accidentalsTip} className={accidentals?"tool on has-tip":"tool has-tip"} onClick={()=>setAccidentals(!accidentals)}><span>♯</span>{t.scoreViewer.accidentals}</button>
+          <button data-tip={t.scoreViewer.tonguingTip} className={tonguing?"tool on has-tip":"tool has-tip"} onClick={()=>setTonguing(!tonguing)}><span>•</span>{t.scoreViewer.tonguing}</button>
+          <button data-tip={t.scoreViewer.fingeringTip} className={fingering?"tool on has-tip":"tool has-tip"} onClick={()=>setFingering(!fingering)}><span>●○</span>{t.scoreViewer.fingering}</button>
+          <button data-tip={t.scoreViewer.markUpTip} className={annotating?"tool on coral has-tip":"tool has-tip"} onClick={()=>{const next=!annotating;setAnnotating(next);if(next)setInkActive(true)}}><span>✎</span>{t.scoreViewer.markUp}</button>
+        </div>
+      </nav>
+      <header className="topbar"><div><a className="back" href={backHref} aria-label={backLabel?`${t.scoreViewer.back}: ${backLabel}`:t.scoreViewer.back} title={backLabel||t.scoreViewer.back}><span className="back-arrow" aria-hidden="true">‹</span>{backLabel&&<span className="back-label">{backLabel}</span>}</a><strong>{title}</strong></div><div><button className={favorite?"viewer-star active has-tip":"viewer-star has-tip"} data-tip={favorite?t.scoreViewer.removeFromSaved:t.scoreViewer.saveMusic} aria-label={favorite?t.scoreViewer.removeFromSaved:t.scoreViewer.saveMusic} onClick={toggleFavorite}>
       <svg viewBox="0 0 20 20" width="19" height="19" fill={favorite?"currentColor":"none"} stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"><path d="M10 2.8l2.2 4.55 5 .73-3.6 3.53.85 4.99L10 14.2l-4.45 2.4.85-4.99L2.8 8.08l5-.73L10 2.8z"/></svg>
-    </button>{toolbar}{pdfPath&&<a className="icon-btn has-tip" href={pdfPath} download data-tip={t.scoreViewer.downloadPdf} aria-label={t.scoreViewer.downloadPdf}>↓</a>}<button className="icon-btn has-tip" data-tip={t.scoreViewer.shareScore} aria-label={t.scoreViewer.shareScore}>↗</button><button className="icon-btn has-tip" data-tip={t.scoreViewer.moreActions} aria-label={t.scoreViewer.moreActions}>•••</button></div></header>
+    </button><span className="topbar-toolbar-slot">{toolbar}</span>{pdfPath&&<a className="icon-btn has-tip" href={pdfPath} download data-tip={t.scoreViewer.downloadPdf} aria-label={t.scoreViewer.downloadPdf}>↓</a>}<button className={focusMode?"icon-btn active has-tip":"icon-btn has-tip"} aria-pressed={focusMode} data-tip={t.scoreViewer.focusModeTip} aria-label={focusMode?t.scoreViewer.exitFocusMode:t.scoreViewer.enterFocusMode} onClick={toggleFocusMode}><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{focusMode?<path d="M3 7V3h4M17 7V3h-4M3 13v4h4M17 13v4h-4"/>:<path d="M7 3H3v4M13 3h4v4M7 17H3v-4M13 17h4v-4"/>}</svg></button><button className="icon-btn has-tip" data-tip={t.scoreViewer.shareScore} aria-label={t.scoreViewer.shareScore}>↗</button><button className="icon-btn has-tip" data-tip={t.scoreViewer.moreActions} aria-label={t.scoreViewer.moreActions}>•••</button></div></header>
       {settings?.({bpm,setTempo:tempo=>{setBpm(tempo);onTempoChange?.(tempo)},metronome:metro,toggleMetronome:toggleMetro})}
       <div className="practice-bar"><div className="tool-group">
         <button data-tip={t.scoreViewer.noteDisplayTip} className={noteDisplay!=="off"?"tool on has-tip":"tool has-tip"} onClick={cycleNoteDisplay}><span>A♭</span>{noteDisplay==="off"?t.scoreViewer.noteDisplay:noteDisplay==="names"?t.scoreViewer.noteNames:t.scoreViewer.solfege}</button>
@@ -503,7 +725,7 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
             </>}
           </div>
         </div></div>
-      {annotating&&<div className="markup-row">
+      {annotating&&<div className="markup-row"><div className="markup-row-surface">
         <button className={inkActive&&!eraser?"markup-icon chosen has-tip":"markup-icon has-tip"} data-tip={t.scoreViewer.pencil} aria-label={t.scoreViewer.pencil} onClick={()=>{setInkActive(true);setEraser(false)}}><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M13.5 4.5l2 2L6.5 15.5l-3 1 1-3L13.5 4.5z"/><path d="M12 6l2 2"/></svg></button>
         <button className={eraser?"markup-icon chosen has-tip":"markup-icon has-tip"} data-tip={t.scoreViewer.eraser} aria-label={t.scoreViewer.eraser} onClick={()=>{setInkActive(true);setEraser(true)}}><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M6.5 15.5L3.8 12.8a1.6 1.6 0 010-2.26l5.7-5.7a1.6 1.6 0 012.26 0l3.66 3.66a1.6 1.6 0 010 2.26l-5.7 5.7a1.6 1.6 0 01-2.26 0z"/><path d="M9.3 7.1l3.6 3.6"/><path d="M3.5 15.5h7.5"/></svg></button>
         <button className="markup-icon has-tip" data-tip={t.scoreViewer.addText} aria-label={t.scoreViewer.addText} onClick={()=>addScoreNote("text")}>T</button>
@@ -514,14 +736,27 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
         <button className="markup-icon has-tip" data-tip={t.scoreViewer.undo} aria-label={t.scoreViewer.undo} onClick={undoInk} disabled={inkIndex.current<=0}>↩</button>
         <button className="markup-icon has-tip" data-tip={t.scoreViewer.redo} aria-label={t.scoreViewer.redo} onClick={redoInk} disabled={inkIndex.current>=inkHistory.current.length-1}>↪</button>
         <button className="markup-icon has-tip" data-tip={t.scoreViewer.clearPage} aria-label={t.scoreViewer.clearPage} onClick={clearInk}><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h12M8 6V4.5a1 1 0 011-1h2a1 1 0 011 1V6M6 6l.6 10.2a1 1 0 001 .8h4.8a1 1 0 001-.8L14 6"/><path d="M8.5 9v5M11.5 9v5"/></svg></button>
-      </div>}
-      <div className="score-scroll"><div className="score-paper engraved"><div className="custom-score-heading"><h1>{title}</h1></div>{loading&&<div className="score-loading">{t.scoreViewer.engraving}</div>}{error&&<div className="score-error">{error}</div>}<div ref={scoreRef} className="osmd-score" onMouseMove={scoreMove} onMouseLeave={()=>{setFingerTip(null);setTheoryTip(null)}} onClick={scoreClick}/><canvas ref={canvasRef} width="1600" height="2200" className={annotating&&inkActive?"ink active":"ink"} onPointerDown={begin} onPointerMove={draw} onPointerUp={saveInk} onPointerCancel={saveInk}/>
+      </div></div>}
+      <div className="score-scroll" ref={scoreScrollRef}><div className="score-paper engraved"><div className="custom-score-heading"><h1>{title}</h1></div>{loading&&<div className="score-loading">{t.scoreViewer.engraving}</div>}{error&&<div className="score-error">{error}</div>}<div ref={scoreRef} className="osmd-score" onMouseMove={scoreMove} onMouseLeave={()=>{setFingerTip(null);setTheoryTip(null)}} onClick={scoreClick}/><canvas ref={canvasRef} width="1600" height="2200" className={annotating&&inkActive?"ink active":"ink"} onPointerDown={begin} onPointerMove={draw} onPointerUp={saveInk} onPointerCancel={saveInk}/>
         {notes.map(note=><div key={note.id} className={note.kind==="sticky"?"score-note sticky":"score-note text"} style={{left:note.x,top:note.y}} onPointerDown={e=>noteDown(e,note)} onPointerMove={noteMove} onPointerUp={noteUp} onPointerCancel={noteUp}>
           <button type="button" className="score-note__remove" aria-label={t.scoreViewer.deleteNote} onClick={()=>removeScoreNote(note.id)}>×</button>
           <textarea value={note.text} onChange={e=>updateScoreNoteText(note.id,e.target.value)} placeholder={t.scoreViewer.notePlaceholder}/>
         </div>)}
       </div></div>
-      <footer className="statusbar"><span className="viewer-zoom-group"><b>{t.scoreViewer.reflow}</b><button onClick={()=>setZoom(Math.max(.55,zoom-.1))}>−</button>{Math.round(zoom*100)}%<button onClick={()=>setZoom(Math.min(1.25,zoom+.1))}>＋</button><b>{t.scoreViewer.magnify}</b><button onClick={()=>setMagnify(Math.max(.75,magnify-.1))}>−</button>{Math.round(magnify*100)}%<button onClick={()=>setMagnify(Math.min(1.5,magnify+.1))}>＋</button></span></footer>
+      <footer className="statusbar">
+        <span className="viewer-zoom-group">
+          <label className="zoom-slider"><span>{t.scoreViewer.magnify}</span><input aria-label={t.scoreViewer.magnify} type="range" min={75} max={150} step={5} value={Math.round(magnify*100)} onChange={e=>setMagnify(+e.target.value/100)}/><b>{Math.round(magnify*100)}%</b></label>
+          <label className="zoom-slider"><span>{t.scoreViewer.reflow}</span><input aria-label={t.scoreViewer.reflow} type="range" min={55} max={125} step={5} value={Math.round(zoom*100)} onChange={e=>setZoom(+e.target.value/100)}/><b>{Math.round(zoom*100)}%</b></label>
+        </span>
+        <span className="page-nav">
+          {pageMode&&pageCount>1&&<>
+            <button className="page-nav-btn" aria-label={t.scoreViewer.previousPage} disabled={pageIndex<=0} onClick={()=>goToPage(pageIndex-1)}>‹</button>
+            <b>{t.scoreViewer.pageOf(pageIndex+1,pageCount)}</b>
+            <button className="page-nav-btn" aria-label={t.scoreViewer.nextPage} disabled={pageIndex>=pageCount-1} onClick={()=>goToPage(pageIndex+1)}>›</button>
+          </>}
+          {pageCount>1&&<button className="page-mode-toggle has-tip" data-tip={t.scoreViewer.pageModeTip} aria-pressed={pageMode} onClick={togglePageMode}>{pageMode?t.scoreViewer.pagesMode:t.scoreViewer.scrollMode}</button>}
+        </span>
+      </footer>
     </section>{theoryTip&&<div className="theory-tip" style={clampTip(theoryTip.x,theoryTip.y,280,150,"below")}><small>{t.scoreViewer.musicTheory}</small><p>{theoryTip.text}</p></div>}{fingerTip&&<div className="flute-tip finger-chart" style={clampTip(fingerTip.x,fingerTip.y,340,255,"above")}><strong>{fingerTip.pitch.replace(/\d/,"")}<sup>{fingerTip.pitch.match(/\d/)?.[0]}</sup></strong><div className="finger-diagram">
         <div className="finger-diagram__group"><span className="finger-diagram__dot-wrap"><i className={fingeringOn(fingerTip.pitch,"T")?"finger-dot pressed":"finger-dot"}/><small>T</small></span></div>
         <span className="finger-diagram__divider"/>
