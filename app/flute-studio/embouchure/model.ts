@@ -76,7 +76,7 @@ export function createModel() {
     }`});
   const intakeField=new THREE.Mesh(new THREE.PlaneGeometry(2.4,3.6),intakeMaterial);
   intakeField.name='Surrounding air gathering into mouth';air.add(intakeField);
-  function fill(geometry:THREE.BufferGeometry,curve:THREE.Curve<THREE.Vector3>,width:(u:number)=>number){const pos=geometry.attributes.position;for(let i=0;i<=80;i++){const u=i/80,p=curve.getPoint(u),tangent=curve.getTangent(u),normal=new THREE.Vector3(-tangent.y,tangent.x,0).normalize().multiplyScalar(width(u));pos.setXYZ(i*2,p.x+normal.x,p.y+normal.y,.58);pos.setXYZ(i*2+1,p.x-normal.x,p.y-normal.y,.58);}pos.needsUpdate=true;}
+  function fill(geometry:THREE.BufferGeometry,curve:THREE.Curve<THREE.Vector3>,width:(u:number)=>number){const pos=geometry.attributes.position;for(let i=0;i<=80;i++){const u=i/80,p=curve.getPoint(u),tangent=curve.getTangent(u),normal=new THREE.Vector3(-tangent.y,tangent.x,0).normalize().multiplyScalar(width(u));pos.setXYZ(i*2,p.x+normal.x,p.y+normal.y,.12);pos.setXYZ(i*2+1,p.x-normal.x,p.y-normal.y,.12);}pos.needsUpdate=true;}
   let phase=0,previousTime:number|undefined,speed=.4;
   function update(note:number,time:number,showAir:boolean,inhalation=0,inhaling=inhalation>.5){
     const {t}=poseAt(note);
@@ -111,7 +111,9 @@ export function createModel() {
     fill(mouthFlow,mouth,u=>{const broad=.22-.10*t+.22*inhalation;return u<.48?THREE.MathUtils.lerp(.055+.055*inhalation,broad,THREE.MathUtils.smoothstep(u,.22,.48)):THREE.MathUtils.lerp(broad,jetWidth,THREE.MathUtils.smoothstep(u,.68,1));});
     const jet=new THREE.LineCurve3(outlet,end);
     fill(jetFlow,jet,u=>jetWidth*(1+.65*u)*Math.min(1,(1-u)*8)*(inhaling?0:1-inhalation));
-    intakeField.position.set(outlet.x+1.2,outlet.y,.58);
+    // Keep air behind the opaque cutaway surfaces so lips, teeth and tongue
+    // occlude it instead of being painted blue by a foreground overlay.
+    intakeField.position.set(outlet.x+1.2,outlet.y,.12);
     intakeMaterial.uniforms.time.value=time;
     intakeMaterial.uniforms.strength.value=.85*inhalation;
     flowMaterial.uniforms.strength.value=.48+.16*inhalation;
