@@ -1,12 +1,28 @@
 "use client";
 import {ScoreViewer} from "../../components/ScoreViewer";
-import {useCallback,useEffect,useRef,useState} from "react";
+import {ReaderPopover} from "../../components/ReaderPopover";
+import {PracticeIcon} from "../../components/PracticeIcon";
+import {useCallback,useEffect,useState} from "react";
 import {useLanguage} from "../../i18n/LanguageContext";
 
-import {majorKeys,ranges,scaleBookMusicXML,scaleNotes,type ScaleRange} from "./scale-score";
-import {type ArticulationGroup,type ArticulationMode,type ArticulationPresetId,type ArticulationSelection,type RhythmChoice,type SyllableScheme,articulationPresetIds,articulationPresetSelection,defaultArticulationSelection,resolveArticulationPattern,resolveArticulation,resolveRhythm,resolveSyllable,selectionsEqual,serializeArticulationSelection,serializeSyllableScheme} from "../../components/notePatterns";
+import {keyForType,majorKeys,ranges,scaleBookMusicXML,scaleForms,scaleNotes,scaleTypes,typeById,type MajorKey,type ScaleBlock,type ScaleEnding,type ScaleFormId,type ScaleRange,type ScaleTypeId} from "./scale-score";
+
+/** A minor scale is titled from its own spelling: C♯ minor, not D♭ minor. */
+const keyLabelFor=(key:MajorKey,typeId:ScaleTypeId)=>keyForType(key,typeById(typeId)).label;
+import {type ArticulationGroup,type ArticulationMode,type ArticulationPresetId,type ArticulationSelection,type RhythmChoice,type SyllableScheme,articulationPresetIds,articulationPresetSelection,defaultArticulationSelection,resolveArticulationPattern,resolveArticulation,resolveRhythm,resolveSyllable,selectionsEqual} from "../../components/notePatterns";
 import "./scale-book.css";
 
+/**
+ * Named starting points linked from the Exercises hub. A preset in the URL
+ * wins over whatever was last saved — following "Major thirds" from the
+ * hub should land on major thirds, not on last night's setup.
+ */
+const presets:Record<string,{types:ScaleTypeId[];forms:ScaleFormId[];range?:ScaleRange}>={
+  "major-scales":{types:["major"],forms:["scale"]},
+  "harmonic-minors":{types:["harmonic"],forms:["scale"]},
+  "major-arpeggios":{types:["major"],forms:["arpeggio"]},
+  "major-thirds":{types:["major"],forms:["thirds"]},
+};
 const preferenceKey="cookie:scale-book:preferences:v3";
 const tempoKey="cookie:scale-book:tempos:v1";
 const allKeys=majorKeys.map(k=>k.id) as string[];
@@ -20,7 +36,7 @@ const articulationModes:ArticulationMode[]=["slur","tongue","staccato","tenuto"]
  * would otherwise show T/K under every tongued note regardless of which
  * pattern a given key is actually using.
  */
-type RotationEntry={articulation:ArticulationSelection;syllables:SyllableScheme};
+type RotationEntry={articulation:ArticulationSelection;syllables:SyllableScheme;custom?:boolean};
 const silentSyllables:SyllableScheme={mode:"off"};
 
 function isValidArticulationSelection(value:unknown):value is ArticulationSelection{
@@ -38,8 +54,8 @@ function isValidSyllableScheme(value:unknown):value is SyllableScheme{
 }
 function isValidRotationEntry(value:unknown):value is RotationEntry{
   if(!value||typeof value!=="object")return false;
-  const v=value as {articulation?:unknown;syllables?:unknown};
-  return isValidArticulationSelection(v.articulation)&&isValidSyllableScheme(v.syllables);
+  const v=value as {articulation?:unknown;syllables?:unknown;custom?:unknown};
+  return isValidArticulationSelection(v.articulation)&&isValidSyllableScheme(v.syllables)&&(v.custom===undefined||typeof v.custom==="boolean");
 }
 function isValidRotation(value:unknown):value is RotationEntry[]{
   // Empty is valid — it means "nothing selected," which resolves to plain
@@ -47,7 +63,9 @@ function isValidRotation(value:unknown):value is RotationEntry[]{
   return Array.isArray(value)&&value.every(isValidRotationEntry);
 }
 function entriesEqual(a:RotationEntry,b:RotationEntry){
-  return selectionsEqual(a.articulation,b.articulation)&&isSameSyllableScheme(a.syllables,b.syllables);
+  // The custom entry never matches a preset even when its groups happen to
+  // spell the same pattern — they are separate slots in the rotation.
+  return !!a.custom===!!b.custom&&selectionsEqual(a.articulation,b.articulation)&&isSameSyllableScheme(a.syllables,b.syllables);
 }
 function isSameSyllableScheme(a:SyllableScheme,b:SyllableScheme){
   if(a.mode!==b.mode)return false;
@@ -193,8 +211,8 @@ function RhythmIcon({choice}:{choice:RhythmChoice}){
  * a completely unrelated control elsewhere caused ScoreViewer to remount.
  * Fully React-controlled open state sidesteps the whole class of bug.
  */
-function AccordionSection({id,title,openSection,onToggle,className,children}:{id:string;title:string;openSection:string|null;onToggle:(id:string)=>void;className?:string;children:React.ReactNode}){
-  const open=openSection===id;
+function AccordionSection({id,title,openSections,onToggle,className,children}:{id:string;title:string;openSections:string[];onToggle:(id:string)=>void;className?:string;children:React.ReactNode}){
+  const open=openSections.includes(id);
   return <div className={className?`scale-book__section ${className}`:"scale-book__section"}>
     <button type="button" className="scale-book__section-summary" aria-expanded={open} onClick={()=>onToggle(id)}>
       <span className="scale-book__disclosure" aria-hidden="true">▸</span>{title}
@@ -207,6 +225,15 @@ export default function ScaleStudio(){
   const {lang}=useLanguage(),zh=lang==="zh";
   const [range,setRange]=useState<ScaleRange>("two");
   const [order,setOrder]=useState("chromatic");
+  // Types and forms are both multi-select and combine as a cross product;
+  // the book groups by type first, then key, then form.
+  const [types,setTypes]=useState<ScaleTypeId[]>(["major"]);
+  const [forms,setForms]=useState<ScaleFormId[]>(["scale"]);
+  // Which axis the book is grouped by: "type" walks every key of one type
+  // before the next type; "key" keeps one tonic together (C major, then c
+  // minor, then c harmonic minor) before moving on.
+  const [grouping,setGrouping]=useState("type");
+  const [ending,setEnding]=useState<ScaleEnding>("hold");
   const [newLines,setNewLines]=useState(false);
   const [keys,setKeys]=useState<string[]>(allKeys);
   // A rotation, not a single pattern: key index i gets
@@ -220,6 +247,9 @@ export default function ScaleStudio(){
   // (or just closing and reopening Customize) doesn't lose what was built.
   const [customDraft,setCustomDraft]=useState<ArticulationGroup[]>([{size:4,mode:"tongue"}]);
   const [rhythm,setRhythm]=useState<RhythmChoice>("even");
+  // Which per-key tempo field is mid-edit, holding its raw text so a
+  // half-typed "1" on the way to "120" is not clamped under the cursor.
+  const [tempoDraft,setTempoDraft]=useState<{id:string;value:string}|null>(null);
   // Which accordion section is open, lifted into real React state rather
   // than each <details>'s own uncontrolled DOM state. Necessary because
   // this whole dialog is rendered inside ScoreViewer via the `settings`
@@ -231,21 +261,26 @@ export default function ScaleStudio(){
   // reasserted on every remount regardless of what the user actually did.
   // Controlled state survives the remount because it lives here, one
   // level up, not on the DOM node that gets thrown away.
-  const [openSection,setOpenSection]=useState<string|null>("articulation");
-  function toggleSection(id:string){setOpenSection(current=>current===id?null:id)}
+  // Sections open and close independently — picking keys while the scale
+  // type list is open should not shut the list you were just using.
+  const [openSections,setOpenSections]=useState<string[]>(["type"]);
+  function toggleSection(id:string){setOpenSections(current=>current.includes(id)?current.filter(s=>s!==id):[...current,id])}
+  // The header breadcrumb doubles as navigation: each segment opens
+  // Customize scales on the section that controls it.
+  const [customizeOpen,setCustomizeOpen]=useState(false);
+  function openCustomize(section:string){setOpenSections(current=>current.includes(section)?current:[...current,section]);setCustomizeOpen(true)}
   const [tempos,setTempos]=useState<Record<string,number>>({});
   const [loaded,setLoaded]=useState(false);
 
-  const [activeKey,setActiveKey]=useState("C");
-  const rotationSignature=articulationRotation.map(e=>`${serializeArticulationSelection(e.articulation)}~${serializeSyllableScheme(e.syllables)}`).join("|");
+  // Which exercise the transport's tempo belongs to. A tempo is per
+  // exercise, not per key: "C major scale" and "c harmonic minor thirds"
+  // are different things to play and carry different speeds.
+  const [activeBlock,setActiveBlock]=useState("");
   // Tempo is tracked per key+range only — not per articulation/rhythm
   // choice, which would otherwise fragment "how fast can I play C major"
   // into a different number every time the practice pattern changes.
-  const scaleId=(key:string,range:ScaleRange)=>`scale-book:major:${key}:${range}`;
-  const saveTempo=useCallback((bpm:number)=>{const id=scaleId(activeKey,range);setTempos(prev=>prev[id]===bpm?prev:{...prev,[id]:bpm})},[range,activeKey,scaleId]);
-  const dialog=useRef<HTMLDialogElement>(null);
-  const [customizing,setCustomizing]=useState(false);
-  useEffect(()=>{if(customizing)dialog.current?.showModal()},[keys,range,newLines,order,rhythm,rotationSignature,customizing]);
+  const blockTempoId=(block:ScaleBlock,range:ScaleRange)=>`scale-book:${block.type}:${block.form}:${block.key.id}:${range}`;
+  const saveTempo=useCallback((bpm:number)=>{if(!activeBlock)return;setTempos(prev=>prev[activeBlock]===bpm?prev:{...prev,[activeBlock]:bpm})},[activeBlock]);
   useEffect(()=>{
     try{
       const pref=JSON.parse(localStorage.getItem(preferenceKey)||"null");
@@ -255,27 +290,55 @@ export default function ScaleStudio(){
       if(pref?.order==="fifths")setOrder("fifths");
       if(typeof pref?.newLines==="boolean")setNewLines(pref.newLines);
       if(Array.isArray(pref?.keys))setKeys(allKeys.filter(k=>pref.keys.includes(k)));
+      if(pref?.grouping==="type"||pref?.grouping==="key")setGrouping(pref.grouping);
+      if(pref?.ending==="none"||pref?.ending==="hold")setEnding(pref.ending);
+      const savedTypes=Array.isArray(pref?.types)?scaleTypes.filter(t=>pref.types.includes(t.id)).map(t=>t.id):[];
+      if(savedTypes.length)setTypes(savedTypes);
+      const savedForms=Array.isArray(pref?.forms)?scaleForms.filter(f=>pref.forms.includes(f.id)).map(f=>f.id):[];
+      if(savedForms.length)setForms(savedForms);
       if(isValidRotation(pref?.articulationRotation))setArticulationRotation(pref.articulationRotation);
       if(pref?.rhythm==="even"||pref?.rhythm==="dottedLongShort"||pref?.rhythm==="dottedShortLong"||pref?.rhythm==="triplet")setRhythm(pref.rhythm);
       const saved=JSON.parse(localStorage.getItem(tempoKey)||"{}");
-      if(saved&&typeof saved==="object")setTempos(Object.fromEntries(Object.entries(saved).filter(([id,n])=>id.startsWith("scale-book:")&&typeof n==="number"&&Number.isFinite(n)&&n>=40&&n<=220)) as Record<string,number>);
+      if(saved&&typeof saved==="object")setTempos(Object.fromEntries(Object.entries(saved)
+        .filter(([id,n])=>id.startsWith("scale-book:")&&typeof n==="number"&&Number.isFinite(n)&&n>=40&&n<=220)
+        // Tempos saved before exercises had a type and a form are all
+        // major scales — the old key was scale-book:major:<key>:<range>.
+        // Re-point them at the new five-part id instead of dropping them.
+        .map(([id,n])=>{const parts=id.split(":");return parts.length===4?[`scale-book:${parts[1]}:scale:${parts[2]}:${parts[3]}`,n] as const:[id,n] as const})
+      ) as Record<string,number>);
     }catch{/* Invalid browser preferences fall back to the complete chapter. */}
+    const preset=presets[new URLSearchParams(location.search).get("preset")??""];
+    if(preset){setTypes(preset.types);setForms(preset.forms);setKeys(allKeys);if(preset.range)setRange(preset.range)}
     setLoaded(true);
   },[]);
-  useEffect(()=>{if(loaded)try{localStorage.setItem(preferenceKey,JSON.stringify({range,keys,newLines,order,articulationRotation,rhythm}));}catch{/* Storage may be disabled. */}},[range,keys,newLines,order,articulationRotation,rhythm,loaded]);
+  useEffect(()=>{if(loaded)try{localStorage.setItem(preferenceKey,JSON.stringify({range,keys,newLines,order,grouping,ending,types,forms,articulationRotation,rhythm}));}catch{/* Storage may be disabled. */}},[range,keys,newLines,order,grouping,ending,types,forms,articulationRotation,rhythm,loaded]);
   useEffect(()=>{if(loaded)try{localStorage.setItem(tempoKey,JSON.stringify(tempos));}catch{/* Storage may be disabled. */}},[tempos,loaded]);
 
   const chosenRange=ranges.find(r=>r.id===range)!;
   const selected=majorKeys.filter(k=>keys.includes(k.id)).sort((a,b)=>order==="fifths"?(a.pc*7)%12-(b.pc*7)%12:a.pc-b.pc);
-  const displayPitches=selected.flatMap(k=>scaleNotes(k,range).map(n=>`${n.step}${n.alter<0?"♭":n.alter>0?"♯":""}${n.octave}`));
-  const measureKeyAccidentals=selected.flatMap(k=>Array.from({length:Math.ceil(scaleNotes(k,range).length/8)},()=>scaleNotes(k,range).filter(n=>n.alter).map(n=>`${n.step}${n.alter<0?"♭":"♯"}`)));
+  // Type is the outermost loop ("all the major ones, then all the minor
+  // ones"), then key, then form — so one key's scale and its thirds sit
+  // next to each other rather than a page apart.
+  const chosenTypes=scaleTypes.filter(t=>types.includes(t.id));
+  const chosenForms=scaleForms.filter(f=>forms.includes(f.id));
+  const showForm=chosenForms.length>1||chosenForms[0]?.id!=="scale";
+  const blockFor=(key:MajorKey,type:typeof chosenTypes[number],form:typeof chosenForms[number]):ScaleBlock=>({
+    key,type:type.id,form:form.id,
+    label:`${keyLabelFor(key,type.id)} ${zh?type.zh:type.label.toLowerCase()}${showForm?` ${zh?form.zh:form.label.toLowerCase()}`:""}`,
+  });
+  const blocks:ScaleBlock[]=grouping==="key"
+    ?selected.flatMap(key=>chosenTypes.flatMap(type=>chosenForms.map(form=>blockFor(key,type,form))))
+    :chosenTypes.flatMap(type=>selected.flatMap(key=>chosenForms.map(form=>blockFor(key,type,form))));
+  const blockNotes=(block:ScaleBlock)=>scaleNotes(block.key,range,block.type,block.form,ending);
+  const displayPitches=blocks.flatMap(b=>blockNotes(b).map(n=>`${n.step}${n.alter<0?"♭":n.alter>0?"♯":""}${n.octave}`));
+  const measureKeyAccidentals=blocks.flatMap(b=>Array.from({length:Math.ceil(blockNotes(b).length/8)},()=>blockNotes(b).filter(n=>n.alter).map(n=>`${n.step}${n.alter<0?"♭":"♯"}`)));
   // Syllables reset per key (own scale, own tonguing count), and each key
   // resolves against whichever rotation entry it's assigned — same
   // per-key reset displayPitches/measureKeyAccidentals already use above.
   // tongueIndex only advances on tongue/staccato notes — a slurred note
   // isn't tongued, so it doesn't consume a T/K turn.
-  const syllables=selected.flatMap((k,keyIndex)=>{
-    const count=scaleNotes(k,range).length;
+  const syllables=blocks.flatMap((block,keyIndex)=>{
+    const count=blockNotes(block).length;
     const entry=articulationRotation[keyIndex%articulationRotation.length]??{articulation:defaultArticulationSelection,syllables:silentSyllables};
     const pattern=resolveArticulationPattern(entry.articulation,count);
     let tongueIndex=0;
@@ -285,7 +348,21 @@ export default function ScaleStudio(){
       return syllable;
     });
   });
+  const soleForm=chosenForms.length===1?chosenForms[0]:null;
+  const formWord=soleForm?(soleForm.id==="scale"?(zh?"音阶":"scales"):(zh?soleForm.zh:soleForm.label.toLowerCase().replace(/([^s])$/,"$1s"))):(zh?"多种形式":"mixed forms");
+  const typeWord=chosenTypes.length===1
+    ?(zh?chosenTypes[0].zh:chosenTypes[0].label)
+    :chosenTypes.length===2
+      ?(zh?`${chosenTypes[0].zh}与${chosenTypes[1].zh}`:`${chosenTypes[0].label} & ${chosenTypes[1].label.toLowerCase()}`)
+      :(zh?`${chosenTypes.length} 种音阶`:`${chosenTypes.length} scale types`);
+  const bookTitle=`${typeWord}${zh?"":" "}${formWord}`;
   const changeRange=(next:ScaleRange)=>setRange(next);
+  const toggleFrom=<T,>(list:T[],value:T,setList:(next:T[])=>void)=>{
+    // Never empty: unticking the last one would render a blank book, so the
+    // last remaining selection stays put.
+    const next=list.includes(value)?list.filter(v=>v!==value):[...list,value];
+    if(next.length)setList(next);
+  };
   const toggleKey=(key:string)=>{
     setKeys(prev=>prev.includes(key)?prev.filter(k=>k!==key):[...prev,key]);
   };
@@ -303,43 +380,54 @@ export default function ScaleStudio(){
   // "My articulation" is just another rotation member (so it can sit
   // alongside presets in a multi-pattern rotation) whose shape happens to
   // be user-built rather than fixed — at most one such entry at a time.
-  const customIndex=articulationRotation.findIndex(e=>e.articulation.kind==="groups");
+  const customIndex=articulationRotation.findIndex(e=>e.custom);
   const customActive=customIndex>=0;
   function toggleCustom(){
     setArticulationRotation(prev=>{
-      const index=prev.findIndex(e=>e.articulation.kind==="groups");
-      return index>=0?prev.filter((_,i)=>i!==index):[...prev,{articulation:{kind:"groups",groups:customDraft},syllables:silentSyllables}];
+      const index=prev.findIndex(e=>e.custom);
+      return index>=0?prev.filter((_,i)=>i!==index):[...prev,{articulation:{kind:"groups",groups:customDraft},syllables:silentSyllables,custom:true}];
     });
   }
   function editCustomGroups(update:(groups:ArticulationGroup[])=>ArticulationGroup[]){
     setCustomDraft(prevDraft=>{
       const next=update(prevDraft);
-      setArticulationRotation(prevRotation=>prevRotation.map(e=>e.articulation.kind==="groups"?{...e,articulation:{kind:"groups",groups:next}}:e));
+      setArticulationRotation(prevRotation=>prevRotation.map(e=>e.custom?{...e,articulation:{kind:"groups",groups:next}}:e));
       return next;
     });
   }
-  const closeOnBackdrop=(e:React.MouseEvent<HTMLDialogElement>)=>{if(e.target===e.currentTarget)dialog.current?.close()};
+
   if(!loaded)return null;
   return <div className="scale-reader">
-    <ScoreViewer key={`${range}:${newLines}:${rhythm}:${rotationSignature}:${selected.map(k=>k.id).join(",")}`} unmetered onTempoChange={saveTempo} config={{title:zh?"大调音阶":"Major Scales",composer:"",asset:scaleBookMusicXML(selected,range,newLines,articulationRotation.map(e=>e.articulation),rhythm),displayPitches,measureKeyAccidentals,syllables,id:`scale-book-${range}-${selected.map(k=>k.id).join("-")}`,backHref:"/flute-studio/exercises",defaultTempo:tempos[scaleId(activeKey,range)]??60}}
-      toolbar={<div className="scale-book__chapter-inline"><span>{zh?"大调音阶":"Major scales"} · {zh?chosenRange.zh:chosenRange.label} · {selected.length} {zh?"个调性":"keys"}</span><button className="scale-book__customize" aria-expanded={customizing} onClick={()=>{dialog.current?.showModal();setCustomizing(true)}}>{zh?"自定义":"Customize"}</button></div>}
+    <ScoreViewer unmetered onTempoChange={saveTempo} lineBreak={{value:newLines,onChange:setNewLines}} config={{title:bookTitle,composer:"",asset:scaleBookMusicXML(blocks,range,newLines,articulationRotation.map(e=>e.articulation),rhythm,ending),displayPitches,measureKeyAccidentals,syllables,id:`scale-book-${range}-${grouping}-${ending}-${types.join("+")}-${forms.join("+")}-${selected.map(k=>k.id).join("-")}`,backHref:"/flute-studio/exercises",defaultTempo:(activeBlock?tempos[activeBlock]:undefined)??60}}
+      toolbar={<div className="scale-book__chapter-inline"><button type="button" className="scale-book__crumb" onClick={()=>openCustomize("type")}>{typeWord}</button><button type="button" className="scale-book__crumb" onClick={()=>openCustomize("form")}>{formWord}</button><span aria-hidden="true">·</span><button type="button" className="scale-book__crumb" onClick={()=>openCustomize("range")}>{zh?chosenRange.zh:chosenRange.label}</button><span aria-hidden="true">·</span><button type="button" className="scale-book__crumb" onClick={()=>openCustomize("keys")}>{selected.length} {zh?"个调性":selected.length===1?"key":"keys"}</button></div>}
       settings={reader=><>
-    {!selected.length&&<p className="scale-book__empty">Choose keys in Customize to display your scales.</p>}
-    <dialog ref={dialog} className="scale-book__panel" onClose={()=>setCustomizing(false)} onClick={closeOnBackdrop} aria-label={zh?"自定义":"Customize"}>
-      <button className="scale-book__panel-close" aria-label={zh?"关闭自定义":"Close Customize"} onClick={()=>dialog.current?.close()}>×</button>
+    {!selected.length&&<p className="scale-book__empty">Choose keys in Customize scales to display your scales.</p>}
+    <ReaderPopover open={customizeOpen} onOpenChange={setCustomizeOpen} label={zh?"自定义音阶":"Customize scales"} trigger={<><PracticeIcon name="settings"/>{zh?"音阶":"Scales"}</>} className="tool has-tip">
       <div className="scale-book__panel-body">
-        <AccordionSection id="keys" title={zh?"调性":"Keys"} openSection={openSection} onToggle={toggleSection}>
+        <AccordionSection id="type" title={zh?"音阶类型":"Scale type"} openSections={openSections} onToggle={toggleSection}>
+          <div className="scale-book__ranges" role="group" aria-label={zh?"音阶类型":"Scale type"}>{scaleTypes.map(t=><button type="button" key={t.id} className={types.includes(t.id)?"scale-book__chip selected":"scale-book__chip"} aria-pressed={types.includes(t.id)} onClick={()=>toggleFrom(types,t.id,setTypes)}>{zh?t.zh:t.label}</button>)}</div>
+        </AccordionSection>
+        <AccordionSection id="form" title={zh?"练习形式":"Form"} openSections={openSections} onToggle={toggleSection}>
+          <div className="scale-book__ranges" role="group" aria-label={zh?"练习形式":"Form"}>{scaleForms.map(f=><button type="button" key={f.id} className={forms.includes(f.id)?"scale-book__chip selected":"scale-book__chip"} aria-pressed={forms.includes(f.id)} onClick={()=>toggleFrom(forms,f.id,setForms)}>{zh?f.zh:f.label}</button>)}</div>
+          <p className="scale-book__field-label">{zh?"结尾":"Ending"}</p>
+          <div className="scale-book__ranges" role="group" aria-label={zh?"结尾":"Ending"}>{([["none",zh?"直接反复":"Straight"],["hold",zh?"主音延长":"Hold the tonic"]] as [ScaleEnding,string][]).map(([value,label])=><button type="button" key={value} className={ending===value?"scale-book__chip selected":"scale-book__chip"} aria-pressed={ending===value} onClick={()=>setEnding(value)}>{label}</button>)}</div>
+        </AccordionSection>
+        <AccordionSection id="keys" title={zh?"调性":"Keys"} openSections={openSections} onToggle={toggleSection}>
           <div className="scale-book__key-actions"><button onClick={()=>setKeys(allKeys)}>{zh?"全部":"All keys"}</button><button onClick={()=>{setKeys([]);}}>{zh?"清除":"Clear"}</button></div>
-          <div className="scale-book__keys">{majorKeys.map(k=><label key={k.id}><input type="checkbox" checked={keys.includes(k.id)} onChange={()=>toggleKey(k.id)}/><span>{k.label}</span></label>)}</div>
+          <div className="scale-book__keys">{majorKeys.map(k=><button type="button" key={k.id} className={keys.includes(k.id)?"scale-book__chip selected":"scale-book__chip"} aria-pressed={keys.includes(k.id)} onClick={()=>toggleKey(k.id)}>{k.label}</button>)}</div>
         </AccordionSection>
-        <AccordionSection id="range" title={zh?"音域":"Range"} openSection={openSection} onToggle={toggleSection}>
-          <div className="scale-book__ranges">{ranges.map(r=><label key={r.id}><input type="radio" name="scale-range" checked={range===r.id} onChange={()=>changeRange(r.id)}/><span>{zh?r.zh:r.label}{"notes" in r?` (${r.notes})`:""}</span></label>)}</div>
+        <AccordionSection id="range" title={zh?"音域":"Range"} openSections={openSections} onToggle={toggleSection}>
+          <div className="scale-book__ranges" role="group" aria-label={zh?"音域":"Range"}>{ranges.map(r=><button type="button" key={r.id} className={range===r.id?"scale-book__chip selected":"scale-book__chip"} aria-pressed={range===r.id} onClick={()=>changeRange(r.id)}>{zh?r.zh:r.label}{"notes" in r&&<small>{r.notes}</small>}</button>)}</div>
         </AccordionSection>
-        <AccordionSection id="display" title={zh?"显示":"Display"} openSection={openSection} onToggle={toggleSection}>
-          <div className="scale-book__order">{[["chromatic",zh?"半音顺序":"Chromatic"],["fifths",zh?"五度圈":"Circle of fifths"]].map(([value,label])=><label key={value}><input type="radio" name="scale-order" checked={order===value} onChange={()=>setOrder(value)}/><span>{label}</span></label>)}</div>
-          <label className="scale-book__line-option"><input type="checkbox" checked={newLines} onChange={e=>setNewLines(e.target.checked)}/><span>{zh?"每个音阶另起一行":"Start each scale on a new line"}</span></label>
+        <AccordionSection id="order" title={zh?"音阶顺序":"Scale order"} openSections={openSections} onToggle={toggleSection}>
+          <p className="scale-book__field-label">{zh?"调性顺序":"Key order"}</p>
+          <div className="scale-book__ranges" role="group" aria-label={zh?"调性顺序":"Key order"}>{[["chromatic",zh?"半音顺序":"Chromatic"],["fifths",zh?"五度圈":"Circle of fifths"]].map(([value,label])=><button type="button" key={value} className={order===value?"scale-book__chip selected":"scale-book__chip"} aria-pressed={order===value} onClick={()=>setOrder(value)}>{label}</button>)}</div>
+          <p className="scale-book__field-label">{zh?"换行":"Line breaks"}</p>
+          <div className="scale-book__ranges" role="group" aria-label={zh?"换行":"Line breaks"}>{([[false,zh?"接续上一个":"Continue from previous"],[true,zh?"另起一行":"Start on a new line"]] as [boolean,string][]).map(([value,label])=><button type="button" key={String(value)} className={newLines===value?"scale-book__chip selected":"scale-book__chip"} aria-pressed={newLines===value} onClick={()=>setNewLines(value)}>{label}</button>)}</div>
+          <p className="scale-book__field-label">{zh?"分组方式":"Group by"}</p>
+          <div className="scale-book__ranges" role="group" aria-label={zh?"分组方式":"Group by"}>{[["type",zh?"音阶类型":"Scale type"],["key",zh?"调性":"Key"]].map(([value,label])=><button type="button" key={value} className={grouping===value?"scale-book__chip selected":"scale-book__chip"} aria-pressed={grouping===value} onClick={()=>setGrouping(value)}>{label}</button>)}</div>
         </AccordionSection>
-        <AccordionSection id="articulation" title={zh?"演奏法":"Articulation"} openSection={openSection} onToggle={toggleSection}>
+        <AccordionSection id="articulation" title={zh?"演奏法":"Articulation"} openSections={openSections} onToggle={toggleSection}>
           {articulationRotation.length>1&&<p className="scale-book__rotation-hint">{zh?"按顺序轮流分配给每个调性":"Cycles across keys in the order selected"}</p>}
           <div className="scale-book__preset-grid">
             {articulationPresetIds.map(id=>{
@@ -363,16 +451,18 @@ export default function ScaleStudio(){
             <button type="button" className="scale-book__add-group" onClick={()=>editCustomGroups(groups=>[...groups,{size:4,mode:"tongue"}])}>{zh?"+ 添加一组":"+ Add group"}</button>
           </div>}
         </AccordionSection>
-        <AccordionSection id="rhythm" title={zh?"节奏型":"Rhythm"} openSection={openSection} onToggle={toggleSection}>
+        <AccordionSection id="rhythm" title={zh?"节奏型":"Rhythm"} openSections={openSections} onToggle={toggleSection}>
           <div className="scale-book__preset-grid">{rhythmChoices.map(value=><button key={value} type="button" className={rhythm===value?"scale-book__preset selected":"scale-book__preset"} aria-label={zh?rhythmLabels[value].zh:rhythmLabels[value].en} onClick={()=>setRhythm(value)}><RhythmIcon choice={value}/></button>)}</div>
         </AccordionSection>
-        <AccordionSection id="tempos" title={zh?"练习速度":"Practice tempos"} openSection={openSection} onToggle={toggleSection} className="scale-book__tempos">{selected.map(k=>{
-          const id=scaleId(k.id,range),tempo=tempos[id]??60;
-          const setTempo=(next:number)=>{setActiveKey(k.id);setTempos(prev=>({...prev,[id]:next}));reader.setTempo(next)};
-          return <div className="scale-reader__tempo" key={k.id}><span className="scale-book__tempo-label"><b>{k.label} {zh?"大调":"major"}</b><small>{zh?chosenRange.zh:chosenRange.label}</small></span><div className="scale-book__metronome"><button disabled={tempo<=40} aria-label={`${k.label}: decrease tempo by 5`} onClick={()=>setTempo(tempo-5)}>−</button><span>♩ = {tempo}</span><button disabled={tempo>=220} aria-label={`${k.label}: increase tempo by 5`} onClick={()=>setTempo(tempo+5)}>+</button><button aria-label={`${k.label}: metronome`} aria-pressed={reader.metronome&&activeKey===k.id} onClick={()=>{const stop=reader.metronome&&activeKey===k.id;setTempo(tempo);if(stop||!reader.metronome)reader.toggleMetronome()}}>♩</button></div></div>;
+        <AccordionSection id="tempos" title={zh?"练习速度":"Practice tempos"} openSections={openSections} onToggle={toggleSection} className="scale-book__tempos">{blocks.map(block=>{
+          const id=blockTempoId(block,range),tempo=tempos[id]??60,name=block.label;
+          const setTempo=(next:number)=>{setActiveBlock(id);setTempos(prev=>({...prev,[id]:next}));reader.setTempo(next)};
+          const running=reader.metronome&&activeBlock===id;
+          return <div className="scale-reader__tempo" key={id}><span className="scale-book__tempo-label"><b>{name}</b><small>{zh?chosenRange.zh:chosenRange.label}</small></span><div className="scale-book__metronome"><button disabled={tempo<=40} aria-label={`${name}: decrease tempo by 5`} onClick={()=>setTempo(tempo-5)}>−</button><label className="scale-book__tempo-field">♩ = <input type="number" min={40} max={220} aria-label={`${name}: tempo in BPM`} value={tempoDraft?.id===id?tempoDraft.value:tempo} onChange={e=>setTempoDraft({id,value:e.target.value})} onFocus={()=>setActiveBlock(id)} onBlur={()=>{if(tempoDraft?.id!==id)return;const next=Number(tempoDraft.value);const valid=Number.isFinite(next)&&tempoDraft.value.trim()!=="";setTempoDraft(null);if(valid)setTempo(Math.max(40,Math.min(220,Math.round(next))))}} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/></label><button disabled={tempo>=220} aria-label={`${name}: increase tempo by 5`} onClick={()=>setTempo(tempo+5)}>+</button><button className={running?"scale-book__play on":"scale-book__play"} aria-label={running?`${name}: stop metronome`:`${name}: start metronome`} aria-pressed={running} onClick={()=>{setTempo(tempo);if(running||!reader.metronome)reader.toggleMetronome()}}><PracticeIcon name="metronome"/></button></div></div>;
         })}</AccordionSection>
       </div>
-    </dialog>
+      <button className="reader-settings-reset" onClick={()=>{setKeys(allKeys);setRange("two");setOrder("chromatic");setGrouping("type");setEnding("hold");setTypes(["major"]);setForms(["scale"]);setNewLines(false);setArticulationRotation([]);setCustomDraft([{size:4,mode:"tongue"}]);setRhythm("even")}}>{zh?"恢复默认":"Restore defaults"}</button>
+    </ReaderPopover>
     </>}/>
   </div>;
 }

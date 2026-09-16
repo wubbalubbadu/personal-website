@@ -177,3 +177,13 @@ approximate them with hand-drawn SVG paths/circles — a freehand clef doesn't
 read as an actual clef no matter how carefully its coordinates are tuned;
 this was tried and reverted. If a glyph is positioned wrong, fix its
 position/size, don't replace the glyph itself.
+
+## Score reader settings
+
+`components/ReaderPopover.tsx` is the shared button-anchored surface for
+View settings and Customize scales. Use it for both; do not introduce a
+centered dialog or separate panel skin. It reuses the inline drone panel's
+white surface, subtle border, 14px radius, and shadow. Reading mode and page width use two visible choices with a soft green
+selected state; reading aids retain their green icon-and-label buttons.
+Reset is a secondary text action. The reader hides global navigation and uses
+two compact rows: identity/customization, then practice/page/view controls.

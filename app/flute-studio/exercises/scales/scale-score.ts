@@ -23,33 +23,118 @@ export const ranges=[
 ] as const;
 export type ScaleRange=typeof ranges[number]["id"];
 export type ScaleNote={step:string;alter:number;octave:number;midi:number};
-const letters="CDEFGAB",naturals=[0,2,4,5,7,9,11],intervals=[0,2,4,5,7,9,11];
+const letters="CDEFGAB",naturals=[0,2,4,5,7,9,11];
+
+/**
+ * A type is a set of seven degree offsets from the tonic. Harmonic minor
+ * raises the 7th outright; melodic minor carries a second set used only on
+ * the way down, which is why direction has to be tracked per note rather
+ * than per scale.
+ */
+export const scaleTypes=[
+  {id:"major",label:"Major",zh:"大调",intervals:[0,2,4,5,7,9,11],descending:null,mode:"major"},
+  {id:"natural",label:"Natural minor",zh:"自然小调",intervals:[0,2,3,5,7,8,10],descending:null,mode:"minor"},
+  {id:"harmonic",label:"Harmonic minor",zh:"和声小调",intervals:[0,2,3,5,7,8,11],descending:null,mode:"minor"},
+  {id:"melodic",label:"Melodic minor",zh:"旋律小调",intervals:[0,2,3,5,7,9,11],descending:[0,2,3,5,7,8,10],mode:"minor"},
+] as const;
+export type ScaleType=typeof scaleTypes[number];
+export type ScaleTypeId=ScaleType["id"];
+
+/** The shape a scale is practised in — same notes, different path. */
+export const scaleForms=[
+  {id:"scale",label:"Scale",zh:"音阶"},
+  {id:"arpeggio",label:"Arpeggio",zh:"琶音"},
+  {id:"thirds",label:"Thirds",zh:"三度"},
+  {id:"fourths",label:"Fourths",zh:"四度"},
+] as const;
+export type ScaleFormId=typeof scaleForms[number]["id"];
+/** "hold" parks a whole note with a fermata on the tonic at the end. */
+export type ScaleEnding="none"|"hold";
+
+/**
+ * A minor key is spelled from its own signature, not its parallel major's:
+ * the tonic a semitone above C is C♯ minor (4 sharps), never D♭ minor
+ * (8 flats, unwritable). Indexed by pitch class.
+ */
+const minorSpelling=[
+  {label:"C",fifths:-3,step:0},{label:"C♯",fifths:4,step:0},{label:"D",fifths:-1,step:1},{label:"E♭",fifths:-6,step:2},
+  {label:"E",fifths:1,step:2},{label:"F",fifths:-4,step:3},{label:"F♯",fifths:3,step:3},{label:"G",fifths:-2,step:4},
+  {label:"G♯",fifths:5,step:4},{label:"A",fifths:0,step:5},{label:"B♭",fifths:-5,step:6},{label:"B",fifths:2,step:6},
+] as const;
+export type SpelledKey={pc:number;label:string;fifths:number;step:number};
+export function keyForType(key:MajorKey,type:ScaleType):SpelledKey{
+  if(type.mode==="major")return {pc:key.pc,label:key.label,fifths:key.fifths,step:key.step};
+  const minor=minorSpelling[key.pc];
+  return {pc:key.pc,label:minor.label.toLowerCase(),fifths:minor.fifths,step:minor.step};
+}
+export const typeById=(id:ScaleTypeId)=>scaleTypes.find(t=>t.id===id)!;
 
 /** Keep diatonic spelling separate from sounding pitch (C-flat in G-flat). */
-function noteAt(key:MajorKey,degree:number):ScaleNote{
+function noteAt(key:SpelledKey,degree:number,type:ScaleType,descending=false):ScaleNote{
+  const offsets=(descending&&type.descending?type.descending:type.intervals) as readonly number[];
   const index=((degree%7)+7)%7;
-  const midi=60+key.pc+12*Math.floor(degree/7)+intervals[index];
+  const midi=60+key.pc+12*Math.floor(degree/7)+offsets[index];
   const letterIndex=key.step+degree;
   const stepIndex=((letterIndex%7)+7)%7;
   const octave=4+Math.floor(letterIndex/7);
   return {step:letters[stepIndex],alter:midi-(12*(octave+1)+naturals[stepIndex]),octave,midi};
 }
 
+/**
+ * The ascending half of a form, as scale degrees. "scale" walks every
+ * degree; the others revisit degrees in a fixed shape — an arpeggio takes
+ * only the chord tones of each octave, thirds and fourths pair each degree
+ * with the one two or three above it.
+ */
+function ascendingDegrees(form:ScaleFormId,low:number,high:number):number[]{
+  const out:number[]=[];
+  if(form==="arpeggio"){
+    for(let d=low;d<=high;d++){const i=((d%7)+7)%7;if(i===0||i===2||i===4)out.push(d)}
+    if(out.at(-1)!==high&&((high%7)+7)%7===0)out.push(high);
+    return out;
+  }
+  if(form==="thirds"||form==="fourths"){
+    const reach=form==="thirds"?2:3;
+    for(let d=low;d+reach<=high;d++)out.push(d,d+reach);
+    return out;
+  }
+  for(let d=low;d<=high;d++)out.push(d);
+  return out;
+}
+
 /** Repeat supplies the final tonic, avoiding a doubled note at the join. */
-export function scaleNotes(key:MajorKey,range:ScaleRange):ScaleNote[]{
+export function scaleNotes(key:MajorKey,range:ScaleRange,typeId:ScaleTypeId="major",form:ScaleFormId="scale",ending:ScaleEnding="none"):ScaleNote[]{
+  const type=typeById(typeId),spelled=keyForType(key,type);
   let low=0,high=range==="one"?7:14;
   if(range==="standard"||range==="full"){
     const min=range==="full"?59:60,max=range==="full"?98:96;
-    while(noteAt(key,low-1).midi>=min)low--;
+    while(noteAt(spelled,low-1,type).midi>=min)low--;
     high=0;
-    while(noteAt(key,high+1).midi<=max)high++;
+    while(noteAt(spelled,high+1,type).midi<=max)high++;
   }
-  const degrees:number[]=[];
-  for(let i=0;i<=high;i++)degrees.push(i);
-  for(let i=high-1;i>=low;i--)degrees.push(i);
-  for(let i=low+1;i<0;i++)degrees.push(i);
-  if(degrees.at(-1)===0)degrees.pop();
-  return degrees.map(i=>noteAt(key,i));
+  // `up` marks which interval set a note is spelled from — only melodic
+  // minor differs between the two, but the flag has to travel per note
+  // because one exercise contains both directions.
+  const path:{degree:number;up:boolean}[]=[];
+  if(form==="scale"){
+    // Tonic → top → bottom → tonic, the shape the full-range exercises
+    // have always had; the other forms mirror around their own span.
+    for(let i=0;i<=high;i++)path.push({degree:i,up:true});
+    for(let i=high-1;i>=low;i--)path.push({degree:i,up:false});
+    for(let i=low+1;i<0;i++)path.push({degree:i,up:true});
+    if(path.at(-1)?.degree===0)path.pop();
+  }else{
+    const up=ascendingDegrees(form,low,high);
+    up.forEach(degree=>path.push({degree,up:true}));
+    for(let i=up.length-2;i>=0;i--)path.push({degree:up[i],up:false});
+  }
+  const notes=path.map(({degree,up})=>noteAt(spelled,degree,type,!up));
+  // The held tonic is part of the note list, not an extra appended at
+  // render time — the practice overlays (names, solfège, syllables) index
+  // straight into this array, so anything the engraver draws has to exist
+  // here or every label after it shifts by one.
+  if(ending==="hold")notes.push(noteAt(spelled,0,type));
+  return notes;
 }
 
 /**
@@ -72,17 +157,20 @@ function beatChunks(count:number,perQuarter:number,durations:{divisions:number}[
   return chunks;
 }
 
-export function scaleMusicXML(key:MajorKey,range:ScaleRange,articulationSelection:ArticulationSelection=defaultArticulationSelection,rhythm:RhythmChoice="even"):string{
-  const notes=scaleNotes(key,range);
-  const durations=resolveRhythm(notes.length,rhythm);
-  const pattern=resolveArticulationPattern(articulationSelection,notes.length);
+export function scaleMusicXML(key:MajorKey,range:ScaleRange,articulationSelection:ArticulationSelection=defaultArticulationSelection,rhythm:RhythmChoice="even",typeId:ScaleTypeId="major",form:ScaleFormId="scale",ending:ScaleEnding="none"):string{
+  const type=typeById(typeId),spelled=keyForType(key,type);
+  const notes=scaleNotes(key,range,typeId,form,ending);
+  const held=ending==="hold"?notes[notes.length-1]:null;
+  const runLength=held?notes.length-1:notes.length;
+  const durations=resolveRhythm(runLength,rhythm);
+  const pattern=resolveArticulationPattern(articulationSelection,runLength);
   const perQuarter=divisionsPerQuarter(rhythm);
-  const beats=beatChunks(notes.length,perQuarter,durations);
+  const beats=beatChunks(runLength,perQuarter,durations);
   const measures:string[]=[];
   // Invisible measures let the engraver wrap naturally on narrow tablets.
   for(let m=0;m*2<beats.length;m++){
     const measureBeats=beats.slice(m*2,m*2+2);
-    const attributes=m===0?`<attributes><divisions>${perQuarter}</divisions><key><fifths>${key.fifths}</fifths><mode>major</mode></key><time print-object="no"><beats>2</beats><beat-type>4</beat-type></time><clef><sign>G</sign><line>2</line></clef></attributes>`:"";
+    const attributes=m===0?`<attributes><divisions>${perQuarter}</divisions><key><fifths>${spelled.fifths}</fifths><mode>${type.mode}</mode></key><time print-object="no"><beats>2</beats><beat-type>4</beat-type></time><clef><sign>G</sign><line>2</line></clef></attributes>`:"";
     const written=measureBeats.map(beat=>{
       const uniformType=beat.every(index=>durations[index].type===durations[beat[0]].type);
       return beat.map((noteIndex,posInBeat)=>{
@@ -110,8 +198,14 @@ export function scaleMusicXML(key:MajorKey,range:ScaleRange,articulationSelectio
         return `<note><pitch><step>${n.step}</step><alter>${n.alter}</alter><octave>${n.octave}</octave></pitch><duration>${d.divisions}</duration>${"<dot/>".repeat(d.dots)}<type>${d.type}</type>${timeMod}${beamXml}${notations.length?`<notations>${notations.join("")}</notations>`:""}</note>`;
       }).join("");
     }).join("");
-    const end=m*2+2>=beats.length;
+    const end=m*2+2>=beats.length&&!held;
     measures.push(`<measure number="${measures.length+1}" implicit="yes">${attributes}${written}<barline location="right"><bar-style>${end?"light-heavy":"none"}</bar-style>${end?'<repeat direction="backward"/>':""}</barline></measure>`);
+  }
+  if(held){
+    // Its own 4/4 measure so the whole note is a genuine whole note; the
+    // time signature is print-object="no" like the 2/4 above it, so the
+    // change never appears on the page.
+    measures.push(`<measure number="${measures.length+1}" implicit="yes"><attributes><time print-object="no"><beats>4</beats><beat-type>4</beat-type></time></attributes><note><pitch><step>${held.step}</step><alter>${held.alter}</alter><octave>${held.octave}</octave></pitch><duration>${perQuarter*4}</duration><type>whole</type><notations><fermata type="upright"/></notations></note><barline location="right"><bar-style>light-heavy</bar-style></barline></measure>`);
   }
   return `<?xml version="1.0" encoding="utf-8"?><score-partwise version="4.0"><part-list><score-part id="P1"><part-name>Flute</part-name></score-part></part-list><part id="P1">${measures.join("")}</part></score-partwise>`;
 }
@@ -123,15 +217,17 @@ export function scaleMusicXML(key:MajorKey,range:ScaleRange,articulationSelectio
  * assign a rotation like "all staccato, all tongued, slur 2 tongue 2" across
  * consecutive keys instead of repeating the same articulation everywhere.
  */
-export function scaleBookMusicXML(keys:readonly MajorKey[],range:ScaleRange,newLines=false,articulations:ArticulationSelection[]=[defaultArticulationSelection],rhythm:RhythmChoice="even"):string{
+export type ScaleBlock={key:MajorKey;type:ScaleTypeId;form:ScaleFormId;label:string};
+export function scaleBookMusicXML(blocks:readonly ScaleBlock[],range:ScaleRange,newLines=false,articulations:ArticulationSelection[]=[defaultArticulationSelection],rhythm:RhythmChoice="even",ending:ScaleEnding="none"):string{
   let number=0;
-  const measures=keys.map((key,keyIndex)=>{
+  const measures=blocks.map((block,keyIndex)=>{
+    const key=block.key;
     const articulationSelection=articulations[keyIndex%articulations.length]??defaultArticulationSelection;
-    const part=scaleMusicXML(key,range,articulationSelection,rhythm).match(/<part id="P1">([\s\S]*)<\/part>/)![1];
+    const part=scaleMusicXML(key,range,articulationSelection,rhythm,block.type,block.form,ending).match(/<part id="P1">([\s\S]*)<\/part>/)![1];
     const first=number===0;
     return part.replace(/<measure number="\d+" implicit="yes">/g,()=>`<measure number="${++number}" implicit="yes">`)
       .replace(/<clef>.*?<\/clef>/,first?"<clef><sign>G</sign><line>2</line></clef>":"")
-      .replace(/(<measure[^>]*>)/,`$1${newLines?'<print new-system="yes"/>':""}<direction placement="above"><direction-type><words font-weight="bold">${key.label} major</words></direction-type></direction>`);
+      .replace(/(<measure[^>]*>)/,`$1${newLines?'<print new-system="yes"/>':""}<direction placement="above"><direction-type><words font-weight="bold">${block.label}</words></direction-type></direction>`);
   }).join("");
   return `<?xml version="1.0" encoding="utf-8"?><score-partwise version="4.0"><part-list><score-part id="P1"><part-name>Flute</part-name></score-part></part-list><part id="P1">${measures}</part></score-partwise>`;
 }

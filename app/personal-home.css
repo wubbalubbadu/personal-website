@@ -1,54 +1,54 @@
 :root {
-  --ground: #e3e5df;
-  --paper: #eff0eb;
-  --panel: #f6f7f2;
-  --ink: #1a1e1b;
-  --ink-70: rgba(26, 30, 27, 0.7);
-  --ink-50: rgba(26, 30, 27, 0.5);
-  --ink-38: rgba(26, 30, 27, 0.38);
-  --rule: rgba(26, 30, 27, 0.12);
-  --rule-soft: rgba(26, 30, 27, 0.06);
-  --pine: #2f5d50;
-  --pine-wash: rgba(47, 93, 80, 0.08);
-  --amber: #b06f28;
-  --tl-red: #d5695b;
-  --tl-yel: #cd9a3c;
-  --tl-grn: #57a266;
-  --shadow: 0 42px 90px -34px rgba(20, 32, 26, 0.42), 0 10px 26px -14px rgba(20, 32, 26, 0.22);
+  --ground: #f7f1e6;
+  --paper: #fffcf6;
+  --panel: #fef4e9;
+  --ink: #241220;
+  --ink-70: rgba(36, 18, 32, 0.7);
+  --ink-50: rgba(36, 18, 32, 0.5);
+  --ink-38: rgba(36, 18, 32, 0.38);
+  --rule: rgba(36, 18, 32, 0.12);
+  --rule-soft: rgba(36, 18, 32, 0.06);
+  --accent: #d6146f;
+  --accent-wash: rgba(214, 20, 111, 0.1);
+  --accent-2: #e8600c;
+  --tl-red: #ff5c52;
+  --tl-yel: #ffc738;
+  --tl-grn: #2ecc71;
+  --shadow: 0 42px 90px -34px rgba(36, 18, 32, 0.32), 0 10px 26px -14px rgba(36, 18, 32, 0.18);
   --font-ui: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-pix: "Silkscreen", "Space Grotesk", ui-monospace, monospace;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --ground: #0d0f0d;
-    --paper: #171a16;
-    --panel: #1c201b;
-    --ink: #e8eae3;
-    --ink-70: rgba(232, 234, 227, 0.7);
-    --ink-50: rgba(232, 234, 227, 0.5);
-    --ink-38: rgba(232, 234, 227, 0.36);
-    --rule: rgba(232, 234, 227, 0.14);
-    --rule-soft: rgba(232, 234, 227, 0.07);
-    --pine: #7aae9a;
-    --pine-wash: rgba(122, 174, 154, 0.12);
-    --amber: #d7a05d;
+    --ground: #150d13;
+    --paper: #1f1420;
+    --panel: #2a1a2c;
+    --ink: #f7eef2;
+    --ink-70: rgba(247, 238, 242, 0.7);
+    --ink-50: rgba(247, 238, 242, 0.5);
+    --ink-38: rgba(247, 238, 242, 0.36);
+    --rule: rgba(247, 238, 242, 0.14);
+    --rule-soft: rgba(247, 238, 242, 0.07);
+    --accent: #ff6eac;
+    --accent-wash: rgba(255, 110, 172, 0.16);
+    --accent-2: #ff9d4d;
     --shadow: 0 42px 100px -30px rgba(0, 0, 0, 0.72), 0 10px 30px -12px rgba(0, 0, 0, 0.5);
   }
 }
 :root[data-theme="dark"] {
-  --ground: #0d0f0d;
-  --paper: #171a16;
-  --panel: #1c201b;
-  --ink: #e8eae3;
-  --ink-70: rgba(232, 234, 227, 0.7);
-  --ink-50: rgba(232, 234, 227, 0.5);
-  --ink-38: rgba(232, 234, 227, 0.36);
-  --rule: rgba(232, 234, 227, 0.14);
-  --rule-soft: rgba(232, 234, 227, 0.07);
-  --pine: #7aae9a;
-  --pine-wash: rgba(122, 174, 154, 0.12);
-  --amber: #d7a05d;
+  --ground: #150d13;
+  --paper: #1f1420;
+  --panel: #2a1a2c;
+  --ink: #f7eef2;
+  --ink-70: rgba(247, 238, 242, 0.7);
+  --ink-50: rgba(247, 238, 242, 0.5);
+  --ink-38: rgba(247, 238, 242, 0.36);
+  --rule: rgba(247, 238, 242, 0.14);
+  --rule-soft: rgba(247, 238, 242, 0.07);
+  --accent: #ff6eac;
+  --accent-wash: rgba(255, 110, 172, 0.16);
+  --accent-2: #ff9d4d;
   --shadow: 0 42px 100px -30px rgba(0, 0, 0, 0.72), 0 10px 30px -12px rgba(0, 0, 0, 0.5);
 }
 
@@ -148,7 +148,8 @@ body {
   align-items: center;
   gap: 10px;
 }
-.win-reset {
+.win-reset,
+.win-theme {
   border: 0;
   background: transparent;
   color: var(--ink-38);
@@ -158,14 +159,15 @@ body {
   padding: 3px;
   border-radius: 5px;
 }
-.win-reset:hover {
+.win-reset:hover,
+.win-theme:hover {
   color: var(--ink);
 }
 .win-status {
   font-family: var(--font-pix);
   font-size: 8px;
   letter-spacing: 0.12em;
-  color: var(--pine);
+  color: var(--accent);
   white-space: nowrap;
 }
 
@@ -222,7 +224,7 @@ body {
   line-height: 1.5;
 }
 .msg--haylie .msg__who b {
-  color: var(--pine);
+  color: var(--accent);
   font-weight: 400;
 }
 .msg--haylie .msg__body {
@@ -250,7 +252,7 @@ body {
   font-size: 13px;
   color: var(--ink);
   text-decoration: none;
-  border-bottom: 1px solid var(--amber);
+  border-bottom: 1px solid var(--accent-2);
   align-self: flex-start;
   padding-bottom: 1px;
 }
@@ -340,9 +342,9 @@ body {
 }
 .ask-pill:hover,
 .ask-pill:focus-visible {
-  border-color: var(--pine);
+  border-color: var(--accent);
   color: var(--ink);
-  background: var(--pine-wash);
+  background: var(--accent-wash);
   outline: none;
 }
 .ask-pill--back {
@@ -357,11 +359,11 @@ body {
   border: 0;
   font: inherit;
   font-weight: 500;
-  color: var(--pine);
+  color: var(--accent);
   cursor: pointer;
   line-height: inherit;
   text-decoration: none;
-  background: var(--pine-wash);
+  background: var(--accent-wash);
   padding: 1px 4px;
   margin: 0 -1px;
   border-radius: 5px;
@@ -371,7 +373,7 @@ body {
 }
 .chat-inlink:hover,
 .chat-inlink:focus-visible {
-  color: var(--amber);
+  color: var(--accent-2);
   background: rgba(176, 111, 40, 0.14);
   outline: none;
 }
@@ -406,7 +408,7 @@ body {
 }
 .win-foot a,
 .win-foot-hi {
-  color: var(--amber);
+  color: var(--accent-2);
   text-decoration: none;
 }
 .win-foot-hi {

@@ -55,6 +55,16 @@ export const GREETING: AnswerNode[] = [
       { text: "." },
     ],
   },
+  {
+    kind: "rich",
+    segments: [
+      { text: "Here's what I'm working on right now: " },
+      { text: "Cookie Flute Studio", href: "/flute-studio" },
+      { text: " and my " },
+      { text: "Learning Log", href: "/learning-log" },
+      { text: "." },
+    ],
+  },
   { kind: "text", value: "Here are some starting points." },
 ];
 

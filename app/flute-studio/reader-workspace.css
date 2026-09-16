@@ -1,0 +1,422 @@
+/* Reader styles are scoped to avoid changing the studio's other workspaces. */
+.reader-workspace{height:100dvh!important;min-height:0}
+.reader-workspace .workspace{display:grid!important;grid-template-columns:174px minmax(0,1fr);grid-template-rows:auto auto auto minmax(0,1fr);grid-template-areas:"tools document" "tools header" "tools markup" "tools score";margin-left:0!important;padding-top:64px!important;min-height:0;width:100%!important}
+.reader-tools{grid-area:tools;display:flex;flex-direction:column;gap:3px;padding:12px 10px;overflow:auto;border-right:1px solid var(--line);background:#fafbf9;min-height:0}
+.reader-tools hr{border:0;border-top:1px solid var(--line);margin:10px 0;width:100%}
+.reader-group-label{font-size:12px;color:#71747e;padding:4px 8px}
+.reader-tool,.reader-workspace .reader-aids .tool{display:flex!important;align-items:center;justify-content:flex-start!important;gap:10px!important;width:100%;min-width:0;min-height:44px;height:auto!important;padding:8px!important;border:0;border-radius:5px!important;background:transparent;color:#41464b!important;font-size:14px!important;text-align:left;cursor:pointer}
+.reader-tool svg,.reader-aids .tool>span{width:24px;flex:0 0 24px;text-align:center}
+.reader-aids .tool>span{font-size:20px!important}
+.reader-aids{display:grid;gap:3px}
+.reader-workspace button:hover{transform:none!important;background-color:#eef2eb}
+.reader-workspace button:active{transform:none!important}
+.reader-tools .has-tip:after{display:none}
+.reader-document{grid-area:document;min-width:0;display:flex;align-items:center;gap:12px;padding:2px 12px;min-height:38px;border-bottom:1px solid #ededeb;font-size:13px}
+.reader-document a{color:#60666c;text-decoration:none;white-space:nowrap;padding:8px 0}
+.reader-document strong{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.reader-document button{border:0;background:transparent;color:#526a47;padding:8px;min-height:36px;cursor:pointer}
+.reader-header{grid-area:header;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 10px;background:rgba(250,251,249,.88);border-bottom:1px solid #e6e8e2;z-index:15;flex-wrap:wrap}
+.reader-playback,.reader-pages,.reader-view{display:flex;align-items:center;gap:4px;min-width:0}
+.reader-header button:not(.transport-menu button){display:flex;align-items:center;justify-content:center;gap:6px;min-width:44px;min-height:44px;padding:8px;border:0;border-radius:5px;background:transparent;color:#41464b;font:inherit;font-size:14px;cursor:pointer}
+.reader-header button:disabled{opacity:.32;cursor:default}
+.reader-pages>span{font-size:14px;font-variant-numeric:tabular-nums;min-width:54px;text-align:center}
+.reader-bpm{display:flex;align-items:center;gap:4px;font-size:12px;color:#71747e}
+.reader-bpm input,.dock-bpm input{width:60px;min-height:36px;border:1px solid #d8dcd3;border-radius:4px;padding:4px;font:inherit;font-size:16px;color:#292a33;background:white;text-align:center}
+.reader-workspace .score-scroll{grid-area:score;min-width:0;min-height:0;padding:12px!important;scrollbar-gutter:stable;overscroll-behavior:contain;background:#eeefeb!important;overflow:auto;scroll-behavior:auto}
+.reader-workspace .score-paper.engraved{box-sizing:border-box;max-width:none!important;min-width:0!important;margin:0!important;border-radius:0!important;box-shadow:none!important;padding:36px 48px 64px!important;min-height:100%;zoom:var(--viewer-magnify,1)}
+.reader-workspace .custom-score-heading{margin:0 0 24px!important}
+.reader-workspace .custom-score-heading h1{font-size:25px}
+.reader-workspace .osmd-score{min-height:0}
+.reader-workspace .markup-row{grid-area:markup;height:auto;min-height:0}
+.reader-workspace .markup-row-surface{position:static;box-shadow:none;border-bottom:1px solid var(--line);padding:4px 10px;justify-content:flex-start;flex-wrap:wrap}
+.reader-workspace .markup-icon{width:auto;min-width:44px;height:44px;border-radius:5px;gap:4px;display:flex;padding:6px;font-size:14px}
+.reader-workspace .swatch{width:28px;height:28px}
+.reader-workspace .ink.active{touch-action:none}
+.reader-workspace .score-note__remove{display:grid;width:32px;height:32px;right:-16px;top:-16px}
+.reader-workspace .notation-setting{display:grid;gap:6px;font-size:13px;padding:8px}
+.notation-setting select{width:100%;font-size:14px;padding:7px;border:1px solid var(--line);background:white;border-radius:4px}
+.running-dot{width:6px;height:6px;flex:0 0 6px;border-radius:50%;background:#46633d}
+.reader-tools .scale-book__chapter-inline>span{display:none}
+.reader-tools .scale-book__customize{width:100%;min-height:44px;border:1px solid #d8dcd3;border-radius:5px;background:white;box-shadow:none;font-size:14px;text-align:left;padding:8px}
+.studio-route:has(.reader-workspace)~.dock-launcher{display:none!important}
+html.score-focus-mode .reader-workspace .workspace{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr);grid-template-areas:"header" "markup" "score";padding-top:0!important}
+html.score-focus-mode .reader-tools,html.score-focus-mode .reader-document{display:none}
+@media(max-width:900px){.reader-workspace .workspace{grid-template-columns:154px minmax(0,1fr)}.reader-header{gap:2px}.reader-playback button span{font-size:12px}.reader-workspace .score-paper.engraved{padding:16px 12px 40px!important}}
+@media(max-width:760px){.reader-workspace{height:calc(100dvh - 76px)!important}.reader-workspace .workspace{padding-top:0!important}.reader-header button:not(.transport-menu button){min-width:46px;min-height:46px}.reader-document{gap:8px}.reader-header{padding:2px 6px}.reader-playback{flex:1}.reader-view{margin-left:auto}}
+@media(max-width:599px){.reader-workspace .workspace{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto auto minmax(0,1fr);grid-template-areas:"document" "header" "tools" "markup" "score"}.reader-tools{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:4px;gap:2px;border-right:0;border-bottom:1px solid var(--line);max-height:220px}.reader-tool,.reader-workspace .reader-aids .tool{font-size:12px!important;gap:3px!important;padding:5px!important;min-height:42px;flex-direction:column;justify-content:center!important;text-align:center}.reader-tools hr{grid-column:1/-1;margin:2px}.reader-group-label{display:none}.reader-aids{grid-column:1/-1;grid-template-columns:repeat(6,minmax(0,1fr));gap:0}.reader-tools>.reader-tool:has(svg),.reader-tools>.scale-book__chapter-inline{min-width:0}.reader-tools>.notation-setting{grid-column:2/-1}.reader-tools>.reader-tool:last-of-type{grid-column:1/3;flex-direction:row}.reader-tools>.scale-book__chapter-inline{grid-column:3/-1}.reader-tools .scale-book__customize{font-size:12px;min-height:40px}.reader-workspace .score-scroll{padding:4px!important}.reader-workspace .score-paper.engraved{padding:12px 6px 32px!important}.reader-workspace .custom-score-heading h1{font-size:21px}.reader-pages{order:3;justify-content:center;flex:1 0 100%}}
+@media(hover:none){.reader-workspace .has-tip:after{display:none!important}.reader-workspace .score-note__remove{width:44px;height:44px}.reader-workspace .markup-icon{min-height:46px}}
+@media(prefers-reduced-motion:reduce){.reader-workspace *{scroll-behavior:auto!important;transition:none!important}}
+
+.reader-pages[data-mode="scroll"]{display:none}
+.reader-workspace .osmd-score[data-theory-enabled="false"] .theory-target{cursor:default;filter:none}
+
+/* Annotation reference: white capsule, blue active tool, circular ink swatches.
+   Scoped to markup only; do not restyle other reader controls here. */
+.reader-workspace .markup-row{padding:8px 12px;z-index:30;background:transparent}
+.reader-workspace .markup-row-surface{width:max-content;max-width:100%;min-height:58px;margin:0 auto;box-sizing:border-box;display:flex;flex-wrap:nowrap;align-items:center;gap:4px;padding:6px 10px;background:#fff;border:1px solid #c7c9c7;border-radius:20px;box-shadow:0 1px 4px #00000018;overflow-x:auto;scrollbar-width:thin}
+.reader-workspace .markup-row .markup-icon{flex:0 0 44px;width:44px;min-width:44px;height:44px;min-height:44px;display:flex;align-items:center;justify-content:center;padding:8px;border:0;border-radius:12px;background:transparent;color:#111;font-size:25px;line-height:1}
+.reader-workspace .markup-row .markup-icon svg{width:24px;height:24px;stroke-width:1.6}
+.reader-workspace .markup-row .markup-icon.chosen{background:#cfe3ff!important;color:#205a9a!important}
+.reader-workspace .markup-row .markup-icon:hover:not(:disabled){background:#f0f3f6}
+.reader-workspace .markup-row .markup-icon:disabled{color:#9c9c9c;opacity:1}
+.reader-workspace .markup-row .swatch{flex:0 0 30px;width:30px;height:30px;margin:0 2px;border:2px solid #cecece;border-radius:50%;box-shadow:none;cursor:pointer}
+.reader-workspace .markup-row .swatch.chosen{box-shadow:0 0 0 2px #111;border-color:#111}
+.reader-workspace .markup-row .divider{flex:0 0 1px;height:30px;border:0;background:#dedede;margin:0 8px}
+.reader-workspace .markup-row .markup-close{position:sticky;right:-10px;flex:0 0 auto;min-height:44px;padding:0 14px;border:0;border-radius:12px;background:white;color:#111;font-size:18px;cursor:pointer}
+.reader-workspace .markup-row .has-tip:after{display:none}
+.reader-workspace .markup-row .sticky-swatch{width:20px;height:20px;transform:none;border:1.6px solid currentColor;background:none;border-radius:2px}
+/* Keep both parts of the metronome control on the same baseline. */
+.reader-header .reader-metro{display:flex;align-items:center;flex:0 0 auto;gap:0;height:44px}
+.reader-header .reader-metro>button{height:44px;min-height:44px;align-self:center}
+.reader-header .reader-metro>.metro-options-button{min-width:24px;width:24px;padding:4px}
+
+.reader-workspace .markup-row .history-control{color:#999}
+.reader-workspace .markup-row .history-control:hover:not(:disabled){color:#222}
+
+/* Compact controls follow the existing rounded Studio buttons. */
+.reader-workspace .workspace{grid-template-columns:104px minmax(0,1fr)}
+.reader-workspace[data-aids-expanded="false"] .workspace{grid-template-columns:44px minmax(0,1fr)}
+.reader-tools{padding:8px 6px;background:white;gap:6px}
+.reader-tools .aids-collapse{align-self:flex-end;display:grid;place-items:center;width:32px;height:32px;border:0;border-radius:10px;background:#f3f5f1;color:#71747e;cursor:pointer}
+.reader-tools[data-expanded="false"] .reader-aids,.reader-tools[data-expanded="false"] .reader-customize{display:none}
+.reader-workspace .reader-aids .tool{flex-direction:column;justify-content:center!important;gap:4px!important;min-height:62px;padding:7px 4px!important;border-radius:14px!important;font-size:12px!important;text-align:center}
+.reader-workspace .reader-aids .tool>span{font-size:25px!important;width:auto;flex:0 0 auto}
+.reader-customize{border-top:1px solid var(--line);padding-top:10px;margin-top:4px}
+.reader-customize .scale-book__chapter-inline{display:block}
+.reader-customize .scale-book__customize{border:0;border-radius:13px;background:#e7eee3;color:#40553d;text-align:center;justify-content:center;font-size:12px;line-height:1.4;padding:10px 6px;white-space:normal}
+.reader-header{justify-content:flex-start}
+.reader-header button:not(.transport-menu button){border-radius:12px}
+.reader-pages{margin-left:auto;gap:2px;flex:none;order:0}
+.reader-pages>button{background:#f0f2ed}
+.reader-pages>span{margin:0 10px;min-width:44px}
+.reader-view{position:relative;margin-left:6px}
+.reader-bpm{align-items:baseline;gap:5px;font-size:20px}
+.reader-bpm input{width:52px;border:0;background:transparent;font-size:24px;color:#40553d;padding:0;text-align:left}
+.reader-bpm small{font-size:11px;color:#71747e}
+.reader-workspace .score-paper.engraved{border-radius:16px!important}
+.reader-workspace .markup-row{padding:2px 10px}
+.reader-workspace .markup-row-surface{min-height:44px;border:0;border-radius:0;box-shadow:none;padding:0;gap:2px}
+.reader-workspace .markup-row .markup-icon{width:40px;min-width:40px;height:40px;min-height:40px;flex-basis:40px;padding:9px;font-size:22px}
+.reader-workspace .markup-row .markup-icon svg{width:22px;height:22px}
+.reader-workspace .markup-row .swatch{width:25px;height:25px;flex-basis:25px}
+.reader-workspace .markup-row .divider{height:24px;margin:0 6px}
+.reader-workspace .markup-row .markup-close{font-size:14px;min-height:40px;padding:0 10px}
+.reader-header .view-settings-backdrop{position:fixed;inset:0;width:100%;height:100%;border-radius:0;z-index:90;background:transparent;cursor:default}
+.reader-header .view-settings-backdrop:hover{background:transparent}
+.reader-view-settings{position:absolute;top:calc(100% + 10px);right:0;z-index:91;width:290px;max-width:calc(100vw - 24px);box-sizing:border-box;display:grid;gap:20px;padding:18px;background:white;border:1px solid #e4e5e0;border-radius:20px;box-shadow:0 10px 30px #292a3320;color:#292a33}
+.view-settings-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.view-settings-heading strong{font-size:16px}
+.reader-header .view-settings-heading button{min-width:32px;min-height:32px;padding:4px}
+.reader-view-settings>label{display:grid;gap:10px;font-size:14px}
+.reader-view-settings input[type="range"]{width:100%;accent-color:#678956}
+.reader-header .view-reset{font-size:13px;background:#f1f1f4;min-height:36px}
+@media(max-width:760px){.reader-pages{margin-left:auto;flex:none;order:0}.reader-playback{flex:none;flex-wrap:wrap}.reader-view-settings{position:fixed;top:110px;right:12px}.reader-tools .aids-collapse{width:40px;height:40px}.reader-workspace[data-aids-expanded="false"] .workspace{grid-template-columns:48px minmax(0,1fr)}}
+@media(max-width:599px){.reader-workspace .workspace,.reader-workspace[data-aids-expanded="false"] .workspace{grid-template-columns:minmax(0,1fr)}.reader-tools{display:flex;flex-direction:column;max-height:180px}.reader-tools .aids-collapse{align-self:flex-start}.reader-aids{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));width:100%}.reader-customize{padding:0;margin:0;border:0;align-self:flex-start}.reader-customize .scale-book__customize{padding:6px 12px}.reader-workspace .reader-aids .tool{min-height:58px;font-size:11px!important}.reader-view-settings{top:100px}.reader-workspace .markup-row-surface{margin:0}}
+
+/* Reuse DESIGN.md / PracticeToolDock tabs, rather than a reader-only toggle. */
+.reader-header .reader-mode-tabs{display:flex;gap:8px;padding:0;background:none;border:0}
+.reader-header .reader-mode-tabs button{height:36px;min-height:36px;flex:1;padding:0 13px;border:0;border-radius:14px;background:#f1f1f4;color:#5a5c63;font-size:12px;font-weight:650}
+.reader-header .reader-mode-tabs button.selected{background:#292a33!important;color:#fff!important}
+.reader-document .reader-save,.reader-document>a{border-radius:12px;color:#5a5c63;min-height:42px;display:flex;align-items:center;justify-content:center}
+.reader-document .reader-save{width:42px;height:42px;padding:10px}
+.reader-document .reader-save:hover,.reader-document>a:hover{background:#f1f5ef}
+.reader-document>a{padding:0 8px}
+.reader-tools .scale-book__customize{background:#e7eee3;color:#40553d;border:1px solid #d7e1d2;border-radius:13px;font-size:12px;font-weight:680;cursor:pointer}
+.reader-tools .scale-book__customize:hover{background:#dce8d7;box-shadow:none}
+.reader-view-settings{border:0;box-shadow:0 9px 28px rgba(41,42,51,.1)}
+.reader-header .view-settings-heading button:hover{background:transparent}
+
+/* Preserve the original inline drone picker instead of inheriting header controls. */
+.reader-header .audio-tool{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:48px;height:44px;border:0;border-radius:12px;background:transparent;color:#5a5c63;font-size:11px;cursor:pointer}
+.reader-header .audio-tool>span{font-size:18px;line-height:18px}
+.reader-header .audio-tool small{font-size:10px;line-height:11px}
+.reader-header .audio-tool.active{background:#e4ecdf;color:#36572d}
+.reader-header .transport-pop{left:0;right:auto;max-width:calc(100vw - 32px)}
+
+/* Historical horizontal reader layout (a24249b), retaining reader view controls. */
+.restored-reader .workspace{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto auto auto minmax(0,1fr)!important;grid-template-areas:"document" "header" "markup" "score"!important}
+.restored-reader .topbar{grid-area:document;position:relative;inset:auto;width:auto;min-height:58px;height:auto;padding:10px 18px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;background:white}
+.restored-reader .topbar>div{display:flex;align-items:center;gap:12px}
+.restored-reader .practice-bar{grid-area:header;position:relative;inset:auto;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding:12px 18px;background:white}
+.restored-reader .practice-bar .tool-group{display:flex;gap:8px;flex-wrap:wrap}
+.restored-reader .practice-bar .tool{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:64px;height:64px;padding:8px;border:0;border-radius:14px;background:transparent;color:var(--muted);font-size:11px}
+.restored-reader .practice-bar .tool>span{font-size:26px;line-height:28px}
+.restored-reader .practice-bar .tool.on{background:#dcebd7;color:#405f37}
+.restored-reader .transport{display:flex;align-items:center;gap:14px}
+.restored-reader .restored-view-controls{padding:0;border:0;background:transparent;gap:8px}
+.restored-reader .topbar-toolbar-slot{display:flex}
+.restored-reader .transport-pop{right:0;left:auto}
+html.score-focus-mode .restored-reader .workspace{grid-template-rows:auto auto auto minmax(0,1fr)!important;padding-top:0!important}
+@media(max-width:760px){.restored-reader .topbar>div{flex-wrap:wrap}.restored-reader .transport{flex-wrap:wrap}.restored-reader .practice-bar{padding:8px}.restored-reader .practice-bar .tool{min-width:54px}}
+.restored-reader .practice-bar>.tool-group,.restored-reader .topbar-toolbar-slot{display:flex!important}
+.restored-reader .practice-bar{justify-content:space-between!important;height:auto!important;min-height:88px;overflow:visible!important}
+/* Compact reader chrome; settings share the original drone popover's surface. */
+body:has(.restored-reader) .studio-navigation{display:none!important}
+.restored-reader .workspace{padding-top:0!important}
+.restored-reader .topbar{min-height:48px!important;padding:4px 16px!important}
+.restored-reader .topbar>div:first-child{flex:0 0 auto}
+.restored-reader .topbar>div:last-child{flex:1;justify-content:flex-end}
+.restored-reader .topbar-toolbar-slot{margin-right:auto}
+.restored-reader .practice-bar{min-height:48px!important;padding:2px 16px!important;gap:8px;flex-wrap:nowrap}
+.restored-reader .practice-bar .tool{height:44px;min-width:44px;padding:4px;font-size:11px;gap:0}
+.restored-reader .practice-bar .tool>span{font-size:20px;line-height:22px}
+/* Not space-between + an auto-margin anymore: on a wide window that combo
+   dumped 100% of the leftover width into one gap right after the transport
+   controls, stretching it into an absurd empty stripe. Cluster every group
+   together on the left with one normal gap instead — any leftover width
+   just becomes quiet empty space at the row's right edge, not a gap in the
+   middle of the controls. */
+.restored-reader .practice-bar{justify-content:flex-start!important;gap:20px}
+/* The whole row (transport controls + recorder + page-nav + customize/view
+   settings) is a lot to fit on one line — compact everything a bit more
+   rather than let it wrap to a second row, which reflows the page oddly. */
+.restored-reader .reader-view{gap:4px}
+.restored-reader .score-paper.engraved{width:var(--reader-page-width)!important;max-width:100%!important;margin:0 auto!important}
+.restored-reader .score-paper[data-loading="true"] .osmd-score,.restored-reader .score-paper[data-loading="true"] canvas{visibility:hidden}
+.reader-popover-anchor{display:inline-flex;align-items:center}
+.reader-settings-panel{position:fixed;inset:auto;margin:0;border:1px solid var(--line);border-radius:14px;padding:14px;background:white;color:#292a33;box-shadow:0 12px 30px #26352e2b;overflow:visible;font:14px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",Arial,sans-serif}
+.reader-panel-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.reader-panel-heading>button{border:0;background:transparent!important;border-radius:12px;width:36px;height:36px;font-size:24px;cursor:pointer}
+.reader-setting-row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px}
+.reader-setting-row select{max-width:160px;border:1px solid var(--line);border-radius:8px;background:white;padding:6px 8px;font:inherit}
+.reader-setting-row input{width:145px;accent-color:#678956}
+.reader-display-options{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:12px}
+.reader-display-options .tool{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:58px;border:0;border-radius:12px;background:rgba(41,42,51,.06);font-size:11px;cursor:pointer}
+.reader-display-options .tool>span{font-size:24px}
+.reader-display-options .tool:hover{background:rgba(41,42,51,.1)}
+.reader-display-options .tool.on{background:#e4ecdf;color:#40553d}
+.reader-display-options .tool.on:hover{background:#dce8d7}
+.reader-settings-panel .reader-settings-reset{display:block;margin:10px 0 0 auto;padding:4px;border:0;background:transparent!important;color:#71747e;font-size:12px;cursor:pointer}
+.reader-settings-panel .scale-book__panel-body{margin:0;gap:0}
+.reader-settings-panel .scale-book__section{border:0}
+@media(max-width:760px){.restored-reader .scale-book__chapter-inline span{display:inline!important}.restored-reader .topbar>div{gap:6px}.restored-reader .practice-bar{flex-wrap:wrap}.restored-reader .restored-view-controls{margin-left:auto}}
+.restored-reader .topbar-toolbar-slot{margin-right:0!important}
+.restored-reader .topbar>div:last-child{justify-content:flex-start}
+.reader-settings-panel .reader-terms{border:0;border-radius:8px;background:rgba(41,42,51,.06);padding:8px;font:inherit;color:#71747e;cursor:pointer}
+.reader-settings-panel .reader-terms:hover{background:rgba(41,42,51,.1)}
+.reader-settings-panel .reader-terms.on{background:#e4ecdf;color:#40553d}
+.reader-settings-panel .reader-terms.on:hover{background:#dce8d7}
+.reader-settings-panel .scale-book__section-summary{font-size:14px}
+.reader-settings-panel{z-index:240}
+/* Focus mode hides the topbar (back/title/save/download) and drops back to
+   viewer-fixes.css's html.score-focus-mode .topbar{display:none}; the
+   practice-bar stays so its transport/page-nav/exit controls (and the
+   recorder, mounted into .transport — see PracticeRecorder.tsx) remain
+   reachable while focused. */
+html.score-focus-mode .restored-reader .practice-bar{display:flex!important}
+html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document" "header" "markup" "score"!important}
+/* These sit at the far right edge of the viewport, so a tooltip centered
+   under them (the has-tip default) runs off-screen — anchor from the
+   button's right edge instead so it only ever grows leftward. !important
+   to beat viewer-fixes.css's own !important transform on .has-tip:after. */
+.restored-reader .viewer-star.has-tip:after,.restored-reader .reader-view .has-tip:after,.restored-reader .reader-pages .has-tip:after{left:auto!important;right:0!important;transform:none!important}
+/* Mirror image of the fix above: Mark up sits at the far LEFT edge, so a
+   tooltip centered under it runs off the left of the screen instead —
+   anchor from the button's left edge so it only ever grows rightward. */
+.restored-reader .tool-group .has-tip:after{left:0!important;right:auto!important;transform:none!important}
+.reader-popover-anchor>button:hover{background:rgba(41,42,51,.1)!important}
+.reader-popover-anchor>button[aria-expanded="true"]{background:#e4ecdf!important;color:#40553d}
+.reader-choice{display:flex;gap:6px}
+.reader-choice button{min-height:36px;padding:6px 14px;border:0;border-radius:14px;background:rgba(41,42,51,.06);color:#5a5c63;font-size:12px;cursor:pointer}
+.reader-choice button:hover{background:rgba(41,42,51,.1)}
+.reader-choice button[aria-pressed="true"]{background:#e4ecdf;color:#40553d}
+.reader-choice button[aria-pressed="true"]:hover{background:#dce8d7}
+.reader-settings-panel .scale-book__section-summary{min-height:40px;padding:8px;border-radius:12px;font-weight:600;background:transparent;cursor:pointer}
+.reader-settings-panel .scale-book__section-summary:hover{background:#f1f1f4}
+.reader-settings-panel .scale-book__section-summary[aria-expanded="true"]{background:transparent;color:#292a33}
+.reader-settings-panel .scale-book__section{margin-bottom:4px}
+.reader-settings-panel .scale-book__section-body{padding:10px 8px}
+/* One chip style everywhere a value is picked from a short list in this
+   panel — Keys, Range, Order, the new-lines toggle, AND the Articulation/
+   Rhythm presets — matching the drone picker's own .pitch-grid button
+   exactly (border, corner radius, colors, hover, cursor) instead of each
+   section inventing its own (native checkboxes/radios here, a borderless
+   pale-fill-with-inset-ring button there, no :hover cursor on presets). */
+.reader-settings-panel .scale-book__preset,.scale-book__chip{border:0;border-radius:12px;background:rgba(41,42,51,.06);color:inherit;font:inherit;font-size:12px;cursor:pointer;transition:background-color .16s ease,color .16s ease}
+.reader-settings-panel .scale-book__preset:hover,.scale-book__chip:hover{background:rgba(41,42,51,.1)}
+.reader-settings-panel .scale-book__preset.selected,.scale-book__chip.selected{background:#e4ecdf;color:#40553d;box-shadow:none}
+.reader-settings-panel .scale-book__preset.selected:hover,.scale-book__chip.selected:hover{background:#dce8d7}
+.reader-settings-panel .scale-book__preset{min-height:40px}
+.reader-settings-panel .scale-book__preset .scale-book__preset-custom-badge{background:#71747e}
+.reader-settings-panel .scale-book__preset.selected .scale-book__preset-custom-badge{background:#40553d;color:#fff}
+.reader-settings-panel .scale-book__ranges,.reader-settings-panel .scale-book__order{display:flex;flex-wrap:wrap;gap:8px}
+/* These are wide, full-text rows (not a compact grid like Keys) — true
+   pill radius, matching Page layout's own selector chips exactly. */
+.reader-settings-panel .scale-book__ranges .scale-book__chip,.reader-settings-panel .scale-book__order .scale-book__chip,.scale-book__line-option.scale-book__chip{min-height:36px;padding:6px 14px;text-align:left;border-radius:12px}
+/* Keys is the same 12 pitches as the drone picker, so it gets the exact
+   same grid — 6 columns, 32px-tall buttons — not a bigger 4-column one. */
+.reader-settings-panel .scale-book__keys{grid-template-columns:repeat(6,1fr);gap:5px}
+.reader-settings-panel .scale-book__keys .scale-book__chip{height:34px;font-size:12.5px;text-align:center}
+.score-spread{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;position:relative;align-items:start}
+.score-spread>svg{max-width:100%;height:auto;background:white;box-shadow:0 1px 6px #292a3314}
+.restored-reader[data-layout="spread"] .score-paper.engraved{background:transparent!important;padding:12px!important}
+.reader-choice{flex-wrap:wrap}
+.score-spread>div:has(>svg){background:white;border-radius:12px;box-shadow:0 1px 6px #292a3314;overflow:hidden}
+.score-spread>div>svg{display:block;max-width:100%;height:auto}
+@media(max-width:999px){.restored-reader[data-layout="spread"] .score-paper.engraved{width:900px!important;background:white!important}}
+/* Facing pages touch at the spine; engraving supplies the inside margins. */
+.score-spread{column-gap:0;row-gap:24px}
+.score-spread>div:has(>svg){border-radius:0;box-shadow:none}
+.score-spread>div:has(>svg):nth-child(even){border-left:1px solid #e5e5e0}
+.score-spread[data-odd-pages="true"]::after{content:"";display:block;background:white;border-left:1px solid #e5e5e0;aspect-ratio:210/297}
+/* Fit the complete book to the reading viewport; its title is engraved on page one. */
+.restored-reader .score-scroll.spread-viewport{overflow:hidden!important}
+.spread-viewport .custom-score-heading{display:none}
+.spread-viewport .score-spread{margin:0 auto}
+.score-spread[data-odd-pages="true"]::after{aspect-ratio:var(--book-page-ratio,210/297)}
+/* One family of practice-bar buttons: Mark up, View and Scales.
+   All three are .tool (stacked icon over label, 44px, radius 14 — see
+   .restored-reader .practice-bar .tool above); these rules only make their
+   ENGAGED look agree, since Mark up signals it with .on while View and
+   Scales signal it by having their popover open. viewer-fixes.css marks
+   .workspace .tool.on !important, so matching it needs !important too. */
+.restored-reader .practice-bar .tool.on,
+.restored-reader .practice-bar .reader-popover-anchor>button[aria-expanded="true"]{background:#e4ecdf!important;color:#40553d!important}
+.restored-reader .practice-bar .tool.on:hover,
+.restored-reader .practice-bar .reader-popover-anchor>button[aria-expanded="true"]:hover{background:#dce8d7!important}
+/* A .tool's label is a bare text node next to the icon, so it can't be
+   targeted directly — keep the whole button from wrapping "Mark up" or
+   "Scales" onto a second line instead. */
+.restored-reader .practice-bar .tool{white-space:nowrap;padding-left:8px;padding-right:8px}
+
+/* ── Practice bar: one button recipe, one row ──────────────────────────
+   Mark up, Play, Record, Tap, Metronome, Drone, Scales, View and Full are
+   all .tool now: a 21px icon over a 10px label, 46px tall, same radius,
+   same engaged green. The sizes need !important because viewer-fixes.css
+   pins .workspace .tool (min-width 74) and .workspace .record-button
+   (42x42, font-size 0 — which would eat the new label) that way. */
+.restored-reader .practice-bar{gap:14px!important;padding:5px 14px!important}
+.restored-reader .practice-bar .tool{display:flex;flex-direction:column;align-items:center;justify-content:center;width:auto!important;min-width:0!important;height:50px!important;padding:5px 10px!important;border-radius:12px!important;gap:2px!important;font-size:10.5px!important;font-weight:500!important;line-height:1.2!important;white-space:nowrap}
+.restored-reader .practice-bar .tool>svg{width:21px;height:21px;flex:0 0 21px}
+.restored-reader .practice-bar .tool small{font-size:8px;line-height:1;color:#8b8d95}
+.restored-reader .practice-bar .tool.on small{color:inherit}
+/* Play and Record are one pair, tight against each other. */
+.restored-reader .transport{gap:4px!important}
+.restored-reader .record-slot,.restored-reader .record-slot .score-recorder{display:inline-flex}
+/* Scales + View travel together; page-turn and Full hold the right edge. */
+.restored-reader .restored-view-controls{margin-left:auto;display:flex;align-items:center;gap:8px}
+.restored-reader .reader-view{gap:2px;margin:0}
+.restored-reader .reader-pages{gap:0}
+.restored-reader .reader-pages>button:not(.tool){width:32px;height:40px;min-width:0;border:0;border-radius:10px;background:transparent;color:#6f7178;cursor:pointer}
+.restored-reader .reader-pages>button:not(.tool):disabled{opacity:.3}
+.restored-reader .reader-pages>span{min-width:38px;padding:0 2px;text-align:center;font-size:11px;color:#6f7178}
+/* Half-window: shed padding before anything is allowed to wrap. */
+@media(max-width:1150px){.restored-reader .practice-bar{gap:8px!important;padding:5px 8px!important}.restored-reader .practice-bar .tool{padding:5px 6px!important}.restored-reader .restored-view-controls{gap:6px}}
+@media(max-width:660px){.restored-reader .practice-bar .tempo small{display:none}}
+
+/* A choice row's label was wrapping to two lines ("Page" / "layout") and
+   squeezing the third chip onto a row of its own — give the label its own
+   line so the chips always share one. */
+.reader-settings-panel .reader-setting-row:has(.reader-choice){flex-direction:column;align-items:stretch;gap:6px;min-height:0;padding:2px 0}
+.reader-settings-panel .reader-choice{flex-wrap:nowrap}
+.reader-settings-panel .reader-choice button{flex:1 1 0;min-width:0;padding:7px 6px;white-space:nowrap}
+/* Record keeps its red dot — the one control whose colour carries meaning. */
+.restored-reader .practice-bar .tool.record-button>svg{color:#e45d46}
+.restored-reader .practice-bar .tool.record-button.on>svg{animation:practicePulse 1s infinite}
+
+/* Typed tempo, shaped like Breathing Lab's "♩ = 60 BPM". Fixed width:
+   the old drag slider re-flowed the readout as you dragged it, which
+   pushed every button to its right along the row. */
+.restored-reader .practice-bar .tempo{display:flex;align-items:center;gap:5px;width:auto!important;height:40px;padding:0 10px;border-radius:9px;background:rgba(41,42,51,.05);color:#4f5158}
+.restored-reader .practice-bar .tempo b{font-size:15px;font-weight:500;line-height:1}
+.restored-reader .practice-bar .tempo input{width:42px!important;border:0;background:transparent;font-size:17px;font-weight:600;color:#40553d;text-align:center;padding:0;-moz-appearance:textfield}
+.restored-reader .practice-bar .tempo input::-webkit-outer-spin-button,.restored-reader .practice-bar .tempo input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.restored-reader .practice-bar .tempo small{font-size:10px;color:#8b8d95}
+.restored-reader .practice-bar .tempo:focus-within{background:rgba(41,42,51,.09)}
+/* Page counter was too small to read at a glance from a music stand. */
+.restored-reader .reader-pages>span{min-width:50px;font-size:13px;color:#4f5158}
+.restored-reader .reader-pages>button:not(.tool){width:36px;height:40px}
+/* A long tip under a button near the left edge (Play's "starts from
+   measure N") overflowed the window when centred; grow it rightward from
+   the button's own left edge instead, same fix the Mark up group got. */
+.restored-reader .transport .has-tip:after{left:0!important;right:auto!important;transform:none!important;max-width:min(260px,60vw)}
+
+/* ── Settings panels: one type scale ──────────────────────────────────
+   Every row label — Page layout, Line breaks, Notation size, System
+   spacing, Order — is the same 14px/600 as the accordion summaries they
+   sit between. They had drifted into three different sizes and colours. */
+/* Longhands, not the `font:` shorthand — `font:600 14px/1.3 inherit` is
+   invalid (inherit is not a legal family there) and the browser drops
+   the whole declaration, which is how "Order" ended up at weight 400
+   next to accordion headings at 600. */
+.reader-settings-panel .reader-setting-row,.reader-settings-panel .reader-setting-row>span{font-size:14px;font-weight:600;line-height:1.3;color:#292a33}
+.reader-settings-panel .reader-setting-row input[type="range"]{font-weight:400}
+.reader-settings-panel .reader-choice button{flex:1 1 0;min-width:0;padding:8px 6px;border-radius:12px;font-size:12.5px;font-weight:500;white-space:nowrap}
+.reader-settings-panel .reader-choice button[aria-pressed="true"]{background:#e4ecdf;color:#40553d}
+.reader-settings-panel .reader-display-options .tool{border-radius:12px!important}
+/* Drone pads: light green while sounding, with the octaves they are
+   sounding at — so C3 stacked under C4 is visible rather than looking
+   like the grid refused the second one. */
+.reader-header .pitch-grid button{position:relative;height:36px;border-radius:8px}
+.reader-header .pitch-grid button.selected{background:#e4ecdf;color:#40553d;font-weight:600}
+.reader-header .pitch-grid button.selected:hover{background:#dce8d7}
+.reader-header .pitch-grid button i{display:block;font-style:normal;font-size:8px;line-height:1;opacity:.75}
+
+/* Range reads as two rows of two, not a ragged three or four — the two
+   long labels ("Low C to high C (C4–C7)") wrap inside their own chip
+   instead of pushing a chip onto a line of its own. */
+.reader-settings-panel .scale-book__ranges{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.reader-settings-panel .scale-book__ranges .scale-book__chip{white-space:normal;text-align:center;padding:8px 10px;line-height:1.25}
+/* Disclosure arrows were 11px grey specks. */
+.reader-settings-panel .scale-book__disclosure{font-size:16px;color:#71747e}
+/* Page counter sat in a 50px box, which read as a gap either side of it. */
+.restored-reader .reader-pages>span{min-width:0;padding:0 4px}
+/* Back arrow and its label were touching. */
+.restored-reader .back{gap:7px!important;padding-left:8px!important}
+/* One vertical rhythm for the whole panel: rows used to butt straight up
+   against each other (a choice row's chips sat 2px under the next row's
+   label) while the slider rows got their air from a 44px min-height, so
+   the gaps read as two different sizes. The panel now owns the spacing. */
+.reader-settings-panel{display:flex;flex-direction:column;gap:14px}
+.reader-settings-panel .reader-panel-heading{margin-bottom:0}
+.reader-settings-panel .reader-setting-row{min-height:0;padding:0}
+.reader-settings-panel .reader-setting-row:has(.reader-choice){gap:8px}
+.reader-settings-panel .reader-display-options{margin-top:0}
+.reader-settings-panel .reader-settings-reset{margin:0 0 0 auto}
+/* The gap under a section title was the summary's own 8px padding plus
+   the body's inherited top margin — read as a hole between a heading and
+   the controls it labels. */
+.reader-settings-panel .scale-book__section-summary{padding:5px 8px}
+.reader-settings-panel .scale-book__section-body{padding:0 0 8px}
+.reader-settings-panel .scale-book__section-body>*:first-child{margin-top:4px}
+/* Range chips carry the concrete pitch span on a second line. */
+.reader-settings-panel .scale-book__ranges .scale-book__chip small{display:block;margin-top:2px;font-size:11px;opacity:.7}
+/* "All keys" / "Clear" are the same quiet text buttons as Restore defaults. */
+.reader-settings-panel .scale-book__key-actions{gap:14px;margin-bottom:8px}
+.reader-settings-panel .scale-book__key-actions button{padding:4px;color:#71747e;font-size:12px}
+.reader-settings-panel .scale-book__key-actions button:hover{color:#40553d}
+/* Typed per-key tempo, matching the practice bar's own field. */
+.scale-book__tempo-field{display:flex;align-items:center;gap:4px;font-size:13px;color:#71747e}
+.scale-book__tempo-field input{width:44px;border:0;border-radius:8px;background:rgba(41,42,51,.05);padding:4px 2px;font:inherit;font-size:14px;font-weight:600;color:#40553d;text-align:center;-moz-appearance:textfield}
+.scale-book__tempo-field input::-webkit-outer-spin-button,.scale-book__tempo-field input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.scale-book__tempo-field input:focus{outline:2px solid #678956;outline-offset:1px}
+/* Breadcrumb segments are navigation, not decoration: each opens
+   Customize scales on the section that owns it. */
+.scale-book__crumb{border:0;border-radius:8px;background:transparent;padding:3px 5px;font:inherit;color:inherit;cursor:pointer;text-decoration:underline;text-decoration-color:#d3d5da;text-underline-offset:3px}
+.scale-book__crumb:hover{background:#f1f1f4;color:#40553d;text-decoration-color:#40553d}
+.restored-reader .scale-book__chapter-inline{gap:2px}
+/* Sub-label inside a section that holds more than one control group. */
+.reader-settings-panel .scale-book__field-label{margin:10px 0 4px;font-size:12px;font-weight:500;color:#71747e}
+.reader-settings-panel .scale-book__section-body>.scale-book__field-label:first-child{margin-top:4px}
+/* Engraving a large book blocks the main thread, so the indicator has to
+   animate on the compositor to keep moving: transform and opacity only —
+   anything that needs layout or paint would freeze along with the score. */
+.score-loading{flex-direction:column!important;gap:14px!important}
+.score-loading__spinner{width:26px;height:26px;border:2.5px solid #dfe3da;border-top-color:#678956;border-radius:50%;animation:scoreLoadingSpin .8s linear infinite;will-change:transform}
+.score-loading>span{animation:scoreLoadingPulse 1.4s ease-in-out infinite;will-change:opacity}
+@keyframes scoreLoadingSpin{to{transform:rotate(360deg)}}
+@keyframes scoreLoadingPulse{0%,100%{opacity:.55}50%{opacity:1}}
+@media(prefers-reduced-motion:reduce){.score-loading__spinner,.score-loading>span{animation:none}}
+/* One chip recipe across both panels — Customize's were 12px/400 next to
+   View settings' 12.5px/500, which read as two different typefaces. */
+.reader-settings-panel .reader-choice button,.reader-settings-panel .scale-book__chip,.reader-settings-panel .scale-book__key-actions button{font-size:12.5px;font-weight:500}
+.reader-settings-panel .reader-choice button,.reader-settings-panel .scale-book__ranges .scale-book__chip{padding:8px 10px}
+/* Sections open independently now, so the panel can outgrow the window —
+   it used to just run off the bottom with no way to reach the rest. Cap it
+   to the viewport and let it scroll. ReaderPopover measures the panel to
+   place it, so the cap also keeps it anchored under its button. */
+.reader-settings-panel{max-height:calc(100vh - 24px);overflow-y:auto;overscroll-behavior:contain}
+/* Two pages drops the paper padding to 12px to win back score area, which
+   also dragged the title 24px up the page relative to the other layouts.
+   Give the heading that 24px back so it sits identically in all three. */
+.restored-reader[data-layout="spread"] .custom-score-heading{padding-top:24px}

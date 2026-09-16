@@ -35,6 +35,35 @@ function usePrefersReducedMotion() {
   return reduced;
 }
 
+/** Tracks the effective light/dark appearance and lets the visitor override
+ * the system preference. The override persists via localStorage and is read
+ * synchronously in app/layout.tsx (before paint) to avoid a flash. */
+function useTheme() {
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const sync = () => {
+      const stored = window.localStorage.getItem("theme");
+      setIsDark(stored === "dark" || (stored !== "light" && mq.matches));
+    };
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
+  const toggle = useCallback(() => {
+    setIsDark((prev) => {
+      const next = !prev;
+      document.documentElement.dataset.theme = next ? "dark" : "light";
+      window.localStorage.setItem("theme", next ? "dark" : "light");
+      return next;
+    });
+  }, []);
+
+  return { isDark, toggle };
+}
+
 function NodeView({ node, onAsk }: { node: AnswerNode; onAsk: (id: string) => void }) {
   if (node.kind === "text") return <p className="node-text">{node.value}</p>;
 
@@ -50,8 +79,15 @@ function NodeView({ node, onAsk }: { node: AnswerNode; onAsk: (id: string) => vo
             );
           }
           if ("href" in seg) {
+            const opensNewTab = seg.href.startsWith("http") || /\.[a-z0-9]+$/i.test(seg.href);
             return (
-              <a key={i} href={seg.href} target="_blank" rel="noreferrer" className="chat-inlink">
+              <a
+                key={i}
+                href={seg.href}
+                target={opensNewTab ? "_blank" : undefined}
+                rel={opensNewTab ? "noreferrer" : undefined}
+                className="chat-inlink"
+              >
                 {seg.text}
               </a>
             );
@@ -121,6 +157,7 @@ export default function ChatPanel() {
   const logRef = useRef<HTMLDivElement>(null);
   const busyRef = useRef(false);
   const reduced = usePrefersReducedMotion();
+  const { isDark, toggle: toggleTheme } = useTheme();
 
   useEffect(() => {
     const el = logRef.current;
@@ -241,6 +278,15 @@ export default function ChatPanel() {
         </div>
         <span className="win-title">haylie.dev</span>
         <div className="win-tools">
+          <button
+            type="button"
+            className="win-theme"
+            onClick={toggleTheme}
+            aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+            title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {isDark ? "☀" : "☾"}
+          </button>
           <button type="button" className="win-reset" onClick={reset} aria-label="Start over" title="Start over">
             ⟲
           </button>

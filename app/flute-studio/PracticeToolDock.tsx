@@ -10,6 +10,7 @@ import {
 } from "react";
 import {useLanguage} from "./i18n/LanguageContext";
 import "./practice-tool-dock.css";
+import {usePracticeAudio} from "./PracticeAudio";
 
 type ToolKey = "tuner" | "metronome" | "drone";
 type PitchReading = {
@@ -19,23 +20,9 @@ type PitchReading = {
   cents: number;
   midi: number;
 };
-type DroneVoice = { oscillator: OscillatorNode; gain: GainNode };
+
 
 const pitches = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"];
-const semitones: Record<string, number> = {
-  C: 0,
-  "C♯": 1,
-  D: 2,
-  "E♭": 3,
-  E: 4,
-  F: 5,
-  "F♯": 6,
-  G: 7,
-  "A♭": 8,
-  A: 9,
-  "B♭": 10,
-  B: 11,
-};
 const centsMarks = [-50, -25, 0, 25, 50];
 
 function median(values: number[]) {
@@ -109,10 +96,8 @@ export default function PracticeToolDock() {
   const [requestedTool, setRequestedTool] = useState<ToolKey | null>(null);
   const [focusedTool, setFocusedTool] = useState<ToolKey | "all">("all");
 
-  const [bpm, setBpm] = useState(76);
-  const [metro, setMetro] = useState(false);
-  const accent = false;
-  const [tapHint, setTapHint] = useState("");
+  const {bpm,setBpm,metro,toggleMetro,drones,toggleDrone:toggleSharedDrone,stopAllDrones}=usePracticeAudio();
+  const [, setTapHint] = useState("");
 
   const [reading, setReading] = useState<PitchReading>({
     name: "A",
@@ -127,12 +112,12 @@ export default function PracticeToolDock() {
 
   const [note, setNote] = useState("A");
   const [octave, setOctave] = useState(4);
-  const [drones, setDrones] = useState<string[]>([]);
+
 
   const drag = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
   const audio = useRef<AudioContext | null>(null);
-  const metroTimer = useRef<number | null>(null);
-  const beat = useRef(0);
+
+
   const tapTimes = useRef<number[]>([]);
   const stream = useRef<MediaStream | null>(null);
   const frame = useRef<number | null>(null);
@@ -143,7 +128,7 @@ export default function PracticeToolDock() {
   const pitchHistory = useRef<number[]>([]);
   const smoothedHz = useRef<number | null>(null);
   const stableMidi = useRef<number | null>(69);
-  const voices = useRef(new Map<string, DroneVoice>());
+
   const tunerSection = useRef<HTMLElement | null>(null);
   const metroSection = useRef<HTMLElement | null>(null);
   const droneSection = useRef<HTMLElement | null>(null);
@@ -164,31 +149,8 @@ export default function PracticeToolDock() {
     setTunerMessage(t.toolDock.listeningStopped);
   };
 
-  const stopMetronome = () => {
-    if (metroTimer.current !== null) clearInterval(metroTimer.current);
-    metroTimer.current = null;
-    setMetro(false);
-  };
-
-  const stopAllDrones = () => {
-    const context = audio.current;
-    voices.current.forEach(({ oscillator, gain }) => {
-      if (context) {
-        gain.gain.cancelScheduledValues(context.currentTime);
-        gain.gain.setTargetAtTime(0.0001, context.currentTime, 0.025);
-        oscillator.stop(context.currentTime + 0.12);
-      } else {
-        oscillator.stop();
-      }
-    });
-    voices.current.clear();
-    setDrones([]);
-  };
-
   useEffect(() => () => {
-    if (metroTimer.current !== null) clearInterval(metroTimer.current);
     stream.current?.getTracks().forEach((track) => track.stop());
-    voices.current.forEach(({ oscillator }) => oscillator.stop());
     if (frame.current !== null) cancelAnimationFrame(frame.current);
     audio.current?.close();
   }, []);
@@ -197,6 +159,7 @@ export default function PracticeToolDock() {
     const openRequestedTool = (event: Event) => {
       const tool = (event as CustomEvent<{ tool?: ToolKey }>).detail?.tool;
       if (tool !== "tuner" && tool !== "metronome" && tool !== "drone") return;
+      setPos({x:0,y:0});
       setRequestedTool(tool);
       setFocusedTool(tool);
       setOpen(true);
@@ -223,46 +186,6 @@ export default function PracticeToolDock() {
     };
   }, [open, requestedTool]);
 
-  const click = (isAccent = false) => {
-    const context = getContext();
-    void context.resume();
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    oscillator.type = "sine";
-    oscillator.frequency.value = isAccent ? 1320 : 880;
-    gain.gain.setValueAtTime(isAccent ? 0.105 : 0.065, context.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.055);
-    oscillator.connect(gain).connect(context.destination);
-    oscillator.start();
-    oscillator.stop(context.currentTime + 0.06);
-  };
-
-  const scheduleMetronome = () => {
-    if (metroTimer.current !== null) clearInterval(metroTimer.current);
-    beat.current = 0;
-    click(accent);
-    beat.current = 1;
-    metroTimer.current = window.setInterval(() => {
-      click(accent && beat.current === 0);
-      beat.current = (beat.current + 1) % 4;
-    }, 60000 / bpm);
-  };
-
-  const toggleMetro = () => {
-    if (metro) stopMetronome();
-    else setMetro(true);
-  };
-
-  useEffect(() => {
-    if (!metro) return;
-    scheduleMetronome();
-    return () => {
-      if (metroTimer.current !== null) clearInterval(metroTimer.current);
-    };
-    // scheduleMetronome intentionally restarts the pulse when tempo or accent changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bpm, metro]);
-
   const tapTempo = () => {
     const now = performance.now();
     const previous = tapTimes.current.at(-1);
@@ -279,30 +202,8 @@ export default function PracticeToolDock() {
     setTapHint(t.toolDock.tapsAveraged(tapTimes.current.length));
   };
 
-  const toggleDrone = () => {
-    const existing = voices.current.get(selectedDrone);
-    if (existing) {
-      const context = getContext();
-      existing.gain.gain.cancelScheduledValues(context.currentTime);
-      existing.gain.gain.setTargetAtTime(0.0001, context.currentTime, 0.025);
-      existing.oscillator.stop(context.currentTime + 0.12);
-      voices.current.delete(selectedDrone);
-    } else {
-      const context = getContext();
-      void context.resume();
-      const oscillator = context.createOscillator();
-      const gain = context.createGain();
-      const midi = (octave + 1) * 12 + semitones[note];
-      oscillator.type = "triangle";
-      oscillator.frequency.value = 440 * 2 ** ((midi - 69) / 12);
-      gain.gain.setValueAtTime(0.0001, context.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.032, context.currentTime + 0.12);
-      oscillator.connect(gain).connect(context.destination);
-      oscillator.start();
-      voices.current.set(selectedDrone, { oscillator, gain });
-    }
-    setDrones([...voices.current.keys()]);
-  };
+  const toggleDrone=()=>toggleSharedDrone(note,octave);
+  const stopMetronome=()=>{if(metro)toggleMetro()};
 
   const tuner = async () => {
     if (listening) {
