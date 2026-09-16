@@ -1,0 +1,60 @@
+/* The fingering chart page. Follows the Exercises hub's page frame so the
+   studio's tool pages share one shape. */
+
+.fingering-chart{min-height:100vh;background:#fff;color:#292a33;padding:64px 24px 120px;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",Inter,Arial,sans-serif}
+.fingering-chart__content{width:min(980px,100%);margin:0 auto}
+.fingering-chart__header{padding:50px 4px 26px}
+.fingering-chart__header>p:first-child{margin:0 0 8px;color:#678956;font-size:12px;font-weight:720;letter-spacing:.08em;text-transform:uppercase}
+.fingering-chart__header h1{margin:0;font-size:42px;line-height:1.04;font-weight:760;letter-spacing:-.04em}
+.fingering-chart__intro{max-width:680px;margin:16px 0 0;color:#6d6f76;font-size:16px;line-height:1.55}
+
+/* The selected note: stave, name and diagram on one row, so what you read
+   and what you play stay in the same glance. */
+.fingering-chart__now{
+  display:grid;
+  grid-template-columns:auto minmax(150px,1fr) minmax(0,2.1fr);
+  align-items:center;
+  gap:20px;
+  padding:22px 24px;
+  border-radius:22px;
+  background:#fff;
+  box-shadow:0 10px 30px rgba(41,42,51,.08);
+}
+.fingering-chart__stave{flex:0 0 auto;width:150px;color:#292a33}
+.fingering-chart__detail{min-width:0}
+.fingering-chart__detail h2{margin:0;font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1.1}
+.fingering-chart__detail h2 sub{font-size:15px;font-weight:500;color:#85868e;margin-left:1px}
+.fingering-chart__variants{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.fingering-chart__variants button{border:0;border-radius:11px;background:#f1f1f4;color:#292a33;padding:6px 11px;font:600 12px/1 inherit;cursor:pointer;transition:background-color .16s ease,color .16s ease}
+.fingering-chart__variants button:hover{background:#e6e6ea}
+.fingering-chart__variants button.selected{background:#40553d;color:#fff}
+.fingering-chart__use{margin:10px 0 0;font-size:13px;line-height:1.5;color:#6d6f76}
+.fingering-chart__requires{margin:6px 0 0;font-size:12px;font-weight:600;color:#7a5340}
+.fingering-chart__diagram{min-width:0;color:#2f3a2c;--flute-key-ground:#fff}
+
+/* One block per acoustic register — the third octave in particular uses
+   different fingerings entirely, so the grouping is information, not just
+   tidying. */
+.fingering-chart__register{margin-top:28px}
+.fingering-chart__register h3{margin:0 0 10px 4px;font-size:12px;font-weight:720;letter-spacing:.08em;text-transform:uppercase;color:#8a8c93}
+.fingering-chart__notes{display:flex;flex-wrap:wrap;gap:6px}
+.fingering-chart__notes button{min-width:52px;border:0;border-radius:12px;background:#f1f1f4;color:#292a33;padding:9px 11px;font:650 14px/1 inherit;cursor:pointer;transition:background-color .16s ease,color .16s ease}
+.fingering-chart__notes button sub{font-size:10px;font-weight:500;color:#8a8c93;margin-left:1px}
+.fingering-chart__notes button:hover{background:#e4ece0}
+.fingering-chart__notes button.selected{background:#40553d;color:#fff}
+.fingering-chart__notes button.selected sub{color:#cfdcc9}
+.fingering-chart__notes button:focus-visible{outline:3px solid rgba(103,137,86,.35);outline-offset:2px}
+
+.fingering-chart__note{margin:34px 4px 0;font-size:12.5px;line-height:1.6;color:#8a8c93;max-width:680px}
+
+@media(max-width:820px){
+  .fingering-chart__now{grid-template-columns:auto minmax(0,1fr);gap:16px}
+  .fingering-chart__diagram{grid-column:1/-1}
+}
+@media(max-width:560px){
+  .fingering-chart{padding:0 16px calc(96px + env(safe-area-inset-bottom))}
+  .fingering-chart__header{padding:42px 4px 22px}
+  .fingering-chart__header h1{font-size:36px}
+  .fingering-chart__now{grid-template-columns:minmax(0,1fr);padding:18px 16px}
+  .fingering-chart__stave{width:130px}
+}

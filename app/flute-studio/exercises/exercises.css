@@ -17,19 +17,72 @@
 .exercise-hub__tabs button.active{background:#292a33;color:#fff}
 
 .exercise-hub__list{overflow:hidden;border-radius:20px;background:white;box-shadow:0 10px 30px rgba(41,42,51,.08)}
-.exercise-hub__row{min-height:78px;margin-left:18px;padding:10px 20px 10px 0;border-bottom:1px solid #e4e4e7;display:grid;grid-template-columns:48px minmax(0,1fr) auto;align-items:center;gap:16px;color:#292a33;text-decoration:none;transition:background-color .16s ease,margin-left .16s ease,padding-left .16s ease}
+/* Every row is a link plus its own trailing control (a save star, or a
+   remove button on a saved set), so the row itself can no longer be one
+   <a>. The article is the flex track; .exercise-hub__row-main carries the
+   icon/copy/badge grid the old single-element row used. */
+.exercise-hub__row{position:relative;min-height:78px;margin-left:18px;padding:10px 12px 10px 0;border-bottom:1px solid #e4e4e7;display:flex;align-items:center;gap:6px;color:#292a33;transition:background-color .16s ease,margin-left .16s ease,padding-left .16s ease}
 .exercise-hub__row:last-child{border-bottom:0}
-.exercise-hub__row--available:hover,.exercise-hub__row--available:focus-visible{margin-left:0;padding-left:18px;background:#f4f7f2}
-.exercise-hub__row--available:focus-visible{outline:3px solid rgba(103,137,86,.35);outline-offset:-3px}
-.exercise-hub__icon{width:48px;height:48px;border-radius:13px;display:grid;place-items:center;font-size:20px;font-weight:700}
-.exercise-hub__icon--cactus{background:#dcebd9;color:#3f5d39}
-.exercise-hub__icon--pink{background:#f7e1f8;color:#68466b}
-.exercise-hub__icon--slate{background:#e6e8eb;color:#4f5962}
+.exercise-hub__row-main{flex:1;min-width:0;display:grid;grid-template-columns:48px minmax(0,1fr) auto;align-items:center;gap:16px;color:inherit;text-decoration:none;padding:8px 0}
+.exercise-hub__row-main--disabled{cursor:default}
+.exercise-hub__row--available:has(.exercise-hub__row-main:hover),.exercise-hub__row--available:has(.exercise-hub__row-main:focus-visible){margin-left:0;padding-left:18px;background:#f4f7f2}
+.exercise-hub__row-main:focus-visible{outline:3px solid rgba(103,137,86,.35);outline-offset:-3px;border-radius:12px}
+/* Exercises are black-and-white throughout the studio — one glyph per
+   focus area (see StudioItemIcon), no per-row colour. The mark alone
+   carries the category, and the monochrome treatment is what tells an
+   exercise apart from a piece of music in the Library's mixed list. */
+.exercise-hub__icon{width:48px;height:48px;border-radius:13px;display:grid;place-items:center;background:#f1f1f2;color:#292a33}
 .exercise-hub__copy{min-width:0;display:block}
 .exercise-hub__copy strong{display:block;font-size:16px;line-height:1.25;font-weight:600;letter-spacing:-.01em}
 .exercise-hub__copy small{display:block;margin-top:3px;font-size:13px;color:#72747c}
 .exercise-hub__action{min-width:58px;height:32px;padding:0 14px;border-radius:16px;display:grid;place-items:center;background:#e5ece1;color:#46633d;font-size:13px;font-weight:700;white-space:nowrap}
 .exercise-hub__action--muted{background:#ececef;color:#8b8c93;font-size:12px;font-weight:620}
+
+/* Saved sets get their own group above the catalog, with a heading only
+   when both groups are on screen — a lone list needs no label. */
+.exercise-hub__section+.exercise-hub__section{margin-top:26px}
+.exercise-hub__section-title{margin:0 0 10px 4px;font-size:12px;font-weight:720;letter-spacing:.08em;text-transform:uppercase;color:#8a8c93}
+
+/* Matches .studio-save's box exactly so a saved set's remove button and a
+   catalog row's save star occupy the same slot down the right edge. */
+.exercise-hub__remove{flex:0 0 40px;width:40px;height:40px;display:grid;place-items:center;border:0;border-radius:12px;background:transparent;color:#a8aab1;font-size:20px;line-height:1;cursor:pointer;transition:background-color .16s ease,color .16s ease}
+.exercise-hub__remove:hover{background:#ededf0;color:#5a5c63}
+.exercise-hub__remove:focus-visible{outline:2px solid rgba(103,137,86,.5);outline-offset:1px}
+
+/* ── The featured row ──────────────────────────────────────────────────────
+   Scale Studio is a whole tool, not a single drill, so it does not sit in
+   the list looking like one. It gets a slowly drifting spectrum: a gradient
+   ring around the row, the same gradient filling its icon tile, and a faint
+   wash behind the copy. The animation is long (14s) and low-contrast on
+   purpose — this has to survive being looked at every day. */
+.exercise-hub__row--featured{
+  border-bottom:0;
+  margin-left:0;
+  padding-left:2px;
+  border-radius:18px;
+  background:
+    linear-gradient(#fff,#fff) padding-box,
+    var(--spectrum) border-box;
+  background-size:auto,300% 100%;
+  border:2px solid transparent;
+  animation:studio-spectrum 14s linear infinite;
+}
+/* The row above it keeps its divider; the featured row supplies its own
+   edge, so a doubled line would show through. */
+.exercise-hub__row--featured+.exercise-hub__row{border-top:0}
+.exercise-hub__row--featured:has(.exercise-hub__row-main:hover){margin-left:0;padding-left:2px;background:linear-gradient(#fbfdfa,#fbfdfa) padding-box,var(--spectrum) border-box;background-size:auto,300% 100%}
+.exercise-hub__row--featured .exercise-hub__row-main{padding-left:14px}
+.exercise-hub__row--featured .exercise-hub__icon{
+  background:var(--spectrum);
+  background-size:300% 100%;
+  color:#fff;
+  animation:studio-spectrum 14s linear infinite;
+}
+.exercise-hub__row--featured .exercise-hub__copy strong{font-weight:680}
+
+@media(prefers-reduced-motion:reduce){
+  .exercise-hub__row--featured,.exercise-hub__row--featured .exercise-hub__icon{animation:none}
+}
 
 @media(max-width:760px){
   .exercise-hub{padding:0 16px calc(92px + env(safe-area-inset-bottom));scrollbar-gutter:auto}

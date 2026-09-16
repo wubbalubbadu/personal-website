@@ -209,7 +209,7 @@ html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document"
    under them (the has-tip default) runs off-screen — anchor from the
    button's right edge instead so it only ever grows leftward. !important
    to beat viewer-fixes.css's own !important transform on .has-tip:after. */
-.restored-reader .viewer-star.has-tip:after,.restored-reader .reader-view .has-tip:after,.restored-reader .reader-pages .has-tip:after{left:auto!important;right:0!important;transform:none!important}
+.restored-reader .studio-save.has-tip:after,.restored-reader .reader-view .has-tip:after,.restored-reader .reader-pages .has-tip:after{left:auto!important;right:0!important;transform:none!important}
 /* Mirror image of the fix above: Mark up sits at the far LEFT edge, so a
    tooltip centered under it runs off the left of the screen instead —
    anchor from the button's left edge so it only ever grows rightward. */
@@ -420,3 +420,104 @@ html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document"
    also dragged the title 24px up the page relative to the other layouts.
    Give the heading that 24px back so it sits identically in all three. */
 .restored-reader[data-layout="spread"] .custom-score-heading{padding-top:24px}
+
+/* ── Scale Studio: presets & saved sets ────────────────────────────────────
+   A saved set is a whole panel configuration under a name. The list sits in
+   the same panel that builds one, so "try a preset → tweak → save" is one
+   uninterrupted path, and the name field lives at the bottom next to
+   Restore defaults — the two things you do *after* setting up. */
+.reader-settings-panel .scale-book__sets{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px}
+.reader-settings-panel .scale-book__set{display:flex;align-items:center;gap:4px;border-radius:12px;background:rgba(41,42,51,.05)}
+.reader-settings-panel .scale-book__set.is-active{background:#e4ecdf}
+.reader-settings-panel .scale-book__set-open{flex:1;min-width:0;display:grid;gap:2px;justify-items:start;text-align:left;border:0;background:transparent;padding:9px 4px 9px 12px;font:inherit;color:inherit;cursor:pointer;border-radius:12px}
+.reader-settings-panel .scale-book__set-open b{font-size:13px;font-weight:600}
+.reader-settings-panel .scale-book__set-open small{font-size:11.5px;color:#71747e;line-height:1.35}
+.reader-settings-panel .scale-book__set.is-active .scale-book__set-open small{color:#4d6448}
+.reader-settings-panel .scale-book__set-delete{flex:0 0 32px;width:32px;height:32px;margin-right:4px;border:0;border-radius:50%;background:transparent;color:#a5a7ad;font-size:17px;line-height:1;cursor:pointer}
+.reader-settings-panel .scale-book__set-delete:hover{background:rgba(41,42,51,.08);color:#5a5c63}
+.reader-settings-panel .scale-book__sets-empty{margin:6px 0 0;font-size:12.5px;line-height:1.5;color:#71747e}
+
+.reader-settings-panel .scale-book__save{display:flex;align-items:flex-end;gap:8px;margin-top:18px;padding-top:16px;border-top:1px solid rgba(41,42,51,.08)}
+.reader-settings-panel .scale-book__save-field{flex:1;min-width:0;display:grid;gap:4px}
+.reader-settings-panel .scale-book__save-field span{font-size:12px;font-weight:500;color:#71747e}
+.reader-settings-panel .scale-book__save-field input{width:100%;height:36px;border:0;border-radius:12px;background:rgba(41,42,51,.06);padding:0 12px;font:inherit;font-size:13px;color:inherit}
+.reader-settings-panel .scale-book__save-field input::placeholder{color:#a5a7ad}
+.reader-settings-panel .scale-book__save-button{flex:0 0 auto;height:36px;padding:0 14px;border:0;border-radius:12px;background:#40553d;color:#fff;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap}
+.reader-settings-panel .scale-book__save-button:hover{background:#354831}
+.reader-settings-panel .scale-book__save-note{margin:8px 0 0;font-size:12px;color:#4d6448}
+
+/* ── Tempos, its own toolbar button ───────────────────────────────────────
+   No accordion, no heading: the panel is the list. One row per exercise in
+   the current book, so this grows with the book rather than being a single
+   global tempo. */
+.reader-settings-panel .scale-book__tempo-list{display:grid;gap:2px;margin-top:4px;font-size:14px}
+.reader-settings-panel .scale-book__tempo-list:empty::after{content:"Choose keys in Customize scales first.";color:#71747e;font-size:12.5px;line-height:1.5}
+.reader-settings-panel .scale-reader__tempo{padding:4px 0}
+.reader-settings-panel .scale-book__tempo-label{min-width:0}
+.reader-settings-panel .scale-book__tempo-label b{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ── The Customize scales trigger ─────────────────────────────────────────
+   The one rainbow control in the toolbar, matching the featured Scale
+   Studio row on the Exercises hub. A ring rather than a fill: this button
+   sits in a row of plain icon buttons, and a solid gradient would read as
+   "active/pressed" instead of "this is the interesting one".
+
+   Written as individual background-* properties, never the shorthand. The
+   surrounding toolbar rules use `background: … !important`, so this has to
+   too — but an !important `background` shorthand also makes
+   background-position important, and that outranks the keyframes, which
+   animate exactly that property. The gradient rendered and then sat
+   perfectly still. Setting the pieces separately leaves position free for
+   the animation to drive. */
+.reader-view .scale-book__scales-trigger{
+  border:1.5px solid transparent!important;
+  border-radius:12px!important;
+  background-color:#fff!important;
+  background-image:linear-gradient(#fff,#fff),var(--spectrum)!important;
+  background-origin:padding-box,border-box!important;
+  background-clip:padding-box,border-box!important;
+  background-repeat:no-repeat,no-repeat!important;
+  background-size:auto,300% 100%!important;
+  animation:studio-spectrum 14s linear infinite;
+}
+/* Hover/open tint the interior only — the toolbar's own `background:
+   … !important` hover rules would otherwise wipe the gradient out. */
+.reader-view .scale-book__scales-trigger:hover,
+.reader-view .scale-book__scales-trigger[aria-expanded="true"]{
+  background-image:linear-gradient(#f3f5f1,#f3f5f1),var(--spectrum)!important;
+}
+/* The label is painted by the gradient rather than by a text colour. It
+   needs its own animated background because background-clip:text and the
+   border-ring trick cannot share one element's background. */
+.reader-view .scale-book__scales-label{
+  background-image:var(--spectrum);
+  background-size:300% 100%;
+  -webkit-background-clip:text;
+  background-clip:text;
+  /* font:inherit is not optional — as a bare text node the label picked up
+     the button's type, but as an element it inherits from the reader's
+     document styles instead and came out large and serif. */
+  font:inherit!important;
+  font-weight:600!important;
+  color:transparent!important;
+  animation:studio-spectrum 14s linear infinite;
+}
+@media(prefers-reduced-motion:reduce){
+  .reader-view .scale-book__scales-trigger,.reader-view .scale-book__scales-label{animation:none}
+}
+
+/* The play/metronome pair on a tempo row: the same quiet icon button as the
+   rest of the panel, tinted only while it is actually running. The old
+   solid-green pill read as "pressed" at rest and crowded the number beside
+   it. */
+.reader-settings-panel .scale-book__row-tool{
+  width:34px;height:34px;min-width:34px;min-height:34px;
+  display:grid;place-items:center;
+  border:0;border-radius:10px;background:transparent;color:#71747e;cursor:pointer;
+  transition:background-color .16s ease,color .16s ease;
+}
+.reader-settings-panel .scale-book__row-tool:first-of-type{margin-left:6px}
+.reader-settings-panel .scale-book__row-tool svg{width:18px;height:18px}
+.reader-settings-panel .scale-book__row-tool:hover{background:rgba(41,42,51,.07);color:#40553d}
+.reader-settings-panel .scale-book__row-tool.on{background:#dce8d7;color:#40553d}
+@media(prefers-reduced-motion:reduce){.reader-settings-panel .scale-book__row-tool{transition:none}}

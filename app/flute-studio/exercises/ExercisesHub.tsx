@@ -1,121 +1,74 @@
 "use client";
 
-import {useState} from "react";
+import {useEffect,useState} from "react";
+import {exerciseCatalog,exerciseFocuses,type ExerciseEntry,type ExerciseFocus} from "../../../content/exercise-catalog";
+import {deleteScaleSet,describeSet,readScaleSets,scaleSetsEvent,type ScaleSet} from "./scales/saved-sets";
+import {SaveButton} from "../components/SaveButton";
+import {StudioItemIcon} from "../components/StudioItemIcon";
+import {useSavedItems} from "../lib/storage";
 import {useLanguage} from "../i18n/LanguageContext";
 import "./exercises.css";
 
-type Category = "technique" | "tone" | "breathing" | "articulation";
-type Exercise = {
-  title: string;
-  detail: string;
-  icon: string;
-  tone: "cactus" | "pink" | "slate";
-  category: Category;
-  href?: string;
-  action: string;
-};
-
-function ExerciseContent({exercise}:{exercise:Exercise}){
-  return <>
-    <span className={`exercise-hub__icon exercise-hub__icon--${exercise.tone}`} aria-hidden="true">{exercise.icon}</span>
-    <span className="exercise-hub__copy">
-      <strong>{exercise.title}</strong>
-      <small>{exercise.detail}</small>
-    </span>
-    <span className={exercise.href?"exercise-hub__action":"exercise-hub__action exercise-hub__action--muted"}>{exercise.action}</span>
+/**
+ * Every row is a link plus its own save star, the same shape as the
+ * Library's rows — so an exercise can be saved from wherever you meet it,
+ * and the two lists read as one system. The old "›" chevron said nothing
+ * the whole clickable row was not already saying.
+ */
+function Row({focus,title,detail,href,badge,featured,save,trailing}:{focus:ExerciseFocus;title:string;detail:string;href?:string;badge?:string;featured?:boolean;save?:{saved:boolean;onToggle:()=>void;label:string};trailing?:React.ReactNode}){
+  const content=<>
+    <StudioItemIcon kind={focus} className="exercise-hub__icon"/>
+    <span className="exercise-hub__copy"><strong>{title}</strong><small>{detail}</small></span>
+    {badge&&<span className="exercise-hub__action exercise-hub__action--muted">{badge}</span>}
   </>;
+  const classes=["exercise-hub__row"];
+  if(href)classes.push("exercise-hub__row--available");
+  if(featured)classes.push("exercise-hub__row--featured");
+  return <article className={classes.join(" ")}>
+    {href
+      ?<a className="exercise-hub__row-main" href={href}>{content}</a>
+      :<div className="exercise-hub__row-main exercise-hub__row-main--disabled">{content}</div>}
+    {save&&<SaveButton saved={save.saved} onToggle={save.onToggle} label={save.label}/>}
+    {trailing}
+  </article>;
 }
 
 export default function ExercisesHub(){
-  const {t}=useLanguage();
-  const [category,setCategory]=useState<Category|"all">("all");
-  const categories:{key:Category|"all";label:string}[]=[
+  const {t,lang}=useLanguage(),zh=lang==="zh";
+  const [focus,setFocus]=useState<ExerciseFocus|"all">("all");
+  // The same store the Library saves into — an exercise starred here is
+  // starred there, because it is the same item.
+  const favorites=useSavedItems("music");
+  // Sets saved in Scale Studio. Read after hydration — they live in
+  // localStorage, which the server render has no view of.
+  const [sets,setSets]=useState<ScaleSet[]>([]);
+  useEffect(()=>{
+    const sync=()=>setSets(readScaleSets());
+    sync();
+    window.addEventListener(scaleSetsEvent,sync);
+    window.addEventListener("storage",sync);
+    return()=>{window.removeEventListener(scaleSetsEvent,sync);window.removeEventListener("storage",sync)};
+  },[]);
+
+  const focusLabels:Record<ExerciseFocus,string>={
+    technique:t.exercises.categoryTechnique,
+    tone:t.exercises.categoryTone,
+    breathing:t.exercises.categoryBreathing,
+    articulation:t.exercises.categoryArticulation,
+  };
+  const tabs:{key:ExerciseFocus|"all";label:string}[]=[
     {key:"all",label:t.exercises.categoryAll},
-    {key:"technique",label:t.exercises.categoryTechnique},
-    {key:"tone",label:t.exercises.categoryTone},
-    {key:"breathing",label:t.exercises.categoryBreathing},
-    {key:"articulation",label:t.exercises.categoryArticulation},
+    ...exerciseFocuses.map(value=>({key:value,label:focusLabels[value]})),
   ];
-  const exercises:readonly Exercise[]=[
-    {
-      title:t.exercises.scaleStudioTitle,
-      detail:t.exercises.scaleStudioDetail,
-      icon:"◎",
-      tone:"cactus",
-      category:"technique",
-      href:"/flute-studio/exercises/scales",
-      action:"›",
-    },
-    {
-      title:t.exercises.majorScalesTitle,
-      detail:t.exercises.majorScalesDetail,
-      icon:"♪",
-      tone:"cactus",
-      category:"technique",
-      href:"/flute-studio/exercises/scales?preset=major-scales",
-      action:"›",
-    },
-    {
-      title:t.exercises.harmonicMinorsTitle,
-      detail:t.exercises.harmonicMinorsDetail,
-      icon:"♭",
-      tone:"cactus",
-      category:"technique",
-      href:"/flute-studio/exercises/scales?preset=harmonic-minors",
-      action:"›",
-    },
-    {
-      title:t.exercises.majorThirdsTitle,
-      detail:t.exercises.majorThirdsDetail,
-      icon:"⁝",
-      tone:"slate",
-      category:"technique",
-      href:"/flute-studio/exercises/scales?preset=major-thirds",
-      action:"›",
-    },
-    {
-      title:t.exercises.chromaticTitle,
-      detail:t.exercises.chromaticDetail,
-      icon:"♩",
-      tone:"slate",
-      category:"technique",
-      action:t.exercises.comingSoon,
-    },
-    {
-      title:t.exercises.longToneTitle,
-      detail:t.exercises.longToneDetail,
-      icon:"◌",
-      tone:"pink",
-      category:"tone",
-      action:t.exercises.comingSoon,
-    },
-    {
-      title:t.exercises.extendedTitle,
-      detail:t.exercises.extendedDetail,
-      icon:"≈",
-      tone:"pink",
-      category:"tone",
-      action:t.exercises.comingSoon,
-    },
-    {
-      title:"Breathing Lab",
-      detail:t.exercises.breathingDetail,
-      icon:"○",
-      tone:"cactus",
-      category:"breathing",
-      href:"/flute-studio/breathing",
-      action:"›",
-    },
-    {
-      title:t.exercises.articulationTitle,
-      detail:t.exercises.articulationDetail,
-      icon:"‥",
-      tone:"slate",
-      category:"articulation",
-      action:t.exercises.comingSoon,
-    },
-  ];
-  const shown=category==="all"?exercises:exercises.filter(exercise=>exercise.category===category);
+
+  const shown=focus==="all"?exerciseCatalog:exerciseCatalog.filter(entry=>entry.focus===focus);
+  // Saved sets are Scale Studio configurations, so they belong under
+  // Technique — and they sit above the catalog, because a set you built on
+  // purpose is more likely to be what you came here for than the generic
+  // list underneath it.
+  const showSets=(focus==="all"||focus==="technique")&&sets.length>0;
+  const titleOf=(entry:ExerciseEntry)=>zh?entry.zhTitle:entry.title;
+  const detailOf=(entry:ExerciseEntry)=>zh?entry.zhDetail:entry.detail;
 
   return <main className="exercise-hub">
       <div className="exercise-hub__content">
@@ -128,18 +81,35 @@ export default function ExercisesHub(){
         </header>
 
         <div className="exercise-hub__tabs" role="tablist" aria-label={t.exercises.title}>
-          {categories.map(item=><button key={item.key} type="button" role="tab" aria-selected={category===item.key} className={category===item.key?"active":""} onClick={()=>setCategory(item.key)}>{item.label}</button>)}
+          {tabs.map(item=><button key={item.key} type="button" role="tab" aria-selected={focus===item.key} className={focus===item.key?"active":""} onClick={()=>setFocus(item.key)}>{item.label}</button>)}
         </div>
 
-        <section className="exercise-hub__section" aria-label={t.exercises.title}>
+        {showSets&&<section className="exercise-hub__section" aria-labelledby="exercise-hub-sets">
+          <h2 className="exercise-hub__section-title" id="exercise-hub-sets">{t.exercises.savedSets}</h2>
           <div className="exercise-hub__list">
-            {shown.map(exercise=>exercise.href?
-              <a className="exercise-hub__row exercise-hub__row--available" href={exercise.href} key={exercise.title}>
-                <ExerciseContent exercise={exercise}/>
-              </a>:
-              <article className="exercise-hub__row" key={exercise.title}>
-                <ExerciseContent exercise={exercise}/>
-              </article>
+            {/* A saved set is already saved, so its control is "forget it",
+                not a star — the star elsewhere means "add this to mine". */}
+            {sets.map(set=><Row key={set.id}
+              focus="technique"
+              title={set.name}
+              detail={describeSet(set.config,zh)}
+              href={`/flute-studio/exercises/scales?set=${encodeURIComponent(set.id)}`}
+              trailing={<button type="button" className="exercise-hub__remove" aria-label={t.exercises.removeSet(set.name)} onClick={()=>deleteScaleSet(set.id)}>×</button>}/>
+            )}
+          </div>
+        </section>}
+
+        <section className="exercise-hub__section" aria-labelledby="exercise-hub-all">
+          {showSets&&<h2 className="exercise-hub__section-title" id="exercise-hub-all">{t.exercises.allExercises}</h2>}
+          <div className="exercise-hub__list">
+            {shown.map(entry=><Row key={entry.id}
+              focus={entry.focus}
+              title={titleOf(entry)}
+              detail={detailOf(entry)}
+              href={entry.href??undefined}
+              badge={entry.href?undefined:t.exercises.comingSoon}
+              featured={entry.featured}
+              save={{saved:favorites.has(entry.id),onToggle:()=>favorites.toggle(entry.id),label:favorites.has(entry.id)?t.musicRow.remove(titleOf(entry)):t.musicRow.save(titleOf(entry))}}/>
             )}
           </div>
         </section>

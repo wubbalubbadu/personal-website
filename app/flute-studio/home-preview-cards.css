@@ -99,60 +99,173 @@
   white-space: nowrap;
 }
 .roadmap-preview i {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
+  position: relative;
+  width: 15px;
+  height: 15px;
+  border-radius: 5px;
+  border: 1.6px solid currentColor;
   flex: 0 0 auto;
-  transition: transform 0.22s ease;
-  transition-delay: calc(var(--i) * 0.04s);
+  display: grid;
+  place-items: center;
+  background: transparent;
+  transition: background-color 0.24s ease;
+  transition-delay: calc(var(--i) * 0.07s);
 }
-.roadmap-preview i.sage { background: #496b40; }
-.roadmap-preview i.pink { background: #7c4f78; }
-.roadmap-preview i.sand { background: #765d31; }
-.roadmap-preview i.blue { background: #4b6378; }
-.roadmap-preview i.lavender { background: #62567a; }
-.roadmap-preview i.coral { background: #825747; }
-/* Hover — dots hop, one after another, like lighting up the map. */
-.preview-card--roadmap:hover .roadmap-preview i {
-  transform: translateY(-3px);
+.roadmap-preview i svg {
+  width: 11px;
+  height: 11px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2.1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* The tick is drawn on, not faded in — it reads as the act of checking
+     something off rather than a mark appearing. */
+  stroke-dasharray: 14;
+  stroke-dashoffset: 14;
+  transition: stroke-dashoffset 0.28s ease;
+  transition-delay: calc(var(--i) * 0.07s);
+}
+.roadmap-preview li.is-done i { background: currentColor; }
+.roadmap-preview li.is-done i svg { stroke-dashoffset: 0; }
+/* Hover ticks the remaining ones in order, so the card shows the roadmap
+   being worked through rather than just listing its parts. */
+.preview-card--roadmap:hover .roadmap-preview i { background: currentColor; }
+.preview-card--roadmap:hover .roadmap-preview i svg { stroke-dashoffset: 0; }
+
+.roadmap-preview i.sage { color: #496b40; }
+.roadmap-preview i.pink { color: #7c4f78; }
+.roadmap-preview i.sand { color: #765d31; }
+.roadmap-preview i.blue { color: #4b6378; }
+.roadmap-preview i.lavender { color: #62567a; }
+.roadmap-preview i.coral { color: #825747; }
+
+@media (prefers-reduced-motion: reduce) {
+  .roadmap-preview i,
+  .roadmap-preview i svg { transition: none; }
 }
 
 /* Exercises — a compact preview list. */
-.preview-card--exercises .preview-card__stage {
+.preview-card--breathing .preview-card__stage { background: #f1f5f6; display: grid; place-items: center; }
+
+/* Breathing Lab preview — a still two-tone ring with a marker travelling
+   round it on hover, the way the Lab's own timer reads.
+
+   Three things this gets right that the first pass did not. The halves are
+   a straight left/right split (a linear-gradient disc with the middle
+   punched out) rather than tinted borders, which only ever produce a
+   diagonal because each border side is a mitred wedge. The marker rides
+   its own element instead of the ring, so it turns on a plain linear
+   rotation — sharing one transform track with an eased scale was what made
+   it visibly speed up and slow down. And it sits on the stroke's
+   centreline, not on the ring's outer edge. */
+.breathing-preview {
+  position: relative;
+  width: 126px;
+  height: 126px;
+  display: grid;
+  place-items: center;
+}
+.breathing-preview__ring {
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #87b4c8 0 50%, #ca9295 50% 100%);
+}
+/* The hole that turns the disc into a ring. Matches the stage behind it. */
+.breathing-preview__ring::after {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  border-radius: 50%;
+  background: #f1f5f6;
+}
+.breathing-preview__orbit {
+  position: absolute;
+  inset: 8px;
+}
+/* The ring is 110px across with a 9px stroke, so the stroke's centreline
+   sits 4.5px inside the box edge — hence top:-3px for a 15px marker. */
+.breathing-preview__orbit b {
+  position: absolute;
+  top: -3px;
+  left: 50%;
+  margin-left: -7.5px;
+  width: 15px;
+  height: 15px;
+  background: #40553d;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+/* Still until you point at it, like the other cards. */
+.preview-card--breathing:hover .breathing-preview__orbit {
+  animation: breathing-orbit 8s linear infinite;
+}
+@keyframes breathing-orbit {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .preview-card--breathing:hover .breathing-preview__orbit { animation: none; }
+}
+
+.preview-card--scales .preview-card__stage {
   background: linear-gradient(160deg, #f3f7f1, #f8faf7);
   align-items: stretch;
-  padding: 20px 22px;
+  padding: 18px 20px 16px;
 }
-.exercises-preview {
-  list-style: none;
-  margin: auto 0;
-  padding: 0;
-  display: grid;
-  gap: 12px;
+
+/* Scale Studio preview — an octave up and back down, played rather than
+   drawn: each note head brightens in turn, so a run travels along the
+   staff on a loop. Just the staff: the card's own copy already says what
+   you can change, and a row of chips repeating it crowded the artwork. */
+.scales-preview { margin: auto 0; }
+.scales-preview__staff { display: block; width: 100%; height: auto; overflow: visible; }
+.scales-preview__line { stroke: #c5d4bd; stroke-width: 1; }
+.scales-preview__note { fill: #40553d; stroke: #40553d; stroke-width: 1.4; opacity: 0.22; }
+.scales-preview__note ellipse { stroke: none; }
+.scales-preview__slur {
+  fill: none;
+  stroke: #7fa06f;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-dasharray: 180;
+  stroke-dashoffset: 180;
 }
-.exercises-preview li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: #40553d;
-  transition: transform 0.22s ease;
-  transition-delay: calc(var(--i) * 0.05s);
+
+/* The run: a 2.8s cycle, each note entering 0.11s after the one before, so
+   the bright spot sweeps left to right and the whole figure resets before
+   it becomes hypnotic. */
+@keyframes scales-run {
+  0%, 62%, 100% { opacity: 0.22; transform: translateY(0); }
+  8% { opacity: 1; transform: translateY(-1.5px); }
+  22% { opacity: 0.4; transform: translateY(0); }
 }
-/* Hover — rows step in from the left, one after another. */
-.preview-card--exercises:hover .exercises-preview li {
-  transform: translateX(4px);
+@keyframes scales-slur-draw {
+  0% { stroke-dashoffset: 180; }
+  45%, 72% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -180; }
 }
-.exercises-preview i {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  flex: 0 0 auto;
+/* At rest the run simply sits there, like the other cards' artwork; the
+   sweep only plays on hover. A card that animates constantly competes with
+   everything around it, and this one shares a screen with four others. */
+.scales-preview__note {
+  opacity: 0.6;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: opacity 0.3s ease;
 }
-.exercises-preview i.green { background: #7fa06f; }
-.exercises-preview i.pink { background: #d98ed3; }
-.exercises-preview i.gray { background: #9aa0a8; }
+.preview-card--scales:hover .scales-preview__note {
+  animation: scales-run 2.4s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.1s);
+}
+.preview-card--scales:hover .scales-preview__slur { animation: scales-slur-draw 2.4s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .preview-card--scales:hover .scales-preview__note,
+  .preview-card--scales:hover .scales-preview__slur { animation: none; }
+  .scales-preview__note { opacity: 0.85; transition: none; }
+}
 
 /* Continue practicing — ONE shared card (not three differently-tinted
    tiles); each of the three sections is told apart by a small colored dot,

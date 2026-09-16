@@ -5,15 +5,22 @@ import type { ArticulationMode } from "./notePatterns";
 // Same canonical 12-tone spelling the rest of the app already uses for
 // playback/drone/tuner lookups (see ScoreViewer's pitchClasses/semitones,
 // PracticeToolDock's pitches array). Built from the note's absolute
-// halfTone (standard MIDI numbering, 60 = C4) rather than OSMD's own
-// ToStringShort()/Octave, which turned out not to be in scientific-pitch
-// terms — reading those directly produced pitches two octaves too low
-// ("C3" for a note that's actually C5) and, for some spellings (Db, Gb...),
-// values outside the app's spelling table at all, which crashed playback
-// with a non-finite AudioParam. halfTone sidesteps both problems.
+// halfTone rather than OSMD's own ToStringShort()/Octave, which turned out
+// not to be in scientific-pitch terms — reading those directly produced
+// pitches two octaves too low ("C3" for a note that's actually C5) and, for
+// some spellings (Db, Gb...), values outside the app's spelling table at
+// all, which crashed playback with a non-finite AudioParam.
+//
+// halfTone is NOT MIDI numbering, despite looking like it: OSMD counts from
+// C0 = 0, so middle C is 48, not 60. Subtracting the usual MIDI offset of 1
+// here made every derived pitch exactly one octave flat — a two-octave
+// scale written C4–C6 came back as C3–C5. That sounded an octave low
+// through playback and the drone, and it silently disabled the third-octave
+// fingering table, whose `octave === "6"` test could then only ever be hit
+// by a written C7.
 const PITCH_CLASSES = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"];
 function pitchFromHalfTone(halfTone: number): string {
-  const octave = Math.floor(halfTone / 12) - 1;
+  const octave = Math.floor(halfTone / 12);
   const pitchClass = PITCH_CLASSES[((halfTone % 12) + 12) % 12];
   return `${pitchClass}${octave}`;
 }

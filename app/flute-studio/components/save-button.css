@@ -1,0 +1,36 @@
+/* The one save control — see SaveButton.tsx.
+   No hover plate anywhere: the star carries its own state — outline at
+   rest, filled amber when saved — and a background swatch on hover only
+   added a second, competing signal. The 40px box matches the studio's
+   other icon buttons so a row's star and the topbar's star are the same
+   object in two places. */
+.studio-save {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #9a9ca3;
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  align-self: center;
+  cursor: pointer;
+  transition: background-color 0.16s ease, color 0.16s ease;
+}
+.studio-save:hover,
+.studio-save:focus-visible { color: #5a5c63; }
+.studio-save:focus-visible {
+  outline: 2px solid rgba(103, 137, 86, 0.4);
+  outline-offset: 1px;
+}
+/* Saved is the filled star itself — no tinted plate behind it. The outline
+   and the fill are the whole vocabulary. */
+.studio-save.is-saved,
+.studio-save.is-saved:hover { color: #b47a16; }
+
+@media (prefers-reduced-motion: reduce) {
+  .studio-save { transition: none; }
+}

@@ -8,6 +8,9 @@ import { useRecents } from "../lib/storage";
 import { deriveScoreEvents, resolveKeyAccidentals } from "./deriveScoreEvents";
 import {usePracticeAudio,pitchFrequency} from "../PracticeAudio";
 import {PracticeIcon} from "./PracticeIcon";
+import {FluteDiagramMini} from "./FluteDiagram";
+import {fingeringsForMidi, midiForPitch} from "../../../content/fingerings/flute";
+import {SaveButton} from "./SaveButton";
 import {notationScale,pageOffsets,pageAt} from "./readerLayout";
 import "../reader-workspace.css";
 import type { ArticulationMode } from "./notePatterns";
@@ -24,55 +27,15 @@ import type { ArticulationMode } from "./notePatterns";
  */
 export type ScoreViewerConfig={title:string;composer:string;asset:string;id:string;backHref:string;backLabel?:string;pdfPath?:string;defaultTempo?:number;pitches?:(string|null)[];events?:{p:string|null;d:number;tied?:boolean;articulation?:ArticulationMode;slurContinuation?:boolean}[];measureStarts?:number[];subtitle?:string;displayPitches?:(string|null)[];measureKeyAccidentals?:string[][];syllables?:(string|null)[]};
 /**
- * Standard closed-hole Boehm flute fingerings, covering the full chromatic
- * scale across the octaves this app can render. Octaves 4 and 5 share a
- * fingering, as on a real flute — the register change comes from air speed,
- * not the fingers. Octave 6 genuinely uses different (harmonic) fingerings,
- * and altissimo notes above G6 vary enough by player/flute that they're left
- * out rather than guessed.
- *
- * Keys: T=thumb, L1-3=left hand index/middle/ring, R1-3=right hand
- * index/middle/ring, LP=left-pinky G♯ key, REb=right-pinky Eb/D♯ key (a Boehm
- * quirk: every note from E up through B needs this key closed, or an "easy"
- * alternate Eb fingering that skips the right hand entirely), RC=right-pinky
- * low-C footjoint key, RCs=right-pinky low-C♯ footjoint key.
+ * Fingerings come from content/fingerings/flute.ts, the same data the
+ * fingering chart and the practice dock read. The two tables that used to
+ * live here had real errors — D missing its E♭ lever, E♭ given G's
+ * fingering, four "third octave" entries that were copies of first-octave
+ * ones — which is what happens when one screen keeps its own copy.
  */
-const octave12Fingerings:Record<string,string[]>={
-  C:["T","L1","L2","L3","R1","R2","R3","RC"],
-  "C♯":["T","L1","L2","L3","R1","R2","R3","RCs"],
-  D:["T","L1","L2","L3","R1","R2","R3"],
-  "D♯":["T","L1","L2","L3","REb"],
-  E:["T","L1","L2","L3","R1","R2","REb"],
-  F:["T","L1","L2","L3","R1","REb"],
-  "F♯":["T","L1","L2","L3","R3","REb"],
-  G:["T","L1","L2","L3","REb"],
-  "G♯":["T","L1","L2","L3","LP","REb"],
-  A:["T","L1","L2","REb"],
-  "A♯":["T","L1","R1","REb"],
-  B:["T","L1","REb"],
-};
-const octave3Fingerings:Record<string,string[]>={
-  C:["T","L1","L2","L3","R1","R2","R3","RC"],
-  "C♯":["T","L1","L2","L3","R1","R2","R3","RCs"],
-  D:["T","L2","L3"],
-  "D♯":["T","L2","L3","REb"],
-  E:["T","L1","L2","R1","R2","REb"],
-  F:["T","L1","L2","L3","R1","REb"],
-  "F♯":["T","L1","L3","R3","REb"],
-  G:["L1","L2","L3","REb"],
-  "G♯":["T","L1","L2","L3","LP","REb"],
-};
 const solfegeNames:Record<string,string>={"C♭":"Ti",C:"Do","C♯":"Di","D♭":"Ra",D:"Re","D♯":"Ri","E♭":"Me",E:"Mi","E♯":"Fa","F♭":"Mi",F:"Fa","F♯":"Fi","G♭":"Se",G:"Sol","G♯":"Si","A♭":"Le",A:"La","A♯":"Li","B♭":"Te",B:"Ti","B♯":"Do"};
-function fingeringsFor(pitch:string){
-  const match=pitch.match(/^([A-G]♯?)(\d)$/);
-  if(!match)return [];
-  const [,letter,octave]=match;
-  const table=octave==="6"?octave3Fingerings:octave12Fingerings;
-  return table[letter]??[];
-}
 type RhythmMode = "off"|"counts"|"bars";
 type NoteDisplay = "off"|"names"|"solfege";
-function fingeringOn(pitch:string,key:string){return fingeringsFor(pitch).includes(key)}
 /**
  * Splits each exercise across systems evenly, measured in NOTES.
  *
@@ -152,9 +115,14 @@ function clampTip(x:number,y:number,width:number,height:number,anchor:"below"|"a
  * seconds to appear. Canvas text metrics need no layout at all.
  */
 const labelWidth=(()=>{
-  const context=document.createElement("canvas").getContext("2d");
+  // The measuring canvas is created on first use, not at module load: this
+  // module is evaluated during server rendering too, where `document` does
+  // not exist, and a top-level createElement there throws before the page
+  // ever reaches the browser.
+  let context:CanvasRenderingContext2D|null|undefined;
   const cache=new Map<string,number>();
   return (text:string,font:string)=>{
+    if(context===undefined)context=typeof document==="undefined"?null:document.createElement("canvas").getContext("2d");
     const key=`${font}|${text}`;
     let width=cache.get(key);
     if(width===undefined){if(context)context.font=font;width=context?context.measureText(text).width:text.length*8;cache.set(key,width)}
@@ -307,7 +275,24 @@ function prepareScore(xml: string,title:string) {
   return new XMLSerializer().serializeToString(document);
 }
 
-export type ReaderControls={bpm:number;setTempo:(tempo:number)=>void;metronome:boolean;toggleMetronome:()=>void};
+export type ReaderControls={
+  bpm:number;
+  setTempo:(tempo:number)=>void;
+  metronome:boolean;
+  toggleMetronome:()=>void;
+  /** True while the score is sounding, whoever started it. */
+  playing:boolean;
+  /**
+   * Start playback at a note, by its index in the score's event list — the
+   * same index the overlay arrays (displayPitches, syllables) use, so a
+   * caller that built those already knows where each of its sections
+   * begins. Passing the index the transport is already playing from stops
+   * instead, which is what makes one button a play/stop toggle.
+   */
+  playFromEvent:(eventIndex:number)=>void;
+  /** Which event playback last started from, or null when stopped. */
+  playingFrom:number|null;
+};
 export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=false,lineBreak}:{config:ScoreViewerConfig;toolbar?:React.ReactNode;settings?:(controls:ReaderControls)=>React.ReactNode;onTempoChange?:(tempo:number)=>void;unmetered?:boolean;lineBreak?:{value:boolean;onChange:(value:boolean)=>void}}) {
   const {t,lang}=useLanguage();
   const zh=lang==="zh";
@@ -350,7 +335,7 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
   // layout pass also runs from a ResizeObserver and from the load effect,
   // neither of which re-closes over current state.
   const overlayVisibilityRef=useRef<OverlayVisibility>({names:false,solfege:false,accidentals:false,tonguing:true,counts:false,sticks:false});
-  const [loading,setLoading]=useState(true); const [error,setError]=useState(""); const [startMeasure,setStartMeasure]=useState(1); const [playing,setPlaying]=useState(false); const [annotating,setAnnotating]=useState(false); const [inkColor,setInkColor]=useState("#e52e31"); const [eraser,setEraser]=useState(false);
+  const [loading,setLoading]=useState(true); const [error,setError]=useState(""); const [startMeasure,setStartMeasure]=useState(1); const [playing,setPlaying]=useState(false); const [playingFrom,setPlayingFrom]=useState<number|null>(null); const [annotating,setAnnotating]=useState(false); const [inkColor,setInkColor]=useState("#e52e31"); const [eraser,setEraser]=useState(false);
   // Page-turn mode: false (free scroll) by default until the mount effect
   // below picks a real default (stored preference, else viewport width) —
   // starting false keeps first paint identical between server and client.
@@ -770,7 +755,7 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },[bpm]);
   function fluteTone(pitch:string,start:number,duration:number,peakGain=.075){const match=pitch.match(/^([A-G][♯♭]?)(\d)$/);if(!match)return;const c=audio(),fund=c.createOscillator(),gain=c.createGain(),vibrato=c.createOscillator(),vibGain=c.createGain(),frequency=pitchFrequency(match[1],+match[2]);fund.type="sine";fund.frequency.value=frequency;vibrato.frequency.value=5.2;vibGain.gain.value=frequency*.004;vibrato.connect(vibGain);vibGain.connect(fund.frequency);gain.gain.setValueAtTime(.0001,start);gain.gain.exponentialRampToValueAtTime(peakGain,start+.035);gain.gain.setValueAtTime(peakGain*.933,start+Math.max(.05,duration-.07));gain.gain.exponentialRampToValueAtTime(.0001,start+duration);fund.connect(gain).connect(c.destination);fund.start(start);vibrato.start(start);fund.stop(start+duration);vibrato.stop(start+duration);playbackNodes.current.push(fund,vibrato)}
-  function stopPlayback(){playbackTimers.current.forEach(window.clearTimeout);playbackTimers.current=[];playbackNodes.current.forEach(o=>{try{o.stop()}catch{/* Already-ended notes need no further cleanup. */}});playbackNodes.current=[];playbackPosition.current=null;scoreRef.current?.querySelectorAll(".playback-active").forEach(n=>n.classList.remove("playback-active"));setPlaying(false)}
+  function stopPlayback(){playbackTimers.current.forEach(window.clearTimeout);playbackTimers.current=[];playbackNodes.current.forEach(o=>{try{o.stop()}catch{/* Already-ended notes need no further cleanup. */}});playbackNodes.current=[];playbackPosition.current=null;scoreRef.current?.querySelectorAll(".playback-active").forEach(n=>n.classList.remove("playback-active"));setPlaying(false);setPlayingFrom(null)}
   // Articulation only ever changes how long a note's own envelope rings,
   // never the start-to-start spacing between notes (that stays `event.d*unit`
   // regardless) — staccato fades out early to leave an audible gap, tenuto
@@ -811,7 +796,21 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
     playbackTimers.current.push(window.setTimeout(stopPlayback,cursor+160));
     playbackPosition.current={audioStart,unit,from:fromIndex};
   }
-  function togglePlayback(){if(playing){stopPlayback();return}setPlaying(true);const first=sequenceRef.current.measureStarts[startMeasure-1]??0;scheduleNotes(first)}
+  function togglePlayback(){if(playing){stopPlayback();return}setPlaying(true);const first=sequenceRef.current.measureStarts[startMeasure-1]??0;setPlayingFrom(first);scheduleNotes(first)}
+  /**
+   * Play from one note rather than from the transport's start measure.
+   * Re-pressing the control that started it stops, so the caller can render
+   * a single play/stop button per section. The start measure moves with it,
+   * so the main transport picks up where this left off.
+   */
+  function playFromEvent(eventIndex:number){
+    if(playing&&playingFrom===eventIndex){stopPlayback();return}
+    if(playing)stopPlayback();
+    const seq=sequenceRef.current;
+    const index=Math.max(0,Math.min(eventIndex,Math.max(0,seq.events.length-1)));
+    setStartMeasure(measureForEvent(index,seq.measureStarts));
+    setPlaying(true);setPlayingFrom(index);scheduleNotes(index);
+  }
   function point(e:PointerEvent<HTMLCanvasElement>){const r=e.currentTarget.getBoundingClientRect(),{w,h}=inkSizeRef.current;return{x:(e.clientX-r.left)*w/r.width,y:(e.clientY-r.top)*h/r.height}}
   function begin(e:PointerEvent<HTMLCanvasElement>){if(!annotating||!inkActive)return;drawing.current=true;const p=point(e),c=e.currentTarget.getContext("2d");c?.beginPath();c?.moveTo(p.x,p.y);e.currentTarget.setPointerCapture(e.pointerId)}
   function draw(e:PointerEvent<HTMLCanvasElement>){if(!drawing.current||!annotating)return;const p=point(e),c=e.currentTarget.getContext("2d");if(!c)return;c.lineWidth=eraser?28:4;c.lineCap="round";c.lineJoin="round";c.globalCompositeOperation=eraser?"destination-out":"source-over";c.strokeStyle=inkColor;c.lineTo(p.x,p.y);c.stroke()}
@@ -845,9 +844,7 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
   function toggleFavorite(){const saved=JSON.parse(localStorage.getItem("cookie:music-favorites")||"[]") as string[],next=saved.includes(id)?saved.filter(item=>item!==id):[...saved,id];localStorage.setItem("cookie:music-favorites",JSON.stringify(next));setFavorite(next.includes(id));window.dispatchEvent(new Event("cookie:favorites-updated"))}
   return <main className="app-shell reader-workspace restored-reader" data-layout={pageWidth} style={{"--reader-page-width":pageWidth==="900"?"900px":"100%","--viewer-magnify":magnify,"--score-composer":`"${composer}"`} as React.CSSProperties}>
     <section className="workspace">
-      <header className="topbar"><div><a className="back has-tip" href={backHref} aria-label={backLabel?`${t.scoreViewer.back}: ${backLabel}`:t.scoreViewer.back} data-tip={backLabel||t.scoreViewer.back}><span className="back-arrow" aria-hidden="true">‹</span>{backLabel&&<span className="back-label">{backLabel}</span>}</a>{!toolbar&&<strong>{title}</strong>}</div><div><button className={favorite?"viewer-star active has-tip":"viewer-star has-tip"} data-tip={favorite?t.scoreViewer.removeFromSaved:t.scoreViewer.saveMusic} aria-label={favorite?t.scoreViewer.removeFromSaved:t.scoreViewer.saveMusic} onClick={toggleFavorite}>
-      <svg viewBox="0 0 20 20" width="19" height="19" fill={favorite?"currentColor":"none"} stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"><path d="M10 2.8l2.2 4.55 5 .73-3.6 3.53.85 4.99L10 14.2l-4.45 2.4.85-4.99L2.8 8.08l5-.73L10 2.8z"/></svg>
-    </button><span className="topbar-toolbar-slot">{toolbar}</span>{pdfPath&&<a className="icon-btn has-tip" href={pdfPath} download data-tip={t.scoreViewer.downloadPdf} aria-label={t.scoreViewer.downloadPdf}>↓</a>}</div></header>
+      <header className="topbar"><div><a className="back has-tip" href={backHref} aria-label={backLabel?`${t.scoreViewer.back}: ${backLabel}`:t.scoreViewer.back} data-tip={backLabel||t.scoreViewer.back}><span className="back-arrow" aria-hidden="true">‹</span>{backLabel&&<span className="back-label">{backLabel}</span>}</a>{!toolbar&&<strong>{title}</strong>}</div><div><SaveButton saved={favorite} onToggle={toggleFavorite} label={favorite?t.scoreViewer.removeFromSaved:t.scoreViewer.saveMusic} tip={favorite?t.scoreViewer.removeFromSaved:t.scoreViewer.saveMusic}/><span className="topbar-toolbar-slot">{toolbar}</span>{pdfPath&&<a className="icon-btn has-tip" href={pdfPath} download data-tip={t.scoreViewer.downloadPdf} aria-label={t.scoreViewer.downloadPdf}>↓</a>}</div></header>
 
       <div className="practice-bar"><div className="tool-group">        <button data-tip={t.scoreViewer.markUpTip} className={annotating?"tool on coral has-tip":"tool has-tip"} onClick={()=>{const next=!annotating;setAnnotating(next);if(next)setInkActive(true)}}><PracticeIcon name="markup"/>{t.scoreViewer.markUp}</button>
       </div>
@@ -869,7 +866,7 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
             </>}
           </div>
         </div>      <div className="reader-header restored-view-controls">        
-        <div className="reader-view">{settings?.({bpm,setTempo:setBpm,metronome:metro,toggleMetronome:toggleMetro})}{magnify!==1&&<button onClick={()=>setMagnify(1)}>{zh?"重置缩放":"Reset zoom"}</button>}
+        <div className="reader-view">{settings?.({bpm,setTempo:setBpm,metronome:metro,toggleMetronome:toggleMetro,playing,playFromEvent,playingFrom})}{magnify!==1&&<button onClick={()=>setMagnify(1)}>{zh?"重置缩放":"Reset zoom"}</button>}
           <ReaderPopover label={zh?"显示设置":"View settings"} trigger={<><PracticeIcon name="gear"/>{zh?"显示":"View"}</>} className="tool has-tip">
 
             <div className="reader-setting-row"><span>{zh?"页面布局":"Page layout"}</span><div className="reader-choice" role="group" aria-label={zh?"页面布局":"Page layout"}>{[["900",zh?"竖向单页":"Portrait"],["auto",zh?"适应窗口":"Fit window"],["spread",zh?"双页":"Two pages"]].map(([value,label])=><button key={value} aria-pressed={pageWidth===value} onClick={()=>setPageWidth(value)}>{label}</button>)}</div></div>
@@ -910,18 +907,8 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
         </div>)}
       </div></div>
 
-    </section>{theoryTip&&<div className="theory-tip" style={clampTip(theoryTip.x,theoryTip.y,280,150,"below")}><small>{t.scoreViewer.musicTheory}</small><p>{theoryTip.text}</p></div>}{fingerTip&&<div className={fingering?"flute-tip finger-chart":"flute-tip note-info-tip"} style={clampTip(fingerTip.x,fingerTip.y,340,255,"above")}>{(noteDisplay!=="off"||fingering)&&<strong>{noteDisplay==="solfege"?fingerTip.solfege:fingerTip.name}<sup>{fingerTip.pitch.match(/\d/)?.[0]}</sup></strong>}{rhythmMode!=="off"&&!unmetered&&<p className="note-info-beat">{zh?"拍位":"Beat"} {fingerTip.beat}</p>}{fingering&&<><div className="finger-diagram">
-        <div className="finger-diagram__group"><span className="finger-diagram__dot-wrap"><i className={fingeringOn(fingerTip.pitch,"T")?"finger-dot pressed":"finger-dot"}/><small>T</small></span></div>
-        <span className="finger-diagram__divider"/>
-        <div className="finger-diagram__group">{[1,2,3].map(n=><span key={`l${n}`} className="finger-diagram__dot-wrap"><i className={fingeringOn(fingerTip.pitch,`L${n}`)?"finger-dot pressed":"finger-dot"}/><small>{n}</small></span>)}{fingeringOn(fingerTip.pitch,"LP")&&<span className="finger-diagram__dot-wrap"><i className="finger-dot pressed small"/><small>G♯</small></span>}</div>
-        <span className="finger-diagram__divider"/>
-        <div className="finger-diagram__group">{[1,2,3].map(n=><span key={`r${n}`} className="finger-diagram__dot-wrap"><i className={fingeringOn(fingerTip.pitch,`R${n}`)?"finger-dot pressed":"finger-dot"}/><small>{n}</small></span>)}</div>
-        <span className="finger-diagram__divider"/>
-        <div className="finger-diagram__group">
-          <span className="finger-diagram__dot-wrap"><i className={fingeringOn(fingerTip.pitch,"REb")?"finger-dot pressed small":"finger-dot small"}/><small>E♭</small></span>
-          {fingeringOn(fingerTip.pitch,"RCs")?
-            <span className="finger-diagram__dot-wrap"><i className="finger-dot pressed"/><small>C♯</small></span>:
-            <span className="finger-diagram__dot-wrap"><i className={fingeringOn(fingerTip.pitch,"RC")?"finger-dot pressed":"finger-dot"}/><small>C</small></span>}
-        </div>
-      </div><small className="finger-diagram__legend">{t.scoreViewer.fingerChartCaption}</small></>}</div>}</main>
+    </section>{theoryTip&&<div className="theory-tip" style={clampTip(theoryTip.x,theoryTip.y,280,150,"below")}><small>{t.scoreViewer.musicTheory}</small><p>{theoryTip.text}</p></div>}{fingerTip&&<div className={fingering?"flute-tip finger-chart":"flute-tip note-info-tip"} style={clampTip(fingerTip.x,fingerTip.y,340,255,"above")}>{(noteDisplay!=="off"||fingering)&&<strong>{noteDisplay==="solfege"?fingerTip.solfege:fingerTip.name}<sup>{fingerTip.pitch.match(/\d/)?.[0]}</sup></strong>}{rhythmMode!=="off"&&!unmetered&&<p className="note-info-beat">{zh?"拍位":"Beat"} {fingerTip.beat}</p>}{fingering&&<><div className="finger-diagram">{(()=>{
+        const entry=fingeringsForMidi(midiForPitch(fingerTip.pitch));
+        return entry?<FluteDiagramMini pressed={entry.fingerings[0].keys}/>:<em className="finger-diagram__none">{t.scoreViewer.noFingering}</em>;
+      })()}</div><small className="finger-diagram__legend">{t.scoreViewer.fingerChartCaption}</small></>}</div>}</main>
 }

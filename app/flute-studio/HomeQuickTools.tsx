@@ -9,7 +9,7 @@ export default function HomeQuickTools(){
     {kind:"tool",id:"tuner",icon:"⌁",title:t.quickTools.tuner,detail:t.quickTools.tunerDetail,tone:"green"},
     {kind:"tool",id:"metronome",icon:"♩",title:t.quickTools.metronome,detail:t.quickTools.metronomeDetail,tone:"sand"},
     {kind:"tool",id:"drone",icon:"◉",title:t.quickTools.drone,detail:t.quickTools.droneDetail,tone:"pink"},
-    {kind:"link",href:"https://www.wfg.woodwind.org/flute/",icon:"●○",title:t.quickTools.fingeringChart,detail:t.quickTools.fingeringChartDetail,tone:"mist"},
+    {kind:"link",href:"/flute-studio/fingerings",icon:"●○",title:t.quickTools.fingeringChart,detail:t.quickTools.fingeringChartDetail,tone:"mist"},
     {kind:"soon",icon:"↟",title:t.quickTools.trillChart,detail:t.quickTools.trillChartDetail,tone:"blue"},
   ] as const;
 

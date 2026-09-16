@@ -1,0 +1,50 @@
+/* The flute fingering diagram — see FluteDiagram.tsx.
+
+   Filled reads as closed, hollow as open: the convention every printed
+   flute chart already shares, so no legend is needed.
+
+   Colours come from `currentColor`, never hardcoded. The same drawing has
+   to work on the chart page (dark ink on white) and inside the score
+   reader's note tooltip (light ink on a dark green ground) — with fixed
+   colours it was invisible in the tooltip. "Open" is transparent rather
+   than white for the same reason: it has to show whatever is behind it,
+   not punch a white hole in a dark panel. */
+
+.flute-diagram {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Closed shapes — the ring keys, the foot bars, the thumb bar. */
+.flute-key circle,
+.flute-key ellipse,
+.flute-key path,
+.flute-key rect {
+  fill: var(--flute-key-ground, transparent);
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linejoin: round;
+  transition: fill 0.14s ease;
+}
+.flute-key.is-down circle,
+.flute-key.is-down ellipse,
+.flute-key.is-down rect,
+.flute-key.is-down path { fill: currentColor; }
+
+/* Interactive ----------------------------------------------------------- */
+.flute-diagram.is-interactive .flute-key { cursor: pointer; }
+.flute-diagram.is-interactive .flute-key:hover circle,
+.flute-diagram.is-interactive .flute-key:hover ellipse,
+.flute-diagram.is-interactive .flute-key:hover rect,
+.flute-diagram.is-interactive .flute-key:hover path { fill: #dce8d7; }
+.flute-diagram.is-interactive .flute-key:focus-visible { outline: none; }
+.flute-diagram.is-interactive .flute-key:focus-visible circle,
+.flute-diagram.is-interactive .flute-key:focus-visible ellipse,
+.flute-diagram.is-interactive .flute-key:focus-visible rect { stroke: #678956; stroke-width: 4.5; }
+
+@media (prefers-reduced-motion: reduce) {
+  .flute-key circle,
+  .flute-key ellipse,
+  .flute-key rect { transition: none; }
+}

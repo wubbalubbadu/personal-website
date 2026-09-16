@@ -103,3 +103,39 @@
 
 /* The Library follows the same stable page frame as Exercises. */
 .library-shell{height:auto;min-height:100vh}.library-main{height:auto;min-height:100vh;overflow:visible;padding:64px 24px 130px!important}.library-content{max-width:980px}.library-page-header{padding:50px 4px 40px}.library-page-header>p:first-child{margin:0 0 8px;color:#678956;font-size:12px;font-weight:720;letter-spacing:.08em;text-transform:uppercase}.library-page-header>div{display:flex;align-items:baseline;gap:13px}.library-page-header h1{margin:0;font-size:42px;line-height:1.04;font-weight:780;letter-spacing:-.04em}.library-page-header>div span{color:#85868e;font-size:15px}.library-page-intro{margin:16px 0 0;color:#6d6f76;font-size:16px;line-height:1.55;max-width:680px}.library-list{border:0;box-shadow:0 10px 30px rgba(41,42,51,.08)}.search-filter{margin-bottom:0}@media(max-width:650px){.library-main{padding:54px 14px 105px!important}.library-page-header{padding:38px 4px 26px}.library-page-header h1{font-size:36px}}
+
+/* ── Library controls, after the difficulty filter was removed ────────────
+   Search + one action, so the row is two columns rather than three. */
+.library-content .search-filter{grid-template-columns:minmax(0,1fr) auto}
+
+/* "Surprise me" reads as a button now, not a bare glyph: icon plus label in
+   the same soft-pill language as the studio's other secondary actions, so
+   it stops looking like a second search affordance. `title` carries the
+   native tooltip — the old .has-tip bubble belongs to the score reader's
+   toolbar and had no styling on this page at all. */
+.library-content .pick-one-trigger{
+  height:52px;
+  width:auto;
+  padding:0 18px;
+  display:inline-flex;
+  align-items:center;
+  gap:9px;
+  border:1px solid var(--border,#e4e4e7);
+  border-radius:15px;
+  background:#fff;
+  color:var(--accent-ink,#46633d);
+  font:650 14px/1 inherit;
+  white-space:nowrap;
+  cursor:pointer;
+  transition:background-color .16s ease,border-color .16s ease,color .16s ease;
+}
+.library-content .pick-one-trigger:hover:not(:disabled){background:var(--accent-tint,#e5ece1);border-color:#d7e1d2}
+.library-content .pick-one-trigger:focus-visible{outline:3px solid rgba(103,137,86,.32);outline-offset:1px}
+.library-content .pick-one-trigger:disabled{opacity:.4;cursor:default}
+.library-content .pick-one-trigger svg{flex:0 0 auto}
+
+@media(max-width:650px){
+  /* The label is the first thing to go when the search field needs the room. */
+  .library-content .pick-one-trigger{padding:0 15px}
+  .library-content .pick-one-trigger span{display:none}
+}

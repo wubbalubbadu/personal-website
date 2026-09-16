@@ -1,7 +1,9 @@
 import type {ReactNode} from "react";
-export type PracticeIconName = "metronome" | "tuner" | "drone" | "markup" | "fullscreen" | "close" | "previous" | "next" | "settings" | "gear" | "tap" | "record" | "play" | "stop" | "undo" | "redo" | "saved" | "aids";
+export type PracticeIconName = "metronome" | "tuner" | "drone" | "markup" | "fullscreen" | "close" | "previous" | "next" | "settings" | "gear" | "tap" | "record" | "play" | "stop" | "undo" | "redo" | "saved" | "aids" | "tempo";
 const paths:Record<PracticeIconName,ReactNode>={
-  metronome:<><path d="M8 3h8l4 18H4L8 3Z"/><path d="m12 17 5-11M8 17h8"/><circle cx="15.5" cy="8" r="1"/></>,
+  // Trapezoid body, base line, pendulum arm. The weight-dot and the extra
+  // crossing stroke the old glyph had collapsed into a smudge at 22px.
+  metronome:<><path d="M9.2 3.5h5.6L18.5 20H5.5L9.2 3.5Z"/><path d="M6.6 14.8h10.8"/><path d="m12 14.8 3.4-8"/></>,
   tuner:<><path d="M7 3v8a5 5 0 0 0 10 0V3M12 16v6"/><path d="M5 3h4M15 3h4"/></>,
   drone:<><path d="M11 4 6 8H3v8h3l5 4V4Z"/><path d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14"/></>,
   markup:<><path d="M16.1 3.9a1.9 1.9 0 0 1 2.7 0l1.3 1.3a1.9 1.9 0 0 1 0 2.7L8.5 19.5l-4.6 1.1 1.1-4.6L16.1 3.9Z"/><path d="m14.4 5.6 4 4"/></>,
@@ -17,5 +19,29 @@ const paths:Record<PracticeIconName,ReactNode>={
   gear:<><circle cx="12" cy="12" r="3.2"/><path d="M19.4 14.4a1.5 1.5 0 0 0 .3 1.7l.1.1a1.9 1.9 0 1 1-2.7 2.7l-.1-.1a1.5 1.5 0 0 0-1.7-.3 1.5 1.5 0 0 0-.9 1.4v.2a1.9 1.9 0 0 1-3.8 0v-.1a1.5 1.5 0 0 0-1-1.4 1.5 1.5 0 0 0-1.7.3l-.1.1a1.9 1.9 0 1 1-2.7-2.7l.1-.1a1.5 1.5 0 0 0 .3-1.7 1.5 1.5 0 0 0-1.4-.9h-.2a1.9 1.9 0 0 1 0-3.8h.1a1.5 1.5 0 0 0 1.4-1 1.5 1.5 0 0 0-.3-1.7l-.1-.1a1.9 1.9 0 1 1 2.7-2.7l.1.1a1.5 1.5 0 0 0 1.7.3h.1a1.5 1.5 0 0 0 .9-1.4v-.2a1.9 1.9 0 0 1 3.8 0v.1a1.5 1.5 0 0 0 .9 1.4 1.5 1.5 0 0 0 1.7-.3l.1-.1a1.9 1.9 0 1 1 2.7 2.7l-.1.1a1.5 1.5 0 0 0-.3 1.7v.1a1.5 1.5 0 0 0 1.4.9h.2a1.9 1.9 0 0 1 0 3.8h-.1a1.5 1.5 0 0 0-1.4.9Z"/></>,
   tap:<><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="7.4" opacity=".45"/></>,
   record:<circle cx="12" cy="12" r="6" fill="currentColor" stroke="none"/>,
+  // A dial, not a metronome: the practice bar already has a metronome
+  // button, and two metronomes in one toolbar would read as one control
+  // drawn twice. This one is "how fast", not "click along".
+  tempo:<><path d="M3.8 17.5a8.5 8.5 0 1 1 16.4 0"/><path d="m12 17.5 4.4-5.2"/><circle cx="12" cy="17.6" r="1.4" fill="currentColor" stroke="none"/></>,
 };
-export function PracticeIcon({name}:{name:PracticeIconName}){return <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>}
+/**
+ * `gradient` swaps the stroke for an SVG paint server by id — a CSS
+ * gradient cannot paint a stroke, so the colours have to come from a
+ * <linearGradient> elsewhere in the document (see SpectrumDef). Every
+ * glyph here is stroke-only, so this is enough to recolour any of them.
+ */
+export function PracticeIcon({name,gradient}:{name:PracticeIconName;gradient?:string}){return <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={gradient?`url(#${gradient})`:"currentColor"} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>}
+
+/**
+ * The gradient the studio's one rainbow control paints its icon with.
+ * Rendered once, zero-sized, next to whatever uses it; the stops match
+ * --spectrum in studio-tokens.css so the icon, the label and the ring are
+ * the same sweep of colour.
+ */
+export function SpectrumDef({id}:{id:string}){
+  return <svg width="0" height="0" aria-hidden="true" focusable="false" style={{position:"absolute"}}>
+    <defs><linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stopColor="#8fb87a"/><stop offset="25%" stopColor="#6fa8c7"/><stop offset="50%" stopColor="#9d8ad4"/><stop offset="75%" stopColor="#d489c4"/><stop offset="100%" stopColor="#e0a46a"/>
+    </linearGradient></defs>
+  </svg>;
+}

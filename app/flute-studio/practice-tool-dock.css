@@ -175,6 +175,7 @@
 .tuner-icon { background: var(--dock-green); }
 .metronome-icon { background: #292a33; }
 .drone-icon { background: #c874c8; }
+.fingering-icon { background: #4b6378; }
 
 .dock-tool-heading > div {
   min-width: 0;
@@ -594,7 +595,7 @@
 }
 
 /* Pastel Quick Tools palette, overriding the retired solid-green theme. */
-.dock-launcher{background:#e7eee3!important;color:#40553d!important;border:1px solid #d7e1d2!important}.dock-launcher>span:first-child{color:#678956!important}.practice-dock>header{height:62px!important;background:#fff!important;color:#292a33!important}.practice-dock>header small{color:#85868e!important}.dock-tool{background:#fff!important}.tuner-icon{background:#dcebd9!important;color:#3f5d39!important}.metronome-icon{background:#f2e8d3!important;color:#765d2e!important}.drone-icon{background:#f7e1f8!important;color:#68466b!important}.dock-tool>button,.dock-tools>section>button{background:#292a33!important;color:#fff!important}.dock-tool[data-requested="true"]{background:#fbf3fc!important;border-color:#e9c6ec!important}
+.dock-launcher{background:#e7eee3!important;color:#40553d!important;border:1px solid #d7e1d2!important}.dock-launcher>span:first-child{color:#678956!important}.practice-dock>header{height:62px!important;background:#fff!important;color:#292a33!important}.practice-dock>header small{color:#85868e!important}.dock-tool{background:#fff!important}.tuner-icon{background:#dcebd9!important;color:#3f5d39!important}.metronome-icon{background:#f2e8d3!important;color:#765d2e!important}.drone-icon{background:#f7e1f8!important;color:#68466b!important}.fingering-icon{background:#dde8f4!important;color:#3c5670!important}.dock-tool>button,.dock-tools>section>button{background:#292a33!important;color:#fff!important}.dock-tool[data-requested="true"]{background:#fbf3fc!important;border-color:#e9c6ec!important}
 .dock-close{background:transparent!important;border:0!important;color:#686a72!important}.dock-tools{gap:16px!important;padding:16px!important;background:#f6f6f4!important}.dock-tool{background:#fff!important}.dock-tool>button,.dock-tools>section>button{background:#e7eee3!important;color:#40553d!important;border:1px solid #d7e1d2!important;transition:background-color .16s ease,transform .16s ease!important}.dock-tool>button:hover,.dock-tools>section>button:hover{background:#dce8d7!important;transform:translateY(-1px)}.dock-tool>button.running,.dock-tools>section>button.running{background:#f2d8f3!important;color:#70466f!important;border-color:#e5c4e6!important}.tuner-status:empty{display:none}.drone-active-inline{margin-top:14px;padding:10px 12px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;border-radius:12px;background:#f7f1f7;color:#5d5060;font-size:12px}.drone-active-inline span{font-weight:700}.drone-active-inline b{padding:4px 7px;border-radius:7px;background:#fff;color:#5c435e}.drone-active-inline button{margin-left:auto;padding:4px 2px!important;border:0!important;background:transparent!important;color:#9a4f91!important;transform:none!important}.practice-dock>footer{display:none!important}
 
 /* Focus on one tool at a time instead of always showing all three. */
@@ -605,3 +606,55 @@
 .dock-tool[hidden]{display:none}
 .dock-tools[data-single]{grid-template-columns:1fr!important}
 .practice-dock:has(.dock-tools[data-single]){width:min(400px,calc(100vw - 44px))}
+
+/* ── Fingering lookup in the dock ─────────────────────────────────────────
+   The whole point is not leaving the score you are reading, so this stays
+   compact: one diagram, the note it belongs to, and a scrollable strip of
+   every note. Alternates are not here — they need the room and the "when
+   to use this" text that only the full chart has. */
+.dock-tool-fingering .dock-fingering-diagram{margin:2px 0 8px;color:#2f3a2c;--flute-key-ground:#fff}
+
+
+/* The name/octave picker. Twelve names wrap into two short rows and the
+   octave row is only as long as that name actually goes, so nothing
+   scrolls sideways and nothing is cut off at the dock's edge. */
+.dock-fingering-link{margin-left:auto;font-size:11px;font-weight:600;color:#46633d;text-decoration:none}
+.dock-fingering-link:hover{text-decoration:underline}
+.dock-fingering-now{display:flex;align-items:center;gap:8px;margin:4px 0 12px;min-width:0}
+.dock-fingering-now .dock-fingering-diagram{flex:1;min-width:0;color:#2f3a2c;--flute-key-ground:#fff}
+
+
+/* Five tabs no longer fit on one line, and the last one was being clipped
+   at the dock's edge. Wrapping beats shrinking the labels to fit. */
+.practice-dock .dock-tabs{flex-wrap:wrap;row-gap:6px}
+
+/* The fingering tab's own sizing: a readable stave, a diagram that gets the
+   rest of the width, and slightly tighter buttons than the drone's so the
+   whole tool still fits without scrolling. */
+.dock-tool-fingering .dock-fingering-diagram{width:100%;margin-bottom:4px}
+.dock-tool-fingering .octave-stepper{margin-top:8px}
+
+/* The drone's stave sits beside its pitch name. */
+/* Stave over diagram rather than side by side: sharing a row left the
+   fingering too small to read, which is the one thing this tab exists for. */
+.dock-tool-fingering .dock-fingering-now{display:block;color:#2f3a2c}
+.dock-tool-fingering .dock-fingering-now > svg:first-child{display:block;margin:0 auto 2px}
+
+/* "Full chart" was loud green text competing with the heading beside it.
+   A quiet pill reads as the secondary action it is. */
+.dock-fingering-link{
+  margin-left:auto;
+  padding:5px 10px;
+  border-radius:9px;
+  background:rgba(41,42,51,.06);
+  color:#5a5c63;
+  font:650 11px/1 inherit;
+  text-decoration:none;
+  transition:background-color .16s ease,color .16s ease;
+}
+.dock-fingering-link:hover{background:rgba(41,42,51,.11);color:#40553d;text-decoration:none}
+
+/* The "Playing" strip sat directly against the button under it. */
+.dock-tool-drone .drone-active-inline{margin-bottom:10px}
+
+

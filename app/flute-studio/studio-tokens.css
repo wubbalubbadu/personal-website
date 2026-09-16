@@ -30,6 +30,12 @@
   --border: #e4e4e7;
   --border-strong: #d9d9dd;
 
+  /* Scale Studio's signature. The studio's one animated flourish, shared by
+     the featured Exercises row and the Customize scales trigger so they read
+     as the same thing in two places. Long and low-contrast on purpose — it
+     has to survive being looked at every day. */
+  --spectrum: linear-gradient(100deg, #8fb87a, #6fa8c7, #9d8ad4, #d489c4, #e0a46a, #8fb87a);
+
   /* accent — sage green */
   --accent: #678956;
   --accent-ink: #46633d;
@@ -67,3 +73,5 @@
     --row-inset: 14px;
   }
 }
+
+@keyframes studio-spectrum { to { background-position: 300% 50%; } }

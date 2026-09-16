@@ -42,7 +42,7 @@ export default function ContinuePracticingRow(){
     </Link>
     <Link className="continue-section" href="/flute-studio/exercises/scales">
       <p><i className="continue-dot tone-sage"/>{t.home.suggestedExercise}</p>
-      <b>{t.exercises.scaleStudioTitle}</b><small>{t.exercises.scaleStudioDetail}</small>
+      <b>{t.quickTools.scaleStudio}</b><small>{t.quickTools.exercisesDetail}</small>
     </Link>
   </div>;
 }

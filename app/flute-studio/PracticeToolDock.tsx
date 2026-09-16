@@ -11,8 +11,11 @@ import {
 import {useLanguage} from "./i18n/LanguageContext";
 import "./practice-tool-dock.css";
 import {usePracticeAudio} from "./PracticeAudio";
+import {FluteDiagram} from "./components/FluteDiagram";
+import {fluteFingerings, midiForPitch} from "../../content/fingerings/flute";
+import {StaffNote} from "./components/StaffNote";
 
-type ToolKey = "tuner" | "metronome" | "drone";
+type ToolKey = "tuner" | "metronome" | "drone" | "fingering";
 type PitchReading = {
   name: string;
   octave: number;
@@ -109,6 +112,11 @@ export default function PracticeToolDock() {
   const [signalActive, setSignalActive] = useState(false);
   const [listening, setListening] = useState(false);
   const [tunerMessage, setTunerMessage] = useState("");
+  // Which fingering the dock is showing, chosen as a note name plus an
+  // octave rather than one pitch out of 41. Local to the dock: looking a
+  // note up mid-practice should not disturb anything else.
+  const [lookupName, setLookupName] = useState("C");
+  const [lookupOctave, setLookupOctave] = useState(4);
 
   const [note, setNote] = useState("A");
   const [octave, setOctave] = useState(4);
@@ -132,9 +140,22 @@ export default function PracticeToolDock() {
   const tunerSection = useRef<HTMLElement | null>(null);
   const metroSection = useRef<HTMLElement | null>(null);
   const droneSection = useRef<HTMLElement | null>(null);
+  const fingeringSection = useRef<HTMLElement | null>(null);
 
   const selectedDrone = `${note}${octave}`;
   const inTune = Math.abs(reading.cents) <= 4;
+  // The twelve note names, in chromatic order, taken from the chart itself
+  // so the dock cannot list a note the data does not have.
+  const lookupNames = Array.from(new Set(fluteFingerings.map((n) => n.names[0])));
+  const octavesFor = (name: string) =>
+    fluteFingerings.filter((n) => n.names[0] === name).map((n) => Number(n.pitch.replace(/\D/g, "")));
+  const lookupOctaves = octavesFor(lookupName);
+  // A name does not exist in every octave (there is no B♭3, and the
+  // altissimo stops partway), so fall back rather than showing nothing.
+  const activeOctave = lookupOctaves.includes(lookupOctave) ? lookupOctave : lookupOctaves[0];
+  const lookupNote =
+    fluteFingerings.find((n) => n.names[0] === lookupName && Number(n.pitch.replace(/\D/g, "")) === activeOctave) ??
+    fluteFingerings[0];
   const tunerTone = !signalActive ? "idle" : inTune ? "tuned" : reading.cents < 0 ? "flat" : "sharp";
 
   const getContext = () => audio.current ?? (audio.current = new AudioContext());
@@ -158,7 +179,7 @@ export default function PracticeToolDock() {
   useEffect(() => {
     const openRequestedTool = (event: Event) => {
       const tool = (event as CustomEvent<{ tool?: ToolKey }>).detail?.tool;
-      if (tool !== "tuner" && tool !== "metronome" && tool !== "drone") return;
+      if (tool !== "tuner" && tool !== "metronome" && tool !== "drone" && tool !== "fingering") return;
       setPos({x:0,y:0});
       setRequestedTool(tool);
       setFocusedTool(tool);
@@ -170,7 +191,9 @@ export default function PracticeToolDock() {
 
   useEffect(() => {
     if (!open || !requestedTool) return;
-    const target = requestedTool === "tuner"
+    const target = requestedTool === "fingering"
+      ? fingeringSection.current
+      : requestedTool === "tuner"
       ? tunerSection.current
       : requestedTool === "metronome"
         ? metroSection.current
@@ -359,14 +382,14 @@ export default function PracticeToolDock() {
           </header>
 
           <nav className="dock-tabs" aria-label={t.toolDock.showOneTool}>
-            {(["all", "tuner", "metronome", "drone"] as const).map((key) => (
+            {(["all", "tuner", "metronome", "drone", "fingering"] as const).map((key) => (
               <button
                 key={key}
                 type="button"
                 className={focusedTool === key ? "selected" : ""}
                 onClick={() => setFocusedTool(key)}
               >
-                {key === "all" ? t.toolDock.allTools : key === "tuner" ? t.toolDock.tunerLabel : key === "metronome" ? t.toolDock.metronomeLabel : t.toolDock.droneLabel}
+                {key === "all" ? t.toolDock.allTools : key === "tuner" ? t.toolDock.tunerLabel : key === "metronome" ? t.toolDock.metronomeLabel : key === "drone" ? t.toolDock.droneLabel : t.toolDock.fingeringLabel}
               </button>
             ))}
           </nav>
@@ -478,6 +501,66 @@ export default function PracticeToolDock() {
                 <span aria-hidden="true">{drones.includes(selectedDrone) ? "■" : "▶"}</span>
                 {drones.includes(selectedDrone) ? t.toolDock.stopDrone(selectedDrone) : t.toolDock.playDrone(selectedDrone)}
               </button>
+            </section>
+            {/* Fingerings live in the dock as well as on their own page:
+                looking one up mid-practice should not cost you the score you
+                are reading. Picking a name and then an octave beats a strip
+                of 41 buttons — twelve names wrap into two short rows, and
+                the octaves are however many that name actually has. The
+                dock shows the standard fingering only; alternates stay on
+                the chart, where there is room to say when to use them. */}
+            <section
+              ref={fingeringSection}
+              className="dock-tool dock-tool-fingering"
+              data-requested={requestedTool === "fingering" || undefined}
+              hidden={focusedTool !== "all" && focusedTool !== "fingering"}
+              tabIndex={-1}
+            >
+              <div className="dock-tool-heading">
+                <span className="dock-tool-icon fingering-icon" aria-hidden="true">●○</span>
+                <strong>{t.toolDock.fingeringLabel}</strong>
+                <a className="dock-fingering-link" href="/flute-studio/fingerings">{t.toolDock.fullChart}</a>
+              </div>
+
+              {/* Stave and diagram share a line: the dock is short, and the
+                  two together are what you are actually reading. */}
+              <div className="dock-fingering-now">
+                <StaffNote midi={midiForPitch(lookupNote.pitch)} spelling={lookupNote.names[0]} width={116} />
+                <FluteDiagram pressed={lookupNote.fingerings[0].keys} className="dock-fingering-diagram" />
+              </div>
+
+              {/* The drone's own pitch picker and octave stepper, same
+                  classes and all — the two tools ask the same question, so
+                  they should not answer it with different controls. */}
+              <div className="pitch-choices">
+                {lookupNames.map((name) => (
+                  <button
+                    key={name}
+                    className={name === lookupName ? "selected" : ""}
+                    aria-pressed={name === lookupName}
+                    onClick={() => setLookupName(name)}
+                  >
+                    {name}
+                  </button>
+                ))}
+              </div>
+              <div className="octave-stepper">
+                <button
+                  aria-label={t.toolDock.lowerOctave}
+                  disabled={activeOctave <= lookupOctaves[0]}
+                  onClick={() => setLookupOctave(Math.max(lookupOctaves[0], activeOctave - 1))}
+                >
+                  −
+                </button>
+                <span><small>{t.toolDock.octave}</small><b>{activeOctave}</b></span>
+                <button
+                  aria-label={t.toolDock.higherOctave}
+                  disabled={activeOctave >= lookupOctaves[lookupOctaves.length - 1]}
+                  onClick={() => setLookupOctave(Math.min(lookupOctaves[lookupOctaves.length - 1], activeOctave + 1))}
+                >
+                  +
+                </button>
+              </div>
             </section>
           </div>
         </section>
