@@ -658,3 +658,12 @@
 .dock-tool-drone .drone-active-inline{margin-bottom:10px}
 
 
+
+/* The dock hid its own overflow behind a fixed max-height, and the tools
+   row capped itself at another fixed height. Between them, any tool taller
+   than the cap — the fingering tab is the tallest — had its bottom cut off
+   with nothing able to scroll to it, which is worse on a short window
+   where the cap bites sooner. The panel scrolls now, and the tools row
+   sizes to its content instead of to a pixel guess. */
+.practice-dock{overflow-y:auto!important;overscroll-behavior:contain}
+.practice-dock .dock-tools{max-height:none!important;min-height:0}
