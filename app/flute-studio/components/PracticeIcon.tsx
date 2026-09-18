@@ -1,5 +1,5 @@
 import type {ReactNode} from "react";
-export type PracticeIconName = "metronome" | "tuner" | "drone" | "markup" | "fullscreen" | "close" | "previous" | "next" | "settings" | "gear" | "tap" | "record" | "play" | "stop" | "undo" | "redo" | "saved" | "aids" | "tempo";
+export type PracticeIconName = "metronome" | "tuner" | "drone" | "markup" | "fullscreen" | "close" | "previous" | "next" | "settings" | "gear" | "tap" | "record" | "play" | "stop" | "undo" | "redo" | "saved" | "aids" | "tempo" | "print";
 const paths:Record<PracticeIconName,ReactNode>={
   // Trapezoid body, base line, pendulum arm. The weight-dot and the extra
   // crossing stroke the old glyph had collapsed into a smudge at 22px.
@@ -23,6 +23,7 @@ const paths:Record<PracticeIconName,ReactNode>={
   // button, and two metronomes in one toolbar would read as one control
   // drawn twice. This one is "how fast", not "click along".
   tempo:<><path d="M3.8 17.5a8.5 8.5 0 1 1 16.4 0"/><path d="m12 17.5 4.4-5.2"/><circle cx="12" cy="17.6" r="1.4" fill="currentColor" stroke="none"/></>,
+  print:<><path d="M7 9V4h10v5"/><path d="M7 18H5.5A1.5 1.5 0 0 1 4 16.5v-5A1.5 1.5 0 0 1 5.5 10h13a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 1-1.5 1.5H17"/><path d="M7 14h10v6H7Z"/></>,
 };
 /**
  * `gradient` swaps the stroke for an SVG paint server by id — a CSS

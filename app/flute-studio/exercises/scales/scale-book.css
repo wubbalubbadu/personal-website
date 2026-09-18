@@ -93,3 +93,70 @@
 .scale-reader .scale-book__panel-close{position:sticky;top:0;margin-left:auto;width:auto;min-width:64px;height:44px;font-size:14px;border-radius:12px;background:white;z-index:2;cursor:pointer}
 .scale-reader .scale-book__panel-close:hover{background:white}
 .scale-reader .scale-book__panel-body{margin-top:8px}
+
+/* Practice tempos printed above each exercise's name on the page (View ▸
+   Practice tempo, or the toggle in Tempos). Deliberately NOT engraving: a
+   practice tempo is a note-to-self that changes week to week, so it reads
+   as a control you can grab rather than as part of the music. Its own
+   blue, not the studio green the engraving and the panels use, so there is
+   never a moment where you read it as something the composer wrote. No
+   "♩ =": it
+   sits on its own line above the title with nothing to be confused with,
+   and the metronome glyph only made it look like a tempo marking the
+   composer wrote. Always visible, never a hover reveal: something you
+   check mid-practice has to be readable without reaching for it. */
+.score-marks { position:absolute; inset:0; pointer-events:none; z-index:6; }
+.score-tempo-mark {
+  position:absolute; transform:translateY(-100%); pointer-events:auto;
+  display:inline-flex; align-items:center; gap:1px; padding:1px;
+  border-radius:999px; background:#e8f0fb; color:#2f5d99;
+  font-size:12px; line-height:1; white-space:nowrap;
+  animation:scoreTempoMarkIn .18s ease both;
+  transition:background-color .14s ease, box-shadow .14s ease;
+}
+@keyframes scoreTempoMarkIn { from { opacity:0 } to { opacity:1 } }
+@media(prefers-reduced-motion:reduce){ .score-tempo-mark { animation:none } }
+.score-tempo-mark:hover { background:#dbe8f9; }
+.score-tempo-mark:focus-within { box-shadow:inset 0 0 0 2px #2f5d99; }
+/* The metronome tap: same icon, same meaning as the one on this exercise's
+   row in Tempos, tinted while it is the one running. */
+.score-tempo-mark__sound {
+  width:18px; height:18px; display:grid; place-items:center;
+  border:0; border-radius:50%; background:transparent; color:#6a8ec0;
+  cursor:pointer; padding:0;
+}
+.score-tempo-mark__sound svg { width:13px; height:13px; }
+.score-tempo-mark__sound:hover { background:#c9dcf4; color:#2f5d99; }
+.score-tempo-mark.is-sounding { background:#cfe0f6; box-shadow:inset 0 0 0 1px #7ba4d8; }
+.score-tempo-mark.is-sounding .score-tempo-mark__sound { color:#2f5d99; }
+.score-tempo-mark__step {
+  width:18px; height:18px; display:grid; place-items:center;
+  border:0; border-radius:50%; background:transparent; color:#6a8ec0;
+  font:600 13px/1 inherit; cursor:pointer; padding:0;
+}
+.score-tempo-mark__step:hover:not(:disabled) { background:#c9dcf4; color:#2f5d99; }
+.score-tempo-mark__step:disabled { opacity:.35; cursor:default; }
+.score-tempo-mark__value { display:inline-flex; align-items:center; padding:0 1px; }
+.score-tempo-mark__value input {
+  width:27px; border:0; background:transparent; padding:0;
+  font:700 13px/1 inherit; color:inherit; text-align:center;
+  -moz-appearance:textfield; cursor:pointer;
+}
+.score-tempo-mark__value input::-webkit-outer-spin-button,
+.score-tempo-mark__value input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+.score-tempo-mark__value input:focus { outline:none; cursor:text; }
+
+
+/* A long exercise name ("C chromatic thirds") used to be cut off with an
+   ellipsis, so reading the list meant scrolling sideways to find out which
+   scale a tempo belonged to. The name now takes whatever width is left and
+   wraps rather than truncating. The row stays ONE row: wrapping the
+   controls underneath made the list twice as tall, which for sixty
+   exercises is a lot of scrolling to save a few characters. The space
+   comes from dropping the per-row range caption instead — it said the same
+   thing ("Two octaves") on every row and is already in the header. */
+.scale-reader__tempo { flex-wrap:nowrap; }
+.scale-book__tempo-label { flex:1 1 auto; min-width:0; }
+.scale-book__metronome { flex:0 0 auto; }
+
+

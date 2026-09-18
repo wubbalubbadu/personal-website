@@ -31,17 +31,25 @@
 .markup-row button:disabled:hover{background:transparent}
 .markup-icon.chosen{background:#dcebd9;color:#3f5d39}
 .sticky-swatch{width:14px;height:14px;background:#fff3a3;border:1px solid #e9dd7a;border-radius:2px;transform:rotate(-8deg);display:block;pointer-events:none}
-.score-note{position:absolute;z-index:9;min-width:150px;max-width:260px;cursor:grab;touch-action:none}
+.score-note{position:absolute;z-index:9;cursor:grab;touch-action:none}
 .score-note:active{cursor:grabbing}
-.score-note textarea{display:block;width:100%;min-height:60px;resize:none;border:0;outline:0;background:transparent;font:400 13px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",Arial,sans-serif;color:#292a33}
-.score-note.sticky textarea{resize:both}
+/* Both kinds resize from their own grabber; the size is read back and
+   stored on the note (see commitNoteSize) so it survives a reload. */
+.score-note textarea{display:block;width:180px;min-width:110px;min-height:60px;resize:both;border:0;outline:0;background:transparent;font:400 13px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",Arial,sans-serif;color:#292a33}
 .score-note.text{background:transparent;border:0;padding:2px;box-shadow:none}
 .score-note.text:focus-within{outline:1px dashed #c9cad1;outline-offset:6px;border-radius:6px}
 .score-note.sticky{background:#fff3a3;border:1px solid #e9dd7a;border-radius:4px;padding:12px 12px 10px;box-shadow:2px 6px 14px rgba(41,42,51,.18);transform:rotate(-1.2deg)}
-.score-note.sticky textarea{min-height:90px;font-family:Georgia,serif;color:#4a4324}
+.score-note.sticky textarea{width:190px;min-height:90px;font-family:Georgia,serif;color:#4a4324}
 .score-note.sticky textarea::placeholder,.score-note.text textarea::placeholder{color:#9a9ba1}
-.score-note__remove{position:absolute;top:-9px;right:-9px;width:20px;height:20px;border:1px solid #dedfd9;border-radius:50%;background:#fff;color:#8b8d94;font-size:13px;line-height:1;cursor:pointer;display:none;place-items:center}
-.score-note:hover .score-note__remove,.score-note:focus-within .score-note__remove{display:grid}
+/* No ring around the ×: the circle read as a UI chip pinned onto the
+   music. A bare glyph, with a tint only under the pointer, reads as an
+   action on the note you have picked. It exists only while that note IS
+   picked — one per note, always on, made the page a field of buttons. */
+.score-note__remove{position:absolute;top:-8px;right:-8px;width:20px;height:20px;border:0;border-radius:5px;background:transparent;color:#8b8d94;font-size:16px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0}
+.score-note__remove:hover{background:rgba(41,42,51,.1);color:#40414a}
+/* The selected note says which one it is, so the × has a visible owner. */
+.score-note.is-selected.text{outline:1px dashed #c9cad1;outline-offset:6px;border-radius:6px}
+.score-note.is-selected.sticky{box-shadow:2px 6px 14px rgba(41,42,51,.18),0 0 0 2px #b9bbc4}
 .flute-tip.finger-chart{min-width:320px;padding:14px 16px}
 /* The fingering drawing sits on its own light plate rather than inverting
    to suit the tip. The tip is dark by default and light inside .workspace,

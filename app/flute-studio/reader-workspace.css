@@ -32,7 +32,7 @@
 .reader-workspace .markup-icon{width:auto;min-width:44px;height:44px;border-radius:5px;gap:4px;display:flex;padding:6px;font-size:14px}
 .reader-workspace .swatch{width:28px;height:28px}
 .reader-workspace .ink.active{touch-action:none}
-.reader-workspace .score-note__remove{display:grid;width:32px;height:32px;right:-16px;top:-16px}
+.reader-workspace .score-note__remove{width:30px;height:30px;right:-15px;top:-15px;font-size:20px;border-radius:7px}
 .reader-workspace .notation-setting{display:grid;gap:6px;font-size:13px;padding:8px}
 .notation-setting select{width:100%;font-size:14px;padding:7px;border:1px solid var(--line);background:white;border-radius:4px}
 .running-dot{width:6px;height:6px;flex:0 0 6px;border-radius:50%;background:#46633d}
@@ -145,6 +145,10 @@ html.score-focus-mode .reader-tools,html.score-focus-mode .reader-document{displ
 .restored-reader .transport{display:flex;align-items:center;gap:14px}
 .restored-reader .restored-view-controls{padding:0;border:0;background:transparent;gap:8px}
 .restored-reader .topbar-toolbar-slot{display:flex}
+/* An empty slot is still a flex child, and the row's 12px gap was being
+   paid for it — which is the odd hole between the star and the download
+   arrow on a piece that has no toolbar of its own. */
+.topbar-toolbar-slot:empty{display:none!important}
 .restored-reader .transport-pop{right:0;left:auto}
 html.score-focus-mode .restored-reader .workspace{grid-template-rows:auto auto auto minmax(0,1fr)!important;padding-top:0!important}
 @media(max-width:760px){.restored-reader .topbar>div{flex-wrap:wrap}.restored-reader .transport{flex-wrap:wrap}.restored-reader .practice-bar{padding:8px}.restored-reader .practice-bar .tool{min-width:54px}}
@@ -172,7 +176,17 @@ body:has(.restored-reader) .studio-navigation{display:none!important}
    rather than let it wrap to a second row, which reflows the page oddly. */
 .restored-reader .reader-view{gap:4px}
 .restored-reader .score-paper.engraved{width:var(--reader-page-width)!important;max-width:100%!important;margin:0 auto!important}
-.restored-reader .score-paper[data-loading="true"] .osmd-score,.restored-reader .score-paper[data-loading="true"] canvas{visibility:hidden}
+/* The engraving fades back IN; it does not blink. Every settings change in
+   Scale Studio re-engraves the whole book, and a hard visibility flip made
+   that read as a glitch — the music vanished and snapped back a sixth of a
+   second later. Going out is instant and going in is a fade, deliberately:
+   engraving blocks the main thread, so a fade-OUT would not get the frames
+   to animate and would only delay hiding a score that is about to be
+   replaced anyway. pointer-events stays off while it is out, which is what
+   visibility was doing for us before. */
+.restored-reader .score-paper .osmd-score,.restored-reader .score-paper canvas{transition:opacity .22s ease}
+.restored-reader .score-paper[data-loading="true"] .osmd-score,.restored-reader .score-paper[data-loading="true"] canvas{opacity:0;pointer-events:none;transition:none}
+@media(prefers-reduced-motion:reduce){.restored-reader .score-paper .osmd-score,.restored-reader .score-paper canvas{transition:none}}
 .reader-popover-anchor{display:inline-flex;align-items:center}
 .reader-settings-panel{position:fixed;inset:auto;margin:0;border:1px solid var(--line);border-radius:14px;padding:14px;background:white;color:#292a33;box-shadow:0 12px 30px #26352e2b;overflow:visible;font:14px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",Arial,sans-serif}
 .reader-panel-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
@@ -454,7 +468,22 @@ html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document"
 .reader-settings-panel .scale-book__tempo-list:empty::after{content:"Choose keys in Customize scales first.";color:#71747e;font-size:12.5px;line-height:1.5}
 .reader-settings-panel .scale-reader__tempo{padding:4px 0}
 .reader-settings-panel .scale-book__tempo-label{min-width:0}
-.reader-settings-panel .scale-book__tempo-label b{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.reader-settings-panel .scale-book__tempo-label b{font-size:13px;white-space:normal}
+/* "♩ =" belongs on one line with the number it labels; letting it wrap
+   stacked the note head above the equals sign in its own little column. */
+.scale-book__tempo-field{white-space:nowrap;flex:0 0 auto}
+/* The −/+ steppers are the same kind of control as the play and metronome
+   buttons beside them, so they get the same 34px rounded square and the
+   same hover tint. They were a wider, rounder pill with a different hover
+   colour, which made one row look like two families of button. */
+.reader-settings-panel .scale-book__metronome>button:not(.scale-book__row-tool){
+  width:34px;height:34px;min-width:34px;min-height:34px;
+  display:grid;place-items:center;border-radius:10px;background:transparent;
+  color:#71747e;font-size:16px;cursor:pointer;
+  transition:background-color .16s ease,color .16s ease;
+}
+.reader-settings-panel .scale-book__metronome>button:not(.scale-book__row-tool):hover:not(:disabled){background:rgba(41,42,51,.07);color:#40553d}
+.reader-settings-panel .scale-book__metronome>button:disabled{opacity:.35;cursor:default}
 
 /* ── The Customize scales trigger ─────────────────────────────────────────
    The one rainbow control in the toolbar, matching the featured Scale
@@ -521,3 +550,45 @@ html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document"
 .reader-settings-panel .scale-book__row-tool:hover{background:rgba(41,42,51,.07);color:#40553d}
 .reader-settings-panel .scale-book__row-tool.on{background:#dce8d7;color:#40553d}
 @media(prefers-reduced-motion:reduce){.reader-settings-panel .scale-book__row-tool{transition:none}}
+
+/* ── Printing a handout ───────────────────────────────────────────────────
+   The score is re-engraved at A4 first (see printScore / layoutScore), so
+   by the time this stylesheet applies the engraving is already one <svg>
+   per sheet. All this has to do is get everything else out of the way and
+   break between those sheets.
+
+   The scroller is the thing that would otherwise ruin it: on screen it is a
+   fixed-height overflow:auto box, so printing it straight would put one
+   screenful on the paper and silently drop the rest of the book. */
+@media print {
+  @page { margin: 14mm 12mm; }
+  .restored-reader .topbar,
+  .restored-reader .practice-bar,
+  .restored-reader .reader-tools,
+  .restored-reader .markup-row,
+  .restored-reader .reader-pages,
+  .restored-reader .reader-settings-panel,
+  .restored-reader .reader-popover-anchor,
+  .restored-reader .score-loading,
+  .cookie-companion { display: none !important; }
+  .restored-reader .workspace { display: block !important; height: auto !important; }
+  .restored-reader .score-scroll {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+  .restored-reader .score-paper.engraved {
+    width: auto !important;
+    max-width: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    background: #fff !important;
+    zoom: 1 !important;
+  }
+  /* Annotations print; their controls do not. */
+  .score-note__remove { display: none !important; }
+  .score-tempo-mark { background: none !important; box-shadow: none !important; }
+  .score-tempo-mark__step, .score-tempo-mark__sound { display: none !important; }
+}

@@ -221,12 +221,17 @@ export function scaleNotes(key:MajorKey,range:ScaleRange,typeId:ScaleTypeId="maj
     for(let i=0;i<=high;i++)path.push({degree:i,up:true});
     for(let i=high-1;i>=low;i--)path.push({degree:i,up:false});
     for(let i=low+1;i<0;i++)path.push({degree:i,up:true});
-    if(path.at(-1)?.degree===0)path.pop();
   }else{
     const up=ascendingDegrees(form,low,high,ceiling,type);
     up.forEach(degree=>path.push({degree,up:true}));
     for(let i=up.length-2;i>=0;i--)path.push({degree:up[i],up:false});
   }
+  // A walk that comes back to where it started ends on the tonic, and that
+  // last tonic is always one too many: on a repeat the next pass opens with
+  // it, and with "Hold the tonic" the held note below IS it. This used to
+  // apply only to scales, so every arpeggio (and every interval form) had a
+  // tonic sounding twice in a row at the end — straight OR held.
+  if(path.at(-1)?.degree===0)path.pop();
   const notes=path.map(({degree,up})=>noteAt(spelled,degree,type,!up));
   // The held tonic is part of the note list, not an extra appended at
   // render time — the practice overlays (names, solfège, syllables) index

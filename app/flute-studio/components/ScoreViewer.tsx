@@ -2,6 +2,7 @@
 import {ReaderPopover} from "./ReaderPopover";
 
 import { PointerEvent, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { MusicSheetCalculator, OpenSheetMusicDisplay as OSMDType } from "opensheetmusicdisplay";
 import { useLanguage } from "../i18n/LanguageContext";
 import { useRecents } from "../lib/storage";
@@ -47,6 +48,43 @@ type NoteDisplay = "off"|"names"|"solfege";
  * number of notes, so that is the unit used for both the capacity and the
  * split.
  */
+/**
+ * VexFlow charges every note for the articulation marks hanging off it:
+ * Articulation.format does `state.left_shift += width/2; state.right_shift
+ * += width/2`, so a staccato dot makes its note ~9px wider on the staff.
+ * In Scale Studio that is very visible — switching a scale from plain
+ * tongued to staccato took a line from 29 notes down to 15, and the whole
+ * book reflowed. It is also not what an engraver does: a staccato dot or a
+ * tenuto line is centred under the notehead and claims no horizontal room
+ * of its own; only the vertical stacking (which setTextLine handles, and
+ * which we leave alone) is real.
+ *
+ * Patched through an instance rather than an import because OSMD bundles
+ * its own private copy of VexFlow and does not re-export it. The flag keeps
+ * it to the unmetered exercise books — repertoire keeps whatever spacing
+ * VexFlow has always given it.
+ */
+let suppressArticulationSpacing=false;
+let articulationSpacingPatched=false;
+type ArticulationModifier={getCategory?:()=>string;constructor:{format?:(articulations:unknown,state:{left_shift:number;right_shift:number})=>boolean}};
+function patchArticulationSpacing(osmd:OSMDType){
+  if(articulationSpacingPatched)return;
+  const measures=(osmd.GraphicSheet?.MeasureList??[]) as {vfVoices?:Record<string,{tickables?:{modifiers?:ArticulationModifier[]}[]}>}[][];
+  for(const row of measures)for(const measure of row??[])for(const voice of Object.values(measure?.vfVoices??{}))for(const tickable of voice?.tickables??[])for(const modifier of tickable?.modifiers??[]){
+    if(modifier.getCategory?.()!=="articulations")continue;
+    const original=modifier.constructor.format;
+    if(!original)return;
+    modifier.constructor.format=(articulations,state)=>{
+      const left=state.left_shift,right=state.right_shift;
+      const handled=original(articulations,state);
+      if(suppressArticulationSpacing){state.left_shift=left;state.right_shift=right}
+      return handled;
+    };
+    articulationSpacingPatched=true;
+    return;
+  }
+}
+
 function balanceSystemBreaks(xml:string,noteCapacity:number){
   const marker='<print new-system="yes"/>';
   if(noteCapacity<1||!xml.includes(marker))return xml;
@@ -129,7 +167,124 @@ const labelWidth=(()=>{
     return width;
   };
 })();
+/** What a host needs to place its own marks on the engraving. */
+/**
+ * The exercise-book engraving rules, in one place so the reader and the PDF
+ * export cannot drift apart: an exercise book has no bar numbers, no time
+ * signature, and does not cancel the previous exercise's key with a row of
+ * naturals. Returns the courtesy-signature suppressor, which has to be
+ * re-applied after every load.
+ */
+function applyExerciseRules(osmd:OSMDType){
+  osmd.setOptions({drawMeasureNumbers:false,newSystemFromXML:true});
+  osmd.EngravingRules.RenderTimeSignatures=false;
+  // Explicit per-exercise breaks (inserted in OnXMLRead, where the page
+  // width is known) replace the global rule — the two would fight, since
+  // RenderXMeasuresPerLineAkaSystem forces its own cut at a fixed measure
+  // count regardless of where an exercise ends.
+  osmd.EngravingRules.RenderXMeasuresPerLineAkaSystem=0;
+  osmd.EngravingRules.StretchLastSystemLine=false;
+  return ()=>{
+    // Independent exercises keep only the opening clef and do not cancel
+    // the preceding exercise's key signature with naturals.
+    osmd.GraphicSheet.MeasureList.forEach((staffMeasures,index)=>staffMeasures.forEach(measure=>{
+      if(index>0)measure.addClefAtBegin=()=>{};
+      const addKey=measure.addKeyAtBegin.bind(measure);
+      measure.addKeyAtBegin=(current,_previous,clef)=>addKey(current,current,clef);
+    }));
+    // Courtesy signatures use extra measures created during reflow. Scope
+    // their omission to this score's synchronous layout pass.
+    const sheet=osmd.GraphicSheet;
+    const calculate=sheet.reCalculate.bind(sheet);
+    sheet.reCalculate=(...args)=>{
+      const factory=(sheet.GetCalculator.constructor as typeof MusicSheetCalculator).symbolFactory;
+      const createExtra=factory.createExtraGraphicalMeasure;
+      factory.createExtraGraphicalMeasure=(...params)=>{
+        const extra=createExtra.apply(factory,params);
+        extra.addKeyAtBegin=()=>{};
+        return extra;
+      };
+      try{return calculate(...args)}finally{factory.createExtraGraphicalMeasure=createExtra}
+    };
+  };
+}
+
+/**
+ * ♭ and ♯ are not in the font faces a PDF can assume are there, and they
+ * come out as mojibake — "D♭ major scale" printed as "D&m major scale",
+ * with the letter spacing thrown off to match.
+ *
+ * This only ever touches the exercise NAMES. Every accidental that belongs
+ * to the music — the ones in key signatures and in front of notes — is
+ * drawn by VexFlow as a path, not as text, so it converts perfectly and is
+ * untouched here. Swapping the two characters for their plain-text
+ * spellings is what a teacher would type anyway, and it costs nothing;
+ * keeping the real glyphs would mean embedding a Unicode font in every
+ * download for two characters.
+ */
+function plainTextAccidentals(svg:SVGSVGElement){
+  for(const node of svg.querySelectorAll("text")){
+    const text=node.textContent;
+    if(!text)continue;
+    const plain=text.replace(/♭/g,"b").replace(/♯/g,"#");
+    if(plain!==text)node.textContent=plain;
+  }
+}
+
+/** Width the export stage is laid out at, in px. Only the ratio to
+ *  PAGE_MM matters — the SVG is mapped 1:1 onto the PDF page afterwards. */
+const PRINT_PAGE_WIDTH=794;
+const PAGE_MM={width:210,height:297};
+/** Page margin for the export, in OSMD units (≈ millimetres). */
+const PRINT_MARGIN=8;
+/**
+ * Top margin, wider than the rest so the title and the byline have a band
+ * of their own to sit in — at the default the byline landed on top of the
+ * first scale.
+ *
+ * It goes on every page, not just the first: OSMD uses the NARROW top
+ * margin on every page when it is not drawing a title itself, which is our
+ * case, so PageTopMargin alone does nothing and both have to be set. An
+ * even top margin throughout is normal in printed music anyway.
+ *
+ * Units are OSMD's, not millimetres — empirically about 1.87mm each, so 13
+ * puts the first ink around 25mm down, clear of a byline whose baseline is
+ * at 19mm.
+ */
+const PRINT_TOP_MARGIN=13;
+/**
+ * One staff space on paper, in millimetres — the single number that decides
+ * how big the printed music is, and the reason the export ignores the
+ * reader's notation-size setting entirely. Engravers quote this as a
+ * rastral: 1.75mm is score size, 2.2mm is a large method book. 1.9mm sits
+ * where a printed solo part normally does, which is what a handout is.
+ */
+const STAFF_SPACE_MM=1.9;
+/** Whose studio made the handout, under the title on the first page. */
+const BYLINE="Cookie Flute Studio";
+/**
+ * Measures a rendered staff space, in millimetres of the finished page.
+ *
+ * Off a notehead, because it is the one dimension that is both trivial to
+ * find in the DOM and fixed by convention: a black notehead is 1.18 staff
+ * spaces wide in every engraving tradition. The staff lines themselves
+ * carry no class of their own, and the enclosing .staffline box grows with
+ * ledger lines and high notes, so measuring that reports whatever the
+ * music happens to reach rather than the staff.
+ */
+function staffSpaceMm(stage:HTMLElement){
+  const svg=stage.querySelector<SVGSVGElement>(":scope > div > svg");
+  const head=svg?.querySelector<SVGGElement>(".vf-notehead");
+  const viewWidth=svg?.viewBox.baseVal.width;
+  if(!svg||!head||!viewWidth)return 0;
+  const spaceInViewUnits=head.getBBox().width/1.18;
+  // The viewBox spans the whole page, so view units convert straight to mm.
+  return spaceInViewUnits*(PAGE_MM.width/viewWidth);
+}
+
 export type OverlayVisibility={names:boolean;solfege:boolean;accidentals:boolean;tonguing:boolean;counts:boolean;sticks:boolean};
+/** What a host needs to place its own marks on the engraving. */
+export type ScoreMarksContext={root:HTMLDivElement|null;version:number;magnify:number;controls:ReaderControls};
 function overlay(root:HTMLDivElement,className:string,text:string,x:number,y:number){const item=document.createElement("span");item.className=`practice-overlay ${className}`;item.textContent=text;item.style.left=`${x}px`;item.style.top=`${y}px`;root.appendChild(item);return item}
 
 /**
@@ -264,7 +419,7 @@ function sizeInkCanvas(canvas:HTMLCanvasElement|null,sizeRef:{current:{w:number;
 }
 function addTheoryTargets(root:HTMLDivElement){const targets:[[string,string],...[string,string][]]=[[".vf-clef","Treble clef: the curl circles the G line. Flute music is normally written in this clef."],[".vf-keysignature","Key signature: shows which notes are sharped or flatted for the rest of the piece, unless an accidental changes one."],[".vf-timesignature","Time signature: the top number gives beats per measure; the bottom number identifies the beat value."],[".vf-stavetie","Tie: hold the connected notes as one continuous sound. Do not tongue the second note."]];targets.forEach(([selector,text])=>root.querySelectorAll<SVGElement>(selector).forEach(node=>{node.dataset.theory=text;node.classList.add("theory-target")}))}
 
-type ScoreNote={id:string;kind:"text"|"sticky";x:number;y:number;text:string};
+type ScoreNote={id:string;kind:"text"|"sticky";x:number;y:number;text:string;w?:number;h?:number};
 function notesStorageKey(id:string){return `cookie:${id}:notes`}
 function readNotes(id:string):ScoreNote[]{try{const saved=JSON.parse(localStorage.getItem(notesStorageKey(id))??"[]");return Array.isArray(saved)?saved:[]}catch{return []}}
 
@@ -276,6 +431,10 @@ function prepareScore(xml: string,title:string) {
 }
 
 export type ReaderControls={
+  /** Write the score out as a PDF file the reader can keep. */
+  download:()=>void;
+  /** True while that PDF is being written. */
+  exporting:boolean;
   bpm:number;
   setTempo:(tempo:number)=>void;
   metronome:boolean;
@@ -292,8 +451,14 @@ export type ReaderControls={
   playFromEvent:(eventIndex:number)=>void;
   /** Which event playback last started from, or null when stopped. */
   playingFrom:number|null;
+  /**
+   * The event the music is ON right now, which is not where it started —
+   * a host listing exercises needs the moving one to know which of them is
+   * sounding once playback has run past the first.
+   */
+  playingEvent:number|null;
 };
-export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=false,lineBreak}:{config:ScoreViewerConfig;toolbar?:React.ReactNode;settings?:(controls:ReaderControls)=>React.ReactNode;onTempoChange?:(tempo:number)=>void;unmetered?:boolean;lineBreak?:{value:boolean;onChange:(value:boolean)=>void}}) {
+export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=false,lineBreak,practiceTempo,scoreMarks,headerActions,save,extraSystemSpacing=0}:{config:ScoreViewerConfig;toolbar?:React.ReactNode;settings?:(controls:ReaderControls)=>React.ReactNode;onTempoChange?:(tempo:number)=>void;unmetered?:boolean;lineBreak?:{value:boolean;onChange:(value:boolean)=>void};practiceTempo?:{value:boolean;onChange:(value:boolean)=>void};scoreMarks?:(context:ScoreMarksContext)=>React.ReactNode;headerActions?:(controls:ReaderControls)=>React.ReactNode;save?:{saved:boolean;onToggle:()=>void;label:string;savedLabel:string};extraSystemSpacing?:number}) {
   const {t,lang}=useLanguage();
   const zh=lang==="zh";
   const {bpm,setBpm,metro,toggleMetro,toggleDrone,stopAllDrones,drones,initializeScore}=usePracticeAudio();
@@ -335,7 +500,7 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
   // layout pass also runs from a ResizeObserver and from the load effect,
   // neither of which re-closes over current state.
   const overlayVisibilityRef=useRef<OverlayVisibility>({names:false,solfege:false,accidentals:false,tonguing:true,counts:false,sticks:false});
-  const [loading,setLoading]=useState(true); const [error,setError]=useState(""); const [startMeasure,setStartMeasure]=useState(1); const [playing,setPlaying]=useState(false); const [playingFrom,setPlayingFrom]=useState<number|null>(null); const [annotating,setAnnotating]=useState(false); const [inkColor,setInkColor]=useState("#e52e31"); const [eraser,setEraser]=useState(false);
+  const [loading,setLoading]=useState(true); const [error,setError]=useState(""); const [startMeasure,setStartMeasure]=useState(1); const [playing,setPlaying]=useState(false); const [playingFrom,setPlayingFrom]=useState<number|null>(null); const [playingEvent,setPlayingEvent]=useState<number|null>(null); const [annotating,setAnnotating]=useState(false); const [inkColor,setInkColor]=useState("#e52e31"); const [eraser,setEraser]=useState(false);
   // Page-turn mode: false (free scroll) by default until the mount effect
   // below picks a real default (stored preference, else viewport width) —
   // starting false keeps first paint identical between server and client.
@@ -362,17 +527,34 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
   // range. 12 matches standard engraving density.
   const [systemSpacing,setSystemSpacing]=useState(12);
   const systemSpacingRef=useRef(systemSpacing);
+  // Extra room a host asks for above every system, on top of whatever the
+  // reader's own System spacing setting is. Scale Studio uses it to open a
+  // real lane for its practice tempos — an annotation printed into a gap
+  // that was never sized for one lands on the beams of the system above.
+  const extraSystemSpacingRef=useRef(extraSystemSpacing);
+  const systemSpacingTotal=()=>systemSpacingRef.current+extraSystemSpacingRef.current;
   // How much room each note gets along the staff. Notation size scales the
   // whole engraving; this changes only how tightly notes are packed, which
   // is what decides how much music fits on a line.
   const [noteSpacing,setNoteSpacing]=useState(1);
   const noteSpacingRef=useRef(noteSpacing);
+  const marksLayerRef=useRef<HTMLDivElement|null>(null);
+  const [marksLayer,setMarksLayer]=useState<HTMLDivElement|null>(null);
+  // Bumped after every engrave so a host drawing on the score knows its
+  // measurements are stale — note positions change on any re-render.
+  const [layoutVersion,setLayoutVersion]=useState(0);
   const readerAnchor=useRef<{event:string;offset:number}|null>(null);
-  const reportTempo=useRef(false);
+  /** Last tempo actually handed to onTempoChange; null until the first. */
+  const reportTempo=useRef<number|null>(null);
   const [pageWidth,setPageWidth]=useState("900");
   const [spreadPageCount,setSpreadPageCount]=useState(0);
   const originalPageMargins=useRef<{left:number;right:number;top:number;narrow:number;bottom:number}|null>(null);
   const pageWidthRef=useRef(pageWidth);
+  // True only while the score is being re-engraved for paper. A ref as well
+  // as state because layoutScore() reads it synchronously, outside React.
+  /** True while the PDF is being written, so the button can say so. */
+  const exportingRef=useRef(false);
+  const [exporting,setExporting]=useState(false);
   const pageTargetRef=useRef<number|null>(null);
   const metroTaps=useRef<number[]>([]);
   function tapTempo(){const now=performance.now();metroTaps.current=[...metroTaps.current.filter(t=>now-t<3000),now].slice(-5);const taps=metroTaps.current;if(taps.length>1)setBpm(60000/((now-taps[0])/(taps.length-1)))}
@@ -383,29 +565,90 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
 
   const [notes,setNotes]=useState<ScoreNote[]>([]);
   const notesRef=useRef<ScoreNote[]>([]);
-  const noteDrag=useRef<{id:string;startX:number;startY:number;origX:number;origY:number}|null>(null);
+  const noteDrag=useRef<{id:string;startX:number;startY:number;origX:number;origY:number;moved:boolean}|null>(null);
+  // Which note is picked up right now. Only the selected note shows its
+  // delete control: an × hovering over every note turned a marked-up page
+  // into a field of little buttons, and there was no way to say "this one"
+  // before acting on it.
+  const [selectedNote,setSelectedNote]=useState<string|null>(null);
   useEffect(()=>{notesRef.current=notes},[notes]);
   useEffect(()=>{setNotes(readNotes(id))},[id]);
   useEffect(()=>{record(id)},[id,record]);
   function persistNotes(next:ScoreNote[]){setNotes(next);notesRef.current=next;localStorage.setItem(notesStorageKey(id),JSON.stringify(next))}
   function addScoreNote(kind:"text"|"sticky"){const note:ScoreNote={id:crypto.randomUUID(),kind,x:60+notes.length*16,y:60+notes.length*16,text:""};persistNotes([...notes,note]);setInkActive(false)}
   function updateScoreNoteText(noteId:string,text:string){persistNotes(notes.map(n=>n.id===noteId?{...n,text}:n))}
-  function removeScoreNote(noteId:string){persistNotes(notes.filter(n=>n.id!==noteId))}
+  function removeScoreNote(noteId:string){setSelectedNote(current=>current===noteId?null:current);persistNotes(notes.filter(n=>n.id!==noteId))}
+  /**
+   * A textarea's own resize grabber changes the element but tells nobody,
+   * so the new size is read back off the DOM when the drag ends and stored
+   * on the note. Without this a resize looks like it worked and is gone on
+   * the next reload, which is worse than not being resizable at all.
+   */
+  function commitNoteSize(noteId:string,element:HTMLTextAreaElement){
+    const w=Math.round(element.offsetWidth),h=Math.round(element.offsetHeight);
+    const note=notesRef.current.find(n=>n.id===noteId);
+    if(!note||(note.w===w&&note.h===h))return;
+    persistNotes(notesRef.current.map(n=>n.id===noteId?{...n,w,h}:n));
+  }
+  /** How close to the textarea's bottom-right corner counts as its own
+   *  resize grabber rather than somewhere to start a drag from. */
+  const RESIZE_CORNER=18;
+  /** Pointer travel that separates "clicked it" from "dragged it". */
+  const DRAG_SLOP=4;
+  /**
+   * A note drags from anywhere on it, not just from the sliver of padding
+   * around the textarea — which was the whole note as far as the eye was
+   * concerned, and made moving one a hunt for its border.
+   *
+   * Pressing is therefore ambiguous: it could become a drag or turn out to
+   * be a click into the text. So the press is only tracked at first, and
+   * nothing is committed until the pointer has travelled far enough to mean
+   * it. Past that it becomes a real drag (and captures the pointer, so the
+   * textarea does not start selecting text underneath); short of it, the
+   * release puts the caret in the note by hand — which it has to, because
+   * the press suppressed the browser's own focus to keep the two apart.
+   *
+   * Two things are deliberately left alone: a note you are already editing
+   * (so selecting text with the mouse still works), and the textarea's own
+   * resize corner (so the grabber still grabs).
+   */
   function noteDown(event:React.PointerEvent<HTMLDivElement>,note:ScoreNote){
-    if((event.target as HTMLElement).tagName==="TEXTAREA"||(event.target as HTMLElement).closest("button"))return;
-    noteDrag.current={id:note.id,startX:event.clientX,startY:event.clientY,origX:note.x,origY:note.y};
-    event.currentTarget.setPointerCapture(event.pointerId);
+    // Selecting happens on any press, including one that lands in the
+    // textarea — clicking into a note to read it is exactly when you want
+    // to be able to delete it.
+    setSelectedNote(note.id);
+    const target=event.target as HTMLElement;
+    if(target.closest("button"))return;
+    if(target.tagName==="TEXTAREA"){
+      if(document.activeElement===target)return;
+      const box=target.getBoundingClientRect();
+      if(event.clientX>box.right-RESIZE_CORNER&&event.clientY>box.bottom-RESIZE_CORNER)return;
+      event.preventDefault();
+    }
+    noteDrag.current={id:note.id,startX:event.clientX,startY:event.clientY,origX:note.x,origY:note.y,moved:false};
+    // Captured on the press, not once the drag is recognised: without it
+    // the very first move has to happen to land on the note itself, and a
+    // quick flick puts the pointer somewhere else before the browser
+    // delivers anything, so the drag never starts at all.
+    try{event.currentTarget.setPointerCapture(event.pointerId)}catch{/* Dragging still works without it. */}
   }
   function noteMove(event:React.PointerEvent<HTMLDivElement>){
-    if(!noteDrag.current)return;
-    const {id:noteId,startX,startY,origX,origY}=noteDrag.current;
-    const dx=(event.clientX-startX)/magnify,dy=(event.clientY-startY)/magnify;
-    setNotes(current=>current.map(n=>n.id===noteId?{...n,x:origX+dx,y:origY+dy}:n));
+    const drag=noteDrag.current;
+    if(!drag)return;
+    if(!drag.moved){
+      if(Math.hypot(event.clientX-drag.startX,event.clientY-drag.startY)<DRAG_SLOP)return;
+      drag.moved=true;
+    }
+    const dx=(event.clientX-drag.startX)/magnify,dy=(event.clientY-drag.startY)/magnify;
+    setNotes(current=>current.map(n=>n.id===drag.id?{...n,x:drag.origX+dx,y:drag.origY+dy}:n));
   }
-  function noteUp(){
-    if(!noteDrag.current)return;
+  function noteUp(event:React.PointerEvent<HTMLDivElement>){
+    const drag=noteDrag.current;
+    if(!drag)return;
     noteDrag.current=null;
-    persistNotes(notesRef.current);
+    if(drag.moved){persistNotes(notesRef.current);return}
+    const target=event.target as HTMLElement;
+    if(target instanceof HTMLTextAreaElement)target.focus();
   }
 
   // Re-tags every rendered note with its event index/measure/pitch (OSMD
@@ -475,7 +718,22 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
     pageOffsetsRef.current=offsets;setPageCount(offsets.length);
     if(pageTargetRef.current===null)setPageIndex(pageAt(offsets,scroller.scrollTop));
   }
-  function resync(){syncNotesAndOverlays();computePages()}
+  function resync(){syncNotesAndOverlays();computePages();mountMarksLayer()}
+  /**
+   * A host-owned layer pinned inside the engraving, for things the PAGE
+   * wants to put on the music (Scale Studio's practice tempos) rather than
+   * things the reader itself draws. It is a plain div React portals into,
+   * re-appended after every engrave because OSMD clears .osmd-score's
+   * children whenever it redraws. Coordinates inside it are .osmd-score's
+   * own, which is the same frame the practice overlays already use.
+   */
+  function mountMarksLayer(){
+    const root=scoreRef.current;if(!root)return;
+    let layer=marksLayerRef.current;
+    if(!layer){layer=document.createElement("div");layer.className="score-marks";marksLayerRef.current=layer;setMarksLayer(layer)}
+    if(layer.parentElement!==root)root.appendChild(layer);
+    setLayoutVersion(version=>version+1);
+  }
   function rememberPosition(){
     const scroller=scoreScrollRef.current,root=scoreRef.current;if(!scroller||!root)return;
     if(scroller.scrollTop<8){readerAnchor.current=null;return}
@@ -483,21 +741,50 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
     const note=[...root.querySelectorAll<SVGElement>("[data-event]")].find(node=>node.getBoundingClientRect().bottom>=top);
     if(note)readerAnchor.current={event:note.dataset.event!,offset:(note.getBoundingClientRect().top-top)/magnifyRef.current};
   }
+  /**
+   * The width and zoom layoutScore() would pick, applied BEFORE the first
+   * engrave rather than only after it. Without this the initial render ran
+   * at the paper's unset width and at full notation size (the `preference`
+   * argument was simply left off), so every re-engrave — which in Scale
+   * Studio means every settings change — produced one throwaway layout
+   * around a third too big before layoutScore() corrected it. It was
+   * hidden, but the hide is what the eye read as a glitch: the music
+   * blanked out and snapped back at a different size. Matching the two up
+   * front means the first layout is already the final one.
+   */
+  /** Every engrave goes through here so the articulation-spacing patch is
+   *  in force for exactly the renders it should apply to. */
+  function renderScore(osmd:OSMDType){
+    suppressArticulationSpacing=unmetered;
+    try{osmd.render()}finally{suppressArticulationSpacing=false}
+  }
+  function prepareLayoutBox(){
+    const osmd=osmdRef.current,scroller=scoreScrollRef.current,root=scoreRef.current;
+    if(!scroller)return;
+    if(root?.parentElement){
+      const padding=getComputedStyle(scroller);
+      root.parentElement.style.width=`${scroller.clientWidth-parseFloat(padding.paddingLeft)-parseFloat(padding.paddingRight)}px`;
+    }
+    const spread=pageWidthRef.current==="spread"&&scroller.clientWidth>=1000;
+    const zoom=notationScale(spread?scroller.clientWidth/2:scroller.clientWidth,scroller.clientHeight,sizePreferenceRef.current);
+    if(osmd)osmd.zoom=zoom;
+    return zoom;
+  }
   function layoutScore(){
     const osmd=osmdRef.current,scroller=scoreScrollRef.current,root=scoreRef.current;if(!osmd||!scroller||!root)return;
     const anchor=readerAnchor.current;
     const spread=pageWidthRef.current==="spread"&&scroller.clientWidth>=1000;
+    const paged=spread;
     root.classList.toggle("score-spread",spread);
-    osmd.setOptions({pageFormat:spread?"A4 P":"Endless",drawTitle:spread});
+    osmd.setOptions({pageFormat:paged?"A4 P":"Endless",drawTitle:spread});
     scroller.classList.toggle("spread-viewport",spread);
     const margins=originalPageMargins.current;
-    if(margins){osmd.EngravingRules.PageLeftMargin=spread?8:margins.left;osmd.EngravingRules.PageRightMargin=spread?8:margins.right;osmd.EngravingRules.PageTopMargin=spread?8:margins.top;osmd.EngravingRules.PageTopMarginNarrow=spread?8:margins.narrow;osmd.EngravingRules.PageBottomMargin=spread?8:margins.bottom;}
+    if(margins){osmd.EngravingRules.PageLeftMargin=paged?8:margins.left;osmd.EngravingRules.PageRightMargin=paged?8:margins.right;osmd.EngravingRules.PageTopMargin=paged?8:margins.top;osmd.EngravingRules.PageTopMarginNarrow=paged?8:margins.narrow;osmd.EngravingRules.PageBottomMargin=paged?8:margins.bottom;}
     const padding=getComputedStyle(scroller);
     const width=scroller.clientWidth-parseFloat(padding.paddingLeft)-parseFloat(padding.paddingRight);
     if(root.parentElement)root.parentElement.style.width=`${width}px`;
-    const next=notationScale(spread?scroller.clientWidth/2:scroller.clientWidth,scroller.clientHeight,sizePreferenceRef.current);
-    osmd.zoom=next;
-    osmd.EngravingRules.MinimumDistanceBetweenSystems=systemSpacingRef.current;
+    osmd.zoom=notationScale(spread?scroller.clientWidth/2:scroller.clientWidth,scroller.clientHeight,sizePreferenceRef.current);
+    osmd.EngravingRules.MinimumDistanceBetweenSystems=systemSpacingTotal();
     osmd.EngravingRules.VoiceSpacingMultiplierVexflow=noteSpacingRef.current;
     if(unmetered)osmd.EngravingRules.RenderXMeasuresPerLineAkaSystem=0;
     const spreadWidth=width-24;
@@ -510,7 +797,7 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
       root.style.setProperty("--book-page-ratio",`${spreadWidth/2} / ${pageHeight}`);
     }
     if(spread)root.style.width=`${spreadWidth/2}px`;else root.style.width="";
-    osmd.render();root.style.width=spread?`${spreadWidth}px`:"";resync();
+    renderScore(osmd);root.style.width=spread?`${spreadWidth}px`:"";resync();
     sizeInkCanvas(canvasRef.current,inkSizeRef,inkHistory,inkIndex,id,()=>setHistoryTick(v=>v+1));
     if(spread){const offsets=pageOffsetsRef.current;scroller.scrollTop=offsets[Math.min(pageIndex,offsets.length-1)]??0;}
     else if(anchor){const node=root.querySelector<SVGElement>(`[data-event="${anchor.event}"]`);if(node)scroller.scrollTop+=node.getBoundingClientRect().top-scroller.getBoundingClientRect().top-anchor.offset*magnifyRef.current}
@@ -608,7 +895,7 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
     return()=>{cancelAnimationFrame(frame);el.removeEventListener("wheel",wheel);el.removeEventListener("touchstart",start);el.removeEventListener("touchmove",move);el.removeEventListener("touchend",end);el.removeEventListener("touchcancel",end);el.removeEventListener("gesturestart",gestureStart);el.removeEventListener("gesturechange",gestureChange)};
   },[]);
 
-  useEffect(()=>{const saved=JSON.parse(localStorage.getItem("cookie:music-favorites")||"[]") as string[];setFavorite(saved.includes(id));let mounted=true; async function load(){ try { if(unmetered&&!asset.includes("<note>")){scoreRef.current?.replaceChildren();osmdRef.current=null;setLoading(false);return;} setLoading(true); const {OpenSheetMusicDisplay}=await import("opensheetmusicdisplay"); if(!mounted||!scoreRef.current)return; scoreRef.current.replaceChildren(); const osmd=new OpenSheetMusicDisplay(scoreRef.current,{backend:"svg",autoResize:false,drawTitle:false,drawComposer:false,drawingParameters:"compacttight"}); osmd.setOptions({pageFormat:"Endless",drawMeasureNumbers:true,drawPartNames:false,drawMetronomeMarks:true}); osmd.OnXMLRead = xml=>{if(config.defaultTempo===undefined){const doc=new DOMParser().parseFromString(xml,"application/xml");const marked=Number(doc.querySelector("sound[tempo]")?.getAttribute("tempo"));if(marked>0)initializeScore(id,marked)}return prepareScore(xml,title)}; osmd.zoom=notationScale(scoreScrollRef.current?.clientWidth??700,scoreScrollRef.current?.clientHeight??650); await osmd.load(asset,title); if(!mounted||!scoreRef.current)return;
+  useEffect(()=>{const saved=JSON.parse(localStorage.getItem("cookie:music-favorites")||"[]") as string[];setFavorite(saved.includes(id));let mounted=true; async function load(){ try { if(unmetered&&!asset.includes("<note>")){scoreRef.current?.replaceChildren();osmdRef.current=null;setLoading(false);return;} setLoading(true); const {OpenSheetMusicDisplay}=await import("opensheetmusicdisplay"); if(!mounted||!scoreRef.current)return; scoreRef.current.replaceChildren(); const osmd=new OpenSheetMusicDisplay(scoreRef.current,{backend:"svg",autoResize:false,drawTitle:false,drawComposer:false,drawingParameters:"compacttight"}); osmd.setOptions({pageFormat:"Endless",drawMeasureNumbers:true,drawPartNames:false,drawMetronomeMarks:true}); osmd.OnXMLRead = xml=>{if(config.defaultTempo===undefined){const doc=new DOMParser().parseFromString(xml,"application/xml");const marked=Number(doc.querySelector("sound[tempo]")?.getAttribute("tempo"));if(marked>0)initializeScore(id,marked)}return prepareScore(xml,title)}; await osmd.load(asset,title); if(!mounted||!scoreRef.current)return;
       // React's Strict Mode runs this whole effect twice in dev (mount,
       // cleanup, mount again) to surface exactly this kind of bug: without
       // re-checking `mounted` after every await, a stale first run and the
@@ -621,7 +908,7 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
       // starts at 12 (standard engraving density) and layoutScore() re-
       // applies it on every relayout, so changing the setting takes effect.
       originalPageMargins.current={left:osmd.EngravingRules.PageLeftMargin,right:osmd.EngravingRules.PageRightMargin,top:osmd.EngravingRules.PageTopMargin,narrow:osmd.EngravingRules.PageTopMarginNarrow,bottom:osmd.EngravingRules.PageBottomMargin};
-      osmd.EngravingRules.MinimumDistanceBetweenSystems=systemSpacingRef.current;
+      osmd.EngravingRules.MinimumDistanceBetweenSystems=systemSpacingTotal();
       osmd.EngravingRules.VoiceSpacingMultiplierVexflow=noteSpacingRef.current;
       // Scale Studio's invisible measures end in a repeat barline every
       // couple of beats — with the default 0 margin, the last note before
@@ -632,40 +919,15 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
       osmd.EngravingRules.MeasureRightMargin=0.6;
       let suppressCourtesySignatures=()=>{};
       if(unmetered){
-        osmd.setOptions({drawMeasureNumbers:false,newSystemFromXML:true});
-        osmd.EngravingRules.RenderTimeSignatures=false;
-        // Explicit per-exercise breaks (inserted in OnXMLRead, where the
-        // page width is known) replace the global rule — the two would
-        // fight, since RenderXMeasuresPerLineAkaSystem forces its own cut
-        // at a fixed measure count regardless of where an exercise ends.
-        osmd.EngravingRules.RenderXMeasuresPerLineAkaSystem=0;
-        suppressCourtesySignatures=()=>{
-          // Independent exercises keep only the opening clef and do not
-          // cancel the preceding exercise's key signature with naturals.
-          osmd.GraphicSheet.MeasureList.forEach((staffMeasures,index)=>staffMeasures.forEach(measure=>{
-            if(index>0)measure.addClefAtBegin=()=>{};
-            const addKey=measure.addKeyAtBegin.bind(measure);
-            measure.addKeyAtBegin=(current,_previous,clef)=>addKey(current,current,clef);
-          }));
-          // Courtesy signatures use extra measures created during reflow.
-          // Scope their omission to this score's synchronous layout pass.
-          const sheet=osmd.GraphicSheet;
-          const calculate=sheet.reCalculate.bind(sheet);
-          sheet.reCalculate=(...args)=>{
-            const factory=(sheet.GetCalculator.constructor as typeof MusicSheetCalculator).symbolFactory;
-            const createExtra=factory.createExtraGraphicalMeasure;
-            factory.createExtraGraphicalMeasure=(...params)=>{
-              const extra=createExtra.apply(factory,params);
-              extra.addKeyAtBegin=()=>{};
-              return extra;
-            };
-            try{return calculate(...args)}finally{factory.createExtraGraphicalMeasure=createExtra}
-          };
-        };
+        suppressCourtesySignatures=applyExerciseRules(osmd);
         suppressCourtesySignatures();
-        osmd.EngravingRules.StretchLastSystemLine=false;
       }
-      osmd.render();
+      // AFTER load, never before: osmd.load() resets zoom to 1, which is
+      // what made the first engrave of every re-render land a third too
+      // large before layoutScore() pulled it back.
+      osmd.zoom=prepareLayoutBox()??osmd.zoom;
+      patchArticulationSpacing(osmd);
+      renderScore(osmd);
       osmdRef.current=osmd; sizeInkCanvas(canvasRef.current,inkSizeRef,inkHistory,inkIndex,id,()=>setHistoryTick(v=>v+1)); if(!config.pitches)sequenceRef.current={...deriveScoreEvents(osmd),keyAccidentals:new Set()};
       // Independent of whether the note sequence itself is auto-derived or
       // hand-authored — the key signature always comes straight from OSMD,
@@ -701,7 +963,8 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
             await osmd.load(balanced,title);
             if(!mounted||!scoreRef.current)return;
             suppressCourtesySignatures();
-            osmd.render();
+            osmd.zoom=prepareLayoutBox()??osmd.zoom;
+            renderScore(osmd);
             if(!config.pitches)sequenceRef.current={...deriveScoreEvents(osmd),keyAccidentals:sequenceRef.current.keyAccidentals};
             layoutScore();
           }
@@ -717,9 +980,21 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
     // upfront and hidden with CSS.
     const changed=(Object.keys(next) as (keyof OverlayVisibility)[]).some(key=>next[key]!==previous[key]);
     if(changed&&!loading&&osmdRef.current)syncNotesAndOverlays();},[noteDisplay,accidentals,rhythmMode,tonguing,loading]);
+  // The spinner announces a real wait, not the ~150ms a re-engrave takes
+  // after a settings change. Flashing it on every click was half of what
+  // made changing a scale feel glitchy: spinner in, spinner out, before
+  // you had finished reading the word. It only appears if the engrave is
+  // genuinely slow — a first load, or a very large book.
+  const [showSpinner,setShowSpinner]=useState(false);
+  useEffect(()=>{
+    if(!loading){setShowSpinner(false);return}
+    const timer=window.setTimeout(()=>setShowSpinner(true),450);
+    return()=>window.clearTimeout(timer);
+  },[loading]);
   useEffect(()=>{sizePreferenceRef.current=sizePreference;rememberPosition();layoutScore()},[sizePreference]);
   useEffect(()=>{pageWidthRef.current=pageWidth;rememberPosition();layoutScore()},[pageWidth]);
   useEffect(()=>{systemSpacingRef.current=systemSpacing;rememberPosition();layoutScore()},[systemSpacing]);
+  useEffect(()=>{extraSystemSpacingRef.current=extraSystemSpacing;rememberPosition();layoutScore()},[extraSystemSpacing]);
   useEffect(()=>{noteSpacingRef.current=noteSpacing;rememberPosition();layoutScore()},[noteSpacing]);
   useEffect(()=>{if(osmdRef.current)computePages()},[magnify]);
   useEffect(()=>{
@@ -735,7 +1010,19 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
   },[]);
   useEffect(()=>()=>{playbackTimers.current.forEach(window.clearTimeout);if(audioRef.current&&audioRef.current.state!=="closed")audioRef.current.close().catch(()=>{})},[]);
   const audio=()=>audioRef.current??(audioRef.current=new AudioContext());
-  useEffect(()=>{if(!reportTempo.current){reportTempo.current=true;return}onTempoChange?.(bpm)},[bpm,onTempoChange]);
+  // Report real tempo CHANGES only. This effect also re-runs whenever the
+  // onTempoChange callback's identity changes, which happens every time the
+  // host switches which exercise is active — and firing there re-reported
+  // the transport's unchanged tempo, stamping it onto whichever exercise
+  // had just been selected. That is what silently reset every practice
+  // tempo to 60: typing into one mark selected that exercise, and the
+  // re-fire wrote the transport's 60 straight back over it.
+  useEffect(()=>{
+    if(reportTempo.current===null){reportTempo.current=bpm;return}
+    if(reportTempo.current===bpm)return;
+    reportTempo.current=bpm;
+    onTempoChange?.(bpm);
+  },[bpm,onTempoChange]);
   useEffect(()=>{
     if(!playing)return;
     const pos=playbackPosition.current;
@@ -755,7 +1042,7 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },[bpm]);
   function fluteTone(pitch:string,start:number,duration:number,peakGain=.075){const match=pitch.match(/^([A-G][♯♭]?)(\d)$/);if(!match)return;const c=audio(),fund=c.createOscillator(),gain=c.createGain(),vibrato=c.createOscillator(),vibGain=c.createGain(),frequency=pitchFrequency(match[1],+match[2]);fund.type="sine";fund.frequency.value=frequency;vibrato.frequency.value=5.2;vibGain.gain.value=frequency*.004;vibrato.connect(vibGain);vibGain.connect(fund.frequency);gain.gain.setValueAtTime(.0001,start);gain.gain.exponentialRampToValueAtTime(peakGain,start+.035);gain.gain.setValueAtTime(peakGain*.933,start+Math.max(.05,duration-.07));gain.gain.exponentialRampToValueAtTime(.0001,start+duration);fund.connect(gain).connect(c.destination);fund.start(start);vibrato.start(start);fund.stop(start+duration);vibrato.stop(start+duration);playbackNodes.current.push(fund,vibrato)}
-  function stopPlayback(){playbackTimers.current.forEach(window.clearTimeout);playbackTimers.current=[];playbackNodes.current.forEach(o=>{try{o.stop()}catch{/* Already-ended notes need no further cleanup. */}});playbackNodes.current=[];playbackPosition.current=null;scoreRef.current?.querySelectorAll(".playback-active").forEach(n=>n.classList.remove("playback-active"));setPlaying(false);setPlayingFrom(null)}
+  function stopPlayback(){playbackTimers.current.forEach(window.clearTimeout);playbackTimers.current=[];playbackNodes.current.forEach(o=>{try{o.stop()}catch{/* Already-ended notes need no further cleanup. */}});playbackNodes.current=[];playbackPosition.current=null;scoreRef.current?.querySelectorAll(".playback-active").forEach(n=>n.classList.remove("playback-active"));setPlaying(false);setPlayingFrom(null);setPlayingEvent(null)}
   // Articulation only ever changes how long a note's own envelope rings,
   // never the start-to-start spacing between notes (that stays `event.d*unit`
   // regardless) — staccato fades out early to leave an audible gap, tenuto
@@ -785,7 +1072,7 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
     const soundUnits:number[]=new Array(slice.length);for(let i=slice.length-1;i>=0;i--)soundUnits[i]=slice[i].d+(i+1<slice.length&&slice[i+1].tied?soundUnits[i+1]:0);
     slice.forEach((event,offset)=>{
       const index=fromIndex+offset,start=cursor;
-      playbackTimers.current.push(window.setTimeout(()=>{nodes.forEach(n=>n.classList.remove("playback-active"));nodes[index]?.classList.add("playback-active")},start+80));
+      playbackTimers.current.push(window.setTimeout(()=>{nodes.forEach(n=>n.classList.remove("playback-active"));nodes[index]?.classList.add("playback-active");setPlayingEvent(index)},start+80));
       if(event.p&&!event.tied){
         const pitch=event.p,{factor,peakGain}=articulationAudio(event.articulation,event.slurContinuation),absoluteStart=audioStart+start/1000,soundDuration=Math.max(.09,soundUnits[offset]*unit/1000*factor);
         playbackTimers.current.push(window.setTimeout(()=>fluteTone(pitch,absoluteStart,soundDuration,peakGain),start));
@@ -842,9 +1129,117 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
     showNoteInfo(node,e.clientX,e.clientY);
   }
   function toggleFavorite(){const saved=JSON.parse(localStorage.getItem("cookie:music-favorites")||"[]") as string[],next=saved.includes(id)?saved.filter(item=>item!==id):[...saved,id];localStorage.setItem("cookie:music-favorites",JSON.stringify(next));setFavorite(next.includes(id));window.dispatchEvent(new Event("cookie:favorites-updated"))}
+  /**
+   * Re-engrave for paper, hand over to the browser's own print-to-PDF, then
+   * put the screen layout back.
+   *
+   * The browser's window is the point rather than something to route
+   * around: "Save as PDF", paper size and margins already live there, and a
+   * real PDF writer in the page would mean shipping a PDF library to render
+   * something the browser can already render.
+   *
+   * The document title is swapped for the piece's own while it happens,
+   * because that is what every browser offers as the default filename — so
+   * the save comes up as "Major scales.pdf" rather than the tab's title.
+   */
+  /**
+   * Write the score out as a real PDF file.
+   *
+   * Engraved OFF-SCREEN, in a second OSMD instance of its own. The first
+   * version re-laid-out the score you were looking at and put it back
+   * afterwards, which made the viewer jump about every time you pressed
+   * download. Nothing here touches the visible engraving at all.
+   *
+   * It is also deliberately NOT a copy of your screen settings. Notation
+   * size, system spacing and note spacing are reading preferences — how
+   * you like the music on a screen at whatever width the window happens to
+   * be — and paper has none of those problems. So the PDF is engraved at
+   * one traditional size, the same for everybody, every time. The only
+   * setting it keeps is where the line breaks go, because that is a
+   * decision about the music rather than about the screen, and it already
+   * lives in the MusicXML.
+   *
+   * Vector, not a screenshot: OSMD draws noteheads and stems as paths, so
+   * they convert straight through and stay sharp at any zoom.
+   */
+  async function downloadPdf(){
+    if(exportingRef.current)return;
+    exportingRef.current=true;
+    setExporting(true);
+    const stage=document.createElement("div");
+    // Off-screen rather than display:none — OSMD has to measure what it
+    // draws, and a hidden element measures zero.
+    stage.style.cssText=`position:fixed;left:-10000px;top:0;width:${PRINT_PAGE_WIDTH}px;pointer-events:none;opacity:0`;
+    document.body.appendChild(stage);
+    try{
+      const [{OpenSheetMusicDisplay},{jsPDF},{svg2pdf}]=await Promise.all([
+        import("opensheetmusicdisplay"),import("jspdf"),import("svg2pdf.js"),
+      ]);
+      const osmd=new OpenSheetMusicDisplay(stage,{backend:"svg",autoResize:false,drawTitle:false,drawComposer:false,drawingParameters:"compacttight"});
+      osmd.setOptions({pageFormat:"A4 P",drawMeasureNumbers:true,drawPartNames:false,drawMetronomeMarks:true});
+      osmd.OnXMLRead=xml=>prepareScore(xml,title);
+      const suppress=unmetered?applyExerciseRules(osmd):()=>{};
+      await osmd.load(asset,title);
+      suppress();
+      osmd.EngravingRules.PageLeftMargin=PRINT_MARGIN;
+      osmd.EngravingRules.PageRightMargin=PRINT_MARGIN;
+      osmd.EngravingRules.PageTopMargin=PRINT_TOP_MARGIN;
+      osmd.EngravingRules.PageTopMarginNarrow=PRINT_TOP_MARGIN;
+      osmd.EngravingRules.PageBottomMargin=PRINT_MARGIN;
+      osmd.EngravingRules.PageFormat.width=PAGE_MM.width;
+      osmd.EngravingRules.PageFormat.height=PAGE_MM.height;
+      osmd.EngravingRules.MeasureRightMargin=0.6;
+      // Engraving defaults, not the reader's: 12 is standard system
+      // density and 1 is unstretched note spacing.
+      osmd.EngravingRules.MinimumDistanceBetweenSystems=12;
+      osmd.EngravingRules.VoiceSpacingMultiplierVexflow=1;
+      // Measure, then set. A staff space is the unit every other dimension
+      // in engraving is quoted in, so sizing the page by measuring one and
+      // scaling it to the traditional 1.75mm lands the same size on paper
+      // whatever the zoom happened to be.
+      osmd.zoom=1;
+      osmd.render();
+      const measured=staffSpaceMm(stage);
+      // Clamped so a measurement that goes wrong cannot collapse or explode
+      // the whole book; at the extremes it just engraves at zoom 1.
+      const scale=measured?Math.min(3,Math.max(.3,STAFF_SPACE_MM/measured)):1;
+      if(Math.abs(scale-1)>0.01){osmd.zoom=scale;suppress();osmd.render()}
+      const pages=[...stage.querySelectorAll<SVGSVGElement>(":scope > div > svg")];
+      {const tops=pages.map(p=>{const vw=p.viewBox.baseVal.width;const ys=[...p.querySelectorAll<SVGGElement>(".vf-text, .staffline")].map(n=>n.getBBox().y);return +(Math.min(...ys)*(PAGE_MM.width/vw)).toFixed(2)});console.log("TOPPROBE",JSON.stringify({tops,pages:pages.length}))}
+      if(!pages.length)return;
+      // compress: the engraving is thousands of small paths, and flate
+      // takes a twelve-page book from megabytes to something you can email.
+      const pdf=new jsPDF({orientation:"portrait",unit:"mm",format:"a4",compress:true});
+      for(let index=0;index<pages.length;index++){
+        if(index)pdf.addPage();
+        plainTextAccidentals(pages[index]);
+        await svg2pdf(pages[index],pdf,{x:0,y:0,width:PAGE_MM.width,height:PAGE_MM.height});
+      }
+      pdf.setPage(1);
+      pdf.setFont("times","normal");
+      pdf.setFontSize(18);
+      pdf.text(title,PAGE_MM.width/2,13,{align:"center"});
+      pdf.setFont("times","italic");
+      pdf.setFontSize(9);
+      pdf.setTextColor(110);
+      pdf.text(BYLINE,PAGE_MM.width/2,19,{align:"center"});
+      pdf.save(`${title}.pdf`);
+    }catch(e){
+      setError(e instanceof Error?e.message:t.scoreViewer.engravingFailed);
+    }finally{
+      stage.remove();
+      exportingRef.current=false;
+      setExporting(false);
+    }
+  }
+
+  // Built once and handed to both the settings panel and anything drawing
+  // on the score, so a tempo mark on the page can drive the transport the
+  // same way a row in a panel does.
+  const readerControls:ReaderControls={bpm,setTempo:setBpm,metronome:metro,toggleMetronome:toggleMetro,playing,playFromEvent,playingFrom,playingEvent,download:downloadPdf,exporting};
   return <main className="app-shell reader-workspace restored-reader" data-layout={pageWidth} style={{"--reader-page-width":pageWidth==="900"?"900px":"100%","--viewer-magnify":magnify,"--score-composer":`"${composer}"`} as React.CSSProperties}>
     <section className="workspace">
-      <header className="topbar"><div><a className="back has-tip" href={backHref} aria-label={backLabel?`${t.scoreViewer.back}: ${backLabel}`:t.scoreViewer.back} data-tip={backLabel||t.scoreViewer.back}><span className="back-arrow" aria-hidden="true">‹</span>{backLabel&&<span className="back-label">{backLabel}</span>}</a>{!toolbar&&<strong>{title}</strong>}</div><div><SaveButton saved={favorite} onToggle={toggleFavorite} label={favorite?t.scoreViewer.removeFromSaved:t.scoreViewer.saveMusic} tip={favorite?t.scoreViewer.removeFromSaved:t.scoreViewer.saveMusic}/><span className="topbar-toolbar-slot">{toolbar}</span>{pdfPath&&<a className="icon-btn has-tip" href={pdfPath} download data-tip={t.scoreViewer.downloadPdf} aria-label={t.scoreViewer.downloadPdf}>↓</a>}</div></header>
+      <header className="topbar"><div><a className="back has-tip" href={backHref} aria-label={backLabel?`${t.scoreViewer.back}: ${backLabel}`:t.scoreViewer.back} data-tip={backLabel||t.scoreViewer.back}><span className="back-arrow" aria-hidden="true">‹</span>{backLabel&&<span className="back-label">{backLabel}</span>}</a>{!toolbar&&<strong>{title}</strong>}</div><div><span className="topbar-toolbar-slot">{toolbar}</span>{save?<SaveButton saved={save.saved} onToggle={save.onToggle} label={save.saved?save.savedLabel:save.label} tip={save.saved?save.savedLabel:save.label}/>:<SaveButton saved={favorite} onToggle={toggleFavorite} label={favorite?t.scoreViewer.removeFromSaved:t.scoreViewer.saveMusic} tip={favorite?t.scoreViewer.removeFromSaved:t.scoreViewer.saveMusic}/>}{headerActions?.(readerControls)}{pdfPath&&<a className="icon-btn has-tip" href={pdfPath} download data-tip={t.scoreViewer.downloadPdf} aria-label={t.scoreViewer.downloadPdf}>↓</a>}</div></header>
 
       <div className="practice-bar"><div className="tool-group">        <button data-tip={t.scoreViewer.markUpTip} className={annotating?"tool on coral has-tip":"tool has-tip"} onClick={()=>{const next=!annotating;setAnnotating(next);if(next)setInkActive(true)}}><PracticeIcon name="markup"/>{t.scoreViewer.markUp}</button>
       </div>
@@ -866,10 +1261,11 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
             </>}
           </div>
         </div>      <div className="reader-header restored-view-controls">        
-        <div className="reader-view">{settings?.({bpm,setTempo:setBpm,metronome:metro,toggleMetronome:toggleMetro,playing,playFromEvent,playingFrom})}{magnify!==1&&<button onClick={()=>setMagnify(1)}>{zh?"重置缩放":"Reset zoom"}</button>}
+        <div className="reader-view">{settings?.(readerControls)}{magnify!==1&&<button onClick={()=>setMagnify(1)}>{zh?"重置缩放":"Reset zoom"}</button>}
           <ReaderPopover label={zh?"显示设置":"View settings"} trigger={<><PracticeIcon name="gear"/>{zh?"显示":"View"}</>} className="tool has-tip">
 
             <div className="reader-setting-row"><span>{zh?"页面布局":"Page layout"}</span><div className="reader-choice" role="group" aria-label={zh?"页面布局":"Page layout"}>{[["900",zh?"竖向单页":"Portrait"],["auto",zh?"适应窗口":"Fit window"],["spread",zh?"双页":"Two pages"]].map(([value,label])=><button key={value} aria-pressed={pageWidth===value} onClick={()=>setPageWidth(value)}>{label}</button>)}</div></div>
+            {practiceTempo&&<div className="reader-setting-row"><span>{zh?"练习速度":"Practice tempo"}</span><div className="reader-choice" role="group" aria-label={zh?"练习速度":"Practice tempo"}><button aria-pressed={!practiceTempo.value} onClick={()=>practiceTempo.onChange(false)}>{zh?"隐藏":"Hidden"}</button><button aria-pressed={practiceTempo.value} onClick={()=>practiceTempo.onChange(true)}>{zh?"显示在乐谱上":"On the page"}</button></div></div>}
             {lineBreak&&<div className="reader-setting-row"><span>{zh?"换行":"Line breaks"}</span><div className="reader-choice" role="group" aria-label={zh?"换行":"Line breaks"}><button aria-pressed={!lineBreak.value} onClick={()=>lineBreak.onChange(false)}>{zh?"接续上一个":"Continue from previous"}</button><button aria-pressed={lineBreak.value} onClick={()=>lineBreak.onChange(true)}>{zh?"另起一行":"Start on a new line"}</button></div></div>}
             <label className="reader-setting-row">{zh?"音符大小":"Notation size"}<input type="range" min="0.75" max="1.5" step="0.05" value={sizePreference} onChange={e=>setSizePreference(+e.target.value)}/></label>
             <label className="reader-setting-row">{zh?"行间距":"System spacing"}<input type="range" min="7" max="24" step="1" value={systemSpacing} onChange={e=>setSystemSpacing(+e.target.value)}/></label>
@@ -900,11 +1296,11 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
         <button className="markup-icon history-control has-tip" data-tip={t.scoreViewer.clearPage} aria-label={t.scoreViewer.clearPage} onClick={clearInk}><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h12M8 6V4.5a1 1 0 011-1h2a1 1 0 011 1V6M6 6l.6 10.2a1 1 0 001 .8h4.8a1 1 0 001-.8L14 6"/><path d="M8.5 9v5M11.5 9v5"/></svg></button>
         <button className="markup-close" onClick={()=>setAnnotating(false)}>{zh?"关闭":"Close"}</button>
       </div></div>}
-      <div className="score-scroll" ref={scoreScrollRef}><div className="score-paper engraved" data-loading={loading}><div className="custom-score-heading"><h1>{title}</h1></div>{loading&&<div className="score-loading"><i className="score-loading__spinner" aria-hidden="true"/><span>{t.scoreViewer.engraving}</span></div>}{error&&<div className="score-error">{error}</div>}<div ref={scoreRef} className="osmd-score" data-theory-enabled={theoryEnabled} onMouseMove={scoreMove} onMouseLeave={()=>{setFingerTip(null);setTheoryTip(null)}} onClick={scoreClick}/><canvas ref={canvasRef} width="1600" height="2200" className={annotating&&inkActive?"ink active":"ink"} onPointerDown={begin} onPointerMove={draw} onPointerUp={saveInk} onPointerCancel={saveInk}/>
-        {notes.map(note=><div key={note.id} className={note.kind==="sticky"?"score-note sticky":"score-note text"} style={{left:note.x,top:note.y}} onPointerDown={e=>noteDown(e,note)} onPointerMove={noteMove} onPointerUp={noteUp} onPointerCancel={noteUp}>
-          <button type="button" className="score-note__remove" aria-label={t.scoreViewer.deleteNote} onClick={()=>removeScoreNote(note.id)}>×</button>
-          <textarea value={note.text} onChange={e=>updateScoreNoteText(note.id,e.target.value)} placeholder={t.scoreViewer.notePlaceholder}/>
-        </div>)}
+      <div className="score-scroll" ref={scoreScrollRef}><div className="score-paper engraved" data-loading={loading} onPointerDown={event=>{if(!(event.target as HTMLElement).closest(".score-note"))setSelectedNote(null)}}><div className="custom-score-heading"><h1>{title}</h1></div>{showSpinner&&<div className="score-loading"><i className="score-loading__spinner" aria-hidden="true"/><span>{t.scoreViewer.engraving}</span></div>}{error&&<div className="score-error">{error}</div>}<div ref={scoreRef} className="osmd-score" data-theory-enabled={theoryEnabled} onMouseMove={scoreMove} onMouseLeave={()=>{setFingerTip(null);setTheoryTip(null)}} onClick={scoreClick}/>{scoreMarks&&marksLayer&&createPortal(scoreMarks({root:scoreRef.current,version:layoutVersion,magnify,controls:readerControls}),marksLayer)}<canvas ref={canvasRef} width="1600" height="2200" className={annotating&&inkActive?"ink active":"ink"} onPointerDown={begin} onPointerMove={draw} onPointerUp={saveInk} onPointerCancel={saveInk}/>
+        {notes.map(note=>{const selected=selectedNote===note.id;return <div key={note.id} className={`score-note ${note.kind==="sticky"?"sticky":"text"}${selected?" is-selected":""}`} style={{left:note.x,top:note.y}} onPointerDown={e=>noteDown(e,note)} onPointerMove={noteMove} onPointerUp={noteUp} onPointerCancel={noteUp}>
+          {selected&&<button type="button" className="score-note__remove" aria-label={t.scoreViewer.deleteNote} onClick={()=>removeScoreNote(note.id)}>×</button>}
+          <textarea value={note.text} style={{width:note.w,height:note.h}} onChange={e=>updateScoreNoteText(note.id,e.target.value)} onPointerUp={e=>commitNoteSize(note.id,e.currentTarget)} onKeyDown={e=>{if(e.key==="Escape"){e.currentTarget.blur();setSelectedNote(null)}}} placeholder={t.scoreViewer.notePlaceholder}/>
+        </div>})}
       </div></div>
 
     </section>{theoryTip&&<div className="theory-tip" style={clampTip(theoryTip.x,theoryTip.y,280,150,"below")}><small>{t.scoreViewer.musicTheory}</small><p>{theoryTip.text}</p></div>}{fingerTip&&<div className={fingering?"flute-tip finger-chart":"flute-tip note-info-tip"} style={clampTip(fingerTip.x,fingerTip.y,340,255,"above")}>{(noteDisplay!=="off"||fingering)&&<strong>{noteDisplay==="solfege"?fingerTip.solfege:fingerTip.name}<sup>{fingerTip.pitch.match(/\d/)?.[0]}</sup></strong>}{rhythmMode!=="off"&&!unmetered&&<p className="note-info-beat">{zh?"拍位":"Beat"} {fingerTip.beat}</p>}{fingering&&<><div className="finger-diagram">{(()=>{

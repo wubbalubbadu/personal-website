@@ -11,6 +11,7 @@ import {keyForType,majorKeys,ranges,scaleBookMusicXML,scaleForms,scaleNotes,scal
 const keyLabelFor=(key:MajorKey,typeId:ScaleTypeId)=>keyForType(key,typeById(typeId)).label;
 import {type ArticulationGroup,type ArticulationMode,type ArticulationPresetId,type ArticulationSelection,type RhythmChoice,type SyllableScheme,articulationPresetIds,articulationPresetSelection,defaultArticulationSelection,resolveArticulationPattern,resolveArticulation,resolveRhythm,resolveSyllable,selectionsEqual} from "../../components/notePatterns";
 import {deleteScaleSet,describeSet,findScaleSet,readScaleSets,saveScaleSet,scaleSetsEvent,type ScaleSet,type ScaleSetConfig} from "./saved-sets";
+import {AugmentationDot,Beam,BeamHook,GlyphSvg,NOTE_SPACING,Notehead,Slur,Staccato,Stem,SyllableText,Tenuto,TupletNumber,centeredStart} from "./notationGlyphs";
 import "./scale-book.css";
 
 /**
@@ -130,42 +131,44 @@ const tonguingLabels:Record<TonguingPresetId,{en:string;zh:string}>={
 function ArticulationIcon({selection}:{selection:ArticulationSelection}){
   const pattern:ArticulationGroup[]=selection.kind==="whole"?[{size:4,mode:selection.mode}]:selection.groups;
   const n=Math.min(6,Math.max(2,pattern.reduce((sum,g)=>sum+Math.max(0,g.size),0)));
-  const spacing=56/(n-1);
-  const notes=Array.from({length:n},(_,i)=>({x:8+i*spacing,mode:resolveArticulation(pattern,i).mode}));
+  const start=centeredStart(n);
+  const notes=Array.from({length:n},(_,i)=>({x:start+i*NOTE_SPACING,mode:resolveArticulation(pattern,i).mode}));
   const slurRuns:{x1:number;x2:number}[]=[];
   let open:{x1:number;x2:number}|null=null;
   notes.forEach(note=>{
     if(note.mode==="slur"){if(open){open.x2=note.x}else{open={x1:note.x,x2:note.x};slurRuns.push(open)}}
     else open=null;
   });
-  return <svg viewBox="0 0 72 32" width="52" height="24" className="scale-book__preset-icon" aria-hidden="true">
-    <line x1={notes[0].x} y1="2" x2={notes[n-1].x} y2="2" stroke="currentColor" strokeWidth="2.4"/>
-    <line x1={notes[0].x} y1="5.6" x2={notes[n-1].x} y2="5.6" stroke="currentColor" strokeWidth="2.4"/>
+  return <GlyphSvg className="scale-book__preset-icon">
+    <Beam from={notes[0].x} to={notes[n-1].x}/>
+    <Beam from={notes[0].x} to={notes[n-1].x} level={1}/>
     {notes.map((note,i)=><g key={i}>
-      <line x1={note.x} y1="8" x2={note.x} y2="17.5" stroke="currentColor" strokeWidth="1.4"/>
-      <ellipse cx={note.x} cy="18.5" rx="3.4" ry="2.6" fill="currentColor"/>
-      {note.mode==="staccato"&&<circle cx={note.x} cy="25" r="1.6" fill="currentColor"/>}
-      {note.mode==="tenuto"&&<rect x={note.x-3} y="24.1" width="6" height="1.8" fill="currentColor"/>}
+      <Stem x={note.x}/>
+      <Notehead x={note.x}/>
+      {note.mode==="staccato"&&<Staccato x={note.x}/>}
+      {note.mode==="tenuto"&&<Tenuto x={note.x}/>}
     </g>)}
-    {slurRuns.map((run,i)=><path key={i} d={`M ${run.x1-1.5} 21.5 Q ${(run.x1+run.x2)/2} 29 ${run.x2+1.5} 21.5`} fill="none" stroke="currentColor" strokeWidth="1.3"/>)}
-  </svg>;
+    {/* A one-note "run" is not a slur — a slur needs something to slur to. */}
+    {slurRuns.filter(run=>run.x2>run.x1).map((run,i)=><Slur key={i} from={run.x1} to={run.x2}/>)}
+  </GlyphSvg>;
 }
 
 /** Same glyph language as ArticulationIcon, with T/K syllables under each note instead of a mark — triplet-grouped shows 3 notes (one full T-K-T cycle) instead of 4. */
 function SyllableIcon({scheme}:{scheme:SyllableScheme}){
   const n=scheme.mode==="tripletGrouped"?3:4;
-  const spacing=56/(n-1);
+  const start=centeredStart(n);
   let tongueIndex=0;
   const letters=Array.from({length:n},()=>{const letter=resolveSyllable("tongue",tongueIndex,scheme);tongueIndex++;return letter});
-  return <svg viewBox="0 0 72 32" width="52" height="24" className="scale-book__preset-icon" aria-hidden="true">
-    <line x1="8" y1="2" x2={8+(n-1)*spacing} y2="2" stroke="currentColor" strokeWidth="2.4"/>
-    <line x1="8" y1="5.6" x2={8+(n-1)*spacing} y2="5.6" stroke="currentColor" strokeWidth="2.4"/>
-    {letters.map((letter,i)=>{const x=8+i*spacing;return <g key={i}>
-      <line x1={x} y1="8" x2={x} y2="17.5" stroke="currentColor" strokeWidth="1.4"/>
-      <ellipse cx={x} cy="18.5" rx="3.4" ry="2.6" fill="currentColor"/>
-      <text x={x} y="27.5" textAnchor="middle" fontSize="8" fontWeight="700" fill="currentColor">{letter}</text>
+  const lastX=start+(n-1)*NOTE_SPACING;
+  return <GlyphSvg className="scale-book__preset-icon">
+    <Beam from={start} to={lastX}/>
+    <Beam from={start} to={lastX} level={1}/>
+    {letters.map((letter,i)=>{const x=start+i*NOTE_SPACING;return <g key={i}>
+      <Stem x={x}/>
+      <Notehead x={x}/>
+      <SyllableText x={x} text={letter??""}/>
     </g>;})}
-  </svg>;
+  </GlyphSvg>;
 }
 
 /** A preset's icon shows its syllables when it has any (the tonguing presets), otherwise its articulation marks — never both, so the glyph stays readable at this size. */
@@ -187,32 +190,47 @@ function RhythmIcon({choice}:{choice:RhythmChoice}){
   const n=choice==="triplet"?3:4;
   const durations=resolveRhythm(n,choice);
   const total=durations.reduce((sum,d)=>sum+d.divisions,0);
-  let cursor=8;
-  const notes=durations.map(d=>{
-    const x=cursor;
-    cursor+=(d.divisions/total)*56;
-    return {x,divisions:d.divisions,type:d.type,dots:d.dots};
-  });
-  const hooks:{x1:number;x2:number}[]=[];
+  // Spacing is proportional to each note's value — that is what makes a
+  // dotted pair read as long-then-short rather than as two notes wearing
+  // different hats. The proportions are then scaled so that first-to-last
+  // is the same distance in all four icons, so the set lines up instead of
+  // each rhythm finding its own width.
+  // Only the gaps BETWEEN notes carry width, so the last note's own value
+  // is not part of what gets normalised.
+  const spread=total-durations[durations.length-1].divisions;
+  const scale=spread>0?((n-1)*NOTE_SPACING)/spread:0;
+  const left=centeredStart(n);
+  const notes=durations.map((d,index)=>({
+    x:left+durations.slice(0,index).reduce((sum,earlier)=>sum+earlier.divisions,0)*scale,
+    divisions:d.divisions,type:d.type,dots:d.dots,
+  }));
+  // Second-beam segments. A run of adjacent 16ths gets a real beam between
+  // them; a lone 16th gets a hook pointing at the longer note it belongs
+  // with — left for long–short (it completes the pair before it), right for
+  // short–long. A full second beam under a lone 16th would misread as a run
+  // of even 16ths, which is the whole distinction these icons exist to show.
+  const segments:{from:number;to:number}[]=[];
+  const hooks:{x:number;side:"left"|"right"}[]=[];
   notes.forEach((note,i)=>{
     if(note.type!=="16th")return;
     const prev=notes[i-1],next=notes[i+1];
-    if(next&&next.type==="16th"){hooks.push({x1:note.x,x2:next.x});return}
-    if(prev&&prev.type==="16th")return; // covered by the previous note's segment
-    if(prev&&prev.divisions>note.divisions)hooks.push({x1:note.x-7,x2:note.x});
-    else if(next&&next.divisions>note.divisions)hooks.push({x1:note.x,x2:note.x+7});
+    if(next&&next.type==="16th"){segments.push({from:note.x,to:next.x});return}
+    if(prev&&prev.type==="16th")return; // already covered by that pair's segment
+    if(prev&&prev.divisions>note.divisions)hooks.push({x:note.x,side:"left"});
+    else if(next&&next.divisions>note.divisions)hooks.push({x:note.x,side:"right"});
   });
   const lastX=notes[notes.length-1].x;
-  return <svg viewBox="0 0 72 32" width="52" height="24" className="scale-book__preset-icon" aria-hidden="true">
-    {choice==="triplet"&&<text x={(notes[0].x+lastX)/2} y="6" textAnchor="middle" fontSize="7" fontWeight="700" fill="currentColor">3</text>}
-    <line x1={notes[0].x} y1="10" x2={lastX} y2="10" stroke="currentColor" strokeWidth="2.4"/>
-    {hooks.map((h,i)=><line key={i} x1={h.x1} y1="13.6" x2={h.x2} y2="13.6" stroke="currentColor" strokeWidth="2.4"/>)}
+  return <GlyphSvg className="scale-book__preset-icon">
+    {choice==="triplet"&&<TupletNumber x={(notes[0].x+lastX)/2}/>}
+    <Beam from={notes[0].x} to={lastX}/>
+    {segments.map((s,i)=><Beam key={`s${i}`} from={s.from} to={s.to} level={1}/>)}
+    {hooks.map((h,i)=><BeamHook key={`h${i}`} x={h.x} side={h.side}/>)}
     {notes.map((note,i)=><g key={i}>
-      <line x1={note.x} y1="16" x2={note.x} y2="25.5" stroke="currentColor" strokeWidth="1.4"/>
-      <ellipse cx={note.x} cy="26.5" rx="3.4" ry="2.6" fill="currentColor"/>
-      {note.dots>0&&<circle cx={note.x+6} cy="26.5" r="1.3" fill="currentColor"/>}
+      <Stem x={note.x}/>
+      <Notehead x={note.x}/>
+      {note.dots>0&&<AugmentationDot x={note.x}/>}
     </g>)}
-  </svg>;
+  </GlyphSvg>;
 }
 
 /**
@@ -232,6 +250,97 @@ function AccordionSection({id,title,openSections,onToggle,className,children}:{i
     </button>
     {open&&<div className="scale-book__section-body">{children}</div>}
   </div>;
+}
+
+
+/**
+ * Practice tempos written onto the music itself, one beside each
+ * exercise's name.
+ *
+ * The Tempos panel lists every exercise in the book, which is fine for a
+ * handful and unusable for sixty — long names ("C chromatic thirds") are
+ * cut off, and reading a tempo means finding the right row in a list that
+ * has nothing to do with where your eyes are. On the page, a tempo belongs
+ * next to the scale it describes. These marks are deliberately NOT drawn
+ * as notation (no ♩ = 72 metronome mark in the engraving): a practice
+ * tempo is your own note-to-self, it changes week to week, and dressing it
+ * as engraving would claim it is part of the music. So it gets its own
+ * colour and reads as an annotation you can grab.
+ *
+ * Anchored by matching each block's label against the bold <words> text
+ * OSMD drew for it, consumed in order so two exercises that somehow share
+ * a name still take different anchors. Positions are measured against the
+ * score root in the same frame the reader's own practice overlays use, and
+ * re-measured on every `version` bump, since any re-engrave moves them.
+ */
+function ScaleTempoMarks({root,version,marks,onChange,onSound,soundingId}:{root:HTMLDivElement|null;version:number;marks:{id:string;label:string;tempo:number}[];onChange:(id:string,tempo:number)=>void;onSound:(id:string,tempo:number)=>void;soundingId:string|null}){
+  // Carries the layout version the positions were measured against. Marks
+  // are drawn only while that matches the CURRENT version: toggling them on
+  // changes the system spacing, so the score re-engraves under them, and
+  // anything still sitting at last layout's coordinates is simply wrong.
+  // Better to show nothing for the frame it takes to re-measure — with the
+  // fade-in below that reads as the marks arriving, not as them twitching.
+  const [spots,setSpots]=useState<{version:number;placed:{id:string;x:number;y:number}[]}>({version:-1,placed:[]});
+  const [draft,setDraft]=useState<{id:string;value:string}|null>(null);
+  // A string, not the array: `marks` is rebuilt on every render of the
+  // page, so depending on it directly would re-measure forever.
+  const signature=marks.map(m=>m.label).join("|");
+  // Measuring the engraving is exactly the "read from an external system"
+  // case an effect is for; the positions it finds have to land in state to
+  // be rendered, so these setStates are the point rather than a cascade.
+  useEffect(()=>{
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if(!root){setSpots({version,placed:[]});return}
+    const rootBox=root.getBoundingClientRect();
+    // OSMD draws each words-direction twice at the same spot; keep one.
+    const labels:{text:string;rect:DOMRect}[]=[];
+    for(const node of root.querySelectorAll<SVGGElement>(".vf-text")){
+      const text=node.textContent?.trim();
+      if(!text)continue;
+      const rect=node.getBoundingClientRect();
+      const previous=labels[labels.length-1];
+      if(previous&&previous.text===text&&Math.abs(previous.rect.left-rect.left)<1&&Math.abs(previous.rect.top-rect.top)<1)continue;
+      labels.push({text,rect});
+    }
+    let cursor=0;
+    const placed:{id:string;x:number;y:number}[]=[];
+    for(const mark of marks){
+      const index=labels.findIndex((label,i)=>i>=cursor&&label.text===mark.label);
+      if(index<0)continue;
+      cursor=index+1;
+      const rect=labels[index].rect;
+      // Sat beside the name to begin with, which put it right where a high
+      // note's ledger lines reach up. Its own lane directly above the name
+      // is the one band in a block that nothing engraved occupies.
+      placed.push({id:mark.id,x:rect.left-rootBox.left,y:rect.top-rootBox.top-3});
+    }
+    setSpots({version,placed});
+    // marks is intentionally excluded — `signature` stands in for it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[root,version,signature]);
+  const byId=new Map(marks.map(m=>[m.id,m]));
+  const commit=(id:string,value:number)=>onChange(id,Math.max(40,Math.min(220,Math.round(value))));
+  return <>{(spots.version===version?spots.placed:[]).map(spot=>{
+    const mark=byId.get(spot.id);
+    if(!mark)return null;
+    const sounding=soundingId===spot.id;
+    return <span className={sounding?"score-tempo-mark is-sounding":"score-tempo-mark"} style={{left:spot.x,top:spot.y}} key={spot.id}>
+      {/* The same action the metronome button on this exercise's Tempos row
+          performs: take the tempo from here, and click. A number printed on
+          the page that you can also hear is the whole point of putting it
+          there. */}
+      <button type="button" className="score-tempo-mark__sound" aria-pressed={sounding} aria-label={sounding?`${mark.label}: stop metronome`:`${mark.label}: metronome at ${mark.tempo}`} onClick={()=>onSound(spot.id,mark.tempo)}><PracticeIcon name="metronome"/></button>
+      {/* One BPM a click, not five: on the page you are nudging a tempo you
+          already have, not dialling one in from scratch. */}
+      <button type="button" className="score-tempo-mark__step" aria-label={`${mark.label}: 1 BPM slower`} disabled={mark.tempo<=40} onClick={()=>commit(spot.id,mark.tempo-1)}>−</button>
+      <label className="score-tempo-mark__value"><input type="number" min={40} max={220} aria-label={`${mark.label}: practice tempo in BPM`}
+        value={draft?.id===spot.id?draft.value:mark.tempo}
+        onChange={e=>setDraft({id:spot.id,value:e.target.value})}
+        onBlur={()=>{if(draft?.id!==spot.id)return;const next=Number(draft.value);const valid=Number.isFinite(next)&&draft.value.trim()!=="";setDraft(null);if(valid)commit(spot.id,next)}}
+        onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/></label>
+      <button type="button" className="score-tempo-mark__step" aria-label={`${mark.label}: 1 BPM faster`} disabled={mark.tempo>=220} onClick={()=>commit(spot.id,mark.tempo+1)}>+</button>
+    </span>;
+  })}</>;
 }
 
 export default function ScaleStudio(){
@@ -283,6 +392,9 @@ export default function ScaleStudio(){
   const [customizeOpen,setCustomizeOpen]=useState(false);
   function openCustomize(section:string){setOpenSections(current=>current.includes(section)?current:[...current,section]);setCustomizeOpen(true)}
   const [tempos,setTempos]=useState<Record<string,number>>({});
+  // Whether practice tempos are written onto the music next to each
+  // exercise, rather than only living in the Tempos list.
+  const [tempoMarks,setTempoMarks]=useState(false);
   const [loaded,setLoaded]=useState(false);
   // Saved sets: named snapshots of this whole panel, listed on the
   // Exercises hub. Kept in state (not read on every render) so the hub and
@@ -329,6 +441,25 @@ export default function ScaleStudio(){
     if(preset.range)setRange(preset.range);
     setActiveSet(null);
   }
+  /**
+   * Whether what is on screen right now IS one of the saved sets — compared
+   * by configuration, not by which one was last opened, so the star goes
+   * hollow the moment you change a key and fills again if you change it
+   * back. A remembered "active set" would claim a setup is saved while it
+   * no longer is.
+   */
+  const sameList=(a:readonly string[]=[],b:readonly string[]=[])=>a.length===b.length&&a.every(v=>b.includes(v));
+  function configMatches(config:ScaleSetConfig){
+    const now=currentConfig();
+    return config.range===now.range&&config.order===now.order&&config.grouping===now.grouping&&config.ending===now.ending&&config.newLines===now.newLines&&config.rhythm===now.rhythm
+      &&sameList(config.types,now.types)&&sameList(config.forms,now.forms)&&sameList(config.keys,now.keys)
+      &&JSON.stringify(config.articulationRotation??[])===JSON.stringify(now.articulationRotation??[]);
+  }
+  const savedMatch=sets.find(set=>configMatches(set.config))??null;
+  function toggleSaved(){
+    if(savedMatch){deleteScaleSet(savedMatch.id);if(activeSet?.id===savedMatch.id)setActiveSet(null);return}
+    commitSave();
+  }
   function commitSave(){
     const saved=saveScaleSet(setName||suggestedSetName,currentConfig());
     if(!saved)return;
@@ -353,6 +484,7 @@ export default function ScaleStudio(){
       if(savedForms.length)setForms(savedForms);
       if(isValidRotation(pref?.articulationRotation))setArticulationRotation(pref.articulationRotation);
       if(pref?.rhythm==="even"||pref?.rhythm==="dottedLongShort"||pref?.rhythm==="dottedShortLong"||pref?.rhythm==="triplet")setRhythm(pref.rhythm);
+      if(typeof pref?.tempoMarks==="boolean")setTempoMarks(pref.tempoMarks);
       const saved=JSON.parse(localStorage.getItem(tempoKey)||"{}");
       if(saved&&typeof saved==="object")setTempos(Object.fromEntries(Object.entries(saved)
         .filter(([id,n])=>id.startsWith("scale-book:")&&typeof n==="number"&&Number.isFinite(n)&&n>=40&&n<=220)
@@ -380,7 +512,7 @@ export default function ScaleStudio(){
     window.addEventListener("storage",sync);
     return()=>{window.removeEventListener(scaleSetsEvent,sync);window.removeEventListener("storage",sync)};
   },[]);
-  useEffect(()=>{if(loaded)try{localStorage.setItem(preferenceKey,JSON.stringify({range,keys,newLines,order,grouping,ending,types,forms,articulationRotation,rhythm}));}catch{/* Storage may be disabled. */}},[range,keys,newLines,order,grouping,ending,types,forms,articulationRotation,rhythm,loaded]);
+  useEffect(()=>{if(loaded)try{localStorage.setItem(preferenceKey,JSON.stringify({range,keys,newLines,order,grouping,ending,types,forms,articulationRotation,rhythm,tempoMarks}));}catch{/* Storage may be disabled. */}},[range,keys,newLines,order,grouping,ending,types,forms,articulationRotation,rhythm,tempoMarks,loaded]);
   useEffect(()=>{if(loaded)try{localStorage.setItem(tempoKey,JSON.stringify(tempos));}catch{/* Storage may be disabled. */}},[tempos,loaded]);
 
   const chosenRange=ranges.find(r=>r.id===range)!;
@@ -455,6 +587,15 @@ export default function ScaleStudio(){
     });
   }
   const isEntryActive=(entry:RotationEntry)=>articulationRotation.some(e=>entriesEqual(e,entry));
+  /**
+   * Which preset chip reads as "on". Derived from what is actually set
+   * right now rather than remembered from the last click, so opening
+   * Customize scales on a book that happens to be twelve major scales
+   * shows "Major scales" lit — and tweaking a key or a form afterwards
+   * turns it back off, since the book is no longer that preset.
+   */
+  const sameSet=(a:readonly string[],b:readonly string[])=>a.length===b.length&&a.every(v=>b.includes(v));
+  const presetActive=(preset:ScalePreset)=>sameSet(preset.types,types)&&sameSet(preset.forms,forms)&&sameSet(preset.keys??allKeys,keys)&&(!preset.range||preset.range===range);
   // "My articulation" is just another rotation member (so it can sit
   // alongside presets in a multi-pattern rotation) whose shape happens to
   // be user-built rather than fixed — at most one such entry at a time.
@@ -476,7 +617,10 @@ export default function ScaleStudio(){
 
   if(!loaded)return null;
   return <div className="scale-reader">
-    <ScoreViewer unmetered onTempoChange={saveTempo} lineBreak={{value:newLines,onChange:setNewLines}} config={{title:bookTitle,composer:"",asset:scaleBookMusicXML(blocks,range,newLines,articulationRotation.map(e=>e.articulation),rhythm,ending),displayPitches,measureKeyAccidentals,syllables,id:`scale-book-${range}-${grouping}-${ending}-${types.join("+")}-${forms.join("+")}-${selected.map(k=>k.id).join("-")}`,backHref:"/flute-studio/exercises",defaultTempo:(activeBlock?tempos[activeBlock]:undefined)??60}}
+    <ScoreViewer unmetered onTempoChange={saveTempo} extraSystemSpacing={tempoMarks?3:0} practiceTempo={{value:tempoMarks,onChange:setTempoMarks}}
+      save={{saved:!!savedMatch,onToggle:toggleSaved,label:zh?"保存这个组合":"Save this set",savedLabel:zh?"从我的组合中移除":"Remove from my sets"}}
+      headerActions={reader=><button type="button" className="icon-btn has-tip" disabled={reader.exporting} data-tip={reader.exporting?(zh?"正在生成 PDF…":"Making the PDF\u2026"):(zh?"下载 PDF":"Download PDF")} aria-label={reader.exporting?(zh?"正在生成 PDF…":"Making the PDF\u2026"):(zh?"下载 PDF":"Download PDF")} onClick={()=>reader.download()}>{reader.exporting?"\u22ef":"\u2193"}</button>}
+      scoreMarks={tempoMarks?context=><ScaleTempoMarks root={context.root} version={context.version} marks={blocks.map(block=>{const id=blockTempoId(block,range);return {id,label:block.label,tempo:tempos[id]??60}})} onChange={(id,next)=>{setActiveBlock(id);setTempos(prev=>({...prev,[id]:next}));context.controls.setTempo(next)}} soundingId={context.controls.metronome?activeBlock||null:null} onSound={(id,tempo)=>{const running=context.controls.metronome&&activeBlock===id;setActiveBlock(id);context.controls.setTempo(tempo);if(running||!context.controls.metronome)context.controls.toggleMetronome()}}/>:undefined} lineBreak={{value:newLines,onChange:setNewLines}} config={{title:bookTitle,composer:"",asset:scaleBookMusicXML(blocks,range,newLines,articulationRotation.map(e=>e.articulation),rhythm,ending),displayPitches,measureKeyAccidentals,syllables,id:`scale-book-${range}-${grouping}-${ending}-${types.join("+")}-${forms.join("+")}-${selected.map(k=>k.id).join("-")}`,backHref:"/flute-studio/exercises",defaultTempo:(activeBlock?tempos[activeBlock]:undefined)??60}}
       toolbar={<div className="scale-book__chapter-inline"><button type="button" className="scale-book__crumb" onClick={()=>openCustomize("type")}>{typeWord}</button><button type="button" className="scale-book__crumb" onClick={()=>openCustomize("form")}>{formWord}</button><span aria-hidden="true">·</span><button type="button" className="scale-book__crumb" onClick={()=>openCustomize("range")}>{zh?chosenRange.zh:chosenRange.label}</button><span aria-hidden="true">·</span><button type="button" className="scale-book__crumb" onClick={()=>openCustomize("keys")}>{selected.length} {zh?"个调性":selected.length===1?"key":"keys"}</button></div>}
       settings={reader=><>
     {!selected.length&&<p className="scale-book__empty">Choose keys in Customize scales to display your scales.</p>}
@@ -484,7 +628,7 @@ export default function ScaleStudio(){
       <div className="scale-book__panel-body">
         <AccordionSection id="presets" title={zh?"预设与我的组合":"Presets & saved sets"} openSections={openSections} onToggle={toggleSection}>
           <p className="scale-book__field-label">{zh?"从预设开始":"Start from a preset"}</p>
-          <div className="scale-book__ranges" role="group" aria-label={zh?"预设":"Presets"}>{presetList.map(preset=><button type="button" key={preset.id} className="scale-book__chip" onClick={()=>applyPreset(preset)}>{zh?preset.zh:preset.en}</button>)}</div>
+          <div className="scale-book__ranges" role="group" aria-label={zh?"预设":"Presets"}>{presetList.map(preset=><button type="button" key={preset.id} className={presetActive(preset)?"scale-book__chip selected":"scale-book__chip"} aria-pressed={presetActive(preset)} onClick={()=>applyPreset(preset)}>{zh?preset.zh:preset.en}</button>)}</div>
           <p className="scale-book__field-label">{zh?"我保存的组合":"My saved sets"}</p>
           {sets.length
             ?<ul className="scale-book__sets">{sets.map(set=><li key={set.id} className={activeSet?.id===set.id?"scale-book__set is-active":"scale-book__set"}>
@@ -570,9 +714,22 @@ export default function ScaleStudio(){
           // Play starts the score at this exercise's first note and, like
           // the transport, the same button stops it.
           const eventStart=blockEventStarts[index];
-          const sounding=reader.playing&&reader.playingFrom===eventStart;
-          return <div className="scale-reader__tempo" key={id}><span className="scale-book__tempo-label"><b>{name}</b><small>{zh?chosenRange.zh:chosenRange.label}</small></span><div className="scale-book__metronome"><button disabled={tempo<=40} aria-label={`${name}: decrease tempo by 5`} onClick={()=>setTempo(tempo-5)}>−</button><label className="scale-book__tempo-field">♩ = <input type="number" min={40} max={220} aria-label={`${name}: tempo in BPM`} value={tempoDraft?.id===id?tempoDraft.value:tempo} onChange={e=>setTempoDraft({id,value:e.target.value})} onFocus={()=>setActiveBlock(id)} onBlur={()=>{if(tempoDraft?.id!==id)return;const next=Number(tempoDraft.value);const valid=Number.isFinite(next)&&tempoDraft.value.trim()!=="";setTempoDraft(null);if(valid)setTempo(Math.max(40,Math.min(220,Math.round(next))))}} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/></label><button disabled={tempo>=220} aria-label={`${name}: increase tempo by 5`} onClick={()=>setTempo(tempo+5)}>+</button><button className={sounding?"scale-book__row-tool on":"scale-book__row-tool"} aria-label={sounding?`${name}: stop playing`:`${name}: play from here`} aria-pressed={sounding} onClick={()=>{setTempo(tempo);reader.playFromEvent(eventStart)}}><PracticeIcon name={sounding?"stop":"play"}/></button><button className={running?"scale-book__row-tool on":"scale-book__row-tool"} aria-label={running?`${name}: stop metronome`:`${name}: start metronome`} aria-pressed={running} onClick={()=>{setTempo(tempo);if(running||!reader.metronome)reader.toggleMetronome()}}><PracticeIcon name="metronome"/></button></div></div>;
+          // Which exercise is sounding follows the music, not the button
+          // that started it: pressing the transport's own Play used to
+          // leave the very first row lit for the whole book.
+          const blockEnd=blockEventStarts[index+1]??Infinity;
+          // playingFrom only stands in for the frame before the first note
+          // actually sounds; once there is a live position it is the only
+          // thing that counts, or the row you started from stays lit for
+          // the rest of the book.
+          const sounding=reader.playing&&(reader.playingEvent!==null?reader.playingEvent>=eventStart&&reader.playingEvent<blockEnd:reader.playingFrom===eventStart);
+          return <div className="scale-reader__tempo" key={id}><span className="scale-book__tempo-label"><b>{name}</b></span><div className="scale-book__metronome"><button disabled={tempo<=40} aria-label={`${name}: decrease tempo by 5`} onClick={()=>setTempo(tempo-5)}>−</button><label className="scale-book__tempo-field">♩ = <input type="number" min={40} max={220} aria-label={`${name}: tempo in BPM`} value={tempoDraft?.id===id?tempoDraft.value:tempo} onChange={e=>setTempoDraft({id,value:e.target.value})} onFocus={()=>setActiveBlock(id)} onBlur={()=>{if(tempoDraft?.id!==id)return;const next=Number(tempoDraft.value);const valid=Number.isFinite(next)&&tempoDraft.value.trim()!=="";setTempoDraft(null);if(valid)setTempo(Math.max(40,Math.min(220,Math.round(next))))}} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/></label><button disabled={tempo>=220} aria-label={`${name}: increase tempo by 5`} onClick={()=>setTempo(tempo+5)}>+</button><button className={sounding?"scale-book__row-tool on":"scale-book__row-tool"} aria-label={sounding?`${name}: stop playing`:`${name}: play from here`} aria-pressed={sounding} onClick={()=>{setTempo(tempo);reader.playFromEvent(eventStart)}}><PracticeIcon name={sounding?"stop":"play"}/></button><button className={running?"scale-book__row-tool on":"scale-book__row-tool"} aria-label={running?`${name}: stop metronome`:`${name}: start metronome`} aria-pressed={running} onClick={()=>{setTempo(tempo);if(running||!reader.metronome)reader.toggleMetronome()}}><PracticeIcon name="metronome"/></button></div></div>;
       })}</div>
+      {/* A quiet text action in the corner rather than a full-width chip:
+          it is a view preference, not one of the tempos this panel is
+          actually about — the same reasoning (and the same styling) as
+          "Restore defaults" at the foot of Customize scales. */}
+      <button type="button" className="reader-settings-reset" aria-pressed={tempoMarks} onClick={()=>setTempoMarks(value=>!value)}>{tempoMarks?(zh?"隐藏乐谱上的练习速度":"Hide practice tempo on the page"):(zh?"在乐谱上显示练习速度":"Show practice tempo on the page")}</button>
     </ReaderPopover>
     </>}/>
   </div>;
