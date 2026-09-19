@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { FluteDiagram } from "../components/FluteDiagram";
 import { StaffNote } from "../components/StaffNote";
@@ -30,7 +32,10 @@ function registerOf(note: NoteFingerings) {
 export default function FingeringChart() {
   const { lang } = useLanguage();
   const zh = lang === "zh";
-  const [pitch, setPitch] = useState("C4");
+  const params = useSearchParams();
+  const requested = params.get("note");
+  const [selectedPitch, setPitch] = useState<string | null>(null);
+  const pitch = selectedPitch ?? (fluteFingerings.some(n => n.pitch === requested) ? requested! : "C4");
   const [variant, setVariant] = useState(0);
 
   const note = fluteFingerings.find(n => n.pitch === pitch) ?? fluteFingerings[0];
@@ -52,11 +57,12 @@ export default function FingeringChart() {
               ? "长笛的基本指法，从低音 B 到超高音区。填黑表示按下，空心表示放开。"
               : "Standard fingerings from low B up through the altissimo. Filled means closed, hollow means open."}
           </p>
+          <Link className="fingering-chart__sibling" href={`/flute-studio/trills?note=${encodeURIComponent(pitch)}`}>{zh ? "颤音指法表" : "Trill chart"} →</Link>
         </header>
 
         <section className="fingering-chart__now" aria-live="polite">
           <div className="fingering-chart__stave">
-            <StaffNote midi={midiForPitch(note.pitch)} spelling={note.names[0]} />
+            <StaffNote midi={midiForPitch(note.pitch)} spelling={note.names[0]} width={190} />
           </div>
           <div className="fingering-chart__detail">
             <h2>

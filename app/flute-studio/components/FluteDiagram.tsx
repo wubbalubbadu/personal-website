@@ -29,12 +29,18 @@ export function FluteDiagram({
   onToggle,
   hasBFoot = true,
   className = "",
+  moving = [],
+  inspectable = false,
+  onInspect,
 }: {
   pressed: ReadonlySet<FluteKeyId> | readonly FluteKeyId[];
   interactive?: boolean;
   onToggle?: (key: FluteKeyId) => void;
   hasBFoot?: boolean;
   className?: string;
+  moving?: readonly FluteKeyId[];
+  inspectable?: boolean;
+  onInspect?: (key: FluteKeyId) => void;
 }) {
   const down = pressed instanceof Set ? pressed : new Set(pressed as readonly FluteKeyId[]);
   // A key that is not on your instrument is noise, not information, so the
@@ -44,20 +50,20 @@ export function FluteDiagram({
       (!key.requires || (key.requires === "b-foot" && hasBFoot)) &&
       // The side lever appears on the one fingering that uses it, nowhere
       // else — see `onlyWhenPressed`.
-      (!key.onlyWhenPressed || down.has(key.id)),
+      (!key.onlyWhenPressed || down.has(key.id) || moving.includes(key.id)),
   );
 
   return (
     <svg
       className={`flute-diagram ${interactive ? "is-interactive" : ""} ${className}`}
       viewBox={`0 0 ${fluteBody.width} ${fluteBody.height}`}
-      role={interactive ? "group" : "img"}
+      role={interactive || inspectable ? "group" : "img"}
       aria-label={interactive ? "Flute keys" : "Flute fingering"}
     >
       {keys.map(key => (
         <g
           key={key.id}
-          className={`flute-key flute-key--${key.shape} ${down.has(key.id) ? "is-down" : ""}`}
+          className={`flute-key flute-key--${key.shape} ${down.has(key.id) ? "is-down" : ""} ${moving.includes(key.id) ? "is-moving" : ""}`}
           // Spread as a block rather than a set of conditional attributes:
           // a bare tabIndex on a group with no role reads as a focusable
           // non-interactive element, which it never is here.
@@ -75,7 +81,17 @@ export function FluteDiagram({
                   }
                 },
               }
-            : {})}
+            : inspectable ? {
+                role: "button" as const,
+                tabIndex: 0,
+                "aria-label": `${key.label}: ${down.has(key.id) ? "pressed" : "released"}${moving.includes(key.id) ? ", moving key" : ""}`,
+                onPointerEnter: () => onInspect?.(key.id),
+                onFocus: () => onInspect?.(key.id),
+                onClick: () => onInspect?.(key.id),
+                onKeyDown: (event: React.KeyboardEvent) => {
+                  if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onInspect?.(key.id); }
+                },
+              } : {})}
         >
           <title>{key.label}</title>
           {keyShape(key)}

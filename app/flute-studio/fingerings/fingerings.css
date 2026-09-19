@@ -20,7 +20,7 @@
   background:#fff;
   box-shadow:0 10px 30px rgba(41,42,51,.08);
 }
-.fingering-chart__stave{flex:0 0 auto;width:150px;color:#292a33}
+.fingering-chart__stave{flex:0 0 auto;width:190px;color:#292a33}
 .fingering-chart__detail{min-width:0}
 .fingering-chart__detail h2{margin:0;font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1.1}
 .fingering-chart__detail h2 sub{font-size:15px;font-weight:500;color:#85868e;margin-left:1px}
@@ -56,5 +56,7 @@
   .fingering-chart__header{padding:42px 4px 22px}
   .fingering-chart__header h1{font-size:36px}
   .fingering-chart__now{grid-template-columns:minmax(0,1fr);padding:18px 16px}
-  .fingering-chart__stave{width:130px}
+  .fingering-chart__stave{width:170px}
 }
+
+.fingering-chart__sibling{display:inline-block;margin-top:18px;color:#40553d;font-size:14px;font-weight:600;text-underline-offset:4px}

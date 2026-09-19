@@ -23,7 +23,8 @@
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "svg2pdf.js": "^2.8.1",
-    "three": "^0.185.1"
+    "three": "^0.185.1",
+    "vexflow": "1.2.93"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.37.1",

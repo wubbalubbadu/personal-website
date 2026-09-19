@@ -63,7 +63,7 @@ const en = {
     fingeringChart: "Fingering chart",
     fingeringChartDetail: "Standard flute fingerings",
     trillChart: "Trill chart",
-    trillChartDetail: "Coming next",
+    trillChartDetail: "Half & whole steps",
     comingSoon: (title: string) => `${title}, coming soon`,
   },
   activity: {
@@ -482,7 +482,7 @@ const zh: typeof en = {
     fingeringChart: "指法表",
     fingeringChartDetail: "标准长笛指法",
     trillChart: "颤音表",
-    trillChartDetail: "即将推出",
+    trillChartDetail: "半音与全音颤音",
     comingSoon: (title) => `${title}，即将推出`,
   },
   activity: {
