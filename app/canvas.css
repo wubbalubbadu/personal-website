@@ -493,13 +493,10 @@
   font-weight: 500;
   letter-spacing: -0.01em;
 }
-.pj-item-name::after {
-  content: " →";
-  color: var(--ink-38);
-}
-.pj-item-btn:hover .pj-item-name::after {
-  color: var(--accent-2);
-}
+/* No arrow glyph: the whole row is the link, and an arrow after every
+   title added a mark that carried no information the row did not already
+   give. The title takes the accent on hover instead. */
+.pj-item-btn:hover .pj-item-name { color: var(--accent-2); }
 .pj-item-blurb {
   font-size: 13.5px;
   color: var(--ink-70);
@@ -511,6 +508,10 @@
   font-size: 9px;
   letter-spacing: 0.1em;
   color: var(--ink-38);
+  /* Wraps instead of running off the edge — a tech list cut mid-word
+     ("OPENSHEETMUSICDISPL") is worse than no tech list. */
+  white-space: normal;
+  line-height: 1.7;
 }
 .pj-detail h2 {
   margin: 0;

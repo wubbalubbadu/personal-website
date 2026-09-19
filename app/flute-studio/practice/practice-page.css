@@ -5,7 +5,7 @@
 .practice-page__header h1{margin:0;font-size:42px;line-height:1.04;font-weight:780;letter-spacing:-.04em}
 .practice-page__intro{margin:16px 0 0;color:#6d6f76;font-size:16px;line-height:1.55;max-width:640px}
 .practice-page__grid{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:24px;align-items:start;margin-bottom:24px}
-.practice-card{background:#fff;border:1px solid #e1e2df;border-radius:22px;padding:22px;box-shadow:0 1px 0 rgba(0,0,0,.04)}
+.practice-card{background:#fff;border:0;border-radius:20px;padding:22px;box-shadow:0 10px 30px rgba(41,42,51,.08)}
 .practice-card h2{margin:0;font-size:20px;font-weight:720;letter-spacing:-.02em}
 .practice-card__heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .routine-count{flex:0 0 auto;height:24px;padding:0 10px;border-radius:12px;background:#e5ece1;color:#506f43;font-size:12px;font-weight:700;display:grid;place-items:center;white-space:nowrap}
@@ -67,3 +67,36 @@
   .practice-page__header h1{font-size:36px}
   .practice-card{padding:18px}
 }
+
+/* Focus timer and calendar share the narrow column. */
+.practice-page__column{display:grid;gap:24px;align-content:start}
+
+/* Recently opened / Saved — compact lists, since they are a way back to
+   something rather than a thing to read. */
+.studio-mini-list { list-style: none; margin: 4px 0 0; padding: 0; display: grid; }
+.studio-mini-list li + li { border-top: 1px solid #f0f0f2; }
+.studio-mini-list a {
+  display: grid; gap: 2px; padding: 9px 4px;
+  color: inherit; text-decoration: none; border-radius: 8px;
+}
+.studio-mini-list a:hover { background: #f4f7f2; }
+.studio-mini-list a.is-disabled { pointer-events: none; opacity: 0.5; }
+.studio-mini-list strong { font-size: 13.5px; font-weight: 600; }
+.studio-mini-list small { font-size: 12px; color: #85868e; }
+
+/* Practice at a glance. Four numbers in a quiet row — the old version set
+   them at 34px bold, which made arithmetic the loudest thing on a page
+   whose subject is your playing. */
+.stats-card { margin-bottom: 24px; }
+.stats-row { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.stats-row li { display: grid; gap: 3px; }
+.stats-row b { font-size: 21px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.stats-row b span { margin-left: 3px; font-size: 12px; font-weight: 500; color: #9a9ca3; letter-spacing: 0; }
+.stats-row small { font-size: 12px; color: #85868e; }
+@media (max-width: 700px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+
+/* Picking a step rather than typing it. */
+.routine-pick { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 12.5px; color: #85868e; }
+.routine-pick select { flex: 1; min-width: 0; font: inherit; font-size: 13px; padding: 7px 9px; border: 1px solid var(--line, #dedfd9); border-radius: 9px; background: #fff; color: #292a33; }
+.routine-list__text--link { color: inherit; text-decoration: none; border-bottom: 1px solid #d7dcd4; }
+.routine-list__text--link:hover { color: #40553d; border-bottom-color: #8aa87c; }

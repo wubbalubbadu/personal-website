@@ -1,0 +1,40 @@
+/* The avatar and its menu — see AccountMenu.tsx. */
+.account-menu{position:relative}
+.account-menu__trigger{
+  width:36px;height:36px;border:0;border-radius:50%;
+  display:grid;place-items:center;cursor:pointer;
+  background:#e5ece1;color:#46633d;
+  font:inherit;font-size:12px;font-weight:720;letter-spacing:.02em;
+  transition:background-color .16s ease;
+}
+.account-menu__trigger:hover,.account-menu__trigger[aria-expanded="true"]{background:#d6e3cf}
+.account-menu__trigger:focus-visible{outline:2px solid rgba(103,137,86,.55);outline-offset:2px}
+.account-menu__panel{
+  position:absolute;top:calc(100% + 10px);right:0;z-index:60;
+  width:248px;padding:14px;border-radius:16px;background:#fff;
+  box-shadow:0 14px 40px rgba(41,42,51,.16);
+  text-align:left;
+}
+.account-menu__group{
+  margin:0 0 8px;padding:0 2px;
+  font-size:11px;font-weight:720;letter-spacing:.08em;text-transform:uppercase;color:#8a8c93;
+}
+.account-menu__choices{display:grid;gap:2px}
+.account-menu__item{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  width:100%;padding:9px 10px;border:0;border-radius:10px;
+  background:none;font:inherit;font-size:13.5px;color:#292a33;cursor:pointer;text-align:left;
+}
+.account-menu__item:hover{background:rgba(41,42,51,.06)}
+.account-menu__item.is-on{background:#e4ecdf;color:#40553d;font-weight:600}
+.account-menu__item b{font-size:12px}
+.account-menu__footnote{margin:8px 2px 0;font-size:11.5px;line-height:1.45;color:#9a9ca3}
+.account-menu__rule{margin:14px 0;border:0;border-top:1px solid #ededf0}
+.account-menu__about{margin:0;padding:0 2px;display:grid;gap:2px}
+.account-menu__about span{font-size:13.5px;font-weight:600}
+.account-menu__about small{font-size:11.5px;color:#9a9ca3}
+@media(max-width:760px){
+  /* The avatar lives in the header, which the phone layout hides; the menu
+     is reachable from My Studio instead. */
+  .account-menu{display:none}
+}

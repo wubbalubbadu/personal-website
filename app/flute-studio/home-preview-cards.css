@@ -340,6 +340,7 @@
 .tones-preview__track { fill: none; stroke: #e3cad3; stroke-width: 5; stroke-linecap: round; }
 .tones-preview__trace { fill: none; stroke: #ca9295; stroke-width: 5; stroke-linecap: round; }
 .tones-preview__cursor { fill: #629ab3; }
+.scales-preview__dot { fill: #b96f85; opacity: 0; }
 
 /* One shared phrase: connected first pair, distinct attacks on the last two.
    Notes stay in place; only the articulation is animated. */
@@ -362,6 +363,16 @@
   60%, 76% { color: #b96f85; }
   76.1%, 100% { color: #87b4c8; }
 }
+/* The slur is up while the first pair is being played, the dots pop as
+   their own note is attacked — same clock as the colour cycle. */
+@keyframes articulation-dot-3 { 0%, 39.9% { opacity: 0; } 41%, 56% { opacity: 1; } 57%, 100% { opacity: 0; } }
+@keyframes articulation-dot-4 { 0%, 59.9% { opacity: 0; } 61%, 76% { opacity: 1; } 77%, 100% { opacity: 0; } }
+/* Swell and taper, in step with the cursor's 5s sweep. */
+@keyframes sustained-swell {
+  0%, 6% { stroke-width: 3; }
+  42% { stroke-width: 9; }
+  78%, 100% { stroke-width: 3; }
+}
 @keyframes articulation-slur {
   0%, 37% { fill: #ca9295; }
   40%, 100% { fill: #87b4c8; }
@@ -382,11 +393,86 @@
 .preview-card--scales:is(:hover, :focus-visible) .scales-preview__note--3 { animation-name: articulation-third; }
 .preview-card--scales:is(:hover, :focus-visible) .scales-preview__note--4 { animation-name: articulation-fourth; }
 .preview-card--scales:is(:hover, :focus-visible) .scales-preview__slur { animation: articulation-slur 4s linear infinite; }
+.preview-card--scales:is(:hover, :focus-visible) .scales-preview__dot--3 { animation: articulation-dot-3 4s linear infinite; }
+.preview-card--scales:is(:hover, :focus-visible) .scales-preview__dot--4 { animation: articulation-dot-4 4s linear infinite; }
 .preview-card--tones:is(:hover, :focus-visible) .tones-preview__trace { stroke-dasharray: 100; animation: sustained-trace 5s linear infinite; }
 .preview-card--tones:is(:hover, :focus-visible) .tones-preview__cursor { animation: sustained-cursor 5s linear infinite; }
+.preview-card--tones:is(:hover, :focus-visible) .tones-preview__trace { animation: sustained-trace 5s linear infinite, sustained-swell 5s linear infinite; }
 @media (prefers-reduced-motion: reduce) {
   .preview-card--scales:is(:hover, :focus-visible) .scales-preview__note,
   .preview-card--scales:is(:hover, :focus-visible) .scales-preview__slur,
   .preview-card--tones:is(:hover, :focus-visible) .tones-preview__trace,
   .preview-card--tones:is(:hover, :focus-visible) .tones-preview__cursor { animation: none; }
 }
+
+/* Every band is labelled — see the note in HomePreviewCards. The cards
+   keep one size inside a group so a group reads as a group; the variation
+   is between groups, not within them. */
+.home-preview { margin: 0 0 30px; }
+.home-preview__lede {
+  margin: 0 0 26px;
+  font-size: 17px;
+  line-height: 1.5;
+  color: #6d6f76;
+}
+.home-preview__group {
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 720;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8a8c93;
+}
+.home-preview .home-preview-grid { margin: 0 0 30px; }
+.home-preview-grid--trio { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 860px) {
+  .home-preview-grid--trio { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 760px) {
+  .home-preview-grid--trio { grid-template-columns: 1fr; }
+}
+
+/* The two chart cards.
+
+   Neither has a running feature to mirror, so each animates what the
+   chart is FOR: keys going down in turn, and a note flicking between two
+   pitches. Both were first built far too subtle to notice — a low-opacity
+   pulse on a grey fill reads as nothing at a glance — so the contrast is
+   deliberately strong and the "down" state is held, not flashed. */
+.preview-card--fingerings .preview-card__stage { background: linear-gradient(160deg, #eef0f2, #f7f8f9); }
+.preview-card--trills .preview-card__stage { background: linear-gradient(160deg, #e9eff5, #f6f9fb); }
+.chart-preview { width: 100%; height: auto; }
+
+.chart-preview__rod { stroke: #b9c0c8; stroke-width: 2; }
+/* Opaque, not transparent: an open key is a white pad, and leaving it
+   see-through let the rod behind it read as a line through the circle. */
+.chart-preview__key-ring { fill: #fbfcfc; stroke: #6f7883; stroke-width: 2; }
+.chart-preview__key-fill { fill: #2f3845; stroke: none; opacity: 0; transition: opacity 0.2s ease; }
+/* Held down for most of the cycle rather than blinking: a key that is
+   closed stays closed while the rest of the hand catches up. */
+@keyframes chart-key-press { 0% { opacity: 0; } 12%, 78% { opacity: 1; } 92%, 100% { opacity: 0; } }
+.preview-card--fingerings:hover .chart-preview__key-fill,
+.preview-card--fingerings:focus-visible .chart-preview__key-fill {
+  animation: chart-key-press 2.6s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.16s);
+}
+
+.chart-preview__line { stroke: #c4d0da; stroke-width: 1; }
+.chart-preview__tr { fill: #4b6378; font: italic 700 15px Georgia, "Times New Roman", serif; }
+/* Drawn at rest, so the card is not blank until you hover it. */
+.chart-preview__wave { fill: none; stroke: #4b6378; stroke-width: 2; stroke-linecap: round; opacity: 0.55; transition: opacity 0.25s ease; }
+.chart-preview__note ellipse, .chart-preview__note rect { fill: #33475a; }
+@keyframes chart-trill-step { 0%, 49% { transform: translateY(0); } 50%, 100% { transform: translateY(-6.5px); } }
+@keyframes chart-wave-pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+.preview-card--trills:hover .chart-preview__note,
+.preview-card--trills:focus-visible .chart-preview__note { animation: chart-trill-step 0.28s steps(1, end) infinite; }
+.preview-card--trills:hover .chart-preview__wave,
+.preview-card--trills:focus-visible .chart-preview__wave { animation: chart-wave-pulse 0.56s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .chart-preview__key-fill, .chart-preview__wave, .chart-preview__note { animation: none !important; }
+  .chart-preview__key-fill { opacity: 1; }
+}
+
+/* The calendar on the home page: same card, held to the width it needs. */
+.home-calendar-row { margin: 16px 0 0; max-width: 340px; }

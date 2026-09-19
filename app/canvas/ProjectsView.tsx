@@ -91,8 +91,10 @@ export default function ProjectsView({
           <>
             <span className="pj-item-name">{project.name}</span>
             <span className="pj-item-blurb">{project.blurb}</span>
+            {/* Three tags, not the whole stack: the full list belongs in the
+                detail view, and at 9px a long one just becomes a grey smear. */}
             <span className="pj-item-meta">
-              {project.year} · {project.status} · {project.tech.join(", ")}
+              {project.year} · {project.status} · {project.tech.slice(0, 3).join(", ")}
             </span>
           </>
         );

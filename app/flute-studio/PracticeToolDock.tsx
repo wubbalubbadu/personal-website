@@ -226,7 +226,6 @@ export default function PracticeToolDock() {
   };
 
   const toggleDrone=()=>toggleSharedDrone(note,octave);
-  const stopMetronome=()=>{if(metro)toggleMetro()};
 
   const tuner = async () => {
     if (listening) {

@@ -96,3 +96,11 @@
 @media(prefers-reduced-motion:reduce){.exercise-hub__row{transition:none}}
 
 
+
+/* A tool row opens the practice dock instead of navigating, so its main
+   region is a <button>. Buttons bring their own browser defaults that an
+   <a> does not, and without these the tool rows sat a few pixels off the
+   link rows above them in the same list. */
+button.exercise-hub__row-main{
+  border:0;background:none;font:inherit;text-align:left;cursor:pointer;width:100%;
+}

@@ -4,10 +4,29 @@ import {useEffect,useState} from "react";
 import {useLanguage} from "../i18n/LanguageContext";
 import {usePomodoro,formatClock} from "../usePomodoro";
 import {readSessions,type PracticeSession} from "../practice-data";
+import {useRecents,useSavedItems} from "../lib/storage";
+import {musicLibrary} from "../../../content/music-library";
+import {PracticeCalendar} from "../PracticeCalendar";
 import "./practice-page.css";
 
 const routineKey="cookie:practice-routine";
-type RoutineItem={id:string;text:string;done?:boolean};
+const dayMs=86400000;
+const dateKey=(value:Date)=>value.toDateString();
+
+/** Consecutive days up to today, and the longest run in the past year. */
+function streaks(active:Set<string>,now:number){
+  let current=0,cursor=new Date(now);
+  while(active.has(dateKey(cursor))){current+=1;cursor=new Date(cursor.getTime()-dayMs)}
+  let longest=0,run=0;
+  for(let i=364;i>=0;i-=1){
+    if(active.has(dateKey(new Date(now-i*dayMs)))){run+=1;longest=Math.max(longest,run)}
+    else run=0;
+  }
+  return {current,longest};
+}
+/** `ref` is a library id when the step was picked rather than typed, so a
+ *  routine step can link back to the thing it is asking you to play. */
+type RoutineItem={id:string;text:string;done?:boolean;ref?:string};
 
 function readRoutine():RoutineItem[]{try{const saved=JSON.parse(localStorage.getItem(routineKey)??"[]");return Array.isArray(saved)?saved:[]}catch{return []}}
 
@@ -21,13 +40,27 @@ function groupByDay(sessions:PracticeSession[]){
 }
 
 export default function PracticePage(){
-  const {t,lang}=useLanguage();
+  const {t,lang}=useLanguage(),zh=lang==="zh";
   const pomodoro=usePomodoro();
   const [routine,setRoutine]=useState<RoutineItem[]>([]);
   const [routineInput,setRoutineInput]=useState("");
   const [sessions,setSessions]=useState<PracticeSession[]>([]);
+  // Captured once on mount rather than read during render: "today" is a
+  // clock read, and rendering has to be pure for the same input.
+  const [now,setNow]=useState(0);
+  // Both already exist and are already written to — the score viewer records
+  // every piece it opens, and the star control writes favourites. Nothing
+  // was reading them back anywhere you could actually browse.
+  const {ids:recentIds}=useRecents("music",8);
+  const {items:savedIds}=useSavedItems("music");
 
   useEffect(()=>{
+    // Routine and sessions both live in localStorage, which is not readable
+    // during SSR — so they are read once after hydration rather than as
+    // initial state, which is what this rule is warning about.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNow(Date.now());
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRoutine(readRoutine());
     const update=()=>setSessions(readSessions());
     update();
@@ -37,11 +70,37 @@ export default function PracticePage(){
 
   function saveRoutine(next:RoutineItem[]){setRoutine(next);localStorage.setItem(routineKey,JSON.stringify(next))}
   function addRoutineStep(){const text=routineInput.trim();if(!text)return;saveRoutine([...routine,{id:crypto.randomUUID(),text,done:false}]);setRoutineInput("")}
+  /** Adds a real exercise or piece, keeping its id so the step can link. */
+  function addRoutineItem(libraryId:string){
+    const item=byId.get(libraryId);
+    if(!item)return;
+    saveRoutine([...routine,{id:crypto.randomUUID(),text:item.title,ref:item.id,done:false}]);
+  }
   function removeRoutineStep(id:string){saveRoutine(routine.filter(item=>item.id!==id))}
   function toggleRoutineStep(id:string){saveRoutine(routine.map(item=>item.id===id?{...item,done:!item.done}:item))}
 
   const itemTypeLabels:Record<PracticeSession["itemType"],string>={repertoire:t.library.repertoire,exercise:t.library.exercise,etude:t.library.etude,method:t.library.method,"warm-up":t.library.warmup,focus:t.pomodoro.focus};
   const dayGroups=groupByDay(sessions);
+  // The same numbers the landing page used to show. They belong here —
+  // this is the page about your practice — and they are rendered as a
+  // quiet row rather than four oversized figures.
+  const minutesOn=(match:(key:string)=>boolean)=>Math.round(
+    sessions.filter(session=>match(dateKey(new Date(session.startedAt))))
+      .reduce((total,session)=>total+session.durationSeconds,0)/60);
+  const today=dateKey(new Date(now));
+  const weekKeys=new Set(Array.from({length:7},(_,i)=>dateKey(new Date(now-i*dayMs))));
+  const run=streaks(new Set(sessions.map(session=>dateKey(new Date(session.startedAt)))),now);
+  const stats=[
+    {label:zh?"今天":"Today",value:minutesOn(key=>key===today),unit:zh?"分钟":"min"},
+    {label:zh?"本周":"This week",value:minutesOn(key=>weekKeys.has(key)),unit:zh?"分钟":"min"},
+    {label:zh?"连续":"Streak",value:run.current,unit:zh?"天":run.current===1?"day":"days"},
+    {label:zh?"最长":"Best",value:run.longest,unit:zh?"天":run.longest===1?"day":"days"},
+  ];
+  // Ids are all the stores keep, so titles come from the library — which
+  // already contains the exercises as well as the pieces.
+  const byId=new Map(musicLibrary.map(item=>[item.id,item]));
+  const recentItems=recentIds.map(id=>byId.get(id)).filter(Boolean) as typeof musicLibrary;
+  const savedItems=savedIds.map(id=>byId.get(id)).filter(Boolean) as typeof musicLibrary;
 
   return <main className="practice-page">
     <div className="practice-page__content">
@@ -51,10 +110,21 @@ export default function PracticePage(){
         <p className="practice-page__intro">{t.practicePage.intro}</p>
       </header>
 
+      <section className="practice-card stats-card" aria-label={zh?"练习统计":"Practice at a glance"}>
+        <ul className="stats-row">
+          {stats.map(stat=><li key={stat.label}>
+            <b>{stat.value}<span>{stat.unit}</span></b>
+            <small>{stat.label}</small>
+          </li>)}
+        </ul>
+      </section>
+
       <div className="practice-page__grid">
+        <div className="practice-page__column">
         <section className="practice-card focus-card" aria-labelledby="focus-timer-title">
           <h2 id="focus-timer-title">{t.practicePage.focusTimer}</h2>
-          <div className={`focus-card__mode ${pomodoro.mode}`}>{pomodoro.mode==="focus"?t.pomodoro.focus:t.pomodoro.breakLabel}</div>
+          {/* Only worth saying when it is NOT the focus clock. */}
+          {pomodoro.mode!=="focus"&&<div className="focus-card__mode break">{t.pomodoro.breakLabel}</div>}
           <div className="focus-card__clock">{formatClock(pomodoro.remaining)}</div>
           {pomodoro.canEditDuration&&<div className="focus-card__duration">
             <button type="button" aria-label={t.pomodoro.decreaseFocus} onClick={()=>pomodoro.adjustFocusMinutes(-5)} disabled={pomodoro.focusMinutes<=pomodoro.minFocusMinutes}>−</button>
@@ -72,27 +142,75 @@ export default function PracticePage(){
           <small>{t.pomodoro.roundsDone(pomodoro.rounds)}</small>
         </section>
 
+        {/* The calendar answers "did I show up"; the history below answers
+            "what did I play". It sits in this column because a month of
+            30px days is 234px wide — spanning the page left it stranded in
+            empty card. */}
+        <PracticeCalendar sessions={sessions}/>
+        </div>
+
+        <div className="practice-page__column">
         <section className="practice-card" aria-labelledby="routine-title">
           <div className="practice-card__heading">
             <h2 id="routine-title">{t.practicePage.routineTitle}</h2>
             {routine.length>0&&<b className="routine-count">{t.activity.planCount(routine.filter(item=>item.done).length,routine.length)}</b>}
           </div>
-          <p className="practice-card__intro">{t.practicePage.routineIntro}</p>
           {routine.length?
             <ol className="routine-list">{routine.map(item=><li key={item.id} className={item.done?"done":""}>
               <label className="routine-list__check">
                 <input type="checkbox" checked={Boolean(item.done)} onChange={()=>toggleRoutineStep(item.id)} aria-label={t.practicePage.markStepDone(item.text)}/>
                 <span aria-hidden="true">✓</span>
               </label>
-              <span className="routine-list__text">{item.text}</span>
+              {item.ref&&byId.get(item.ref)?.viewerPath
+                ?<a className="routine-list__text routine-list__text--link" href={byId.get(item.ref)!.viewerPath!}>{item.text}</a>
+                :<span className="routine-list__text">{item.text}</span>}
               <button type="button" aria-label={t.practicePage.removeStep(item.text)} onClick={()=>removeRoutineStep(item.id)}>×</button>
             </li>)}</ol>:
-            <p className="practice-card__empty">{t.practicePage.routineEmpty}</p>}
+            <p className="practice-card__empty">{zh?"还没有步骤。":"No steps yet."}</p>}
           <label className="routine-add">
             <span aria-hidden="true">＋</span>
             <input value={routineInput} onChange={e=>setRoutineInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();addRoutineStep()}}} placeholder={t.practicePage.routineAddPlaceholder} aria-label={t.practicePage.routineAddAria}/>
           </label>
+          {/* A routine is mostly real exercises and pieces, so they can be
+              picked rather than retyped — and a picked step links to the
+              thing it names. Free text still works for everything else. */}
+          <label className="routine-pick">
+            <span>{zh?"或选择":"or pick"}</span>
+            <select value="" onChange={e=>{addRoutineItem(e.target.value);e.currentTarget.value=""}} aria-label={zh?"添加练习或曲目":"Add an exercise or piece"}>
+              <option value="">{zh?"练习或曲目…":"Exercise or piece\u2026"}</option>
+              <optgroup label={zh?"练习":"Exercises"}>
+                {musicLibrary.filter(item=>item.category==="exercise").map(item=>
+                  <option key={item.id} value={item.id}>{item.title}</option>)}
+              </optgroup>
+              <optgroup label={zh?"曲目":"Music"}>
+                {musicLibrary.filter(item=>item.category!=="exercise").map(item=>
+                  <option key={item.id} value={item.id}>{item.title}</option>)}
+              </optgroup>
+            </select>
+          </label>
         </section>
+        <section className="practice-card" aria-labelledby="recent-title">
+          <h2 id="recent-title">{zh?"最近打开":"Recently opened"}</h2>
+          {recentItems.length
+            ?<ul className="studio-mini-list">{recentItems.map(item=><li key={item.id}>
+              <a href={item.viewerPath??undefined} className={item.viewerPath?"":"is-disabled"}>
+                <strong>{item.title}</strong><small>{item.composer}</small>
+              </a>
+            </li>)}</ul>
+            :<p className="practice-card__empty">{zh?"还没有打开过谱子。":"Nothing opened yet."}</p>}
+        </section>
+
+        <section className="practice-card" aria-labelledby="saved-title">
+          <h2 id="saved-title">{zh?"已收藏":"Saved"}</h2>
+          {savedItems.length
+            ?<ul className="studio-mini-list">{savedItems.map(item=><li key={item.id}>
+              <a href={item.viewerPath??undefined} className={item.viewerPath?"":"is-disabled"}>
+                <strong>{item.title}</strong><small>{item.category==="exercise"?(zh?"练习":"Exercise"):item.composer}</small>
+              </a>
+            </li>)}</ul>
+            :<p className="practice-card__empty">{zh?"还没有收藏。":"Nothing saved yet \u2014 tap the star on a piece or exercise."}</p>}
+        </section>
+        </div>
       </div>
 
       <section className="practice-card history-card" aria-labelledby="history-title">

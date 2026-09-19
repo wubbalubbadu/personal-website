@@ -43,7 +43,7 @@ export const GREETING: AnswerNode[] = [
       { text: "Hi, I'm Haylie. I'm a " },
       { text: "software engineer", intent: "experience" },
       { text: " with a background that combines computer science and high-level " },
-      { text: "music performance", intent: "flute" },
+      { text: "flute performance", intent: "flute" },
       { text: "." },
     ],
   },

@@ -27,17 +27,64 @@ export type Project = {
 
 export const projects: Project[] = [
   {
-    slug: "cookie-flute-studio",
+slug: "cookie-flute-studio",
     name: "Cookie Flute Studio",
     size: "flagship",
     status: "Active",
     year: "2026",
     role: "Solo design & development",
-    tech: ["Next.js", "TypeScript", "Web Audio API", "MusicXML", "AWS"],
-    blurb: "A real-time practice platform for flutists with score-following pitch feedback.",
+    tech: [
+      "Next.js",
+      "TypeScript",
+      "MusicXML",
+      "OpenSheetMusicDisplay",
+      "Web Audio API",
+      "three.js",
+      "Cloudflare Workers",
+    ],
+    blurb:
+      "A practice studio for flutists where the sheet music is generated, not stored — scales, long tones and fingering charts computed from a model and engraved in the browser.",
     detail:
-      "A practice tool for flutists that listens while you play. Its score-following engine matches live pitch detection against parsed MusicXML, so you get per-note intonation feedback in real time, not just one overall score at the end. Around that core there's repertoire management, in-app score annotation, and practice-session tracking.\n\nAn insights layer aggregates the per-note data across sessions to surface the passages you keep missing. Built with Next.js and TypeScript on the Web Audio API, with a serverless AWS backend (S3, Lambda, API Gateway, DynamoDB). Still in active development, with more practice tools on the way.",
+      "Most practice apps ship sheet music as files. This one mostly doesn't have any. A scale, a long-tone exercise and a fingering chart are all the same kind of object — a rule about pitch — so the studio stores the rule and emits MusicXML on demand, then engraves it client-side with OpenSheetMusicDisplay. Changing the articulation pattern or the range re-generates the score rather than swapping a picture of one.\n\nThat decision is what makes the rest possible: every exercise is parameterised, nothing goes stale, and the same engine renders a twelve-key scale book, Moyse's De la sonorité and a four-octave trill chart. The work is mostly in the places where a general-purpose engraver and a practice tool disagree — pagination, enharmonic spelling, and what to do when a student's range doesn't match the book's.\n\nBuilt as a single Next.js app in TypeScript, deployed on Cloudflare Workers, fully bilingual (English/中文). Notation by OpenSheetMusicDisplay over VexFlow; audio, tuning and playback on the Web Audio API; the anatomy views in three.js.\n\nNext: score-following. The pitch tracker currently powers a standalone tuner; the work in progress is matching that live estimate against the engraved score note by note, so intonation feedback lands on the passage you actually played rather than as one number at the end — and an insights layer that aggregates it across sessions to surface the bars you keep missing.",
     links: [{ label: "Open Cookie Flute Studio", href: "/flute-studio" }],
+    items: [
+      {
+        name: "A scale as data, not a file",
+        blurb:
+          "Each scale type is an interval set, a letter-class sequence, a chord and a reach — which generalises past seven notes per octave, so chromatic, whole-tone, diminished and augmented scales fall out of the same generator rather than needing hand-written exceptions. Accidentals are spelled by direction of travel (flats descending, sharps ascending) because a chromatic scale has no key signature to infer them from.",
+        tech: ["MusicXML generation", "Enharmonic spelling"],
+      },
+      {
+        name: "Engraving the browser wasn't designed for",
+        blurb:
+          "Page-turn mode measures the rendered systems and computes page offsets itself, since OSMD's own pagination assumes fixed paper. Line breaks are rebalanced by measuring how many notes the first system actually fits, then re-emitting the XML with explicit breaks — the naive pass wraps at one measure per line because the container hasn't been laid out at its real width yet.",
+        tech: ["OpenSheetMusicDisplay", "VexFlow", "Layout measurement"],
+      },
+      {
+        name: "Vector PDF export",
+        blurb:
+          "Downloading a book spins up a second OSMD instance off-screen, engraves at a fixed traditional staff size, and maps each A4 page 1:1 onto a PDF page — so the file carries the engraver's margins rather than the print stylesheet's. Output is vector, not screenshots, and flate compression takes a twelve-page book from 1.4 MB to 247 KB.",
+        tech: ["svg2pdf", "jsPDF", "Off-screen rendering"],
+      },
+      {
+        name: "Pitch tracking",
+        blurb:
+          "The tuner runs a difference-function pitch estimator over the Web Audio time-domain buffer, gated on RMS so room noise doesn't register, then median-filters the last few frames and requires consecutive agreeing frames before it commits to a note — with hysteresis, so a held pitch doesn't flicker between neighbours at the boundary.",
+        tech: ["Web Audio API", "Autocorrelation", "Signal smoothing"],
+      },
+      {
+        name: "One fingering dataset, two directions",
+        blurb:
+          "Fingerings are indexed both by sounding pitch and by key shape, so the chart runs backwards: press keys on the diagram and it tells you what sounds. The mechanically linked foot keys are declared once and applied to every fingering rather than typed out per note, which is exactly how the low notes and the altissimo had drifted apart in the hand-written table it replaced.",
+        tech: ["Reverse indexing", "SVG diagrams"],
+      },
+      {
+        name: "Annotation, playback and practice history",
+        blurb:
+          "Scores take canvas ink and draggable text notes; playback synthesises a flute tone per note with articulation-aware envelopes; a drone and metronome run from a shared audio context so they stay in step. Sessions are recorded and rolled up into a practice calendar that shows the shape of a month at a glance.",
+        tech: ["Canvas", "Web Audio API", "localStorage"],
+      },
+    ],
   },
   {
     slug: "learning-log",

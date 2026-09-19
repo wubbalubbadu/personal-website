@@ -158,3 +158,8 @@
 @media (prefers-reduced-motion: reduce) {
   .quick-tool { transition: none; }
 }
+
+/* The quick tools now draw the same icons Resources does, so the tile no
+   longer sizes a text glyph — it holds a 24px SVG and centres it. The
+   hover animations key off .quick-tool__glyph, which is this element. */
+.quick-tool__glyph svg { display: block; }

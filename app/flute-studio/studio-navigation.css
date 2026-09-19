@@ -17,7 +17,6 @@
 .studio-navigation__tab:hover{color:#292a33;background:rgba(103,137,86,.06)}
 .studio-navigation__tab.is-active{color:#46633d;font-weight:690}
 .studio-navigation__tab.is-active::after{opacity:1;transform:scaleX(1)}
-.studio-navigation__tab-icon{font-size:17px;line-height:1;color:inherit}
 .studio-navigation__actions{margin-left:auto;display:flex;align-items:center;gap:12px}
 .studio-navigation__tools{height:36px;padding:0 14px;border:0;border-radius:12px;display:flex;align-items:center;gap:7px;background:#e9ece6;color:#46633d;font:inherit;font-size:12px;font-weight:680;line-height:1;cursor:pointer;transition:background-color .16s ease,transform .16s ease}
 .studio-navigation__tools:hover{background:#dde6d9}
@@ -38,13 +37,13 @@
   .studio-navigation{top:auto;bottom:0;height:calc(68px + env(safe-area-inset-bottom));border-top:1px solid rgba(41,42,51,.08);border-bottom:0;background:rgba(255,255,255,.9)}
   .studio-navigation__inner{padding:6px 10px env(safe-area-inset-bottom);display:block}
   .studio-navigation__brand,.studio-navigation__actions{display:none}
-  .studio-navigation__tabs{height:62px;display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
+  /* Two tabs on a phone, not six — see the `phone` flag in the nav. */
+  .studio-navigation__tabs{height:62px;display:grid;grid-template-columns:repeat(2,1fr);gap:2px}
+  .studio-navigation__tab:not([data-phone]){display:none}
   .studio-navigation__tab{height:58px;padding:4px 2px 3px;display:grid;place-items:center;align-content:center;gap:3px;border-radius:13px;font-size:10px;font-weight:560}
-  .studio-navigation__tab[data-key="home"]{display:grid}
   .studio-navigation__tab::after{display:none}
   .studio-navigation__tab:hover{background:transparent}
   .studio-navigation__tab.is-active{background:#e5ece1;color:#46633d}
-  .studio-navigation__tab-icon{font-size:21px}
 }
 
 @media(prefers-reduced-motion:reduce){.studio-navigation__tab,.studio-navigation__tab::after,.studio-navigation__tools{transition:none}}

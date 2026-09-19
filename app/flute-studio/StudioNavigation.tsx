@@ -2,17 +2,22 @@
 
 import Link from "next/link";
 import {usePathname} from "next/navigation";
+import AccountMenu from "./AccountMenu";
 import {useLanguage} from "./i18n/LanguageContext";
 import "./studio-navigation.css";
 
 function useDestinations(){
   const {t}=useLanguage();
   return [
-    {key:"home",label:t.nav.home,href:"/flute-studio",icon:"⌂"},
-    {key:"music",label:t.nav.music,href:"/flute-studio/music",icon:"♫"},
-    {key:"exercises",label:t.nav.exercises,href:"/flute-studio/exercises",icon:"◎"},
-    {key:"practice",label:t.nav.practice,href:"/flute-studio/practice",icon:"✓"},
-    {key:"settings",label:t.nav.settings,href:"/flute-studio/settings",icon:"⚙"},
+    // `phone: true` marks the two a phone keeps. The studio is a desktop
+    // tool — you practise at a stand with a laptop — so a phone gets the
+    // two things you would actually reach for away from one: the library
+    // and your own record.
+    {key:"home",label:t.nav.home,href:"/flute-studio"},
+    {key:"music",label:t.nav.music,href:"/flute-studio/music",phone:true},
+    {key:"exercises",label:t.nav.exercises,href:"/flute-studio/exercises"},
+    {key:"resources",label:t.nav.resources,href:"/flute-studio/resources"},
+    {key:"practice",label:t.nav.practice,href:"/flute-studio/practice",phone:true},
   ] as const;
 }
 
@@ -42,17 +47,20 @@ export default function StudioNavigation(){
           return <Link
             key={destination.key}
             data-key={destination.key}
+            data-phone={"phone" in destination&&destination.phone?"":undefined}
             href={destination.href}
             className={active?"studio-navigation__tab is-active":"studio-navigation__tab"}
             aria-current={active?"page":undefined}
           >
-            <span className="studio-navigation__tab-icon" aria-hidden="true">{destination.icon}</span>
+            {/* Words only. Every tab having a glyph made the bar read as a
+                row of symbols with captions rather than as navigation, and
+                the labels already say it. */}
             <span>{destination.label}</span>
           </Link>;
         })}
       </nav>
       <div className="studio-navigation__actions">
-        <span className="studio-navigation__avatar" role="img" aria-label={t.nav.avatarLabel}>HW</span>
+        <AccountMenu/>
       </div>
     </div>
   </header>;
