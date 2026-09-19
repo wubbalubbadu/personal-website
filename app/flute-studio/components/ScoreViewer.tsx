@@ -1205,7 +1205,6 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
       const scale=measured?Math.min(3,Math.max(.3,STAFF_SPACE_MM/measured)):1;
       if(Math.abs(scale-1)>0.01){osmd.zoom=scale;suppress();osmd.render()}
       const pages=[...stage.querySelectorAll<SVGSVGElement>(":scope > div > svg")];
-      {const tops=pages.map(p=>{const vw=p.viewBox.baseVal.width;const ys=[...p.querySelectorAll<SVGGElement>(".vf-text, .staffline")].map(n=>n.getBBox().y);return +(Math.min(...ys)*(PAGE_MM.width/vw)).toFixed(2)});console.log("TOPPROBE",JSON.stringify({tops,pages:pages.length}))}
       if(!pages.length)return;
       // compress: the engraving is thousands of small paths, and flate
       // takes a twelve-page book from megabytes to something you can email.
