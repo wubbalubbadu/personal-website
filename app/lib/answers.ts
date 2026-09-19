@@ -2,8 +2,12 @@
  * that asks that question; `href` makes it a normal link. */
 export type RichSeg =
   | { text: string }
-  | { text: string; intent: string }
-  | { text: string; href: string };
+  | { text: string; intent: string; flair?: RichFlair }
+  | { text: string; href: string; flair?: RichFlair };
+
+/** Optional emphasis on a clickable run. `rainbow` is reserved for the one
+ * project that's currently in flight, so it stays special. */
+export type RichFlair = "rainbow";
 
 export type AnswerNode =
   | { kind: "text"; value: string }
@@ -59,7 +63,7 @@ export const GREETING: AnswerNode[] = [
     kind: "rich",
     segments: [
       { text: "Here's what I'm working on right now: " },
-      { text: "Cookie Flute Studio", href: "/flute-studio" },
+      { text: "Cookie Flute Studio", href: "/flute-studio", flair: "rainbow" },
       { text: " and my " },
       { text: "Learning Log", href: "/learning-log" },
       { text: "." },

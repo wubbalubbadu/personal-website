@@ -238,6 +238,34 @@ export function midiForPitch(pitch: string) {
   return (Number(octave) + 1) * 12 + SEMITONES[letter] + (accidental === "♯" ? 1 : accidental === "♭" ? -1 : 0);
 }
 
+/**
+ * The registers, split at E rather than at D.
+ *
+ * The printed convention calls D the start of the second octave, but the
+ * flute disagrees twice over. C5 to D♯5 can be produced either as
+ * fundamentals or overblown, so E is the first note that genuinely has to
+ * be overblown; and E5 upwards is fingered exactly like E4 upwards, while
+ * D5 and E♭5 are not — they vent the left first finger and belong cleanly
+ * to neither pattern.
+ *
+ * One list, used by the fingering chart and by the long-tone book, so the
+ * two never drift apart on where an octave begins.
+ */
+export const REGISTERS = [
+  { id: "first", en: "First octave", zh: "第一八度", below: 76 },
+  { id: "second", en: "Second octave", zh: "第二八度", below: 88 },
+  // The E rule is about overblowing the octave, which is what the second
+  // and third registers do. Altissimo is a different animal — higher
+  // harmonics and ad-hoc fingerings — so it keeps its own boundary.
+  { id: "third", en: "Third octave", zh: "第三八度", below: 97 },
+  { id: "altissimo", en: "Altissimo", zh: "超高音区", below: Infinity },
+] as const;
+
+export type Register = (typeof REGISTERS)[number];
+
+export const registerForMidi = (midi: number): Register =>
+  REGISTERS.find(register => midi < register.below) ?? REGISTERS[REGISTERS.length - 1];
+
 /** Pitch-class order for laying the chart out chromatically. */
 export const chromaticIndex = (pitch: string) => {
   const match = pitch.match(/^([A-G][♯♭]?)(\d)$/);

@@ -71,9 +71,10 @@ function NodeView({ node, onAsk }: { node: AnswerNode; onAsk: (id: string) => vo
     return (
       <p className="node-text">
         {node.segments.map((seg, i) => {
+          const inlink = "flair" in seg && seg.flair ? `chat-inlink chat-inlink--${seg.flair}` : "chat-inlink";
           if ("intent" in seg) {
             return (
-              <button type="button" key={i} className="chat-inlink" onClick={() => onAsk(seg.intent)}>
+              <button type="button" key={i} className={inlink} onClick={() => onAsk(seg.intent)}>
                 {seg.text}
               </button>
             );
@@ -86,7 +87,7 @@ function NodeView({ node, onAsk }: { node: AnswerNode; onAsk: (id: string) => vo
                 href={seg.href}
                 target={opensNewTab ? "_blank" : undefined}
                 rel={opensNewTab ? "noreferrer" : undefined}
-                className="chat-inlink"
+                className={inlink}
               >
                 {seg.text}
               </a>

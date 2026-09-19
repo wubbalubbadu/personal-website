@@ -4,7 +4,7 @@ import { useState } from "react";
 import { FluteDiagram } from "../components/FluteDiagram";
 import { StaffNote } from "../components/StaffNote";
 import { useLanguage } from "../i18n/LanguageContext";
-import { fluteFingerings, midiForPitch, type NoteFingerings } from "../../../content/fingerings/flute";
+import { REGISTERS, fluteFingerings, midiForPitch, registerForMidi, type NoteFingerings } from "../../../content/fingerings/flute";
 import "./fingerings.css";
 
 /**
@@ -23,16 +23,8 @@ import "./fingerings.css";
  * Alternates are behind a row of buttons rather than listed all at once —
  * a beginner needs one B♭, not three.
  */
-const REGISTERS = [
-  { id: "first", en: "First octave", zh: "第一八度", upTo: 74 },
-  { id: "second", en: "Second octave", zh: "第二八度", upTo: 86 },
-  { id: "third", en: "Third octave", zh: "第三八度", upTo: 97 },
-  { id: "altissimo", en: "Altissimo", zh: "超高音区", upTo: Infinity },
-];
-
 function registerOf(note: NoteFingerings) {
-  const midi = midiForPitch(note.pitch);
-  return REGISTERS.find(r => midi < r.upTo) ?? REGISTERS[REGISTERS.length - 1];
+  return registerForMidi(midiForPitch(note.pitch));
 }
 
 export default function FingeringChart() {

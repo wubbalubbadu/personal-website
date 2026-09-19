@@ -209,64 +209,6 @@
   .preview-card--breathing:hover .breathing-preview__orbit { animation: none; }
 }
 
-.preview-card--scales .preview-card__stage {
-  background: linear-gradient(160deg, #f3f7f1, #f8faf7);
-  align-items: stretch;
-  padding: 18px 20px 16px;
-}
-
-/* Scale Studio preview — an octave up and back down, played rather than
-   drawn: each note head brightens in turn, so a run travels along the
-   staff on a loop. Just the staff: the card's own copy already says what
-   you can change, and a row of chips repeating it crowded the artwork. */
-.scales-preview { margin: auto 0; }
-.scales-preview__staff { display: block; width: 100%; height: auto; overflow: visible; }
-.scales-preview__line { stroke: #c5d4bd; stroke-width: 1; }
-.scales-preview__note { fill: #40553d; stroke: #40553d; stroke-width: 1.4; opacity: 0.22; }
-.scales-preview__note ellipse { stroke: none; }
-.scales-preview__slur {
-  fill: none;
-  stroke: #7fa06f;
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-dasharray: 180;
-  stroke-dashoffset: 180;
-}
-
-/* The run: a 2.8s cycle, each note entering 0.11s after the one before, so
-   the bright spot sweeps left to right and the whole figure resets before
-   it becomes hypnotic. */
-@keyframes scales-run {
-  0%, 62%, 100% { opacity: 0.22; transform: translateY(0); }
-  8% { opacity: 1; transform: translateY(-1.5px); }
-  22% { opacity: 0.4; transform: translateY(0); }
-}
-@keyframes scales-slur-draw {
-  0% { stroke-dashoffset: 180; }
-  45%, 72% { stroke-dashoffset: 0; }
-  100% { stroke-dashoffset: -180; }
-}
-/* At rest the run simply sits there, like the other cards' artwork; the
-   sweep only plays on hover. A card that animates constantly competes with
-   everything around it, and this one shares a screen with four others. */
-.scales-preview__note {
-  opacity: 0.6;
-  transform-box: fill-box;
-  transform-origin: center;
-  transition: opacity 0.3s ease;
-}
-.preview-card--scales:hover .scales-preview__note {
-  animation: scales-run 2.4s ease-in-out infinite;
-  animation-delay: calc(var(--i) * 0.1s);
-}
-.preview-card--scales:hover .scales-preview__slur { animation: scales-slur-draw 2.4s ease-in-out infinite; }
-
-@media (prefers-reduced-motion: reduce) {
-  .preview-card--scales:hover .scales-preview__note,
-  .preview-card--scales:hover .scales-preview__slur { animation: none; }
-  .scales-preview__note { opacity: 0.85; transition: none; }
-}
-
 /* Continue practicing — ONE shared card (not three differently-tinted
    tiles); each of the three sections is told apart by a small colored dot,
    not a different background, so it reads as one unit. */
@@ -384,4 +326,67 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .preview-card, .music-preview__swatch { transition: none; }
+}
+
+/* Flat notation and a sustained pitch trace, at the breathing card's scale. */
+.preview-card--scales .preview-card__stage { background: #f0f5f8; }
+.preview-card--tones .preview-card__stage { background: #f8f1f4; }
+.scales-preview, .tones-preview { width: 220px; max-width: 90%; }
+.scales-preview svg, .tones-preview svg { display: block; width: 100%; }
+.scales-preview__note { color: #87b4c8; fill: currentColor; }
+.scales-preview__slur { fill: #87b4c8; }
+.tones-preview__pitch { fill: #846473; font-size: 23px; font-weight: 550; }
+.tones-preview__guide { fill: none; stroke: #e7dce2; stroke-width: 1.5; stroke-dasharray: 2 7; }
+.tones-preview__track { fill: none; stroke: #e3cad3; stroke-width: 5; stroke-linecap: round; }
+.tones-preview__trace { fill: none; stroke: #ca9295; stroke-width: 5; stroke-linecap: round; }
+.tones-preview__cursor { fill: #629ab3; }
+
+/* One shared phrase: connected first pair, distinct attacks on the last two.
+   Notes stay in place; only the articulation is animated. */
+@keyframes articulation-first {
+  0%, 18% { color: #b96f85; }
+  22%, 100% { color: #87b4c8; }
+}
+@keyframes articulation-second {
+  0%, 17% { color: #87b4c8; }
+  21%, 38% { color: #b96f85; }
+  40%, 100% { color: #87b4c8; }
+}
+@keyframes articulation-third {
+  0%, 39.9% { color: #87b4c8; }
+  40%, 56% { color: #b96f85; }
+  56.1%, 100% { color: #87b4c8; }
+}
+@keyframes articulation-fourth {
+  0%, 59.9% { color: #87b4c8; }
+  60%, 76% { color: #b96f85; }
+  76.1%, 100% { color: #87b4c8; }
+}
+@keyframes articulation-slur {
+  0%, 37% { fill: #ca9295; }
+  40%, 100% { fill: #87b4c8; }
+}
+@keyframes sustained-trace {
+  0% { stroke-dashoffset: 100; opacity: 1; }
+  78%, 90% { stroke-dashoffset: 0; opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0; }
+}
+@keyframes sustained-cursor {
+  0% { transform: translateX(-152px); opacity: 1; }
+  78%, 90% { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(0); opacity: 0; }
+}
+.preview-card--scales:is(:hover, :focus-visible) .scales-preview__note { animation-duration: 4s; animation-timing-function: linear; animation-iteration-count: infinite; }
+.preview-card--scales:is(:hover, :focus-visible) .scales-preview__note--1 { animation-name: articulation-first; }
+.preview-card--scales:is(:hover, :focus-visible) .scales-preview__note--2 { animation-name: articulation-second; }
+.preview-card--scales:is(:hover, :focus-visible) .scales-preview__note--3 { animation-name: articulation-third; }
+.preview-card--scales:is(:hover, :focus-visible) .scales-preview__note--4 { animation-name: articulation-fourth; }
+.preview-card--scales:is(:hover, :focus-visible) .scales-preview__slur { animation: articulation-slur 4s linear infinite; }
+.preview-card--tones:is(:hover, :focus-visible) .tones-preview__trace { stroke-dasharray: 100; animation: sustained-trace 5s linear infinite; }
+.preview-card--tones:is(:hover, :focus-visible) .tones-preview__cursor { animation: sustained-cursor 5s linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .preview-card--scales:is(:hover, :focus-visible) .scales-preview__note,
+  .preview-card--scales:is(:hover, :focus-visible) .scales-preview__slur,
+  .preview-card--tones:is(:hover, :focus-visible) .tones-preview__trace,
+  .preview-card--tones:is(:hover, :focus-visible) .tones-preview__cursor { animation: none; }
 }

@@ -1,0 +1,42 @@
+/* The animated marks a studio row can wear (see StudioRowArt.tsx).
+
+   The hover selectors list BOTH row types deliberately: the Library builds
+   its list from the same exercise catalog, so Scale Studio and Long tones
+   are the same row in two places and must animate in both. */
+.studio-art-tile{
+  display:grid;place-items:center;flex:0 0 auto;
+  width:48px;height:48px;border-radius:13px;
+  background:var(--spectrum,#f1f1f2);background-size:300% 100%;
+  color:#fff;
+}
+.hub-art{width:30px;height:24px;overflow:visible}
+.hub-art__staff{stroke:currentColor;stroke-width:1;opacity:.35}
+.hub-art__note,.hub-art__note rect{fill:currentColor}
+.hub-art--tones .hub-art__note--second{opacity:.45;transition:opacity .3s ease}
+.hub-art--tones .hub-art__slur{
+  stroke:currentColor;stroke-width:1.6;stroke-linecap:round;fill:none;
+  stroke-dasharray:26;stroke-dashoffset:26;opacity:.6;
+}
+.hub-art--scales .hub-art__note{opacity:.5;transition:opacity .3s ease}
+@keyframes hub-slur-draw{
+  0%{stroke-dashoffset:26;opacity:.4}
+  45%{stroke-dashoffset:0;opacity:1}
+  80%{stroke-dashoffset:0;opacity:1}
+  100%{stroke-dashoffset:26;opacity:.4}
+}
+@keyframes hub-second-arrive{0%{opacity:.45}45%{opacity:1}80%{opacity:1}100%{opacity:.45}}
+@keyframes hub-scale-step{0%,100%{opacity:.5}40%{opacity:1}}
+.exercise-hub__row-main:hover .hub-art--tones .hub-art__slur,
+.music-row__main:hover .hub-art--tones .hub-art__slur{animation:hub-slur-draw 2.4s ease-in-out infinite}
+.exercise-hub__row-main:hover .hub-art--tones .hub-art__note--second,
+.music-row__main:hover .hub-art--tones .hub-art__note--second{animation:hub-second-arrive 2.4s ease-in-out infinite}
+.exercise-hub__row-main:hover .hub-art--scales .hub-art__note,
+.music-row__main:hover .hub-art--scales .hub-art__note{
+  animation:hub-scale-step 2.2s ease-in-out infinite;
+  animation-delay:calc(var(--i) * .11s);
+}
+@media (prefers-reduced-motion: reduce){
+  .hub-art__slur,.hub-art__note,.hub-art__note--second{animation:none!important}
+  .hub-art--tones .hub-art__slur{stroke-dashoffset:0;opacity:1}
+  .hub-art--tones .hub-art__note--second,.hub-art--scales .hub-art__note{opacity:1}
+}

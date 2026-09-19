@@ -2,6 +2,7 @@
 
 import {useEffect,useState} from "react";
 import {exerciseCatalog,exerciseFocuses,type ExerciseEntry,type ExerciseFocus} from "../../../content/exercise-catalog";
+import {artForId} from "../components/StudioRowArt";
 import {deleteScaleSet,describeSet,readScaleSets,scaleSetsEvent,type ScaleSet} from "./scales/saved-sets";
 import {SaveButton} from "../components/SaveButton";
 import {StudioItemIcon} from "../components/StudioItemIcon";
@@ -15,9 +16,13 @@ import "./exercises.css";
  * and the two lists read as one system. The old "›" chevron said nothing
  * the whole clickable row was not already saying.
  */
-function Row({focus,title,detail,href,badge,featured,save,trailing}:{focus:ExerciseFocus;title:string;detail:string;href?:string;badge?:string;featured?:boolean;save?:{saved:boolean;onToggle:()=>void;label:string};trailing?:React.ReactNode}){
+function Row({focus,title,detail,href,badge,featured,art,save,trailing}:{focus:ExerciseFocus;title:string;detail:string;href?:string;badge?:string;featured?:boolean;art?:React.ReactNode;save?:{saved:boolean;onToggle:()=>void;label:string};trailing?:React.ReactNode}){
   const content=<>
-    <StudioItemIcon kind={focus} className="exercise-hub__icon"/>
+    {/* A featured row may draw its own mark; everything else keeps the
+        generic focus icon, so the list stays one family. */}
+    {art
+      ?<span className="studio-art-tile">{art}</span>
+      :<StudioItemIcon kind={focus} className="exercise-hub__icon"/>}
     <span className="exercise-hub__copy"><strong>{title}</strong><small>{detail}</small></span>
     {badge&&<span className="exercise-hub__action exercise-hub__action--muted">{badge}</span>}
   </>;
@@ -109,6 +114,7 @@ export default function ExercisesHub(){
               href={entry.href??undefined}
               badge={entry.href?undefined:t.exercises.comingSoon}
               featured={entry.featured}
+              art={artForId(entry.id)}
               save={{saved:favorites.has(entry.id),onToggle:()=>favorites.toggle(entry.id),label:favorites.has(entry.id)?t.musicRow.remove(titleOf(entry)):t.musicRow.save(titleOf(entry))}}/>
             )}
           </div>

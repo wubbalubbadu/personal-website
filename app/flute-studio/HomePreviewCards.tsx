@@ -10,14 +10,6 @@ export default function HomePreviewCards(){
   const {t}=useLanguage();
   const regions=t.roadmap.regions;
   const tracks=musicLibrary.filter(item=>item.status==="published").slice(0,4);
-  // A scale drawn as an arch: up an octave and back down. The note heads
-  // animate in sequence, so the card shows a run being *played* rather than
-  // a static picture of one. 13 notes is the most that stays legible at
-  // this size while still reading as a full octave there and back.
-  const runNotes=Array.from({length:13},(_,i)=>{
-    const degree=i<=6?i:12-i;
-    return {x:20+i*14.5,y:68-degree*5,i};
-  });
 
   return <section className="home-preview-grid" aria-label="Resources">
     <Link className="preview-card preview-card--embouchure" href="/flute-studio/embouchure">
@@ -34,16 +26,33 @@ export default function HomePreviewCards(){
       <div className="preview-card__copy"><b>Breathing Lab</b><small>Guided breaths, your rhythm.</small></div>
     </Link>
 
+    <Link className="preview-card preview-card--tones" href="/flute-studio/exercises/long-tones">
+      <div className="preview-card__stage">
+        <div className="tones-preview" aria-hidden="true">
+          <svg viewBox="0 0 240 160" role="presentation">
+            <text className="tones-preview__pitch" x="26" y="87">A</text>
+            <path className="tones-preview__guide" d="M62 48 H214 M62 112 H214"/>
+            <path className="tones-preview__track" d="M62 80 H214"/>
+            <path className="tones-preview__trace" pathLength="100" d="M62 80 H214"/>
+            <circle className="tones-preview__cursor" cx="214" cy="80" r="6"/>
+          </svg>
+        </div>
+      </div>
+      <div className="preview-card__copy"><b>Long tones</b><small>Held notes and De la sonorité.</small></div>
+    </Link>
+
     <Link className="preview-card preview-card--scales" href="/flute-studio/exercises/scales">
       <div className="preview-card__stage">
         <div className="scales-preview" aria-hidden="true">
-          <svg className="scales-preview__staff" viewBox="0 0 220 84" role="presentation">
-            {[0,1,2,3,4].map(line=><line key={line} className="scales-preview__line" x1="6" x2="214" y1={28+line*10} y2={28+line*10}/>)}
-            <path className="scales-preview__slur" d="M 20 76 Q 107 88 194 76"/>
-            {runNotes.map(note=><g key={note.i} className="scales-preview__note" style={{"--i":note.i} as React.CSSProperties}>
-              <line x1={note.x+4.6} y1={note.y-2} x2={note.x+4.6} y2={note.y-17}/>
-              <ellipse cx={note.x} cy={note.y} rx="4.6" ry="3.5"/>
-            </g>)}
+          <svg viewBox="0 0 240 160" role="presentation">
+            <path className="scales-preview__slur" d="M36 123 C45 139 70 130 84 111 C70 125 49 132 36 123Z"/>
+            {Array.from({length:4}, (_,i)=>{
+              const x=36+i*52, y=110-i*12;
+              return <g key={i} className={`scales-preview__note scales-preview__note--${i+1}`}>
+                <ellipse cx={x} cy={y} rx="10" ry="7" transform={`rotate(-22 ${x} ${y})`}/>
+                <path d={`M ${x+8} ${y-3} V ${y-42}`} fill="none" stroke="currentColor" strokeWidth="3"/>
+              </g>;
+            })}
           </svg>
         </div>
       </div>

@@ -160,3 +160,49 @@
 .scale-book__metronome { flex:0 0 auto; }
 
 
+
+/* The starting-note stepper in Long Tones. Its own row rather than the
+   two-column chip grid the panel uses elsewhere: − note + reads as one
+   control, and the grid was stacking the two buttons. */
+
+
+
+/* A breadcrumb that has just jumped you to a group says which one, then
+   lets go — without it the panel opens and nothing appears to have
+   happened, since the group you asked for looks like every other group. */
+[data-tone-group][data-just-focused] { animation: tone-group-flash .9s ease-out; border-radius:10px; }
+@keyframes tone-group-flash {
+  from { background:#e4ecdf; }
+  to { background:transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-tone-group][data-just-focused] { animation:none; background:#e4ecdf; }
+}
+
+/* Custom range. The two ends are labels, not buttons: they name what you
+   are setting and show where it is, and the grid below does the choosing.
+   Giving them fills and hover states made three competing sets of buttons
+   in one small panel. */
+.scale-book__note-pickers { display:grid; gap:2px; margin-top:8px; }
+.scale-book__note-current {
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  width:100%; padding:7px 2px; border:0; background:none; font:inherit;
+  font-size:12.5px; color:#71747e; cursor:pointer; text-align:left;
+}
+/* The note itself wears a light box so it reads as a field you can change,
+   while the row around it stays a plain label — the affordance belongs to
+   the value, which is the only part that is editable. */
+.scale-book__note-current b {
+  padding:3px 10px; border-radius:9px;
+  background:rgba(41,42,51,.06);
+  font-size:14px; font-weight:600; color:#292a33;
+  transition:background-color .16s ease,color .16s ease;
+}
+.scale-book__note-current:hover b { background:rgba(41,42,51,.11); }
+.scale-book__note-current[aria-expanded="true"] b { background:#e4ecdf; color:#40553d; }
+.scale-book__note-grid-wrap { display:grid; gap:8px; padding:2px 0 8px; }
+.scale-book__octave { display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:12.5px; color:#71747e; }
+.scale-book__octave select { font:inherit; font-size:13px; padding:5px 8px; border:1px solid var(--line,#dedfd9); border-radius:8px; background:#fff; color:#292a33; }
+.scale-book__note-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:4px; }
+.scale-book__note-grid .scale-book__chip { min-height:32px; padding:5px 2px; text-align:center; }
+.scale-book__note-grid .scale-book__chip:disabled { opacity:.3; cursor:default; }
