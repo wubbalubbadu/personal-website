@@ -1,7 +1,7 @@
 /* The fingering chart page. Follows the Exercises hub's page frame so the
    studio's tool pages share one shape. */
 
-.fingering-chart{min-height:100vh;background:#fff;color:#292a33;padding:64px 24px 120px;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",Inter,Arial,sans-serif}
+.fingering-chart{height:100vh;height:100dvh;min-height:0;overflow-y:auto;scrollbar-gutter:stable;background:#fff;color:#292a33;padding:64px 24px 120px;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",Inter,Arial,sans-serif}
 .fingering-chart__content{width:min(980px,100%);margin:0 auto}
 .fingering-chart__header{padding:50px 4px 26px}
 .fingering-chart__header>p:first-child{margin:0 0 8px;color:#678956;font-size:12px;font-weight:720;letter-spacing:.08em;text-transform:uppercase}
