@@ -60,6 +60,11 @@ export default function StudioNavigation(){
         })}
       </nav>
       <div className="studio-navigation__actions">
+        {/* The practice dock portals its launcher in here. It used to float
+            in the bottom-right corner, where it competed with the cookie
+            for the same spot; it belongs with the account control, since
+            like that one it is available on every page. */}
+        <div id="practice-tools-slot" className="studio-navigation__tools-slot"/>
         <AccountMenu/>
       </div>
     </div>

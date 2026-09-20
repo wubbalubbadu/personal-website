@@ -44,8 +44,21 @@ export default function EmbouchureMiniPreview() {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const hovering = {current: false};
     const setHover = (value: boolean) => { hovering.current = value; };
-    container.addEventListener('pointerenter', () => setHover(true));
-    container.addEventListener('pointerleave', () => setHover(false));
+    const enter = () => setHover(true);
+    const leave = () => setHover(false);
+    container.addEventListener('pointerenter', enter);
+    container.addEventListener('pointerleave', leave);
+    let touchObserver: IntersectionObserver | undefined;
+    let touchTimer: ReturnType<typeof setTimeout> | undefined;
+    if (!reduced && window.matchMedia('(hover: none) and (pointer: coarse)').matches) {
+      touchObserver = new IntersectionObserver(([entry]) => {
+        if (!entry.isIntersecting) return;
+        touchObserver?.disconnect();
+        setHover(true);
+        touchTimer = setTimeout(() => setHover(false), 4000);
+      }, {threshold: .58});
+      touchObserver.observe(container);
+    }
     let frame = 0, revealed = false;
     function tick(now: number) {
       const time = now / 1000;
@@ -59,6 +72,10 @@ export default function EmbouchureMiniPreview() {
     return () => {
       cancelAnimationFrame(frame);
       resize.disconnect();
+      touchObserver?.disconnect();
+      if (touchTimer) clearTimeout(touchTimer);
+      container.removeEventListener('pointerenter', enter);
+      container.removeEventListener('pointerleave', leave);
       scene.traverse(o => {
         if (o instanceof THREE.Mesh) {
           o.geometry.dispose();

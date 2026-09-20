@@ -47,3 +47,52 @@
 }
 
 @media(prefers-reduced-motion:reduce){.studio-navigation__tab,.studio-navigation__tab::after,.studio-navigation__tools{transition:none}}
+
+/* The practice-tools launcher, now sitting in the header beside the
+   avatar. Matches the avatar's size and shape so the two read as one pair
+   of controls rather than a button parked next to an avatar. The old
+   floating pill is overridden here (ios-theme.css sizes it as a pill with
+   !important, hence the specificity). */
+.studio-navigation__tools-slot{display:flex;align-items:center}
+.studio-navigation__actions .dock-launcher,
+.topbar-tools-slot .dock-launcher{
+  display:inline-flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:6px!important;
+  /* position:relative gives the running dot something to anchor to, but
+     it also made the floating style's `bottom:24px` apply as a 24px
+     upward nudge — which is why the button hung above its row. */
+  position:relative!important;
+  inset:auto!important;
+  width:auto!important;height:32px!important;
+  min-width:0!important;
+  padding:0 10px 0 8px!important;
+  border:1px solid #dde1da!important;border-radius:999px!important;
+  background:rgba(255,255,255,.68)!important;color:#666a70!important;
+  font-size:12px!important;line-height:1!important;
+  box-shadow:none!important;
+  cursor:pointer;
+  transition:background-color .16s ease,color .16s ease,border-color .16s ease,transform .16s ease;
+}
+.studio-navigation__actions .dock-launcher:hover,.topbar-tools-slot .dock-launcher:hover,
+.studio-navigation__actions .dock-launcher[aria-expanded="true"],
+.topbar-tools-slot .dock-launcher[aria-expanded="true"]{background:#edf3ea!important;color:#40553d!important;border-color:#cbd8c5!important;transform:translateY(-1px)}
+.studio-navigation__actions .dock-launcher:focus-visible,
+.topbar-tools-slot .dock-launcher:focus-visible{outline:2px solid rgba(103,137,86,.55);outline-offset:2px}
+.dock-launcher__icon{width:16px;height:16px;fill:#fff;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+.dock-launcher__label{font-size:12px;font-weight:600;letter-spacing:-.005em;white-space:nowrap}
+
+.topbar-tools-slot{display:flex;align-items:center}
+/* Pushes the tools and avatar to the right edge of the reader's topbar,
+   on the same row as the back link. */
+.topbar-spacer{flex:1 1 auto;min-width:8px}
+/* The "a tool is running" dot rides the corner of the button. */
+.studio-navigation__actions .dock-launcher i,
+.topbar-tools-slot .dock-launcher i{
+  position:absolute;right:-3px;top:-3px;transform:none;
+  width:8px;height:8px;border-radius:50%;
+  background:#e2683f;border:2px solid #fff;
+}
+.studio-navigation__actions{display:flex;align-items:center;gap:8px}

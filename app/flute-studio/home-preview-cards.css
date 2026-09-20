@@ -130,8 +130,8 @@
 .roadmap-preview li.is-done i svg { stroke-dashoffset: 0; }
 /* Hover ticks the remaining ones in order, so the card shows the roadmap
    being worked through rather than just listing its parts. */
-.preview-card--roadmap:hover .roadmap-preview i { background: currentColor; }
-.preview-card--roadmap:hover .roadmap-preview i svg { stroke-dashoffset: 0; }
+.preview-card--roadmap:is(:hover, :focus-visible, .is-touch-playing) .roadmap-preview i { background: currentColor; }
+.preview-card--roadmap:is(:hover, :focus-visible, .is-touch-playing) .roadmap-preview i svg { stroke-dashoffset: 0; }
 
 .roadmap-preview i.sage { color: #496b40; }
 .roadmap-preview i.pink { color: #7c4f78; }
@@ -199,14 +199,14 @@
   box-sizing: border-box;
 }
 /* Still until you point at it, like the other cards. */
-.preview-card--breathing:hover .breathing-preview__orbit {
+.preview-card--breathing:is(:hover, :focus-visible, .is-touch-playing) .breathing-preview__orbit {
   animation: breathing-orbit 8s linear infinite;
 }
 @keyframes breathing-orbit {
   to { transform: rotate(360deg); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .preview-card--breathing:hover .breathing-preview__orbit { animation: none; }
+  .preview-card--breathing:is(:hover, :focus-visible, .is-touch-playing) .breathing-preview__orbit { animation: none; }
 }
 
 /* Continue practicing — ONE shared card (not three differently-tinted
@@ -299,7 +299,7 @@
   transform: rotate(calc((var(--i) - 1.5) * 4deg)) translateY(calc(var(--i) * 2px));
   transition: transform 0.2s ease;
 }
-.preview-card--music:hover .music-preview__swatch {
+.preview-card--music:is(:hover, :focus-visible, .is-touch-playing) .music-preview__swatch {
   transform: rotate(calc((var(--i) - 1.5) * 9deg)) translateY(calc(var(--i) * -3px)) translateX(calc((var(--i) - 1.5) * 14px));
 }
 .music-preview__swatch b {
@@ -387,17 +387,17 @@
   78%, 90% { transform: translateX(0); opacity: 1; }
   100% { transform: translateX(0); opacity: 0; }
 }
-.preview-card--scales:is(:hover, :focus-visible) .scales-preview__note { animation-duration: 4s; animation-timing-function: linear; animation-iteration-count: infinite; }
-.preview-card--scales:is(:hover, :focus-visible) .scales-preview__note--1 { animation-name: articulation-first; }
-.preview-card--scales:is(:hover, :focus-visible) .scales-preview__note--2 { animation-name: articulation-second; }
-.preview-card--scales:is(:hover, :focus-visible) .scales-preview__note--3 { animation-name: articulation-third; }
-.preview-card--scales:is(:hover, :focus-visible) .scales-preview__note--4 { animation-name: articulation-fourth; }
-.preview-card--scales:is(:hover, :focus-visible) .scales-preview__slur { animation: articulation-slur 4s linear infinite; }
-.preview-card--scales:is(:hover, :focus-visible) .scales-preview__dot--3 { animation: articulation-dot-3 4s linear infinite; }
-.preview-card--scales:is(:hover, :focus-visible) .scales-preview__dot--4 { animation: articulation-dot-4 4s linear infinite; }
-.preview-card--tones:is(:hover, :focus-visible) .tones-preview__trace { stroke-dasharray: 100; animation: sustained-trace 5s linear infinite; }
-.preview-card--tones:is(:hover, :focus-visible) .tones-preview__cursor { animation: sustained-cursor 5s linear infinite; }
-.preview-card--tones:is(:hover, :focus-visible) .tones-preview__trace { animation: sustained-trace 5s linear infinite, sustained-swell 5s linear infinite; }
+.preview-card--scales:is(:hover, :focus-visible, .is-touch-playing) .scales-preview__note { animation-duration: 1.7s; animation-timing-function: linear; animation-iteration-count: infinite; }
+.preview-card--scales:is(:hover, :focus-visible, .is-touch-playing) .scales-preview__note--1 { animation-name: articulation-first; }
+.preview-card--scales:is(:hover, :focus-visible, .is-touch-playing) .scales-preview__note--2 { animation-name: articulation-second; }
+.preview-card--scales:is(:hover, :focus-visible, .is-touch-playing) .scales-preview__note--3 { animation-name: articulation-third; }
+.preview-card--scales:is(:hover, :focus-visible, .is-touch-playing) .scales-preview__note--4 { animation-name: articulation-fourth; }
+.preview-card--scales:is(:hover, :focus-visible, .is-touch-playing) .scales-preview__slur { animation: articulation-slur 1.7s linear infinite; }
+.preview-card--scales:is(:hover, :focus-visible, .is-touch-playing) .scales-preview__dot--3 { animation: articulation-dot-3 1.7s linear infinite; }
+.preview-card--scales:is(:hover, :focus-visible, .is-touch-playing) .scales-preview__dot--4 { animation: articulation-dot-4 1.7s linear infinite; }
+.preview-card--tones:is(:hover, :focus-visible, .is-touch-playing) .tones-preview__trace { stroke-dasharray: 100; animation: sustained-trace 3.2s linear infinite; }
+.preview-card--tones:is(:hover, :focus-visible, .is-touch-playing) .tones-preview__cursor { animation: sustained-cursor 3.2s linear infinite; }
+.preview-card--tones:is(:hover, :focus-visible, .is-touch-playing) .tones-preview__trace { animation: sustained-trace 3.2s linear infinite, sustained-swell 3.2s linear infinite; }
 @media (prefers-reduced-motion: reduce) {
   .preview-card--scales:is(:hover, :focus-visible) .scales-preview__note,
   .preview-card--scales:is(:hover, :focus-visible) .scales-preview__slur,
@@ -451,8 +451,7 @@
 /* Held down for most of the cycle rather than blinking: a key that is
    closed stays closed while the rest of the hand catches up. */
 @keyframes chart-key-press { 0% { opacity: 0; } 12%, 78% { opacity: 1; } 92%, 100% { opacity: 0; } }
-.preview-card--fingerings:hover .chart-preview__key-fill,
-.preview-card--fingerings:focus-visible .chart-preview__key-fill {
+.preview-card--fingerings:is(:hover, :focus-visible, .is-touch-playing) .chart-preview__key-fill {
   animation: chart-key-press 2.6s ease-in-out infinite;
   animation-delay: calc(var(--i) * 0.16s);
 }
@@ -464,10 +463,28 @@
 .chart-preview__note ellipse, .chart-preview__note rect { fill: #33475a; }
 @keyframes chart-trill-step { 0%, 49% { transform: translateY(0); } 50%, 100% { transform: translateY(-6.5px); } }
 @keyframes chart-wave-pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
-.preview-card--trills:hover .chart-preview__note,
-.preview-card--trills:focus-visible .chart-preview__note { animation: chart-trill-step 0.28s steps(1, end) infinite; }
-.preview-card--trills:hover .chart-preview__wave,
-.preview-card--trills:focus-visible .chart-preview__wave { animation: chart-wave-pulse 0.56s ease-in-out infinite; }
+.preview-card--trills:is(:hover, :focus-visible, .is-touch-playing) .chart-preview__note { animation: chart-trill-step 0.28s steps(1, end) infinite; }
+.preview-card--trills:is(:hover, :focus-visible, .is-touch-playing) .chart-preview__wave { animation: chart-wave-pulse 0.56s ease-in-out infinite; }
+
+/* Touch-first devices have no hover state to reveal the previews. Each card
+   receives this class once as it enters the viewport, then completes a
+   finite demonstration and returns to rest. */
+@media (hover: none) and (pointer: coarse) {
+  .preview-card.is-touch-playing .scales-preview__note,
+  .preview-card.is-touch-playing .scales-preview__slur,
+  .preview-card.is-touch-playing .scales-preview__dot,
+  .preview-card.is-touch-playing .tones-preview__trace,
+  .preview-card.is-touch-playing .tones-preview__cursor,
+  .preview-card.is-touch-playing .chart-preview__key-fill {
+    animation-iteration-count: 1;
+  }
+  .preview-card--breathing.is-touch-playing .breathing-preview__orbit {
+    animation-duration: 4s;
+    animation-iteration-count: 1;
+  }
+  .preview-card--trills.is-touch-playing .chart-preview__note { animation-iteration-count: 8; }
+  .preview-card--trills.is-touch-playing .chart-preview__wave { animation-iteration-count: 4; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .chart-preview__key-fill, .chart-preview__wave, .chart-preview__note { animation: none !important; }

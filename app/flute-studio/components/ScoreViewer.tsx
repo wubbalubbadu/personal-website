@@ -2,6 +2,8 @@
 import {ReaderPopover} from "./ReaderPopover";
 
 import { PointerEvent, useEffect, useRef, useState } from "react";
+/** The DOM PointerEvent, which React's synthetic type shadows here. */
+type PointerEvent2 = globalThis.PointerEvent;
 import { createPortal } from "react-dom";
 import type { MusicSheetCalculator, OpenSheetMusicDisplay as OSMDType } from "opensheetmusicdisplay";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -12,6 +14,7 @@ import {PracticeIcon} from "./PracticeIcon";
 import {FluteDiagramMini} from "./FluteDiagram";
 import {fingeringsForMidi, midiForPitch} from "../../../content/fingerings/flute";
 import {SaveButton} from "./SaveButton";
+import AccountMenu from "../AccountMenu";
 import {notationScale,pageOffsets,pageAt} from "./readerLayout";
 import "../reader-workspace.css";
 import type { ArticulationMode } from "./notePatterns";
@@ -501,6 +504,12 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
   // neither of which re-closes over current state.
   const overlayVisibilityRef=useRef<OverlayVisibility>({names:false,solfege:false,accidentals:false,tonguing:true,counts:false,sticks:false});
   const [loading,setLoading]=useState(true); const [error,setError]=useState(""); const [startMeasure,setStartMeasure]=useState(1); const [playing,setPlaying]=useState(false); const [playingFrom,setPlayingFrom]=useState<number|null>(null); const [playingEvent,setPlayingEvent]=useState<number|null>(null); const [annotating,setAnnotating]=useState(false); const [inkColor,setInkColor]=useState("#e52e31"); const [eraser,setEraser]=useState(false);
+  /** Freehand or arrow. An arrow is dragged tail-to-tip, so it is not a
+   *  stroke you accumulate — it is previewed and committed on release. */
+  const [inkTool,setInkTool]=useState<"pen"|"arrow">("pen");
+  /** Where the current arrow started, and the canvas as it was before it. */
+  const arrowFrom=useRef<{x:number;y:number}|null>(null);
+  const arrowBase=useRef<ImageData|null>(null);
   // Page-turn mode: false (free scroll) by default until the mount effect
   // below picks a real default (stored preference, else viewport width) —
   // starting false keeps first paint identical between server and client.
@@ -719,6 +728,12 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
     if(pageTargetRef.current===null)setPageIndex(pageAt(offsets,scroller.scrollTop));
   }
   function resync(){syncNotesAndOverlays();computePages();mountMarksLayer()}
+  /** Jump to the very start, in either page-turn or free-scroll mode. */
+  function backToTop(){
+    readerAnchor.current=null;
+    setPageIndex(0);
+    scoreScrollRef.current?.scrollTo({top:0,behavior:"smooth"});
+  }
   /**
    * A host-owned layer pinned inside the engraving, for things the PAGE
    * wants to put on the music (Scale Studio's practice tempos) rather than
@@ -1098,11 +1113,110 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
     setStartMeasure(measureForEvent(index,seq.measureStarts));
     setPlaying(true);setPlayingFrom(index);scheduleNotes(index);
   }
-  function point(e:PointerEvent<HTMLCanvasElement>){const r=e.currentTarget.getBoundingClientRect(),{w,h}=inkSizeRef.current;return{x:(e.clientX-r.left)*w/r.width,y:(e.clientY-r.top)*h/r.height}}
-  function begin(e:PointerEvent<HTMLCanvasElement>){if(!annotating||!inkActive)return;drawing.current=true;const p=point(e),c=e.currentTarget.getContext("2d");c?.beginPath();c?.moveTo(p.x,p.y);e.currentTarget.setPointerCapture(e.pointerId)}
-  function draw(e:PointerEvent<HTMLCanvasElement>){if(!drawing.current||!annotating)return;const p=point(e),c=e.currentTarget.getContext("2d");if(!c)return;c.lineWidth=eraser?28:4;c.lineCap="round";c.lineJoin="round";c.globalCompositeOperation=eraser?"destination-out":"source-over";c.strokeStyle=inkColor;c.lineTo(p.x,p.y);c.stroke()}
+  function point(e:{clientX:number;clientY:number},canvas:HTMLCanvasElement){
+    const r=canvas.getBoundingClientRect(),{w,h}=inkSizeRef.current;
+    return{x:(e.clientX-r.left)*w/r.width,y:(e.clientY-r.top)*h/r.height};
+  }
+  /**
+   * Midpoint smoothing needs two things remembered: the last raw sample,
+   * which becomes the curve's control point, and the last midpoint, which
+   * is where the drawn path actually ends. Tracking only the raw point is
+   * what produced a dotted line — each segment was drawn from the previous
+   * sample to the midpoint, and the midpoint-to-sample half was never
+   * drawn at all. Slow writing hid it; fast writing made the gaps as long
+   * as the strokes.
+   */
+  const inkLast=useRef<{x:number;y:number}|null>(null);
+  const inkMid=useRef<{x:number;y:number}|null>(null);
+  /** Nib width for a sample. A device with no pressure sensor reports 0.5. */
+  function nibWidth(pressure:number){
+    if(eraser)return 26;
+    const p=pressure>0?Math.min(1,pressure):0.5;
+    return 1+2.4*p;
+  }
+  /** A line with a solid head at the tip, sized off the current nib. */
+  function drawArrow(c:CanvasRenderingContext2D,from:{x:number;y:number},to:{x:number;y:number}){
+    const width=3.2;
+    const head=Math.max(11,width*4);
+    const angle=Math.atan2(to.y-from.y,to.x-from.x);
+    const length=Math.hypot(to.x-from.x,to.y-from.y);
+    if(length<2)return;
+    c.globalCompositeOperation="source-over";
+    c.strokeStyle=inkColor;c.fillStyle=inkColor;
+    c.lineCap="round";c.lineJoin="round";c.lineWidth=width;
+    // The shaft stops short of the tip so the head is not drawn over a
+    // line that already reached the point.
+    const shaft=Math.max(0,length-head*0.85);
+    c.beginPath();
+    c.moveTo(from.x,from.y);
+    c.lineTo(from.x+Math.cos(angle)*shaft,from.y+Math.sin(angle)*shaft);
+    c.stroke();
+    c.beginPath();
+    c.moveTo(to.x,to.y);
+    c.lineTo(to.x-Math.cos(angle-0.42)*head,to.y-Math.sin(angle-0.42)*head);
+    c.lineTo(to.x-Math.cos(angle+0.42)*head,to.y-Math.sin(angle+0.42)*head);
+    c.closePath();
+    c.fill();
+  }
+  function strokeTo(c:CanvasRenderingContext2D,to:{x:number;y:number},pressure:number){
+    const prev=inkLast.current;
+    if(!prev||!inkMid.current){inkLast.current=to;inkMid.current=to;return}
+    const mid={x:(prev.x+to.x)/2,y:(prev.y+to.y)/2};
+    c.lineWidth=nibWidth(pressure);
+    c.lineCap="round";c.lineJoin="round";
+    c.globalCompositeOperation=eraser?"destination-out":"source-over";
+    c.strokeStyle=inkColor;
+    // Start where the last curve ended, bend around the sample between
+    // them, finish at the new midpoint — so consecutive segments meet.
+    c.beginPath();
+    c.moveTo(inkMid.current.x,inkMid.current.y);
+    c.quadraticCurveTo(prev.x,prev.y,mid.x,mid.y);
+    c.stroke();
+    inkLast.current=to;
+    inkMid.current=mid;
+  }
+  function begin(e:PointerEvent<HTMLCanvasElement>){
+    if(!annotating||!inkActive)return;
+    // Stops the gesture becoming a page scroll or a text selection on the
+    // score underneath — the reason a finger or a Pencil used to drag a
+    // blue highlight across the engraving instead of drawing on it.
+    e.preventDefault();
+    drawing.current=true;
+    const start=point(e,e.currentTarget);
+    if(inkTool==="arrow"&&!eraser){
+      arrowFrom.current=start;
+      // Snapshot what is already drawn so each preview frame can restore
+      // it before drawing the arrow at its new length.
+      const c=e.currentTarget.getContext("2d");
+      const {w,h}=inkSizeRef.current;
+      arrowBase.current=c?c.getImageData(0,0,Math.round(w*(e.currentTarget.width/w)),Math.round(h*(e.currentTarget.height/h))):null;
+    }else{
+      inkLast.current=start;
+      inkMid.current=start;
+    }
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }
+  function draw(e:PointerEvent<HTMLCanvasElement>){
+    if(!drawing.current||!annotating)return;
+    e.preventDefault();
+    const canvas=e.currentTarget,c=canvas.getContext("2d");
+    if(!c)return;
+    if(inkTool==="arrow"&&!eraser){
+      if(!arrowFrom.current)return;
+      if(arrowBase.current)c.putImageData(arrowBase.current,0,0);
+      drawArrow(c,arrowFrom.current,point(e,canvas));
+      return;
+    }
+    // A 120Hz pen delivers several samples per frame; without these the
+    // browser hands over only the last one and the rest of the stroke is
+    // thrown away, which is most of why it looked coarse.
+    const native=e.nativeEvent as unknown as {getCoalescedEvents?:()=>PointerEvent2[]};
+    const samples=native.getCoalescedEvents?.()??[];
+    if(samples.length)for(const sample of samples)strokeTo(c,point(sample,canvas),sample.pressure);
+    else strokeTo(c,point(e,canvas),e.pressure);
+  }
   function pushHistory(data:string){inkHistory.current=inkHistory.current.slice(0,inkIndex.current+1);inkHistory.current.push(data);inkIndex.current=inkHistory.current.length-1;localStorage.setItem(`cookie:${id}:ink`,data);setHistoryTick(v=>v+1)}
-  function saveInk(){drawing.current=false;const data=canvasRef.current?.toDataURL();if(data)pushHistory(data)}
+  function saveInk(){drawing.current=false;inkLast.current=null;inkMid.current=null;arrowFrom.current=null;arrowBase.current=null;const data=canvasRef.current?.toDataURL();if(data)pushHistory(data)}
   function showHistory(index:number){const canvas=canvasRef.current;if(!canvas)return;const context=canvas.getContext("2d"),{w,h}=inkSizeRef.current;context?.clearRect(0,0,w,h);const data=inkHistory.current[index];if(data){const image=new Image();image.onload=()=>context?.drawImage(image,0,0,w,h);image.src=data}inkIndex.current=index;if(data)localStorage.setItem(`cookie:${id}:ink`,data);else localStorage.removeItem(`cookie:${id}:ink`);setHistoryTick(v=>v+1)}
   function undoInk(){if(inkIndex.current>0)showHistory(inkIndex.current-1)} function redoInk(){if(inkIndex.current<inkHistory.current.length-1)showHistory(inkIndex.current+1)}
   function clearInk(){const canvas=canvasRef.current,{w,h}=inkSizeRef.current;canvas?.getContext("2d")?.clearRect(0,0,w,h);if(canvas)pushHistory(canvas.toDataURL())}
@@ -1238,12 +1352,11 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
   const readerControls:ReaderControls={bpm,setTempo:setBpm,metronome:metro,toggleMetronome:toggleMetro,playing,playFromEvent,playingFrom,playingEvent,download:downloadPdf,exporting};
   return <main className="app-shell reader-workspace restored-reader" data-layout={pageWidth} style={{"--reader-page-width":pageWidth==="900"?"900px":"100%","--viewer-magnify":magnify,"--score-composer":`"${composer}"`} as React.CSSProperties}>
     <section className="workspace">
-      <header className="topbar"><div><a className="back has-tip" href={backHref} aria-label={backLabel?`${t.scoreViewer.back}: ${backLabel}`:t.scoreViewer.back} data-tip={backLabel||t.scoreViewer.back}><span className="back-arrow" aria-hidden="true">‹</span>{backLabel&&<span className="back-label">{backLabel}</span>}</a>{!toolbar&&<strong>{title}</strong>}</div><div><span className="topbar-toolbar-slot">{toolbar}</span>{save?<SaveButton saved={save.saved} onToggle={save.onToggle} label={save.saved?save.savedLabel:save.label} tip={save.saved?save.savedLabel:save.label}/>:<SaveButton saved={favorite} onToggle={toggleFavorite} label={favorite?t.scoreViewer.removeFromSaved:t.scoreViewer.saveMusic} tip={favorite?t.scoreViewer.removeFromSaved:t.scoreViewer.saveMusic}/>}{headerActions?.(readerControls)}{pdfPath&&<a className="icon-btn has-tip" href={pdfPath} download data-tip={t.scoreViewer.downloadPdf} aria-label={t.scoreViewer.downloadPdf}>↓</a>}</div></header>
+      <header className="topbar"><div><a className="back has-tip" href={backHref} aria-label={backLabel?`${t.scoreViewer.back}: ${backLabel}`:t.scoreViewer.back} data-tip={backLabel||t.scoreViewer.back}><span className="back-arrow" aria-hidden="true">‹</span>{backLabel&&<span className="back-label">{backLabel}</span>}</a>{!toolbar&&<strong>{title}</strong>}</div><div><span className="topbar-toolbar-slot">{toolbar}</span>{save?<SaveButton saved={save.saved} onToggle={save.onToggle} label={save.saved?save.savedLabel:save.label} tip={save.saved?save.savedLabel:save.label}/>:<SaveButton saved={favorite} onToggle={toggleFavorite} label={favorite?t.scoreViewer.removeFromSaved:t.scoreViewer.saveMusic} tip={favorite?t.scoreViewer.removeFromSaved:t.scoreViewer.saveMusic}/>}{headerActions?.(readerControls)}{pdfPath&&<a className="icon-btn has-tip" href={pdfPath} download data-tip={t.scoreViewer.downloadPdf} aria-label={t.scoreViewer.downloadPdf}>↓</a>}{/* The reader hides the studio nav, so the two controls that live there on every other page — practice tools and the account menu — come here instead, on the same row as the back link. */}<span className="topbar-spacer"/><div id="reader-tools-slot" className="topbar-tools-slot"/><AccountMenu/></div></header>
 
       <div className="practice-bar"><div className="tool-group">        <button data-tip={t.scoreViewer.markUpTip} className={annotating?"tool on coral has-tip":"tool has-tip"} onClick={()=>{const next=!annotating;setAnnotating(next);if(next)setInkActive(true)}}><PracticeIcon name="markup"/>{t.scoreViewer.markUp}</button>
       </div>
-        <div className="transport"><button data-tip={t.scoreViewer.playTip(startMeasure)} className={playing?"tool on has-tip":"tool has-tip"} onClick={togglePlayback}><PracticeIcon name={playing?"stop":"play"}/>{playing?t.scoreViewer.stop:t.scoreViewer.play}</button><span className="record-slot"/><label className="tempo"><b>♩ =</b><input aria-label={t.scoreViewer.tempoAria} type="number" min="40" max="220" value={tempoDraft??bpm} onChange={e=>setTempoDraft(e.target.value)} onBlur={commitTempo} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/><small>{t.scoreViewer.bpm}</small></label><button className="tool has-tip" data-tip={t.scoreViewer.tapTempo} aria-label={t.scoreViewer.tapTempo} onClick={tapTempo}><PracticeIcon name="tap"/>{zh?"打拍":"Tap"}</button>
-          <button data-tip={t.scoreViewer.metronomeTip} className={metro?"tool on has-tip":"tool has-tip"} onClick={toggleMetro}><PracticeIcon name="metronome"/>{t.scoreViewer.metronome}</button>
+        <div className="transport"><button data-tip={t.scoreViewer.playTip(startMeasure)} className={playing?"tool on has-tip":"tool has-tip"} onClick={togglePlayback}><PracticeIcon name={playing?"stop":"play"}/>{playing?t.scoreViewer.stop:t.scoreViewer.play}</button><span className="record-slot"/>{/* Everything about tempo in one group: the metronome that sounds it, the number, and the steppers. The metronome used to sit after Listen, which is what made "Listen" read as "start the metronome"; the steppers reuse the − n + shape the on-page tempo marks already use rather than a spinner. */}<div className="tempo-group"><button data-tip={t.scoreViewer.metronomeTip} className={metro?"tool on has-tip":"tool has-tip"} onClick={toggleMetro}><PracticeIcon name="metronome"/>{t.scoreViewer.metronome}</button>{/* A div, not a label: buttons nested in a label get the label's hover applied to them as a set — hovering + lit up − too — and a tap on one activates the label, which focuses the number field and would raise the keyboard on a tablet. Only the glyph and the field are labelled. */}<div className="tempo"><button type="button" className="tempo-step" aria-label={zh?"减慢":"Slower"} disabled={bpm<=40} onClick={()=>setBpm(bpm-1)}>−</button><label className="tempo-field"><b>♩ =</b><input aria-label={t.scoreViewer.tempoAria} type="number" min="40" max="220" value={tempoDraft??bpm} onChange={e=>setTempoDraft(e.target.value)} onBlur={commitTempo} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/></label><button type="button" className="tempo-step" aria-label={zh?"加快":"Faster"} disabled={bpm>=220} onClick={()=>setBpm(bpm+1)}>+</button></div></div><button className="tool has-tip" data-tip={t.scoreViewer.tapTempo} aria-label={t.scoreViewer.tapTempo} onClick={tapTempo}><PracticeIcon name="tap"/>{zh?"打拍":"Tap"}</button>
           <div className="transport-menu">
             <button aria-label={t.scoreViewer.drone} aria-pressed={drones.length>0} aria-expanded={picker} data-tip={t.scoreViewer.droneTip} className={drones.length?"tool on has-tip":"tool has-tip"} onClick={()=>setPicker(o=>!o)}><PracticeIcon name="drone"/>{t.scoreViewer.drone}<small>{drones.length?drones.join("+"):t.scoreViewer.droneOff}</small></button>
             {picker&&<>
@@ -1279,11 +1392,15 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
             <button className="reader-settings-reset" onClick={()=>{setSizePreference(.8);setSystemSpacing(12);setNoteSpacing(1);setPageWidth("900")}}>{zh?"恢复默认":"Restore defaults"}</button>
           </ReaderPopover>
         </div>
-        <div className="reader-pages" data-mode="pages"><button aria-label={t.scoreViewer.previousPage} disabled={pageIndex<=0} onClick={()=>goToPage(pageIndex-1)}><PracticeIcon name="previous"/></button><button aria-label={t.scoreViewer.nextPage} disabled={pageIndex>=pageCount-1} onClick={()=>goToPage(pageIndex+1)}><PracticeIcon name="next"/></button><span aria-live="polite">{spreadPageCount?`${pageIndex*2+1}${pageIndex*2+2<=spreadPageCount?`–${pageIndex*2+2}`:""} / ${spreadPageCount}`:`${pageIndex+1} / ${pageCount}`}</span><button className={focusMode?"tool on has-tip":"tool has-tip"} aria-pressed={focusMode} data-tip={t.scoreViewer.focusModeTip} aria-label={focusMode?t.scoreViewer.exitFocusMode:t.scoreViewer.enterFocusMode} onClick={toggleFocusMode}><PracticeIcon name={focusMode?"close":"fullscreen"}/>{focusMode?(zh?"退出":"Exit"):(zh?"全屏":"Full")}</button></div>
+        <div className="reader-pages" data-mode="pages">{/* Back to the first page. A long exercise book is a lot of
+            arrow presses to get home, and in scroll mode there are no
+            arrows at all — this is the only way back to the top. */}
+          <button className="reader-pages__top" aria-label={zh?"回到开头":"Back to top"} data-tip={zh?"回到开头":"Back to top"} disabled={pageIndex<=0&&(scoreScrollRef.current?.scrollTop??0)<8} onClick={backToTop}><PracticeIcon name="top"/></button><button aria-label={t.scoreViewer.previousPage} disabled={pageIndex<=0} onClick={()=>goToPage(pageIndex-1)}><PracticeIcon name="previous"/></button><button aria-label={t.scoreViewer.nextPage} disabled={pageIndex>=pageCount-1} onClick={()=>goToPage(pageIndex+1)}><PracticeIcon name="next"/></button><span aria-live="polite">{spreadPageCount?`${pageIndex*2+1}${pageIndex*2+2<=spreadPageCount?`–${pageIndex*2+2}`:""} / ${spreadPageCount}`:`${pageIndex+1} / ${pageCount}`}</span><button className={focusMode?"tool on has-tip":"tool has-tip"} aria-pressed={focusMode} data-tip={t.scoreViewer.focusModeTip} aria-label={focusMode?t.scoreViewer.exitFocusMode:t.scoreViewer.enterFocusMode} onClick={toggleFocusMode}><PracticeIcon name={focusMode?"close":"fullscreen"}/>{focusMode?(zh?"退出":"Exit"):(zh?"全屏":"Full")}</button></div>
 </div>
 </div>
       {annotating&&<div className="markup-row"><div className="markup-row-surface" role="toolbar" aria-label={zh?"批注工具":"Annotation tools"}>
-        <button aria-pressed={inkActive&&!eraser} className={inkActive&&!eraser?"markup-icon chosen has-tip":"markup-icon has-tip"} data-tip={t.scoreViewer.pencil} aria-label={t.scoreViewer.pencil} onClick={()=>{setInkActive(true);setEraser(false)}}><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M13.5 4.5l2 2L6.5 15.5l-3 1 1-3L13.5 4.5z"/><path d="M12 6l2 2"/></svg></button>
+        <button aria-pressed={inkActive&&!eraser&&inkTool==="pen"} className={inkActive&&!eraser&&inkTool==="pen"?"markup-icon chosen has-tip":"markup-icon has-tip"} data-tip={t.scoreViewer.pencil} aria-label={t.scoreViewer.pencil} onClick={()=>{setInkActive(true);setEraser(false);setInkTool("pen")}}><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M13.5 4.5l2 2L6.5 15.5l-3 1 1-3L13.5 4.5z"/><path d="M12 6l2 2"/></svg></button>
+        <button aria-pressed={inkActive&&!eraser&&inkTool==="arrow"} className={inkActive&&!eraser&&inkTool==="arrow"?"markup-icon chosen has-tip":"markup-icon has-tip"} data-tip={zh?"箭头":"Arrow"} aria-label={zh?"箭头":"Arrow"} onClick={()=>{setInkActive(true);setEraser(false);setInkTool("arrow")}}><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M5 15L15 5"/><path d="M8.5 5H15v6.5"/></svg></button>
         <button aria-pressed={eraser} className={eraser?"markup-icon chosen has-tip":"markup-icon has-tip"} data-tip={t.scoreViewer.eraser} aria-label={t.scoreViewer.eraser} onClick={()=>{setInkActive(true);setEraser(true)}}><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M6.5 15.5L3.8 12.8a1.6 1.6 0 010-2.26l5.7-5.7a1.6 1.6 0 012.26 0l3.66 3.66a1.6 1.6 0 010 2.26l-5.7 5.7a1.6 1.6 0 01-2.26 0z"/><path d="M9.3 7.1l3.6 3.6"/><path d="M3.5 15.5h7.5"/></svg></button>
         <button className="markup-icon has-tip" data-tip={t.scoreViewer.addText} aria-label={t.scoreViewer.addText} onClick={()=>addScoreNote("text")}>T</button>
         <button className="markup-icon has-tip" data-tip={t.scoreViewer.addSticky} aria-label={t.scoreViewer.addSticky} onClick={()=>addScoreNote("sticky")}><i className="sticky-swatch"/></button>

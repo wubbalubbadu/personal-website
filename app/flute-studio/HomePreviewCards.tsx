@@ -1,5 +1,6 @@
 "use client";
 
+import {useEffect, useRef} from "react";
 import {useLanguage} from "./i18n/LanguageContext";
 import Link from "next/link";
 import {musicLibrary} from "../../content/music-library";
@@ -10,6 +11,37 @@ export default function HomePreviewCards(){
   const {t}=useLanguage();
   const regions=t.roadmap.regions;
   const tracks=musicLibrary.filter(item=>item.status==="published").slice(0,4);
+  const previewRoot=useRef<HTMLDivElement>(null);
+
+  useEffect(()=>{
+    const root=previewRoot.current;
+    if(!root || !window.matchMedia("(hover: none) and (pointer: coarse)").matches || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const cards=Array.from(root.querySelectorAll<HTMLElement>(".preview-card"));
+    const timers=new Set<ReturnType<typeof setTimeout>>();
+    const observer=new IntersectionObserver(entries=>{
+      entries
+        .filter(entry=>entry.isIntersecting)
+        .sort((a,b)=>cards.indexOf(a.target as HTMLElement)-cards.indexOf(b.target as HTMLElement))
+        .forEach((entry,index)=>{
+          const card=entry.target as HTMLElement;
+          observer.unobserve(card);
+          const startTimer=setTimeout(()=>{
+            card.classList.add("is-touch-playing");
+            const stopTimer=setTimeout(()=>card.classList.remove("is-touch-playing"),3600);
+            timers.add(stopTimer);
+          },index*140);
+          timers.add(startTimer);
+        });
+    },{threshold:.58});
+
+    cards.forEach(card=>observer.observe(card));
+    return ()=>{
+      observer.disconnect();
+      timers.forEach(timer=>clearTimeout(timer));
+      cards.forEach(card=>card.classList.remove("is-touch-playing"));
+    };
+  },[]);
 
   // Every group carries a heading, which is what stops them reading as
   // decoration: a page where only some sections are labelled looks like a
@@ -20,7 +52,7 @@ export default function HomePreviewCards(){
   // several. Five resources means the second row holds two at the same
   // third-width as the first, which is the point: they keep their size
   // instead of expanding to fill the gap.
-  return <div className="home-preview">
+  return <div className="home-preview" ref={previewRoot}>
     <p className="home-preview__lede">An all-in-one flute practice space.</p>
 
     <h2 className="home-preview__group">Exercises</h2>

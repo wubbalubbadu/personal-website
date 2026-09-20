@@ -31,7 +31,17 @@
 .reader-workspace .markup-row-surface{position:static;box-shadow:none;border-bottom:1px solid var(--line);padding:4px 10px;justify-content:flex-start;flex-wrap:wrap}
 .reader-workspace .markup-icon{width:auto;min-width:44px;height:44px;border-radius:5px;gap:4px;display:flex;padding:6px;font-size:14px}
 .reader-workspace .swatch{width:28px;height:28px}
-.reader-workspace .ink.active{touch-action:none}
+/* Touch and pen belong to the canvas while mark-up is on: without this
+   the gesture is claimed as a page scroll, and the score underneath is
+   selected instead of drawn on (a finger did it as readily as a Pencil). */
+.reader-workspace .ink.active{touch-action:none;-webkit-user-select:none;user-select:none}
+/* Nothing in the engraving is text you would want to select, and letting
+   it be selectable is what produced the blue highlight across the staves. */
+.reader-workspace .osmd-score{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+/* A slider has to own its own gesture, or on a touch screen the drag is
+   taken by the scroller and the control never moves. */
+.reader-settings-panel input[type="range"],
+.reader-setting-row input[type="range"]{touch-action:none}
 .reader-workspace .score-note__remove{width:30px;height:30px;right:-15px;top:-15px;font-size:20px;border-radius:7px}
 .reader-workspace .notation-setting{display:grid;gap:6px;font-size:13px;padding:8px}
 .notation-setting select{width:100%;font-size:14px;padding:7px;border:1px solid var(--line);background:white;border-radius:4px}
@@ -161,7 +171,10 @@ body:has(.restored-reader) .studio-navigation{display:none!important}
 .restored-reader .topbar>div:first-child{flex:0 0 auto}
 .restored-reader .topbar>div:last-child{flex:1;justify-content:flex-end}
 .restored-reader .topbar-toolbar-slot{margin-right:auto}
-.restored-reader .practice-bar{min-height:48px!important;padding:2px 16px!important;gap:8px;flex-wrap:nowrap}
+/* 4px, matching the gap inside .tool-group and .transport: the bar's gap
+   is only ever seen at the seam between those two groups, and anything
+   wider makes one join in an otherwise even run look double. */
+.restored-reader .practice-bar{min-height:48px!important;padding:2px 16px!important;gap:4px;flex-wrap:nowrap}
 .restored-reader .practice-bar .tool{height:44px;min-width:44px;padding:4px;font-size:11px;gap:0}
 .restored-reader .practice-bar .tool>span{font-size:20px;line-height:22px}
 /* Not space-between + an auto-margin anymore: on a wide window that combo
@@ -315,7 +328,7 @@ html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document"
 .restored-reader .reader-pages>button:not(.tool):disabled{opacity:.3}
 .restored-reader .reader-pages>span{min-width:38px;padding:0 2px;text-align:center;font-size:11px;color:#6f7178}
 /* Half-window: shed padding before anything is allowed to wrap. */
-@media(max-width:1150px){.restored-reader .practice-bar{gap:8px!important;padding:5px 8px!important}.restored-reader .practice-bar .tool{padding:5px 6px!important}.restored-reader .restored-view-controls{gap:6px}}
+@media(max-width:1150px){.restored-reader .practice-bar{gap:4px!important;padding:5px 8px!important}.restored-reader .practice-bar .tool{padding:5px 6px!important}.restored-reader .restored-view-controls{gap:6px}}
 @media(max-width:660px){.restored-reader .practice-bar .tempo small{display:none}}
 
 /* A choice row's label was wrapping to two lines ("Page" / "layout") and
@@ -498,22 +511,39 @@ html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document"
    animate exactly that property. The gradient rendered and then sat
    perfectly still. Setting the pieces separately leaves position free for
    the animation to drive. */
+/* A single bright arc travelling around the outline, rather than the whole
+   ring sliding through the spectrum. The old version animated
+   background-position across a 300%-wide gradient clipped to the border
+   box, which Safari on an iPad repaints badly — the ring appeared to flash
+   on and off rather than move. A conic gradient rotated through a
+   registered custom property moves one segment around the edge, which is
+   both cheaper and what the motion was trying to say in the first place.
+   Browsers without @property simply show the resting ring, unanimated. */
+@property --studio-spin{syntax:"<angle>";inherits:false;initial-value:0deg}
+@keyframes studio-spin{to{--studio-spin:360deg}}
 .reader-view .scale-book__scales-trigger{
   border:1.5px solid transparent!important;
   border-radius:12px!important;
   background-color:#fff!important;
-  background-image:linear-gradient(#fff,#fff),var(--spectrum)!important;
-  background-origin:padding-box,border-box!important;
-  background-clip:padding-box,border-box!important;
-  background-repeat:no-repeat,no-repeat!important;
-  background-size:auto,300% 100%!important;
-  animation:studio-spectrum 14s linear infinite;
+  background-image:
+    linear-gradient(#fff,#fff),
+    conic-gradient(from var(--studio-spin),
+      transparent 0deg,#8f7fd6 22deg,#e08ba8 48deg,#f0b27a 70deg,transparent 104deg,transparent 360deg),
+    linear-gradient(#e3e3e8,#e3e3e8)!important;
+  background-origin:padding-box,border-box,border-box!important;
+  background-clip:padding-box,border-box,border-box!important;
+  background-repeat:no-repeat,no-repeat,no-repeat!important;
+  animation:studio-spin 3.6s linear infinite;
 }
 /* Hover/open tint the interior only — the toolbar's own `background:
    … !important` hover rules would otherwise wipe the gradient out. */
 .reader-view .scale-book__scales-trigger:hover,
 .reader-view .scale-book__scales-trigger[aria-expanded="true"]{
-  background-image:linear-gradient(#f3f5f1,#f3f5f1),var(--spectrum)!important;
+  background-image:
+    linear-gradient(#f3f5f1,#f3f5f1),
+    conic-gradient(from var(--studio-spin),
+      transparent 0deg,#8f7fd6 22deg,#e08ba8 48deg,#f0b27a 70deg,transparent 104deg,transparent 360deg),
+    linear-gradient(#e3e3e8,#e3e3e8)!important;
 }
 /* The label is painted by the gradient rather than by a text colour. It
    needs its own animated background because background-clip:text and the
@@ -591,4 +621,69 @@ html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document"
   .score-note__remove { display: none !important; }
   .score-tempo-mark { background: none !important; box-shadow: none !important; }
   .score-tempo-mark__step, .score-tempo-mark__sound { display: none !important; }
+}
+
+/* Back to the start. Quieter than the page arrows either side of it —
+   it is the escape hatch, not part of the normal turn-by-turn. */
+.reader-pages__top{opacity:.7}
+.reader-pages__top:hover:not(:disabled){opacity:1}
+.reader-pages__top:disabled{opacity:.28}
+
+/* Tempo is one group: the metronome that sounds it, the number, and the
+   steppers. Keeping the metronome button separate — sitting after Listen —
+   is what made "Listen" read as "start the metronome". */
+.restored-reader .practice-bar .tempo-group{display:flex;align-items:center;gap:6px}
+/* The steppers are for touch: on an iPad, typing into a number field
+   summons a keyboard, where −/+ is one tap. Kept borderless and grey so
+   two extra controls do not turn the bar into a row of buttons — they
+   take chrome only when you are actually on them. */
+.restored-reader .practice-bar .tempo-step{
+  min-width:26px!important;width:26px;min-height:26px!important;height:26px;
+  padding:0!important;border:0;border-radius:7px;background:transparent;
+  color:#8b8d94;font-size:17px;line-height:1;cursor:pointer;
+  display:grid!important;place-items:center;
+}
+.restored-reader .practice-bar .tempo-step:hover:not(:disabled){background:rgba(41,42,51,.09);color:#40553d}
+.restored-reader .practice-bar .tempo-step:disabled{opacity:.3;cursor:default}
+/* Fingers need more than 26px; the visual size stays the same. */
+@media(hover:none){
+  .restored-reader .practice-bar .tempo-step{min-width:34px!important;width:34px;min-height:34px!important;height:34px}
+}
+
+/* The glyph and the field are the labelled pair; the steppers sit beside
+   them in the pill, outside the label. */
+.restored-reader .practice-bar .tempo-field{display:flex;align-items:center;gap:5px;margin:0;padding:0;background:none}
+
+/* ── Phone ────────────────────────────────────────────────────────────────
+   The practice bar wrapped onto three rows on a phone, which pushed the
+   score down and let the breadcrumb and Mark up land on top of each other.
+   One row that scrolls sideways is the usual answer for a toolbar that
+   cannot fit: nothing overlaps, nothing is hidden, and the score keeps its
+   height. */
+@media(max-width:760px){
+  .restored-reader .practice-bar{
+    flex-wrap:nowrap!important;
+    justify-content:flex-start;
+    overflow-x:auto;overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .restored-reader .practice-bar::-webkit-scrollbar{display:none}
+  /* Every group keeps its width instead of being squeezed until it wraps. */
+  .restored-reader .practice-bar>*{flex:0 0 auto}
+  /* The right-hand controls are pushed away by margin-left:auto on wide
+     screens; in a scrolling row that would strand them off-screen. */
+  .restored-reader .practice-bar .restored-view-controls{margin-left:8px!important}
+  /* The reader hides the studio's own tab bar, so there is no 76px of
+     chrome to leave room for — subtracting it is what left a white strip
+     under the music. */
+  .reader-workspace{height:100dvh!important}
+  /* The breadcrumb sits in the topbar, whose content runs to 88px inside a
+     56px box — so it spilled out and landed on the practice bar below,
+     which is why Mark up and "Major scales" were drawn over each other.
+     On a phone the topbar takes the height it needs and the grid row
+     follows it. */
+  .reader-workspace .workspace{grid-template-rows:auto auto auto minmax(0,1fr)!important}
+  .reader-workspace .topbar{height:auto!important;min-height:0!important;flex-wrap:wrap;padding:6px 10px!important;row-gap:2px}
+  .reader-workspace .topbar-toolbar-slot{flex:1 0 100%;order:2}
 }

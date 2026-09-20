@@ -1,5 +1,7 @@
 "use client";
 
+import { createPortal } from "react-dom";
+import { usePathname } from "next/navigation";
 import {
   CSSProperties,
   PointerEvent,
@@ -93,9 +95,30 @@ function pitchFromBuffer(buffer: Float32Array, sampleRate: number) {
 }
 
 export default function PracticeToolDock() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage(), zh = lang === "zh";
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ x: 0, y: 0 });
+  /** The nav's launcher slot, found after mount so SSR markup matches. */
+  const [toolsSlot, setToolsSlot] = useState<HTMLElement | null>(null);
+  const pathname = usePathname();
+  useEffect(() => {
+    // The reader has its own slot in its topbar; the rest of the studio
+    // uses the nav's. Whichever is actually on screen wins, and if neither
+    // is the launcher floats as before.
+    //
+    // Checked after paint: on a client-side navigation this effect runs
+    // before the incoming route has laid out, so measuring immediately
+    // found neither slot visible and the button dropped back to floating.
+    let frame = 0;
+    const pick = () => {
+      const slot = ["reader-tools-slot", "practice-tools-slot"]
+        .map(id => document.getElementById(id))
+        .find(el => el && el.getClientRects().length > 0) ?? null;
+      setToolsSlot(slot);
+    };
+    frame = requestAnimationFrame(() => { frame = requestAnimationFrame(pick); });
+    return () => cancelAnimationFrame(frame);
+  }, [pathname]);
   const [requestedTool, setRequestedTool] = useState<ToolKey | null>(null);
   const [focusedTool, setFocusedTool] = useState<ToolKey | "all">("all");
 
@@ -339,18 +362,32 @@ export default function PracticeToolDock() {
     "--cents-position": `${50 + reading.cents * 0.92}%`,
   } as CSSProperties), [reading.cents]);
 
+  const launcher = (
+    <button
+      className="dock-launcher"
+      aria-expanded={open}
+      aria-controls="practice-console"
+      aria-label={open ? t.toolDock.hideTools : t.toolDock.practiceTools}
+      title={open ? t.toolDock.hideTools : t.toolDock.practiceTools}
+      onClick={() => setOpen((current) => !current)}
+    >
+      <svg className="dock-launcher__icon" viewBox="0 0 18 18" aria-hidden="true">
+        <path d="M3 5h12M3 13h12"/>
+        <circle cx="7" cy="5" r="1.8"/>
+        <circle cx="12" cy="13" r="1.8"/>
+      </svg>
+      <span className="dock-launcher__label">{zh?"工具":"Tools"}</span>
+      {(listening || metro || drones.length > 0) && <i aria-label={t.toolDock.toolRunning} />}
+    </button>
+  );
+
   return (
     <>
-      <button
-        className="dock-launcher"
-        aria-expanded={open}
-        aria-controls="practice-console"
-        onClick={() => setOpen((current) => !current)}
-      >
-        <span aria-hidden="true">⌁</span>
-        <span>{open ? t.toolDock.hideTools : t.toolDock.practiceTools}</span>
-        {(listening || metro || drones.length > 0) && <i aria-label={t.toolDock.toolRunning} />}
-      </button>
+      {/* Rendered into the nav's slot, keeping the dock's own state (the
+          tuner is listening, the metronome is running) as the one source
+          for the running dot. Falls back to its old floating position if
+          the slot is not on the page. */}
+      {toolsSlot ? createPortal(launcher, toolsSlot) : launcher}
 
       {open && (
         <section
