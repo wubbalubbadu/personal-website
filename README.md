@@ -1,100 +1,105 @@
-# vinext-starter
+# personal-website
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+My personal website, live at **[hayliewu.com](https://hayliewu.com)**.
 
-## Prerequisites
+Most of it is a chat-style landing page and a few small projects; the
+substantial one is **[Cookie Flute Studio](https://hayliewu.com/flute-studio)**,
+a practice app for flutists.
 
-- Node.js `>=22.13.0`
+Built with [vinext](https://github.com/cloudflare/vinext) (Next.js on Cloudflare
+Workers) and TypeScript.
 
-## Quick Start
+---
+
+## Cookie Flute Studio
+
+A practice tool built for my own daily flute practice, mostly on an iPad with
+the instrument in my hands. The through-line is that the app knows what is on
+the page: the music is **generated**, not stored as files, so the same
+description that engraves an exercise also drives playback, the fingering
+tooltips and the PDF export.
+
+### Exercises
+
+- **Scale Studio** — generates a scale book from a description: which keys,
+  which types (major, minor, chromatic, whole-tone, diminished, augmented),
+  scales or arpeggios, range, note order, articulation rotations and rhythm
+  variants. Saved sets let you keep a named configuration and reopen it.
+- **Long Tones** — held notes by register, and a *De la sonorité* exercise
+  (after Moyse) generated at a chosen interval, both directions on one page.
+  Includes a live pitch trace: hold a note and watch the line, with duration,
+  pitch spread and drift reported per note.
+
+### Reader
+
+Everything is read through one viewer, shared by exercises and repertoire:
+
+- **Engraving** via OpenSheetMusicDisplay from generated MusicXML, with
+  adjustable notation size, system spacing, note spacing and page layout
+  (single page, fit-to-window, two-page spread)
+- **Playback** of the score, a metronome on the Web Audio clock, a tuning drone
+  and tap tempo
+- **Markup** — draw on the score with a pencil or finger, plus arrows, text
+  boxes and sticky notes
+- **Note help** — tap a note for its fingering, name, solfège or beat position
+- **Vector PDF download** at a fixed traditional notation size, so the printout
+  looks like sheet music rather than a screenshot
+
+### Reference
+
+- **Fingering chart** across the flute's range, split by register at E5
+- **Trill chart** covering four octaves
+- **Body & embouchure** — a 3D model for posture and breathing work
+- **Technique roadmap**
+
+### Repertoire
+
+A small library of pieces read through the same viewer.
+
+---
+
+## Everything else
+
+- **[Learning log](https://hayliewu.com/learning-log)** — notes from a CMU course on AI and music,
+  with interactive Web Audio and SVG widgets, alongside standalone notes on
+  individual papers
+- **[Daily Critter](https://hayliewu.com/daily-critter)** — a critter a day, with a dex
+- **[QR Tree](https://hayliewu.com/qr-tree)** — a QR code you drag to turn; it still scans flat
+
+---
+
+## Running locally
+
+Requires Node `>=22.13.0`.
 
 ```bash
 npm install
 npm run dev
-npm run build
 ```
 
-This starter does not use `wrangler.jsonc`.
+`npm run dev` prints the port it actually bound to — it is not always 3000.
 
-## Included Shape
-
-- edit site code under `app/`
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
-
-## Workspace Auth Headers
-
-Signed-in visitors receive both `oai-authenticated-user-id` and `oai-authenticated-user-email`. Private Sites require every visitor to sign in; public Sites may also have anonymous visitors, for whom neither header is present.
-
-The user ID is stable for the same user on the same Site and different across Sites. Email and name are intended for display or contact purposes.
-
-SIWC-authenticated workspace sites may also receive
-`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
-`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
-
-Treat the full name as optional and fall back to email when it is absent:
-
-```tsx
-import { headers } from "next/headers";
-
-export default async function Home() {
-  const requestHeaders = await headers();
-  const userId = requestHeaders.get("oai-authenticated-user-id");
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
-
-  const displayName = fullName ?? email;
-  // ...
-}
+```bash
+npm run build    # production build
+npm run start    # serve the production build
+npm run lint
+npm test         # builds, then runs tests/*.test.mjs
 ```
 
-## Optional Dispatch-Owned ChatGPT Sign-In
+## Layout
 
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
-optional or required ChatGPT sign-in:
+| path | what's there |
+| --- | --- |
+| `app/` | routes and UI |
+| `app/flute-studio/` | Cookie Flute Studio |
+| `app/flute-studio/lib/` | pitch detection and note segmentation |
+| `app/learning-log/` | course notes and widgets |
+| `content/` | music library, fingering data, exercise catalog |
+| `db/` | Drizzle schema |
+| `docs/BACKLOG.md` | what's planned and what's deliberately parked |
 
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
-  anonymous visitors through Sign in with ChatGPT.
-- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
-  browser links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in
-  or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
+## Notes on the music
 
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
-OAuth cookies, and identity header injection. Do not implement app routes for
-those reserved paths. Routes that do not import and call the helper remain
-anonymous-compatible.
-
-SIWC establishes identity only; it does not prove workspace membership. Use the
-Sites hosting platform's access policy controls for workspace-wide restrictions,
-or enforce explicit server-side membership or allowlist checks.
-
-Use SIWC for account pages, user-specific dashboards, saved records, and write
-actions tied to the current ChatGPT user. Leave public content anonymous.
-
-## Useful Commands
-
-- `npm run dev`: start local development
-- `npm run build`: verify the vinext build output
-- `npm test`: build the starter and verify its rendered loading skeleton
-- `npm run db:generate`: generate Drizzle migrations after schema changes
-
-## Learn More
-
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+Exercises that carry someone else's name are generated from the *procedure*
+described in the source, with my own instruction text — no one else's prose or
+engraving is reproduced here.
