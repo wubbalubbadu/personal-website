@@ -667,3 +667,195 @@
    sizes to its content instead of to a pixel guess. */
 .practice-dock{overflow-y:auto!important;overscroll-behavior:contain}
 .practice-dock .dock-tools{max-height:none!important;min-height:0}
+
+/* One row that scrolls sideways, instead of a 3-wide grid.
+
+   With four tools a three-column grid wraps the fingering panel onto a
+   second row, which the dock's max-height then crops — so the one tool
+   you opened it for was half visible. A single row keeps every tool the
+   same height and lets you swipe to the one you want, and it stops the
+   dock occupying most of an iPad screen. The !important flags are here
+   because ios-theme.css sets these same properties that way. */
+.practice-dock .dock-tools{
+  grid-template-columns:none!important;
+  grid-auto-flow:column!important;
+  grid-auto-columns:minmax(min(288px,80vw),1fr)!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  max-height:none!important;
+  scroll-snap-type:x proximity;
+  overscroll-behavior-x:contain;
+}
+.practice-dock .dock-tool{
+  min-height:0!important;
+  scroll-snap-align:start;
+}
+/* Focused on a single tool, there is nothing to scroll through. */
+.practice-dock .dock-tools[data-single]{
+  grid-auto-columns:minmax(0,1fr)!important;
+  overflow-x:hidden!important;
+}
+
+/* ── The dock hangs from the Tools button, not from the bottom ───────────
+   It used to rise from the bottom-right at 780px wide with a 62px titled
+   header — which covered the music while you were reading it, and pointed
+   at nothing. Anchored under the control that opens it (the way the
+   account menu is), narrow enough to sit beside the score, and still
+   draggable by its grip. */
+.practice-dock{
+  top:60px!important;
+  bottom:auto!important;
+  right:16px!important;
+  width:min(420px,calc(100vw - 32px))!important;
+  max-height:min(560px,calc(100vh - 96px))!important;
+  transform-origin:top right!important;
+}
+@keyframes dock-enter-top{from{opacity:0;transform:translateY(-8px) scale(.985)}}
+.practice-dock{animation:dock-enter-top .18s ease-out!important}
+/* A grip to drag by, and nothing else. */
+.practice-dock>header{
+  min-height:26px!important;height:26px!important;
+  padding:0 8px 0 10px!important;
+  background:transparent!important;
+  border-bottom:0!important;
+}
+.practice-dock>header .dock-grip{opacity:.5}
+/* Breathing room between the tool card and the panel edge — the card was
+   flush against the border on the side it scrolled toward. */
+.practice-dock .dock-tools{
+  padding:0 14px 14px!important;
+  gap:14px!important;
+  scroll-padding-inline:14px;
+}
+@media(max-width:760px){
+  .practice-dock{top:auto!important;bottom:16px!important;right:12px!important;left:12px!important;width:auto!important;transform-origin:bottom center!important}
+}
+@media(prefers-reduced-motion:reduce){.practice-dock{animation:none!important}}
+
+/* A single tool surface, anchored to its launcher. Keep these scoped to
+   the compact dock to outrank the studio's legacy theme overrides. */
+.practice-dock.practice-dock--compact {
+  top:var(--dock-top)!important;
+  right:var(--dock-right)!important;
+  bottom:auto!important;
+  left:auto!important;
+  width:min(320px,calc(100vw - 24px))!important;
+  max-height:calc(100dvh - var(--dock-top) - 12px)!important;
+  border:0!important;
+  border-radius:16px!important;
+  background:#fff!important;
+  box-shadow:0 14px 40px rgba(41,42,51,.16)!important;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+  transform-origin:top right!important;
+}
+.practice-dock--compact .dock-tabs {
+  display:flex;
+  flex-wrap:nowrap;
+  gap:0;
+  padding:0 8px;
+  background:transparent;
+}
+.practice-dock--compact .dock-tabs button {
+  flex:1;
+  min-width:0;
+  height:44px;
+  padding:0 5px;
+  border-radius:0;
+  border-bottom:2px solid transparent;
+  background:transparent;
+  font-size:11px;
+  font-weight:500;
+  color:#73777f;
+  position:relative;
+}
+.practice-dock--compact .dock-tabs button.selected {
+  color:#40553d;
+  border-bottom-color:#678956;
+  background:transparent;
+}
+.practice-dock--compact .dock-tabs button[data-running]::after {
+  content:"";
+  position:absolute;
+  bottom:5px;
+  left:calc(50% - 2px);
+  width:4px;
+  height:4px;
+  border-radius:50%;
+  background:#678956;
+}
+.practice-dock--compact .dock-tools {
+  display:block;
+  padding:0!important;
+  background:transparent!important;
+}
+.practice-dock--compact .dock-tool {
+  padding:14px 18px!important;
+  min-height:0!important;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+  background:#fff!important;
+}
+.practice-dock--compact .tuner-reading {min-height:76px;padding-top:0}
+.practice-dock--compact .tuner-note b {font-size:46px}
+.practice-dock--compact .primary-tool-button,
+.practice-dock--compact .tap-tempo-button {
+  align-self:center;
+  width:auto;
+  min-height:36px;
+  padding:7px 14px!important;
+  margin-top:12px;
+  border:0!important;
+  border-radius:12px;
+  background:rgba(41,42,51,.06)!important;
+  color:#50554d!important;
+  font-size:12px!important;
+  font-weight:500;
+  transform:none!important;
+}
+.practice-dock--compact .primary-tool-button.is-running {
+  background:#e4ecdf!important;
+  color:#40553d!important;
+}
+.practice-dock--compact .primary-tool-button:hover,
+.practice-dock--compact .tap-tempo-button:hover {background:rgba(41,42,51,.1)!important;transform:none!important}
+.practice-dock--compact .metro-options {display:flex;justify-content:center;margin-top:0}
+.practice-dock--compact .dock-fingering-link {align-self:flex-end;background:transparent;padding:0 0 6px}
+.practice-dock--compact button:focus-visible {outline:2px solid #678956;outline-offset:2px}
+.practice-dock--compact .pitch-choices button {height:34px}
+
+/* EngravedNote wraps its SVG in a div. The old direct-SVG rule never
+   applied, leaving the engraving's safety whitespace between controls. */
+.practice-dock--compact .dock-tool-fingering {position:relative}
+.practice-dock--compact .dock-fingering-link {
+  position:absolute;
+  top:14px;
+  right:18px;
+  z-index:1;
+}
+.practice-dock--compact .dock-fingering-now {margin:0 0 10px}
+.practice-dock--compact .dock-fingering-now > [role="img"] {
+  margin:-16px 0 -22px;
+}
+.practice-dock--compact .dock-fingering-now .dock-fingering-diagram {margin:0}
+.practice-dock--compact .dock-tool-fingering .octave-stepper {margin-top:4px;min-height:54px}
+.practice-dock--compact .primary-tool-button.is-running:hover {background:#dce8d7!important}
+
+.practice-dock--compact .dock-drag-handle {
+  display:flex;align-items:center;justify-content:center;
+  width:100%;height:20px;padding:0;border:0;background:transparent;
+  cursor:grab;touch-action:none;
+}
+.practice-dock--compact .dock-drag-handle:active {cursor:grabbing}
+.practice-dock--compact .dock-drag-handle span {width:28px;height:3px;border-radius:3px;background:#d7d8dc}
+.practice-dock--compact .dock-tabs {border-bottom-color:#ededf0}
+
+.practice-dock--compact .dock-panel-heading {position:relative;height:36px}
+.practice-dock--compact .dock-panel-heading .dock-drag-handle {height:36px;width:calc(100% - 44px);padding-left:44px}
+/* Same close control as ReaderPopover's settings heading. */
+.practice-dock--compact .dock-panel-close {
+  position:absolute;right:4px;top:0;
+  border:0;background:transparent!important;border-radius:12px;
+  width:36px;height:36px;font-size:24px;cursor:pointer;color:inherit;
+}

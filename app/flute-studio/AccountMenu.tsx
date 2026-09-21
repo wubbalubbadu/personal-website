@@ -20,6 +20,12 @@ import "./account-menu.css";
 export default function AccountMenu(){
   const {t,lang,setLang}=useLanguage();
   const [open,setOpen]=useState(false);
+  const [position,setPosition]=useState({top:62,right:16});
+  useEffect(()=>{
+    const close=()=>setOpen(false);
+    window.addEventListener("cookie:open-tools-panel",close);
+    return()=>window.removeEventListener("cookie:open-tools-panel",close);
+  },[]);
   const wrap=useRef<HTMLDivElement>(null);
 
   useEffect(()=>{
@@ -46,10 +52,18 @@ export default function AccountMenu(){
       aria-haspopup="menu"
       aria-expanded={open}
       aria-label={t.nav.avatarLabel}
-      onClick={()=>setOpen(value=>!value)}
+      onClick={()=>{
+        if(!open){
+          const rect=wrap.current?.getBoundingClientRect();
+          const header=wrap.current?.closest("header")?.getBoundingClientRect();
+          if(rect)setPosition({top:Math.max(rect.bottom,header?.bottom??0)+10-rect.top,right:0});
+          window.dispatchEvent(new Event("cookie:open-account-panel"));
+        }
+        setOpen(value=>!value);
+      }}
     >HW</button>
 
-    {open&&<div className="account-menu__panel" role="menu">
+    {open&&<div className="account-menu__panel" role="menu" style={{top:position.top,right:position.right}}>
       <p className="account-menu__group">{t.settings.language}</p>
       <div className="account-menu__choices">
         {([["en",t.settings.english],["zh",t.settings.chinese]] as const).map(([value,label])=>

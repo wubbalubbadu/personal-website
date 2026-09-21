@@ -1,4 +1,6 @@
 "use client";
+
+import PracticeRecorder from "../PracticeRecorder";
 import {ReaderPopover} from "./ReaderPopover";
 
 import { PointerEvent, useEffect, useRef, useState } from "react";
@@ -186,7 +188,14 @@ function applyExerciseRules(osmd:OSMDType){
   // RenderXMeasuresPerLineAkaSystem forces its own cut at a fixed measure
   // count regardless of where an exercise ends.
   osmd.EngravingRules.RenderXMeasuresPerLineAkaSystem=0;
-  osmd.EngravingRules.StretchLastSystemLine=false;
+  // Exercise books are pages of parallel lines, and a final line left at
+  // natural width reads as a mistake rather than as the end of a paragraph:
+  // it stops short of the margin AND, being unstretched, sits tighter than
+  // every justified line above it. balanceSystemBreaks has already made the
+  // last line a fair share of its block, so there is nothing to protect it
+  // from. Repertoire keeps OSMD's default, where a genuinely short final
+  // system should not be stretched across the page.
+  osmd.EngravingRules.StretchLastSystemLine=true;
   return ()=>{
     // Independent exercises keep only the opening clef and do not cancel
     // the preceding exercise's key signature with naturals.
@@ -350,6 +359,13 @@ for(let measure=1;measure<=measureStarts.length;measure++){const group=byMeasure
 // tracked separately since only one of them being on-screen doesn't mean
 // they'd collide at the same x the same way.
 const nameRows:[number,number]=[-Infinity,-Infinity],solfegeRows:[number,number]=[-Infinity,-Infinity];let lastCountRight=-Infinity,lastLetter="";
+// Which letters have already been marked in the bar currently being laid
+// out. An accidental holds for the rest of its measure, so a B♭ written
+// once applies to every later B in that bar — those repeats are marked
+// too, in a second colour, because the player has to remember them rather
+// than read them.
+const markedThisMeasure=new Set<string>();
+let accidentalMeasure=-1;
 group.forEach(note=>{const index=Number(note.dataset.event),event=scoreEvents[index];
   // A grace note borrows its time from the note it decorates rather than
   // occupying a beat position of its own (deriveScoreEvents gives it
@@ -371,11 +387,35 @@ group.forEach(note=>{const index=Number(note.dataset.event),event=scoreEvents[in
       if(visible.solfege)placeStackedLabel(root,"solfege-marker",solfegeNames[letter]??letter,x,labelLane,15,solfegeRows,"700 16px Arial");
       lastLetter=letter;
     }
-    if(visible.accidentals&&(measureKeys?.[measure-1]?.includes(letter)??keyAccidentals.has(letter))){
-      const head=headBox.get(note)??box;
-      const size=Math.round(Math.max(11,Math.min(26,head.height*2.1)));
-      const mark=overlay(root,"accidental-marker",letter.slice(1),head.left-rootBox.left+head.width/2,box.top-rootBox.top-size*1.25-3);
-      mark.style.fontSize=`${size}px`;
+    if(visible.accidentals){
+      if(measure!==accidentalMeasure){markedThisMeasure.clear();accidentalMeasure=measure}
+      // What the KEY SIGNATURE alters. These apply to every bar of the
+      // piece, so there is nothing about them to remember within a
+      // measure — they are marked, but never as "carried".
+      const keySig=measureKeys?.[measure-1]??[...keyAccidentals];
+      const base=letter[0];
+      const inKeySig=keySig.includes(letter);
+      // An accidental the key signature does not account for. The staff
+      // already prints these where they occur, so the first one is NOT
+      // marked — the overlay exists to show what the notation does not.
+      const writtenNatural=letter.length===1&&keySig.some(entry=>entry[0]===base);
+      const writtenAccidental=(letter.length>1&&!inKeySig)||writtenNatural;
+      // What IS worth marking: a key-signature alteration, which is never
+      // printed next to the note, and a repeat later in the same bar of an
+      // accidental written earlier in it, which is not reprinted either.
+      const carried=writtenAccidental&&markedThisMeasure.has(letter);
+      if(inKeySig||carried){
+        const head=headBox.get(note)??box;
+        const size=Math.round(Math.max(11,Math.min(26,head.height*2.1)));
+        // Spelled from the key signature where that is what we are
+        // marking: the derived pitch normalises enharmonics, so a staff
+        // C♯ arrives here as D♭ and would print the wrong symbol.
+        const glyph=inKeySig?(keySig.find(entry=>entry[0]===base)??letter).slice(1)
+          :writtenNatural?"♮":letter.slice(1);
+        const mark=overlay(root,`accidental-marker${carried?" is-carried":""}`,glyph,head.left-rootBox.left+head.width/2,box.top-rootBox.top-size*1.25-3);
+        mark.style.fontSize=`${size}px`;
+      }
+      if(writtenAccidental)markedThisMeasure.add(letter);
     }
   }
   // Sits above the accidental lane (-18) rather than sharing it, so a
@@ -461,10 +501,10 @@ export type ReaderControls={
    */
   playingEvent:number|null;
 };
-export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=false,lineBreak,practiceTempo,scoreMarks,headerActions,save,extraSystemSpacing=0}:{config:ScoreViewerConfig;toolbar?:React.ReactNode;settings?:(controls:ReaderControls)=>React.ReactNode;onTempoChange?:(tempo:number)=>void;unmetered?:boolean;lineBreak?:{value:boolean;onChange:(value:boolean)=>void};practiceTempo?:{value:boolean;onChange:(value:boolean)=>void};scoreMarks?:(context:ScoreMarksContext)=>React.ReactNode;headerActions?:(controls:ReaderControls)=>React.ReactNode;save?:{saved:boolean;onToggle:()=>void;label:string;savedLabel:string};extraSystemSpacing?:number}) {
+export function ScoreViewer({config,toolbar,settings,aside,defaultNoteSpacing,onTempoChange,unmetered=false,lineBreak,practiceTempo,scoreMarks,headerActions,save,extraSystemSpacing=0}:{config:ScoreViewerConfig;toolbar?:React.ReactNode;settings?:(controls:ReaderControls)=>React.ReactNode;/** Pinned below the music inside the scroll area — for a live readout that has to stay visible while the page scrolls. */aside?:React.ReactNode;/** Starting note spacing, for books whose notes are faster than the exercise default assumes. Overridden by a saved preference. */defaultNoteSpacing?:number;onTempoChange?:(tempo:number)=>void;unmetered?:boolean;lineBreak?:{value:boolean;onChange:(value:boolean)=>void};practiceTempo?:{value:boolean;onChange:(value:boolean)=>void};scoreMarks?:(context:ScoreMarksContext)=>React.ReactNode;headerActions?:(controls:ReaderControls)=>React.ReactNode;save?:{saved:boolean;onToggle:()=>void;label:string;savedLabel:string};extraSystemSpacing?:number}) {
   const {t,lang}=useLanguage();
   const zh=lang==="zh";
-  const {bpm,setBpm,metro,toggleMetro,toggleDrone,stopAllDrones,drones,initializeScore}=usePracticeAudio();
+  const {bpm,setBpm,metro,toggleMetro,toggleDrone,stopAllDrones,drones,initializeScore,setAccent}=usePracticeAudio();
   const [picker,setPicker]=useState(false),[,setDronePitch]=useState("G"),[droneOctave,setDroneOctave]=useState(4);
   // The field holds a raw draft while it is being typed, so "1" on the way
   // to "120" isn't clamped to 40 under the cursor; it commits on blur/Enter.
@@ -545,7 +585,7 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
   // How much room each note gets along the staff. Notation size scales the
   // whole engraving; this changes only how tightly notes are packed, which
   // is what decides how much music fits on a line.
-  const [noteSpacing,setNoteSpacing]=useState(1);
+  const [noteSpacing,setNoteSpacing]=useState(defaultNoteSpacing??(unmetered?0.82:1));
   const noteSpacingRef=useRef(noteSpacing);
   const marksLayerRef=useRef<HTMLDivElement|null>(null);
   const [marksLayer,setMarksLayer]=useState<HTMLDivElement|null>(null);
@@ -556,6 +596,48 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
   /** Last tempo actually handed to onTempoChange; null until the first. */
   const reportTempo=useRef<number|null>(null);
   const [pageWidth,setPageWidth]=useState("900");
+
+  /**
+   * How the reader is set up is a fact about your eyes, not about the
+   * piece — so it is stored once and restored everywhere, rather than
+   * reset on every reload (and lost entirely whenever Scale Studio
+   * rebuilt its id from a new set of scales).
+   *
+   * Metered and unmetered books keep separate settings: an exercise book
+   * of sixteenth-note runs wants tighter packing than a piece does.
+   */
+  const viewPrefsKey=`cookie:reader-view:${unmetered?"exercise":"piece"}:v1`;
+  const viewPrefsLoaded=useRef(false);
+  useEffect(()=>{
+    try{
+      const saved=JSON.parse(localStorage.getItem(viewPrefsKey)||"null");
+      if(saved){
+        /* eslint-disable react-hooks/set-state-in-effect */
+        if(Number.isFinite(saved.sizePreference))setSizePreference(saved.sizePreference);
+        if(Number.isFinite(saved.systemSpacing))setSystemSpacing(saved.systemSpacing);
+        if(Number.isFinite(saved.noteSpacing))setNoteSpacing(saved.noteSpacing);
+        if(typeof saved.pageWidth==="string")setPageWidth(saved.pageWidth);
+        if(typeof saved.noteDisplay==="string")setNoteDisplay(saved.noteDisplay);
+        if(typeof saved.accidentals==="boolean")setAccidentals(saved.accidentals);
+        if(typeof saved.tonguing==="boolean")setTonguing(saved.tonguing);
+        if(typeof saved.fingering==="boolean")setFingering(saved.fingering);
+        if(typeof saved.rhythmMode==="string")setRhythmMode(saved.rhythmMode);
+        /* eslint-enable react-hooks/set-state-in-effect */
+      }
+    }catch{/* Unreadable preferences fall back to the defaults. */}
+    viewPrefsLoaded.current=true;
+  },[viewPrefsKey]);
+  useEffect(()=>{
+    // Only after the restore pass, or the defaults would overwrite what
+    // was saved before it had a chance to load.
+    if(!viewPrefsLoaded.current)return;
+    try{
+      localStorage.setItem(viewPrefsKey,JSON.stringify({
+        sizePreference,systemSpacing,noteSpacing,pageWidth,
+        noteDisplay,accidentals,tonguing,fingering,rhythmMode,
+      }));
+    }catch{/* Storage may be disabled. */}
+  },[viewPrefsKey,sizePreference,systemSpacing,noteSpacing,pageWidth,noteDisplay,accidentals,tonguing,fingering,rhythmMode]);
   const [spreadPageCount,setSpreadPageCount]=useState(0);
   const originalPageMargins=useRef<{left:number;right:number;top:number;narrow:number;bottom:number}|null>(null);
   const pageWidthRef=useRef(pageWidth);
@@ -569,6 +651,10 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
   function tapTempo(){const now=performance.now();metroTaps.current=[...metroTaps.current.filter(t=>now-t<3000),now].slice(-5);const taps=metroTaps.current;if(taps.length>1)setBpm(60000/((now-taps[0])/(taps.length-1)))}
   const selectedEventRef=useRef<number|null>(null);
   useEffect(()=>{initializeScore(id,config.defaultTempo??76)},[id]);
+  // An unmetered book has no bar lines, so there is no downbeat for the
+  // metronome to lean on — a stressed beat every four clicks implies a 4/4
+  // that is not there.
+  useEffect(()=>{setAccent(!unmetered)},[unmetered,setAccent]);
   function cycleNoteDisplay(){setNoteDisplay(current=>current==="off"?"names":current==="names"?"solfege":"off")}
   function cycleRhythm(){setRhythmMode(current=>current==="off"?"counts":current==="counts"?"bars":"off")}
 
@@ -1356,7 +1442,7 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
 
       <div className="practice-bar"><div className="tool-group">        <button data-tip={t.scoreViewer.markUpTip} className={annotating?"tool on coral has-tip":"tool has-tip"} onClick={()=>{const next=!annotating;setAnnotating(next);if(next)setInkActive(true)}}><PracticeIcon name="markup"/>{t.scoreViewer.markUp}</button>
       </div>
-        <div className="transport"><button data-tip={t.scoreViewer.playTip(startMeasure)} className={playing?"tool on has-tip":"tool has-tip"} onClick={togglePlayback}><PracticeIcon name={playing?"stop":"play"}/>{playing?t.scoreViewer.stop:t.scoreViewer.play}</button><span className="record-slot"/>{/* Everything about tempo in one group: the metronome that sounds it, the number, and the steppers. The metronome used to sit after Listen, which is what made "Listen" read as "start the metronome"; the steppers reuse the − n + shape the on-page tempo marks already use rather than a spinner. */}<div className="tempo-group"><button data-tip={t.scoreViewer.metronomeTip} className={metro?"tool on has-tip":"tool has-tip"} onClick={toggleMetro}><PracticeIcon name="metronome"/>{t.scoreViewer.metronome}</button>{/* A div, not a label: buttons nested in a label get the label's hover applied to them as a set — hovering + lit up − too — and a tap on one activates the label, which focuses the number field and would raise the keyboard on a tablet. Only the glyph and the field are labelled. */}<div className="tempo"><button type="button" className="tempo-step" aria-label={zh?"减慢":"Slower"} disabled={bpm<=40} onClick={()=>setBpm(bpm-1)}>−</button><label className="tempo-field"><b>♩ =</b><input aria-label={t.scoreViewer.tempoAria} type="number" min="40" max="220" value={tempoDraft??bpm} onChange={e=>setTempoDraft(e.target.value)} onBlur={commitTempo} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/></label><button type="button" className="tempo-step" aria-label={zh?"加快":"Faster"} disabled={bpm>=220} onClick={()=>setBpm(bpm+1)}>+</button></div></div><button className="tool has-tip" data-tip={t.scoreViewer.tapTempo} aria-label={t.scoreViewer.tapTempo} onClick={tapTempo}><PracticeIcon name="tap"/>{zh?"打拍":"Tap"}</button>
+        <div className="transport"><button data-tip={t.scoreViewer.playTip(startMeasure)} className={playing?"tool on has-tip":"tool has-tip"} onClick={togglePlayback}><PracticeIcon name={playing?"stop":"play"}/>{playing?t.scoreViewer.stop:t.scoreViewer.play}</button><PracticeRecorder/>{/* Everything about tempo in one group: the metronome that sounds it, the number, and the steppers. The metronome used to sit after Listen, which is what made "Listen" read as "start the metronome"; the steppers reuse the − n + shape the on-page tempo marks already use rather than a spinner. */}<div className="tempo-group"><button data-tip={t.scoreViewer.metronomeTip} className={metro?"tool on has-tip":"tool has-tip"} onClick={toggleMetro}><PracticeIcon name="metronome"/>{t.scoreViewer.metronome}</button>{/* A div, not a label: buttons nested in a label get the label's hover applied to them as a set — hovering + lit up − too — and a tap on one activates the label, which focuses the number field and would raise the keyboard on a tablet. Only the field is labelled. */}<div className="tempo"><button type="button" className="tempo-step" aria-label={zh?"减慢":"Slower"} disabled={bpm<=40} onClick={()=>setBpm(bpm-1)}>−</button><label className="tempo-field"><input aria-label={t.scoreViewer.tempoAria} type="number" min="40" max="220" value={tempoDraft??bpm} onChange={e=>setTempoDraft(e.target.value)} onBlur={commitTempo} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/></label><button type="button" className="tempo-step" aria-label={zh?"加快":"Faster"} disabled={bpm>=220} onClick={()=>setBpm(bpm+1)}>+</button></div></div><button className="tool has-tip reader-tap" data-tip={t.scoreViewer.tapTempo} aria-label={t.scoreViewer.tapTempo} onClick={tapTempo}><PracticeIcon name="tap"/>{zh?"打拍":"Tap"}</button>
           <div className="transport-menu">
             <button aria-label={t.scoreViewer.drone} aria-pressed={drones.length>0} aria-expanded={picker} data-tip={t.scoreViewer.droneTip} className={drones.length?"tool on has-tip":"tool has-tip"} onClick={()=>setPicker(o=>!o)}><PracticeIcon name="drone"/>{t.scoreViewer.drone}<small>{drones.length?drones.join("+"):t.scoreViewer.droneOff}</small></button>
             {picker&&<>
@@ -1395,7 +1481,7 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
         <div className="reader-pages" data-mode="pages">{/* Back to the first page. A long exercise book is a lot of
             arrow presses to get home, and in scroll mode there are no
             arrows at all — this is the only way back to the top. */}
-          <button className="reader-pages__top" aria-label={zh?"回到开头":"Back to top"} data-tip={zh?"回到开头":"Back to top"} disabled={pageIndex<=0&&(scoreScrollRef.current?.scrollTop??0)<8} onClick={backToTop}><PracticeIcon name="top"/></button><button aria-label={t.scoreViewer.previousPage} disabled={pageIndex<=0} onClick={()=>goToPage(pageIndex-1)}><PracticeIcon name="previous"/></button><button aria-label={t.scoreViewer.nextPage} disabled={pageIndex>=pageCount-1} onClick={()=>goToPage(pageIndex+1)}><PracticeIcon name="next"/></button><span aria-live="polite">{spreadPageCount?`${pageIndex*2+1}${pageIndex*2+2<=spreadPageCount?`–${pageIndex*2+2}`:""} / ${spreadPageCount}`:`${pageIndex+1} / ${pageCount}`}</span><button className={focusMode?"tool on has-tip":"tool has-tip"} aria-pressed={focusMode} data-tip={t.scoreViewer.focusModeTip} aria-label={focusMode?t.scoreViewer.exitFocusMode:t.scoreViewer.enterFocusMode} onClick={toggleFocusMode}><PracticeIcon name={focusMode?"close":"fullscreen"}/>{focusMode?(zh?"退出":"Exit"):(zh?"全屏":"Full")}</button></div>
+          <button className="reader-pages__top" aria-label={zh?"回到开头":"Back to top"} data-tip={zh?"回到开头":"Back to top"} disabled={pageIndex<=0&&(scoreScrollRef.current?.scrollTop??0)<8} onClick={backToTop}><PracticeIcon name="top"/></button><button aria-label={t.scoreViewer.previousPage} disabled={pageIndex<=0} onClick={()=>goToPage(pageIndex-1)}><PracticeIcon name="previous"/></button><button aria-label={t.scoreViewer.nextPage} disabled={pageIndex>=pageCount-1} onClick={()=>goToPage(pageIndex+1)}><PracticeIcon name="next"/></button><span aria-live="polite">{spreadPageCount?`${pageIndex*2+1}${pageIndex*2+2<=spreadPageCount?`–${pageIndex*2+2}`:""} / ${spreadPageCount}`:`${pageIndex+1} / ${pageCount}`}</span><button className={focusMode?"tool on has-tip":"tool has-tip"} aria-pressed={focusMode} data-tip={t.scoreViewer.focusModeTip} aria-label={focusMode?t.scoreViewer.exitFocusMode:t.scoreViewer.enterFocusMode} onClick={toggleFocusMode}><PracticeIcon name={focusMode?"close":"fullscreen"}/></button></div>
 </div>
 </div>
       {annotating&&<div className="markup-row"><div className="markup-row-surface" role="toolbar" aria-label={zh?"批注工具":"Annotation tools"}>
@@ -1417,7 +1503,7 @@ export function ScoreViewer({config,toolbar,settings,onTempoChange,unmetered=fal
           {selected&&<button type="button" className="score-note__remove" aria-label={t.scoreViewer.deleteNote} onClick={()=>removeScoreNote(note.id)}>×</button>}
           <textarea value={note.text} style={{width:note.w,height:note.h}} onChange={e=>updateScoreNoteText(note.id,e.target.value)} onPointerUp={e=>commitNoteSize(note.id,e.currentTarget)} onKeyDown={e=>{if(e.key==="Escape"){e.currentTarget.blur();setSelectedNote(null)}}} placeholder={t.scoreViewer.notePlaceholder}/>
         </div>})}
-      </div></div>
+      </div>{aside&&<div className="score-aside">{aside}</div>}</div>
 
     </section>{theoryTip&&<div className="theory-tip" style={clampTip(theoryTip.x,theoryTip.y,280,150,"below")}><small>{t.scoreViewer.musicTheory}</small><p>{theoryTip.text}</p></div>}{fingerTip&&<div className={fingering?"flute-tip finger-chart":"flute-tip note-info-tip"} style={clampTip(fingerTip.x,fingerTip.y,340,255,"above")}>{(noteDisplay!=="off"||fingering)&&<strong>{noteDisplay==="solfege"?fingerTip.solfege:fingerTip.name}<sup>{fingerTip.pitch.match(/\d/)?.[0]}</sup></strong>}{rhythmMode!=="off"&&!unmetered&&<p className="note-info-beat">{zh?"拍位":"Beat"} {fingerTip.beat}</p>}{fingering&&<><div className="finger-diagram">{(()=>{
         const entry=fingeringsForMidi(midiForPitch(fingerTip.pitch));

@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import {
   CSSProperties,
-  PointerEvent,
+  PointerEvent as ReactPointerEvent,
   useEffect,
   useMemo,
   useRef,
@@ -12,6 +12,9 @@ import {
 } from "react";
 import {useLanguage} from "./i18n/LanguageContext";
 import "./practice-tool-dock.css";
+// The detector lives in lib/pitch.ts now — the tuner is one consumer of
+// it, not its owner.
+import {detectPitch, median} from "./lib/pitch";
 import {usePracticeAudio} from "./PracticeAudio";
 import {FluteDiagram} from "./components/FluteDiagram";
 import {fluteFingerings, midiForPitch} from "../../content/fingerings/flute";
@@ -30,74 +33,21 @@ type PitchReading = {
 const pitches = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"];
 const centsMarks = [-50, -25, 0, 25, 50];
 
-function median(values: number[]) {
-  const sorted = [...values].sort((a, b) => a - b);
-  const middle = Math.floor(sorted.length / 2);
-  return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
-}
 
-function pitchFromBuffer(buffer: Float32Array, sampleRate: number) {
-  let sumSquares = 0;
-  for (let i = 0; i < buffer.length; i += 1) sumSquares += buffer[i] * buffer[i];
-  const rms = Math.sqrt(sumSquares / buffer.length);
-
-  // A flute easily clears this level at ordinary device distance. Room noise usually does not.
-  if (rms < 0.014) return null;
-
-  const analysisSize = Math.floor(buffer.length / 2);
-  const minimumLag = Math.floor(sampleRate / 1500);
-  const maximumLag = Math.min(Math.floor(sampleRate / 170), analysisSize - 2);
-  const difference = new Float32Array(maximumLag + 1);
-
-  for (let lag = minimumLag; lag <= maximumLag; lag += 1) {
-    let total = 0;
-    for (let i = 0; i < analysisSize; i += 1) {
-      const delta = buffer[i] - buffer[i + lag];
-      total += delta * delta;
-    }
-    difference[lag] = total;
-  }
-
-  let runningTotal = 0;
-  let selectedLag = -1;
-  let selectedScore = 1;
-  for (let lag = minimumLag; lag <= maximumLag; lag += 1) {
-    runningTotal += difference[lag];
-    const normalized = runningTotal > 0 ? (difference[lag] * (lag - minimumLag + 1)) / runningTotal : 1;
-    if (normalized < 0.15) {
-      let localLag = lag;
-      let localScore = normalized;
-      while (localLag + 1 <= maximumLag) {
-        const nextLag = localLag + 1;
-        const nextRunning = runningTotal + difference[nextLag];
-        const nextScore = nextRunning > 0
-          ? (difference[nextLag] * (nextLag - minimumLag + 1)) / nextRunning
-          : 1;
-        if (nextScore >= localScore) break;
-        localLag = nextLag;
-        localScore = nextScore;
-      }
-      selectedLag = localLag;
-      selectedScore = localScore;
-      break;
-    }
-  }
-
-  if (selectedLag < 0 || 1 - selectedScore < 0.78) return null;
-
-  const previous = difference[selectedLag - 1] || difference[selectedLag];
-  const current = difference[selectedLag];
-  const next = difference[selectedLag + 1] || difference[selectedLag];
-  const denominator = previous - 2 * current + next;
-  const adjustment = denominator === 0 ? 0 : 0.5 * (previous - next) / denominator;
-  const hz = sampleRate / (selectedLag + Math.max(-0.5, Math.min(0.5, adjustment)));
-  return hz >= 170 && hz <= 1500 ? { hz, rms } : null;
-}
 
 export default function PracticeToolDock() {
   const { t, lang } = useLanguage(), zh = lang === "zh";
   const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState({ x: 0, y: 0 });
+  useEffect(()=>{
+    const close=()=>setOpen(false);
+    window.addEventListener("cookie:open-account-panel",close);
+    return()=>window.removeEventListener("cookie:open-account-panel",close);
+  },[]);
+  const launcherRef = useRef<HTMLButtonElement | null>(null);
+  const panelRef = useRef<HTMLElement | null>(null);
+  const moved = useRef(false);
+  const drag = useRef<{id:number;x:number;y:number;top:number;right:number} | null>(null);
+  const [anchor, setAnchor] = useState({ top: 60, right: 16 });
   /** The nav's launcher slot, found after mount so SSR markup matches. */
   const [toolsSlot, setToolsSlot] = useState<HTMLElement | null>(null);
   const pathname = usePathname();
@@ -113,16 +63,21 @@ export default function PracticeToolDock() {
     const pick = () => {
       const slot = ["reader-tools-slot", "practice-tools-slot"]
         .map(id => document.getElementById(id))
-        .find(el => el && el.getClientRects().length > 0) ?? null;
+        .find(el => {
+          if (!el || !el.getClientRects().length) return false;
+          const rect = el.getBoundingClientRect();
+          return rect.right > 0 && rect.left < window.innerWidth && rect.bottom > 0 && rect.top < window.innerHeight;
+        }) ?? null;
       setToolsSlot(slot);
     };
     frame = requestAnimationFrame(() => { frame = requestAnimationFrame(pick); });
-    return () => cancelAnimationFrame(frame);
+    window.addEventListener("resize", pick);
+    return () => { cancelAnimationFrame(frame); window.removeEventListener("resize", pick); };
   }, [pathname]);
   const [requestedTool, setRequestedTool] = useState<ToolKey | null>(null);
-  const [focusedTool, setFocusedTool] = useState<ToolKey | "all">("all");
+  const [focusedTool, setFocusedTool] = useState<ToolKey>("tuner");
 
-  const {bpm,setBpm,metro,toggleMetro,drones,toggleDrone:toggleSharedDrone,stopAllDrones}=usePracticeAudio();
+  const {bpm,setBpm,metro,toggleMetro,drones,toggleDrone:toggleSharedDrone,stopAllDrones,getAudio}=usePracticeAudio();
   const [, setTapHint] = useState("");
 
   const [reading, setReading] = useState<PitchReading>({
@@ -145,8 +100,7 @@ export default function PracticeToolDock() {
   const [octave, setOctave] = useState(4);
 
 
-  const drag = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
-  const audio = useRef<AudioContext | null>(null);
+
 
 
   const tapTimes = useRef<number[]>([]);
@@ -181,7 +135,13 @@ export default function PracticeToolDock() {
     fluteFingerings[0];
   const tunerTone = !signalActive ? "idle" : inTune ? "tuned" : reading.cents < 0 ? "flat" : "sharp";
 
-  const getContext = () => audio.current ?? (audio.current = new AudioContext());
+  /**
+   * The tuner listens on the SAME context the metronome and drone play
+   * through. It used to open a second one, and on iOS opening a mic input
+   * while another context is playing reroutes the audio session — which
+   * silenced the metronome and drone until the page was reloaded.
+   */
+  const getContext = () => getAudio();
 
   const stopListening = () => {
     stream.current?.getTracks().forEach((track) => track.stop());
@@ -196,14 +156,14 @@ export default function PracticeToolDock() {
   useEffect(() => () => {
     stream.current?.getTracks().forEach((track) => track.stop());
     if (frame.current !== null) cancelAnimationFrame(frame.current);
-    audio.current?.close();
+    /* The context is shared now, so it is not ours to close. */
   }, []);
 
   useEffect(() => {
     const openRequestedTool = (event: Event) => {
       const tool = (event as CustomEvent<{ tool?: ToolKey }>).detail?.tool;
       if (tool !== "tuner" && tool !== "metronome" && tool !== "drone" && tool !== "fingering") return;
-      setPos({x:0,y:0});
+      window.dispatchEvent(new Event("cookie:open-tools-panel"));
       setRequestedTool(tool);
       setFocusedTool(tool);
       setOpen(true);
@@ -294,7 +254,7 @@ export default function PracticeToolDock() {
         if (timestamp - lastAnalysis.current >= 42) {
           lastAnalysis.current = timestamp;
           analyser.getFloatTimeDomainData(data);
-          const estimate = pitchFromBuffer(data, context.sampleRate);
+          const estimate = detectPitch(data, context.sampleRate);
 
           if (estimate) {
             const midi = Math.round(69 + 12 * Math.log2(estimate.hz / 440));
@@ -345,17 +305,49 @@ export default function PracticeToolDock() {
     }
   };
 
-  const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    drag.current = { x: event.clientX, y: event.clientY, px: pos.x, py: pos.y };
-    event.currentTarget.setPointerCapture(event.pointerId);
-  };
+  useEffect(() => {
+    if (!open) return;
+    const position = () => {
+      if (moved.current) return;
+      const rect = launcherRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const header = launcherRef.current?.closest("header")?.getBoundingClientRect();
+      const top = Math.max(rect.bottom, header?.bottom ?? 0) + 10;
+      setAnchor({
+        top: Math.min(top, Math.max(12, window.innerHeight - 340)),
+        right: Math.min(Math.max(12, window.innerWidth - Math.min(320, window.innerWidth - 24) - 12), Math.max(12, window.innerWidth - rect.right)),
+      });
+    };
+    const dismiss = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        launcherRef.current?.focus();
+      }
+    };
+    position();
+    window.addEventListener("resize", position);
+    window.addEventListener("scroll", position, true);
+    window.addEventListener("keydown", dismiss);
+    return () => {
+      window.removeEventListener("resize", position);
+      window.removeEventListener("scroll", position, true);
+      window.removeEventListener("keydown", dismiss);
+    };
+  }, [open, toolsSlot]);
 
-  const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    if (!drag.current) return;
-    setPos({
-      x: drag.current.px + event.clientX - drag.current.x,
-      y: drag.current.py + event.clientY - drag.current.y,
+  const movePanel = (top:number, right:number) => {
+    moved.current = true;
+    const width = panelRef.current?.offsetWidth ?? 320;
+    const height = panelRef.current?.offsetHeight ?? 260;
+    setAnchor({
+      top:Math.max(8,Math.min(top,window.innerHeight - Math.min(height,window.innerHeight - 16) - 8)),
+      right:Math.max(8,Math.min(right,window.innerWidth - width - 8)),
     });
+  };
+  const startDrag = (event:ReactPointerEvent<HTMLButtonElement>) => {
+    if (event.button !== 0) return;
+    drag.current = {id:event.pointerId,x:event.clientX,y:event.clientY,...anchor};
+    event.currentTarget.setPointerCapture(event.pointerId);
   };
 
   const rulerStyle = useMemo(() => ({
@@ -364,12 +356,13 @@ export default function PracticeToolDock() {
 
   const launcher = (
     <button
+      ref={launcherRef}
       className="dock-launcher"
       aria-expanded={open}
       aria-controls="practice-console"
       aria-label={open ? t.toolDock.hideTools : t.toolDock.practiceTools}
       title={open ? t.toolDock.hideTools : t.toolDock.practiceTools}
-      onClick={() => setOpen((current) => !current)}
+      onClick={() => { if (!open) { window.dispatchEvent(new Event("cookie:open-tools-panel")); moved.current = false; setFocusedTool("tuner"); } setOpen((current) => !current); }}
     >
       <svg className="dock-launcher__icon" viewBox="0 0 18 18" aria-hidden="true">
         <path d="M3 5h12M3 13h12"/>
@@ -391,57 +384,53 @@ export default function PracticeToolDock() {
 
       {open && (
         <section
+          ref={panelRef}
           id="practice-console"
-          className="practice-dock"
-          style={{ transform: `translate(${pos.x}px, ${pos.y}px)` }}
+          className="practice-dock practice-dock--compact"
+          style={{ "--dock-top": `${anchor.top}px`, "--dock-right": `${anchor.right}px` } as CSSProperties}
           aria-label={t.toolDock.practiceTools}
         >
-          <header
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={() => { drag.current = null; }}
-            onPointerCancel={() => { drag.current = null; }}
-          >
-            <div>
-              <span className="dock-grip" aria-hidden="true" />
-              <strong>{t.toolDock.practiceTools}</strong>
-            </div>
-            <button
-              type="button"
-              className="dock-close"
-              aria-label={t.toolDock.close}
-              onPointerDown={(event) => event.stopPropagation()}
-              onClick={() => setOpen(false)}
-            >
-              ×
-            </button>
-          </header>
-
+          <div className="dock-panel-heading">
+          <button type="button" className="dock-drag-handle"
+            aria-label={zh?"移动工具面板，或使用方向键":"Move tools panel, or use arrow keys"}
+            onPointerDown={startDrag}
+            onPointerMove={event=>{
+              const origin=drag.current;
+              if(origin?.id===event.pointerId)movePanel(origin.top+event.clientY-origin.y,origin.right-event.clientX+origin.x);
+            }}
+            onPointerUp={()=>{drag.current=null}}
+            onPointerCancel={()=>{drag.current=null}}
+            onKeyDown={event=>{
+              const directions:Record<string,[number,number]>={ArrowUp:[-10,0],ArrowDown:[10,0],ArrowLeft:[0,10],ArrowRight:[0,-10]};
+              const delta=directions[event.key];
+              if(delta){event.preventDefault();movePanel(anchor.top+delta[0],anchor.right+delta[1])}
+            }}
+          ><span aria-hidden="true"/></button>
+          <button type="button" className="dock-panel-close" aria-label={t.toolDock.close} onClick={()=>{setOpen(false);launcherRef.current?.focus()}}>×</button>
+          </div>
           <nav className="dock-tabs" aria-label={t.toolDock.showOneTool}>
-            {(["all", "tuner", "metronome", "drone", "fingering"] as const).map((key) => (
+            {(["tuner", "metronome", "drone", "fingering"] as const).map((key) => (
               <button
                 key={key}
                 type="button"
                 className={focusedTool === key ? "selected" : ""}
+                aria-pressed={focusedTool === key}
+                data-running={(key === "tuner" ? listening : key === "metronome" ? metro : key === "drone" ? drones.length > 0 : false) || undefined}
                 onClick={() => setFocusedTool(key)}
               >
-                {key === "all" ? t.toolDock.allTools : key === "tuner" ? t.toolDock.tunerLabel : key === "metronome" ? t.toolDock.metronomeLabel : key === "drone" ? t.toolDock.droneLabel : t.toolDock.fingeringLabel}
+                {key === "tuner" ? t.toolDock.tunerLabel : key === "metronome" ? t.toolDock.metronomeLabel : key === "drone" ? t.toolDock.droneLabel : t.toolDock.fingeringLabel}
               </button>
             ))}
           </nav>
 
-          <div className="dock-tools" data-single={focusedTool === "all" ? undefined : ""}>
+          <div className="dock-tools" data-single="">
             <section
               ref={tunerSection}
               className="dock-tool dock-tool-tuner"
               data-requested={requestedTool === "tuner" || undefined}
-              hidden={focusedTool !== "all" && focusedTool !== "tuner"}
+              hidden={focusedTool !== "tuner"}
               tabIndex={-1}
             >
-              <div className="dock-tool-heading">
-                <span className="dock-tool-icon tuner-icon" aria-hidden="true">⌁</span>
-                <strong>{t.toolDock.tunerLabel}</strong>
-              </div>
 
               <div className={`tuner-reading ${tunerTone}`} aria-live="polite">
                 <div className="tuner-note"><b>{reading.name}</b><sup>{reading.octave}</sup></div>
@@ -460,7 +449,6 @@ export default function PracticeToolDock() {
 
               <p className="tuner-status">{tunerMessage}</p>
               <button className={`primary-tool-button ${listening ? "is-running" : ""}`} onClick={tuner}>
-                <span aria-hidden="true">{listening ? "■" : "●"}</span>
                 {listening ? t.toolDock.stopListening : t.toolDock.listen}
               </button>
             </section>
@@ -469,13 +457,9 @@ export default function PracticeToolDock() {
               ref={metroSection}
               className="dock-tool dock-tool-metronome"
               data-requested={requestedTool === "metronome" || undefined}
-              hidden={focusedTool !== "all" && focusedTool !== "metronome"}
+              hidden={focusedTool !== "metronome"}
               tabIndex={-1}
             >
-              <div className="dock-tool-heading">
-                <span className="dock-tool-icon metronome-icon" aria-hidden="true">♩</span>
-                <strong>{t.toolDock.metronomeLabel}</strong>
-              </div>
 
               <div className="tempo-stepper">
                 <button aria-label={t.toolDock.decreaseTempo} onClick={() => setBpm(Math.max(40, bpm - 1))}>−</button>
@@ -495,7 +479,6 @@ export default function PracticeToolDock() {
                 <button className="tap-tempo-button" onClick={tapTempo}>{t.toolDock.tapTempo}</button>
               </div>
               <button className={`primary-tool-button ${metro ? "is-running" : ""}`} onClick={toggleMetro}>
-                <span aria-hidden="true">{metro ? "■" : "▶"}</span>
                 {metro ? t.toolDock.stopMetronome : t.toolDock.startMetronome}
               </button>
             </section>
@@ -504,13 +487,9 @@ export default function PracticeToolDock() {
               ref={droneSection}
               className="dock-tool dock-tool-drone"
               data-requested={requestedTool === "drone" || undefined}
-              hidden={focusedTool !== "all" && focusedTool !== "drone"}
+              hidden={focusedTool !== "drone"}
               tabIndex={-1}
             >
-              <div className="dock-tool-heading">
-                <span className="dock-tool-icon drone-icon" aria-hidden="true">◉</span>
-                <strong>{t.toolDock.droneLabel}</strong>
-              </div>
 
               <div className="selected-pitch" aria-live="polite">
                 <span>{note}</span><sup>{octave}</sup>
@@ -534,7 +513,6 @@ export default function PracticeToolDock() {
               </div>
               {drones.length>0&&<div className="drone-active-inline"><span>{t.toolDock.playing}</span>{drones.map(pitch=><b key={pitch}>{pitch}</b>)}<button onClick={stopAllDrones}>{t.toolDock.stopAll}</button></div>}
               <button className={`primary-tool-button ${drones.includes(selectedDrone) ? "is-running" : ""}`} onClick={toggleDrone}>
-                <span aria-hidden="true">{drones.includes(selectedDrone) ? "■" : "▶"}</span>
                 {drones.includes(selectedDrone) ? t.toolDock.stopDrone(selectedDrone) : t.toolDock.playDrone(selectedDrone)}
               </button>
             </section>
@@ -549,14 +527,10 @@ export default function PracticeToolDock() {
               ref={fingeringSection}
               className="dock-tool dock-tool-fingering"
               data-requested={requestedTool === "fingering" || undefined}
-              hidden={focusedTool !== "all" && focusedTool !== "fingering"}
+              hidden={focusedTool !== "fingering"}
               tabIndex={-1}
             >
-              <div className="dock-tool-heading">
-                <span className="dock-tool-icon fingering-icon" aria-hidden="true">●○</span>
-                <strong>{t.toolDock.fingeringLabel}</strong>
-                <a className="dock-fingering-link" href="/flute-studio/fingerings">{t.toolDock.fullChart}</a>
-              </div>
+              <a className="dock-fingering-link" href="/flute-studio/fingerings">{t.toolDock.fullChart}</a>
 
               {/* Stave and diagram share a line: the dock is short, and the
                   two together are what you are actually reading. */}

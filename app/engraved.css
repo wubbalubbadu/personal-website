@@ -95,3 +95,9 @@
 .active-drone-list button{height:28px;padding:0 10px;border:1px solid var(--line);border-radius:14px;background:#f7f7f5;font-size:11px;color:inherit;cursor:pointer}
 .active-drone-list button:hover{background:#eef1ec}
 .transport-pop small{color:var(--muted);font-size:11px;line-height:1.4}
+
+/* Green marks a note still carrying an accidental added earlier in the
+   same bar — the one thing on the page a player has to remember rather
+   than read. Key-signature accidentals never get this: they apply to
+   every bar, so there is nothing to carry. */
+.accidental-marker.is-carried{color:#2f8a55}

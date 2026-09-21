@@ -1,4 +1,4 @@
-import {majorKeys,ranges,scaleForms,scaleTypes,type ScaleEnding,type ScaleFormId,type ScaleRange,type ScaleTypeId} from "./scale-score";
+import {majorKeys,ranges,scaleForms,scaleTypes,type ScaleEnding,type ScaleFormId,type ScaleRange,type ScaleStart,type ScaleTypeId} from "./scale-score";
 import type {ArticulationSelection,RhythmChoice,SyllableScheme} from "../../components/notePatterns";
 
 /**
@@ -20,6 +20,8 @@ export type ScaleSetConfig={
   forms:ScaleFormId[];
   grouping:string;
   ending:ScaleEnding;
+  /** Optional: sets saved before the option existed default to the tonic. */
+  scaleStart?:ScaleStart;
   newLines:boolean;
   keys:string[];
   articulationRotation:{articulation:ArticulationSelection;syllables:SyllableScheme;custom?:boolean}[];

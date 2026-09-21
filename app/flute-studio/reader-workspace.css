@@ -650,8 +650,10 @@ html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document"
   .restored-reader .practice-bar .tempo-step{min-width:34px!important;width:34px;min-height:34px!important;height:34px}
 }
 
-/* The glyph and the field are the labelled pair; the steppers sit beside
-   them in the pill, outside the label. */
+/* The tempo number is the label's only content; the steppers sit beside it
+   in the pill, outside the label. The ♩= glyph used to lead the field and
+   was dropped: on an iPad Air the practice bar had run out of room, and the
+   number is already unambiguous next to a metronome button. */
 .restored-reader .practice-bar .tempo-field{display:flex;align-items:center;gap:5px;margin:0;padding:0;background:none}
 
 /* ── Phone ────────────────────────────────────────────────────────────────
@@ -686,4 +688,48 @@ html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document"
   .reader-workspace .workspace{grid-template-rows:auto auto auto minmax(0,1fr)!important}
   .reader-workspace .topbar{height:auto!important;min-height:0!important;flex-wrap:wrap;padding:6px 10px!important;row-gap:2px}
   .reader-workspace .topbar-toolbar-slot{flex:1 0 100%;order:2}
+}
+
+/* A live readout pinned to the foot of the scroll area. Sticky rather than
+   fixed so it stays inside the reader's own column — the reader is used at
+   several page widths and in fullscreen, and a fixed panel would ignore all
+   of them. */
+.score-aside{position:sticky;bottom:0;z-index:6;width:min(1050px,100%);margin:14px auto 0;padding-bottom:12px}
+@media(max-width:700px){.score-aside{margin-top:10px}}
+
+/* Shared left-hand reader controls use the same spacing on every score. */
+.restored-reader .practice-bar {column-gap:4px!important}
+.restored-reader .practice-bar > .tool-group,
+.restored-reader .practice-bar > .transport {gap:4px!important;margin:0!important}
+.restored-reader .practice-bar .tempo-group {gap:4px}
+
+/* ── Tablet ───────────────────────────────────────────────────────────────
+   Between a phone and a desktop the practice bar is nearly, but not quite,
+   wide enough. Scale Studio carries one control more than the other books
+   (Tempos), and that one button is enough to push the pager onto a second
+   row — which then costs the score a whole row of height on the device it
+   is mostly read on.
+
+   The width comes back from the two controls with the most padding to
+   spare: the tempo pill and the pager buttons. Tap targets stay at 32px
+   and above. Desktop and the larger iPads clear the bar comfortably, so
+   the band stops at 1180px; the phone rules below 761px are untouched. */
+@media(min-width:761px) and (max-width:1180px){
+  /* The page controls tighten first: they are icons at generous size in a
+     group that only needs to be reachable, not prominent. This alone is
+     enough from an iPad Air upward. */
+  .restored-reader .reader-pages>button:not(.tool){width:32px}
+  .restored-reader .reader-pages>span{min-width:40px}
+  .restored-reader .practice-bar .tempo{padding:0 8px}
+  .restored-reader .restored-view-controls{gap:4px}
+}
+
+/* Below about 790px the bar cannot hold everything on one row even after
+   that, so Tap goes — it is the one control here with a substitute, since
+   the metronome beside it sets the same number, and losing it costs a
+   shortcut rather than a capability. The cut is measured, not guessed: the
+   bar needs 791px with Tap present, so anything wider keeps it. Phones are
+   excluded because their bar scrolls sideways and has no row to save. */
+@media(min-width:761px) and (max-width:800px){
+  .restored-reader .practice-bar .reader-tap{display:none}
 }

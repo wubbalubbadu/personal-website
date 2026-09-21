@@ -5,6 +5,7 @@ import {PracticeIcon,SpectrumDef} from "../../components/PracticeIcon";
 import {useEffect,useState} from "react";
 import {useLanguage} from "../../i18n/LanguageContext";
 import {type RangePresetId,type ToneSpan,HIGHEST_MIDI,LOWEST_MIDI,OCTAVES,PITCH_CLASSES,RANGE_PRESETS,midiFor,octaveOf,pitchClassOf,heldNotesMusicXML,longToneMusicXML,noteName,patternById,toneIntervals} from "./long-tone-score";
+import {ToneTrace} from "./ToneTrace";
 import "../scales/scale-book.css";
 
 /**
@@ -34,11 +35,13 @@ export default function LongToneStudio(){
   // from its own button, so its open state lives here rather than inside
   // the popover — and `focus` says which group to jump to when it opens.
   const [panelOpen,setPanelOpen]=useState(false);
-  const [focus,setFocus]=useState<string|null>(null);
+  const [expanded,setExpanded]=useState<string[]>(["exercise","interval","range"]);
+  const toggleSection=(section:string)=>setExpanded(current=>current.includes(section)?current.filter(id=>id!==section):[...current,section]);
+  const [focus,setFocus]=useState<{section:string}|null>(null);
   // Which end of a custom range is being picked, if either. One picker
   // open at a time — two note grids stacked was the cramped thing.
   const [editing,setEditing]=useState<"low"|"high"|null>(null);
-  function openPanel(section:string){setFocus(section);setPanelOpen(true)}
+  function openPanel(section:string){setExpanded(current=>current.includes(section)?current:[...current,section]);setFocus({section});setPanelOpen(true)}
   const [loaded,setLoaded]=useState(false);
 
   useEffect(()=>{
@@ -70,19 +73,25 @@ export default function LongToneStudio(){
   // layout effect), so this runs a frame later rather than on click.
   useEffect(()=>{
     if(!panelOpen||!focus)return;
+    let group:HTMLElement|null=null;
+    let timer=0;
     const frame=requestAnimationFrame(()=>{
-      const group=document.querySelector<HTMLElement>(`[data-tone-group="${focus}"]`);
+      group=document.querySelector<HTMLElement>(`[data-tone-group="${focus.section}"]`);
       if(!group)return;
       group.scrollIntoView({block:"nearest"});
       group.dataset.justFocused="true";
-      window.setTimeout(()=>{delete group.dataset.justFocused},900);
+      timer=window.setTimeout(()=>{if(group)delete group.dataset.justFocused},1200);
     });
-    return()=>cancelAnimationFrame(frame);
+    return()=>{cancelAnimationFrame(frame);clearTimeout(timer);if(group)delete group.dataset.justFocused};
   },[panelOpen,focus]);
 
   if(!loaded)return null;
   return <div className="scale-reader">
     <ScoreViewer unmetered lineBreak={{value:newLines,onChange:setNewLines}}
+      /* The trace belongs to long tones rather than to the reader: it is the
+         one exercise where holding one note steadily IS the exercise, so the
+         measurement and the music want to be on screen together. */
+      aside={<ToneTrace zh={zh}/>}
       config={{
         title,
         composer:"",
@@ -105,21 +114,24 @@ export default function LongToneStudio(){
       settings={()=><>
       <ReaderPopover open={panelOpen} onOpenChange={setPanelOpen} label={zh?"长音设置":"Long tones"} trigger={<><SpectrumDef id="tone-spectrum"/><PracticeIcon name="settings" gradient="tone-spectrum"/><span className="scale-book__scales-label">{zh?"长音":"Tones"}</span></>} className="tool has-tip scale-book__scales-trigger">
         <div className="scale-book__panel-body">
-          <div data-tone-group="exercise">
-          <p className="scale-book__field-label">{zh?"练习":"Exercise"}</p>
+          <div data-tone-group="exercise" className="scale-book__section">
+          <button type="button" className="scale-book__section-summary" aria-expanded={expanded.includes("exercise")} onClick={()=>toggleSection("exercise")}><span className="scale-book__disclosure" aria-hidden="true">▸</span>{zh?"练习":"Exercise"}</button>
+          <div className="scale-book__section-body" hidden={!expanded.includes("exercise")}>
           <div className="scale-book__ranges" role="group" aria-label={zh?"练习":"Exercise"}>
             <button type="button" className={held?"scale-book__chip selected":"scale-book__chip"} aria-pressed={held} onClick={()=>setExercise("held")}>{zh?"长音":"Held notes"}</button>
             <button type="button" className={held?"scale-book__chip":"scale-book__chip selected"} aria-pressed={!held} onClick={()=>setExercise("sonorite")}>{zh?"音色练习":"De la sonorit\u00e9"}</button>
           </div>
-          </div>
-          {!held&&<div data-tone-group="interval">
-            <p className="scale-book__field-label">{zh?"音程":"Interval"}</p>
+          </div></div>
+          {!held&&<div data-tone-group="interval" className="scale-book__section">
+            <button type="button" className="scale-book__section-summary" aria-expanded={expanded.includes("interval")} onClick={()=>toggleSection("interval")}><span className="scale-book__disclosure" aria-hidden="true">▸</span>{zh?"音程":"Interval"}</button>
+          <div className="scale-book__section-body" hidden={!expanded.includes("interval")}>
             <div className="scale-book__ranges" role="group" aria-label={zh?"音程":"Interval"}>
               {toneIntervals.map(option=><button type="button" key={option.id} className={option.id===patternId?"scale-book__chip selected":"scale-book__chip"} aria-pressed={option.id===patternId} onClick={()=>setPatternId(option.id)}>{zh?option.zh:option.label}</button>)}
             </div>
-          </div>}
-          <div data-tone-group="range">
-          <p className="scale-book__field-label">{zh?"音域":"Range"}</p>
+          </div></div>}
+          <div data-tone-group="range" className="scale-book__section">
+          <button type="button" className="scale-book__section-summary" aria-expanded={expanded.includes("range")} onClick={()=>toggleSection("range")}><span className="scale-book__disclosure" aria-hidden="true">▸</span>{zh?"音域":"Range"}</button>
+          <div className="scale-book__section-body" hidden={!expanded.includes("range")}>
           <div className="scale-book__ranges" role="group" aria-label={zh?"音域":"Range"}>
             {RANGE_PRESETS.map(option=><button type="button" key={option.id} className={rangeId===option.id?"scale-book__chip selected":"scale-book__chip"} aria-pressed={rangeId===option.id} onClick={()=>setRangeId(option.id)}>{zh?option.zh:option.label}</button>)}
             <button type="button" className={rangeId==="custom"?"scale-book__chip selected":"scale-book__chip"} aria-pressed={rangeId==="custom"} onClick={()=>setRangeId("custom")}>{zh?"自定义":"Custom"}</button>
@@ -155,7 +167,7 @@ export default function LongToneStudio(){
               </div>;
             })}
           </div>}
-          </div>
+          </div></div>
 
         </div>
       </ReaderPopover>

@@ -170,14 +170,22 @@
 /* A breadcrumb that has just jumped you to a group says which one, then
    lets go — without it the panel opens and nothing appears to have
    happened, since the group you asked for looks like every other group. */
-[data-tone-group][data-just-focused] { animation: tone-group-flash .9s ease-out; border-radius:10px; }
-@keyframes tone-group-flash {
-  from { background:#e4ecdf; }
-  to { background:transparent; }
+/* Briefly emphasize only the destination heading, never its controls. */
+:is([data-tone-group],[data-scale-group])[data-just-focused] > .scale-book__section-summary {
+  animation:studio-section-focus 1.2s ease-out;
+  text-decoration:underline;
+  text-decoration-color:#85839b;
+  text-underline-offset:5px;
+  text-decoration-thickness:2px;
 }
-@media (prefers-reduced-motion: reduce) {
-  [data-tone-group][data-just-focused] { animation:none; background:#e4ecdf; }
+@keyframes studio-section-focus {
+  0%,50% {color:#69647f;text-decoration-color:#85839b}
+  100% {color:#292a33;text-decoration-color:transparent}
 }
+@media(prefers-reduced-motion:reduce) {
+  :is([data-tone-group],[data-scale-group])[data-just-focused] > .scale-book__section-summary {animation:none}
+}
+.scale-book__section-body[hidden] {display:none}
 
 /* Custom range. The two ends are labels, not buttons: they name what you
    are setting and show where it is, and the grid below does the choosing.
