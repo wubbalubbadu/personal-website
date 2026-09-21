@@ -2,9 +2,9 @@
 
 My personal website, live at **[hayliewu.com](https://hayliewu.com)**.
 
-Most of it is a chat-style landing page and a few small projects; the
-substantial one is **[Cookie Flute Studio](https://hayliewu.com/flute-studio)**,
-a practice app for flutists.
+A chat-style landing page, a log of what I am reading, and
+**[Cookie Flute Studio](https://hayliewu.com/flute-studio)** — a practice app
+for flutists, which is the substantial part.
 
 Built with [vinext](https://github.com/cloudflare/vinext) (Next.js on Cloudflare
 Workers) and TypeScript.
@@ -58,13 +58,11 @@ A small library of pieces read through the same viewer.
 
 ---
 
-## Everything else
+## Learning log
 
-- **[Learning log](https://hayliewu.com/learning-log)** — notes from a CMU course on AI and music,
-  with interactive Web Audio and SVG widgets, alongside standalone notes on
-  individual papers
-- **[Daily Critter](https://hayliewu.com/daily-critter)** — a critter a day, with a dex
-- **[QR Tree](https://hayliewu.com/qr-tree)** — a QR code you drag to turn; it still scans flat
+[hayliewu.com/learning-log](https://hayliewu.com/learning-log) — notes from a
+CMU course on AI and music, worked through unit by unit with interactive Web
+Audio and SVG widgets, alongside standalone notes on individual papers.
 
 ---
 
