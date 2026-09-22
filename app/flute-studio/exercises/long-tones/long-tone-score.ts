@@ -356,3 +356,8 @@ export const tonePatterns: readonly TonePattern[] = toneIntervals.map(interval =
 }));
 
 export const patternById = (id: string) => tonePatterns.find(pattern => pattern.id === id) ?? tonePatterns[0];
+
+/** A close-up uses the same notes, slurs and fermatas as the complete book. */
+export function toneGroupMusicXML(block: ToneBlock, pattern: TonePattern): string {
+  return `<?xml version="1.0" encoding="utf-8"?><score-partwise version="4.0"><part-list><score-part id="P1"><part-name>Flute</part-name></score-part></part-list><part id="P1">${groupXml({...block,heading:undefined}, pattern, 1)}</part></score-partwise>`;
+}

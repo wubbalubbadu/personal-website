@@ -1,4 +1,12 @@
-.app-shell .score-paper.engraved{zoom:var(--viewer-magnify,1);padding-top:20px;padding-bottom:40px}.viewer-zoom-group{display:flex;align-items:center;gap:16px;font-variant-numeric:tabular-nums}.viewer-zoom-group b{margin-left:0;color:#5d6068;font-size:10px;font-weight:700}
+/* Pinch zoom magnifies the page the way zooming a photo does: a closer,
+   cropped view you scroll around, with nothing re-laid out underneath.
+   This used to be CSS `zoom`, which scales the layout box rather than the
+   picture — so the title resized, the music could reflow, and the paper
+   could not grow past its container at all, which made spreading two
+   fingers do nothing while pinching in still shrank. A transform never
+   touches layout. ScoreViewer reserves the extra room it needs to scroll
+   into, since a transform claims no space of its own. */
+.app-shell .score-paper.engraved{transform:scale(var(--viewer-magnify,1));transform-origin:0 0;padding-top:20px;padding-bottom:40px}.viewer-zoom-group{display:flex;align-items:center;gap:16px;font-variant-numeric:tabular-nums}.viewer-zoom-group b{margin-left:0;color:#5d6068;font-size:10px;font-weight:700}
 
 /* Zoom steppers replaced with drag sliders — same underlying zoom/magnify
    state, just no more clicking a tiny button repeatedly to get anywhere. */

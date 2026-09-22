@@ -2,13 +2,14 @@
    The studio's visual language, in one place.
 
    Restyling later = editing these values, not hunting selectors across 25 files.
-   Scoped to .studio-route (the wrapper in flute-studio/layout.tsx) so nothing
+   Scoped to .studio-route and portaled reader settings so nothing
    leaks to the main site. New components read these vars instead of hardcoding
    hexes; old pages get migrated onto them whenever they're next touched.
 
    Values here are the CURRENT look, extracted — not a new design.
    ───────────────────────────────────────────────────────────────────────────── */
-.studio-route {
+.studio-route,
+.reader-settings-panel {
   /* type */
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
   --text-page-title: 42px;

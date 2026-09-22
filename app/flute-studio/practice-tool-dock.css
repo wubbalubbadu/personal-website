@@ -600,9 +600,11 @@
 
 /* Focus on one tool at a time instead of always showing all three. */
 .dock-tabs{display:flex;gap:6px;padding:10px 16px;background:rgb(255 255 255 / 58%);border-bottom:1px solid var(--dock-line)}
-.dock-tabs button{height:30px;padding:0 13px;border:0;border-radius:14px;background:#f1f1f4;color:#5a5c63;font-size:12px;font-weight:650;cursor:pointer;transition:background-color .16s ease,color .16s ease}
+.dock-tabs button{height:30px;padding:0 13px;border:0;border-radius:14px;background:#f1f1f4;color:#5a5c63;font-size:12px;font-weight:550;cursor:pointer;transition:background-color .16s ease,color .16s ease}
 .dock-tabs button:hover{background:#e6e6ea}
-.dock-tabs button.selected{background:#292a33;color:#fff}
+/* Weight marks the selected tab rather than shouting on all four: every
+   label bold at once is the same as none of them being bold. */
+.dock-tabs button.selected{background:#292a33;color:#fff;font-weight:650}
 .dock-tool[hidden]{display:none}
 .dock-tools[data-single]{grid-template-columns:1fr!important}
 .practice-dock:has(.dock-tools[data-single]){width:min(400px,calc(100vw - 44px))}

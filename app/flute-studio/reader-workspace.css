@@ -733,3 +733,74 @@ html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document"
 @media(min-width:761px) and (max-width:800px){
   .restored-reader .practice-bar .reader-tap{display:none}
 }
+
+/* ── Tooltips inside View settings ────────────────────────────────────────
+   The .has-tip default centres a 220px tooltip under its button, which
+   assumes open space either side. The settings panel is 360px wide in three
+   107px columns, so a tooltip on an outer column runs ~41px past the panel
+   edge — and the panel is overflow:auto, so that spill is clipped rather
+   than merely untidy.
+
+   Outer columns anchor to the panel's inside edge instead of centring, and
+   the whole group opens upward: the display options sit at the foot of the
+   panel with about 54px beneath them, which a two-line tooltip already
+   fills. There is far more room above.
+
+   !important throughout because viewer-fixes.css sets its own !important
+   transform on .has-tip::after for the fade-in, which would otherwise keep
+   the centring translate and undo the anchoring. */
+.reader-settings-panel .reader-display-options .has-tip:after{
+  top:auto!important;bottom:calc(100% + 8px);margin-top:0!important;
+}
+.reader-settings-panel .reader-display-options .has-tip:nth-child(3n+1):after{
+  left:0!important;right:auto!important;transform:none!important;
+}
+.reader-settings-panel .reader-display-options .has-tip:nth-child(3n):after{
+  left:auto!important;right:0!important;transform:none!important;
+}
+
+/* A settings row whose control is a grid rather than a single field: the
+   label sits above it, the way Page layout and Line breaks already read,
+   instead of being squeezed into a column beside it. */
+.reader-settings-panel .reader-setting-row--stack{
+  display:flex;flex-direction:column;align-items:stretch;gap:8px;
+}
+
+/* ── Note and term popovers ───────────────────────────────────────────────
+   These were dark green from the original engraved.css and never got the
+   light treatment the rest of the reader did: viewer-fixes.css lightens
+   them, but only under .workspace, and the reader renders them as siblings
+   of it, so that rule never matched. Same paper-and-line surface as every
+   other panel here. */
+/* !important because ios-theme.css pins .theory-tip to --charcoal with its
+   own !important, and viewer-fixes.css's light version is scoped to
+   .workspace, which these popovers are rendered outside of. */
+.restored-reader .theory-tip,
+.restored-reader .flute-tip{
+  background:var(--paper)!important;
+  color:var(--ink)!important;
+  border:1px solid var(--line)!important;
+  box-shadow:0 14px 36px rgb(41 42 51 / 14%)!important;
+  border-radius:12px;
+}
+.restored-reader .theory-tip{padding:11px 13px;max-width:290px}
+.restored-reader .theory-tip strong{
+  display:block;margin-bottom:4px;
+  font:600 13px Georgia,serif;color:var(--ink)!important;
+}
+.restored-reader .theory-tip p{margin:0;font-size:12px;line-height:1.45;color:#5c5f57!important}
+.restored-reader .flute-tip strong{color:var(--ink)}
+.restored-reader .flute-tip small,
+.restored-reader .flute-tip .finger-diagram__legend{color:#6d7069}
+.restored-reader .flute-tip code{color:#4b6a55}
+
+/* The note popover is pointer-transparent so it never eats a hover on the
+   score beneath it; the alternates link is the one part you should be able
+   to reach. On a tablet the popover is opened by tapping a note and stays
+   put, which is where this link earns its place. */
+.restored-reader .flute-tip .finger-diagram__alts{
+  display:inline-block;margin-top:8px;
+  pointer-events:auto;
+  color:#4b6a55;font-size:11px;font-weight:600;text-decoration:none;
+}
+.restored-reader .flute-tip .finger-diagram__alts:hover{text-decoration:underline}

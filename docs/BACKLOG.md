@@ -20,10 +20,17 @@ These make a feature unusable on the device you actually practise with.
   tapping a note to see its fingering fires the drone instead. The drone
   should need arming first (press the Drone control, *then* tap a note).
   Open question: how to keep octave selection usable in both places.
-- [ ] **Tooltip placement collides with the panel border**, especially the
-  fingering tooltip inside View settings.
-- [ ] **Tooltip wording assumes a mouse.** "Hover a note" is wrong on a
-  tablet. Wording should not name the gesture, or should name both.
+- [x] **Tooltip placement collides with the panel border**, especially the
+  fingering tooltip inside View settings. *(Outer columns now anchor to the
+  panel's inside edge instead of centring, and the group opens upward.)*
+- [x] **Tooltip wording assumes a mouse.** *(Now "Turn on, then tap or hover a
+  note"; the Chinese string said 鼠标 outright. Drone strings say "Tap or
+  click".)*
+- [ ] **These tooltips do not exist on a tablet at all.** `@media(hover:none)`
+  hides every `.has-tip:after` in the reader, so on the iPad the View settings
+  buttons have no explanation whatsoever — the wording and placement fixes
+  above only show where a pointer exists. Needs a touch answer: a tap-to-reveal
+  hint, or a line of helper text under each group.
 
 ## 2. Bugs — annoying but not blocking
 

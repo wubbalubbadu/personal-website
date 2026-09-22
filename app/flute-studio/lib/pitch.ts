@@ -20,7 +20,7 @@ export const SILENCE_RMS = 0.014;
 
 /** The flute's practical range, with headroom at both ends. */
 export const MIN_HZ = 170;
-export const MAX_HZ = 1500;
+export const MAX_HZ = 2500;
 
 /** How certain the estimator is, below which a frame is not trusted. */
 const MIN_CLARITY = 0.78;
@@ -42,11 +42,11 @@ export type PitchFrame = {
  * the lag at which the signal best matches a delayed copy of itself, then
  * interpolate around it for sub-sample resolution.
  */
-export function detectPitch(buffer: Float32Array, sampleRate: number): PitchFrame | null {
+export function detectPitch(buffer: Float32Array, sampleRate: number, minimumRms = SILENCE_RMS): PitchFrame | null {
   let sumSquares = 0;
   for (let i = 0; i < buffer.length; i += 1) sumSquares += buffer[i] * buffer[i];
   const rms = Math.sqrt(sumSquares / buffer.length);
-  if (rms < SILENCE_RMS) return null;
+  if (rms < minimumRms) return null;
 
   const analysisSize = Math.floor(buffer.length / 2);
   const minimumLag = Math.floor(sampleRate / MAX_HZ);
@@ -54,7 +54,7 @@ export function detectPitch(buffer: Float32Array, sampleRate: number): PitchFram
   if (maximumLag <= minimumLag) return null;
 
   const difference = new Float32Array(maximumLag + 1);
-  for (let lag = minimumLag; lag <= maximumLag; lag += 1) {
+  for (let lag = 1; lag <= maximumLag; lag += 1) {
     let total = 0;
     for (let i = 0; i < analysisSize; i += 1) {
       const delta = buffer[i] - buffer[i + lag];
@@ -68,28 +68,19 @@ export function detectPitch(buffer: Float32Array, sampleRate: number): PitchFram
   // under the threshold rather than its local minimum lands an octave out
   // often enough to matter.
   let runningTotal = 0;
+  const normalized = new Float32Array(maximumLag + 1);
+  for (let lag = 1; lag <= maximumLag; lag++) {
+    runningTotal += difference[lag];
+    normalized[lag] = runningTotal > 0 ? difference[lag] * lag / runningTotal : 1;
+  }
   let selectedLag = -1;
   let selectedScore = 1;
-  for (let lag = minimumLag; lag <= maximumLag; lag += 1) {
-    runningTotal += difference[lag];
-    const normalized = runningTotal > 0 ? (difference[lag] * (lag - minimumLag + 1)) / runningTotal : 1;
-    if (normalized < DIP_THRESHOLD) {
-      let localLag = lag;
-      let localScore = normalized;
-      while (localLag + 1 <= maximumLag) {
-        const nextLag = localLag + 1;
-        const nextRunning = runningTotal + difference[nextLag];
-        const nextScore = nextRunning > 0
-          ? (difference[nextLag] * (nextLag - minimumLag + 1)) / nextRunning
-          : 1;
-        if (nextScore >= localScore) break;
-        localLag = nextLag;
-        localScore = nextScore;
-      }
-      selectedLag = localLag;
-      selectedScore = localScore;
-      break;
-    }
+  for (let lag = minimumLag; lag < maximumLag; lag++) {
+    if (normalized[lag] >= DIP_THRESHOLD) continue;
+    while (lag + 1 < maximumLag && normalized[lag + 1] < normalized[lag]) lag++;
+    selectedLag = lag;
+    selectedScore = normalized[lag];
+    break;
   }
 
   const clarity = 1 - selectedScore;

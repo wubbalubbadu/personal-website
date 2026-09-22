@@ -2,6 +2,7 @@
 
 import {useEffect,useRef,useState} from "react";
 import {useLanguage} from "./i18n/LanguageContext";
+import {setPencilOnly,usePencilOnly} from "./lib/pencilMode";
 import "./account-menu.css";
 
 /**
@@ -19,6 +20,7 @@ import "./account-menu.css";
  */
 export default function AccountMenu(){
   const {t,lang,setLang}=useLanguage();
+  const pencil=usePencilOnly();
   const [open,setOpen]=useState(false);
   const [position,setPosition]=useState({top:62,right:16});
   useEffect(()=>{
@@ -79,7 +81,22 @@ export default function AccountMenu(){
             {lang===value&&<b aria-hidden="true">✓</b>}
           </button>)}
       </div>
-      <p className="account-menu__footnote">{t.settings.languageFooter}</p>
+
+      <hr className="account-menu__rule"/>
+      <p className="account-menu__group">{t.settings.drawing}</p>
+      <div className="account-menu__choices">
+        <button
+          type="button"
+          role="menuitemcheckbox"
+          aria-checked={pencil}
+          className={pencil?"account-menu__item is-on":"account-menu__item"}
+          onClick={()=>setPencilOnly(!pencil)}
+        >
+          <span>{t.settings.pencilOnly}</span>
+          {pencil&&<b aria-hidden="true">✓</b>}
+        </button>
+      </div>
+      <p className="account-menu__footnote">{t.settings.pencilOnlyNote}</p>
 
       <hr className="account-menu__rule"/>
       <p className="account-menu__group">{t.settings.about}</p>

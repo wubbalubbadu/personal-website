@@ -1,4 +1,4 @@
-import {type ArticulationSelection,type RhythmChoice,defaultArticulationSelection,divisionsPerQuarter,resolveArticulation,resolveArticulationPattern,resolveRhythm} from "../../components/notePatterns";
+import {type ArticulationSelection,type RhythmChoice,defaultArticulationSelection,divisionsPerQuarter,resolveArticulation,resolveArticulationPattern,resolveRhythm,isMixedArticulation,marksStaccato} from "../../components/notePatterns";
 
 export const majorKeys = [
   {id:"C",label:"C",pc:0,fifths:0,step:0},
@@ -20,7 +20,30 @@ export const ranges=[
   {id:"two",label:"Two octaves",zh:"两个八度"},
   {id:"standard",label:"Low C to high C",zh:"低音 C 至高音 C",notes:"C4–C7"},
   {id:"full",label:"Low B to high D",zh:"低音 B 至高音 D",notes:"B3–D7"},
+  {id:"custom",label:"Custom",zh:"自定义"},
 ] as const;
+
+/** The two ends of a custom range, as MIDI numbers. */
+export type ScaleSpan={low:number;high:number};
+/** What the flute can reach, so a picker cannot ask for the impossible. */
+export const SCALE_LOWEST_MIDI=59;
+export const SCALE_HIGHEST_MIDI=98;
+export const DEFAULT_SCALE_SPAN:ScaleSpan={low:60,high:96};
+
+/* Picking a custom range by note name rather than by dragging a slider
+   through forty semitones. Kept here rather than imported from the long
+   tone module so the two exercises do not share a moving part. */
+export const SCALE_PITCH_CLASSES=[
+  {pc:0,label:"C"},{pc:1,label:"C♯"},{pc:2,label:"D"},{pc:3,label:"E♭"},
+  {pc:4,label:"E"},{pc:5,label:"F"},{pc:6,label:"F♯"},{pc:7,label:"G"},
+  {pc:8,label:"A♭"},{pc:9,label:"A"},{pc:10,label:"B♭"},{pc:11,label:"B"},
+] as const;
+export const SCALE_OCTAVES=[3,4,5,6,7] as const;
+export const midiForNote=(octave:number,pc:number)=>(octave+1)*12+pc;
+export const octaveOfMidi=(midi:number)=>Math.floor(midi/12)-1;
+export const pitchClassOfMidi=(midi:number)=>((midi%12)+12)%12;
+export const scaleNoteName=(midi:number)=>
+  `${SCALE_PITCH_CLASSES[pitchClassOfMidi(midi)].label}${octaveOfMidi(midi)}`;
 export type ScaleRange=typeof ranges[number]["id"];
 /**
  * Where a scale begins. "tonic" is the classroom shape — tonic up to the
@@ -129,6 +152,24 @@ const minorSpelling=[
   {label:"G♯",fifths:5,step:4},{label:"A",fifths:0,step:5},{label:"B♭",fifths:-5,step:6},{label:"B",fifths:2,step:6},
 ] as const;
 export type SpelledKey={pc:number;label:string;fifths:number;step:number};
+/* A key signature adds its accidentals in a fixed order. */
+const SIGNATURE_SHARPS=["F","C","G","D","A","E","B"];
+const SIGNATURE_FLATS=["B","E","A","D","G","C","F"];
+/**
+ * The notes a key signature alters, as written names.
+ *
+ * Derived from the same `fifths` the MusicXML prints, so the overlay and
+ * the engraving can never disagree about what the signature says. The
+ * previous version inferred it from "every altered note that happens to
+ * appear in the scale", which is only right by coincidence: a harmonic
+ * minor's raised seventh is altered but is not in the signature, and a
+ * signature note the exercise never reaches is in it but never appears.
+ */
+export function keySignatureNotes(fifths:number):string[]{
+  if(fifths>0)return SIGNATURE_SHARPS.slice(0,Math.min(7,fifths)).map(n=>`${n}♯`);
+  if(fifths<0)return SIGNATURE_FLATS.slice(0,Math.min(7,-fifths)).map(n=>`${n}♭`);
+  return [];
+}
 export function keyForType(key:MajorKey,type:ScaleType):SpelledKey{
   // Chromatic, whole-tone, diminished and augmented scales are written
   // without a key signature — every accidental spelled out — so they take
@@ -206,7 +247,7 @@ function ascendingDegrees(form:ScaleFormId,low:number,high:number,ceiling:number
 }
 
 /** Repeat supplies the final tonic, avoiding a doubled note at the join. */
-export function scaleNotes(key:MajorKey,range:ScaleRange,typeId:ScaleTypeId="major",form:ScaleFormId="scale",ending:ScaleEnding="none",start:ScaleStart="tonic"):ScaleNote[]{
+export function scaleNotes(key:MajorKey,range:ScaleRange,typeId:ScaleTypeId="major",form:ScaleFormId="scale",ending:ScaleEnding="none",start:ScaleStart="tonic",span:ScaleSpan=DEFAULT_SCALE_SPAN):ScaleNote[]{
   const type=typeById(typeId),spelled=keyForType(key,type);
   const card=degreesPerOctave(type);
   let low=0,high=range==="one"?card:card*2;
@@ -214,11 +255,23 @@ export function scaleNotes(key:MajorKey,range:ScaleRange,typeId:ScaleTypeId="maj
   // instrument ranges bound what the flute can physically play, so only
   // those cap how high an interval's upper note may reach.
   let ceiling=Infinity;
-  if(range==="standard"||range==="full"){
-    const min=range==="full"?59:60,max=range==="full"?98:96;
+  if(range==="standard"||range==="full"||range==="custom"){
+    // A custom range is the same idea as the two built-in instrument
+    // ranges — a pair of real pitches the exercise may not pass — so it
+    // walks outward from the tonic the same way rather than counting
+    // octaves. Reversed ends are read either way round.
+    const min=range==="custom"?Math.min(span.low,span.high):range==="full"?59:60;
+    const max=range==="custom"?Math.max(span.low,span.high):range==="full"?98:96;
     while(noteAt(spelled,low-1,type).midi>=min)low--;
     high=0;
     while(noteAt(spelled,high+1,type).midi<=max)high++;
+    // The walk starts at the tonic and only ever moves outward, so the
+    // tonic itself is assumed to sit inside the range. That holds for the
+    // built-in ranges, which span the whole instrument, but a custom range
+    // can begin above the tonic or end below it — trim any degree that
+    // falls outside rather than letting the starting note escape.
+    while(low<=high&&noteAt(spelled,low,type).midi<min)low++;
+    while(high>=low&&noteAt(spelled,high,type).midi>max)high--;
     ceiling=high;
   }
   // `up` marks which interval set a note is spelled from — only melodic
@@ -233,9 +286,13 @@ export function scaleNotes(key:MajorKey,range:ScaleRange,typeId:ScaleTypeId="maj
   }else if(form==="scale"){
     // Tonic → top → bottom → tonic, the shape the full-range exercises
     // have always had; the other forms mirror around their own span.
-    for(let i=0;i<=high;i++)path.push({degree:i,up:true});
+    // Normally this opens on the tonic (degree 0). A custom range can
+    // start above it, and then there is no tonic to open on — so it begins
+    // at the lowest degree the range allows instead.
+    const opening=Math.max(low,0);
+    for(let i=opening;i<=high;i++)path.push({degree:i,up:true});
     for(let i=high-1;i>=low;i--)path.push({degree:i,up:false});
-    for(let i=low+1;i<0;i++)path.push({degree:i,up:true});
+    for(let i=low+1;i<opening;i++)path.push({degree:i,up:true});
   }else{
     const up=ascendingDegrees(form,low,high,ceiling,type);
     up.forEach(degree=>path.push({degree,up:true}));
@@ -276,13 +333,14 @@ function beatChunks(count:number,perQuarter:number,durations:{divisions:number}[
   return chunks;
 }
 
-export function scaleMusicXML(key:MajorKey,range:ScaleRange,articulationSelection:ArticulationSelection=defaultArticulationSelection,rhythm:RhythmChoice="even",typeId:ScaleTypeId="major",form:ScaleFormId="scale",ending:ScaleEnding="none",start:ScaleStart="tonic"):string{
+export function scaleMusicXML(key:MajorKey,range:ScaleRange,articulationSelection:ArticulationSelection=defaultArticulationSelection,rhythm:RhythmChoice="even",typeId:ScaleTypeId="major",form:ScaleFormId="scale",ending:ScaleEnding="none",start:ScaleStart="tonic",span:ScaleSpan=DEFAULT_SCALE_SPAN):string{
   const type=typeById(typeId),spelled=keyForType(key,type);
-  const notes=scaleNotes(key,range,typeId,form,ending,start);
+  const notes=scaleNotes(key,range,typeId,form,ending,start,span);
   const held=ending==="hold"?notes[notes.length-1]:null;
   const runLength=held?notes.length-1:notes.length;
   const durations=resolveRhythm(runLength,rhythm);
   const pattern=resolveArticulationPattern(articulationSelection,runLength);
+  const mixedArticulation=isMixedArticulation(pattern);
   const perQuarter=divisionsPerQuarter(rhythm);
   const beats=beatChunks(runLength,perQuarter,durations);
   const measures:string[]=[];
@@ -300,7 +358,7 @@ export function scaleMusicXML(key:MajorKey,range:ScaleRange,articulationSelectio
         if(mode==="slur"&&positionInGroup===0)notations.push('<slur type="start" number="1"/>');
         if(mode==="slur"&&positionInGroup===groupSize-1)notations.push('<slur type="stop" number="1"/>');
         if(d.tuplet)notations.push(`<tuplet type="${d.tuplet}" number="1"/>`);
-        if(mode==="staccato"||mode==="tenuto")notations.push(`<articulations>${mode==="staccato"?"<staccato/>":"<tenuto/>"}</articulations>`);
+        if(marksStaccato(mode,mixedArticulation)||mode==="tenuto")notations.push(`<articulations>${mode==="tenuto"?"<tenuto/>":"<staccato/>"}</articulations>`);
         // Only notes actually grouped into a triplet get time-modification —
         // resolveRhythm renders any non-multiple-of-3 tail as plain 16ths
         // (type "16th"), not fractional triplet-eighths, so type is the
@@ -337,12 +395,12 @@ export function scaleMusicXML(key:MajorKey,range:ScaleRange,articulationSelectio
  * consecutive keys instead of repeating the same articulation everywhere.
  */
 export type ScaleBlock={key:MajorKey;type:ScaleTypeId;form:ScaleFormId;label:string};
-export function scaleBookMusicXML(blocks:readonly ScaleBlock[],range:ScaleRange,newLines=false,articulations:ArticulationSelection[]=[defaultArticulationSelection],rhythm:RhythmChoice="even",ending:ScaleEnding="none",start:ScaleStart="tonic"):string{
+export function scaleBookMusicXML(blocks:readonly ScaleBlock[],range:ScaleRange,newLines=false,articulations:ArticulationSelection[]=[defaultArticulationSelection],rhythm:RhythmChoice="even",ending:ScaleEnding="none",start:ScaleStart="tonic",span:ScaleSpan=DEFAULT_SCALE_SPAN):string{
   let number=0;
   const measures=blocks.map((block,keyIndex)=>{
     const key=block.key;
     const articulationSelection=articulations[keyIndex%articulations.length]??defaultArticulationSelection;
-    const part=scaleMusicXML(key,range,articulationSelection,rhythm,block.type,block.form,ending,start).match(/<part id="P1">([\s\S]*)<\/part>/)![1];
+    const part=scaleMusicXML(key,range,articulationSelection,rhythm,block.type,block.form,ending,start,span).match(/<part id="P1">([\s\S]*)<\/part>/)![1];
     const first=number===0;
     return part.replace(/<measure number="\d+" implicit="yes">/g,()=>`<measure number="${++number}" implicit="yes">`)
       .replace(/<clef>.*?<\/clef>/,first?"<clef><sign>G</sign><line>2</line></clef>":"")

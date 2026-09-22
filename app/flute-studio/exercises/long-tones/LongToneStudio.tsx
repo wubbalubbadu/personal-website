@@ -1,11 +1,11 @@
 "use client";
-import {ScoreViewer} from "../../components/ScoreViewer";
+import {TonePracticeReader} from "./TonePracticeReader";
 import {ReaderPopover} from "../../components/ReaderPopover";
 import {PracticeIcon,SpectrumDef} from "../../components/PracticeIcon";
 import {useEffect,useState} from "react";
 import {useLanguage} from "../../i18n/LanguageContext";
 import {type RangePresetId,type ToneSpan,HIGHEST_MIDI,LOWEST_MIDI,OCTAVES,PITCH_CLASSES,RANGE_PRESETS,midiFor,octaveOf,pitchClassOf,heldNotesMusicXML,longToneMusicXML,noteName,patternById,toneIntervals} from "./long-tone-score";
-import {ToneTrace} from "./ToneTrace";
+import {heldNoteSections,toneBlocks} from "./long-tone-score";
 import "../scales/scale-book.css";
 
 /**
@@ -87,11 +87,9 @@ export default function LongToneStudio(){
 
   if(!loaded)return null;
   return <div className="scale-reader">
-    <ScoreViewer unmetered lineBreak={{value:newLines,onChange:setNewLines}}
-      /* The trace belongs to long tones rather than to the reader: it is the
-         one exercise where holding one note steadily IS the exercise, so the
-         measurement and the music want to be on screen together. */
-      aside={<ToneTrace zh={zh}/>}
+    <TonePracticeReader key={`practice-${held?"held":patternId}-${span.low}-${span.high}`}
+      groups={held?heldNoteSections(span).flatMap(section=>section.notes.map(note=>({label:noteName(note.midi,false),notes:[note]}))):[...toneBlocks(pattern,"down",span).flat(),...toneBlocks(pattern,"up",span).flat()]}
+      pattern={pattern} zh={zh} unmetered lineBreak={{value:newLines,onChange:setNewLines}}
       config={{
         title,
         composer:"",

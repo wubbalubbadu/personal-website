@@ -1,44 +1,64 @@
-/* The pitch trace panel. Owns every rule it uses: a shared component that
-   borrows classes from another page's stylesheet breaks that page's build
-   when it moves. */
-.tone-trace{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:grid;gap:12px;box-shadow:0 6px 22px #3d433622}
-.tone-trace.is-open{padding:14px 16px 16px}
-.tone-trace__head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.tone-trace__label{display:grid;gap:2px}
-.tone-trace__label strong{font:600 13px Georgia,serif}
-.tone-trace__label small{font-size:10px;color:var(--muted)}
-.tone-trace__actions{display:flex;align-items:center;gap:8px}
-.tone-trace__ghost{border:0;background:transparent;color:var(--muted);font-size:10px;text-decoration:underline;cursor:pointer;padding:6px}
-.tone-trace__listen{border:1px solid var(--sage);background:var(--sage);color:#fff;border-radius:8px;padding:8px 16px;font-size:11px;font-weight:600;cursor:pointer}
-.tone-trace__listen.is-on{background:#fae2dc;border-color:#e8b4a8;color:#b34533}
+.tone-workspace{color:var(--ink,#292a33);font-family:var(--font,-apple-system,BlinkMacSystemFont,sans-serif)}
+.tone-controls{display:inline-flex;align-items:center;gap:4px}
+.tone-controls button{white-space:nowrap}
+.tone-track{color:#46633d!important}
+.tone-workspace button:focus-visible,.tone-workspace select:focus-visible,.tone-workspace input:focus-visible{outline:2px solid #356eaa;outline-offset:3px}
+.tone-workspace button[aria-pressed=true]{background:#e5ece1;color:#46633d}
+.tone-workspace.is-closeup .tone-full-reader{display:none}
+.tone-score-feedback{position:absolute;inset:0;pointer-events:none}
+.tone-note-anchor{position:absolute;pointer-events:none}
+.tone-playhead{position:absolute;left:-18px;top:-34px;height:65px;width:2px;background:#356eaa}
+.tone-playhead:before{content:'';position:absolute;top:-1px;left:-3px;width:8px;height:5px;border-radius:2px;background:#356eaa}
+.tone-note-time{position:absolute;top:30px;left:0;transform:translateX(-50%);white-space:nowrap;font:500 12px var(--font,sans-serif);color:#356eaa;background:#fff;padding:2px 4px;border-radius:4px;font-variant-numeric:tabular-nums}
+.tone-session-status{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:8;background:#fff;border:1px solid #e4e4e7;border-radius:8px;padding:8px 16px;font-size:13px;max-width:90vw;text-align:center}
+.tone-closeup{max-width:1100px;margin:0 auto;background:#fff;min-height:65vh;padding:20px 30px 26px}
+.tone-closeup-header{display:flex;align-items:center;gap:20px;padding-bottom:20px;border-bottom:1px solid #e4e4e7;font-size:14px;color:#72747c}
+.tone-closeup-header>span:last-child{margin-left:auto;font-variant-numeric:tabular-nums}
+.tone-closeup button,.tone-detail-surface button,.tone-take-actions button{font:500 14px var(--font,sans-serif);border:1px solid #e4e4e7;background:#fff;color:#292a33;padding:9px 13px;border-radius:8px;cursor:pointer;min-height:40px}
+.tone-closeup button:disabled{opacity:.35;cursor:default}
+.tone-closeup-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:18px 0}
+.tone-tempo{display:flex;gap:5px;align-items:center;font-size:15px}
+.tone-tempo input{width:60px;border:1px solid #e4e4e7;padding:8px;border-radius:8px;font:inherit}
+.tone-notation{max-width:950px;margin:24px auto 8px;width:100%;color:#292a33;min-height:130px}
+.tone-notation svg{display:block;width:100%;max-height:300px;min-height:140px}
+.tone-notation .vf-stavenote{cursor:pointer}
+.tone-notation .vf-stavenote[data-grade=green] .vf-notehead{filter:drop-shadow(0 0 4px #71ad64)}
+.tone-notation .vf-stavenote[data-grade=amber] .vf-notehead{filter:drop-shadow(0 0 4px #edb544)}
+.tone-notation .vf-stavenote[data-grade=red] .vf-notehead{filter:drop-shadow(0 0 4px #e97a70)}
+.tone-notation .tone-notation-active{filter:drop-shadow(-3px 0 1px #356eaa)}
+.tone-closeup-status{display:flex;justify-content:center;font-size:15px;color:#72747c;min-height:28px;font-variant-numeric:tabular-nums}
+.tone-closeup-status .is-listening{color:#356eaa}
+.tone-group-nav{display:flex;justify-content:center;gap:12px;margin-top:24px}
+.tone-fingering{display:flex;align-items:center;gap:20px;max-width:550px;margin:20px auto}.tone-fingering .flute-diagram{flex:1}
+.tone-detail-surface{background:#fff;border-top:1px solid #e4e4e7;padding:20px 28px;max-width:1100px;margin:0 auto;position:relative;z-index:9}
+.tone-detail-surface>header{display:flex;align-items:center;justify-content:space-between;gap:16px}.tone-detail-surface>header>div{display:flex;gap:12px;align-items:baseline}.tone-detail-surface>header span{font-size:13px;color:#72747c}
+.tone-detail-surface .tone-notation{max-width:580px;margin:0 auto}.tone-detail-surface .tone-notation svg{max-height:150px}
+.tone-analysis{padding-top:16px}.tone-analysis-heading{display:flex;gap:16px;align-items:baseline;font-size:14px;margin-bottom:16px}.tone-analysis-heading span{font-size:12px;color:#72747c}
+.tone-plot-wrap{display:flex;height:190px;gap:10px}.tone-axis{width:42px;flex-shrink:0;display:flex;flex-direction:column;justify-content:space-between;text-align:right;font-size:12px;color:#72747c}
+.tone-plot{width:calc(100% - 52px);height:100%;overflow:visible}.tone-plot-band{fill:#e5ece1;opacity:.55}.tone-plot-zero{stroke:#b3bcb0;stroke-width:1}.tone-plot-divider{stroke:#e4e4e7;stroke-dasharray:3 4}.tone-plot-line{fill:none;stroke:#46633d;stroke-width:2;vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round}
+.tone-time-axis{display:flex;justify-content:space-between;margin:8px 0 0 52px;font-size:12px;color:#72747c;font-variant-numeric:tabular-nums}
+.tone-analysis-stats,.tone-trace-legend{display:flex;gap:22px;flex-wrap:wrap;margin-top:18px;font-size:14px;font-variant-numeric:tabular-nums}.tone-analysis-stats span{color:#72747c}.tone-analysis-stats b{color:#292a33;font-weight:500}.tone-trace-legend{gap:16px;font-size:12px;color:#72747c}
+.tone-analysis-empty{padding:32px 0;text-align:center;color:#72747c;font-size:14px}.tone-attempt-picker{display:flex;gap:8px;align-items:center;font-size:14px}.tone-attempt-picker select{font:inherit;padding:6px;border:1px solid #e4e4e7;border-radius:8px}
+.tone-take-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 28px 60px;max-width:1100px;margin:auto;font-size:13px;color:#72747c}
+@media(max-width:700px){.tone-controls{gap:0;flex-wrap:wrap}.tone-closeup{padding:14px}.tone-closeup-header{gap:12px}.tone-closeup-toolbar{gap:6px}.tone-closeup-toolbar button{font-size:12px;padding:8px}.tone-detail-surface{padding:16px}.tone-plot-wrap{height:160px}.tone-analysis-heading{flex-wrap:wrap;gap:4px}.tone-group-nav{gap:8px}.tone-notation{margin-top:18px}.tone-analysis-stats{gap:12px}.tone-session-status{bottom:8px;font-size:12px}.tone-closeup-header>span:nth-child(2){display:none}}
+.tone-closeup-playhead{stroke:#356eaa;stroke-width:2;vector-effect:non-scaling-stroke;pointer-events:none}
+.tone-notation .tone-notation-active{filter:none}
+.tone-workspace:not(.is-closeup).has-analysis .reader-workspace{height:60dvh!important}
+.tone-workspace:not(.is-closeup).has-analysis .tone-detail-surface{height:40dvh;overflow-y:auto;border-top:1px solid #d9d9dd}
+.tone-workspace:not(.is-closeup).has-analysis .tone-detail-surface .tone-notation{max-width:320px}
+.tone-workspace:not(.is-closeup).has-analysis .tone-detail-surface .tone-notation svg{min-height:75px;max-height:90px}
+.tone-workspace:not(.is-closeup).has-analysis .tone-session-status{bottom:calc(40dvh + 8px)}
+@media(prefers-reduced-motion:reduce){.tone-workspace *{scroll-behavior:auto!important}}
 
-.tone-trace__plot{position:relative;height:220px;border-radius:9px;background:#fbfbf7;border:1px solid var(--line);overflow:hidden;padding-right:84px}
-.tone-trace__plot svg{width:100%;height:100%;display:block}
-.tone-trace__band{fill:var(--sage-pale);opacity:.55}
-.tone-trace__centre{stroke:#9fb5a6;stroke-width:1;vector-effect:non-scaling-stroke}
-.tone-trace__grid{stroke:var(--line);stroke-width:1;stroke-dasharray:4 5;vector-effect:non-scaling-stroke}
-/* non-scaling-stroke because preserveAspectRatio:none stretches the drawing
-   to the panel, which would otherwise stretch the line thickness with it. */
-.tone-trace__line{fill:none;stroke:var(--sage);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.tone-result-label{font-size:14px;margin:16px 0 0;color:#72747c}.tone-result-label.grade-green{color:#46633d}.tone-result-label.grade-amber{color:#8d5814}.tone-result-label.grade-red{color:#a83d32}
 
-.tone-trace__reading{position:absolute;left:14px;top:12px;display:grid;gap:1px;background:#fffefacc;border-radius:8px;padding:6px 10px;backdrop-filter:blur(2px)}
-.tone-trace__reading b{font:600 26px Georgia,serif;line-height:1}
-.tone-trace__reading span{font-size:13px;font-weight:600;color:var(--coral)}
-.tone-trace__reading span i{font-style:normal;font-size:9px;margin-left:1px}
-.tone-trace__reading.is-in span{color:var(--sage)}
-.tone-trace__reading small{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums}
-.tone-trace__hint{position:absolute;inset:0;display:grid;place-items:center;margin:0;font-size:11px;color:var(--muted)}
-
-.tone-trace__holds{list-style:none;margin:0;padding:0;display:grid;gap:5px}
-.tone-trace__hold{display:grid;grid-template-columns:44px 56px 96px 96px 1fr;align-items:baseline;gap:10px;font-size:10px;color:var(--muted);padding:5px 8px;border-radius:7px;background:#faf9f5}
-.tone-trace__hold b{font:600 13px Georgia,serif;color:var(--ink)}
-.tone-trace__hold span{font-variant-numeric:tabular-nums}
-.tone-trace__hold>span:first-of-type{color:var(--ink);font-weight:600}
-.tone-trace__spread.is-steady{color:#4e7a61}
-
-@media(max-width:700px){
-  .tone-trace{padding:12px}
-  .tone-trace__plot{height:170px;padding-right:0}
-  .tone-trace__reading b{font-size:21px}
-  .tone-trace__hold{grid-template-columns:38px 46px 1fr 1fr;gap:8px}
-}
+/* Color follows the SVG glyph itself, independently of zoom and HTML hit targets. */
+.tone-workspace .vf-stavenote[data-tone-grade=green] .vf-notehead{filter:drop-shadow(0 0 4px #71ad64)}
+.tone-workspace .vf-stavenote[data-tone-grade=amber] .vf-notehead{filter:drop-shadow(0 0 4px #edb544)}
+.tone-workspace .vf-stavenote[data-tone-grade=red] .vf-notehead{filter:drop-shadow(0 0 4px #e97a70)}
+.tone-workspace .tone-note-hit{position:absolute;left:0;top:0;translate:-50% -50%;width:30px;height:28px;min-width:0;min-height:0;padding:0;margin:0;border:0;background:transparent;pointer-events:auto;cursor:pointer}
+.tone-workspace .tone-note-hit:hover,.tone-workspace .tone-note-hit:active,.tone-workspace .tone-note-hit:focus{background:transparent;box-shadow:none}
+.tone-workspace .tone-note-hit:focus-visible{outline:1px solid #57799d;outline-offset:2px}
+.tone-workspace .tone-pitch-badge{position:absolute;left:0;translate:-50% 0;display:block;width:max-content;min-width:0;min-height:0;padding:2px 3px;margin:0;border:0;border-radius:3px;background:#fff;color:#72747c;font:500 11px var(--font,sans-serif);font-variant-numeric:tabular-nums;line-height:1.2;white-space:nowrap;pointer-events:auto;cursor:pointer}
+.tone-workspace .tone-pitch-badge.grade-green{color:#46633d}.tone-workspace .tone-pitch-badge.grade-amber{color:#8d5814}.tone-workspace .tone-pitch-badge.grade-red{color:#a83d32}
+.tone-notation-pitch-label{font:6px -apple-system,BlinkMacSystemFont,sans-serif;fill:#72747c;cursor:pointer}.tone-notation-pitch-label.grade-green{fill:#46633d}.tone-notation-pitch-label.grade-amber{fill:#8d5814}.tone-notation-pitch-label.grade-red{fill:#a83d32}

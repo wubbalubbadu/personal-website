@@ -17,6 +17,7 @@ import {FluteDiagramMini} from "./FluteDiagram";
 import {fingeringsForMidi, midiForPitch} from "../../../content/fingerings/flute";
 import {SaveButton} from "./SaveButton";
 import AccountMenu from "../AccountMenu";
+import {usePencilOnly} from "../lib/pencilMode";
 import {notationScale,pageOffsets,pageAt} from "./readerLayout";
 import "../reader-workspace.css";
 import type { ArticulationMode } from "./notePatterns";
@@ -234,11 +235,25 @@ function applyExerciseRules(osmd:OSMDType){
  * keeping the real glyphs would mean embedding a Unicode font in every
  * download for two characters.
  */
+/**
+ * Accidental signs as letters.
+ *
+ * The PDF is written with jsPDF's built-in Times, which is a Latin-1 font:
+ * it has no glyph for ♭, ♯ or any of the double accidentals, so a heading
+ * like "D♭ major" comes out as mojibake. Double accidentals go first —
+ * 𝄫 is a single code point, but ♭♭ is two, and replacing ♭ first would
+ * leave "bb" either way, which is what a flutist reads anyway.
+ */
+export function plainAccidentals(text:string){
+  return text
+    .replace(/𝄫/g,"bb").replace(/𝄪/g,"x")
+    .replace(/♭/g,"b").replace(/♯/g,"#").replace(/♮/g,"");
+}
 function plainTextAccidentals(svg:SVGSVGElement){
   for(const node of svg.querySelectorAll("text")){
     const text=node.textContent;
     if(!text)continue;
-    const plain=text.replace(/♭/g,"b").replace(/♯/g,"#");
+    const plain=plainAccidentals(text);
     if(plain!==text)node.textContent=plain;
   }
 }
@@ -458,9 +473,112 @@ function sizeInkCanvas(canvas:HTMLCanvasElement|null,sizeRef:{current:{w:number;
   canvas.getContext("2d")?.scale(dpr,dpr);
   const saved=localStorage.getItem(`cookie:${id}:ink`),blank=canvas.toDataURL();
   historyRef.current=[blank];indexRef.current=0;
-  if(saved){const image=new Image();image.onload=()=>{canvas.getContext("2d")?.drawImage(image,0,0,w,h);historyRef.current.push(saved);indexRef.current=1;onRestore()};image.src=saved}
+  if(saved){
+    // Restoring the saved ink is asynchronous, and a view setting that
+    // re-lays the page calls this again before the image has loaded. Both
+    // loads then draw onto the same canvas — at whatever size each was
+    // measured at — and drawImage does not clear, so the page ends up
+    // carrying two copies of every stroke at slightly different scales.
+    // Stamp the canvas with which resize is current and let a superseded
+    // load drop its result.
+    const generation=String((Number(canvas.dataset.inkGeneration)||0)+1);
+    canvas.dataset.inkGeneration=generation;
+    const image=new Image();
+    image.onload=()=>{
+      if(canvas.dataset.inkGeneration!==generation)return;
+      const context=canvas.getContext("2d");
+      context?.clearRect(0,0,w,h);
+      context?.drawImage(image,0,0,w,h);
+      historyRef.current.push(saved);indexRef.current=1;onRestore();
+    };
+    image.src=saved;
+  }
 }
-function addTheoryTargets(root:HTMLDivElement){const targets:[[string,string],...[string,string][]]=[[".vf-clef","Treble clef: the curl circles the G line. Flute music is normally written in this clef."],[".vf-keysignature","Key signature: shows which notes are sharped or flatted for the rest of the piece, unless an accidental changes one."],[".vf-timesignature","Time signature: the top number gives beats per measure; the bottom number identifies the beat value."],[".vf-stavetie","Tie: hold the connected notes as one continuous sound. Do not tongue the second note."]];targets.forEach(([selector,text])=>root.querySelectorAll<SVGElement>(selector).forEach(node=>{node.dataset.theory=text;node.classList.add("theory-target")}))}
+/** Major and relative-minor keys by number of sharps, then by number of flats. */
+const SHARP_KEYS=[["C","A"],["G","E"],["D","B"],["A","F♯"],["E","C♯"],["B","G♯"],["F♯","D♯"],["C♯","A♯"]];
+const FLAT_KEYS=[["C","A"],["F","D"],["B♭","G"],["E♭","C"],["A♭","F"],["D♭","B♭"],["G♭","E♭"],["C♭","A♭"]];
+
+/**
+ * What a key signature actually says.
+ *
+ * "Key signature: shows which notes are sharped or flatted" describes the
+ * concept, which is no use when you are looking at three flats and want to
+ * know which three. The altered notes come from the score's own per-measure
+ * key data, so the answer is the engraved key rather than a guess.
+ */
+/** Key signatures add their accidentals in a fixed order. */
+const SHARP_ORDER=["F♯","C♯","G♯","D♯","A♯","E♯","B♯"];
+const FLAT_ORDER=["B♭","E♭","A♭","D♭","G♭","C♭","F♭"];
+
+function keySignatureText(raw:string[]){
+  const altered=[...new Set(raw)];
+  if(!altered.length)return "None — C major or A minor. No note is sharped or flatted unless an accidental says so.";
+  const flats=altered.some(note=>note.includes("♭"));
+  const order=flats?FLAT_ORDER:SHARP_ORDER;
+  // Only name a key when the accidentals really are the first n of the
+  // standard order. The caller's list can hold more than the signature —
+  // naming a key off a list that is not a key signature would state a
+  // confident wrong fact, which is worse than the vague sentence it replaced.
+  const sorted=[...altered].sort((a,b)=>order.indexOf(a)-order.indexOf(b));
+  const canonical=sorted.every((note,index)=>note===order[index]);
+  const list=sorted.length===1?sorted[0]
+    :`${sorted.slice(0,-1).join(", ")} and ${sorted[sorted.length-1]}`;
+  if(!canonical)return `Every ${list} is ${flats?"flattened":"sharpened"} here, unless an accidental changes one.`;
+  const pair=(flats?FLAT_KEYS:SHARP_KEYS)[sorted.length];
+  return `${pair[0]} major or ${pair[1]} minor. Every ${list} is ${flats?"flattened":"sharpened"} for the rest of the line, unless an accidental changes one.`;
+}
+
+/**
+ * A fermata is a modifier glyph hanging off a notehead, and VexFlow gives it
+ * no class of its own — it is a bare <path> inside .vf-modifiers, exactly
+ * like an accidental. Shape tells them apart: a fermata is a wide, shallow
+ * arc (about 18x10), while accidentals are tall and narrow (6x22) and a
+ * tenuto is a near-flat line. Comparing width to height rather than to fixed
+ * pixels keeps it true at any zoom.
+ *
+ * This matters beyond the tooltip text: score clicks give [data-theory] the
+ * first say and return, so tagging the fermata is also what stops a tap on
+ * it being read as a tap on the note underneath — which was starting a drone.
+ */
+function tagFermatas(root:HTMLDivElement,text:string){
+  root.querySelectorAll<SVGPathElement>(".vf-modifiers path").forEach(path=>{
+    const box=path.getBoundingClientRect();
+    if(!box.width||!box.height)return;
+    const wide=box.width>box.height*1.35, notALine=box.height>box.width*0.3;
+    if(!wide||!notALine)return;
+    path.dataset.theoryTitle="Fermata";
+    path.dataset.theory=text;
+    path.classList.add("theory-target");
+  });
+}
+
+function addTheoryTargets(root:HTMLDivElement,measureKeys?:string[][],measureStarts?:number[]){
+  const targets:[string,string,string][]=[
+    [".vf-clef","Treble clef","The curl circles the G line. Flute music is normally written in this clef."],
+    [".vf-timesignature","Time signature","The top number gives beats per measure; the bottom number identifies the beat value."],
+    [".vf-stavetie","Tie","Hold the connected notes as one continuous sound. Do not tongue the second note."],
+  ];
+  targets.forEach(([selector,title,text])=>root.querySelectorAll<SVGElement>(selector).forEach(node=>{node.dataset.theoryTitle=title;node.dataset.theory=text;node.classList.add("theory-target")}));
+
+  tagFermatas(root,"Hold the note longer than its written value — how much longer is your choice. Here it marks the end of the exercise, so let the sound settle before you stop.");
+
+  // Which key a signature announces depends on where it sits, and a scale
+  // book changes key every few lines. The nearest note after it carries the
+  // event index that says which measure that is.
+  const notes=[...root.querySelectorAll<SVGGElement>(".vf-stavenote[data-event]")];
+  root.querySelectorAll<SVGElement>(".vf-keysignature").forEach(node=>{
+    let altered:string[]|undefined;
+    if(measureKeys&&measureStarts){
+      const next=notes.find(note=>node.compareDocumentPosition(note)&Node.DOCUMENT_POSITION_FOLLOWING);
+      const event=next?Number(next.dataset.event):NaN;
+      if(Number.isFinite(event))altered=measureKeys[measureForEvent(event,measureStarts)-1];
+    }
+    node.dataset.theoryTitle="Key signature";
+    node.dataset.theory=altered?keySignatureText(altered)
+      :"Shows which notes are sharped or flatted for the rest of the piece, unless an accidental changes one.";
+    node.classList.add("theory-target");
+  });
+}
 
 type ScoreNote={id:string;kind:"text"|"sticky";x:number;y:number;text:string;w?:number;h?:number};
 function notesStorageKey(id:string){return `cookie:${id}:notes`}
@@ -501,11 +619,11 @@ export type ReaderControls={
    */
   playingEvent:number|null;
 };
-export function ScoreViewer({config,toolbar,settings,aside,defaultNoteSpacing,onTempoChange,unmetered=false,lineBreak,practiceTempo,scoreMarks,headerActions,save,extraSystemSpacing=0}:{config:ScoreViewerConfig;toolbar?:React.ReactNode;settings?:(controls:ReaderControls)=>React.ReactNode;/** Pinned below the music inside the scroll area — for a live readout that has to stay visible while the page scrolls. */aside?:React.ReactNode;/** Starting note spacing, for books whose notes are faster than the exercise default assumes. Overridden by a saved preference. */defaultNoteSpacing?:number;onTempoChange?:(tempo:number)=>void;unmetered?:boolean;lineBreak?:{value:boolean;onChange:(value:boolean)=>void};practiceTempo?:{value:boolean;onChange:(value:boolean)=>void};scoreMarks?:(context:ScoreMarksContext)=>React.ReactNode;headerActions?:(controls:ReaderControls)=>React.ReactNode;save?:{saved:boolean;onToggle:()=>void;label:string;savedLabel:string};extraSystemSpacing?:number}) {
+export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceActions,onPracticeNote,practiceEvent,defaultNoteSpacing,onTempoChange,unmetered=false,lineBreak,practiceTempo,scoreMarks,headerActions,save,extraSystemSpacing=0}:{config:ScoreViewerConfig;toolbar?:React.ReactNode;settings?:(controls:ReaderControls)=>React.ReactNode;/** Pinned below the music inside the scroll area — for a live readout that has to stay visible while the page scrolls. */aside?:React.ReactNode;/** Title and music to print instead of what is on screen. The PDF is written with jsPDF's built-in Latin-1 fonts, which cannot encode Chinese at all, so a Chinese book prints from an English copy of itself. */printConfig?:{title:string;asset:string};practiceActions?:React.ReactNode;onPracticeNote?:(event:number)=>void;practiceEvent?:number;/** Starting note spacing, for books whose notes are faster than the exercise default assumes. Overridden by a saved preference. */defaultNoteSpacing?:number;onTempoChange?:(tempo:number)=>void;unmetered?:boolean;lineBreak?:{value:boolean;onChange:(value:boolean)=>void};practiceTempo?:{value:boolean;onChange:(value:boolean)=>void};scoreMarks?:(context:ScoreMarksContext)=>React.ReactNode;headerActions?:(controls:ReaderControls)=>React.ReactNode;save?:{saved:boolean;onToggle:()=>void;label:string;savedLabel:string};extraSystemSpacing?:number}) {
   const {t,lang}=useLanguage();
   const zh=lang==="zh";
   const {bpm,setBpm,metro,toggleMetro,toggleDrone,stopAllDrones,drones,initializeScore,setAccent}=usePracticeAudio();
-  const [picker,setPicker]=useState(false),[,setDronePitch]=useState("G"),[droneOctave,setDroneOctave]=useState(4);
+  const [droneArmed,setDroneArmed]=useState(false);
   // The field holds a raw draft while it is being typed, so "1" on the way
   // to "120" isn't clamped to 40 under the cursor; it commits on blur/Enter.
   const [tempoDraft,setTempoDraft]=useState<string|null>(null);
@@ -567,7 +685,7 @@ export function ScoreViewer({config,toolbar,settings,aside,defaultNoteSpacing,on
   // tool (below) is the only thing that turns this back on; placing a
   // text/sticky note turns it off, since what the user wants right after
   // placing one is to interact with it, not keep drawing.
-  const [inkActive,setInkActive]=useState(true); const [,setHistoryTick]=useState(0); const [noteDisplay,setNoteDisplay]=useState<NoteDisplay>("off"); const [accidentals,setAccidentals]=useState(false); const [tonguing,setTonguing]=useState(true); const [fingering,setFingering]=useState(false); const [rhythmMode,setRhythmMode]=useState<RhythmMode>("off");  const [magnify,setMagnify]=useState(1); const [fingerTip,setFingerTip]=useState<{pitch:string;name:string;solfege:string;beat:string;x:number;y:number}|null>(null); const [theoryTip,setTheoryTip]=useState<{text:string;x:number;y:number}|null>(null); const [favorite,setFavorite]=useState(false);
+  const [inkActive,setInkActive]=useState(true); const [,setHistoryTick]=useState(0); const [noteDisplay,setNoteDisplay]=useState<NoteDisplay>("off"); const [accidentals,setAccidentals]=useState(false); const [tonguing,setTonguing]=useState(true); const [fingering,setFingering]=useState(false); const [rhythmMode,setRhythmMode]=useState<RhythmMode>("off");  const [magnify,setMagnify]=useState(1); const [fingerTip,setFingerTip]=useState<{pitch:string;name:string;octave:string;solfege:string;beat:string;x:number;y:number}|null>(null); const [theoryTip,setTheoryTip]=useState<{title:string;text:string;x:number;y:number}|null>(null); const [favorite,setFavorite]=useState(false);
   const [theoryEnabled,setTheoryEnabled]=useState(false),[sizePreference,setSizePreference]=useState(.8);
   const sizePreferenceRef=useRef(sizePreference);
   // How much vertical gap OSMD leaves between systems — user-adjustable
@@ -660,14 +778,19 @@ export function ScoreViewer({config,toolbar,settings,aside,defaultNoteSpacing,on
 
   const [notes,setNotes]=useState<ScoreNote[]>([]);
   const notesRef=useRef<ScoreNote[]>([]);
-  const noteDrag=useRef<{id:string;startX:number;startY:number;origX:number;origY:number;moved:boolean}|null>(null);
+  const noteDrag=useRef<{id:string;startX:number;startY:number;origX:number;origY:number;moved:boolean;field:HTMLTextAreaElement|null}|null>(null);
   // Which note is picked up right now. Only the selected note shows its
   // delete control: an × hovering over every note turned a marked-up page
   // into a field of little buttons, and there was no way to say "this one"
   // before acting on it.
   const [selectedNote,setSelectedNote]=useState<string|null>(null);
   useEffect(()=>{notesRef.current=notes},[notes]);
-  useEffect(()=>{setNotes(readNotes(id))},[id]);
+  // The ref has to follow the state everywhere, not only through
+  // persistNotes: noteUp writes notesRef.current back to storage when a drag
+  // ends, so any path that sets notes without updating the ref makes that
+  // write save a stale array — and after a fresh load the stale array is
+  // empty, which deletes every note on the page the first time one is moved.
+  useEffect(()=>{const loaded=readNotes(id);setNotes(loaded);notesRef.current=loaded},[id]);
   useEffect(()=>{record(id)},[id,record]);
   function persistNotes(next:ScoreNote[]){setNotes(next);notesRef.current=next;localStorage.setItem(notesStorageKey(id),JSON.stringify(next))}
   function addScoreNote(kind:"text"|"sticky"){const note:ScoreNote={id:crypto.randomUUID(),kind,x:60+notes.length*16,y:60+notes.length*16,text:""};persistNotes([...notes,note]);setInkActive(false)}
@@ -720,7 +843,12 @@ export function ScoreViewer({config,toolbar,settings,aside,defaultNoteSpacing,on
       if(event.clientX>box.right-RESIZE_CORNER&&event.clientY>box.bottom-RESIZE_CORNER)return;
       event.preventDefault();
     }
-    noteDrag.current={id:note.id,startX:event.clientX,startY:event.clientY,origX:note.x,origY:note.y,moved:false};
+    // Which field the press landed on, remembered here because the pointer
+    // capture below re-targets pointerup at the note itself — so by the time
+    // the press turns out to be a click rather than a drag, the event can no
+    // longer say it was over the textarea, and the note never took focus.
+    noteDrag.current={id:note.id,startX:event.clientX,startY:event.clientY,origX:note.x,origY:note.y,moved:false,
+      field:target instanceof HTMLTextAreaElement?target:null};
     // Captured on the press, not once the drag is recognised: without it
     // the very first move has to happen to land on the note itself, and a
     // quick flick puts the pointer somewhere else before the browser
@@ -735,15 +863,15 @@ export function ScoreViewer({config,toolbar,settings,aside,defaultNoteSpacing,on
       drag.moved=true;
     }
     const dx=(event.clientX-drag.startX)/magnify,dy=(event.clientY-drag.startY)/magnify;
-    setNotes(current=>current.map(n=>n.id===drag.id?{...n,x:drag.origX+dx,y:drag.origY+dy}:n));
+    setNotes(current=>{const next=current.map(n=>n.id===drag.id?{...n,x:drag.origX+dx,y:drag.origY+dy}:n);notesRef.current=next;return next});
   }
   function noteUp(event:React.PointerEvent<HTMLDivElement>){
     const drag=noteDrag.current;
     if(!drag)return;
     noteDrag.current=null;
     if(drag.moved){persistNotes(notesRef.current);return}
-    const target=event.target as HTMLElement;
-    if(target instanceof HTMLTextAreaElement)target.focus();
+    const field=drag.field??(event.target instanceof HTMLTextAreaElement?event.target:null);
+    field?.focus();
   }
 
   // Re-tags every rendered note with its event index/measure/pitch (OSMD
@@ -756,9 +884,9 @@ export function ScoreViewer({config,toolbar,settings,aside,defaultNoteSpacing,on
     const root=scoreRef.current;
     if(!root)return;
     const seq=sequenceRef.current;
-    root.querySelectorAll<SVGGElement>(".vf-stavenote").forEach((node,index)=>{node.dataset.event=String(index);node.classList.toggle("playback-start",index===selectedEventRef.current);node.dataset.measure=String(measureForEvent(index,seq.measureStarts));const pitch=seq.pitches[index];if(pitch)node.dataset.pitch=pitch});
+    root.querySelectorAll<SVGGElement>(".vf-stavenote").forEach((node,index)=>{node.dataset.event=String(index);node.classList.toggle("playback-start",index===selectedEventRef.current);node.dataset.measure=String(measureForEvent(index,seq.measureStarts));const pitch=seq.pitches[index];if(pitch)node.dataset.pitch=pitch;const written=config.displayPitches?.[index];if(written){node.dataset.noteName=written.replace(/\d/,"");const octave=written.match(/\d/)?.[0];if(octave)node.dataset.noteOctave=octave}});
     placePracticeOverlays(root,seq.events,seq.measureStarts,seq.unitsPerBeat,seq.keyAccidentals??new Set(),config.displayPitches,config.measureKeyAccidentals,unmetered,config.syllables,overlayVisibilityRef.current);
-    addTheoryTargets(root);
+    addTheoryTargets(root,config.measureKeyAccidentals,seq.measureStarts);
     updateDroneHighlight();
   }
   // A droned note needs its own color, distinct from the coral
@@ -905,6 +1033,25 @@ export function ScoreViewer({config,toolbar,settings,aside,defaultNoteSpacing,on
     else scroller.scrollTop=0;
     computePages();
   }
+  useEffect(()=>{
+    if(practiceEvent===undefined)return;
+    const frame=requestAnimationFrame(()=>{
+      const root=scoreRef.current,scroller=scoreScrollRef.current;
+      const note=root?.querySelector<SVGGElement>(`.vf-stavenote[data-event="${practiceEvent}"]`);
+      if(!note||!scroller||!scroller.clientHeight)return;
+      const box=note.getBoundingClientRect(),viewport=scroller.getBoundingClientRect();
+      if(box.top>=viewport.top+25&&box.bottom<=viewport.bottom-25)return;
+      const absoluteTop=box.top-viewport.top+scroller.scrollTop;
+      const offsets=pageOffsetsRef.current;
+      let page=0;
+      for(let i=0;i<offsets.length;i++)if(offsets[i]<=absoluteTop)page=i;
+      pageTargetRef.current=offsets[page]??0;
+      setPageIndex(page);
+      scroller.scrollTo({top:offsets[page]??0,behavior:"instant"});
+    });
+    return()=>cancelAnimationFrame(frame);
+  },[practiceEvent,layoutVersion]);
+
   function goToPage(index:number){
     const scroller=scoreScrollRef.current,offsets=pageOffsetsRef.current;
     if(!scroller||!offsets.length)return;
@@ -980,11 +1127,23 @@ export function ScoreViewer({config,toolbar,settings,aside,defaultNoteSpacing,on
   useEffect(()=>{
     const el=scoreScrollRef.current;if(!el)return;
     let frame=0,touchDistance=0,touchZoom=1,gestureZoom=1;
+    // The magnification is written straight to the custom property while a
+    // gesture is running, and only committed to React state when it ends.
+    // Calling setMagnify on every touchmove re-rendered the whole reader
+    // dozens of times a second, which is what made a pinch shake and flash.
+    const surface=el.closest<HTMLElement>(".restored-reader");
+    let commit=0;
     function apply(value:number,x:number,y:number){
       const next=Math.max(.5,Math.min(3,value)),old=magnifyRef.current,box=el!.getBoundingClientRect();
       const px=x-box.left,py=y-box.top,left=(el!.scrollLeft+px)*next/old-px,top=(el!.scrollTop+py)*next/old-py;
-      magnifyRef.current=next;setMagnify(next);cancelAnimationFrame(frame);
+      magnifyRef.current=next;
+      surface?.style.setProperty("--viewer-magnify",String(next));
+      cancelAnimationFrame(frame);
       frame=requestAnimationFrame(()=>{el!.scrollLeft=left;el!.scrollTop=top;rememberPosition()});
+      // One state update once the fingers settle, so the scrollable area is
+      // re-reserved and anything else watching magnify sees the final value.
+      window.clearTimeout(commit);
+      commit=window.setTimeout(()=>setMagnify(magnifyRef.current),140);
     }
     function wheel(e:WheelEvent){if(!e.ctrlKey)return;e.preventDefault();apply(magnifyRef.current*Math.exp(-e.deltaY*.008),e.clientX,e.clientY)}
     function start(e:TouchEvent){if(e.touches.length!==2)return;e.preventDefault();touchDistance=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);touchZoom=magnifyRef.current}
@@ -993,7 +1152,7 @@ export function ScoreViewer({config,toolbar,settings,aside,defaultNoteSpacing,on
     function gestureStart(e:Event){e.preventDefault();gestureZoom=magnifyRef.current}
     function gestureChange(e:Event){e.preventDefault();if(touchDistance)return;const g=e as Event&{scale:number;clientX:number;clientY:number};apply(gestureZoom*g.scale,g.clientX,g.clientY)}
     el.addEventListener("wheel",wheel,{passive:false});el.addEventListener("touchstart",start,{passive:false});el.addEventListener("touchmove",move,{passive:false});el.addEventListener("touchend",end);el.addEventListener("touchcancel",end);el.addEventListener("gesturestart",gestureStart);el.addEventListener("gesturechange",gestureChange);
-    return()=>{cancelAnimationFrame(frame);el.removeEventListener("wheel",wheel);el.removeEventListener("touchstart",start);el.removeEventListener("touchmove",move);el.removeEventListener("touchend",end);el.removeEventListener("touchcancel",end);el.removeEventListener("gesturestart",gestureStart);el.removeEventListener("gesturechange",gestureChange)};
+    return()=>{cancelAnimationFrame(frame);window.clearTimeout(commit);el.removeEventListener("wheel",wheel);el.removeEventListener("touchstart",start);el.removeEventListener("touchmove",move);el.removeEventListener("touchend",end);el.removeEventListener("touchcancel",end);el.removeEventListener("gesturestart",gestureStart);el.removeEventListener("gesturechange",gestureChange)};
   },[]);
 
   useEffect(()=>{const saved=JSON.parse(localStorage.getItem("cookie:music-favorites")||"[]") as string[];setFavorite(saved.includes(id));let mounted=true; async function load(){ try { if(unmetered&&!asset.includes("<note>")){scoreRef.current?.replaceChildren();osmdRef.current=null;setLoading(false);return;} setLoading(true); const {OpenSheetMusicDisplay}=await import("opensheetmusicdisplay"); if(!mounted||!scoreRef.current)return; scoreRef.current.replaceChildren(); const osmd=new OpenSheetMusicDisplay(scoreRef.current,{backend:"svg",autoResize:false,drawTitle:false,drawComposer:false,drawingParameters:"compacttight"}); osmd.setOptions({pageFormat:"Endless",drawMeasureNumbers:true,drawPartNames:false,drawMetronomeMarks:true}); osmd.OnXMLRead = xml=>{if(config.defaultTempo===undefined){const doc=new DOMParser().parseFromString(xml,"application/xml");const marked=Number(doc.querySelector("sound[tempo]")?.getAttribute("tempo"));if(marked>0)initializeScore(id,marked)}return prepareScore(xml,title)}; await osmd.load(asset,title); if(!mounted||!scoreRef.current)return;
@@ -1098,6 +1257,17 @@ export function ScoreViewer({config,toolbar,settings,aside,defaultNoteSpacing,on
   useEffect(()=>{extraSystemSpacingRef.current=extraSystemSpacing;rememberPosition();layoutScore()},[extraSystemSpacing]);
   useEffect(()=>{noteSpacingRef.current=noteSpacing;rememberPosition();layoutScore()},[noteSpacing]);
   useEffect(()=>{if(osmdRef.current)computePages()},[magnify]);
+  // A scaled element still occupies its unscaled box, so without this the
+  // scroller has nothing to scroll into and the magnified page is simply
+  // clipped. transform-origin is the top left corner, so the overflow is
+  // all to the right and below.
+  useEffect(()=>{
+    const paper=scoreRef.current?.closest<HTMLElement>(".score-paper");
+    if(!paper)return;
+    const grow=Math.max(0,magnify-1);
+    paper.style.marginRight=grow?`${grow*paper.offsetWidth}px`:"";
+    paper.style.marginBottom=grow?`${grow*paper.offsetHeight}px`:"";
+  },[magnify,layoutVersion]);
   useEffect(()=>{
     const scroller=scoreScrollRef.current;if(!scroller)return;
     let timer=0,lastWidth=scroller.clientWidth,lastHeight=scroller.clientHeight;
@@ -1261,8 +1431,49 @@ export function ScoreViewer({config,toolbar,settings,aside,defaultNoteSpacing,on
     inkLast.current=to;
     inkMid.current=mid;
   }
+  /**
+   * Palm rejection.
+   *
+   * Writing with a Pencil puts the hand on the page as well as the nib, and
+   * the hand lands first — so the canvas sees a large touch contact and a
+   * pen contact and joins them with a stroke across the staff.
+   *
+   * Two rules, in order. A pen seen in the last moment means any touch is
+   * the hand resting, so it is ignored outright. With no pen in play a
+   * finger may draw, because drawing with a finger is a real way to use
+   * this, but a contact the size of a palm still is not a fingertip.
+   */
+  const PEN_GRACE_MS=1200;
+  const PALM_CONTACT_PX=26;
+  const pencilOnlyMode=usePencilOnly();
+  const penSeenAt=useRef(0);
+  const inkPointer=useRef<number|null>(null);
+  function inkAccepts(e:PointerEvent<HTMLCanvasElement>){
+    // performance.now() rather than e.timeStamp: the event clock is not
+    // guaranteed to share an origin with anything we store, and a zeroed
+    // timestamp would keep the grace window open forever, locking touch out.
+    const now=performance.now();
+    if(e.pointerType==="pen"){penSeenAt.current=now;return true}
+    if(e.pointerType!=="touch")return true;
+    // Pencil-only is a promise, not a guess: no timing window, no contact
+    // size, no case where a resting hand can leave a mark.
+    if(pencilOnlyMode)return false;
+    if(now-penSeenAt.current<PEN_GRACE_MS)return false;
+    // width/height are the contact patch in CSS pixels; a fingertip reports
+    // a small box, a palm or forearm a large one. Devices that do not
+    // report a size send 1, which passes — better to draw than to swallow
+    // input on hardware that cannot tell us.
+    return Math.max(e.width,e.height)<PALM_CONTACT_PX;
+  }
   function begin(e:PointerEvent<HTMLCanvasElement>){
     if(!annotating||!inkActive)return;
+    if(!inkAccepts(e))return;
+    // Don't let a second contact hijack a stroke already under way — but a
+    // pen always wins, so if the hand landed first the nib takes over
+    // rather than queueing behind it. Keyed on the stroke actually being in
+    // progress, which saveInk always clears, rather than on a stored id.
+    if(drawing.current&&e.pointerType!=="pen")return;
+    inkPointer.current=e.pointerId;
     // Stops the gesture becoming a page scroll or a text selection on the
     // score underneath — the reason a finger or a Pencil used to drag a
     // blue highlight across the engraving instead of drawing on it.
@@ -1284,6 +1495,7 @@ export function ScoreViewer({config,toolbar,settings,aside,defaultNoteSpacing,on
   }
   function draw(e:PointerEvent<HTMLCanvasElement>){
     if(!drawing.current||!annotating)return;
+    if(inkPointer.current!==null&&e.pointerId!==inkPointer.current)return;
     e.preventDefault();
     const canvas=e.currentTarget,c=canvas.getContext("2d");
     if(!c)return;
@@ -1302,30 +1514,85 @@ export function ScoreViewer({config,toolbar,settings,aside,defaultNoteSpacing,on
     else strokeTo(c,point(e,canvas),e.pressure);
   }
   function pushHistory(data:string){inkHistory.current=inkHistory.current.slice(0,inkIndex.current+1);inkHistory.current.push(data);inkIndex.current=inkHistory.current.length-1;localStorage.setItem(`cookie:${id}:ink`,data);setHistoryTick(v=>v+1)}
-  function saveInk(){drawing.current=false;inkLast.current=null;inkMid.current=null;arrowFrom.current=null;arrowBase.current=null;const data=canvasRef.current?.toDataURL();if(data)pushHistory(data)}
-  function showHistory(index:number){const canvas=canvasRef.current;if(!canvas)return;const context=canvas.getContext("2d"),{w,h}=inkSizeRef.current;context?.clearRect(0,0,w,h);const data=inkHistory.current[index];if(data){const image=new Image();image.onload=()=>context?.drawImage(image,0,0,w,h);image.src=data}inkIndex.current=index;if(data)localStorage.setItem(`cookie:${id}:ink`,data);else localStorage.removeItem(`cookie:${id}:ink`);setHistoryTick(v=>v+1)}
+  function saveInk(e?:PointerEvent<HTMLCanvasElement>){if(e&&inkPointer.current!==null&&e.pointerId!==inkPointer.current)return;inkPointer.current=null;drawing.current=false;inkLast.current=null;inkMid.current=null;arrowFrom.current=null;arrowBase.current=null;const data=canvasRef.current?.toDataURL();if(data)pushHistory(data)}
+  function showHistory(index:number){const canvas=canvasRef.current;if(!canvas)return;const context=canvas.getContext("2d"),{w,h}=inkSizeRef.current;const data=inkHistory.current[index];
+    // Clear only once the replacement is decoded and ready to draw. Clearing
+    // first left the canvas blank until the image loaded, so every undo
+    // blinked the whole page of markup away and back — the step being undone
+    // should be the only thing that disappears.
+    if(data){const image=new Image();image.onload=()=>{context?.clearRect(0,0,w,h);context?.drawImage(image,0,0,w,h)};image.src=data}
+    else context?.clearRect(0,0,w,h);
+    inkIndex.current=index;if(data)localStorage.setItem(`cookie:${id}:ink`,data);else localStorage.removeItem(`cookie:${id}:ink`);setHistoryTick(v=>v+1)}
   function undoInk(){if(inkIndex.current>0)showHistory(inkIndex.current-1)} function redoInk(){if(inkIndex.current<inkHistory.current.length-1)showHistory(inkIndex.current+1)}
   function clearInk(){const canvas=canvasRef.current,{w,h}=inkSizeRef.current;canvas?.getContext("2d")?.clearRect(0,0,w,h);if(canvas)pushHistory(canvas.toDataURL())}
   function showNoteInfo(node:SVGGElement,x:number,y:number){
     if(noteDisplay==="off"&&!fingering&&rhythmMode==="off"){setFingerTip(null);return}
-    setFingerTip({pitch:node.dataset.pitch!,name:node.dataset.noteName??node.dataset.pitch!.replace(/\d/,""),solfege:node.dataset.solfege??"",beat:node.dataset.beat??"",x,y});
+    setFingerTip({pitch:node.dataset.pitch!,name:node.dataset.noteName??node.dataset.pitch!.replace(/\d/,""),octave:node.dataset.noteOctave??node.dataset.pitch!.match(/\d/)?.[0]??"",solfege:node.dataset.solfege??"",beat:node.dataset.beat??"",x,y});
   }
   function scoreMove(e:React.MouseEvent<HTMLDivElement>){
     if(annotating)return;
     const theory=(e.target as Element).closest<SVGElement>("[data-theory]");
-    setTheoryTip(theoryEnabled&&theory?{text:theory.dataset.theory!,x:e.clientX,y:e.clientY}:null);
+    setTheoryTip(theoryEnabled&&theory?{title:theory.dataset.theoryTitle??"",text:theory.dataset.theory!,x:e.clientX,y:e.clientY}:null);
+    // A fermata hangs off a notehead, so walking up from it lands on the
+    // note and used to show a fingering beside the term explanation. The
+    // mark you are pointing at wins, the way it already does on click.
+    if(theoryEnabled&&theory){setFingerTip(null);return}
+    // Hovering only opens the popover when it has something to add. Note
+    // names and beat numbers are already printed on the page as overlays
+    // when those are switched on, so repeating them under the pointer is
+    // noise; a fingering diagram, and knowing which note a drone would
+    // land on, are not on the page.
+    if(!fingering&&!droneArmed){setFingerTip(null);return}
     const node=(e.target as Element).closest<SVGGElement>(".vf-stavenote[data-pitch]");
     if(!node){setFingerTip(null);return}showNoteInfo(node,e.clientX,e.clientY);
   }
+  /**
+   * How far a tap may land from a notehead and still count, in pixels.
+   * A fingertip is far wider than an engraved notehead.
+   */
+  const TAP_SLOP=16;
+  /**
+   * The note a tap meant, when it did not quite land on one.
+   *
+   * SVG hit-testing only registers on the painted glyph, so a tap a couple
+   * of pixels off a notehead has e.target === the <svg> itself and finds no
+   * note at all. With a mouse you simply click again; with a finger you
+   * cannot reliably hit a 6px glyph, which is why tapping a sounding note
+   * to switch its drone off so often did nothing.
+   *
+   * Only taps get this. Hover is precise by nature, and measuring every
+   * note on a pointermove would thrash layout on a page holding hundreds.
+   */
+  function noteNear(x:number,y:number){
+    const root=scoreRef.current;
+    if(!root)return null;
+    // Bound the search to the measure under the finger rather than the
+    // whole book — a scale page can carry 350 notes.
+    const stack=document.elementsFromPoint(x,y);
+    const scope=stack.find(el=>el.classList?.contains("vf-measure"))??root;
+    let best:SVGGElement|null=null,bestDistance=Infinity;
+    scope.querySelectorAll<SVGGElement>(".vf-stavenote[data-pitch]").forEach(note=>{
+      const box=(note.querySelector(".vf-notehead")??note).getBoundingClientRect();
+      const dx=Math.max(box.left-x,0,x-box.right),dy=Math.max(box.top-y,0,y-box.bottom);
+      const distance=Math.hypot(dx,dy);
+      if(distance<bestDistance){bestDistance=distance;best=note}
+    });
+    return bestDistance<=TAP_SLOP?best:null;
+  }
   function scoreClick(e:React.MouseEvent<HTMLDivElement>){
     if(annotating)return;
-    const node=(e.target as Element).closest<SVGGElement>(".vf-stavenote[data-pitch]");
+    const node=(e.target as Element).closest<SVGGElement>(".vf-stavenote[data-pitch]")??noteNear(e.clientX,e.clientY);
     const theory=(e.target as Element).closest<SVGElement>("[data-theory]");
-    if(theoryEnabled&&theory){setTheoryTip({text:theory.dataset.theory!,x:e.clientX,y:e.clientY});return}
+    if(theoryEnabled&&theory){setTheoryTip({title:theory.dataset.theoryTitle??"",text:theory.dataset.theory!,x:e.clientX,y:e.clientY});return}
     setTheoryTip(null);
     if(!node){setFingerTip(null);return}
+    if(onPracticeNote){onPracticeNote(Number(node.dataset.event));return}
     const match=node.dataset.pitch!.match(/^([A-G][♯♭]?)(\d)$/);if(!match)return;
-    setStartMeasure(Number(node.dataset.measure)||1);setDronePitch(match[1]);setDroneOctave(+match[2]);toggleDrone(match[1],+match[2]);
+    setStartMeasure(Number(node.dataset.measure)||1);
+    // A tap is the only gesture a tablet has, so it cannot mean "show me
+    // this note" and "sound this note" at once. The drone control arms it
+    // first; until then a tap only tells you about the note.
+    if(droneArmed)toggleDrone(match[1],+match[2]);
     showNoteInfo(node,e.clientX,e.clientY);
   }
   function toggleFavorite(){const saved=JSON.parse(localStorage.getItem("cookie:music-favorites")||"[]") as string[],next=saved.includes(id)?saved.filter(item=>item!==id):[...saved,id];localStorage.setItem("cookie:music-favorites",JSON.stringify(next));setFavorite(next.includes(id));window.dispatchEvent(new Event("cookie:favorites-updated"))}
@@ -1377,9 +1644,10 @@ export function ScoreViewer({config,toolbar,settings,aside,defaultNoteSpacing,on
       ]);
       const osmd=new OpenSheetMusicDisplay(stage,{backend:"svg",autoResize:false,drawTitle:false,drawComposer:false,drawingParameters:"compacttight"});
       osmd.setOptions({pageFormat:"A4 P",drawMeasureNumbers:true,drawPartNames:false,drawMetronomeMarks:true});
-      osmd.OnXMLRead=xml=>prepareScore(xml,title);
+      const printTitle=plainAccidentals(printConfig?.title??title);
+      osmd.OnXMLRead=xml=>prepareScore(xml,printTitle);
       const suppress=unmetered?applyExerciseRules(osmd):()=>{};
-      await osmd.load(asset,title);
+      await osmd.load(printConfig?.asset??asset,printTitle);
       suppress();
       osmd.EngravingRules.PageLeftMargin=PRINT_MARGIN;
       osmd.EngravingRules.PageRightMargin=PRINT_MARGIN;
@@ -1417,12 +1685,12 @@ export function ScoreViewer({config,toolbar,settings,aside,defaultNoteSpacing,on
       pdf.setPage(1);
       pdf.setFont("times","normal");
       pdf.setFontSize(18);
-      pdf.text(title,PAGE_MM.width/2,13,{align:"center"});
+      pdf.text(printTitle,PAGE_MM.width/2,13,{align:"center"});
       pdf.setFont("times","italic");
       pdf.setFontSize(9);
       pdf.setTextColor(110);
       pdf.text(BYLINE,PAGE_MM.width/2,19,{align:"center"});
-      pdf.save(`${title}.pdf`);
+      pdf.save(`${printTitle}.pdf`);
     }catch(e){
       setError(e instanceof Error?e.message:t.scoreViewer.engravingFailed);
     }finally{
@@ -1442,32 +1710,31 @@ export function ScoreViewer({config,toolbar,settings,aside,defaultNoteSpacing,on
 
       <div className="practice-bar"><div className="tool-group">        <button data-tip={t.scoreViewer.markUpTip} className={annotating?"tool on coral has-tip":"tool has-tip"} onClick={()=>{const next=!annotating;setAnnotating(next);if(next)setInkActive(true)}}><PracticeIcon name="markup"/>{t.scoreViewer.markUp}</button>
       </div>
-        <div className="transport"><button data-tip={t.scoreViewer.playTip(startMeasure)} className={playing?"tool on has-tip":"tool has-tip"} onClick={togglePlayback}><PracticeIcon name={playing?"stop":"play"}/>{playing?t.scoreViewer.stop:t.scoreViewer.play}</button><PracticeRecorder/>{/* Everything about tempo in one group: the metronome that sounds it, the number, and the steppers. The metronome used to sit after Listen, which is what made "Listen" read as "start the metronome"; the steppers reuse the − n + shape the on-page tempo marks already use rather than a spinner. */}<div className="tempo-group"><button data-tip={t.scoreViewer.metronomeTip} className={metro?"tool on has-tip":"tool has-tip"} onClick={toggleMetro}><PracticeIcon name="metronome"/>{t.scoreViewer.metronome}</button>{/* A div, not a label: buttons nested in a label get the label's hover applied to them as a set — hovering + lit up − too — and a tap on one activates the label, which focuses the number field and would raise the keyboard on a tablet. Only the field is labelled. */}<div className="tempo"><button type="button" className="tempo-step" aria-label={zh?"减慢":"Slower"} disabled={bpm<=40} onClick={()=>setBpm(bpm-1)}>−</button><label className="tempo-field"><input aria-label={t.scoreViewer.tempoAria} type="number" min="40" max="220" value={tempoDraft??bpm} onChange={e=>setTempoDraft(e.target.value)} onBlur={commitTempo} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/></label><button type="button" className="tempo-step" aria-label={zh?"加快":"Faster"} disabled={bpm>=220} onClick={()=>setBpm(bpm+1)}>+</button></div></div><button className="tool has-tip reader-tap" data-tip={t.scoreViewer.tapTempo} aria-label={t.scoreViewer.tapTempo} onClick={tapTempo}><PracticeIcon name="tap"/>{zh?"打拍":"Tap"}</button>
+        <div className="transport">{practiceActions}<button data-tip={t.scoreViewer.playTip(startMeasure)} className={playing?"tool on has-tip":"tool has-tip"} onClick={togglePlayback}><PracticeIcon name={playing?"stop":"play"}/>{playing?t.scoreViewer.stop:t.scoreViewer.play}</button><PracticeRecorder/>{/* Everything about tempo in one group: the metronome that sounds it, the number, and the steppers. The metronome used to sit after Listen, which is what made "Listen" read as "start the metronome"; the steppers reuse the − n + shape the on-page tempo marks already use rather than a spinner. */}<div className="tempo-group"><button data-tip={t.scoreViewer.metronomeTip} className={metro?"tool on has-tip":"tool has-tip"} onClick={toggleMetro}><PracticeIcon name="metronome"/>{t.scoreViewer.metronome}</button>{/* A div, not a label: buttons nested in a label get the label's hover applied to them as a set — hovering + lit up − too — and a tap on one activates the label, which focuses the number field and would raise the keyboard on a tablet. Only the field is labelled. */}<div className="tempo"><button type="button" className="tempo-step" aria-label={zh?"减慢":"Slower"} disabled={bpm<=40} onClick={()=>setBpm(bpm-1)}>−</button><label className="tempo-field"><input aria-label={t.scoreViewer.tempoAria} type="number" min="40" max="220" value={tempoDraft??bpm} onChange={e=>setTempoDraft(e.target.value)} onBlur={commitTempo} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/></label><button type="button" className="tempo-step" aria-label={zh?"加快":"Faster"} disabled={bpm>=220} onClick={()=>setBpm(bpm+1)}>+</button></div></div><button className="tool has-tip reader-tap" data-tip={t.scoreViewer.tapTempo} aria-label={t.scoreViewer.tapTempo} onClick={tapTempo}><PracticeIcon name="tap"/>{zh?"打拍":"Tap"}</button>
           <div className="transport-menu">
-            <button aria-label={t.scoreViewer.drone} aria-pressed={drones.length>0} aria-expanded={picker} data-tip={t.scoreViewer.droneTip} className={drones.length?"tool on has-tip":"tool has-tip"} onClick={()=>setPicker(o=>!o)}><PracticeIcon name="drone"/>{t.scoreViewer.drone}<small>{drones.length?drones.join("+"):t.scoreViewer.droneOff}</small></button>
-            {picker&&<>
-              <div className="transport-menu-backdrop" onClick={()=>setPicker(false)}/>
-              <div className="transport-pop" role="dialog" aria-label={t.scoreViewer.drone}>
-                <label className="octave-row">{t.scoreViewer.octave} <select value={droneOctave} onChange={e=>setDroneOctave(+e.target.value)}>{[3,4,5,6].map(o=><option key={o}>{o}</option>)}</select></label>
-                <div className="pitch-grid">{["C","C♯","D","E♭","E","F","F♯","G","A♭","A","B♭","B"].map(n=>{
-                  const sounding=drones.filter(d=>d.slice(0,-1)===n).map(d=>d.slice(-1)).sort();
-                  return <button key={n} aria-pressed={sounding.length>0} className={sounding.length?"selected":""} onClick={()=>{setDronePitch(n);toggleDrone(n,droneOctave)}}>{n}{sounding.length>0&&<i>{sounding.join("·")}</i>}</button>;
-                })}</div>
-                {drones.length>0&&<div className="active-drone-list">{drones.map(n=><button key={n} onClick={()=>toggleDrone(n.slice(0,-1),+n.slice(-1))}>{n} ×</button>)}<button onClick={stopAllDrones}>{t.scoreViewer.stopAll}</button></div>}
-                <small>{t.scoreViewer.droneHint}</small>
-              </div>
-            </>}
+            <button aria-label={t.scoreViewer.drone} aria-pressed={droneArmed||drones.length>0} data-tip={t.scoreViewer.droneTip} className={droneArmed||drones.length?"tool on has-tip":"tool has-tip"} onClick={()=>setDroneArmed(on=>{
+              // Turning the drone off stops what is sounding. Keeping the
+              // pitches armed-but-silent would mean a second hidden state to
+              // explain, and the note highlights read straight off the
+              // sounding list, so they clear themselves with it.
+              if(on)stopAllDrones();
+              return !on;
+            })}><PracticeIcon name="drone"/>{t.scoreViewer.drone}<small>{drones.length?drones.join("+"):droneArmed?t.scoreViewer.droneOn:t.scoreViewer.droneOff}</small></button>
           </div>
         </div>      <div className="reader-header restored-view-controls">        
-        <div className="reader-view">{settings?.(readerControls)}{magnify!==1&&<button onClick={()=>setMagnify(1)}>{zh?"重置缩放":"Reset zoom"}</button>}
+        <div className="reader-view">{settings?.(readerControls)}
           <ReaderPopover label={zh?"显示设置":"View settings"} trigger={<><PracticeIcon name="gear"/>{zh?"显示":"View"}</>} className="tool has-tip">
 
             <div className="reader-setting-row"><span>{zh?"页面布局":"Page layout"}</span><div className="reader-choice" role="group" aria-label={zh?"页面布局":"Page layout"}>{[["900",zh?"竖向单页":"Portrait"],["auto",zh?"适应窗口":"Fit window"],["spread",zh?"双页":"Two pages"]].map(([value,label])=><button key={value} aria-pressed={pageWidth===value} onClick={()=>setPageWidth(value)}>{label}</button>)}</div></div>
             {practiceTempo&&<div className="reader-setting-row"><span>{zh?"练习速度":"Practice tempo"}</span><div className="reader-choice" role="group" aria-label={zh?"练习速度":"Practice tempo"}><button aria-pressed={!practiceTempo.value} onClick={()=>practiceTempo.onChange(false)}>{zh?"隐藏":"Hidden"}</button><button aria-pressed={practiceTempo.value} onClick={()=>practiceTempo.onChange(true)}>{zh?"显示在乐谱上":"On the page"}</button></div></div>}
             {lineBreak&&<div className="reader-setting-row"><span>{zh?"换行":"Line breaks"}</span><div className="reader-choice" role="group" aria-label={zh?"换行":"Line breaks"}><button aria-pressed={!lineBreak.value} onClick={()=>lineBreak.onChange(false)}>{zh?"接续上一个":"Continue from previous"}</button><button aria-pressed={lineBreak.value} onClick={()=>lineBreak.onChange(true)}>{zh?"另起一行":"Start on a new line"}</button></div></div>}
-            <label className="reader-setting-row">{zh?"音符大小":"Notation size"}<input type="range" min="0.75" max="1.5" step="0.05" value={sizePreference} onChange={e=>setSizePreference(+e.target.value)}/></label>
-            <label className="reader-setting-row">{zh?"行间距":"System spacing"}<input type="range" min="7" max="24" step="1" value={systemSpacing} onChange={e=>setSystemSpacing(+e.target.value)}/></label>
-            <label className="reader-setting-row">{zh?"音符间距":"Note spacing"}<input type="range" min="0.5" max="2" step="0.05" value={noteSpacing} onChange={e=>setNoteSpacing(+e.target.value)}/></label>
+            <label className="reader-setting-row">{zh?"音符大小":"Notation size"}<input type="range" min="0.6" max="2" step="0.05" value={sizePreference} onChange={e=>setSizePreference(+e.target.value)}/></label>
+            <label className="reader-setting-row">{zh?"行间距":"System spacing"}<input type="range" min="4" max="40" step="1" value={systemSpacing} onChange={e=>setSystemSpacing(+e.target.value)}/></label>
+            <label className="reader-setting-row">{zh?"音符间距":"Note spacing"}<input type="range" min="0.3" max="2" step="0.05" value={noteSpacing} onChange={e=>setNoteSpacing(+e.target.value)}/></label>
+            {/* The other groups in this panel are labelled; this one was a
+                bare row of icons, so what the five toggles had in common was
+                left for the reader to infer. */}
+            <div className="reader-setting-row reader-setting-row--stack"><span>{zh?"在谱面上显示":"Show on the page"}</span>
             <div className="reader-display-options">
         <button data-tip={t.scoreViewer.noteDisplayTip} className={noteDisplay!=="off"?"tool on has-tip":"tool has-tip"} onClick={cycleNoteDisplay}><span>A♭</span>{noteDisplay==="off"?t.scoreViewer.noteDisplay:noteDisplay==="names"?t.scoreViewer.noteNames:t.scoreViewer.solfege}</button>
         {!unmetered&&<button data-tip={t.scoreViewer.rhythmDisplay} className={rhythmMode!=="off"?"tool on has-tip":"tool has-tip"} onClick={cycleRhythm}><span>▥</span>{rhythmMode==="off"?t.scoreViewer.rhythm:rhythmMode==="counts"?t.scoreViewer.rhythmCountsShort:t.scoreViewer.rhythmBarsShort}</button>}
@@ -1475,7 +1742,7 @@ export function ScoreViewer({config,toolbar,settings,aside,defaultNoteSpacing,on
         <button data-tip={t.scoreViewer.tonguingTip} className={tonguing?"tool on has-tip":"tool has-tip"} onClick={()=>setTonguing(!tonguing)}><span>•</span>{t.scoreViewer.tonguing}</button>
         <button data-tip={t.scoreViewer.fingeringTip} className={fingering?"tool on has-tip":"tool has-tip"} onClick={()=>setFingering(!fingering)}><span>●○</span>{t.scoreViewer.fingering}</button>
 <button data-tip={t.scoreViewer.musicalTermsTip} className={theoryEnabled?"tool on has-tip":"tool has-tip"} aria-pressed={theoryEnabled} onClick={()=>setTheoryEnabled(v=>!v)}><span>𝑓</span>{zh?"音乐术语":"Musical terms"}</button></div>
-            <button className="reader-settings-reset" onClick={()=>{setSizePreference(.8);setSystemSpacing(12);setNoteSpacing(1);setPageWidth("900")}}>{zh?"恢复默认":"Restore defaults"}</button>
+            </div><button className="reader-settings-reset" onClick={()=>{setSizePreference(.8);setSystemSpacing(12);setNoteSpacing(1);setPageWidth("900")}}>{zh?"恢复默认":"Restore defaults"}</button>
           </ReaderPopover>
         </div>
         <div className="reader-pages" data-mode="pages">{/* Back to the first page. A long exercise book is a lot of
@@ -1505,8 +1772,19 @@ export function ScoreViewer({config,toolbar,settings,aside,defaultNoteSpacing,on
         </div>})}
       </div>{aside&&<div className="score-aside">{aside}</div>}</div>
 
-    </section>{theoryTip&&<div className="theory-tip" style={clampTip(theoryTip.x,theoryTip.y,280,150,"below")}><small>{t.scoreViewer.musicTheory}</small><p>{theoryTip.text}</p></div>}{fingerTip&&<div className={fingering?"flute-tip finger-chart":"flute-tip note-info-tip"} style={clampTip(fingerTip.x,fingerTip.y,340,255,"above")}>{(noteDisplay!=="off"||fingering)&&<strong>{noteDisplay==="solfege"?fingerTip.solfege:fingerTip.name}<sup>{fingerTip.pitch.match(/\d/)?.[0]}</sup></strong>}{rhythmMode!=="off"&&!unmetered&&<p className="note-info-beat">{zh?"拍位":"Beat"} {fingerTip.beat}</p>}{fingering&&<><div className="finger-diagram">{(()=>{
+    </section>{theoryTip&&<div className="theory-tip" style={clampTip(theoryTip.x,theoryTip.y,280,150,"below")}><strong>{theoryTip.title}</strong><p>{theoryTip.text}</p></div>}{fingerTip&&<div className={fingering?"flute-tip finger-chart":"flute-tip note-info-tip"} style={clampTip(fingerTip.x,fingerTip.y,340,255,"above")}>{(noteDisplay!=="off"||fingering)&&<strong>{noteDisplay==="solfege"?fingerTip.solfege:fingerTip.name}<sup>{fingerTip.octave}</sup></strong>}{rhythmMode!=="off"&&!unmetered&&<p className="note-info-beat">{zh?"拍位":"Beat"} {fingerTip.beat}</p>}{fingering&&<><div className="finger-diagram">{(()=>{
         const entry=fingeringsForMidi(midiForPitch(fingerTip.pitch));
         return entry?<FluteDiagramMini pressed={entry.fingerings[0].keys}/>:<em className="finger-diagram__none">{t.scoreViewer.noFingering}</em>;
-      })()}</div><small className="finger-diagram__legend">{t.scoreViewer.fingerChartCaption}</small></>}</div>}</main>
+      })()}</div>{(()=>{
+        // The caption used to be a static legend naming every key on the
+        // instrument — the same sentence under every note, which read as a
+        // claim about which keys this note presses. What is actually worth
+        // saying here is whether there is more than one way to play it.
+        const entry=fingeringsForMidi(midiForPitch(fingerTip.pitch));
+        const alts=(entry?.fingerings.length??0)-1;
+        if(alts<1)return null;
+        return <a className="finger-diagram__alts" href={`/flute-studio/fingerings?note=${encodeURIComponent(entry!.pitch)}`}>
+          {zh?`另有 ${alts} 种指法 →`:`${alts} more fingering${alts>1?"s":""} →`}
+        </a>;
+      })()}</>}</div>}</main>
 }

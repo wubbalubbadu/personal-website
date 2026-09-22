@@ -9,6 +9,25 @@ export type ArticulationGroup = { size: number; mode: ArticulationMode };
  * for slur; tongue/staccato/tenuto don't care about position, so "whole
  * run, one mode" and "repeating group of 1" would behave the same for them.
  */
+/**
+ * Does this pattern mix slurred and tongued notes?
+ *
+ * It matters for what gets printed. A run that is entirely tongued needs no
+ * marks — plain noteheads already mean "tongue everything". But in a mixed
+ * pattern the slurs say which notes are joined and nothing says which are
+ * not, so the tongued notes are marked too. That is how the method books
+ * print "slur two, tongue two", and it is the only way the eye can tell the
+ * groups apart at speed.
+ */
+export function isMixedArticulation(pattern: ArticulationGroup[]) {
+  return pattern.some(g => g.mode === "slur") && pattern.some(g => g.mode === "tongue");
+}
+
+/** Whether a note carries a staccato dot, given its pattern's context. */
+export function marksStaccato(mode: ArticulationMode, mixed: boolean) {
+  return mode === "staccato" || (mixed && mode === "tongue");
+}
+
 export type ArticulationSelection = { kind: "whole"; mode: ArticulationMode } | { kind: "groups"; groups: ArticulationGroup[] };
 
 export function resolveArticulationPattern(selection: ArticulationSelection, totalNotes: number): ArticulationGroup[] {
