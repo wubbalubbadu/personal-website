@@ -1,5 +1,5 @@
 import type {ReactNode} from "react";
-export type PracticeIconName = "metronome" | "tuner" | "drone" | "markup" | "fullscreen" | "close" | "previous" | "next" | "settings" | "gear" | "tap" | "record" | "play" | "stop" | "undo" | "redo" | "saved" | "aids" | "tempo" | "print" | "top";
+export type PracticeIconName = "metronome" | "tuner" | "drone" | "markup" | "fullscreen" | "close" | "previous" | "next" | "settings" | "gear" | "tap" | "record" | "play" | "stop" | "undo" | "redo" | "saved" | "aids" | "tempo" | "print" | "top" | "highlighter" | "arrow" | "eraser" | "text" | "sticky" | "select";
 const paths:Record<PracticeIconName,ReactNode>={
   // Trapezoid body, base line, pendulum arm. The weight-dot and the extra
   // crossing stroke the old glyph had collapsed into a smudge at 22px.
@@ -7,8 +7,14 @@ const paths:Record<PracticeIconName,ReactNode>={
   tuner:<><path d="M7 3v8a5 5 0 0 0 10 0V3M12 16v6"/><path d="M5 3h4M15 3h4"/></>,
   drone:<><path d="M11 4 6 8H3v8h3l5 4V4Z"/><path d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14"/></>,
   markup:<><path d="M16.1 3.9a1.9 1.9 0 0 1 2.7 0l1.3 1.3a1.9 1.9 0 0 1 0 2.7L8.5 19.5l-4.6 1.1 1.1-4.6L16.1 3.9Z"/><path d="m14.4 5.6 4 4"/></>,
-  undo:<><path d="M4 3v6h6M4 9a8 8 0 1 1 0 8"/></>,
-  redo:<><path d="M20 3v6h-6M20 9a8 8 0 1 0 0 8"/></>,
+  undo:<path d="m8 5-4 4 4 4M4 9h10a5 5 0 0 1 0 10h-3"/>,
+  redo:<path d="m16 5 4 4-4 4M20 9H10a5 5 0 0 0 0 10h3"/>,
+  highlighter:<path d="m14 4 6 6-8 8-6-6 8-8ZM6 12l-2 6 2 2 6-2M3 21h8"/>,
+  arrow:<path d="M5 19 19 5M8 5h11v11"/>,
+  eraser:<path d="m14 4 6 6-10 10H6l-4-4L14 4ZM8 10l6 6M10 20h10"/>,
+  text:<path d="M5 6V4h14v2M12 4v16M8 20h8"/>,
+  sticky:<path d="M14 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v9l-7 7ZM14 21v-7h7"/>,
+  select:<path d="m5 3 15 10-7 1-3 7L5 3Z"/>,
   saved:<path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3l-5.6 2.9 1.1-6.2L3 9.6l6.2-.9Z"/>,
   aids:<><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16M5.5 8h1M5.5 12h1M5.5 16h1"/></>,
   fullscreen:<path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/>,

@@ -3,9 +3,8 @@
 import PracticeRecorder from "../PracticeRecorder";
 import {ReaderPopover} from "./ReaderPopover";
 
-import { PointerEvent, useEffect, useRef, useState } from "react";
-/** The DOM PointerEvent, which React's synthetic type shadows here. */
-type PointerEvent2 = globalThis.PointerEvent;
+import { useEffect, useRef, useState } from "react";
+import {AnnotationLayer} from "./AnnotationLayer";
 import { createPortal } from "react-dom";
 import type { MusicSheetCalculator, OpenSheetMusicDisplay as OSMDType } from "opensheetmusicdisplay";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -17,8 +16,7 @@ import {FluteDiagramMini} from "./FluteDiagram";
 import {fingeringsForMidi, midiForPitch} from "../../../content/fingerings/flute";
 import {SaveButton} from "./SaveButton";
 import AccountMenu from "../AccountMenu";
-import {usePencilOnly} from "../lib/pencilMode";
-import {notationScale,pageOffsets,pageAt} from "./readerLayout";
+import {notationScale,pageOffsets,pageAt,tabletReader,initialReaderLayout} from "./readerLayout";
 import "../reader-workspace.css";
 import type { ArticulationMode } from "./notePatterns";
 
@@ -32,7 +30,7 @@ import type { ArticulationMode } from "./notePatterns";
  * line pulled out of a multi-voice/chord XML the auto-derivation doesn't
  * handle yet).
  */
-export type ScoreViewerConfig={title:string;composer:string;asset:string;id:string;backHref:string;backLabel?:string;pdfPath?:string;defaultTempo?:number;pitches?:(string|null)[];events?:{p:string|null;d:number;tied?:boolean;articulation?:ArticulationMode;slurContinuation?:boolean}[];measureStarts?:number[];subtitle?:string;displayPitches?:(string|null)[];measureKeyAccidentals?:string[][];syllables?:(string|null)[]};
+export type ScoreViewerConfig={title:string;composer:string;asset:string;id:string;backHref:string;backLabel?:string;pdfPath?:string;defaultTempo?:number;pitches?:(string|null)[];events?:{p:string|null;d:number;tied?:boolean;articulation?:ArticulationMode;slurContinuation?:boolean}[];measureStarts?:number[];subtitle?:string;displayPitches?:(string|null)[];noteKeySignatures?:string[][];syllables?:(string|null)[]};
 /**
  * Fingerings come from content/fingerings/flute.ts, the same data the
  * fingering chart and the practice dock read. The two tables that used to
@@ -344,12 +342,14 @@ function placeStackedLabel(root:HTMLDivElement,className:string,text:string,x:nu
  * than that (a 32nd or 64th off-grid) gets no syllable at all rather than
  * a misleading/duplicate one.
  */
-function placePracticeOverlays(root:HTMLDivElement,scoreEvents:{p:string|null;d:number}[],measureStarts:number[],unitsPerBeat:number,keyAccidentals:Set<string>,displayPitches?:(string|null)[],measureKeys?:string[][],unmetered=false,syllables?:(string|null)[],visible:OverlayVisibility={names:true,solfege:true,accidentals:true,tonguing:true,counts:true,sticks:true}){root.querySelectorAll(".practice-overlay").forEach(n=>n.remove());
+function placePracticeOverlays(root:HTMLDivElement,scoreEvents:{p:string|null;d:number}[],measureStarts:number[],unitsPerBeat:number,keyAccidentals:Set<string>,displayPitches?:(string|null)[],noteKeys?:string[][],unmetered=false,syllables?:(string|null)[],visible:OverlayVisibility={names:true,solfege:true,accidentals:true,tonguing:true,counts:true,sticks:true}){root.querySelectorAll(".practice-overlay").forEach(n=>n.remove());
 const all=[...root.querySelectorAll<SVGGElement>(".vf-stavenote[data-event]")],step=unitsPerBeat/4;
 // EVERY layout read happens here, before a single node is appended. Mixing
 // reads and writes forces the browser to re-lay-out the whole score on each
 // read; in a book of a few thousand notes that alone was seconds of work.
 const rootBox=root.getBoundingClientRect();
+const markedThisMeasure=new Set<string>();
+let accidentalMeasure=-1;
 const noteBox=new Map<Element,DOMRect>(),headBox=new Map<Element,DOMRect>(),byMeasure=new Map<number,SVGGElement[]>();
 for(const note of all){
   noteBox.set(note,note.getBoundingClientRect());
@@ -379,8 +379,6 @@ const nameRows:[number,number]=[-Infinity,-Infinity],solfegeRows:[number,number]
 // once applies to every later B in that bar — those repeats are marked
 // too, in a second colour, because the player has to remember them rather
 // than read them.
-const markedThisMeasure=new Set<string>();
-let accidentalMeasure=-1;
 group.forEach(note=>{const index=Number(note.dataset.event),event=scoreEvents[index];
   // A grace note borrows its time from the note it decorates rather than
   // occupying a beat position of its own (deriveScoreEvents gives it
@@ -390,7 +388,8 @@ group.forEach(note=>{const index=Number(note.dataset.event),event=scoreEvents[in
   if(event?.d===0)return;
   const box=noteBox.get(note)!,x=box.left-rootBox.left+box.width/2;
   if(event?.p){
-    const letter=(displayPitches?.[index]??event.p).replace(/\d/,"");
+    const written=displayPitches?.[index]??event.p;
+    const letter=written.replace(/\d/,"");
     // Consecutive notes on the exact same pitch repeat the same letter —
     // skip re-printing it (count-markers still show every beat regardless,
     // this is only about pitch identity) so the space goes to notes that
@@ -404,33 +403,34 @@ group.forEach(note=>{const index=Number(note.dataset.event),event=scoreEvents[in
     }
     if(visible.accidentals){
       if(measure!==accidentalMeasure){markedThisMeasure.clear();accidentalMeasure=measure}
-      // What the KEY SIGNATURE alters. These apply to every bar of the
-      // piece, so there is nothing about them to remember within a
-      // measure — they are marked, but never as "carried".
-      const keySig=measureKeys?.[measure-1]??[...keyAccidentals];
+      const keySig=noteKeys?.[index]??[...keyAccidentals];
       const base=letter[0];
+      // What the key signature alters. Never printed beside the note, so
+      // always marked.
       const inKeySig=keySig.includes(letter);
-      // An accidental the key signature does not account for. The staff
-      // already prints these where they occur, so the first one is NOT
-      // marked — the overlay exists to show what the notation does not.
+      // What the staff prints for itself: an accidental the signature does
+      // not account for, and a natural cancelling one that it does.
       const writtenNatural=letter.length===1&&keySig.some(entry=>entry[0]===base);
       const writtenAccidental=(letter.length>1&&!inKeySig)||writtenNatural;
-      // What IS worth marking: a key-signature alteration, which is never
-      // printed next to the note, and a repeat later in the same bar of an
-      // accidental written earlier in it, which is not reprinted either.
-      const carried=writtenAccidental&&markedThisMeasure.has(letter);
+      // The engraver prints an accidental once per bar per octave, so a
+      // note that returns later in the same bar — the descent of a scale
+      // that turned around inside it — carries no sign at all. That is
+      // exactly where a reminder is worth having. Keyed on the written
+      // pitch, octave included, because an accidental only governs its own
+      // octave and the same letter an octave away IS printed again.
+      const carried=writtenAccidental&&markedThisMeasure.has(written);
       if(inKeySig||carried){
         const head=headBox.get(note)??box;
         const size=Math.round(Math.max(11,Math.min(26,head.height*2.1)));
-        // Spelled from the key signature where that is what we are
-        // marking: the derived pitch normalises enharmonics, so a staff
-        // C♯ arrives here as D♭ and would print the wrong symbol.
+        // Spelled from the key signature where that is what is being
+        // marked: the derived pitch normalises enharmonics, so a staff C♯
+        // arrives here as D♭ and would print the wrong symbol.
         const glyph=inKeySig?(keySig.find(entry=>entry[0]===base)??letter).slice(1)
           :writtenNatural?"♮":letter.slice(1);
         const mark=overlay(root,`accidental-marker${carried?" is-carried":""}`,glyph,head.left-rootBox.left+head.width/2,box.top-rootBox.top-size*1.25-3);
         mark.style.fontSize=`${size}px`;
       }
-      if(writtenAccidental)markedThisMeasure.add(letter);
+      if(writtenAccidental)markedThisMeasure.add(written);
     }
   }
   // Sits above the accidental lane (-18) rather than sharing it, so a
@@ -453,47 +453,6 @@ let onset=0;const anchors:{t:number;x:number}[]=[];group.forEach((node,i)=>{cons
 // much is actually there instead of assuming a fixed 4.
 measureUnits=Math.max(unitsPerBeat*4,onset);anchors.push({t:measureUnits,x:right});const top=(measureBox?.top??Math.min(...group.map(n=>n.getBoundingClientRect().top)))-rootBox.top-7;for(let beat=0;beat*unitsPerBeat<measureUnits;beat++){const target=beat*unitsPerBeat,left=[...anchors].reverse().find(a=>a.t<=target)??anchors[0],next=anchors.find(a=>a.t>=target)??anchors.at(-1)!,ratio=next.t===left.t?0:(target-left.t)/(next.t-left.t);overlay(root,"beat-stick","",left.x+(next.x-left.x)*ratio,top)}}}
 
-/**
- * Sizes the ink canvas's backing store to match the score paper's actual
- * rendered size (not a fixed 1600x2200) times devicePixelRatio, then scales
- * the context so drawing coordinates stay in that logical size regardless
- * of the backing resolution. Fixes annotations looking thick/pixelated: the
- * old fixed backing store was routinely far shorter than a real page of
- * music (a few hundred native px vs. a couple thousand CSS px tall), so the
- * browser was stretching a low-res bitmap to fill the space, and on a
- * retina display that stretch was on top of an already-too-coarse pixel
- * grid. Also restores any saved stroke from localStorage, sized to fit.
- */
-function sizeInkCanvas(canvas:HTMLCanvasElement|null,sizeRef:{current:{w:number;h:number}},historyRef:{current:string[]},indexRef:{current:number},id:string,onRestore:()=>void){
-  if(!canvas)return;
-  const paper=canvas.closest<HTMLElement>(".score-paper"),dpr=window.devicePixelRatio||1;
-  const w=Math.max(1,Math.round(paper?.clientWidth||canvas.clientWidth||sizeRef.current.w)),h=Math.max(1,Math.round(paper?.scrollHeight||canvas.clientHeight||sizeRef.current.h));
-  sizeRef.current={w,h};
-  canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);
-  canvas.getContext("2d")?.scale(dpr,dpr);
-  const saved=localStorage.getItem(`cookie:${id}:ink`),blank=canvas.toDataURL();
-  historyRef.current=[blank];indexRef.current=0;
-  if(saved){
-    // Restoring the saved ink is asynchronous, and a view setting that
-    // re-lays the page calls this again before the image has loaded. Both
-    // loads then draw onto the same canvas — at whatever size each was
-    // measured at — and drawImage does not clear, so the page ends up
-    // carrying two copies of every stroke at slightly different scales.
-    // Stamp the canvas with which resize is current and let a superseded
-    // load drop its result.
-    const generation=String((Number(canvas.dataset.inkGeneration)||0)+1);
-    canvas.dataset.inkGeneration=generation;
-    const image=new Image();
-    image.onload=()=>{
-      if(canvas.dataset.inkGeneration!==generation)return;
-      const context=canvas.getContext("2d");
-      context?.clearRect(0,0,w,h);
-      context?.drawImage(image,0,0,w,h);
-      historyRef.current.push(saved);indexRef.current=1;onRestore();
-    };
-    image.src=saved;
-  }
-}
 /** Major and relative-minor keys by number of sharps, then by number of flats. */
 const SHARP_KEYS=[["C","A"],["G","E"],["D","B"],["A","F♯"],["E","C♯"],["B","G♯"],["F♯","D♯"],["C♯","A♯"]];
 const FLAT_KEYS=[["C","A"],["F","D"],["B♭","G"],["E♭","C"],["A♭","F"],["D♭","B♭"],["G♭","E♭"],["C♭","A♭"]];
@@ -552,7 +511,7 @@ function tagFermatas(root:HTMLDivElement,text:string){
   });
 }
 
-function addTheoryTargets(root:HTMLDivElement,measureKeys?:string[][],measureStarts?:number[]){
+function addTheoryTargets(root:HTMLDivElement,noteKeys?:string[][]){
   const targets:[string,string,string][]=[
     [".vf-clef","Treble clef","The curl circles the G line. Flute music is normally written in this clef."],
     [".vf-timesignature","Time signature","The top number gives beats per measure; the bottom number identifies the beat value."],
@@ -568,10 +527,12 @@ function addTheoryTargets(root:HTMLDivElement,measureKeys?:string[][],measureSta
   const notes=[...root.querySelectorAll<SVGGElement>(".vf-stavenote[data-event]")];
   root.querySelectorAll<SVGElement>(".vf-keysignature").forEach(node=>{
     let altered:string[]|undefined;
-    if(measureKeys&&measureStarts){
+    if(noteKeys){
+      // The first note after the signature carries the signature it is
+      // written under, so there is nothing to compute.
       const next=notes.find(note=>node.compareDocumentPosition(note)&Node.DOCUMENT_POSITION_FOLLOWING);
       const event=next?Number(next.dataset.event):NaN;
-      if(Number.isFinite(event))altered=measureKeys[measureForEvent(event,measureStarts)-1];
+      if(Number.isFinite(event))altered=noteKeys[event];
     }
     node.dataset.theoryTitle="Key signature";
     node.dataset.theory=altered?keySignatureText(altered)
@@ -579,10 +540,6 @@ function addTheoryTargets(root:HTMLDivElement,measureKeys?:string[][],measureSta
     node.classList.add("theory-target");
   });
 }
-
-type ScoreNote={id:string;kind:"text"|"sticky";x:number;y:number;text:string;w?:number;h?:number};
-function notesStorageKey(id:string){return `cookie:${id}:notes`}
-function readNotes(id:string):ScoreNote[]{try{const saved=JSON.parse(localStorage.getItem(notesStorageKey(id))??"[]");return Array.isArray(saved)?saved:[]}catch{return []}}
 
 function prepareScore(xml: string,title:string) {
   const document = new DOMParser().parseFromString(xml, "application/xml");
@@ -643,31 +600,21 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   // whatever grid the piece actually needs (see resolveUnitsPerWhole) and
   // overwrites this once the score loads.
   const sequenceRef=useRef<{pitches:(string|null)[];events:{p:string|null;d:number;tied?:boolean;articulation?:ArticulationMode;slurContinuation?:boolean}[];measureStarts:number[];unitsPerBeat:number;keyAccidentals:Set<string>}>({pitches:config.pitches??[],events:config.events??[],measureStarts:config.measureStarts??[],unitsPerBeat:4,keyAccidentals:new Set()});
-  const scoreRef = useRef<HTMLDivElement>(null); const scoreScrollRef = useRef<HTMLDivElement>(null); const canvasRef = useRef<HTMLCanvasElement>(null); const osmdRef = useRef<OSMDType | null>(null);
+  const scoreRef = useRef<HTMLDivElement>(null); const scoreScrollRef = useRef<HTMLDivElement>(null); const osmdRef = useRef<OSMDType | null>(null);
   // Scroll offsets (within .score-scroll's own content, not the viewport)
   // where each computed "page" starts — see computePages(). Kept in a ref
   // rather than state since only page TURNS need to re-render; the offsets
   // themselves are consumed imperatively by goToPage/the scroll-snap effect.
   const pageOffsetsRef = useRef<number[]>([0]);
-  const audioRef = useRef<AudioContext | null>(null); const playbackTimers=useRef<number[]>([]); const playbackNodes=useRef<OscillatorNode[]>([]); const playbackPosition=useRef<{audioStart:number;unit:number;from:number}|null>(null); const drawing = useRef(false); const inkHistory=useRef<string[]>([]); const inkIndex=useRef(-1);
-  // Logical (CSS-pixel) size of the ink canvas's drawing surface — set once
-  // the score has rendered, from the paper's actual size, not a fixed
-  // constant. The canvas's real backing-store resolution is this times
-  // devicePixelRatio (see the load effect), so strokes stay crisp on
-  // retina displays instead of a fixed-resolution bitmap getting stretched
-  // to fit whatever size the paper turns out to be.
-  const inkSizeRef = useRef({ w: 1600, h: 2200 });
+  const audioRef = useRef<AudioContext | null>(null); const playbackTimers=useRef<number[]>([]); const playbackNodes=useRef<OscillatorNode[]>([]); const playbackPosition=useRef<{audioStart:number;unit:number;from:number}|null>(null);
   // Which overlay rows are actually on screen. Held in a ref because the
   // layout pass also runs from a ResizeObserver and from the load effect,
   // neither of which re-closes over current state.
   const overlayVisibilityRef=useRef<OverlayVisibility>({names:false,solfege:false,accidentals:false,tonguing:true,counts:false,sticks:false});
-  const [loading,setLoading]=useState(true); const [error,setError]=useState(""); const [startMeasure,setStartMeasure]=useState(1); const [playing,setPlaying]=useState(false); const [playingFrom,setPlayingFrom]=useState<number|null>(null); const [playingEvent,setPlayingEvent]=useState<number|null>(null); const [annotating,setAnnotating]=useState(false); const [inkColor,setInkColor]=useState("#e52e31"); const [eraser,setEraser]=useState(false);
-  /** Freehand or arrow. An arrow is dragged tail-to-tip, so it is not a
-   *  stroke you accumulate — it is previewed and committed on release. */
-  const [inkTool,setInkTool]=useState<"pen"|"arrow">("pen");
-  /** Where the current arrow started, and the canvas as it was before it. */
-  const arrowFrom=useRef<{x:number;y:number}|null>(null);
-  const arrowBase=useRef<ImageData|null>(null);
+  const [loading,setLoading]=useState(true); const [error,setError]=useState(""); const [startMeasure,setStartMeasure]=useState(1); const [playing,setPlaying]=useState(false); const [playingFrom,setPlayingFrom]=useState<number|null>(null); const [playingEvent,setPlayingEvent]=useState<number|null>(null); const [annotating,setAnnotating]=useState(false);
+  const [annotationToolbar,setAnnotationToolbar]=useState<HTMLDivElement|null>(null);
+  const annotatingRef=useRef(false);
+  useEffect(()=>{annotatingRef.current=annotating;if(annotating){setFingerTip(null);setTheoryTip(null)}},[annotating]);
   // Page-turn mode: false (free scroll) by default until the mount effect
   // below picks a real default (stored preference, else viewport width) —
   // starting false keeps first paint identical between server and client.
@@ -677,15 +624,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   // "tap the page to read distraction-free" mode. See scoreClick below for
   // the tap trigger and the effect further down for the fullscreen attempt.
   const [focusMode,setFocusMode]=useState(false);
-  // Whether the pencil/eraser is the selected tool right now — separate
-  // from `annotating` (mark-up mode being on at all). Without this, the
-  // canvas captured every pointer event the whole time mark-up was open:
-  // typing into a text box and then clicking away to deselect it landed
-  // that click on the canvas too and left a stray dot. A dedicated pencil
-  // tool (below) is the only thing that turns this back on; placing a
-  // text/sticky note turns it off, since what the user wants right after
-  // placing one is to interact with it, not keep drawing.
-  const [inkActive,setInkActive]=useState(true); const [,setHistoryTick]=useState(0); const [noteDisplay,setNoteDisplay]=useState<NoteDisplay>("off"); const [accidentals,setAccidentals]=useState(false); const [tonguing,setTonguing]=useState(true); const [fingering,setFingering]=useState(false); const [rhythmMode,setRhythmMode]=useState<RhythmMode>("off");  const [magnify,setMagnify]=useState(1); const [fingerTip,setFingerTip]=useState<{pitch:string;name:string;octave:string;solfege:string;beat:string;x:number;y:number}|null>(null); const [theoryTip,setTheoryTip]=useState<{title:string;text:string;x:number;y:number}|null>(null); const [favorite,setFavorite]=useState(false);
+  const [noteDisplay,setNoteDisplay]=useState<NoteDisplay>("off"); const [accidentals,setAccidentals]=useState(false); const [tonguing,setTonguing]=useState(true); const [fingering,setFingering]=useState(false); const [rhythmMode,setRhythmMode]=useState<RhythmMode>("off");  const [magnify,setMagnify]=useState(1); const [fingerTip,setFingerTip]=useState<{pitch:string;name:string;octave:string;solfege:string;beat:string;x:number;y:number}|null>(null); const [theoryTip,setTheoryTip]=useState<{title:string;text:string;x:number;y:number}|null>(null); const [favorite,setFavorite]=useState(false);
   const [theoryEnabled,setTheoryEnabled]=useState(false),[sizePreference,setSizePreference]=useState(.8);
   const sizePreferenceRef=useRef(sizePreference);
   // How much vertical gap OSMD leaves between systems — user-adjustable
@@ -729,12 +668,15 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   useEffect(()=>{
     try{
       const saved=JSON.parse(localStorage.getItem(viewPrefsKey)||"null");
+      /* eslint-disable react-hooks/set-state-in-effect */
+      const tablet=tabletReader(navigator.maxTouchPoints,Math.min(screen.width,screen.height));
+      const tabletKey=`${viewPrefsKey}:tablet-layout`;
+      const tabletLayout=tablet?localStorage.getItem(tabletKey):null;
+      setPageWidth(initialReaderLayout(tablet,saved?.pageWidth,tabletLayout));
       if(saved){
-        /* eslint-disable react-hooks/set-state-in-effect */
         if(Number.isFinite(saved.sizePreference))setSizePreference(saved.sizePreference);
         if(Number.isFinite(saved.systemSpacing))setSystemSpacing(saved.systemSpacing);
         if(Number.isFinite(saved.noteSpacing))setNoteSpacing(saved.noteSpacing);
-        if(typeof saved.pageWidth==="string")setPageWidth(saved.pageWidth);
         if(typeof saved.noteDisplay==="string")setNoteDisplay(saved.noteDisplay);
         if(typeof saved.accidentals==="boolean")setAccidentals(saved.accidentals);
         if(typeof saved.tonguing==="boolean")setTonguing(saved.tonguing);
@@ -776,103 +718,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   function cycleNoteDisplay(){setNoteDisplay(current=>current==="off"?"names":current==="names"?"solfege":"off")}
   function cycleRhythm(){setRhythmMode(current=>current==="off"?"counts":current==="counts"?"bars":"off")}
 
-  const [notes,setNotes]=useState<ScoreNote[]>([]);
-  const notesRef=useRef<ScoreNote[]>([]);
-  const noteDrag=useRef<{id:string;startX:number;startY:number;origX:number;origY:number;moved:boolean;field:HTMLTextAreaElement|null}|null>(null);
-  // Which note is picked up right now. Only the selected note shows its
-  // delete control: an × hovering over every note turned a marked-up page
-  // into a field of little buttons, and there was no way to say "this one"
-  // before acting on it.
-  const [selectedNote,setSelectedNote]=useState<string|null>(null);
-  useEffect(()=>{notesRef.current=notes},[notes]);
-  // The ref has to follow the state everywhere, not only through
-  // persistNotes: noteUp writes notesRef.current back to storage when a drag
-  // ends, so any path that sets notes without updating the ref makes that
-  // write save a stale array — and after a fresh load the stale array is
-  // empty, which deletes every note on the page the first time one is moved.
-  useEffect(()=>{const loaded=readNotes(id);setNotes(loaded);notesRef.current=loaded},[id]);
   useEffect(()=>{record(id)},[id,record]);
-  function persistNotes(next:ScoreNote[]){setNotes(next);notesRef.current=next;localStorage.setItem(notesStorageKey(id),JSON.stringify(next))}
-  function addScoreNote(kind:"text"|"sticky"){const note:ScoreNote={id:crypto.randomUUID(),kind,x:60+notes.length*16,y:60+notes.length*16,text:""};persistNotes([...notes,note]);setInkActive(false)}
-  function updateScoreNoteText(noteId:string,text:string){persistNotes(notes.map(n=>n.id===noteId?{...n,text}:n))}
-  function removeScoreNote(noteId:string){setSelectedNote(current=>current===noteId?null:current);persistNotes(notes.filter(n=>n.id!==noteId))}
-  /**
-   * A textarea's own resize grabber changes the element but tells nobody,
-   * so the new size is read back off the DOM when the drag ends and stored
-   * on the note. Without this a resize looks like it worked and is gone on
-   * the next reload, which is worse than not being resizable at all.
-   */
-  function commitNoteSize(noteId:string,element:HTMLTextAreaElement){
-    const w=Math.round(element.offsetWidth),h=Math.round(element.offsetHeight);
-    const note=notesRef.current.find(n=>n.id===noteId);
-    if(!note||(note.w===w&&note.h===h))return;
-    persistNotes(notesRef.current.map(n=>n.id===noteId?{...n,w,h}:n));
-  }
-  /** How close to the textarea's bottom-right corner counts as its own
-   *  resize grabber rather than somewhere to start a drag from. */
-  const RESIZE_CORNER=18;
-  /** Pointer travel that separates "clicked it" from "dragged it". */
-  const DRAG_SLOP=4;
-  /**
-   * A note drags from anywhere on it, not just from the sliver of padding
-   * around the textarea — which was the whole note as far as the eye was
-   * concerned, and made moving one a hunt for its border.
-   *
-   * Pressing is therefore ambiguous: it could become a drag or turn out to
-   * be a click into the text. So the press is only tracked at first, and
-   * nothing is committed until the pointer has travelled far enough to mean
-   * it. Past that it becomes a real drag (and captures the pointer, so the
-   * textarea does not start selecting text underneath); short of it, the
-   * release puts the caret in the note by hand — which it has to, because
-   * the press suppressed the browser's own focus to keep the two apart.
-   *
-   * Two things are deliberately left alone: a note you are already editing
-   * (so selecting text with the mouse still works), and the textarea's own
-   * resize corner (so the grabber still grabs).
-   */
-  function noteDown(event:React.PointerEvent<HTMLDivElement>,note:ScoreNote){
-    // Selecting happens on any press, including one that lands in the
-    // textarea — clicking into a note to read it is exactly when you want
-    // to be able to delete it.
-    setSelectedNote(note.id);
-    const target=event.target as HTMLElement;
-    if(target.closest("button"))return;
-    if(target.tagName==="TEXTAREA"){
-      if(document.activeElement===target)return;
-      const box=target.getBoundingClientRect();
-      if(event.clientX>box.right-RESIZE_CORNER&&event.clientY>box.bottom-RESIZE_CORNER)return;
-      event.preventDefault();
-    }
-    // Which field the press landed on, remembered here because the pointer
-    // capture below re-targets pointerup at the note itself — so by the time
-    // the press turns out to be a click rather than a drag, the event can no
-    // longer say it was over the textarea, and the note never took focus.
-    noteDrag.current={id:note.id,startX:event.clientX,startY:event.clientY,origX:note.x,origY:note.y,moved:false,
-      field:target instanceof HTMLTextAreaElement?target:null};
-    // Captured on the press, not once the drag is recognised: without it
-    // the very first move has to happen to land on the note itself, and a
-    // quick flick puts the pointer somewhere else before the browser
-    // delivers anything, so the drag never starts at all.
-    try{event.currentTarget.setPointerCapture(event.pointerId)}catch{/* Dragging still works without it. */}
-  }
-  function noteMove(event:React.PointerEvent<HTMLDivElement>){
-    const drag=noteDrag.current;
-    if(!drag)return;
-    if(!drag.moved){
-      if(Math.hypot(event.clientX-drag.startX,event.clientY-drag.startY)<DRAG_SLOP)return;
-      drag.moved=true;
-    }
-    const dx=(event.clientX-drag.startX)/magnify,dy=(event.clientY-drag.startY)/magnify;
-    setNotes(current=>{const next=current.map(n=>n.id===drag.id?{...n,x:drag.origX+dx,y:drag.origY+dy}:n);notesRef.current=next;return next});
-  }
-  function noteUp(event:React.PointerEvent<HTMLDivElement>){
-    const drag=noteDrag.current;
-    if(!drag)return;
-    noteDrag.current=null;
-    if(drag.moved){persistNotes(notesRef.current);return}
-    const field=drag.field??(event.target instanceof HTMLTextAreaElement?event.target:null);
-    field?.focus();
-  }
 
   // Re-tags every rendered note with its event index/measure/pitch (OSMD
   // gives us fresh DOM nodes with none of that whenever it re-renders) and
@@ -885,8 +731,8 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     if(!root)return;
     const seq=sequenceRef.current;
     root.querySelectorAll<SVGGElement>(".vf-stavenote").forEach((node,index)=>{node.dataset.event=String(index);node.classList.toggle("playback-start",index===selectedEventRef.current);node.dataset.measure=String(measureForEvent(index,seq.measureStarts));const pitch=seq.pitches[index];if(pitch)node.dataset.pitch=pitch;const written=config.displayPitches?.[index];if(written){node.dataset.noteName=written.replace(/\d/,"");const octave=written.match(/\d/)?.[0];if(octave)node.dataset.noteOctave=octave}});
-    placePracticeOverlays(root,seq.events,seq.measureStarts,seq.unitsPerBeat,seq.keyAccidentals??new Set(),config.displayPitches,config.measureKeyAccidentals,unmetered,config.syllables,overlayVisibilityRef.current);
-    addTheoryTargets(root,config.measureKeyAccidentals,seq.measureStarts);
+    placePracticeOverlays(root,seq.events,seq.measureStarts,seq.unitsPerBeat,seq.keyAccidentals??new Set(),config.displayPitches,config.noteKeySignatures,unmetered,config.syllables,overlayVisibilityRef.current);
+    addTheoryTargets(root,config.noteKeySignatures);
     updateDroneHighlight();
   }
   // A droned note needs its own color, distinct from the coral
@@ -1027,7 +873,6 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     }
     if(spread)root.style.width=`${spreadWidth/2}px`;else root.style.width="";
     renderScore(osmd);root.style.width=spread?`${spreadWidth}px`:"";resync();
-    sizeInkCanvas(canvasRef.current,inkSizeRef,inkHistory,inkIndex,id,()=>setHistoryTick(v=>v+1));
     if(spread){const offsets=pageOffsetsRef.current;scroller.scrollTop=offsets[Math.min(pageIndex,offsets.length-1)]??0;}
     else if(anchor){const node=root.querySelector<SVGElement>(`[data-event="${anchor.event}"]`);if(node)scroller.scrollTop+=node.getBoundingClientRect().top-scroller.getBoundingClientRect().top-anchor.offset*magnifyRef.current}
     else scroller.scrollTop=0;
@@ -1123,6 +968,14 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
 
   // Keep engraving width fixed while magnifying; preserve the point under the gesture.
   const magnifyRef=useRef(magnify);
+  function zoomAnnotations(value:number,x:number,y:number){
+    const el=scoreScrollRef.current;if(!el)return;
+    const next=Math.max(.5,Math.min(3,value)),old=magnifyRef.current,box=el.getBoundingClientRect();
+    const px=x-box.left,py=y-box.top,left=(el.scrollLeft+px)*next/old-px,top=(el.scrollTop+py)*next/old-py;
+    magnifyRef.current=next;
+    el.closest<HTMLElement>(".restored-reader")?.style.setProperty("--viewer-magnify",String(next));
+    setMagnify(next);el.scrollLeft=left;el.scrollTop=top;
+  }
   useEffect(()=>{magnifyRef.current=magnify},[magnify]);
   useEffect(()=>{
     const el=scoreScrollRef.current;if(!el)return;
@@ -1145,12 +998,12 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
       window.clearTimeout(commit);
       commit=window.setTimeout(()=>setMagnify(magnifyRef.current),140);
     }
-    function wheel(e:WheelEvent){if(!e.ctrlKey)return;e.preventDefault();apply(magnifyRef.current*Math.exp(-e.deltaY*.008),e.clientX,e.clientY)}
-    function start(e:TouchEvent){if(e.touches.length!==2)return;e.preventDefault();touchDistance=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);touchZoom=magnifyRef.current}
-    function move(e:TouchEvent){if(e.touches.length!==2||!touchDistance)return;e.preventDefault();const [a,b]=[e.touches[0],e.touches[1]];apply(touchZoom*Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)/touchDistance,(a.clientX+b.clientX)/2,(a.clientY+b.clientY)/2)}
+    function wheel(e:WheelEvent){if(!e.ctrlKey)return;e.preventDefault();if(el?.querySelector('.annotation-layer[data-drawing="true"]'))return;apply(magnifyRef.current*Math.exp(-e.deltaY*.008),e.clientX,e.clientY)}
+    function start(e:TouchEvent){if(annotatingRef.current||e.touches.length!==2)return;e.preventDefault();touchDistance=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);touchZoom=magnifyRef.current}
+    function move(e:TouchEvent){if(annotatingRef.current||e.touches.length!==2||!touchDistance)return;e.preventDefault();const [a,b]=[e.touches[0],e.touches[1]];apply(touchZoom*Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)/touchDistance,(a.clientX+b.clientX)/2,(a.clientY+b.clientY)/2)}
     function end(){touchDistance=0}
-    function gestureStart(e:Event){e.preventDefault();gestureZoom=magnifyRef.current}
-    function gestureChange(e:Event){e.preventDefault();if(touchDistance)return;const g=e as Event&{scale:number;clientX:number;clientY:number};apply(gestureZoom*g.scale,g.clientX,g.clientY)}
+    function gestureStart(e:Event){e.preventDefault();if(annotatingRef.current)return;gestureZoom=magnifyRef.current}
+    function gestureChange(e:Event){e.preventDefault();if(annotatingRef.current||touchDistance)return;const g=e as Event&{scale:number;clientX:number;clientY:number};apply(gestureZoom*g.scale,g.clientX,g.clientY)}
     el.addEventListener("wheel",wheel,{passive:false});el.addEventListener("touchstart",start,{passive:false});el.addEventListener("touchmove",move,{passive:false});el.addEventListener("touchend",end);el.addEventListener("touchcancel",end);el.addEventListener("gesturestart",gestureStart);el.addEventListener("gesturechange",gestureChange);
     return()=>{cancelAnimationFrame(frame);window.clearTimeout(commit);el.removeEventListener("wheel",wheel);el.removeEventListener("touchstart",start);el.removeEventListener("touchmove",move);el.removeEventListener("touchend",end);el.removeEventListener("touchcancel",end);el.removeEventListener("gesturestart",gestureStart);el.removeEventListener("gesturechange",gestureChange)};
   },[]);
@@ -1188,7 +1041,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
       osmd.zoom=prepareLayoutBox()??osmd.zoom;
       patchArticulationSpacing(osmd);
       renderScore(osmd);
-      osmdRef.current=osmd; sizeInkCanvas(canvasRef.current,inkSizeRef,inkHistory,inkIndex,id,()=>setHistoryTick(v=>v+1)); if(!config.pitches)sequenceRef.current={...deriveScoreEvents(osmd),keyAccidentals:new Set()};
+      osmdRef.current=osmd; if(!config.pitches)sequenceRef.current={...deriveScoreEvents(osmd),keyAccidentals:new Set()};
       // Independent of whether the note sequence itself is auto-derived or
       // hand-authored — the key signature always comes straight from OSMD,
       // so even Mystery of Love (predates deriveScoreEvents, passes its
@@ -1369,162 +1222,6 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     setStartMeasure(measureForEvent(index,seq.measureStarts));
     setPlaying(true);setPlayingFrom(index);scheduleNotes(index);
   }
-  function point(e:{clientX:number;clientY:number},canvas:HTMLCanvasElement){
-    const r=canvas.getBoundingClientRect(),{w,h}=inkSizeRef.current;
-    return{x:(e.clientX-r.left)*w/r.width,y:(e.clientY-r.top)*h/r.height};
-  }
-  /**
-   * Midpoint smoothing needs two things remembered: the last raw sample,
-   * which becomes the curve's control point, and the last midpoint, which
-   * is where the drawn path actually ends. Tracking only the raw point is
-   * what produced a dotted line — each segment was drawn from the previous
-   * sample to the midpoint, and the midpoint-to-sample half was never
-   * drawn at all. Slow writing hid it; fast writing made the gaps as long
-   * as the strokes.
-   */
-  const inkLast=useRef<{x:number;y:number}|null>(null);
-  const inkMid=useRef<{x:number;y:number}|null>(null);
-  /** Nib width for a sample. A device with no pressure sensor reports 0.5. */
-  function nibWidth(pressure:number){
-    if(eraser)return 26;
-    const p=pressure>0?Math.min(1,pressure):0.5;
-    return 1+2.4*p;
-  }
-  /** A line with a solid head at the tip, sized off the current nib. */
-  function drawArrow(c:CanvasRenderingContext2D,from:{x:number;y:number},to:{x:number;y:number}){
-    const width=3.2;
-    const head=Math.max(11,width*4);
-    const angle=Math.atan2(to.y-from.y,to.x-from.x);
-    const length=Math.hypot(to.x-from.x,to.y-from.y);
-    if(length<2)return;
-    c.globalCompositeOperation="source-over";
-    c.strokeStyle=inkColor;c.fillStyle=inkColor;
-    c.lineCap="round";c.lineJoin="round";c.lineWidth=width;
-    // The shaft stops short of the tip so the head is not drawn over a
-    // line that already reached the point.
-    const shaft=Math.max(0,length-head*0.85);
-    c.beginPath();
-    c.moveTo(from.x,from.y);
-    c.lineTo(from.x+Math.cos(angle)*shaft,from.y+Math.sin(angle)*shaft);
-    c.stroke();
-    c.beginPath();
-    c.moveTo(to.x,to.y);
-    c.lineTo(to.x-Math.cos(angle-0.42)*head,to.y-Math.sin(angle-0.42)*head);
-    c.lineTo(to.x-Math.cos(angle+0.42)*head,to.y-Math.sin(angle+0.42)*head);
-    c.closePath();
-    c.fill();
-  }
-  function strokeTo(c:CanvasRenderingContext2D,to:{x:number;y:number},pressure:number){
-    const prev=inkLast.current;
-    if(!prev||!inkMid.current){inkLast.current=to;inkMid.current=to;return}
-    const mid={x:(prev.x+to.x)/2,y:(prev.y+to.y)/2};
-    c.lineWidth=nibWidth(pressure);
-    c.lineCap="round";c.lineJoin="round";
-    c.globalCompositeOperation=eraser?"destination-out":"source-over";
-    c.strokeStyle=inkColor;
-    // Start where the last curve ended, bend around the sample between
-    // them, finish at the new midpoint — so consecutive segments meet.
-    c.beginPath();
-    c.moveTo(inkMid.current.x,inkMid.current.y);
-    c.quadraticCurveTo(prev.x,prev.y,mid.x,mid.y);
-    c.stroke();
-    inkLast.current=to;
-    inkMid.current=mid;
-  }
-  /**
-   * Palm rejection.
-   *
-   * Writing with a Pencil puts the hand on the page as well as the nib, and
-   * the hand lands first — so the canvas sees a large touch contact and a
-   * pen contact and joins them with a stroke across the staff.
-   *
-   * Two rules, in order. A pen seen in the last moment means any touch is
-   * the hand resting, so it is ignored outright. With no pen in play a
-   * finger may draw, because drawing with a finger is a real way to use
-   * this, but a contact the size of a palm still is not a fingertip.
-   */
-  const PEN_GRACE_MS=1200;
-  const PALM_CONTACT_PX=26;
-  const pencilOnlyMode=usePencilOnly();
-  const penSeenAt=useRef(0);
-  const inkPointer=useRef<number|null>(null);
-  function inkAccepts(e:PointerEvent<HTMLCanvasElement>){
-    // performance.now() rather than e.timeStamp: the event clock is not
-    // guaranteed to share an origin with anything we store, and a zeroed
-    // timestamp would keep the grace window open forever, locking touch out.
-    const now=performance.now();
-    if(e.pointerType==="pen"){penSeenAt.current=now;return true}
-    if(e.pointerType!=="touch")return true;
-    // Pencil-only is a promise, not a guess: no timing window, no contact
-    // size, no case where a resting hand can leave a mark.
-    if(pencilOnlyMode)return false;
-    if(now-penSeenAt.current<PEN_GRACE_MS)return false;
-    // width/height are the contact patch in CSS pixels; a fingertip reports
-    // a small box, a palm or forearm a large one. Devices that do not
-    // report a size send 1, which passes — better to draw than to swallow
-    // input on hardware that cannot tell us.
-    return Math.max(e.width,e.height)<PALM_CONTACT_PX;
-  }
-  function begin(e:PointerEvent<HTMLCanvasElement>){
-    if(!annotating||!inkActive)return;
-    if(!inkAccepts(e))return;
-    // Don't let a second contact hijack a stroke already under way — but a
-    // pen always wins, so if the hand landed first the nib takes over
-    // rather than queueing behind it. Keyed on the stroke actually being in
-    // progress, which saveInk always clears, rather than on a stored id.
-    if(drawing.current&&e.pointerType!=="pen")return;
-    inkPointer.current=e.pointerId;
-    // Stops the gesture becoming a page scroll or a text selection on the
-    // score underneath — the reason a finger or a Pencil used to drag a
-    // blue highlight across the engraving instead of drawing on it.
-    e.preventDefault();
-    drawing.current=true;
-    const start=point(e,e.currentTarget);
-    if(inkTool==="arrow"&&!eraser){
-      arrowFrom.current=start;
-      // Snapshot what is already drawn so each preview frame can restore
-      // it before drawing the arrow at its new length.
-      const c=e.currentTarget.getContext("2d");
-      const {w,h}=inkSizeRef.current;
-      arrowBase.current=c?c.getImageData(0,0,Math.round(w*(e.currentTarget.width/w)),Math.round(h*(e.currentTarget.height/h))):null;
-    }else{
-      inkLast.current=start;
-      inkMid.current=start;
-    }
-    e.currentTarget.setPointerCapture(e.pointerId);
-  }
-  function draw(e:PointerEvent<HTMLCanvasElement>){
-    if(!drawing.current||!annotating)return;
-    if(inkPointer.current!==null&&e.pointerId!==inkPointer.current)return;
-    e.preventDefault();
-    const canvas=e.currentTarget,c=canvas.getContext("2d");
-    if(!c)return;
-    if(inkTool==="arrow"&&!eraser){
-      if(!arrowFrom.current)return;
-      if(arrowBase.current)c.putImageData(arrowBase.current,0,0);
-      drawArrow(c,arrowFrom.current,point(e,canvas));
-      return;
-    }
-    // A 120Hz pen delivers several samples per frame; without these the
-    // browser hands over only the last one and the rest of the stroke is
-    // thrown away, which is most of why it looked coarse.
-    const native=e.nativeEvent as unknown as {getCoalescedEvents?:()=>PointerEvent2[]};
-    const samples=native.getCoalescedEvents?.()??[];
-    if(samples.length)for(const sample of samples)strokeTo(c,point(sample,canvas),sample.pressure);
-    else strokeTo(c,point(e,canvas),e.pressure);
-  }
-  function pushHistory(data:string){inkHistory.current=inkHistory.current.slice(0,inkIndex.current+1);inkHistory.current.push(data);inkIndex.current=inkHistory.current.length-1;localStorage.setItem(`cookie:${id}:ink`,data);setHistoryTick(v=>v+1)}
-  function saveInk(e?:PointerEvent<HTMLCanvasElement>){if(e&&inkPointer.current!==null&&e.pointerId!==inkPointer.current)return;inkPointer.current=null;drawing.current=false;inkLast.current=null;inkMid.current=null;arrowFrom.current=null;arrowBase.current=null;const data=canvasRef.current?.toDataURL();if(data)pushHistory(data)}
-  function showHistory(index:number){const canvas=canvasRef.current;if(!canvas)return;const context=canvas.getContext("2d"),{w,h}=inkSizeRef.current;const data=inkHistory.current[index];
-    // Clear only once the replacement is decoded and ready to draw. Clearing
-    // first left the canvas blank until the image loaded, so every undo
-    // blinked the whole page of markup away and back — the step being undone
-    // should be the only thing that disappears.
-    if(data){const image=new Image();image.onload=()=>{context?.clearRect(0,0,w,h);context?.drawImage(image,0,0,w,h)};image.src=data}
-    else context?.clearRect(0,0,w,h);
-    inkIndex.current=index;if(data)localStorage.setItem(`cookie:${id}:ink`,data);else localStorage.removeItem(`cookie:${id}:ink`);setHistoryTick(v=>v+1)}
-  function undoInk(){if(inkIndex.current>0)showHistory(inkIndex.current-1)} function redoInk(){if(inkIndex.current<inkHistory.current.length-1)showHistory(inkIndex.current+1)}
-  function clearInk(){const canvas=canvasRef.current,{w,h}=inkSizeRef.current;canvas?.getContext("2d")?.clearRect(0,0,w,h);if(canvas)pushHistory(canvas.toDataURL())}
   function showNoteInfo(node:SVGGElement,x:number,y:number){
     if(noteDisplay==="off"&&!fingering&&rhythmMode==="off"){setFingerTip(null);return}
     setFingerTip({pitch:node.dataset.pitch!,name:node.dataset.noteName??node.dataset.pitch!.replace(/\d/,""),octave:node.dataset.noteOctave??node.dataset.pitch!.match(/\d/)?.[0]??"",solfege:node.dataset.solfege??"",beat:node.dataset.beat??"",x,y});
@@ -1704,11 +1401,11 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   // on the score, so a tempo mark on the page can drive the transport the
   // same way a row in a panel does.
   const readerControls:ReaderControls={bpm,setTempo:setBpm,metronome:metro,toggleMetronome:toggleMetro,playing,playFromEvent,playingFrom,playingEvent,download:downloadPdf,exporting};
-  return <main className="app-shell reader-workspace restored-reader" data-layout={pageWidth} style={{"--reader-page-width":pageWidth==="900"?"900px":"100%","--viewer-magnify":magnify,"--score-composer":`"${composer}"`} as React.CSSProperties}>
+  return <main className="app-shell reader-workspace restored-reader" data-layout={pageWidth} data-annotating={annotating} style={{"--reader-page-width":pageWidth==="900"?"900px":"100%","--viewer-magnify":magnify,"--score-composer":`"${composer}"`} as React.CSSProperties}>
     <section className="workspace">
       <header className="topbar"><div><a className="back has-tip" href={backHref} aria-label={backLabel?`${t.scoreViewer.back}: ${backLabel}`:t.scoreViewer.back} data-tip={backLabel||t.scoreViewer.back}><span className="back-arrow" aria-hidden="true">‹</span>{backLabel&&<span className="back-label">{backLabel}</span>}</a>{!toolbar&&<strong>{title}</strong>}</div><div><span className="topbar-toolbar-slot">{toolbar}</span>{save?<SaveButton saved={save.saved} onToggle={save.onToggle} label={save.saved?save.savedLabel:save.label} tip={save.saved?save.savedLabel:save.label}/>:<SaveButton saved={favorite} onToggle={toggleFavorite} label={favorite?t.scoreViewer.removeFromSaved:t.scoreViewer.saveMusic} tip={favorite?t.scoreViewer.removeFromSaved:t.scoreViewer.saveMusic}/>}{headerActions?.(readerControls)}{pdfPath&&<a className="icon-btn has-tip" href={pdfPath} download data-tip={t.scoreViewer.downloadPdf} aria-label={t.scoreViewer.downloadPdf}>↓</a>}{/* The reader hides the studio nav, so the two controls that live there on every other page — practice tools and the account menu — come here instead, on the same row as the back link. */}<span className="topbar-spacer"/><div id="reader-tools-slot" className="topbar-tools-slot"/><AccountMenu/></div></header>
 
-      <div className="practice-bar"><div className="tool-group">        <button data-tip={t.scoreViewer.markUpTip} className={annotating?"tool on coral has-tip":"tool has-tip"} onClick={()=>{const next=!annotating;setAnnotating(next);if(next)setInkActive(true)}}><PracticeIcon name="markup"/>{t.scoreViewer.markUp}</button>
+      <div className="practice-bar"><div className="tool-group">        <button data-tip={t.scoreViewer.markUpTip} className={annotating?"tool on coral has-tip":"tool has-tip"} onClick={()=>setAnnotating(!annotating)}><PracticeIcon name="markup"/>{t.scoreViewer.markUp}</button>
       </div>
         <div className="transport">{practiceActions}<button data-tip={t.scoreViewer.playTip(startMeasure)} className={playing?"tool on has-tip":"tool has-tip"} onClick={togglePlayback}><PracticeIcon name={playing?"stop":"play"}/>{playing?t.scoreViewer.stop:t.scoreViewer.play}</button><PracticeRecorder/>{/* Everything about tempo in one group: the metronome that sounds it, the number, and the steppers. The metronome used to sit after Listen, which is what made "Listen" read as "start the metronome"; the steppers reuse the − n + shape the on-page tempo marks already use rather than a spinner. */}<div className="tempo-group"><button data-tip={t.scoreViewer.metronomeTip} className={metro?"tool on has-tip":"tool has-tip"} onClick={toggleMetro}><PracticeIcon name="metronome"/>{t.scoreViewer.metronome}</button>{/* A div, not a label: buttons nested in a label get the label's hover applied to them as a set — hovering + lit up − too — and a tap on one activates the label, which focuses the number field and would raise the keyboard on a tablet. Only the field is labelled. */}<div className="tempo"><button type="button" className="tempo-step" aria-label={zh?"减慢":"Slower"} disabled={bpm<=40} onClick={()=>setBpm(bpm-1)}>−</button><label className="tempo-field"><input aria-label={t.scoreViewer.tempoAria} type="number" min="40" max="220" value={tempoDraft??bpm} onChange={e=>setTempoDraft(e.target.value)} onBlur={commitTempo} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/></label><button type="button" className="tempo-step" aria-label={zh?"加快":"Faster"} disabled={bpm>=220} onClick={()=>setBpm(bpm+1)}>+</button></div></div><button className="tool has-tip reader-tap" data-tip={t.scoreViewer.tapTempo} aria-label={t.scoreViewer.tapTempo} onClick={tapTempo}><PracticeIcon name="tap"/>{zh?"打拍":"Tap"}</button>
           <div className="transport-menu">
@@ -1725,7 +1422,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
         <div className="reader-view">{settings?.(readerControls)}
           <ReaderPopover label={zh?"显示设置":"View settings"} trigger={<><PracticeIcon name="gear"/>{zh?"显示":"View"}</>} className="tool has-tip">
 
-            <div className="reader-setting-row"><span>{zh?"页面布局":"Page layout"}</span><div className="reader-choice" role="group" aria-label={zh?"页面布局":"Page layout"}>{[["900",zh?"竖向单页":"Portrait"],["auto",zh?"适应窗口":"Fit window"],["spread",zh?"双页":"Two pages"]].map(([value,label])=><button key={value} aria-pressed={pageWidth===value} onClick={()=>setPageWidth(value)}>{label}</button>)}</div></div>
+            <div className="reader-setting-row"><span>{zh?"页面布局":"Page layout"}</span><div className="reader-choice" role="group" aria-label={zh?"页面布局":"Page layout"}>{[["900",zh?"竖向单页":"Portrait"],["auto",zh?"适应窗口":"Fit window"],["spread",zh?"双页":"Two pages"]].map(([value,label])=><button key={value} aria-pressed={pageWidth===value} onClick={()=>{setPageWidth(value);if(tabletReader(navigator.maxTouchPoints,Math.min(screen.width,screen.height)))try{localStorage.setItem(`${viewPrefsKey}:tablet-layout`,value)}catch{/* Keep the selected layout for this visit. */}}}>{label}</button>)}</div></div>
             {practiceTempo&&<div className="reader-setting-row"><span>{zh?"练习速度":"Practice tempo"}</span><div className="reader-choice" role="group" aria-label={zh?"练习速度":"Practice tempo"}><button aria-pressed={!practiceTempo.value} onClick={()=>practiceTempo.onChange(false)}>{zh?"隐藏":"Hidden"}</button><button aria-pressed={practiceTempo.value} onClick={()=>practiceTempo.onChange(true)}>{zh?"显示在乐谱上":"On the page"}</button></div></div>}
             {lineBreak&&<div className="reader-setting-row"><span>{zh?"换行":"Line breaks"}</span><div className="reader-choice" role="group" aria-label={zh?"换行":"Line breaks"}><button aria-pressed={!lineBreak.value} onClick={()=>lineBreak.onChange(false)}>{zh?"接续上一个":"Continue from previous"}</button><button aria-pressed={lineBreak.value} onClick={()=>lineBreak.onChange(true)}>{zh?"另起一行":"Start on a new line"}</button></div></div>}
             <label className="reader-setting-row">{zh?"音符大小":"Notation size"}<input type="range" min="0.6" max="2" step="0.05" value={sizePreference} onChange={e=>setSizePreference(+e.target.value)}/></label>
@@ -1742,7 +1439,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
         <button data-tip={t.scoreViewer.tonguingTip} className={tonguing?"tool on has-tip":"tool has-tip"} onClick={()=>setTonguing(!tonguing)}><span>•</span>{t.scoreViewer.tonguing}</button>
         <button data-tip={t.scoreViewer.fingeringTip} className={fingering?"tool on has-tip":"tool has-tip"} onClick={()=>setFingering(!fingering)}><span>●○</span>{t.scoreViewer.fingering}</button>
 <button data-tip={t.scoreViewer.musicalTermsTip} className={theoryEnabled?"tool on has-tip":"tool has-tip"} aria-pressed={theoryEnabled} onClick={()=>setTheoryEnabled(v=>!v)}><span>𝑓</span>{zh?"音乐术语":"Musical terms"}</button></div>
-            </div><button className="reader-settings-reset" onClick={()=>{setSizePreference(.8);setSystemSpacing(12);setNoteSpacing(1);setPageWidth("900")}}>{zh?"恢复默认":"Restore defaults"}</button>
+            </div><button className="reader-settings-reset" onClick={()=>{setSizePreference(.8);setSystemSpacing(12);setNoteSpacing(1);setPageWidth(initialReaderLayout(tabletReader(navigator.maxTouchPoints,Math.min(screen.width,screen.height))));try{localStorage.removeItem(`${viewPrefsKey}:tablet-layout`)}catch{/* Defaults still apply for this visit. */}}}>{zh?"恢复默认":"Restore defaults"}</button>
           </ReaderPopover>
         </div>
         <div className="reader-pages" data-mode="pages">{/* Back to the first page. A long exercise book is a lot of
@@ -1751,25 +1448,8 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
           <button className="reader-pages__top" aria-label={zh?"回到开头":"Back to top"} data-tip={zh?"回到开头":"Back to top"} disabled={pageIndex<=0&&(scoreScrollRef.current?.scrollTop??0)<8} onClick={backToTop}><PracticeIcon name="top"/></button><button aria-label={t.scoreViewer.previousPage} disabled={pageIndex<=0} onClick={()=>goToPage(pageIndex-1)}><PracticeIcon name="previous"/></button><button aria-label={t.scoreViewer.nextPage} disabled={pageIndex>=pageCount-1} onClick={()=>goToPage(pageIndex+1)}><PracticeIcon name="next"/></button><span aria-live="polite">{spreadPageCount?`${pageIndex*2+1}${pageIndex*2+2<=spreadPageCount?`–${pageIndex*2+2}`:""} / ${spreadPageCount}`:`${pageIndex+1} / ${pageCount}`}</span><button className={focusMode?"tool on has-tip":"tool has-tip"} aria-pressed={focusMode} data-tip={t.scoreViewer.focusModeTip} aria-label={focusMode?t.scoreViewer.exitFocusMode:t.scoreViewer.enterFocusMode} onClick={toggleFocusMode}><PracticeIcon name={focusMode?"close":"fullscreen"}/></button></div>
 </div>
 </div>
-      {annotating&&<div className="markup-row"><div className="markup-row-surface" role="toolbar" aria-label={zh?"批注工具":"Annotation tools"}>
-        <button aria-pressed={inkActive&&!eraser&&inkTool==="pen"} className={inkActive&&!eraser&&inkTool==="pen"?"markup-icon chosen has-tip":"markup-icon has-tip"} data-tip={t.scoreViewer.pencil} aria-label={t.scoreViewer.pencil} onClick={()=>{setInkActive(true);setEraser(false);setInkTool("pen")}}><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M13.5 4.5l2 2L6.5 15.5l-3 1 1-3L13.5 4.5z"/><path d="M12 6l2 2"/></svg></button>
-        <button aria-pressed={inkActive&&!eraser&&inkTool==="arrow"} className={inkActive&&!eraser&&inkTool==="arrow"?"markup-icon chosen has-tip":"markup-icon has-tip"} data-tip={zh?"箭头":"Arrow"} aria-label={zh?"箭头":"Arrow"} onClick={()=>{setInkActive(true);setEraser(false);setInkTool("arrow")}}><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M5 15L15 5"/><path d="M8.5 5H15v6.5"/></svg></button>
-        <button aria-pressed={eraser} className={eraser?"markup-icon chosen has-tip":"markup-icon has-tip"} data-tip={t.scoreViewer.eraser} aria-label={t.scoreViewer.eraser} onClick={()=>{setInkActive(true);setEraser(true)}}><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M6.5 15.5L3.8 12.8a1.6 1.6 0 010-2.26l5.7-5.7a1.6 1.6 0 012.26 0l3.66 3.66a1.6 1.6 0 010 2.26l-5.7 5.7a1.6 1.6 0 01-2.26 0z"/><path d="M9.3 7.1l3.6 3.6"/><path d="M3.5 15.5h7.5"/></svg></button>
-        <button className="markup-icon has-tip" data-tip={t.scoreViewer.addText} aria-label={t.scoreViewer.addText} onClick={()=>addScoreNote("text")}>T</button>
-        <button className="markup-icon has-tip" data-tip={t.scoreViewer.addSticky} aria-label={t.scoreViewer.addSticky} onClick={()=>addScoreNote("sticky")}><i className="sticky-swatch"/></button>
-        <span className="divider"/>
-        {["#e52e31","#2379c5","#2f9e4c","#222222"].map(c=><button aria-label={t.scoreViewer.useColor(c)} aria-pressed={inkColor===c&&!eraser} key={c} className={inkColor===c&&!eraser?"swatch chosen":"swatch"} style={{background:c}} onClick={()=>{setInkColor(c);setEraser(false);setInkActive(true)}}/>)}
-        <span className="divider"/>
-        <button className="markup-icon history-control has-tip" data-tip={t.scoreViewer.undo} aria-label={t.scoreViewer.undo} onClick={undoInk} disabled={inkIndex.current<=0}><PracticeIcon name="undo"/></button>
-        <button className="markup-icon history-control has-tip" data-tip={t.scoreViewer.redo} aria-label={t.scoreViewer.redo} onClick={redoInk} disabled={inkIndex.current>=inkHistory.current.length-1}><PracticeIcon name="redo"/></button>
-        <button className="markup-icon history-control has-tip" data-tip={t.scoreViewer.clearPage} aria-label={t.scoreViewer.clearPage} onClick={clearInk}><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h12M8 6V4.5a1 1 0 011-1h2a1 1 0 011 1V6M6 6l.6 10.2a1 1 0 001 .8h4.8a1 1 0 001-.8L14 6"/><path d="M8.5 9v5M11.5 9v5"/></svg></button>
-        <button className="markup-close" onClick={()=>setAnnotating(false)}>{zh?"关闭":"Close"}</button>
-      </div></div>}
-      <div className="score-scroll" ref={scoreScrollRef}><div className="score-paper engraved" data-loading={loading} onPointerDown={event=>{if(!(event.target as HTMLElement).closest(".score-note"))setSelectedNote(null)}}><div className="custom-score-heading"><h1>{title}</h1></div>{showSpinner&&<div className="score-loading"><i className="score-loading__spinner" aria-hidden="true"/><span>{t.scoreViewer.engraving}</span></div>}{error&&<div className="score-error">{error}</div>}<div ref={scoreRef} className="osmd-score" data-theory-enabled={theoryEnabled} onMouseMove={scoreMove} onMouseLeave={()=>{setFingerTip(null);setTheoryTip(null)}} onClick={scoreClick}/>{scoreMarks&&marksLayer&&createPortal(scoreMarks({root:scoreRef.current,version:layoutVersion,magnify,controls:readerControls}),marksLayer)}<canvas ref={canvasRef} width="1600" height="2200" className={annotating&&inkActive?"ink active":"ink"} onPointerDown={begin} onPointerMove={draw} onPointerUp={saveInk} onPointerCancel={saveInk}/>
-        {notes.map(note=>{const selected=selectedNote===note.id;return <div key={note.id} className={`score-note ${note.kind==="sticky"?"sticky":"text"}${selected?" is-selected":""}`} style={{left:note.x,top:note.y}} onPointerDown={e=>noteDown(e,note)} onPointerMove={noteMove} onPointerUp={noteUp} onPointerCancel={noteUp}>
-          {selected&&<button type="button" className="score-note__remove" aria-label={t.scoreViewer.deleteNote} onClick={()=>removeScoreNote(note.id)}>×</button>}
-          <textarea value={note.text} style={{width:note.w,height:note.h}} onChange={e=>updateScoreNoteText(note.id,e.target.value)} onPointerUp={e=>commitNoteSize(note.id,e.currentTarget)} onKeyDown={e=>{if(e.key==="Escape"){e.currentTarget.blur();setSelectedNote(null)}}} placeholder={t.scoreViewer.notePlaceholder}/>
-        </div>})}
+      <div className="markup-row" ref={setAnnotationToolbar}/>
+      <div className="score-scroll" ref={scoreScrollRef}><div className="score-paper engraved" data-loading={loading}><div className="custom-score-heading"><h1>{title}</h1></div>{showSpinner&&<div className="score-loading"><i className="score-loading__spinner" aria-hidden="true"/><span>{t.scoreViewer.engraving}</span></div>}{error&&<div className="score-error">{error}</div>}<div ref={scoreRef} className="osmd-score" data-theory-enabled={theoryEnabled} onMouseMove={scoreMove} onMouseLeave={()=>{setFingerTip(null);setTheoryTip(null)}} onClick={scoreClick}/>{scoreMarks&&marksLayer&&createPortal(scoreMarks({root:scoreRef.current,version:layoutVersion,magnify,controls:readerControls}),marksLayer)}<AnnotationLayer key={id} id={id} active={annotating} layoutReady={!loading} layoutVersion={layoutVersion} toolbar={annotationToolbar} zh={zh} onClose={()=>setAnnotating(false)} zoom={magnify} onZoom={zoomAnnotations}/>
       </div>{aside&&<div className="score-aside">{aside}</div>}</div>
 
     </section>{theoryTip&&<div className="theory-tip" style={clampTip(theoryTip.x,theoryTip.y,280,150,"below")}><strong>{theoryTip.title}</strong><p>{theoryTip.text}</p></div>}{fingerTip&&<div className={fingering?"flute-tip finger-chart":"flute-tip note-info-tip"} style={clampTip(fingerTip.x,fingerTip.y,340,255,"above")}>{(noteDisplay!=="off"||fingering)&&<strong>{noteDisplay==="solfege"?fingerTip.solfege:fingerTip.name}<sup>{fingerTip.octave}</sup></strong>}{rhythmMode!=="off"&&!unmetered&&<p className="note-info-beat">{zh?"拍位":"Beat"} {fingerTip.beat}</p>}{fingering&&<><div className="finger-diagram">{(()=>{

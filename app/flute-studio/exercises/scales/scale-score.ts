@@ -200,10 +200,30 @@ function noteAt(key:SpelledKey,degree:number,type:ScaleType,descending=false):Sc
   const index=((degree%card)+card)%card;
   const octaveShift=Math.floor(degree/card);
   const midi=60+key.pc+12*octaveShift+offsets[index];
-  const letterIndex=key.step+letterSteps[index]+7*octaveShift;
-  const stepIndex=((letterIndex%7)+7)%7;
-  const octave=4+Math.floor(letterIndex/7);
-  return {step:letters[stepIndex],alter:midi-(12*(octave+1)+naturals[stepIndex]),octave,midi};
+  const spell=(letterIndex:number)=>{
+    const stepIndex=((letterIndex%7)+7)%7;
+    const octave=4+Math.floor(letterIndex/7);
+    return {step:letters[stepIndex],alter:midi-(12*(octave+1)+naturals[stepIndex]),octave,midi};
+  };
+  const base=key.step+letterSteps[index]+7*octaveShift;
+  const spelled=spell(base);
+  // Only the types written without a key signature get respelled. A double
+  // sharp is correct in a harmonic or melodic minor — F𝄪 IS the raised
+  // seventh of G♯ minor, and spelling it G♮ would be wrong. But chromatic,
+  // whole-tone, diminished and augmented scales have no signature to be
+  // consistent with, so a double accidental there is a by-product of the
+  // letter pattern meeting an altered tonic, not notation anyone wants.
+  if(!type.openSignature)return spelled;
+  // B𝄫 is plainly A, F𝄪 plainly G.
+  if(spelled.alter<-1)return spell(base-1);
+  if(spelled.alter>1)return spell(base+1);
+  // And with no signature to answer to there is no reason to write E♯ for F
+  // or C♭ for B: if stepping the letter the way the accidental points lands
+  // on a natural, that is the name to use. G♭ stays G♭ — stepping down from
+  // it reaches F, which is not natural at that pitch.
+  if(spelled.alter===1&&spell(base+1).alter===0)return spell(base+1);
+  if(spelled.alter===-1&&spell(base-1).alter===0)return spell(base-1);
+  return spelled;
 }
 
 /**

@@ -592,7 +592,10 @@ export default function ScaleStudio(){
   // this array, so generating it from a different note set puts every note
   // name and accidental on the wrong note.
   const blockNotes=(block:ScaleBlock)=>scaleNotes(block.key,range,block.type,block.form,ending,scaleStart,customSpan);
-  const displayPitches=blocks.flatMap(b=>blockNotes(b).map(n=>`${n.step}${n.alter<0?"♭":n.alter>0?"♯":""}${n.octave}`));
+  // A double sharp is not a sharp. Collapsing ±2 onto the single-accidental
+  // glyph made the overlay print ♯ over an F𝄪, which says the wrong note.
+  const accidentalGlyph=(alter:number)=>alter===-2?"𝄫":alter===-1?"♭":alter===1?"♯":alter===2?"𝄪":"";
+  const displayPitches=blocks.flatMap(b=>blockNotes(b).map(n=>`${n.step}${accidentalGlyph(n.alter)}${n.octave}`));
   // The index of each block's first note in the flat event list the score
   // is built from — the same indexing displayPitches and syllables use, so
   // "play this scale" is just "play from this index".
@@ -602,10 +605,13 @@ export default function ScaleStudio(){
   // accidental, which counted a harmonic minor's raised seventh as part of
   // the signature and missed signature notes the exercise never reached.
   const blockKeySignature=(b:ScaleBlock)=>keySignatureNotes(keyForType(b.key,typeById(b.type)).fifths);
-  const measureKeyAccidentals=blocks.flatMap(b=>Array.from({length:Math.ceil(blockNotes(b).length/8)},()=>blockKeySignature(b)));
+  // One entry per note, built from the very same blockNotes() array that
+  // displayPitches uses — so the two cannot fall out of step, and nothing
+  // has to work out how many measures an exercise occupies.
+  const noteKeySignatures=blocks.flatMap(b=>blockNotes(b).map(()=>blockKeySignature(b)));
   // Syllables reset per key (own scale, own tonguing count), and each key
   // resolves against whichever rotation entry it's assigned — same
-  // per-key reset displayPitches/measureKeyAccidentals already use above.
+  // per-key reset displayPitches/noteKeySignatures already use above.
   // tongueIndex only advances on tongue/staccato notes — a slurred note
   // isn't tongued, so it doesn't consume a T/K turn.
   const syllables=blocks.flatMap((block,keyIndex)=>{
@@ -698,7 +704,7 @@ export default function ScaleStudio(){
       defaultNoteSpacing={0.55} extraSystemSpacing={tempoMarks?3:0} practiceTempo={{value:tempoMarks,onChange:setTempoMarks}}
       save={{saved:!!savedMatch,onToggle:toggleSaved,label:zh?"保存这个组合":"Save this set",savedLabel:zh?"从我的组合中移除":"Remove from my sets"}}
       headerActions={reader=><button type="button" className="icon-btn has-tip" disabled={reader.exporting} data-tip={reader.exporting?(zh?"正在生成 PDF…":"Making the PDF\u2026"):(zh?"下载 PDF":"Download PDF")} aria-label={reader.exporting?(zh?"正在生成 PDF…":"Making the PDF\u2026"):(zh?"下载 PDF":"Download PDF")} onClick={()=>reader.download()}>{reader.exporting?"\u22ef":"\u2193"}</button>}
-      scoreMarks={tempoMarks?context=><ScaleTempoMarks root={context.root} version={context.version} marks={blocks.map(block=>{const id=blockTempoId(block,range);return {id,label:block.label,tempo:tempoForBlock(block,range,tempos)}})} onChange={(id,next)=>{setActiveBlock(id);setTempos(prev=>({...prev,[id]:next}));context.controls.setTempo(next)}} soundingId={context.controls.metronome?activeBlock||null:null} onSound={(id,tempo)=>{const running=context.controls.metronome&&activeBlock===id;setActiveBlock(id);context.controls.setTempo(tempo);if(running||!context.controls.metronome)context.controls.toggleMetronome()}}/>:undefined} printConfig={zh?{title:englishTitle,asset:scaleBookMusicXML(buildBlocks(true),range,newLines,articulationRotation.map(e=>e.articulation),rhythm,ending,scaleStart,customSpan)}:undefined} lineBreak={{value:newLines,onChange:setNewLines}} config={{title:bookTitle,composer:"",asset:scaleBookMusicXML(blocks,range,newLines,articulationRotation.map(e=>e.articulation),rhythm,ending,scaleStart,customSpan),displayPitches,measureKeyAccidentals,syllables,id:`scale-book-${rangeKey}-${grouping}-${ending}-${scaleStart}-${types.join("+")}-${forms.join("+")}-${selected.map(k=>k.id).join("-")}`,backHref:"/flute-studio/exercises",defaultTempo:(activeBlock?tempos[activeBlock]:undefined)??60}}
+      scoreMarks={tempoMarks?context=><ScaleTempoMarks root={context.root} version={context.version} marks={blocks.map(block=>{const id=blockTempoId(block,range);return {id,label:block.label,tempo:tempoForBlock(block,range,tempos)}})} onChange={(id,next)=>{setActiveBlock(id);setTempos(prev=>({...prev,[id]:next}));context.controls.setTempo(next)}} soundingId={context.controls.metronome?activeBlock||null:null} onSound={(id,tempo)=>{const running=context.controls.metronome&&activeBlock===id;setActiveBlock(id);context.controls.setTempo(tempo);if(running||!context.controls.metronome)context.controls.toggleMetronome()}}/>:undefined} printConfig={zh?{title:englishTitle,asset:scaleBookMusicXML(buildBlocks(true),range,newLines,articulationRotation.map(e=>e.articulation),rhythm,ending,scaleStart,customSpan)}:undefined} lineBreak={{value:newLines,onChange:setNewLines}} config={{title:bookTitle,composer:"",asset:scaleBookMusicXML(blocks,range,newLines,articulationRotation.map(e=>e.articulation),rhythm,ending,scaleStart,customSpan),displayPitches,noteKeySignatures,syllables,id:`scale-book-${rangeKey}-${grouping}-${ending}-${scaleStart}-${types.join("+")}-${forms.join("+")}-${selected.map(k=>k.id).join("-")}`,backHref:"/flute-studio/exercises",defaultTempo:(activeBlock?tempos[activeBlock]:undefined)??60}}
       toolbar={<div className="scale-book__chapter-inline"><button type="button" className="scale-book__crumb" onClick={()=>openCustomize("type")}>{typeWord}</button><button type="button" className="scale-book__crumb" onClick={()=>openCustomize("form")}>{formWord}</button><span aria-hidden="true">·</span><button type="button" className="scale-book__crumb" onClick={()=>openCustomize("range")}>{zh?chosenRange.zh:chosenRange.label}</button><span aria-hidden="true">·</span><button type="button" className="scale-book__crumb" onClick={()=>openCustomize("keys")}>{selected.length} {zh?"个调性":selected.length===1?"key":"keys"}</button></div>}
       settings={reader=><>
     {!selected.length&&<p className="scale-book__empty">Choose keys in Customize scales to display your scales.</p>}

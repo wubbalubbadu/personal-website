@@ -24,3 +24,11 @@ export function pageOffsets(systems:{top:number;bottom:number}[],height:number,m
 export function pageAt(offsets:number[],top:number){
   let index=0;for(let i=1;i<offsets.length;i++){if(offsets[i]>top)break;index=i}return index;
 }
+
+export function tabletReader(touchPoints:number,shortestScreenEdge:number){
+  return touchPoints>1&&shortestScreenEdge>=600;
+}
+export function initialReaderLayout(tablet:boolean,saved?:string|null,tabletSaved?:string|null){
+  const valid=(value?:string|null)=>value==='900'||value==='auto'||value==='spread';
+  return tablet?(valid(tabletSaved)?tabletSaved!:'auto'):(valid(saved)?saved!:'900');
+}
