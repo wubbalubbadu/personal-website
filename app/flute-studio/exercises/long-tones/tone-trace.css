@@ -145,3 +145,15 @@
 .tone-report footer a:hover{text-decoration:underline}
 .reader-workspace .pitch-row button:disabled{color:#b3b6ba;cursor:default}
 .tone-notation>.tone-playhead{pointer-events:none}
+
+/* Tuner-style plot: ±30¢ fills the height, a gridline every 10¢, loudness as
+   a soft band behind the line, and the line coloured moment by moment. */
+.tone-axis>span{font-size:11px}
+.tone-axis>span.is-zero{color:#41464b}
+.tone-plot-grid{stroke:#eceee9;stroke-width:1;vector-effect:non-scaling-stroke}
+.tone-plot-band{fill:#edf3ea}
+.tone-plot-volume{fill:#8f9be0;opacity:.16}
+.tone-plot-line{stroke-width:2.75}
+.tone-plot-line.is-in{stroke:#4f8a45}.tone-plot-line.is-near{stroke:#c3881f}.tone-plot-line.is-off{stroke:#c54a3d}
+.tone-closeup .tone-graph{--plot-h:220px}
+.tone-dock{--plot-h:160px!important}

@@ -15,6 +15,18 @@ const PX_PER_SECOND = 48;
  */
 const MIN_WINDOW_MS = 15000, STEP_MS = 5000, AHEAD_MS = 3000;
 const windowFor = (played: number) => Math.max(MIN_WINDOW_MS, Math.ceil((played + AHEAD_MS) / STEP_MS) * STEP_MS);
+/** Every 10 cents gets a gridline, like a tuner; ±10 is the in-tune band. */
+const GRID = [30, 20, 10, 0, -10, -20, -30];
+/** The line is coloured by where it is at that moment, not by the note's overall grade. */
+const band = (cents: number) => Math.abs(cents) <= 10 ? 'in' : Math.abs(cents) <= 20 ? 'near' : 'off';
+/** Loudness as 0–1: about −50 dB (a whisper of breath) to −10 dB (full tone). */
+const loudness = (rms: number) => Math.max(0, Math.min(1, (20 * Math.log10(Math.max(rms, 1e-6)) + 50) / 40));
+/**
+ * The first and last instants of a note are the slur or attack arriving and
+ * the air stopping. They are real, but drawn they read as huge spikes at every
+ * boundary, so the drawing skips them. The numbers already ignore them too.
+ */
+const ATTACK_MS = 60, RELEASE_MS = 100;
 const signed = (n: number) => `${n > 0 ? '+' : n < 0 ? '−' : ''}${Math.abs(Math.round(n))}`;
 const endOf = (a: ToneAttempt) => a.endedAt ?? a.frames.at(-1)?.at ?? a.startedAt;
 
@@ -46,7 +58,7 @@ export function ToneTrace({attempts, selectedId=null, onSelect, zh=false}: {atte
   const ticks = Array.from({length: Math.floor(seconds / step) + 1}, (_, i) => i * step);
   return <section className="tone-analysis" aria-label={zh ? '音准分析' : 'Pitch analysis'}>
     <div className="tone-plot-frame">
-      <div className="tone-axis" aria-hidden="true"><span style={{top:'15%'}}>+30¢</span><span style={{top:'50%'}}>0</span><span style={{top:'85%'}}>−30¢</span></div>
+      <div className="tone-axis" aria-hidden="true">{GRID.map(c => <span key={c} className={c === 0 ? 'is-zero' : ''} style={{top: `${traceY(c) / 2}%`}}>{c > 0 ? `+${c}` : c < 0 ? `−${-c}` : '0'}</span>)}</div>
       <div className="tone-plot-scroll" ref={scroll}>
         <div className="tone-plot-canvas" style={{minWidth: `${Math.round(seconds * PX_PER_SECOND)}px`}}>
           <div className="tone-segment-labels">{segments.map(({a, start, end}) =>
@@ -54,13 +66,46 @@ export function ToneTrace({attempts, selectedId=null, onSelect, zh=false}: {atte
           <svg className="tone-plot" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label={zh ? '横轴为秒，纵轴为相对谱面音高的音分' : 'Cents from the written pitch over time'}>
             {selected && <rect x={selected.start * W / 100} y="0" width={(selected.end - selected.start) * W / 100} height={H} className="tone-plot-selected"/>}
             <rect x="0" y={traceY(10)} width={W} height={traceY(-10) - traceY(10)} className="tone-plot-band"/>
-            <line x1="0" y1={H / 2} x2={W} y2={H / 2} className="tone-plot-zero"/>
+            {GRID.map(c => <line key={c} x1="0" x2={W} y1={traceY(c)} y2={traceY(c)} className={c === 0 ? 'tone-plot-zero' : 'tone-plot-grid'}/>)}
             {segments.slice(1).map(({a, start}) => <line key={a.id} x1={start * W / 100} x2={start * W / 100} y1="0" y2={H} className="tone-plot-divider"/>)}
-            {attempts.map(a => {
-              let last = -Infinity;
-              const d = a.frames.map(f => { const move = f.at - last > 140; last = f.at; return `${move ? 'M' : 'L'}${(pct(f.at) * W / 100).toFixed(2)},${traceY(centsFromMidi(f.hz, a.target.midi)).toFixed(2)}`; }).join(' ');
-              return <path key={a.id} d={d} className={`tone-plot-line grade-${toneFinding(a).grade}`}/>;
-            })}
+            {(() => {
+              // One continuous trace across the whole group. Each note is still
+              // measured against its own written pitch; the messy instants at a
+              // boundary are skipped and the line bridges straight across them,
+              // so a slur reads as one line, not separate pieces. Only a real
+              // breath (or a detection gap within a note) breaks it.
+              type Point = {at: number; cents: number; rms: number; note: number};
+              const points: Point[] = attempts.flatMap((a, note) => {
+                const end = endOf(a);
+                return a.frames.filter(f => f.at - a.startedAt >= ATTACK_MS && end - f.at >= RELEASE_MS)
+                  .map(f => ({at: f.at, cents: centsFromMidi(f.hz, a.target.midi), rms: f.rms ?? 0, note}));
+              });
+              const runs: Point[][] = [];
+              points.forEach((p, i) => {
+                const prev = points[i - 1];
+                const broken = !prev || p.at - prev.at > (p.note === prev.note ? 140 : 450);
+                if (broken) runs.push([p]); else runs.at(-1)!.push(p);
+              });
+              const x = (at: number) => (pct(at) * W / 100).toFixed(2);
+              const h = (p: Point) => loudness(p.rms) * 46;
+              const envelope = runs.filter(r => r.length > 1).map(r =>
+                'M' + r.map(p => `${x(p.at)},${(H / 2 - h(p)).toFixed(1)}`).join(' L') + ' L' + [...r].reverse().map(p => `${x(p.at)},${(H / 2 + h(p)).toFixed(1)}`).join(' L') + 'Z');
+              // Pitch, split into pieces by colour; each piece starts where the previous one ended.
+              const pieces: {cls: string; d: string}[] = [];
+              for (const r of runs) {
+                let current: {cls: string; points: string[]} | null = null, last = '';
+                for (const p of r) {
+                  const cls = band(p.cents), point = `${x(p.at)},${traceY(p.cents).toFixed(2)}`;
+                  if (!current || current.cls !== cls) { if (current) pieces.push({cls: current.cls, d: 'M' + current.points.join(' L')}); current = {cls, points: last ? [last] : []}; }
+                  current.points.push(point); last = point;
+                }
+                if (current) pieces.push({cls: current.cls, d: 'M' + current.points.join(' L')});
+              }
+              return <>
+                {envelope.map((d, i) => <path key={`v${i}`} d={d} className="tone-plot-volume"/>)}
+                {pieces.map((p, i) => <path key={i} d={p.d} className={`tone-plot-line is-${p.cls}`}/>)}
+              </>;
+            })()}
           </svg>
           <div className="tone-time-axis" aria-hidden="true">{ticks.map(t => <span key={t} style={{left: `${t / seconds * 100}%`}}>{t}s</span>)}</div>
         </div>

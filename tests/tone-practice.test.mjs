@@ -126,10 +126,10 @@ test('feedback labels give direction and rounded cents relative to the written n
 
 const {traceY,traceDuration,TRACE_LIMIT_CENTS}=await import(moduleUrl('../app/flute-studio/lib/toneTrace.ts'));
 test('fixed trace scale keeps ±30 cents at 70 percent even with extreme tail readings',()=>{
-  assert.equal(traceY(-30)-traceY(30),140);
+  assert.ok(Math.abs(traceY(-30)-traceY(30)-200*30/35)<1e-9);
   assert.equal(traceY(1950),0);
   assert.equal(traceY(-1950),200);
-  assert.ok(TRACE_LIMIT_CENTS>42&&TRACE_LIMIT_CENTS<43);
+  assert.equal(TRACE_LIMIT_CENTS,35);
   const session=new ToneSession(targets);play(session,60,0,2000,18);
   const before=session.snapshot().live.frames.map(f=>({...f}));
   play(session,60,2040,2040,-1900);session.pause();

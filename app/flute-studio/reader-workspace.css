@@ -813,7 +813,7 @@ html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document"
 /* With a dock, the score gives up the bottom of the canvas instead of being
    covered: the gray canvas carries on under both, so the dock reads as a
    second sheet on the same desk. */
-.restored-reader[data-dock] .workspace{grid-template-rows:auto auto auto minmax(0,1fr) fit-content(40%)!important;grid-template-areas:"document" "header" "markup" "score" "dock"!important}
+.restored-reader[data-dock] .workspace{grid-template-rows:auto auto auto minmax(0,1fr) fit-content(46%)!important;grid-template-areas:"document" "header" "markup" "score" "dock"!important}
 html.score-focus-mode .restored-reader[data-dock] .workspace{grid-template-areas:"document" "header" "markup" "score" "dock"!important}
 .reader-workspace .reader-dock{grid-area:dock;min-width:0;min-height:0;padding:0 12px 12px;background:#eeefeb}
 /* One corner for every control in the tool rows (Mark up, Pitch) and the
