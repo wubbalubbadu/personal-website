@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePracticeAudio } from '../PracticeAudio';
 import { detectPitch } from './pitch';
-import { ToneSession, type ToneTarget, type ToneSnapshot } from './toneSession';
+import { TONE_MIN_RMS, ToneSession, type ToneTarget, type ToneSnapshot } from './toneSession';
 
 export function useToneSession(targets: ToneTarget[]) {
   const { getAudio } = usePracticeAudio();
@@ -52,7 +52,9 @@ export function useToneSession(targets: ToneTarget[]) {
         if (now - last >= 30) {
           last = now;
           analyser.getFloatTimeDomainData(data);
-          const estimate = detectPitch(data, context.sampleRate, session.current.isSounding() ? .004 : .014);
+          // Keep the gate identical across breaths and explicit restarts.
+          // Periodicity checks plus onset confirmation reject transient noise.
+          const estimate = detectPitch(data, context.sampleRate, TONE_MIN_RMS);
           const at = now - origin.current!;
           session.current.push(estimate ? {...estimate,at} : null, at);
           publish();
@@ -75,6 +77,7 @@ export function useToneSession(targets: ToneTarget[]) {
   return { ...snapshot, status, error, start, pause,
     select: (index: number) => { session.current.select(index); publish(); },
     clear: () => { session.current.clear(); publish(); },
+    firstTry: (targetId: number) => session.current.firstTry(targetId),
     setRepeat: (repeat: boolean) => { session.current.repeat = repeat; },
   };
 }

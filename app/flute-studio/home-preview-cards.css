@@ -493,3 +493,11 @@
 
 /* The calendar on the home page: same card, held to the width it needs. */
 .home-calendar-row { margin: 16px 0 0; max-width: 340px; }
+
+.preview-card--theory .preview-card__stage{background:#f5f5f5}
+.theory-preview{width:240px;max-width:90%;color:#171717;overflow:visible}
+.theory-preview>line{stroke:#333;stroke-width:1}
+.theory-preview-note{fill:currentColor}
+.theory-preview-note text{text-anchor:middle;font:12px -apple-system,BlinkMacSystemFont,sans-serif;opacity:0;transition:opacity .25s;transition-delay:calc(var(--i)*.12s)}
+.preview-card--theory:is(:hover,:focus-visible,.is-touch-playing) text{opacity:1}
+@media(prefers-reduced-motion:reduce){.theory-preview-note text{transition:none}}

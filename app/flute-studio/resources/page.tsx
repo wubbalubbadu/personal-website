@@ -35,6 +35,11 @@ type Resource = {
 
 const RESOURCES: readonly Resource[] = [
   {
+    key: "theory", href: "/flute-studio/theory", en: "Theory lessons", zh: "乐理课",
+    enDetail: "Interactive tutorial for reading music.",
+    zhDetail: "学习识谱的互动教程。", icon: "theory",
+  },
+  {
     key: "fingerings",
     href: "/flute-studio/fingerings",
     en: "Fingering chart",
@@ -78,6 +83,7 @@ const TOOLS = ["tuner", "metronome", "drone"] as const;
 export default function ResourcesHub() {
   const { t, lang } = useLanguage();
   const zh = lang === "zh";
+  const sentence=(text:string)=>/[.!?。！？]$/.test(text.trim())?text:`${text}${zh?"。":"."}`;
 
   return (
     <main className="exercise-hub">
@@ -89,8 +95,8 @@ export default function ResourcesHub() {
           </div>
           <p className="exercise-hub__intro">
             {zh
-              ? "需要查阅的东西都在这里——指法、颤音、身体模型和技巧路线图。"
-              : "The things you look up rather than practise — fingerings, trills, the body model and what to learn next."}
+              ? "从乐理入门到指法查阅，找到你需要的学习资料。"
+              : "Learn something new or look something up: theory lessons, fingerings, and guides for your playing."}
           </p>
         </header>
 
@@ -103,7 +109,7 @@ export default function ResourcesHub() {
                   <ResourceIcon name={resource.icon} className="exercise-hub__icon" />
                   <span className="exercise-hub__copy">
                     <strong>{zh ? resource.zh : resource.en}</strong>
-                    <small>{zh ? resource.zhDetail : resource.enDetail}</small>
+                    <small>{sentence(zh ? resource.zhDetail : resource.enDetail)}</small>
                   </span>
                 </a>
               </article>

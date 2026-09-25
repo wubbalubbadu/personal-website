@@ -4,12 +4,14 @@ import {useEffect, useRef} from "react";
 import {useLanguage} from "./i18n/LanguageContext";
 import Link from "next/link";
 import {musicLibrary} from "../../content/music-library";
+import QuarterNote from "./theory/QuarterNote";
 import EmbouchureMiniPreview from "./EmbouchureMiniPreview";
 import "./home-preview-cards.css";
 
 export default function HomePreviewCards(){
-  const {t}=useLanguage();
+  const {t,lang}=useLanguage();
   const regions=t.roadmap.regions;
+  const sentence=(text:string)=>/[.!?。！？]$/.test(text.trim())?text:`${text}${lang==="zh"?"。":"."}`;
   const tracks=musicLibrary.filter(item=>item.status==="published").slice(0,4);
   const previewRoot=useRef<HTMLDivElement>(null);
 
@@ -49,7 +51,7 @@ export default function HomePreviewCards(){
   //
   // Three to a row throughout, and never one — a lone card stretched to
   // the full width reads as a banner rather than as one item among
-  // several. Five resources means the second row holds two at the same
+  // several. Six resources means the second row holds three at the same
   // third-width as the first, which is the point: they keep their size
   // instead of expanding to fill the gap.
   return <div className="home-preview" ref={previewRoot}>
@@ -77,7 +79,7 @@ export default function HomePreviewCards(){
           </svg>
         </div>
       </div>
-      <div className="preview-card__copy"><b>{t.quickTools.scaleStudio}</b><small>{t.quickTools.scaleStudioDetail}</small></div>
+      <div className="preview-card__copy"><b>{t.quickTools.scaleStudio}</b><small>{sentence(t.quickTools.scaleStudioDetail)}</small></div>
     </Link>
     <Link className="preview-card preview-card--tones" href="/flute-studio/exercises/long-tones">
       <div className="preview-card__stage">
@@ -109,7 +111,7 @@ export default function HomePreviewCards(){
     <section className="home-preview-grid home-preview-grid--trio" aria-label="Resources">
     <Link className="preview-card preview-card--embouchure" href="/flute-studio/embouchure">
       <div className="preview-card__stage"><EmbouchureMiniPreview/></div>
-      <div className="preview-card__copy"><b>{t.quickTools.embouchure}</b><small>{t.quickTools.embouchureDetail}</small></div>
+      <div className="preview-card__copy"><b>{t.quickTools.embouchure}</b><small>{sentence(t.quickTools.embouchureDetail)}</small></div>
     </Link>
     <Link className="preview-card preview-card--roadmap" href="/flute-studio/roadmap">
       <div className="preview-card__stage">
@@ -121,7 +123,7 @@ export default function HomePreviewCards(){
           {regions.map((region,index)=><li key={region.id} className={index<2?"is-done":""} style={{"--i":index} as React.CSSProperties}><i className={region.tone}><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.3 4.8 8.6 9.5 3.6"/></svg></i><span>{region.title}</span></li>)}
         </ul>
       </div>
-      <div className="preview-card__copy"><b>{t.quickTools.roadmap}</b><small>{t.quickTools.roadmapDetail}</small></div>
+      <div className="preview-card__copy"><b>{t.quickTools.roadmap}</b><small>{sentence(t.quickTools.roadmapDetail)}</small></div>
     </Link>
     <Link className="preview-card preview-card--music" href="/flute-studio/music">
       <div className="preview-card__stage">
@@ -129,7 +131,7 @@ export default function HomePreviewCards(){
           {tracks.map((track,index)=><div className="music-preview__swatch" key={track.id} style={{"--i":index} as React.CSSProperties}><b>{track.title}</b><span>{track.composer}</span></div>)}
         </div>
       </div>
-      <div className="preview-card__copy"><b>{t.quickTools.browseMusic}</b><small>{t.quickTools.browseMusicDetail}</small></div>
+      <div className="preview-card__copy"><b>{t.quickTools.browseMusic}</b><small>{sentence(t.quickTools.browseMusicDetail)}</small></div>
     </Link>
 
     <Link className="preview-card preview-card--fingerings" href="/flute-studio/fingerings">
@@ -165,6 +167,15 @@ export default function HomePreviewCards(){
         </svg>
       </div>
       <div className="preview-card__copy"><b>Trill chart</b><small>Four octaves of trill fingerings.</small></div>
+    </Link>
+    <Link className="preview-card preview-card--theory" href="/flute-studio/theory">
+      <div className="preview-card__stage">
+        <svg className="theory-preview" viewBox="0 0 240 150" aria-hidden="true">
+          {[0,1,2,3,4].map(i=><line key={i} x1="25" x2="215" y1={42+i*16} y2={42+i*16}/>)}
+          {[90,74,58,66].map((y,i)=><g className="theory-preview-note" key={i} style={{"--i":i} as React.CSSProperties}><g transform={`translate(${55+i*44} ${y}) scale(.6)`}><QuarterNote down={i>1}/></g><text x={55+i*44} y="135">{['G','B','D','C'][i]}</text></g>)}
+        </svg>
+      </div>
+      <div className="preview-card__copy"><b>{lang==="zh"?"乐理课":"Theory lessons"}</b><small>{lang==="zh"?"学习识谱的互动教程。":"Interactive tutorial for reading music."}</small></div>
     </Link>
     </section>
 

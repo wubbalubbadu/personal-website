@@ -7,6 +7,7 @@ import {readSessions,type PracticeSession} from "../practice-data";
 import {useRecents,useSavedItems} from "../lib/storage";
 import {musicLibrary} from "../../../content/music-library";
 import {PracticeCalendar} from "../PracticeCalendar";
+import {PitchTendencies} from "./PitchTendencies";
 import "./practice-page.css";
 
 const routineKey="cookie:practice-routine";
@@ -118,6 +119,8 @@ export default function PracticePage(){
           </li>)}
         </ul>
       </section>
+
+      <PitchTendencies zh={zh}/>
 
       <div className="practice-page__grid">
         <div className="practice-page__column">

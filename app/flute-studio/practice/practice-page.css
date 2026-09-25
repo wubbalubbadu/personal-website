@@ -100,3 +100,41 @@
 .routine-pick select { flex: 1; min-width: 0; font: inherit; font-size: 13px; padding: 7px 9px; border: 1px solid var(--line, #dedfd9); border-radius: 9px; background: #fff; color: #292a33; }
 .routine-list__text--link { color: inherit; text-decoration: none; border-bottom: 1px solid #d7dcd4; }
 .routine-list__text--link:hover { color: #40553d; border-bottom-color: #8aa87c; }
+
+/* Pitch tendencies: a 12-column map (one column per pitch class, one row per
+   octave). Blue leans flat, orange leans sharp, green is in tune; the
+   stronger the tint, the further off. Blank cells are notes not yet played. */
+.pitch-card{margin-bottom:24px;scroll-margin-top:80px}
+.pitch-card__meta{font-size:13px;color:#85868e;font-variant-numeric:tabular-nums}
+.pitch-card .practice-card__empty a{color:#205a9a;font-weight:500;text-decoration:none}
+.pitch-map{margin-top:18px;display:grid;gap:4px;overflow-x:auto}
+.pitch-map__row{display:grid;grid-template-columns:28px repeat(12,minmax(44px,1fr));gap:4px;min-width:600px}
+.pitch-map__head span{font-size:12px;color:#85868e;text-align:center}
+.pitch-map__octave{align-self:center;font-size:12px;color:#85868e;text-align:right;padding-right:4px}
+.pitch-map__cell{height:44px;border-radius:8px;display:grid;place-content:center;justify-items:center;gap:0;background:#f4f5f2;font-variant-numeric:tabular-nums;cursor:default}
+.pitch-map__cell b{font-size:13px;font-weight:600;line-height:1.1}
+.pitch-map__cell small{font-size:10px;opacity:.75}
+.pitch-map__cell.is-empty{background:transparent;border:1px dashed #e1e2dd}
+.pitch-map__cell.is-outside{visibility:hidden}
+.pitch-map__cell.is-tune{background:#e5efe0;color:#40553d}
+.pitch-map__cell.is-flat{background:color-mix(in srgb,#6b9ae0 calc(var(--lean)*60%),#eef3fa);color:#173e6e}
+.pitch-map__cell.is-sharp{background:color-mix(in srgb,#e8925a calc(var(--lean)*60%),#fbf0e7);color:#6b300a}
+.pitch-map__legend{display:flex;align-items:center;gap:14px;margin-top:6px;padding-left:32px;font-size:12px;color:#85868e}
+.pitch-map__legend span{display:flex;align-items:center;gap:5px}
+.pitch-map__legend span::before{content:'';width:12px;height:12px;border-radius:3px}
+.pitch-map__legend .is-flat::before{background:#4f86cf}.pitch-map__legend .is-tune::before{background:#b9d3ad}.pitch-map__legend .is-sharp::before{background:#dc7b3c}
+.pitch-map__legend small{margin-left:auto;font-size:12px}
+.pitch-card__insights{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:22px;padding-top:18px;border-top:1px solid #efefec}
+.pitch-card__insights h3{margin:0 0 10px;font-size:14px;font-weight:650}
+.pitch-card__focus,.pitch-card__habits{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.pitch-card__focus li{display:flex;gap:12px;align-items:baseline;font-size:14px}
+.pitch-card__focus b{min-width:3em;font-weight:600}
+.pitch-card__focus span{color:#6d6f76;font-variant-numeric:tabular-nums}
+.pitch-card__habits li{display:grid;gap:2px;font-size:14px}
+.pitch-card__habits li.is-warn{color:#8d5814}
+.pitch-card__habits small{font-size:13px;color:#6d6f76}
+@media(max-width:700px){.pitch-card__insights{grid-template-columns:1fr}.pitch-map__legend small{display:none}}
+.pitch-card__hint{margin:-6px 0 10px;font-size:13px;color:#85868e}
+.pitch-card__subhead{margin-top:18px!important}
+.pitch-card__focus.is-fixed b{color:#40553d}
+.pitch-map__cell b i{font-style:normal;font-weight:500}

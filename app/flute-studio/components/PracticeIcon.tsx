@@ -1,9 +1,11 @@
 import type {ReactNode} from "react";
-export type PracticeIconName = "metronome" | "tuner" | "drone" | "markup" | "fullscreen" | "close" | "previous" | "next" | "settings" | "gear" | "tap" | "record" | "play" | "stop" | "undo" | "redo" | "saved" | "aids" | "tempo" | "print" | "top" | "highlighter" | "arrow" | "eraser" | "text" | "sticky" | "select";
+export type PracticeIconName = "metronome" | "tuner" | "mic" | "drone" | "markup" | "fullscreen" | "close" | "previous" | "next" | "settings" | "gear" | "tap" | "record" | "play" | "stop" | "undo" | "redo" | "saved" | "aids" | "tempo" | "print" | "top" | "highlighter" | "arrow" | "eraser" | "text" | "sticky" | "select";
 const paths:Record<PracticeIconName,ReactNode>={
   // Trapezoid body, base line, pendulum arm. The weight-dot and the extra
   // crossing stroke the old glyph had collapsed into a smudge at 22px.
   metronome:<><path d="M9.2 3.5h5.6L18.5 20H5.5L9.2 3.5Z"/><path d="M6.6 14.8h10.8"/><path d="m12 14.8 3.4-8"/></>,
+  // Capsule, cradle, stand: reads as "listening", which Record (a dot) does not.
+  mic:<><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></>,
   tuner:<><path d="M7 3v8a5 5 0 0 0 10 0V3M12 16v6"/><path d="M5 3h4M15 3h4"/></>,
   drone:<><path d="M11 4 6 8H3v8h3l5 4V4Z"/><path d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14"/></>,
   markup:<><path d="M16.1 3.9a1.9 1.9 0 0 1 2.7 0l1.3 1.3a1.9 1.9 0 0 1 0 2.7L8.5 19.5l-4.6 1.1 1.1-4.6L16.1 3.9Z"/><path d="m14.4 5.6 4 4"/></>,
@@ -45,10 +47,11 @@ export function PracticeIcon({name,gradient}:{name:PracticeIconName;gradient?:st
  * --spectrum in studio-tokens.css so the icon, the label and the ring are
  * the same sweep of colour.
  */
-export function SpectrumDef({id}:{id:string}){
+const WARM_STOPS=["#8fb87a","#6fa8c7","#9d8ad4","#d489c4","#e0a46a"];
+export function SpectrumDef({id,stops=WARM_STOPS}:{id:string;stops?:string[]}){
   return <svg width="0" height="0" aria-hidden="true" focusable="false" style={{position:"absolute"}}>
     <defs><linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stopColor="#8fb87a"/><stop offset="25%" stopColor="#6fa8c7"/><stop offset="50%" stopColor="#9d8ad4"/><stop offset="75%" stopColor="#d489c4"/><stop offset="100%" stopColor="#e0a46a"/>
+      {stops.map((color,i)=><stop key={i} offset={`${i/(stops.length-1)*100}%`} stopColor={color}/>)}
     </linearGradient></defs>
   </svg>;
 }

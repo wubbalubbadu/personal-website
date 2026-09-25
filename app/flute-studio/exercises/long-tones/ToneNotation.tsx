@@ -1,10 +1,10 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { toneGroupMusicXML, type ToneBlock, type TonePattern } from './long-tone-score';
-import { toneSummary, tonePitchLabel, type ToneAttempt } from '../../lib/toneSession';
+import { toneFinding, type ToneAttempt } from '../../lib/toneSession';
 
-export function ToneNotation({block,pattern,active,cursorAfter=false,startEvent,attempts,onSelect,zh}: {
-  block:ToneBlock;pattern:TonePattern;active:number;cursorAfter?:boolean;startEvent:number;attempts:ToneAttempt[];onSelect:(event:number)=>void;zh:boolean;
+export function ToneNotation({block,pattern,active,cursorAfter=false,startEvent,attempts,onSelect,zh,live=null,running=false}: {
+  block:ToneBlock;pattern:TonePattern;active:number;cursorAfter?:boolean;startEvent:number;attempts:ToneAttempt[];onSelect:(event:number)=>void;zh:boolean;live?:ToneAttempt|null;running?:boolean;
 }) {
   const host=useRef<HTMLDivElement>(null);
   const selectRef=useRef(onSelect);
@@ -33,44 +33,46 @@ export function ToneNotation({block,pattern,active,cursorAfter=false,startEvent,
     }).catch(()=>{if(!disposed)setFailed(true)});
     return()=>{disposed=true;root.replaceChildren()};
   },[block,pattern,startEvent,zh]);
+  // Feedback marks are HTML over the engraving, not SVG text inside it: the
+  // SVG scales with the notation, and text inside it scaled with it.
+  const [marks,setMarks]=useState<{event:number;x:number;y:number;finding:ReturnType<typeof toneFinding>}[]>([]);
+  // The playhead is the score's own (same line, cap and label), not an SVG line of its own.
+  const [head,setHead]=useState<{x:number;top:number;height:number;labelY:number}|null>(null);
   useEffect(()=>{
-    host.current?.querySelectorAll('.tone-closeup-playhead,.tone-notation-pitch-label').forEach(node=>node.remove());
-    host.current?.querySelectorAll<SVGGElement>('[data-tone-event]').forEach(node=>{
+    const el=host.current;
+    if(!el)return;
+    const observer=new ResizeObserver(()=>setVersion(v=>v+1));
+    observer.observe(el);
+    return()=>observer.disconnect();
+  },[]);
+  useEffect(()=>{
+    const el=host.current;
+    if(!el)return;
+    const svg=el.querySelector('svg'),matrix=svg?.getScreenCTM(),frame=el.parentElement!.getBoundingClientRect();
+    const next:typeof marks=[];let playhead:typeof head=null;
+    el.querySelectorAll<SVGGElement>('[data-tone-event]').forEach(node=>{
       const event=Number(node.dataset.toneEvent);
-      node.classList.toggle('tone-notation-active',event===active);
+      const head=node.querySelector('.vf-notehead path')??node.querySelector('.vf-notehead');
+      if(!svg||!head||!matrix)return;
+      const box=head.getBoundingClientRect();
+      const measure=(node.closest('.vf-measure')??node).getBoundingClientRect();
+      const attempted=attempts.some(a=>a.target.id===event);
       if(event===active){
-        const svg=host.current?.querySelector('svg'),head=node.querySelector('.vf-notehead path')??node.querySelector('.vf-notehead');
-        const matrix=svg?.getScreenCTM();
-        if(svg&&head&&matrix){
-          const box=head.getBoundingClientRect();
-          const point=new DOMPoint(cursorAfter?box.right:box.left,box.top).matrixTransform(matrix.inverse());
-          const line=document.createElementNS('http://www.w3.org/2000/svg','line');
-          line.setAttribute('class','tone-closeup-playhead');
-          line.setAttribute('x1',String(point.x+(cursorAfter?7:-7)));line.setAttribute('x2',String(point.x+(cursorAfter?7:-7)));
-          line.setAttribute('y1',String(point.y-32));line.setAttribute('y2',String(point.y+18));
-          svg.appendChild(line);
-        }
+        const top=Math.min(box.top,measure.top)-14-frame.top;
+        playhead={x:(cursorAfter?box.right+10:box.left-10)-frame.left,top,height:measure.bottom-frame.top-top,labelY:measure.bottom-frame.top+(attempted?34:8)};
       }
       const attempt=attempts.filter(a=>a.target.id===event).at(-1);
-      node.dataset.grade=attempt?toneSummary(attempt).grade:'';
-      const svg=host.current?.querySelector('svg'),head=node.querySelector('.vf-notehead path')??node.querySelector('.vf-notehead');
-      const matrix=svg?.getScreenCTM();
-      if(attempt&&svg&&head&&matrix){
-        const box=head.getBoundingClientRect(),measure=(node.closest('.vf-measure')??node).getBoundingClientRect();
-        const point=new DOMPoint(box.left+box.width/2,measure.bottom).matrixTransform(matrix.inverse());
-        const label=tonePitchLabel(attempt,zh),text=document.createElementNS('http://www.w3.org/2000/svg','text');
-        text.setAttribute('class',`tone-notation-pitch-label grade-${toneSummary(attempt).grade}`);
-        text.setAttribute('x',String(point.x));text.setAttribute('y',String(point.y+12));text.setAttribute('text-anchor','middle');
-        text.setAttribute('role','button');text.setAttribute('tabindex','0');text.setAttribute('aria-label',label.description);
-        text.textContent=label.short;
-        const title=document.createElementNS('http://www.w3.org/2000/svg','title');title.textContent=label.description;text.appendChild(title);
-        text.addEventListener('click',()=>selectRef.current(event));
-        text.addEventListener('keydown',key=>{if(key.key==='Enter'||key.key===' '){key.preventDefault();selectRef.current(event)}});
-        svg.appendChild(text);
+      if(attempt){
+        next.push({event,x:box.left+box.width/2-frame.left,y:measure.bottom-frame.top+6,finding:toneFinding(attempt,zh)});
       }
     });
+    setMarks(next);setHead(playhead);
   },[active,cursorAfter,attempts,version,zh]);
   return <div className="tone-notation" role="group" aria-label={zh?"练习乐谱":"Practice notation"}>
-    <div ref={host}/>{failed&&<p role="alert">{zh?'无法显示乐谱，请返回完整乐谱。':'Notation could not load. Return to the full score.'}</p>}
+    <div ref={host}/>
+    {head&&<><span className={`tone-playhead ${cursorAfter?'is-after':''}`} style={{left:head.x,top:head.top,height:head.height}}/>
+      {(live||(!cursorAfter&&!running))&&<span className="tone-note-time" style={{left:head.x+(cursorAfter?0:10),top:head.labelY}}>{live?`${((live.frames.at(-1)!.at-live.startedAt)/1000).toFixed(1)}s`:(zh?'从这里开始':'Start here')}</span>}</>}
+    {marks.map(m=><button key={m.event} className={`tone-pitch-badge grade-${m.finding.grade} kind-${m.finding.kind}`} style={{left:m.x,top:m.y}} title={m.finding.text} aria-label={m.finding.text} onClick={()=>selectRef.current(m.event)}>{m.finding.short}</button>)}
+    {failed&&<p role="alert">{zh?'无法显示乐谱，请返回完整乐谱。':'Notation could not load. Return to the full score.'}</p>}
   </div>;
 }

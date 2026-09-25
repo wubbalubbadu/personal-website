@@ -804,3 +804,28 @@ html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document"
   color:#4b6a55;font-size:11px;font-weight:600;text-decoration:none;
 }
 .restored-reader .flute-tip .finger-diagram__alts:hover{text-decoration:underline}
+
+/* A host's own tool row stacks above mark-up's, in the same grid row, so the
+   two modes can be open together. A stage covers the music area in place;
+   the engraving stays mounted beneath it so its layout survives. */
+.reader-workspace .reader-rows{grid-area:markup;min-width:0}
+.reader-workspace .reader-stage{grid-area:score;z-index:6;min-width:0;min-height:0;overflow:auto;padding:12px;background:#eeefeb;overscroll-behavior:contain}
+/* With a dock, the score gives up the bottom of the canvas instead of being
+   covered: the gray canvas carries on under both, so the dock reads as a
+   second sheet on the same desk. */
+.restored-reader[data-dock] .workspace{grid-template-rows:auto auto auto minmax(0,1fr) fit-content(40%)!important;grid-template-areas:"document" "header" "markup" "score" "dock"!important}
+html.score-focus-mode .restored-reader[data-dock] .workspace{grid-template-areas:"document" "header" "markup" "score" "dock"!important}
+.reader-workspace .reader-dock{grid-area:dock;min-width:0;min-height:0;padding:0 12px 12px;background:#eeefeb}
+/* One corner for every control in the tool rows (Mark up, Pitch) and the
+   panels they open. Earlier rules had left 5, 6 and 12px mixed side by side.
+   The ink colour dots stay round: they are swatches, not buttons. */
+.reader-workspace .markup-row .annotation-toolbar>button,
+.reader-workspace .markup-row .markup-icon,
+.reader-workspace .markup-row .markup-close,
+.reader-workspace .pitch-row button,
+.reader-workspace .reader-stage button,
+.reader-workspace .reader-dock button{border-radius:8px!important}
+/* The dock is its own sheet: a gap and a hairline keep the cut-off edge of
+   the score from running straight into it. */
+.reader-workspace .reader-dock{padding-top:10px;border-top:1px solid #dcded8}
+.reader-workspace .osmd-score[data-page-cut]{-webkit-mask-image:linear-gradient(to bottom,#000 calc(var(--page-cut) - 28px),transparent var(--page-cut));mask-image:linear-gradient(to bottom,#000 calc(var(--page-cut) - 28px),transparent var(--page-cut))}

@@ -24,9 +24,11 @@ export type ResourceIconName =
   | "roadmap"
   | "tuner"
   | "metronome"
-  | "drone";
+  | "drone"
+  | "theory";
 
 const paths: Record<ResourceIconName, React.ReactNode> = {
+  theory: <><path d="M3 6h18M3 10h18M3 14h18M3 18h18" opacity=".45"/><ellipse cx="12" cy="14" rx="3" ry="2" fill="currentColor" stroke="none"/><path d="M15 14V4"/></>,
   // The instrument itself: a tube with keys, two of them pressed. This is
   // what a fingering chart is a picture of.
   fingerings: (

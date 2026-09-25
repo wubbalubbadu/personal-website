@@ -22,3 +22,14 @@
 .cookie-pomodoro>small{display:block;margin-top:11px;text-align:center;font-size:11px;color:#85868e}
 @keyframes cookiePomodoroReveal{from{opacity:0;transform:translateY(6px) scale(.98)}}
 @media(prefers-reduced-motion:reduce){.cookie-pomodoro{animation:none}}
+.cookie-pet-wrap.is-lesson-companion{display:block}.is-lesson-companion .cookie-pet-bubble{max-width:min(260px,60vw);font-size:14px;font-weight:400;line-height:1.45}.cookie-pet-wrap:has(.cookie-pet:active) .cookie-pet{animation:none}
+.cookie-pet-wrap.is-docked{position:relative;inset:auto!important;display:flex;align-items:center;gap:16px;width:min(100%,620px);height:auto;z-index:2;touch-action:auto}.is-docked .cookie-pet{flex:0 0 60px;order:0;touch-action:none}.is-docked .cookie-pet-bubble{position:relative;inset:auto!important;order:1;max-width:none;width:auto;box-shadow:none;font-size:16px;line-height:1.45;font-weight:400;padding:12px 16px;text-wrap:pretty}.is-docked .cookie-pet-bubble:after{display:none}
+
+/* The lesson conversation belongs to the staff scene, with room for a full prompt. */
+.is-docked .cookie-pet-bubble{flex:1;min-height:76px;display:flex;align-items:center;background:#fff6e7;color:#453526;border:1px solid #e8cfaa;border-radius:20px;padding:18px 24px;font-size:clamp(18px,2vw,22px);line-height:1.4;transition:background .25s,border-color .25s,color .25s}
+.is-docked .cookie-pet-bubble:after{display:block;left:-8px;right:auto;top:calc(50% - 8px);bottom:auto;width:14px;height:14px;background:inherit;border:0;border-left:1px solid #e8cfaa;border-bottom:1px solid #e8cfaa;transform:rotate(45deg)}
+.theory-paper:has(.is-correct) .is-docked .cookie-pet-bubble{background:#edf7ef;border-color:#b7d8be;color:#245437}
+.theory-paper:has(.is-correct) .is-docked .cookie-pet-bubble:after{border-color:#b7d8be}
+.theory-paper:has(.is-incorrect) .is-docked .cookie-pet-bubble{background:#fff2e8;border-color:#e9c2a3}
+.theory-paper:has(.is-incorrect) .is-docked .cookie-pet-bubble:after{border-color:#e9c2a3}
+@media(max-width:600px){.cookie-pet-wrap.is-docked{gap:12px}.is-docked .cookie-pet-bubble{padding:14px 16px;font-size:18px}}

@@ -29,3 +29,5 @@
 .reader-workspace .annotation-colors button[aria-pressed=true]{box-shadow:0 0 0 2px #454b52}
 .annotation-toolbar>span[role=status]{font-size:12px;color:#6c7075;padding:4px 8px}
 @media(pointer:coarse){.reader-workspace .annotation-toolbar button{min-height:44px}.reader-workspace .annotation-colors button{width:28px;min-height:28px}}
+/* Close shares the tools' hover; the transparent reset above had outranked it. */
+.reader-workspace .markup-row .annotation-toolbar .markup-close:hover{background:#f0f3f6;color:#41464b}

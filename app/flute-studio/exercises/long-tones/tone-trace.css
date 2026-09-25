@@ -1,64 +1,147 @@
-.tone-workspace{color:var(--ink,#292a33);font-family:var(--font,-apple-system,BlinkMacSystemFont,sans-serif)}
-.tone-controls{display:inline-flex;align-items:center;gap:4px}
-.tone-controls button{white-space:nowrap}
-.tone-track{color:#46633d!important}
-.tone-workspace button:focus-visible,.tone-workspace select:focus-visible,.tone-workspace input:focus-visible{outline:2px solid #356eaa;outline-offset:3px}
-.tone-workspace button[aria-pressed=true]{background:#e5ece1;color:#46633d}
-.tone-workspace.is-closeup .tone-full-reader{display:none}
+/* Pitch mode for long tones. Three text sizes only: 12px for axis and small
+   print, 13px for controls and labels, 15px for the numbers you read while
+   playing. Colours: blue = the tool's own state (chosen, playhead), and
+   green / amber / red = how a note went. Nothing else is coloured. */
+.tone-workspace{--tone-green:#46633d;--tone-amber:#8d5814;--tone-red:#a83d32;--tone-muted:#6b7078;--tone-blue:#205a9a;color:#292a33;font-family:var(--font,-apple-system,BlinkMacSystemFont,sans-serif)}
+.tone-workspace button:focus-visible{outline:2px solid #356eaa;outline-offset:2px}
+
+/* ── Toolbar button: Tones' travelling arc, in cool colours ── */
+.restored-reader .practice-bar .pitch-mode-trigger{
+  border:1.5px solid transparent!important;
+  background-color:#fff!important;
+  background-image:linear-gradient(#fff,#fff),conic-gradient(from var(--studio-spin),transparent 0deg,#5fb3b3 22deg,#5b9bd5 48deg,#9a7fd1 70deg,transparent 104deg,transparent 360deg),linear-gradient(#e3e3e8,#e3e3e8)!important;
+  background-origin:padding-box,border-box,border-box!important;
+  background-clip:padding-box,border-box,border-box!important;
+  background-repeat:no-repeat!important;
+  animation:studio-spin 3.6s linear infinite;
+}
+.restored-reader .practice-bar .pitch-mode-trigger:hover,.restored-reader .practice-bar .pitch-mode-trigger.on{
+  background-image:linear-gradient(#eef4fb,#eef4fb),conic-gradient(from var(--studio-spin),transparent 0deg,#5fb3b3 22deg,#5b9bd5 48deg,#9a7fd1 70deg,transparent 104deg,transparent 360deg),linear-gradient(#e3e3e8,#e3e3e8)!important;
+}
+.pitch-mode-label{background-image:linear-gradient(100deg,#4f9e9e,#4a86c2,#7c6fc4,#4f9e9e);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent!important;font:inherit!important;font-weight:600!important;animation:studio-spectrum 14s linear infinite}
+.restored-reader .practice-bar .tool>.pitch-mode-label{font-size:inherit!important;line-height:inherit!important}
+@media(prefers-reduced-motion:reduce){.restored-reader .practice-bar .pitch-mode-trigger,.pitch-mode-label{animation:none}}
+
+/* ── Pitch row: Mark up's strip, in words ── */
+.reader-workspace .pitch-row{padding:2px 10px;background:#fff;border-bottom:1px solid #ededeb}
+.reader-workspace .pitch-row-surface{width:max-content;max-width:100%;min-height:48px;margin:0 auto;display:flex;align-items:center;gap:2px}
+.reader-workspace .pitch-row-surface>*{flex-shrink:0}
+.reader-workspace .pitch-row button{display:flex;align-items:center;gap:6px;min-height:36px;padding:0 10px;border:0;border-radius:6px;background:transparent;color:#41464b;font:500 13px var(--font,sans-serif);white-space:nowrap;cursor:pointer}
+.reader-workspace .pitch-row button:hover:not(:disabled){background:#f0f3f6}
+.reader-workspace .pitch-row button[aria-pressed=true],.reader-workspace .pitch-row button[aria-pressed=true]:hover{background:#cfe3ff;color:var(--tone-blue)}
+/* Start is a practice-bar tool (icon over label), like Record and Metronome. */
+.reader-workspace .pitch-row .pitch-start{flex-direction:column;justify-content:center;gap:1px;min-width:48px;height:44px;padding:2px 8px;border-radius:12px;color:#40553d;font-size:11px}
+.reader-workspace .pitch-row .pitch-start svg{width:20px;height:20px}
+.reader-workspace .pitch-row .pitch-start.is-on,.reader-workspace .pitch-row .pitch-start.is-on:hover{background:#fbe9e7;color:#a8392f}
+.reader-workspace .pitch-row .pitch-start.is-on svg{animation:pitchLive 1.4s ease-in-out infinite}
+@keyframes pitchLive{50%{opacity:.45}}
+.pitch-readout{display:flex;align-items:baseline;gap:12px;width:20em;padding:0 12px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:13px;font-style:italic;color:var(--tone-muted)}
+.pitch-readout.is-error{color:var(--tone-red)}
+.pitch-readout.is-live{font-style:normal;font-size:15px;font-variant-numeric:tabular-nums;color:#41464b}
+.pitch-readout.is-live b{font-weight:500;color:#111}
+.pitch-readout .grade-green{color:var(--tone-green)}.pitch-readout .grade-amber{color:var(--tone-amber)}.pitch-readout .grade-red{color:var(--tone-red)}
+.reader-workspace .pitch-row .divider{flex:0 0 1px;height:24px;background:#dedede;margin:0 6px}
+.reader-workspace .pitch-row .pitch-clear.is-confirming{color:var(--tone-red)}
+.reader-workspace .pitch-row .pitch-close{color:#727982}
+@media(prefers-reduced-motion:reduce){.reader-workspace .pitch-row .pitch-start.is-on svg{animation:none}}
+/* Scrolls sideways only when it has to; a scrolling row would clip tooltips. */
+@media(max-width:760px){.reader-workspace .pitch-row-surface{overflow-x:auto;scrollbar-width:none}.pitch-readout{width:12em;padding:0 8px;gap:8px}}
+
+/* ── Marks on the score ── */
 .tone-score-feedback{position:absolute;inset:0;pointer-events:none}
 .tone-note-anchor{position:absolute;pointer-events:none}
-.tone-playhead{position:absolute;left:-18px;top:-34px;height:65px;width:2px;background:#356eaa}
+.tone-playhead{position:absolute;top:-34px;height:65px;width:2px;background:#356eaa}
 .tone-playhead:before{content:'';position:absolute;top:-1px;left:-3px;width:8px;height:5px;border-radius:2px;background:#356eaa}
-.tone-note-time{position:absolute;top:30px;left:0;transform:translateX(-50%);white-space:nowrap;font:500 12px var(--font,sans-serif);color:#356eaa;background:#fff;padding:2px 4px;border-radius:4px;font-variant-numeric:tabular-nums}
-.tone-session-status{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:8;background:#fff;border:1px solid #e4e4e7;border-radius:8px;padding:8px 16px;font-size:13px;max-width:90vw;text-align:center}
-.tone-closeup{max-width:1100px;margin:0 auto;background:#fff;min-height:65vh;padding:20px 30px 26px}
-.tone-closeup-header{display:flex;align-items:center;gap:20px;padding-bottom:20px;border-bottom:1px solid #e4e4e7;font-size:14px;color:#72747c}
-.tone-closeup-header>span:last-child{margin-left:auto;font-variant-numeric:tabular-nums}
-.tone-closeup button,.tone-detail-surface button,.tone-take-actions button{font:500 14px var(--font,sans-serif);border:1px solid #e4e4e7;background:#fff;color:#292a33;padding:9px 13px;border-radius:8px;cursor:pointer;min-height:40px}
-.tone-closeup button:disabled{opacity:.35;cursor:default}
-.tone-closeup-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:18px 0}
-.tone-tempo{display:flex;gap:5px;align-items:center;font-size:15px}
-.tone-tempo input{width:60px;border:1px solid #e4e4e7;padding:8px;border-radius:8px;font:inherit}
-.tone-notation{max-width:950px;margin:24px auto 8px;width:100%;color:#292a33;min-height:130px}
-.tone-notation svg{display:block;width:100%;max-height:300px;min-height:140px}
-.tone-notation .vf-stavenote{cursor:pointer}
-.tone-notation .vf-stavenote[data-grade=green] .vf-notehead{filter:drop-shadow(0 0 4px #71ad64)}
-.tone-notation .vf-stavenote[data-grade=amber] .vf-notehead{filter:drop-shadow(0 0 4px #edb544)}
-.tone-notation .vf-stavenote[data-grade=red] .vf-notehead{filter:drop-shadow(0 0 4px #e97a70)}
-.tone-notation .tone-notation-active{filter:drop-shadow(-3px 0 1px #356eaa)}
-.tone-closeup-status{display:flex;justify-content:center;font-size:15px;color:#72747c;min-height:28px;font-variant-numeric:tabular-nums}
-.tone-closeup-status .is-listening{color:#356eaa}
-.tone-group-nav{display:flex;justify-content:center;gap:12px;margin-top:24px}
-.tone-fingering{display:flex;align-items:center;gap:20px;max-width:550px;margin:20px auto}.tone-fingering .flute-diagram{flex:1}
-.tone-detail-surface{background:#fff;border-top:1px solid #e4e4e7;padding:20px 28px;max-width:1100px;margin:0 auto;position:relative;z-index:9}
-.tone-detail-surface>header{display:flex;align-items:center;justify-content:space-between;gap:16px}.tone-detail-surface>header>div{display:flex;gap:12px;align-items:baseline}.tone-detail-surface>header span{font-size:13px;color:#72747c}
-.tone-detail-surface .tone-notation{max-width:580px;margin:0 auto}.tone-detail-surface .tone-notation svg{max-height:150px}
-.tone-analysis{padding-top:16px}.tone-analysis-heading{display:flex;gap:16px;align-items:baseline;font-size:14px;margin-bottom:16px}.tone-analysis-heading span{font-size:12px;color:#72747c}
-.tone-plot-wrap{display:flex;height:190px;gap:10px}.tone-axis{width:42px;flex-shrink:0;display:flex;flex-direction:column;justify-content:space-between;text-align:right;font-size:12px;color:#72747c}
-.tone-plot{width:calc(100% - 52px);height:100%;overflow:visible}.tone-plot-band{fill:#e5ece1;opacity:.55}.tone-plot-zero{stroke:#b3bcb0;stroke-width:1}.tone-plot-divider{stroke:#e4e4e7;stroke-dasharray:3 4}.tone-plot-line{fill:none;stroke:#46633d;stroke-width:2;vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round}
-.tone-time-axis{display:flex;justify-content:space-between;margin:8px 0 0 52px;font-size:12px;color:#72747c;font-variant-numeric:tabular-nums}
-.tone-analysis-stats,.tone-trace-legend{display:flex;gap:22px;flex-wrap:wrap;margin-top:18px;font-size:14px;font-variant-numeric:tabular-nums}.tone-analysis-stats span{color:#72747c}.tone-analysis-stats b{color:#292a33;font-weight:500}.tone-trace-legend{gap:16px;font-size:12px;color:#72747c}
-.tone-analysis-empty{padding:32px 0;text-align:center;color:#72747c;font-size:14px}.tone-attempt-picker{display:flex;gap:8px;align-items:center;font-size:14px}.tone-attempt-picker select{font:inherit;padding:6px;border:1px solid #e4e4e7;border-radius:8px}
-.tone-take-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 28px 60px;max-width:1100px;margin:auto;font-size:13px;color:#72747c}
-@media(max-width:700px){.tone-controls{gap:0;flex-wrap:wrap}.tone-closeup{padding:14px}.tone-closeup-header{gap:12px}.tone-closeup-toolbar{gap:6px}.tone-closeup-toolbar button{font-size:12px;padding:8px}.tone-detail-surface{padding:16px}.tone-plot-wrap{height:160px}.tone-analysis-heading{flex-wrap:wrap;gap:4px}.tone-group-nav{gap:8px}.tone-notation{margin-top:18px}.tone-analysis-stats{gap:12px}.tone-session-status{bottom:8px;font-size:12px}.tone-closeup-header>span:nth-child(2){display:none}}
-.tone-closeup-playhead{stroke:#356eaa;stroke-width:2;vector-effect:non-scaling-stroke;pointer-events:none}
-.tone-notation .tone-notation-active{filter:none}
-.tone-workspace:not(.is-closeup).has-analysis .reader-workspace{height:60dvh!important}
-.tone-workspace:not(.is-closeup).has-analysis .tone-detail-surface{height:40dvh;overflow-y:auto;border-top:1px solid #d9d9dd}
-.tone-workspace:not(.is-closeup).has-analysis .tone-detail-surface .tone-notation{max-width:320px}
-.tone-workspace:not(.is-closeup).has-analysis .tone-detail-surface .tone-notation svg{min-height:75px;max-height:90px}
-.tone-workspace:not(.is-closeup).has-analysis .tone-session-status{bottom:calc(40dvh + 8px)}
-@media(prefers-reduced-motion:reduce){.tone-workspace *{scroll-behavior:auto!important}}
-
-.tone-result-label{font-size:14px;margin:16px 0 0;color:#72747c}.tone-result-label.grade-green{color:#46633d}.tone-result-label.grade-amber{color:#8d5814}.tone-result-label.grade-red{color:#a83d32}
-
-/* Color follows the SVG glyph itself, independently of zoom and HTML hit targets. */
-.tone-workspace .vf-stavenote[data-tone-grade=green] .vf-notehead{filter:drop-shadow(0 0 4px #71ad64)}
-.tone-workspace .vf-stavenote[data-tone-grade=amber] .vf-notehead{filter:drop-shadow(0 0 4px #edb544)}
-.tone-workspace .vf-stavenote[data-tone-grade=red] .vf-notehead{filter:drop-shadow(0 0 4px #e97a70)}
+.tone-note-time{position:absolute;left:0;transform:translateX(-50%);white-space:nowrap;font:500 12px var(--font,sans-serif);font-variant-numeric:tabular-nums;color:#356eaa;background:#fff;padding:2px 4px;border-radius:4px}
 .tone-workspace .tone-note-hit{position:absolute;left:0;top:0;translate:-50% -50%;width:30px;height:28px;min-width:0;min-height:0;padding:0;margin:0;border:0;background:transparent;pointer-events:auto;cursor:pointer}
-.tone-workspace .tone-note-hit:hover,.tone-workspace .tone-note-hit:active,.tone-workspace .tone-note-hit:focus{background:transparent;box-shadow:none}
-.tone-workspace .tone-note-hit:focus-visible{outline:1px solid #57799d;outline-offset:2px}
-.tone-workspace .tone-pitch-badge{position:absolute;left:0;translate:-50% 0;display:block;width:max-content;min-width:0;min-height:0;padding:2px 3px;margin:0;border:0;border-radius:3px;background:#fff;color:#72747c;font:500 11px var(--font,sans-serif);font-variant-numeric:tabular-nums;line-height:1.2;white-space:nowrap;pointer-events:auto;cursor:pointer}
-.tone-workspace .tone-pitch-badge.grade-green{color:#46633d}.tone-workspace .tone-pitch-badge.grade-amber{color:#8d5814}.tone-workspace .tone-pitch-badge.grade-red{color:#a83d32}
-.tone-notation-pitch-label{font:6px -apple-system,BlinkMacSystemFont,sans-serif;fill:#72747c;cursor:pointer}.tone-notation-pitch-label.grade-green{fill:#46633d}.tone-notation-pitch-label.grade-amber{fill:#8d5814}.tone-notation-pitch-label.grade-red{fill:#a83d32}
+.tone-workspace .tone-note-hit:hover,.tone-workspace .tone-note-hit:focus{background:transparent;box-shadow:none}
+/* A note that needs work gets a filled pill; a good note gets a quiet tick,
+   so the page's eye goes only to what to fix next. */
+.tone-workspace .tone-pitch-badge{position:absolute;left:0;translate:-50% 0;display:block;width:max-content;min-width:0;min-height:0;margin:0;padding:2px 7px;border:0;border-radius:999px;background:transparent;color:var(--tone-muted);font:500 12px var(--font,sans-serif);font-variant-numeric:tabular-nums;line-height:1.35;white-space:nowrap;pointer-events:auto;cursor:pointer}
+.tone-workspace .tone-pitch-badge.grade-green{color:var(--tone-green)}
+.tone-workspace .tone-pitch-badge.grade-amber{background:#faeeda;color:#6f4210}
+.tone-workspace .tone-pitch-badge.grade-red{background:#fbe3e0;color:#8a2a21}
+.tone-workspace .tone-pitch-badge:hover{filter:brightness(.96)}
+
+/* ── Close-up: nav, large music, graph — one screen, no scrolling ── */
+.tone-closeup{box-sizing:border-box;height:100%;min-height:520px;display:flex;flex-direction:column;gap:12px;padding:20px 32px 24px;background:#fff;border-radius:16px}
+.tone-group-nav{display:flex;align-items:center;justify-content:center;gap:6px}
+.tone-closeup button,.tone-dock button{font:500 13px var(--font,sans-serif);border:0;background:transparent;color:#41464b;padding:0 10px;min-height:36px;border-radius:6px;cursor:pointer}
+.tone-closeup button:hover:not(:disabled),.tone-dock button:hover:not(:disabled){background:#f0f3f6}
+.tone-closeup button[aria-pressed=true]{background:#cfe3ff;color:var(--tone-blue)}
+.tone-closeup button:disabled,.tone-dock button:disabled{opacity:.35;cursor:default}
+.tone-group-count{min-width:4.5em;text-align:center;font-size:13px;color:var(--tone-muted);font-variant-numeric:tabular-nums}
+.tone-group-nav .has-tip{margin-left:12px}
+.tone-closeup-music{flex:0 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;gap:24px}
+.tone-notation{position:relative;flex:1;max-width:760px;min-height:120px;color:#292a33}
+.tone-notation svg{display:block;width:100%;max-height:32dvh;min-height:120px}
+.tone-notation .vf-stavenote{cursor:pointer}
+.tone-fingering{display:flex;flex-direction:column;align-items:center;gap:6px;width:150px;font-size:13px}
+.tone-fingering .flute-diagram{width:100%}
+.tone-closeup .tone-graph{flex:1 1 auto;min-height:0;border-top:1px solid #ededeb;padding-top:12px}
+
+/* ── Graph (shared by close-up and the dock) ── */
+.tone-graph-head{display:flex;align-items:baseline;gap:12px;margin-bottom:8px;font-size:13px}
+.tone-graph-head strong{font-weight:500;font-size:13px}
+.tone-graph-head>span{color:var(--tone-muted)}
+.tone-plot-frame{display:flex;gap:8px}
+.tone-axis{position:relative;flex:0 0 38px;height:var(--plot-h,150px);margin-top:22px;font-size:12px;color:var(--tone-muted);font-variant-numeric:tabular-nums}
+.tone-axis>span{position:absolute;right:0;transform:translateY(-50%)}
+.tone-plot-scroll{flex:1;min-width:0;overflow-x:auto;scrollbar-width:thin}
+.tone-plot-canvas{position:relative;width:100%}
+.tone-segment-labels{position:relative;height:22px}
+.tone-workspace .tone-segment-labels button{position:absolute;top:0;min-height:20px;padding:0;border-radius:4px;background:transparent;font:500 12px var(--font,sans-serif);color:#41464b;text-align:center;overflow:hidden;white-space:nowrap}
+.tone-workspace .tone-segment-labels button.is-selected{color:var(--tone-blue)}
+.tone-plot{display:block;width:100%;height:var(--plot-h,150px)}
+.tone-plot-band{fill:#e9efe5}.tone-plot-zero{stroke:#b3bcb0;stroke-width:1;vector-effect:non-scaling-stroke}
+.tone-plot-divider{stroke:#9aa0a6;stroke-dasharray:3 4;vector-effect:non-scaling-stroke}
+.tone-plot-selected{fill:#eaf2fc}
+.tone-plot-line{fill:none;stroke-width:2;vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round;stroke:#9aa0a6}
+.tone-plot-line.grade-green{stroke:#5d8a4f}.tone-plot-line.grade-amber{stroke:#c08a2a}.tone-plot-line.grade-red{stroke:#c0503f}
+.tone-time-axis{position:relative;height:18px;font-size:12px;color:var(--tone-muted);font-variant-numeric:tabular-nums}
+.tone-time-axis span{position:absolute;top:3px;transform:translateX(-50%)}
+.tone-time-axis span:first-child{transform:none}
+.tone-note-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin:10px 0 0 46px}
+.tone-workspace .tone-note-card{display:grid;gap:2px;justify-items:start;padding:8px 10px;min-height:0;border:1px solid transparent;border-radius:8px;background:#f5f6f3;text-align:left;font:400 13px var(--font,sans-serif);color:#41464b}
+.tone-workspace .tone-note-card:hover:not(:disabled){background:#eef0ec}
+.tone-note-card-head{display:flex;gap:8px;align-items:baseline;font-variant-numeric:tabular-nums}
+.tone-note-card-head b{font-weight:500;color:#111}.tone-note-card-head span,.tone-note-card small{color:var(--tone-muted);font-size:12px;font-variant-numeric:tabular-nums}
+.tone-note-card strong{font-weight:500}
+.tone-note-card.grade-green strong{color:var(--tone-green)}.tone-note-card.grade-amber strong{color:var(--tone-amber)}.tone-note-card.grade-red strong{color:var(--tone-red)}
+.tone-workspace .tone-note-card.grade-amber{background:#fbf3e4}.tone-workspace .tone-note-card.grade-red{background:#fcecea}
+.tone-workspace .tone-note-card.is-selected{border-color:#9cc0ea}
+.tone-analysis-empty{margin:0;padding:28px 0;text-align:center;font-size:13px;font-style:italic;color:var(--tone-muted)}
+
+/* ── Dock: the graph under the score, as a second paper on the same canvas ── */
+.tone-dock{--plot-h:110px;position:relative;box-sizing:border-box;height:100%;max-width:var(--reader-page-width,100%);margin:0 auto;overflow:auto;padding:12px 20px 10px;background:#fff;border-radius:16px}
+.tone-workspace .tone-dock-close{position:absolute;top:8px;right:10px;min-width:32px;font-size:18px;color:#727982}
+
+@media(max-width:700px){.tone-closeup{padding:14px;min-height:0}.tone-closeup-music{flex-direction:column;gap:8px}.tone-fingering{width:120px}.tone-note-cards{margin-left:0}.tone-dock{padding:12px}}
+
+/* Dock: title across the top, the group's notation on the left, the graph on
+   the right. The graph wrapper dissolves (display:contents) so its title and
+   plot can sit on the dock's own grid, aligned with the notation. */
+.tone-dock:has(.tone-dock-music){display:grid;grid-template-columns:minmax(180px,260px) minmax(0,1fr);grid-template-areas:"head head" "music plot";column-gap:24px;row-gap:4px;align-items:center;box-shadow:0 1px 3px #29302a14}
+.tone-dock:has(.tone-dock-music)>.tone-graph{display:contents}
+.tone-dock .tone-graph-head{grid-area:head;padding-right:40px}
+.tone-dock-music{grid-area:music;align-self:start}
+.tone-dock .tone-analysis,.tone-dock .tone-analysis-empty{grid-area:plot}
+.tone-dock .tone-analysis-empty{padding:0;text-align:left}
+.tone-dock-music .tone-notation{min-height:0}
+.tone-dock-music .tone-notation svg{min-height:0;max-height:130px}
+.tone-dock-music .tone-pitch-badge{font-size:11px}
+@media(max-width:700px){.tone-dock:has(.tone-dock-music){grid-template-columns:minmax(0,1fr);grid-template-areas:"head" "music" "plot"}.tone-dock-music .tone-notation svg{max-height:90px}}
+
+/* Report after closing Pitch. */
+.tone-report{display:flex;flex-direction:column;gap:10px}
+.tone-report-facts{display:flex;gap:28px;margin:0;padding:0;list-style:none;flex-wrap:wrap}
+.tone-report-facts li{display:grid;gap:2px}
+.tone-report-facts b{font-size:22px;font-weight:500;font-variant-numeric:tabular-nums;color:#111}
+.tone-report-facts span{font-size:12px;color:var(--tone-muted)}
+.tone-report-facts .is-warn b{color:var(--tone-amber)}
+.tone-report-line{margin:0;font-size:13px;color:#41464b}
+.tone-report footer{display:flex;align-items:center;justify-content:space-between;margin-top:auto}
+.tone-report footer a{font-size:13px;font-weight:500;color:var(--tone-blue);text-decoration:none}
+.tone-report footer a:hover{text-decoration:underline}
+.reader-workspace .pitch-row button:disabled{color:#b3b6ba;cursor:default}
+.tone-notation>.tone-playhead{pointer-events:none}
