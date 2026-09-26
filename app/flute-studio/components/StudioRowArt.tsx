@@ -52,6 +52,17 @@ export function ScaleArt() {
   );
 }
 
+/** Air moving through a breath cycle: inhale, hold, then release. */
+export function BreathingArt() {
+  return (
+    <svg className="hub-art hub-art--breathing" viewBox="0 0 44 34" aria-hidden="true" focusable="false">
+      <circle className="hub-art__breath-ring hub-art__breath-ring--outer" cx="22" cy="17" r="12" />
+      <circle className="hub-art__breath-ring hub-art__breath-ring--inner" cx="22" cy="17" r="6" />
+      <path className="hub-art__breath-flow" d="M8 17h8m-3-3 3 3-3 3M36 17h-8m3-3-3 3 3 3" />
+    </svg>
+  );
+}
+
 /**
  * The mark for a catalog id, if it has one. Everything else falls back to
  * its focus/category icon, so this stays a short list of the few tools
@@ -60,5 +71,6 @@ export function ScaleArt() {
 export function artForId(id: string) {
   if (id === "long-tones") return <LongToneArt />;
   if (id === "scale-studio") return <ScaleArt />;
+  if (id === "breathing-lab") return <BreathingArt />;
   return null;
 }

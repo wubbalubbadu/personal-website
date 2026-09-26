@@ -17,7 +17,7 @@ import "./exercises.css";
  * and the two lists read as one system. The old "›" chevron said nothing
  * the whole clickable row was not already saying.
  */
-function Row({focus,title,detail,href,badge,featured,art,save,trailing}:{focus:ExerciseFocus;title:string;detail:string;href?:string;badge?:string;featured?:boolean;art?:React.ReactNode;save?:{saved:boolean;onToggle:()=>void;label:string};trailing?:React.ReactNode}){
+function Row({id,focus,title,detail,href,badge,featured,art,save,trailing}:{id?:string;focus:ExerciseFocus;title:string;detail:string;href?:string;badge?:string;featured?:boolean;art?:React.ReactNode;save?:{saved:boolean;onToggle:()=>void;label:string};trailing?:React.ReactNode}){
   const content=<>
     {/* A featured row may draw its own mark; everything else keeps the
         generic focus icon, so the list stays one family. */}
@@ -30,6 +30,7 @@ function Row({focus,title,detail,href,badge,featured,art,save,trailing}:{focus:E
   const classes=["exercise-hub__row"];
   if(href)classes.push("exercise-hub__row--available");
   if(featured)classes.push("exercise-hub__row--featured");
+  if(id)classes.push(`exercise-hub__row--${id}`);
   return <article className={classes.join(" ")}>
     {href
       ?<Link className="exercise-hub__row-main" href={href}>{content}</Link>
@@ -67,14 +68,16 @@ export default function ExercisesHub(){
     ...exerciseFocuses.map(value=>({key:value,label:focusLabels[value]})),
   ];
 
-  const shown=focus==="all"?exerciseCatalog:exerciseCatalog.filter(entry=>entry.focus===focus);
+  const titleOf=(entry:ExerciseEntry)=>zh?entry.zhTitle:entry.title;
+  const detailOf=(entry:ExerciseEntry)=>zh?entry.zhDetail:entry.detail;
+  const shown=(focus==="all"?exerciseCatalog:exerciseCatalog.filter(entry=>entry.focus===focus))
+    .slice()
+    .sort((a,b)=>titleOf(a).localeCompare(titleOf(b),lang));
   // Saved sets are Scale Studio configurations, so they belong under
   // Technique — and they sit above the catalog, because a set you built on
   // purpose is more likely to be what you came here for than the generic
   // list underneath it.
   const showSets=(focus==="all"||focus==="technique")&&sets.length>0;
-  const titleOf=(entry:ExerciseEntry)=>zh?entry.zhTitle:entry.title;
-  const detailOf=(entry:ExerciseEntry)=>zh?entry.zhDetail:entry.detail;
 
   return <main className="exercise-hub">
       <div className="exercise-hub__content">
@@ -109,6 +112,7 @@ export default function ExercisesHub(){
           {showSets&&<h2 className="exercise-hub__section-title" id="exercise-hub-all">{t.exercises.allExercises}</h2>}
           <div className="exercise-hub__list">
             {shown.map(entry=><Row key={entry.id}
+              id={entry.id}
               focus={entry.focus}
               title={titleOf(entry)}
               detail={detailOf(entry)}

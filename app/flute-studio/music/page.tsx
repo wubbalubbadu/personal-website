@@ -10,15 +10,17 @@ import "./library-fixes.css";
 
 export default function MusicLibrary(){
   const router=useRouter();
-  const {t}=useLanguage();
-  const labels:Record<string,string>={all:t.library.all,exercise:t.library.exercise,repertoire:t.library.repertoire,etude:t.library.etude,pop:t.library.pop};
+  const {t,lang}=useLanguage(),zh=lang==="zh";
+  const labels:Record<MusicCategory,string>=zh
+    ?{all:"全部",simple:"入门小曲",pop:"流行音乐",repertoire:"古典曲目",etude:"练习曲",excerpt:"管弦乐片段"}
+    :{all:"All",simple:"Simple tunes",pop:"Pop tunes",repertoire:"Classical repertoire",etude:"Etudes",excerpt:"Orchestral excerpts"};
   const [query,setQuery]=useState("");
   const [category,setCategory]=useState<MusicCategory>("all");
   const [favorites,setFavorites]=useState<string[]>([]);
   const [favoritesOnly,setFavoritesOnly]=useState(false);
 
   useEffect(()=>{const saved=localStorage.getItem("cookie:music-favorites");if(saved)setFavorites(JSON.parse(saved));const params=new URLSearchParams(location.search),initial=params.get("category");if(musicCategories.includes(initial as MusicCategory))setCategory(initial as MusicCategory);if(params.get("favorites")==="1")setFavoritesOnly(true)},[]);
-  const items=useMemo(()=>musicLibrary.filter(item=>(category==="all"||item.category===category)&&(!favoritesOnly||favorites.includes(item.id))&&`${item.title} ${item.composer} ${item.key} ${item.techniques.join(" ")}`.toLowerCase().includes(query.toLowerCase())).sort((a,b)=>a.title.localeCompare(b.title)),[query,category,favoritesOnly,favorites]);
+  const items=useMemo(()=>musicLibrary.filter(item=>(category==="all"||item.category===category)&&(!favoritesOnly||favorites.includes(item.id))&&`${item.title} ${item.composer}`.toLowerCase().includes(query.toLowerCase())).sort((a,b)=>a.title.localeCompare(b.title)),[query,category,favoritesOnly,favorites]);
   function favorite(id:string){const next=favorites.includes(id)?favorites.filter(item=>item!==id):[...favorites,id];setFavorites(next);localStorage.setItem("cookie:music-favorites",JSON.stringify(next));window.dispatchEvent(new Event("cookie:favorites-updated"))}
   function pickOne(){const available=items.filter(item=>item.viewerPath);if(!available.length)return;const choice=available[Math.floor(Math.random()*available.length)];router.push(choice.viewerPath!)}
 
@@ -37,7 +39,7 @@ export default function MusicLibrary(){
           {musicCategories.map(value=><button key={value} className={category===value&&!favoritesOnly?"active":""} onClick={()=>{setCategory(value);setFavoritesOnly(false)}}>{labels[value]}</button>)}
           <button className={favoritesOnly?"active":""} onClick={()=>{setFavoritesOnly(true);setCategory("all")}}>{t.library.savedMusicHeading}</button>
         </div>
-        <section className="library-list">{items.map(item=><MusicRow key={item.id} item={item} saved={favorites.includes(item.id)} onToggleSave={()=>favorite(item.id)} detail={`${item.composer} · ${item.key}${!item.viewerPath?t.library.comingSoon:""}`}/>)}</section>
+        <section className="library-list">{items.map(item=><MusicRow key={item.id} item={item} saved={favorites.includes(item.id)} onToggleSave={()=>favorite(item.id)} detail={`${item.composer}${!item.viewerPath?t.library.comingSoon:""}`}/>)}</section>
         {!items.length&&<div className="no-results"><span>♫</span><b>{favoritesOnly?t.library.noSavedMusic:t.library.noMatchingMusic}</b>{!favoritesOnly&&<p>{t.library.changeFilters}</p>}</div>}
       </div>
     </section>

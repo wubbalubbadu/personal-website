@@ -10,13 +10,13 @@
    at rest, solid accent fill only when active. Margin-top is small on
    purpose — .exercise-hub__header already has its own bottom padding, so
    stacking a big margin here on top of that left a visible dead gap. */
-.exercise-hub__tabs{display:flex;gap:6px;overflow:auto;margin:8px 0 18px;scrollbar-width:none}
+.exercise-hub__tabs{display:flex;flex-wrap:wrap;gap:6px;overflow:visible;margin:8px 0 24px;scrollbar-width:none}
 .exercise-hub__tabs::-webkit-scrollbar{display:none}
 .exercise-hub__tabs button{flex:0 0 auto;height:34px;display:inline-flex;align-items:center;justify-content:center;line-height:1;border:0;border-radius:17px;padding:0 15px;background:#f1f1f4;color:#5a5c63;font:inherit;font-size:12px;text-transform:uppercase;letter-spacing:.02em;font-weight:650;cursor:pointer;transition:background-color .16s ease,color .16s ease}
 .exercise-hub__tabs button:hover{background:#e6e6ea}
 .exercise-hub__tabs button.active{background:#292a33;color:#fff}
 
-.exercise-hub__list{overflow:hidden;border-radius:20px;background:white;box-shadow:0 10px 30px rgba(41,42,51,.08)}
+.exercise-hub__list{overflow:hidden;border-radius:20px;background:white;box-shadow:0 10px 30px rgba(41,42,51,.08);margin-bottom:30px}
 /* Every row is a link plus its own trailing control (a save star, or a
    remove button on a saved set), so the row itself can no longer be one
    <a>. The article is the flex track; .exercise-hub__row-main carries the
@@ -25,8 +25,8 @@
 .exercise-hub__row:last-child{border-bottom:0}
 .exercise-hub__row-main{flex:1;min-width:0;display:grid;grid-template-columns:48px minmax(0,1fr) auto;align-items:center;gap:16px;color:inherit;text-decoration:none;padding:8px 0}
 .exercise-hub__row-main--disabled{cursor:default}
-.exercise-hub__row--available:has(.exercise-hub__row-main:hover),.exercise-hub__row--available:has(.exercise-hub__row-main:focus-visible){margin-left:0;padding-left:18px;background:#f4f7f2}
-.exercise-hub__row-main:focus-visible{outline:3px solid rgba(103,137,86,.35);outline-offset:-3px;border-radius:12px}
+.exercise-hub__row--available:has(.exercise-hub__row-main:hover),.exercise-hub__row--available:has(.exercise-hub__row-main:focus-visible){margin-left:0;padding-left:18px;background:#f4f4f6}
+.exercise-hub__row-main:focus-visible{outline:3px solid rgba(41,42,51,.2);outline-offset:-3px;border-radius:12px}
 /* Exercises are black-and-white throughout the studio — one glyph per
    focus area (see StudioItemIcon), no per-row colour. The mark alone
    carries the category, and the monochrome treatment is what tells an
@@ -67,10 +67,13 @@
   border:2px solid transparent;
   animation:studio-spectrum 14s linear infinite;
 }
+.exercise-hub__row--scale-studio{--spectrum:linear-gradient(100deg,#5f91d8,#8176d5,#d078bd,#5f91d8)}
+.exercise-hub__row--long-tones{--spectrum:linear-gradient(100deg,#df876b,#d4a14b,#c66e8a,#df876b)}
+.exercise-hub__row--breathing-lab{--spectrum:linear-gradient(100deg,#48a9a6,#5b9ed1,#8a7fd1,#48a9a6)}
 /* The row above it keeps its divider; the featured row supplies its own
    edge, so a doubled line would show through. */
 .exercise-hub__row--featured+.exercise-hub__row{border-top:0}
-.exercise-hub__row--featured:has(.exercise-hub__row-main:hover){margin-left:0;padding-left:2px;background:linear-gradient(#fbfdfa,#fbfdfa) padding-box,var(--spectrum) border-box;background-size:auto,300% 100%}
+.exercise-hub__row--featured:has(.exercise-hub__row-main:hover){margin-left:0;padding-left:2px;background:linear-gradient(#f7f7f9,#f7f7f9) padding-box,var(--spectrum) border-box;background-size:auto,300% 100%}
 .exercise-hub__row--featured .exercise-hub__row-main{padding-left:14px}
 .exercise-hub__row--featured .exercise-hub__icon{
   background:var(--spectrum);

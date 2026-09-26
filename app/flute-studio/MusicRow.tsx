@@ -13,7 +13,7 @@ export default function MusicRow({item,saved,onToggleSave,detail}:{item:MusicIte
   // The Library's list is built from the same exercise catalog the hub
   // uses, so a tool that draws its own mark there draws it here too.
   const art=artForId(item.id);
-  const content=<>{art?<span className="studio-art-tile">{art}</span>:<StudioItemIcon kind={iconKindFor(item)} className="music-row__icon"/>}<span className="music-row__copy"><strong>{item.title}</strong><small>{detail??`${item.composer} · ${item.difficulty.replace("-"," ")} · ${item.key}`}</small></span></>;
+  const content=<>{art?<span className="studio-art-tile">{art}</span>:<StudioItemIcon kind={iconKindFor(item)} className="music-row__icon"/>}<span className="music-row__copy"><strong>{item.title}</strong><small>{detail??item.composer}</small></span></>;
   return <article className="music-row">
     {item.viewerPath?<Link className="music-row__main" href={item.viewerPath}>{content}</Link>:<div className="music-row__main music-row__main--disabled">{content}</div>}
     <SaveButton saved={saved} onToggle={onToggleSave} label={saved?t.musicRow.remove(item.title):t.musicRow.save(item.title)}/>

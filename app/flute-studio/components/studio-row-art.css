@@ -18,6 +18,10 @@
   stroke-dasharray:26;stroke-dashoffset:26;opacity:.6;
 }
 .hub-art--scales .hub-art__note{opacity:.5;transition:opacity .3s ease}
+.hub-art__breath-ring,.hub-art__breath-flow{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+.hub-art__breath-ring--outer{stroke-width:1.2;opacity:.42;transform-origin:22px 17px}
+.hub-art__breath-ring--inner{stroke-width:1.6;opacity:.95;transform-origin:22px 17px}
+.hub-art__breath-flow{stroke-width:1.4;opacity:.7}
 @keyframes hub-slur-draw{
   0%{stroke-dashoffset:26;opacity:.4}
   45%{stroke-dashoffset:0;opacity:1}
@@ -26,6 +30,7 @@
 }
 @keyframes hub-second-arrive{0%{opacity:.45}45%{opacity:1}80%{opacity:1}100%{opacity:.45}}
 @keyframes hub-scale-step{0%,100%{opacity:.5}40%{opacity:1}}
+@keyframes hub-breathe{0%,100%{transform:scale(.72);opacity:.35}48%{transform:scale(1);opacity:1}}
 .exercise-hub__row-main:hover .hub-art--tones .hub-art__slur,
 .music-row__main:hover .hub-art--tones .hub-art__slur{animation:hub-slur-draw 2.4s ease-in-out infinite}
 .exercise-hub__row-main:hover .hub-art--tones .hub-art__note--second,
@@ -35,6 +40,8 @@
   animation:hub-scale-step 2.2s ease-in-out infinite;
   animation-delay:calc(var(--i) * .11s);
 }
+.exercise-hub__row-main:hover .hub-art__breath-ring--outer{animation:hub-breathe 2.8s ease-in-out infinite}
+.exercise-hub__row-main:hover .hub-art__breath-ring--inner{animation:hub-breathe 2.8s .12s ease-in-out infinite}
 @media (prefers-reduced-motion: reduce){
   .hub-art__slur,.hub-art__note,.hub-art__note--second{animation:none!important}
   .hub-art--tones .hub-art__slur{stroke-dashoffset:0;opacity:1}

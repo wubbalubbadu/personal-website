@@ -1,5 +1,5 @@
 import type {ReactNode} from "react";
-import {exerciseCatalog,type ExerciseFocus} from "../../../content/exercise-catalog";
+import type {ExerciseFocus} from "../../../content/exercise-catalog";
 import type {MusicItem} from "../../../content/music-library";
 
 /**
@@ -18,7 +18,7 @@ import type {MusicItem} from "../../../content/music-library";
  * category for the things that are not exercises. An exercise resolves to
  * its focus icon wherever it appears, so it looks the same on both pages.
  */
-export type StudioIconKind=ExerciseFocus|"repertoire"|"etude"|"pop";
+export type StudioIconKind=ExerciseFocus|"simple"|"repertoire"|"etude"|"pop"|"excerpt";
 
 const paths:Record<StudioIconKind,ReactNode>={
   // Technique — an ascending run of notes: fingers moving through a scale.
@@ -29,6 +29,8 @@ const paths:Record<StudioIconKind,ReactNode>={
   breathing:<><circle cx="12" cy="12" r="7.5"/><path d="M12 8.5v7M8.5 12h7"/></>,
   // Articulation — separated notes: a beam over staccato dots.
   articulation:<><path d="M4 6h16"/><path d="M6 6v7M12 6v7M18 6v7"/><circle cx="6" cy="17.5" r="1.2"/><circle cx="12" cy="17.5" r="1.2"/><circle cx="18" cy="17.5" r="1.2"/></>,
+  // Simple tune: one clear melody note on a short staff.
+  simple:<><path d="M3 17h18M3 12h18"/><circle cx="10" cy="14.5" r="3"/><path d="M13 14.5V5"/></>,
   // Repertoire — a piece to perform: a single note with a phrase mark.
   repertoire:<><circle cx="8" cy="17" r="3"/><path d="M11 17V5l8-2v12"/><circle cx="16" cy="15" r="3"/></>,
   // Etude — a study: stacked lines of a printed page.
@@ -37,14 +39,13 @@ const paths:Record<StudioIconKind,ReactNode>={
   // the same row is a star, and two stars per row read as one control
   // twice rather than "a song you can save".
   pop:<><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.2"/></>,
+  // Orchestral excerpt: a short bracketed passage rather than a full work.
+  excerpt:<><path d="M5 4H3v16h2M19 4h2v16h-2"/><circle cx="9" cy="15" r="2.4"/><path d="M11.4 15V7M11.4 8h5M16.4 8v5"/><circle cx="14" cy="13" r="2.4"/></>,
 };
 
-const focusById=new Map(exerciseCatalog.map(entry=>[entry.id,entry.focus]));
-
-/** An exercise wears its focus icon; anything else wears its category icon. */
+/** Library rows wear the icon for their musical category. */
 export function iconKindFor(item:Pick<MusicItem,"id"|"category">):StudioIconKind{
-  if(item.category!=="exercise")return item.category;
-  return focusById.get(item.id)??"technique";
+  return item.category;
 }
 
 /**

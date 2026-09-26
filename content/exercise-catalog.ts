@@ -1,5 +1,3 @@
-import type {MusicItem} from "./music-library";
-
 /**
  * The one list of exercises in the studio.
  *
@@ -7,12 +5,11 @@ import type {MusicItem} from "./music-library";
  * separate hand-written lists, which drifted: the hub advertised four
  * different scale rows and "Long Tones", the Library knew about one "Scale
  * Studio" and a "Long-tone Ladder", and neither agreed on what existed.
- * Both now render this array, so an exercise is added, renamed, or shipped
- * exactly once.
+ * The Exercises hub renders this array, so an exercise is added, renamed,
+ * or shipped exactly once.
  *
- * `focus` is what the hub groups and colours by; `category`/`difficulty`/
- * `key` are what the Library needs. An entry with no `href` is not built
- * yet and renders as "Coming soon" in both places.
+ * `focus` is what the hub groups and colours by. An entry with no `href`
+ * is not built yet and renders as "Coming soon".
  */
 export const exerciseFocuses=["technique","tone","breathing","articulation"] as const;
 export type ExerciseFocus=typeof exerciseFocuses[number];
@@ -27,8 +24,7 @@ export type ExerciseEntry={
   zhDetail:string;
   href:string|null;
   minutes:number;
-  difficulty:MusicItem["difficulty"];
-  /** Shown in the Library's row, e.g. "All 12 keys". */
+  difficulty:"beginner"|"early-intermediate"|"intermediate"|"advanced";
   key:string;
   description:string;
   techniques:string[];
@@ -57,20 +53,6 @@ export const exerciseCatalog:readonly ExerciseEntry[]=[
     description:"Major, minor, chromatic, whole-tone, diminished and augmented scales, as scales, arpeggios, seconds, thirds or fourths, across four flute ranges.",
     techniques:["scales","articulation","range"],
     featured:true,
-  },
-  {
-    id:"taffanel-gaubert-no-1",
-    focus:"technique",
-    title:"Daily Exercise No. 1",
-    zhTitle:"每日练习 第一首",
-    detail:"The classic Taffanel and Gaubert finger warm-up",
-    zhDetail:"塔法内尔与戈贝尔的经典手指热身",
-    href:null,
-    minutes:12,
-    difficulty:"intermediate",
-    key:"All keys",
-    description:"The first of the seventeen daily exercises, run through every key.",
-    techniques:["finger coordination","evenness","scales"],
   },
   {
     id:"long-tones",
@@ -115,6 +97,7 @@ export const exerciseCatalog:readonly ExerciseEntry[]=[
     description:"Timed breathing sequences with a body view, for support and air control.",
     techniques:["breathing","air support"],
     scorePath:null,
+    featured:true,
   },
   {
     id:"tonguing-drills",
@@ -131,21 +114,3 @@ export const exerciseCatalog:readonly ExerciseEntry[]=[
     techniques:["articulation","tonguing","speed"],
   },
 ];
-
-/** The Library speaks MusicItem; an entry with no href is not playable yet. */
-export function exerciseAsMusicItem(entry:ExerciseEntry):MusicItem{
-  return {
-    id:entry.id,
-    title:entry.title,
-    composer:"Cookie Flute Studio",
-    category:"exercise",
-    difficulty:entry.difficulty,
-    key:entry.key,
-    estimatedMinutes:entry.minutes,
-    description:entry.description,
-    techniques:entry.techniques,
-    status:entry.href?"published":"coming-soon",
-    scorePath:entry.scorePath??null,
-    viewerPath:entry.href,
-  };
-}

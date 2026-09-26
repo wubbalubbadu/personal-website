@@ -7,6 +7,7 @@ import {usePomodoro,formatClock} from "../usePomodoro";
 import {readSessions,type PracticeSession} from "../practice-data";
 import {useRecents,useSavedItems} from "../lib/storage";
 import {musicLibrary} from "../../../content/music-library";
+import {exerciseCatalog} from "../../../content/exercise-catalog";
 import {PracticeCalendar} from "../PracticeCalendar";
 import {PitchTendencies} from "./PitchTendencies";
 import "./practice-page.css";
@@ -29,6 +30,7 @@ function streaks(active:Set<string>,now:number){
 /** `ref` is a library id when the step was picked rather than typed, so a
  *  routine step can link back to the thing it is asking you to play. */
 type RoutineItem={id:string;text:string;done?:boolean;ref?:string};
+type StudioListItem={id:string;title:string;composer:string;category:string;viewerPath:string|null};
 
 function readRoutine():RoutineItem[]{try{const saved=JSON.parse(localStorage.getItem(routineKey)??"[]");return Array.isArray(saved)?saved:[]}catch{return []}}
 
@@ -100,9 +102,10 @@ export default function PracticePage(){
   ];
   // Ids are all the stores keep, so titles come from the library — which
   // already contains the exercises as well as the pieces.
-  const byId=new Map(musicLibrary.map(item=>[item.id,item]));
-  const recentItems=recentIds.map(id=>byId.get(id)).filter(Boolean) as typeof musicLibrary;
-  const savedItems=savedIds.map(id=>byId.get(id)).filter(Boolean) as typeof musicLibrary;
+  const exerciseItems:StudioListItem[]=exerciseCatalog.map(item=>({id:item.id,title:zh?item.zhTitle:item.title,composer:zh?"练习":"Exercise",category:"exercise",viewerPath:item.href}));
+  const byId=new Map<string,StudioListItem>([...musicLibrary,...exerciseItems].map(item=>[item.id,item]));
+  const recentItems=recentIds.map(id=>byId.get(id)).filter((item):item is StudioListItem=>!!item);
+  const savedItems=savedIds.map(id=>byId.get(id)).filter((item):item is StudioListItem=>!!item);
 
   return <main className="practice-page">
     <div className="practice-page__content">
@@ -183,12 +186,10 @@ export default function PracticePage(){
             <select value="" onChange={e=>{addRoutineItem(e.target.value);e.currentTarget.value=""}} aria-label={zh?"添加练习或曲目":"Add an exercise or piece"}>
               <option value="">{zh?"练习或曲目…":"Exercise or piece\u2026"}</option>
               <optgroup label={zh?"练习":"Exercises"}>
-                {musicLibrary.filter(item=>item.category==="exercise").map(item=>
-                  <option key={item.id} value={item.id}>{item.title}</option>)}
+                {exerciseItems.filter(item=>item.viewerPath).map(item=><option key={item.id} value={item.id}>{item.title}</option>)}
               </optgroup>
               <optgroup label={zh?"曲目":"Music"}>
-                {musicLibrary.filter(item=>item.category!=="exercise").map(item=>
-                  <option key={item.id} value={item.id}>{item.title}</option>)}
+                {musicLibrary.map(item=><option key={item.id} value={item.id}>{item.title}</option>)}
               </optgroup>
             </select>
           </label>
@@ -209,8 +210,8 @@ export default function PracticePage(){
           {savedItems.length
             ?<ul className="studio-mini-list">{savedItems.map(item=><li key={item.id}>
               {item.viewerPath?<Link href={item.viewerPath}>
-                <strong>{item.title}</strong><small>{item.category==="exercise"?(zh?"练习":"Exercise"):item.composer}</small>
-              </Link>:<span className="is-disabled"><strong>{item.title}</strong><small>{item.category==="exercise"?(zh?"练习":"Exercise"):item.composer}</small></span>}
+                <strong>{item.title}</strong><small>{item.composer}</small>
+              </Link>:<span className="is-disabled"><strong>{item.title}</strong><small>{item.composer}</small></span>}
             </li>)}</ul>
             :<p className="practice-card__empty">{zh?"还没有收藏。":"Nothing saved yet \u2014 tap the star on a piece or exercise."}</p>}
         </section>

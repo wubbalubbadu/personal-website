@@ -114,23 +114,23 @@
    native tooltip — the old .has-tip bubble belongs to the score reader's
    toolbar and had no styling on this page at all. */
 .library-content .pick-one-trigger{
-  height:52px;
+  height:42px;
   width:auto;
-  padding:0 18px;
+  padding:0 11px;
   display:inline-flex;
   align-items:center;
   gap:9px;
-  border:1px solid var(--border,#e4e4e7);
-  border-radius:15px;
-  background:#fff;
-  color:var(--accent-ink,#46633d);
-  font:650 14px/1 inherit;
+  border:0;
+  border-radius:10px;
+  background:transparent;
+  color:#61636b;
+  font:620 13px/1 inherit;
   white-space:nowrap;
   cursor:pointer;
   transition:background-color .16s ease,border-color .16s ease,color .16s ease;
 }
-.library-content .pick-one-trigger:hover:not(:disabled){background:var(--accent-tint,#e5ece1);border-color:#d7e1d2}
-.library-content .pick-one-trigger:focus-visible{outline:3px solid rgba(103,137,86,.32);outline-offset:1px}
+.library-content .pick-one-trigger:hover:not(:disabled){background:#f0f0f3;color:#292a33}
+.library-content .pick-one-trigger:focus-visible{outline:3px solid rgba(41,42,51,.2);outline-offset:1px}
 .library-content .pick-one-trigger:disabled{opacity:.4;cursor:default}
 .library-content .pick-one-trigger svg{flex:0 0 auto}
 
@@ -139,3 +139,6 @@
   .library-content .pick-one-trigger{padding:0 15px}
   .library-content .pick-one-trigger span{display:none}
 }
+
+.library-search:focus-within{box-shadow:0 0 0 3px rgba(41,42,51,.16)!important}
+.library-content .category-tabs{flex-wrap:wrap;overflow:visible;row-gap:8px}

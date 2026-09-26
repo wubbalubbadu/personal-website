@@ -9,7 +9,11 @@ function useAudioEngine(){
   const context=useRef<AudioContext|null>(null),voices=useRef(new Map<string,Voice>()),tempoByScore=useRef(new Map<string,number>()),score=useRef<string|null>(null);
   const getAudio=()=>{const audio=context.current??(context.current=new AudioContext());void audio.resume();return audio};
   function setBpm(value:number){if(!Number.isFinite(value))return;const next=Math.max(40,Math.min(220,Math.round(value)));if(score.current)tempoByScore.current.set(score.current,next);setBpmState(next)}
-  function initializeScore(id:string,tempo:number){score.current=id;setBpm(tempoByScore.current.get(id)??tempo)}
+  // A piece's starting tempo is only a suggestion, so it is not remembered:
+  // the reader calls this with 76 first and again with the score's marking once
+  // the XML is read, and the marking must win. Only tempos the player picks
+  // (setBpm) are kept per piece.
+  function initializeScore(id:string,tempo:number){score.current=id;const chosen=tempoByScore.current.get(id);if(chosen!==undefined){setBpmState(chosen);return}if(Number.isFinite(tempo))setBpmState(Math.max(40,Math.min(220,Math.round(tempo))))}
   function toggleMetro(){getAudio();setMetro(value=>!value)}
   /**
    * The metronome runs on the AudioContext clock, not on setInterval.

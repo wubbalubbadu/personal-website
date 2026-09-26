@@ -11,6 +11,7 @@ import type { MusicSheetCalculator, OpenSheetMusicDisplay as OSMDType } from "op
 import { useLanguage } from "../i18n/LanguageContext";
 import { useRecents } from "../lib/storage";
 import { deriveScoreEvents, resolveKeyAccidentals } from "./deriveScoreEvents";
+import {readScoreFacts,keySignatureFromFifths,keySignatureFromNotes,timeSignatureText,metronomeText,performanceTermText,tuckMetronomeMarks,spaceMetronomeMarks,METRONOME_TUCK_SHIFT,type ScoreFacts} from "./scoreTheory";
 import {usePracticeAudio,pitchFrequency} from "../PracticeAudio";
 import {PracticeIcon} from "./PracticeIcon";
 import {FluteDiagramMini} from "./FluteDiagram";
@@ -454,40 +455,6 @@ let onset=0;const anchors:{t:number;x:number}[]=[];group.forEach((node,i)=>{cons
 // much is actually there instead of assuming a fixed 4.
 measureUnits=Math.max(unitsPerBeat*4,onset);anchors.push({t:measureUnits,x:right});const top=(measureBox?.top??Math.min(...group.map(n=>n.getBoundingClientRect().top)))-rootBox.top-7;for(let beat=0;beat*unitsPerBeat<measureUnits;beat++){const target=beat*unitsPerBeat,left=[...anchors].reverse().find(a=>a.t<=target)??anchors[0],next=anchors.find(a=>a.t>=target)??anchors.at(-1)!,ratio=next.t===left.t?0:(target-left.t)/(next.t-left.t);overlay(root,"beat-stick","",left.x+(next.x-left.x)*ratio,top)}}}
 
-/** Major and relative-minor keys by number of sharps, then by number of flats. */
-const SHARP_KEYS=[["C","A"],["G","E"],["D","B"],["A","F♯"],["E","C♯"],["B","G♯"],["F♯","D♯"],["C♯","A♯"]];
-const FLAT_KEYS=[["C","A"],["F","D"],["B♭","G"],["E♭","C"],["A♭","F"],["D♭","B♭"],["G♭","E♭"],["C♭","A♭"]];
-
-/**
- * What a key signature actually says.
- *
- * "Key signature: shows which notes are sharped or flatted" describes the
- * concept, which is no use when you are looking at three flats and want to
- * know which three. The altered notes come from the score's own per-measure
- * key data, so the answer is the engraved key rather than a guess.
- */
-/** Key signatures add their accidentals in a fixed order. */
-const SHARP_ORDER=["F♯","C♯","G♯","D♯","A♯","E♯","B♯"];
-const FLAT_ORDER=["B♭","E♭","A♭","D♭","G♭","C♭","F♭"];
-
-function keySignatureText(raw:string[]){
-  const altered=[...new Set(raw)];
-  if(!altered.length)return "None — C major or A minor. No note is sharped or flatted unless an accidental says so.";
-  const flats=altered.some(note=>note.includes("♭"));
-  const order=flats?FLAT_ORDER:SHARP_ORDER;
-  // Only name a key when the accidentals really are the first n of the
-  // standard order. The caller's list can hold more than the signature —
-  // naming a key off a list that is not a key signature would state a
-  // confident wrong fact, which is worse than the vague sentence it replaced.
-  const sorted=[...altered].sort((a,b)=>order.indexOf(a)-order.indexOf(b));
-  const canonical=sorted.every((note,index)=>note===order[index]);
-  const list=sorted.length===1?sorted[0]
-    :`${sorted.slice(0,-1).join(", ")} and ${sorted[sorted.length-1]}`;
-  if(!canonical)return `Every ${list} is ${flats?"flattened":"sharpened"} here, unless an accidental changes one.`;
-  const pair=(flats?FLAT_KEYS:SHARP_KEYS)[sorted.length];
-  return `${pair[0]} major or ${pair[1]} minor. Every ${list} is ${flats?"flattened":"sharpened"} for the rest of the line, unless an accidental changes one.`;
-}
-
 /**
  * A fermata is a modifier glyph hanging off a notehead, and VexFlow gives it
  * no class of its own — it is a bare <path> inside .vf-modifiers, exactly
@@ -512,33 +479,72 @@ function tagFermatas(root:HTMLDivElement,text:string){
   });
 }
 
-function addTheoryTargets(root:HTMLDivElement,noteKeys?:string[][]){
+/**
+ * Tags every marking the "Musical terms" layer can explain. Signatures and
+ * tempo marks are explained for the measure they sit on: the first note
+ * after a signature carries the event index that says which measure that
+ * is, and the score's facts say what that measure's key and meter are.
+ */
+function addTheoryTargets(root:HTMLDivElement,noteKeys?:string[][],facts?:ScoreFacts|null,measureStarts:number[]=[]){
+  const tag=(node:SVGElement,title:string,text:string)=>{node.dataset.theoryTitle=title;node.dataset.theory=text;node.classList.add("theory-target")};
   const targets:[string,string,string][]=[
     [".vf-clef","Treble clef","The curl circles the G line. Flute music is normally written in this clef."],
-    [".vf-timesignature","Time signature","The top number gives beats per measure; the bottom number identifies the beat value."],
     [".vf-stavetie","Tie","Hold the connected notes as one continuous sound. Do not tongue the second note."],
   ];
-  targets.forEach(([selector,title,text])=>root.querySelectorAll<SVGElement>(selector).forEach(node=>{node.dataset.theoryTitle=title;node.dataset.theory=text;node.classList.add("theory-target")}));
+  targets.forEach(([selector,title,text])=>root.querySelectorAll<SVGElement>(selector).forEach(node=>tag(node,title,text)));
 
-  tagFermatas(root,"Hold the note longer than its written value — how much longer is your choice. Here it marks the end of the exercise, so let the sound settle before you stop.");
+  tagFermatas(root,"Hold the note longer than its written value. How much longer is your choice. Here it marks the end of the exercise, so let the sound settle before you stop.");
 
-  // Which key a signature announces depends on where it sits, and a scale
-  // book changes key every few lines. The nearest note after it carries the
-  // event index that says which measure that is.
   const notes=[...root.querySelectorAll<SVGGElement>(".vf-stavenote[data-event]")];
+  const eventAfter=(node:Element)=>{
+    const next=notes.find(note=>node.compareDocumentPosition(note)&Node.DOCUMENT_POSITION_FOLLOWING);
+    const event=next?Number(next.dataset.event):NaN;
+    return Number.isFinite(event)?event:undefined;
+  };
+  const measureAfter=(node:Element)=>{
+    const event=eventAfter(node);
+    return event===undefined||!measureStarts.length?undefined:facts?.measures[measureForEvent(event,measureStarts)-1];
+  };
+
+  root.querySelectorAll<SVGElement>(".vf-timesignature").forEach(node=>{
+    const meter=measureAfter(node);
+    if(meter){const {title,text}=timeSignatureText(meter);tag(node,title,text)}
+    else tag(node,"Time signature","The top number gives beats per measure; the bottom number identifies the beat value.");
+  });
+
   root.querySelectorAll<SVGElement>(".vf-keysignature").forEach(node=>{
-    let altered:string[]|undefined;
-    if(noteKeys){
-      // The first note after the signature carries the signature it is
-      // written under, so there is nothing to compute.
-      const next=notes.find(note=>node.compareDocumentPosition(note)&Node.DOCUMENT_POSITION_FOLLOWING);
-      const event=next?Number(next.dataset.event):NaN;
-      if(Number.isFinite(event))altered=noteKeys[event];
+    const measure=measureAfter(node);
+    if(measure&&facts){
+      // The measures this signature governs: from here to the next written
+      // key, so a natural minor exercise is not credited with the raised
+      // 7th of the harmonic minor one after it.
+      const from=facts.measures.indexOf(measure);
+      const until=facts.measures.findIndex((entry,index)=>index>from&&entry.keyWritten);
+      const {title,text}=keySignatureFromFifths(measure.fifths,measure.mode,facts.lastPitch,facts.measures.slice(from,until<0?undefined:until));
+      tag(node,title,text);return;
     }
-    node.dataset.theoryTitle="Key signature";
-    node.dataset.theory=altered?keySignatureText(altered)
-      :"Shows which notes are sharped or flatted for the rest of the piece, unless an accidental changes one.";
-    node.classList.add("theory-target");
+    const event=eventAfter(node);
+    const altered=event===undefined?undefined:noteKeys?.[event];
+    tag(node,"Key signature",altered?keySignatureFromNotes(altered)
+      :"Shows which notes are sharped or flatted for the rest of the piece, unless an accidental changes one.");
+  });
+
+  // Metronome marks, matched to the score's own marks by measure, then by
+  // order if the measure lookup fails.
+  root.querySelectorAll<SVGGElement>(".vf-stavetempo").forEach((node,index)=>{
+    const event=eventAfter(node);
+    const measureNumber=event===undefined||!measureStarts.length?undefined:measureForEvent(event,measureStarts);
+    const mark=facts?.metronomes.find(entry=>entry.measure===measureNumber)??facts?.metronomes[index];
+    const {title,text}=metronomeText(mark,mark?facts?.measures[mark.measure-1]:undefined,node.textContent??"");
+    tag(node,title,text);
+  });
+
+  // Tempo and expression words. Only the ones the glossary knows: a
+  // tooltip that says "this is text" teaches nothing.
+  root.querySelectorAll<SVGTextElement>(".vf-text:not(.measure-number) text").forEach(node=>{
+    const words=node.textContent?.trim()??"";
+    const explained=performanceTermText(words,facts?.metronomes.find(entry=>entry.words===words));
+    if(explained)tag(node,explained.title,explained.text);
   });
 }
 
@@ -600,6 +606,9 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   // against the legacy 4-units-per-beat grid; deriveScoreEvents works out
   // whatever grid the piece actually needs (see resolveUnitsPerWhole) and
   // overwrites this once the score loads.
+  // Key, meter and tempo per measure, read from the MusicXML on every load so the
+  // Musical terms layer can explain the marking you tapped, not the concept.
+  const scoreFactsRef=useRef<ScoreFacts|null>(null);
   const sequenceRef=useRef<{pitches:(string|null)[];events:{p:string|null;d:number;tied?:boolean;articulation?:ArticulationMode;slurContinuation?:boolean}[];measureStarts:number[];unitsPerBeat:number;keyAccidentals:Set<string>}>({pitches:config.pitches??[],events:config.events??[],measureStarts:config.measureStarts??[],unitsPerBeat:4,keyAccidentals:new Set()});
   const scoreRef = useRef<HTMLDivElement>(null); const scoreScrollRef = useRef<HTMLDivElement>(null); const osmdRef = useRef<OSMDType | null>(null);
   // Scroll offsets (within .score-scroll's own content, not the viewport)
@@ -733,7 +742,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     const seq=sequenceRef.current;
     root.querySelectorAll<SVGGElement>(".vf-stavenote").forEach((node,index)=>{node.dataset.event=String(index);node.classList.toggle("playback-start",index===selectedEventRef.current);node.dataset.measure=String(measureForEvent(index,seq.measureStarts));const pitch=seq.pitches[index];if(pitch)node.dataset.pitch=pitch;const written=config.displayPitches?.[index];if(written){node.dataset.noteName=written.replace(/\d/,"");const octave=written.match(/\d/)?.[0];if(octave)node.dataset.noteOctave=octave}});
     placePracticeOverlays(root,seq.events,seq.measureStarts,seq.unitsPerBeat,seq.keyAccidentals??new Set(),config.displayPitches,config.noteKeySignatures,unmetered,config.syllables,overlayVisibilityRef.current);
-    addTheoryTargets(root,config.noteKeySignatures);
+    addTheoryTargets(root,config.noteKeySignatures,scoreFactsRef.current,seq.measureStarts);
     updateDroneHighlight();
   }
   // A droned note needs its own color, distinct from the coral
@@ -859,6 +868,8 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   function renderScore(osmd:OSMDType){
     suppressArticulationSpacing=unmetered;
     try{osmd.render()}finally{suppressArticulationSpacing=false}
+    if(scoreRef.current)spaceMetronomeMarks(scoreRef.current);
+    if(scoreFactsRef.current?.tempoWordsWithMetronome&&scoreRef.current)tuckMetronomeMarks(scoreRef.current);
   }
   function prepareLayoutBox(){
     const osmd=osmdRef.current,scroller=scoreScrollRef.current,root=scoreRef.current;
@@ -1035,7 +1046,9 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     return()=>{cancelAnimationFrame(frame);window.clearTimeout(commit);el.removeEventListener("wheel",wheel);el.removeEventListener("touchstart",start);el.removeEventListener("touchmove",move);el.removeEventListener("touchend",end);el.removeEventListener("touchcancel",end);el.removeEventListener("gesturestart",gestureStart);el.removeEventListener("gesturechange",gestureChange)};
   },[]);
 
-  useEffect(()=>{const saved=JSON.parse(localStorage.getItem("cookie:music-favorites")||"[]") as string[];setFavorite(saved.includes(id));let mounted=true; async function load(){ try { if(unmetered&&!asset.includes("<note>")){scoreRef.current?.replaceChildren();osmdRef.current=null;setLoading(false);return;} setLoading(true); const {OpenSheetMusicDisplay}=await import("opensheetmusicdisplay"); if(!mounted||!scoreRef.current)return; scoreRef.current.replaceChildren(); const osmd=new OpenSheetMusicDisplay(scoreRef.current,{backend:"svg",autoResize:false,drawTitle:false,drawComposer:false,drawingParameters:"compacttight"}); osmd.setOptions({pageFormat:"Endless",drawMeasureNumbers:true,drawPartNames:false,drawMetronomeMarks:true}); osmd.OnXMLRead = xml=>{if(config.defaultTempo===undefined){const doc=new DOMParser().parseFromString(xml,"application/xml");const marked=Number(doc.querySelector("sound[tempo]")?.getAttribute("tempo"));if(marked>0)initializeScore(id,marked)}return prepareScore(xml,title)}; await osmd.load(asset,title); if(!mounted||!scoreRef.current)return;
+  useEffect(()=>{const saved=JSON.parse(localStorage.getItem("cookie:music-favorites")||"[]") as string[];setFavorite(saved.includes(id));let mounted=true; async function load(){ try { if(unmetered&&!asset.includes("<note>")){scoreRef.current?.replaceChildren();osmdRef.current=null;setLoading(false);return;} setLoading(true); const {OpenSheetMusicDisplay}=await import("opensheetmusicdisplay"); if(!mounted||!scoreRef.current)return; scoreRef.current.replaceChildren(); const osmd=new OpenSheetMusicDisplay(scoreRef.current,{backend:"svg",autoResize:false,drawTitle:false,drawComposer:false,drawingParameters:"compacttight"}); osmd.setOptions({pageFormat:"Endless",drawMeasureNumbers:true,drawPartNames:false,drawMetronomeMarks:true}); /* Chord symbols stay in the MusicXML (for a future accompaniment) but are never drawn. OSMD builds them inside load(), so this has to be set first. */ osmd.EngravingRules.RenderChordSymbols=false; osmd.OnXMLRead = xml=>{scoreFactsRef.current=readScoreFacts(xml);if(config.defaultTempo===undefined){const doc=new DOMParser().parseFromString(xml,"application/xml");const marked=Number(doc.querySelector("sound[tempo]")?.getAttribute("tempo"));if(marked>0)initializeScore(id,marked)}return prepareScore(xml,title)}; await osmd.load(asset,title); if(!mounted||!scoreRef.current)return;
+      // One line for "Allegro assai ♩ = 144" instead of two; see tuckMetronomeMarks.
+      osmd.EngravingRules.MetronomeMarkYShift=scoreFactsRef.current?.tempoWordsWithMetronome?METRONOME_TUCK_SHIFT:-1;
       // React's Strict Mode runs this whole effect twice in dev (mount,
       // cleanup, mount again) to surface exactly this kind of bug: without
       // re-checking `mounted` after every await, a stale first run and the
@@ -1368,11 +1381,15 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
       ]);
       const osmd=new OpenSheetMusicDisplay(stage,{backend:"svg",autoResize:false,drawTitle:false,drawComposer:false,drawingParameters:"compacttight"});
       osmd.setOptions({pageFormat:"A4 P",drawMeasureNumbers:true,drawPartNames:false,drawMetronomeMarks:true});
+      osmd.EngravingRules.RenderChordSymbols=false;
       const printTitle=plainAccidentals(printConfig?.title??title);
-      osmd.OnXMLRead=xml=>prepareScore(xml,printTitle);
+      let printFacts:ScoreFacts|null=null;
+      osmd.OnXMLRead=xml=>{printFacts=readScoreFacts(xml);return prepareScore(xml,printTitle)};
       const suppress=unmetered?applyExerciseRules(osmd):()=>{};
       await osmd.load(printConfig?.asset??asset,printTitle);
       suppress();
+      const tuck=(printFacts as ScoreFacts|null)?.tempoWordsWithMetronome??false;
+      osmd.EngravingRules.MetronomeMarkYShift=tuck?METRONOME_TUCK_SHIFT:-1;
       osmd.EngravingRules.PageLeftMargin=PRINT_MARGIN;
       osmd.EngravingRules.PageRightMargin=PRINT_MARGIN;
       osmd.EngravingRules.PageTopMargin=PRINT_TOP_MARGIN;
@@ -1396,6 +1413,8 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
       // the whole book; at the extremes it just engraves at zoom 1.
       const scale=measured?Math.min(3,Math.max(.3,STAFF_SPACE_MM/measured)):1;
       if(Math.abs(scale-1)>0.01){osmd.zoom=scale;suppress();osmd.render()}
+      spaceMetronomeMarks(stage);
+      if(tuck)tuckMetronomeMarks(stage);
       const pages=[...stage.querySelectorAll<SVGSVGElement>(":scope > div > svg")];
       if(!pages.length)return;
       // compress: the engraving is thousands of small paths, and flate
