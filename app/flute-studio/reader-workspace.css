@@ -828,4 +828,3 @@ html.score-focus-mode .restored-reader[data-dock] .workspace{grid-template-areas
 /* The dock is its own sheet: a gap and a hairline keep the cut-off edge of
    the score from running straight into it. */
 .reader-workspace .reader-dock{padding-top:10px;border-top:1px solid #dcded8}
-.reader-workspace .osmd-score[data-page-cut]{-webkit-mask-image:linear-gradient(to bottom,#000 calc(var(--page-cut) - 28px),transparent var(--page-cut));mask-image:linear-gradient(to bottom,#000 calc(var(--page-cut) - 28px),transparent var(--page-cut))}
