@@ -3,7 +3,10 @@
     "id": "traditional-amazing-grace",
     "title": "Amazing Grace",
     "composer": "Traditional",
-    "category": "simple",
+    "tags": [
+      "Folk"
+    ],
+    "beginner": true,
     "status": "published",
     "scorePath": "/music/traditional-amazing-grace/score.musicxml",
     "fullScorePath": "/music/traditional-amazing-grace/full-score.musicxml",
@@ -15,7 +18,10 @@
     "id": "english-traditional-danny-boy",
     "title": "Danny Boy",
     "composer": "Traditional",
-    "category": "simple",
+    "tags": [
+      "Folk"
+    ],
+    "beginner": true,
     "status": "published",
     "scorePath": "/music/english-traditional-danny-boy/score.musicxml",
     "fullScorePath": "/music/english-traditional-danny-boy/full-score.musicxml",
@@ -27,7 +33,10 @@
     "id": "txt-deja-vu",
     "title": "Deja Vu",
     "composer": "TOMORROW X TOGETHER",
-    "category": "pop",
+    "tags": [
+      "Pop",
+      "K-pop"
+    ],
     "status": "published",
     "scorePath": "/music/txt-deja-vu/score.mxl",
     "viewerPath": "/flute-studio/music/txt-deja-vu",
@@ -38,7 +47,10 @@
     "id": "ditto",
     "title": "Ditto",
     "composer": "NewJeans",
-    "category": "pop",
+    "tags": [
+      "Pop",
+      "K-pop"
+    ],
     "status": "published",
     "scorePath": "/music/ditto/score.mxl",
     "viewerPath": "/flute-studio/music/ditto",
@@ -49,7 +61,10 @@
     "id": "gold-dust",
     "title": "Gold Dust",
     "composer": "NCT 127",
-    "category": "pop",
+    "tags": [
+      "Pop",
+      "K-pop"
+    ],
     "status": "published",
     "scorePath": "/music/gold-dust/score.mxl",
     "viewerPath": "/flute-studio/music/gold-dust",
@@ -60,7 +75,10 @@
     "id": "traditional-greensleeves",
     "title": "Greensleeves",
     "composer": "Traditional",
-    "category": "simple",
+    "tags": [
+      "Folk"
+    ],
+    "beginner": true,
     "status": "published",
     "scorePath": "/music/traditional-greensleeves/score.musicxml",
     "fullScorePath": "/music/traditional-greensleeves/full-score.musicxml",
@@ -69,10 +87,27 @@
     "viewerPath": "/flute-studio/music/traditional-greensleeves"
   },
   {
+    "id": "christian-petzold-minuet-in-g-major",
+    "title": "Minuet in G major",
+    "composer": "Christian Petzold",
+    "tags": [
+      "Classical"
+    ],
+    "status": "published",
+    "scorePath": "/music/christian-petzold-minuet-in-g-major/score.musicxml",
+    "fullScorePath": "/music/christian-petzold-minuet-in-g-major/full-score.musicxml",
+    "readingPartId": "P1",
+    "partCount": 1,
+    "viewerPath": "/flute-studio/music/christian-petzold-minuet-in-g-major"
+  },
+  {
     "id": "mystery-of-love",
     "title": "Mystery of Love",
     "composer": "Sufjan Stevens",
-    "category": "pop",
+    "tags": [
+      "Pop",
+      "Film"
+    ],
     "status": "published",
     "scorePath": "/mystery-of-love.mxl",
     "viewerPath": "/flute-studio/music/mystery-of-love"
@@ -81,7 +116,10 @@
     "id": "beethoven-ode-to-joy",
     "title": "Ode to Joy",
     "composer": "Beethoven",
-    "category": "simple",
+    "tags": [
+      "Classical"
+    ],
+    "beginner": true,
     "status": "published",
     "scorePath": "/music/beethoven-ode-to-joy/score.musicxml",
     "viewerPath": "/flute-studio/music/beethoven-ode-to-joy"
@@ -90,7 +128,10 @@
     "id": "traditional-scarborough-fair",
     "title": "Scarborough Fair",
     "composer": "Traditional",
-    "category": "simple",
+    "tags": [
+      "Folk"
+    ],
+    "beginner": true,
     "status": "published",
     "scorePath": "/music/traditional-scarborough-fair/score.musicxml",
     "fullScorePath": "/music/traditional-scarborough-fair/full-score.musicxml",
@@ -102,7 +143,10 @@
     "id": "traditional-twinkle-twinkle-little-star",
     "title": "Twinkle Twinkle Little Star",
     "composer": "Traditional",
-    "category": "simple",
+    "tags": [
+      "Folk"
+    ],
+    "beginner": true,
     "status": "published",
     "scorePath": "/music/traditional-twinkle-twinkle-little-star/score.musicxml",
     "fullScorePath": "/music/traditional-twinkle-twinkle-little-star/full-score.musicxml",

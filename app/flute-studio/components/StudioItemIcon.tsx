@@ -14,8 +14,8 @@ import type {MusicItem} from "../../../content/music-library";
  * mark on one page and another on the next.
  *
  * Now there is exactly one mark per *kind of thing*: one per practice
- * focus (technique / tone / breathing / articulation) and one per library
- * category for the things that are not exercises. An exercise resolves to
+ * focus (technique / tone / breathing / articulation) and one per kind of
+ * library piece, picked from its tags (see iconKindFor). An exercise resolves to
  * its focus icon wherever it appears, so it looks the same on both pages.
  */
 export type StudioIconKind=ExerciseFocus|"simple"|"repertoire"|"etude"|"pop"|"excerpt";
@@ -43,9 +43,16 @@ const paths:Record<StudioIconKind,ReactNode>={
   excerpt:<><path d="M5 4H3v16h2M19 4h2v16h-2"/><circle cx="9" cy="15" r="2.4"/><path d="M11.4 15V7M11.4 8h5M16.4 8v5"/><circle cx="14" cy="13" r="2.4"/></>,
 };
 
-/** Library rows wear the icon for their musical category. */
-export function iconKindFor(item:Pick<MusicItem,"id"|"category">):StudioIconKind{
-  return item.category;
+/**
+ * Library rows wear one icon, picked from their tags. Tags are free text, so
+ * this matches loosely and in priority order (an orchestral excerpt tagged
+ * "Classical" too should still read as an excerpt); anything unrecognised,
+ * like "Folk", gets the plain melody note.
+ */
+const tagIcons:[RegExp,StudioIconKind][]=[[/excerpt/,"excerpt"],[/etude|étude|study/,"etude"],[/pop|film|anime|game|musical/,"pop"],[/classical|repertoire|baroque|romantic/,"repertoire"]];
+export function iconKindFor(item:Pick<MusicItem,"tags">):StudioIconKind{
+  const tags=item.tags.map(tag=>tag.toLowerCase());
+  return tagIcons.find(([pattern])=>tags.some(tag=>pattern.test(tag)))?.[1]??"simple";
 }
 
 /**

@@ -30,7 +30,7 @@ function streaks(active:Set<string>,now:number){
 /** `ref` is a library id when the step was picked rather than typed, so a
  *  routine step can link back to the thing it is asking you to play. */
 type RoutineItem={id:string;text:string;done?:boolean;ref?:string};
-type StudioListItem={id:string;title:string;composer:string;category:string;viewerPath:string|null};
+type StudioListItem={id:string;title:string;composer:string;viewerPath:string|null};
 
 function readRoutine():RoutineItem[]{try{const saved=JSON.parse(localStorage.getItem(routineKey)??"[]");return Array.isArray(saved)?saved:[]}catch{return []}}
 
@@ -102,7 +102,7 @@ export default function PracticePage(){
   ];
   // Ids are all the stores keep, so titles come from the library — which
   // already contains the exercises as well as the pieces.
-  const exerciseItems:StudioListItem[]=exerciseCatalog.map(item=>({id:item.id,title:zh?item.zhTitle:item.title,composer:zh?"练习":"Exercise",category:"exercise",viewerPath:item.href}));
+  const exerciseItems:StudioListItem[]=exerciseCatalog.map(item=>({id:item.id,title:zh?item.zhTitle:item.title,composer:zh?"练习":"Exercise",viewerPath:item.href}));
   const byId=new Map<string,StudioListItem>([...musicLibrary,...exerciseItems].map(item=>[item.id,item]));
   const recentItems=recentIds.map(id=>byId.get(id)).filter((item):item is StudioListItem=>!!item);
   const savedItems=savedIds.map(id=>byId.get(id)).filter((item):item is StudioListItem=>!!item);
