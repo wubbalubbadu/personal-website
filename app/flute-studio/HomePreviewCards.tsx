@@ -9,6 +9,8 @@ import BreathingPreview from "./BreathingPreview";
 import {TheoryPreview,EmbouchurePreview,FingeringPreview,TrillPreview,RoadmapPreview} from "./LearnPreviews";
 import "./home-preview-cards.css";
 
+const warmScoreReader=()=>{void import("opensheetmusicdisplay")};
+
 export default function HomePreviewCards(){
   const {t,lang}=useLanguage();
   const regions=t.roadmap.regions;
@@ -28,13 +30,13 @@ export default function HomePreviewCards(){
     <h2 className="home-preview__group">{lang==="zh"?"练习":"Practice"}</h2>
     {/* Two across, so each card has room to act out what the tool does. */}
     <section className="home-preview-grid home-preview-grid--duo" aria-label="Practice">
-    <Link className="preview-card preview-card--scales" href="/flute-studio/exercises/scales">
+    <Link className="preview-card preview-card--scales" href="/flute-studio/exercises/scales" onPointerEnter={warmScoreReader} onFocus={warmScoreReader}>
       <div className="preview-card__stage">
         <ScaleStudioPreview zh={lang==="zh"}/>
       </div>
       <div className="preview-card__copy"><b>{t.quickTools.scaleStudio}</b><small>{lang==="zh"?"任何调、任何音域、任何演奏法、任何练习型。做出你自己的音阶书，还会记住你的速度。":"Any key, any range, any articulation, any pattern. Build your own scale book, and it remembers your tempos."}</small></div>
     </Link>
-    <Link className="preview-card preview-card--tones" href="/flute-studio/exercises/long-tones">
+    <Link className="preview-card preview-card--tones" href="/flute-studio/exercises/long-tones" onPointerEnter={warmScoreReader} onFocus={warmScoreReader}>
       <div className="preview-card__stage">
         <LongTonePreview zh={lang==="zh"}/>
       </div>

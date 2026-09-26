@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, type ComponentProps } from 'react';
 import { ScoreViewer, type ScoreMarksContext } from '../../components/ScoreViewer';
 import { useToneSession } from '../../lib/useToneSession';
@@ -186,6 +187,6 @@ function PitchReportCard({report,zh,onDone}:{report:PitchReport;zh:boolean;onDon
     </ul>
     {worst.length>0&&<p className="tone-report-line">{zh?'先练：':'Start with: '}{worst.join(' · ')}</p>}
     {report.medianHoldMs<HOLD_GOAL_MS&&report.notes>=3&&<p className="tone-report-line">{zh?`试着把每个音保持到 ${HOLD_GOAL_MS/1000} 秒。`:`Try holding each note for ${HOLD_GOAL_MS/1000}s.`}</p>}
-    <footer><a href="/flute-studio/practice#pitch">{zh?'查看你的音准倾向 ›':'See your pitch tendencies ›'}</a><button onClick={onDone}>{zh?'完成':'Done'}</button></footer>
+    <footer><Link href="/flute-studio/practice#pitch">{zh?'查看你的音准倾向 ›':'See your pitch tendencies ›'}</Link><button onClick={onDone}>{zh?'完成':'Done'}</button></footer>
   </section>;
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {ResourceIcon,type ResourceIconName} from "../components/ResourceIcon";
 import {openPracticeTool} from "../PracticeAudio";
 import {useLanguage} from "../i18n/LanguageContext";
@@ -105,13 +106,13 @@ export default function ResourcesHub() {
           <div className="exercise-hub__list">
             {RESOURCES.map(resource => (
               <article className="exercise-hub__row exercise-hub__row--available" key={resource.key}>
-                <a className="exercise-hub__row-main" href={resource.href}>
+                <Link className="exercise-hub__row-main" href={resource.href}>
                   <ResourceIcon name={resource.icon} className="exercise-hub__icon" />
                   <span className="exercise-hub__copy">
                     <strong>{zh ? resource.zh : resource.en}</strong>
                     <small>{sentence(zh ? resource.zhDetail : resource.enDetail)}</small>
                   </span>
-                </a>
+                </Link>
               </article>
             ))}
           </div>

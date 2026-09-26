@@ -5,3 +5,8 @@
 .scale-book__chip:hover{background:rgba(41,42,51,.1)}
 .scale-book__chip.selected{background:#e4ecdf;color:#40553d;box-shadow:none}
 .scale-book__chip.selected:hover{background:#dce8d7}
+.studio-route-loading{min-height:calc(100dvh - 76px);display:grid;place-content:center;justify-items:center;gap:12px;color:#6d7069}
+.studio-route-loading>span{width:24px;height:24px;border:2px solid #dfe3da;border-top-color:#678956;border-radius:50%;animation:studio-route-spin .7s linear infinite}
+.studio-route-loading p{margin:0;font-size:13px}
+@keyframes studio-route-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.studio-route-loading>span{animation:none;border-color:#678956}}

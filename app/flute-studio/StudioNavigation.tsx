@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import {usePathname} from "next/navigation";
+import {useEffect} from "react";
+import {usePathname,useRouter} from "next/navigation";
 import AccountMenu from "./AccountMenu";
 import {useLanguage} from "./i18n/LanguageContext";
 import "./studio-navigation.css";
@@ -30,8 +31,19 @@ function destinationIsActive(destination:Destination,pathname:string){
 
 export default function StudioNavigation(){
   const pathname=usePathname();
+  const router=useRouter();
   const {t}=useLanguage();
   const destinations=useDestinations();
+
+  // Production has a real network hop. Warm the persistent studio
+  // destinations after the current page settles so brand and tab clicks do
+  // not wait for their route payload before reacting.
+  useEffect(()=>{
+    const timer=window.setTimeout(()=>{
+      ["/flute-studio","/flute-studio/music","/flute-studio/exercises","/flute-studio/resources","/flute-studio/practice"].forEach(href=>router.prefetch(href));
+    },1000);
+    return()=>window.clearTimeout(timer);
+  },[router]);
 
   return <header className="studio-navigation">
     <div className="studio-navigation__inner">

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {useEffect,useState} from "react";
 import {useLanguage} from "../i18n/LanguageContext";
 import {usePomodoro,formatClock} from "../usePomodoro";
@@ -165,7 +166,7 @@ export default function PracticePage(){
                 <span aria-hidden="true">✓</span>
               </label>
               {item.ref&&byId.get(item.ref)?.viewerPath
-                ?<a className="routine-list__text routine-list__text--link" href={byId.get(item.ref)!.viewerPath!}>{item.text}</a>
+                ?<Link className="routine-list__text routine-list__text--link" href={byId.get(item.ref)!.viewerPath!}>{item.text}</Link>
                 :<span className="routine-list__text">{item.text}</span>}
               <button type="button" aria-label={t.practicePage.removeStep(item.text)} onClick={()=>removeRoutineStep(item.id)}>×</button>
             </li>)}</ol>:
@@ -196,9 +197,9 @@ export default function PracticePage(){
           <h2 id="recent-title">{zh?"最近打开":"Recently opened"}</h2>
           {recentItems.length
             ?<ul className="studio-mini-list">{recentItems.map(item=><li key={item.id}>
-              <a href={item.viewerPath??undefined} className={item.viewerPath?"":"is-disabled"}>
+              {item.viewerPath?<Link href={item.viewerPath}>
                 <strong>{item.title}</strong><small>{item.composer}</small>
-              </a>
+              </Link>:<span className="is-disabled"><strong>{item.title}</strong><small>{item.composer}</small></span>}
             </li>)}</ul>
             :<p className="practice-card__empty">{zh?"还没有打开过谱子。":"Nothing opened yet."}</p>}
         </section>
@@ -207,9 +208,9 @@ export default function PracticePage(){
           <h2 id="saved-title">{zh?"已收藏":"Saved"}</h2>
           {savedItems.length
             ?<ul className="studio-mini-list">{savedItems.map(item=><li key={item.id}>
-              <a href={item.viewerPath??undefined} className={item.viewerPath?"":"is-disabled"}>
+              {item.viewerPath?<Link href={item.viewerPath}>
                 <strong>{item.title}</strong><small>{item.category==="exercise"?(zh?"练习":"Exercise"):item.composer}</small>
-              </a>
+              </Link>:<span className="is-disabled"><strong>{item.title}</strong><small>{item.category==="exercise"?(zh?"练习":"Exercise"):item.composer}</small></span>}
             </li>)}</ul>
             :<p className="practice-card__empty">{zh?"还没有收藏。":"Nothing saved yet \u2014 tap the star on a piece or exercise."}</p>}
         </section>

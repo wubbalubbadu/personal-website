@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {useEffect,useState} from "react";
 import {exerciseCatalog,exerciseFocuses,type ExerciseEntry,type ExerciseFocus} from "../../../content/exercise-catalog";
 import {artForId} from "../components/StudioRowArt";
@@ -31,7 +32,7 @@ function Row({focus,title,detail,href,badge,featured,art,save,trailing}:{focus:E
   if(featured)classes.push("exercise-hub__row--featured");
   return <article className={classes.join(" ")}>
     {href
-      ?<a className="exercise-hub__row-main" href={href}>{content}</a>
+      ?<Link className="exercise-hub__row-main" href={href}>{content}</Link>
       :<div className="exercise-hub__row-main exercise-hub__row-main--disabled">{content}</div>}
     {save&&<SaveButton saved={save.saved} onToggle={save.onToggle} label={save.label}/>}
     {trailing}

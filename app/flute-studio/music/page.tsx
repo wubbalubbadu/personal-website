@@ -1,6 +1,7 @@
 "use client";
 
 import {useEffect,useMemo,useState} from "react";
+import {useRouter} from "next/navigation";
 import {musicCategories,musicLibrary,type MusicCategory} from "../../../content/music-library";
 import MusicRow from "../MusicRow";
 import {useLanguage} from "../i18n/LanguageContext";
@@ -8,6 +9,7 @@ import "./library.css";
 import "./library-fixes.css";
 
 export default function MusicLibrary(){
+  const router=useRouter();
   const {t}=useLanguage();
   const labels:Record<string,string>={all:t.library.all,exercise:t.library.exercise,repertoire:t.library.repertoire,etude:t.library.etude,pop:t.library.pop};
   const [query,setQuery]=useState("");
@@ -18,7 +20,7 @@ export default function MusicLibrary(){
   useEffect(()=>{const saved=localStorage.getItem("cookie:music-favorites");if(saved)setFavorites(JSON.parse(saved));const params=new URLSearchParams(location.search),initial=params.get("category");if(musicCategories.includes(initial as MusicCategory))setCategory(initial as MusicCategory);if(params.get("favorites")==="1")setFavoritesOnly(true)},[]);
   const items=useMemo(()=>musicLibrary.filter(item=>(category==="all"||item.category===category)&&(!favoritesOnly||favorites.includes(item.id))&&`${item.title} ${item.composer} ${item.key} ${item.techniques.join(" ")}`.toLowerCase().includes(query.toLowerCase())).sort((a,b)=>a.title.localeCompare(b.title)),[query,category,favoritesOnly,favorites]);
   function favorite(id:string){const next=favorites.includes(id)?favorites.filter(item=>item!==id):[...favorites,id];setFavorites(next);localStorage.setItem("cookie:music-favorites",JSON.stringify(next));window.dispatchEvent(new Event("cookie:favorites-updated"))}
-  function pickOne(){const available=items.filter(item=>item.viewerPath);if(!available.length)return;const choice=available[Math.floor(Math.random()*available.length)];window.location.assign(choice.viewerPath!)}
+  function pickOne(){const available=items.filter(item=>item.viewerPath);if(!available.length)return;const choice=available[Math.floor(Math.random()*available.length)];router.push(choice.viewerPath!)}
 
   return <main className="library-shell">
     <section className="library-main">

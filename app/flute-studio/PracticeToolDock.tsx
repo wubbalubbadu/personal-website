@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import {
@@ -530,7 +531,7 @@ export default function PracticeToolDock() {
               hidden={focusedTool !== "fingering"}
               tabIndex={-1}
             >
-              <a className="dock-fingering-link" href="/flute-studio/fingerings">{t.toolDock.fullChart}</a>
+              <Link className="dock-fingering-link" href="/flute-studio/fingerings">{t.toolDock.fullChart}</Link>
 
               {/* Stave and diagram share a line: the dock is short, and the
                   two together are what you are actually reading. */}

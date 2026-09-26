@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import {useEffect,useState} from "react";
 import {readPitchHistory,noteTendencies,focusNotes,correctedNotes,habits,PITCH_UPDATED,OFF_CENTS,HOLD_GOAL_MS,type PitchRecord,type NoteTendency} from "../lib/pitchHistory";
 
@@ -41,7 +42,7 @@ export function PitchTendencies({zh}:{zh:boolean}){
       {records.length>0&&<span className="pitch-card__meta">{zh?`${records.length} 个音 · ${habit.sessions} 次练习`:`${records.length} notes · ${habit.sessions} ${habit.sessions===1?"session":"sessions"}`}</span>}
     </div>
     {!records.length
-      ?<p className="practice-card__empty">{zh?"在长音练习中打开“音准”，这里会画出你每个音的倾向。":"Turn on Pitch in Long tones, and this map fills in note by note."} <a href="/flute-studio/exercises/long-tones">{zh?"去练长音 ›":"Go to Long tones ›"}</a></p>
+      ?<p className="practice-card__empty">{zh?"在长音练习中打开“音准”，这里会画出你每个音的倾向。":"Turn on Pitch in Long tones, and this map fills in note by note."} <Link href="/flute-studio/exercises/long-tones">{zh?"去练长音 ›":"Go to Long tones ›"}</Link></p>
       :<>
       <div className="pitch-map" role="table" aria-label={zh?"每个音的平均音准":"Typical pitch of each note"}>
         <div className="pitch-map__row pitch-map__head" role="row"><span role="columnheader"/>{PITCH_CLASSES.map(name=><span key={name} role="columnheader">{name}</span>)}</div>
