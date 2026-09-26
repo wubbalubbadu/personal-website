@@ -49,13 +49,12 @@ export default function HomePreviewCards(){
   // decoration: a page where only some sections are labelled looks like a
   // template, a page where all of them are looks like a contents.
   //
-  // Three to a row throughout, and never one — a lone card stretched to
-  // the full width reads as a banner rather than as one item among
-  // several. Six resources means the second row holds three at the same
-  // third-width as the first, which is the point: they keep their size
-  // instead of expanding to fill the gap.
+  // Cards keep a fixed column width and never stretch to fill a row: a lone
+  // card stretched to the full width reads as a banner rather than as one
+  // item among several. Resources run four across so the two reference
+  // charts can sit on a row of their own at the same size.
   return <div className="home-preview" ref={previewRoot}>
-    <p className="home-preview__lede">An all-in-one flute practice space.</p>
+    <p className="home-preview__lede">{lang==="zh"?"音阶、长音和真正的乐曲，还有一个边听边给反馈的麦克风。":"Scales, long tones and real music, plus a mic that listens while you play."}</p>
 
     <h2 className="home-preview__group">Exercises</h2>
     <section className="home-preview-grid home-preview-grid--trio" aria-label="Exercises">
@@ -95,7 +94,7 @@ export default function HomePreviewCards(){
           </svg>
         </div>
       </div>
-      <div className="preview-card__copy"><b>Long tones</b><small>Held notes and De la sonorité.</small></div>
+      <div className="preview-card__copy"><b>Long tones</b><small>{lang==="zh"?"对着麦克风吹，看每个音准不准，结尾有没有往下掉。":"Play into the mic and see if each note is in tune, and whether it sags at the end."}</small></div>
     </Link>
     <Link className="preview-card preview-card--breathing" href="/flute-studio/breathing">
       <div className="preview-card__stage">
@@ -103,12 +102,23 @@ export default function HomePreviewCards(){
             travel at a constant speed while the ring stays put. */}
         <div className="breathing-preview" aria-hidden="true"><i className="breathing-preview__ring"/><i className="breathing-preview__orbit"><b/></i></div>
       </div>
-      <div className="preview-card__copy"><b>Breathing Lab</b><small>Guided breaths, your rhythm.</small></div>
+      <div className="preview-card__copy"><b>Breathing Lab</b><small>{lang==="zh"?"跟着引导呼吸，速度由你来定。":"Breathe along with the guide at a pace you set."}</small></div>
     </Link>
     </section>
 
     <h2 className="home-preview__group">Resources</h2>
-    <section className="home-preview-grid home-preview-grid--trio" aria-label="Resources">
+    {/* Theory first: it is where a new player starts. The two reference charts
+        sit on their own row under the four main resources. */}
+    <section className="home-preview-grid home-preview-grid--quartet" aria-label="Resources">
+    <Link className="preview-card preview-card--theory" href="/flute-studio/theory">
+      <div className="preview-card__stage">
+        <svg className="theory-preview" viewBox="0 0 240 150" aria-hidden="true">
+          {[0,1,2,3,4].map(i=><line key={i} x1="25" x2="215" y1={42+i*16} y2={42+i*16}/>)}
+          {[90,74,58,66].map((y,i)=><g className="theory-preview-note" key={i} style={{"--i":i} as React.CSSProperties}><g transform={`translate(${55+i*44} ${y}) scale(.6)`}><QuarterNote down={i>1}/></g><text x={55+i*44} y="135">{['G','B','D','C'][i]}</text></g>)}
+        </svg>
+      </div>
+      <div className="preview-card__copy"><b>{lang==="zh"?"乐理课":"Theory lessons"}</b><small>{lang==="zh"?"动手学识谱和节奏的小课。":"Short hands-on lessons for reading notes and rhythm."}</small></div>
+    </Link>
     <Link className="preview-card preview-card--embouchure" href="/flute-studio/embouchure">
       <div className="preview-card__stage"><EmbouchureMiniPreview/></div>
       <div className="preview-card__copy"><b>{t.quickTools.embouchure}</b><small>{sentence(t.quickTools.embouchureDetail)}</small></div>
@@ -134,6 +144,9 @@ export default function HomePreviewCards(){
       <div className="preview-card__copy"><b>{t.quickTools.browseMusic}</b><small>{sentence(t.quickTools.browseMusicDetail)}</small></div>
     </Link>
 
+
+
+
     <Link className="preview-card preview-card--fingerings" href="/flute-studio/fingerings">
       <div className="preview-card__stage">
         {/* Keys going down one after another — a fingering being taken,
@@ -148,7 +161,7 @@ export default function HomePreviewCards(){
           </g>)}
         </svg>
       </div>
-      <div className="preview-card__copy"><b>Fingering chart</b><small>Low B to the altissimo, with alternates.</small></div>
+      <div className="preview-card__copy"><b>Fingering chart</b><small>{lang==="zh"?"从低音 B 到最高音，每个音都有替代指法。":"Every note from low B to the top, with alternate fingerings."}</small></div>
     </Link>
 
     <Link className="preview-card preview-card--trills" href="/flute-studio/trills">
@@ -168,15 +181,7 @@ export default function HomePreviewCards(){
       </div>
       <div className="preview-card__copy"><b>Trill chart</b><small>Four octaves of trill fingerings.</small></div>
     </Link>
-    <Link className="preview-card preview-card--theory" href="/flute-studio/theory">
-      <div className="preview-card__stage">
-        <svg className="theory-preview" viewBox="0 0 240 150" aria-hidden="true">
-          {[0,1,2,3,4].map(i=><line key={i} x1="25" x2="215" y1={42+i*16} y2={42+i*16}/>)}
-          {[90,74,58,66].map((y,i)=><g className="theory-preview-note" key={i} style={{"--i":i} as React.CSSProperties}><g transform={`translate(${55+i*44} ${y}) scale(.6)`}><QuarterNote down={i>1}/></g><text x={55+i*44} y="135">{['G','B','D','C'][i]}</text></g>)}
-        </svg>
-      </div>
-      <div className="preview-card__copy"><b>{lang==="zh"?"乐理课":"Theory lessons"}</b><small>{lang==="zh"?"学习识谱的互动教程。":"Interactive tutorial for reading music."}</small></div>
-    </Link>
+
     </section>
 
   </div>;

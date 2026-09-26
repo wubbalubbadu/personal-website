@@ -6,7 +6,7 @@ import RhythmNote from './rhythm/RhythmNote';
 import {useCourseProgress} from './useCourseProgress';
 import {useLanguage} from '../i18n/LanguageContext';
 import './theory.css';
-import './lesson-frame.css';
+import './theory-home.css';
 export default function TheoryHome(){
   const {completed}=useCourseProgress();
   const {lang}=useLanguage(),zh=lang==='zh';

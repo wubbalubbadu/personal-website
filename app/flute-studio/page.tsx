@@ -3,7 +3,7 @@
 import HomePreviewCards from "./HomePreviewCards";
 import HomeQuickTools from "./HomeQuickTools";
 import ContinuePracticingRow from "./ContinuePracticingCard";
-import HomeCalendarRow from "./HomeCalendarRow";
+import HomeStudioBrief from "./HomeStudioBrief";
 import "./studio-home.css";
 
 export default function StudioHome(){
@@ -20,12 +20,12 @@ export default function StudioHome(){
         <h2 className="home-preview__group">Tools</h2>
         <HomeQuickTools/>
 
-        {/* The way back in, plus the month at a glance. This is the SAME
-            calendar component My Studio uses — the two used to be separate
-            implementations in different visual languages. */}
+        {/* The way back in, plus a few lines from My Studio (this week,
+            notes still off pitch, a long-tone habit). The month calendar
+            lives on My Studio; here it only showed dates. */}
         <h2 className="home-preview__group">Practice tracker</h2>
         <ContinuePracticingRow/>
-        <HomeCalendarRow/>
+        <HomeStudioBrief/>
       </div>
     </section>
   </main>

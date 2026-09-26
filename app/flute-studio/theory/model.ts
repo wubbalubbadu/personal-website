@@ -1,5 +1,6 @@
 export const SAVE_KEY = 'cookie-theory-v1';
-export const STEPS = ['The staff', 'The spaces', 'The treble clef', 'Names & sounds', 'Neighbors on the staff', 'Ledger lines', 'Your first phrase', 'Find your way', 'Your melody', 'Play the keyboard'] as const;
+// Step names in lesson order; FirstNotes' FLOW holds the matching ids.
+export const STEPS = ['Staff', 'Spaces', 'Notes', 'Clef', 'Other clefs', 'Note names', 'Finding notes', 'Practice', 'Ledger lines', 'Twinkle', 'Read new notes', 'Free play'] as const;
 // Diatonic positions counted upward from the bottom staff line, E4.
 export const PITCHES = [
   {name:'C', octave:4, midi:60}, {name:'D', octave:4, midi:62},

@@ -2,7 +2,7 @@
 
 import {createPortal} from "react-dom";
 import {usePathname} from "next/navigation";
-import {PointerEvent,useEffect,useRef,useState} from "react";
+import {PointerEvent,useEffect,useLayoutEffect,useRef,useState} from "react";
 import {usePomodoro,formatClock} from "./usePomodoro";
 import "./cookie-pet.css";
 
@@ -30,6 +30,22 @@ export default function CookiePet(){
     return()=>{cancelAnimationFrame(hydration);window.removeEventListener('cookie:lesson',lesson);window.removeEventListener('resize',resize)};
   },[]);
 
+  // The timer card opens on whichever side of the cookie has room, so it is
+  // never pushed under the nav bar or off an edge wherever the cookie was
+  // dragged. Measured after it renders, before paint, so it never flickers.
+  const wrapRef=useRef<HTMLDivElement>(null),cardRef=useRef<HTMLElement>(null);
+  const [cardPlace,setCardPlace]=useState<{below:boolean;left:boolean}>({below:false,left:false});
+  useLayoutEffect(()=>{
+    const wrap=wrapRef.current,card=cardRef.current;
+    if(!open||!wrap||!card)return;
+    const cookie=wrap.getBoundingClientRect(),size=card.getBoundingClientRect();
+    const navBottom=document.querySelector(".studio-navigation")?.getBoundingClientRect().bottom??0;
+    const roomAbove=cookie.top-8-Math.max(0,navBottom)-8,roomBelow=window.innerHeight-cookie.bottom-8-8;
+    const below=size.height>roomAbove&&roomBelow>roomAbove;
+    // Right-aligned to the cookie by default; flip to left-aligned when that would cross the left edge.
+    const left=cookie.right-9-size.width<8;
+    setCardPlace(current=>current.below===below&&current.left===left?current:{below,left});
+  },[open,point]);
   function down(event:PointerEvent<HTMLDivElement>){
     const rect=event.currentTarget.getBoundingClientRect();
     drag.current={dx:event.clientX-rect.left,dy:event.clientY-rect.top,moved:false,startX:event.clientX,startY:event.clientY};
@@ -53,9 +69,9 @@ export default function CookiePet(){
     if(!wasMoved&&!lessonPage)setOpen(current=>!current);
   }
 
-  const content=<div className={`cookie-pet-wrap ${lessonText?"is-lesson-companion":""} ${docked?"is-docked":""}`} style={point?{left:point.x,top:point.y,right:"auto",bottom:"auto"}:undefined}>
+  const content=<div ref={wrapRef} className={`cookie-pet-wrap ${lessonText?"is-lesson-companion":""} ${docked?"is-docked":""}`} style={point?{left:point.x,top:point.y,right:"auto",bottom:"auto"}:undefined}>
     {(lessonText||(!lessonPage&&message))&&(!open||lessonPage)&&<div className="cookie-pet-bubble" role="status" style={point?{left:point.x<280?0:undefined,right:point.x<280?'auto':undefined,top:point.y<170?72:undefined,bottom:point.y<170?'auto':undefined}:undefined}>{lessonText||message}</div>}
-    {open&&!lessonPage&&<section className="cookie-pomodoro" role="dialog" aria-label={t.pomodoro.title}>
+    {open&&!lessonPage&&<section ref={cardRef} className={`cookie-pomodoro ${cardPlace.below?"is-below":""} ${cardPlace.left?"is-left":""}`} role="dialog" aria-label={t.pomodoro.title}>
       <header>
         <strong>{t.pomodoro.title}</strong>
         <button type="button" aria-label={t.pomodoro.close} onClick={()=>setOpen(false)}>×</button>

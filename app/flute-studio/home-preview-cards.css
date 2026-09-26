@@ -425,11 +425,15 @@
 }
 .home-preview .home-preview-grid { margin: 0 0 30px; }
 .home-preview-grid--trio { grid-template-columns: repeat(3, 1fr); }
+.home-preview-grid--quartet { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 1000px) {
+  .home-preview-grid--quartet { grid-template-columns: repeat(3, 1fr); }
+}
 @media (max-width: 860px) {
-  .home-preview-grid--trio { grid-template-columns: 1fr 1fr; }
+  .home-preview-grid--trio, .home-preview-grid--quartet { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 760px) {
-  .home-preview-grid--trio { grid-template-columns: 1fr; }
+  .home-preview-grid--trio, .home-preview-grid--quartet { grid-template-columns: 1fr; }
 }
 
 /* The two chart cards.
@@ -501,3 +505,13 @@
 .theory-preview-note text{text-anchor:middle;font:12px -apple-system,BlinkMacSystemFont,sans-serif;opacity:0;transition:opacity .25s;transition-delay:calc(var(--i)*.12s)}
 .preview-card--theory:is(:hover,:focus-visible,.is-touch-playing) text{opacity:1}
 @media(prefers-reduced-motion:reduce){.theory-preview-note text{transition:none}}
+
+/* From My Studio: the same three-part card as Continue, with a heading row and a link out. */
+.studio-brief { margin: 0 0 42px; }
+.studio-brief .continue-panel { margin: 0; }
+.studio-brief__pitch { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.studio-brief__pitch span { display: inline-flex; align-items: baseline; gap: 4px; padding: 3px 9px; border-radius: 999px; font-size: 14px; font-weight: 640; }
+.studio-brief__pitch .is-sharp { background: #f7e1f8; color: #68466b; }
+.studio-brief__pitch .is-flat { background: #e6e8eb; color: #4f5962; }
+.studio-brief__pitch small { display: inline; margin: 0; font-size: 12px; font-weight: 500; color: inherit; }
+.continue-panel + .studio-brief { margin-top: -26px; }

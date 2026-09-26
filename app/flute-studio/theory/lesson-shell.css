@@ -1,0 +1,74 @@
+/* Lesson page: top bar, step dots, one idea heading, the scene, and Cookie's bubble. */
+.lesson-shell{max-width:1040px;min-height:100dvh;display:flex;flex-direction:column;padding:78px 32px 24px;--scene-h:clamp(190px,33vh,340px)}
+.lesson-top{display:flex;align-items:center;gap:14px;min-height:44px}
+.lesson-top{justify-content:center}
+.lesson-shell .lesson-top h1{margin:0;font-size:14px;font-weight:600;letter-spacing:0;color:#71747e}
+.lesson-shell .theory-timeline{margin:0 auto;width:100%;max-width:760px}
+.lesson-shell .theory-timeline button{min-width:0;padding:30px 2px 6px;white-space:normal;line-height:1.2;font-size:12px}
+/* Only the current step is named; the others show their name on hover or focus. */
+.lesson-shell .theory-timeline button:not([aria-current]){color:transparent}
+.lesson-shell .theory-timeline button:hover,.lesson-shell .theory-timeline button:focus-visible{color:#71747e}
+.lesson-shell .theory-timeline button[aria-current]{color:#292a33;font-weight:600}
+.lesson-shell .lesson-heading{margin:auto 0 0;padding-top:24px;text-align:center;font-size:19px;font-weight:400;line-height:1.4;letter-spacing:0;color:#45464f;animation:lesson-heading-in .3s ease both}
+@keyframes lesson-heading-in{from{opacity:0;transform:translateY(4px)}}
+
+/* A fixed-height scene (the staff plus room for its controls) keeps the bubble in one place as controls change. */
+.lesson-scene{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:14px;width:100%;max-width:900px;min-height:calc(var(--scene-h) + 140px);margin:0 auto;padding:12px 0 8px}
+.lesson-scene>*{width:100%}
+.lesson-scene .theory-staff,.lesson-scene .sequence-staff,.lesson-scene .theory-tracing>svg,.lesson-scene .rhythm-score,.lesson-scene .rhythm-tree{display:block;width:100%;height:var(--scene-h);max-height:none;min-height:0}
+.lesson-scene:has(.sequence-keyboard.is-visible) .sequence-staff{height:calc(var(--scene-h) - 70px)}
+.lesson-scene .sequence-keyboard.is-visible{max-width:340px;margin:6px auto 0}
+.lesson-scene .theory-memory-methods{max-width:760px;margin:0 auto;padding:0}
+.lesson-scene .ledger-slider{margin:4px auto 0}
+.lesson-tools{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
+.lesson-shell .lesson-tools button,.lesson-shell .theory-tracing .theory-explore-controls button{min-height:44px;padding:8px 18px;border:0;border-radius:12px;background:#f3f0e9;color:#292a33;font-size:15px}
+.lesson-shell .lesson-tools button:hover:not(:disabled){background:#ebe6db}
+.lesson-count{font-size:14px;color:#71747e;text-align:center;margin:0!important}
+
+/* Narration: the idea in plain words, right above the music. */
+.lesson-shell .lesson-narration{margin:0 auto;padding-top:14px;min-height:calc(2 * 1.5em + 14px);max-width:700px;text-align:center;font-size:19px;line-height:1.5;color:#45464f;text-wrap:pretty}
+
+/* Name-the-note choices and the placing staff. */
+.lesson-choices{display:flex;justify-content:center;gap:12px}
+.lesson-shell .lesson-choices button{display:grid;gap:1px;min-width:78px;min-height:64px;padding:8px 14px;border:1px solid #e5dccb;border-radius:14px;background:#fff;color:#292a33;font-size:20px;font-weight:650;transition:background .2s,border-color .2s}
+.lesson-choices button span{font-size:13px;font-weight:400;color:#71747e}
+.lesson-shell .lesson-choices button:hover:not(:disabled){border-color:#c9b48f}
+.lesson-shell .lesson-choices button.is-correct{background:#edf7ef;border-color:#8eaf86}
+.lesson-shell .lesson-choices button.is-wrong{background:#fff2e8;border-color:#e9c2a3}
+.note-practice{display:flex;flex-direction:column;gap:14px}
+.theory-staff.is-placing{cursor:pointer;touch-action:none}
+.note-practice-guide{stroke:#c9b48f;stroke-dasharray:3 7;stroke-linecap:round}
+.note-practice-note{transition:transform .12s ease-out}
+.note-practice-note.is-correct .theory-quarter-note{fill:#46633d;color:#46633d}
+
+/* Cookie's bubble: the task, then feedback, then the only Next button. */
+.lesson-talk{display:flex;align-items:center;gap:16px;width:100%;max-width:760px;margin:0 auto;padding-bottom:24px}
+.lesson-talk #lesson-companion{flex:0 0 64px;display:flex;justify-content:center;min-height:64px}
+.lesson-talk .cookie-pet-wrap.is-docked{width:auto}
+.lesson-bubble{flex:1;display:flex;align-items:center;gap:16px;min-height:84px;padding:14px 14px 14px 22px;border:1px solid transparent;border-radius:22px;background:#faf5ec;color:#453526;transition:background .25s,border-color .25s,color .25s}
+.lesson-bubble.is-correct{background:#edf7ef;border-color:#b7d8be;color:#245437}
+.lesson-bubble.is-wrong{background:#fff2e8;border-color:#e9c2a3}
+.lesson-shell .lesson-bubble>p{flex:1;margin:0;font-size:18px;line-height:1.45;color:inherit;text-wrap:pretty}
+.lesson-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.lesson-shell .lesson-next{display:inline-flex;align-items:center;min-height:46px;padding:10px 18px;border:0;border-radius:13px;background:#678956;color:#fff;font-size:15px;font-weight:650;white-space:nowrap;animation:lesson-next-in .25s ease both}
+.lesson-shell .lesson-next:hover{background:#587a49}
+.lesson-shell .lesson-skip,.lesson-shell .lesson-secondary{min-height:46px;padding:8px 14px;border:0;border-radius:13px;background:transparent;color:#71747e;font-size:14px;white-space:nowrap}
+.lesson-shell .lesson-skip:hover{color:#292a33}
+.lesson-shell .lesson-secondary{background:#fff;color:#46633d;border:1px solid #d6e2cf;font-weight:600}
+@keyframes lesson-next-in{from{opacity:0;transform:scale(.96)}}
+.lesson-status{margin:8px 0 0!important;font-size:13px;color:#a12f28!important;text-align:center}
+
+@media(max-height:760px){.lesson-shell{--scene-h:clamp(160px,28vh,280px);padding-top:70px}.lesson-shell .lesson-heading{margin-top:14px;font-size:22px}}
+@media(max-width:760px){.lesson-talk #lesson-companion{display:none}}
+@media(max-width:700px){.lesson-shell{padding:70px 16px 16px}.lesson-shell .lesson-heading{font-size:17px}.lesson-bubble{flex-direction:column;align-items:stretch;padding:14px 16px}.lesson-actions{justify-content:flex-end}.lesson-shell .lesson-bubble>p{font-size:17px}}
+@media(prefers-reduced-motion:reduce){.lesson-shell .lesson-heading,.lesson-shell .lesson-next{animation:none}.note-practice-note{transition:none}}
+
+.clef-compare{display:flex;flex-direction:column;gap:14px}
+.lesson-shell .clef-compare .lesson-choices button{font-size:16px;min-width:120px}
+.lesson-shell .lesson-choices button.is-picked{border-color:#678956;background:#f1f6ee}
+.clef-compare-glyph{animation:lesson-heading-in .3s ease both}
+.clef-compare-note{cursor:pointer;transition:transform .3s ease}
+@media(max-width:700px){.lesson-shell .lesson-narration{font-size:17px}}
+.lesson-shell .clef-compare .theory-staff{height:calc(var(--scene-h) - 50px)}
+.note-practice-ghost{opacity:.22;pointer-events:none}
+.sequence-figure.is-static .sequence-note{cursor:pointer}

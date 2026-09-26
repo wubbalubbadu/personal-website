@@ -1,0 +1,5 @@
+/* Theory lessons index: the course cards. */
+.theory-home .theory-course{height:calc(clamp(160px,30vh,280px) + 124px);display:grid;grid-template-rows:minmax(0,1fr) 124px;align-self:start}.theory-home .theory-course>svg{height:100%;width:100%;min-height:0}.theory-home .theory-course>div{height:124px;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-content:start}.theory-home .theory-course>div>span{font-size:12px;padding-top:3px}.theory-home .theory-course.is-complete{border-color:#8eaf86;box-shadow:inset 0 0 0 1px #8eaf86}.theory-home .theory-course.is-complete>div>span{color:#44663e}
+@media(max-width:600px){.theory-home .theory-course{height:100%;grid-template-rows:minmax(0,1fr) 95px}.theory-home .theory-course>div{height:95px}}
+@media(max-width:700px){.theory-home .theory-course>div{gap:8px}}
+.course-check{font-size:14px;color:#44663e}

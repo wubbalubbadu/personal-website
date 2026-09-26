@@ -33,3 +33,6 @@
 .theory-paper:has(.is-incorrect) .is-docked .cookie-pet-bubble{background:#fff2e8;border-color:#e9c2a3}
 .theory-paper:has(.is-incorrect) .is-docked .cookie-pet-bubble:after{border-color:#e9c2a3}
 @media(max-width:600px){.cookie-pet-wrap.is-docked{gap:12px}.is-docked .cookie-pet-bubble{padding:14px 16px;font-size:18px}}
+/* Placement flips chosen in CookiePet when the default (above, right-aligned) would not fit. */
+.cookie-pomodoro.is-below{bottom:auto;top:72px}
+.cookie-pomodoro.is-left{right:auto;left:0}
