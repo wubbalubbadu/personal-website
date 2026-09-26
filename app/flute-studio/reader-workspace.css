@@ -259,10 +259,10 @@ html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document"
    exactly (border, corner radius, colors, hover, cursor) instead of each
    section inventing its own (native checkboxes/radios here, a borderless
    pale-fill-with-inset-ring button there, no :hover cursor on presets). */
-.reader-settings-panel .scale-book__preset,.scale-book__chip{border:0;border-radius:12px;background:rgba(41,42,51,.06);color:inherit;font:inherit;font-size:12px;cursor:pointer;transition:background-color .16s ease,color .16s ease}
-.reader-settings-panel .scale-book__preset:hover,.scale-book__chip:hover{background:rgba(41,42,51,.1)}
-.reader-settings-panel .scale-book__preset.selected,.scale-book__chip.selected{background:#e4ecdf;color:#40553d;box-shadow:none}
-.reader-settings-panel .scale-book__preset.selected:hover,.scale-book__chip.selected:hover{background:#dce8d7}
+.reader-settings-panel .scale-book__preset{border:0;border-radius:12px;background:rgba(41,42,51,.06);color:inherit;font:inherit;font-size:12px;cursor:pointer;transition:background-color .16s ease,color .16s ease}
+.reader-settings-panel .scale-book__preset:hover{background:rgba(41,42,51,.1)}
+.reader-settings-panel .scale-book__preset.selected{background:#e4ecdf;color:#40553d;box-shadow:none}
+.reader-settings-panel .scale-book__preset.selected:hover{background:#dce8d7}
 .reader-settings-panel .scale-book__preset{min-height:40px}
 .reader-settings-panel .scale-book__preset .scale-book__preset-custom-badge{background:#71747e}
 .reader-settings-panel .scale-book__preset.selected .scale-book__preset-custom-badge{background:#40553d;color:#fff}

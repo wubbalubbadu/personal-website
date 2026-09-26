@@ -25,3 +25,10 @@ export function breathAt(beats:number,s:Settings){
  const progress=elapsed/duration;
  return {...c,round,phase,progress,beat:Math.min(duration,Math.floor(elapsed)+1),cycle:remaining/(c.inhale+c.hold+c.exhale),fullness:phase==='Inhale'?progress:phase==='Hold'?1:1-progress};
 }
+
+// Spoken-style cues for each phase. Shared with the home page's Breathing Lab card.
+export const cueBank={
+ Inhale:['Make space. Let air in.','Relax the back of your throat.','Imagine sniffing a flower.','Release your belly.','Feel expansion around your lower ribs.','Imagine the breath filling low, around your rib cage.','Jaw releases. Throat opens.','Listen to your breath.'],
+ Hold:['Stay easy.','Keep the throat relaxed.'],
+ Exhale:['Keep the air even.','Stay open as you blow.','Manage your air to last through all the beats.','Feel support through your core.','Keep your body free of tension.','Support without bracing.','Keep the air moving.']
+};

@@ -3,19 +3,13 @@ import {useEffect,useRef,useState} from 'react';
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {createModel} from './model';
-import {MIN_NOTE,MAX_NOTE,noteName} from './poses';
+import {MIN_NOTE,MAX_NOTE,noteName,guidance} from './poses';
 import StudioPage from '../components/StudioPage';
 import Workbench from '../components/Workbench';
 import './workbench.css';
 import StaffNote from './StaffNote';
 import Breathing from './Breathing';
 
-// Short, register-specific embouchure cues. Thresholds match poses.ts (E5=76, E6=88).
-function guidance(note: number) {
-  if (note < 76) return 'Air aims down into the tube, jaw drops — ahh, ohh';
-  if (note < 88) return 'Air blows a little more forward — eeh';
-  return 'Tongue and lower lip move forward, air very fast across — eee';
-}
 
 function Embouchure(){
  const host=useRef<HTMLDivElement>(null), target=useRef(76), animate=useRef(false), direction=useRef(1), reset=useRef(()=>{});

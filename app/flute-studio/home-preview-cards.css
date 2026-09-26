@@ -1,3 +1,8 @@
+/* Four soft tints drawn from the studio tone set (green, pink, sand, slate), flat, no gradients.
+   Each card gets one on purpose so neighbours differ and the page repeats a small palette:
+     Practice  scales slate · tones pink / music green · breathing sand
+     Learn     theory sand · embouchure slate · roadmap pink / fingerings green · trills slate */
+.home-preview { --tint-green: #eef4ec; --tint-pink: #faf0f6; --tint-sand: #f7f1e6; --tint-slate: #edf1f5; }
 /* Bigger, border-free cards that replace the old Theory-lesson / Exercise-of-
    the-day pair — same general proportions, but each one previews real
    content instead of showing an icon. No border anywhere (the page is white
@@ -57,22 +62,15 @@
   color: #71747e;
 }
 
-/* Embouchure — the 3D canvas fills the stage. */
+/* Embouchure: stage tint (the demo is EmbouchurePreview in LearnPreviews). */
 .preview-card--embouchure .preview-card__stage {
-  background: radial-gradient(120% 140% at 30% 20%, #eef3ec, #e6e8eb);
-}
-.preview-3d {
-  width: 100%;
-  height: 100%;
-}
-.preview-3d canvas {
-  display: block;
+  background: var(--tint-slate);
 }
 
 /* Roadmap — a compact legend of the map's regions (flat, no levels: this
    mirrors the real page's own six tones rather than implying a path). */
 .preview-card--roadmap .preview-card__stage {
-  background: linear-gradient(160deg, #fbf1fa, #fdf7fc);
+  background: var(--tint-pink);
   padding: 0 22px;
 }
 .roadmap-preview {
@@ -128,10 +126,6 @@
 }
 .roadmap-preview li.is-done i { background: currentColor; }
 .roadmap-preview li.is-done i svg { stroke-dashoffset: 0; }
-/* Hover ticks the remaining ones in order, so the card shows the roadmap
-   being worked through rather than just listing its parts. */
-.preview-card--roadmap:is(:hover, :focus-visible, .is-touch-playing) .roadmap-preview i { background: currentColor; }
-.preview-card--roadmap:is(:hover, :focus-visible, .is-touch-playing) .roadmap-preview i svg { stroke-dashoffset: 0; }
 
 .roadmap-preview i.sage { color: #496b40; }
 .roadmap-preview i.pink { color: #7c4f78; }
@@ -145,69 +139,8 @@
   .roadmap-preview i svg { transition: none; }
 }
 
-/* Exercises — a compact preview list. */
-.preview-card--breathing .preview-card__stage { background: #f1f5f6; display: grid; place-items: center; }
-
-/* Breathing Lab preview — a still two-tone ring with a marker travelling
-   round it on hover, the way the Lab's own timer reads.
-
-   Three things this gets right that the first pass did not. The halves are
-   a straight left/right split (a linear-gradient disc with the middle
-   punched out) rather than tinted borders, which only ever produce a
-   diagonal because each border side is a mitred wedge. The marker rides
-   its own element instead of the ring, so it turns on a plain linear
-   rotation — sharing one transform track with an eased scale was what made
-   it visibly speed up and slow down. And it sits on the stroke's
-   centreline, not on the ring's outer edge. */
-.breathing-preview {
-  position: relative;
-  width: 126px;
-  height: 126px;
-  display: grid;
-  place-items: center;
-}
-.breathing-preview__ring {
-  position: absolute;
-  inset: 8px;
-  border-radius: 50%;
-  background: linear-gradient(90deg, #87b4c8 0 50%, #ca9295 50% 100%);
-}
-/* The hole that turns the disc into a ring. Matches the stage behind it. */
-.breathing-preview__ring::after {
-  content: "";
-  position: absolute;
-  inset: 9px;
-  border-radius: 50%;
-  background: #f1f5f6;
-}
-.breathing-preview__orbit {
-  position: absolute;
-  inset: 8px;
-}
-/* The ring is 110px across with a 9px stroke, so the stroke's centreline
-   sits 4.5px inside the box edge — hence top:-3px for a 15px marker. */
-.breathing-preview__orbit b {
-  position: absolute;
-  top: -3px;
-  left: 50%;
-  margin-left: -7.5px;
-  width: 15px;
-  height: 15px;
-  background: #40553d;
-  border: 3px solid #fff;
-  border-radius: 50%;
-  box-sizing: border-box;
-}
-/* Still until you point at it, like the other cards. */
-.preview-card--breathing:is(:hover, :focus-visible, .is-touch-playing) .breathing-preview__orbit {
-  animation: breathing-orbit 8s linear infinite;
-}
-@keyframes breathing-orbit {
-  to { transform: rotate(360deg); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .preview-card--breathing:is(:hover, :focus-visible, .is-touch-playing) .breathing-preview__orbit { animation: none; }
-}
+/* Breathing Lab: stage tint (the demo is BreathingPreview). */
+.preview-card--breathing .preview-card__stage { background: var(--tint-sand); }
 
 /* Continue practicing — ONE shared card (not three differently-tinted
    tiles); each of the three sections is told apart by a small colored dot,
@@ -280,152 +213,38 @@
   .continue-section:first-child { border-top: 0; }
 }
 
-/* Browse music — a loosely fanned stack of track chips. */
+/* Browse music: stage tint (the demo itself is MusicPreview). */
 .preview-card--music .preview-card__stage {
-  background: linear-gradient(160deg, #eef3ea, #f6f8f4);
+  background: var(--tint-green);
 }
-.music-preview {
-  position: relative;
-  width: 76%;
-  height: 68%;
-}
-.music-preview__swatch {
-  position: absolute;
-  inset: 0;
-  border-radius: 14px;
-  background: #fff;
-  box-shadow: 0 6px 16px rgba(41, 42, 51, 0.1);
-  padding: 12px 14px;
-  transform: rotate(calc((var(--i) - 1.5) * 4deg)) translateY(calc(var(--i) * 2px));
-  transition: transform 0.2s ease;
-}
-.preview-card--music:is(:hover, :focus-visible, .is-touch-playing) .music-preview__swatch {
-  transform: rotate(calc((var(--i) - 1.5) * 9deg)) translateY(calc(var(--i) * -3px)) translateX(calc((var(--i) - 1.5) * 14px));
-}
-.music-preview__swatch b {
-  display: block;
-  font-size: 13px;
-  font-weight: 650;
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.music-preview__swatch span {
-  display: block;
-  margin-top: 3px;
-  font-size: 11.5px;
-  color: #85868e;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 @media (max-width: 900px) {
   .home-preview-grid { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .preview-card, .music-preview__swatch { transition: none; }
+  .preview-card { transition: none; }
 }
 
-/* Flat notation and a sustained pitch trace, at the breathing card's scale. */
-.preview-card--scales .preview-card__stage { background: #f0f5f8; }
-.preview-card--tones .preview-card__stage { background: #f8f1f4; }
-.scales-preview, .tones-preview { width: 220px; max-width: 90%; }
-.scales-preview svg, .tones-preview svg { display: block; width: 100%; }
-.scales-preview__note { color: #87b4c8; fill: currentColor; }
-.scales-preview__slur { fill: #87b4c8; }
-.tones-preview__pitch { fill: #846473; font-size: 23px; font-weight: 550; }
-.tones-preview__guide { fill: none; stroke: #e7dce2; stroke-width: 1.5; stroke-dasharray: 2 7; }
-.tones-preview__track { fill: none; stroke: #e3cad3; stroke-width: 5; stroke-linecap: round; }
-.tones-preview__trace { fill: none; stroke: #ca9295; stroke-width: 5; stroke-linecap: round; }
-.tones-preview__cursor { fill: #629ab3; }
-.scales-preview__dot { fill: #b96f85; opacity: 0; }
-
-/* One shared phrase: connected first pair, distinct attacks on the last two.
-   Notes stay in place; only the articulation is animated. */
-@keyframes articulation-first {
-  0%, 18% { color: #b96f85; }
-  22%, 100% { color: #87b4c8; }
-}
-@keyframes articulation-second {
-  0%, 17% { color: #87b4c8; }
-  21%, 38% { color: #b96f85; }
-  40%, 100% { color: #87b4c8; }
-}
-@keyframes articulation-third {
-  0%, 39.9% { color: #87b4c8; }
-  40%, 56% { color: #b96f85; }
-  56.1%, 100% { color: #87b4c8; }
-}
-@keyframes articulation-fourth {
-  0%, 59.9% { color: #87b4c8; }
-  60%, 76% { color: #b96f85; }
-  76.1%, 100% { color: #87b4c8; }
-}
-/* The slur is up while the first pair is being played, the dots pop as
-   their own note is attacked — same clock as the colour cycle. */
-@keyframes articulation-dot-3 { 0%, 39.9% { opacity: 0; } 41%, 56% { opacity: 1; } 57%, 100% { opacity: 0; } }
-@keyframes articulation-dot-4 { 0%, 59.9% { opacity: 0; } 61%, 76% { opacity: 1; } 77%, 100% { opacity: 0; } }
-/* Swell and taper, in step with the cursor's 5s sweep. */
-@keyframes sustained-swell {
-  0%, 6% { stroke-width: 3; }
-  42% { stroke-width: 9; }
-  78%, 100% { stroke-width: 3; }
-}
-@keyframes articulation-slur {
-  0%, 37% { fill: #ca9295; }
-  40%, 100% { fill: #87b4c8; }
-}
-@keyframes sustained-trace {
-  0% { stroke-dashoffset: 100; opacity: 1; }
-  78%, 90% { stroke-dashoffset: 0; opacity: 1; }
-  100% { stroke-dashoffset: 0; opacity: 0; }
-}
-@keyframes sustained-cursor {
-  0% { transform: translateX(-152px); opacity: 1; }
-  78%, 90% { transform: translateX(0); opacity: 1; }
-  100% { transform: translateX(0); opacity: 0; }
-}
-.preview-card--scales:is(:hover, :focus-visible, .is-touch-playing) .scales-preview__note { animation-duration: 1.7s; animation-timing-function: linear; animation-iteration-count: infinite; }
-.preview-card--scales:is(:hover, :focus-visible, .is-touch-playing) .scales-preview__note--1 { animation-name: articulation-first; }
-.preview-card--scales:is(:hover, :focus-visible, .is-touch-playing) .scales-preview__note--2 { animation-name: articulation-second; }
-.preview-card--scales:is(:hover, :focus-visible, .is-touch-playing) .scales-preview__note--3 { animation-name: articulation-third; }
-.preview-card--scales:is(:hover, :focus-visible, .is-touch-playing) .scales-preview__note--4 { animation-name: articulation-fourth; }
-.preview-card--scales:is(:hover, :focus-visible, .is-touch-playing) .scales-preview__slur { animation: articulation-slur 1.7s linear infinite; }
-.preview-card--scales:is(:hover, :focus-visible, .is-touch-playing) .scales-preview__dot--3 { animation: articulation-dot-3 1.7s linear infinite; }
-.preview-card--scales:is(:hover, :focus-visible, .is-touch-playing) .scales-preview__dot--4 { animation: articulation-dot-4 1.7s linear infinite; }
-.preview-card--tones:is(:hover, :focus-visible, .is-touch-playing) .tones-preview__trace { stroke-dasharray: 100; animation: sustained-trace 3.2s linear infinite; }
-.preview-card--tones:is(:hover, :focus-visible, .is-touch-playing) .tones-preview__cursor { animation: sustained-cursor 3.2s linear infinite; }
-.preview-card--tones:is(:hover, :focus-visible, .is-touch-playing) .tones-preview__trace { animation: sustained-trace 3.2s linear infinite, sustained-swell 3.2s linear infinite; }
-@media (prefers-reduced-motion: reduce) {
-  .preview-card--scales:is(:hover, :focus-visible) .scales-preview__note,
-  .preview-card--scales:is(:hover, :focus-visible) .scales-preview__slur,
-  .preview-card--tones:is(:hover, :focus-visible) .tones-preview__trace,
-  .preview-card--tones:is(:hover, :focus-visible) .tones-preview__cursor { animation: none; }
-}
-
+/* Scale Studio and Long tones: stage tints (the demos are ScaleStudioPreview and LongTonePreview). */
+.preview-card--scales .preview-card__stage { background: var(--tint-slate); }
+.preview-card--tones .preview-card__stage { background: var(--tint-pink); }
 /* Every band is labelled — see the note in HomePreviewCards. The cards
    keep one size inside a group so a group reads as a group; the variation
    is between groups, not within them. */
 .home-preview { margin: 0 0 30px; }
-.home-preview__lede {
-  margin: 0 0 26px;
-  font-size: 17px;
-  line-height: 1.5;
-  color: #6d6f76;
-}
 .home-preview__group {
-  margin: 0 0 12px;
-  font-size: 12px;
-  font-weight: 720;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #8a8c93;
+  margin: 0 0 14px;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  color: #292a33;
 }
+.home-preview > .home-preview__group:first-child { margin-top: 6px; }
 .home-preview .home-preview-grid { margin: 0 0 30px; }
 .home-preview-grid--trio { grid-template-columns: repeat(3, 1fr); }
 .home-preview-grid--quartet { grid-template-columns: repeat(4, 1fr); }
+.home-preview-grid--duo { grid-template-columns: repeat(2, 1fr); }
+.home-preview-grid--duo .preview-card__stage { height: 220px; }
 @media (max-width: 1000px) {
   .home-preview-grid--quartet { grid-template-columns: repeat(3, 1fr); }
 }
@@ -433,78 +252,18 @@
   .home-preview-grid--trio, .home-preview-grid--quartet { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 760px) {
-  .home-preview-grid--trio, .home-preview-grid--quartet { grid-template-columns: 1fr; }
+  .home-preview-grid--trio, .home-preview-grid--quartet, .home-preview-grid--duo { grid-template-columns: 1fr; }
 }
 
 /* The two chart cards.
 
-   Neither has a running feature to mirror, so each animates what the
-   chart is FOR: keys going down in turn, and a note flicking between two
-   pitches. Both were first built far too subtle to notice — a low-opacity
-   pulse on a grey fill reads as nothing at a glance — so the contrast is
-   deliberately strong and the "down" state is held, not flashed. */
-.preview-card--fingerings .preview-card__stage { background: linear-gradient(160deg, #eef0f2, #f7f8f9); }
-.preview-card--trills .preview-card__stage { background: linear-gradient(160deg, #e9eff5, #f6f9fb); }
-.chart-preview { width: 100%; height: auto; }
-
-.chart-preview__rod { stroke: #b9c0c8; stroke-width: 2; }
-/* Opaque, not transparent: an open key is a white pad, and leaving it
-   see-through let the rod behind it read as a line through the circle. */
-.chart-preview__key-ring { fill: #fbfcfc; stroke: #6f7883; stroke-width: 2; }
-.chart-preview__key-fill { fill: #2f3845; stroke: none; opacity: 0; transition: opacity 0.2s ease; }
-/* Held down for most of the cycle rather than blinking: a key that is
-   closed stays closed while the rest of the hand catches up. */
-@keyframes chart-key-press { 0% { opacity: 0; } 12%, 78% { opacity: 1; } 92%, 100% { opacity: 0; } }
-.preview-card--fingerings:is(:hover, :focus-visible, .is-touch-playing) .chart-preview__key-fill {
-  animation: chart-key-press 2.6s ease-in-out infinite;
-  animation-delay: calc(var(--i) * 0.16s);
-}
-
-.chart-preview__line { stroke: #c4d0da; stroke-width: 1; }
-.chart-preview__tr { fill: #4b6378; font: italic 700 15px Georgia, "Times New Roman", serif; }
-/* Drawn at rest, so the card is not blank until you hover it. */
-.chart-preview__wave { fill: none; stroke: #4b6378; stroke-width: 2; stroke-linecap: round; opacity: 0.55; transition: opacity 0.25s ease; }
-.chart-preview__note ellipse, .chart-preview__note rect { fill: #33475a; }
-@keyframes chart-trill-step { 0%, 49% { transform: translateY(0); } 50%, 100% { transform: translateY(-6.5px); } }
-@keyframes chart-wave-pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
-.preview-card--trills:is(:hover, :focus-visible, .is-touch-playing) .chart-preview__note { animation: chart-trill-step 0.28s steps(1, end) infinite; }
-.preview-card--trills:is(:hover, :focus-visible, .is-touch-playing) .chart-preview__wave { animation: chart-wave-pulse 0.56s ease-in-out infinite; }
-
-/* Touch-first devices have no hover state to reveal the previews. Each card
-   receives this class once as it enters the viewport, then completes a
-   finite demonstration and returns to rest. */
-@media (hover: none) and (pointer: coarse) {
-  .preview-card.is-touch-playing .scales-preview__note,
-  .preview-card.is-touch-playing .scales-preview__slur,
-  .preview-card.is-touch-playing .scales-preview__dot,
-  .preview-card.is-touch-playing .tones-preview__trace,
-  .preview-card.is-touch-playing .tones-preview__cursor,
-  .preview-card.is-touch-playing .chart-preview__key-fill {
-    animation-iteration-count: 1;
-  }
-  .preview-card--breathing.is-touch-playing .breathing-preview__orbit {
-    animation-duration: 4s;
-    animation-iteration-count: 1;
-  }
-  .preview-card--trills.is-touch-playing .chart-preview__note { animation-iteration-count: 8; }
-  .preview-card--trills.is-touch-playing .chart-preview__wave { animation-iteration-count: 4; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .chart-preview__key-fill, .chart-preview__wave, .chart-preview__note { animation: none !important; }
-  .chart-preview__key-fill { opacity: 1; }
-}
-
+   Their demos (FingeringPreview, TrillPreview) use the real flute diagram. */
+.preview-card--fingerings .preview-card__stage { background: var(--tint-green); }
+.preview-card--trills .preview-card__stage { background: var(--tint-slate); }
 /* The calendar on the home page: same card, held to the width it needs. */
 .home-calendar-row { margin: 16px 0 0; max-width: 340px; }
 
-.preview-card--theory .preview-card__stage{background:#f5f5f5}
-.theory-preview{width:240px;max-width:90%;color:#171717;overflow:visible}
-.theory-preview>line{stroke:#333;stroke-width:1}
-.theory-preview-note{fill:currentColor}
-.theory-preview-note text{text-anchor:middle;font:12px -apple-system,BlinkMacSystemFont,sans-serif;opacity:0;transition:opacity .25s;transition-delay:calc(var(--i)*.12s)}
-.preview-card--theory:is(:hover,:focus-visible,.is-touch-playing) text{opacity:1}
-@media(prefers-reduced-motion:reduce){.theory-preview-note text{transition:none}}
+.preview-card--theory .preview-card__stage{background:var(--tint-sand)}
 
 /* From My Studio: the same three-part card as Continue, with a heading row and a link out. */
 .studio-brief { margin: 0 0 42px; }
@@ -515,3 +274,113 @@
 .studio-brief__pitch .is-flat { background: #e6e8eb; color: #4f5962; }
 .studio-brief__pitch small { display: inline; margin: 0; font-size: 12px; font-weight: 500; color: inherit; }
 .continue-panel + .studio-brief { margin-top: -26px; }
+
+/* Scale Studio card: one engraved row that rewrites itself, and a caption naming what changed. */
+.scale-preview { width: 100%; height: 100%; padding: 12px 24px 16px; display: flex; flex-direction: column; align-items: center; box-sizing: border-box; }
+.scale-preview svg { flex: 1; min-height: 0; width: 100%; fill: #1c1c22; }
+.scale-preview__staff { stroke: #4d4e56; stroke-width: 1.3; }
+.scale-preview__stem { stroke: #1c1c22; stroke-width: 2.4; }
+.scale-preview__fade { animation: scale-preview-in 0.3s ease both; }
+@keyframes scale-preview-in { from { opacity: 0; } }
+.scale-preview__caption { margin: 2px 0 0; display: flex; gap: 8px; font-size: 14px; color: #71747e; }
+.scale-preview__caption i { font-style: normal; color: #b5b7bd; }
+.scale-preview__caption .is-changed { color: #46633d; font-weight: 650; animation: scale-preview-in 0.3s ease both; }
+@media (prefers-reduced-motion: reduce) { .scale-preview__fade, .scale-preview__caption .is-changed { animation: none; } }
+
+/* Long tones card: the real pitch graph's look (band, grid, colour by band, loudness shading). */
+.tone-preview { width: 100%; height: 100%; padding: 14px 24px 14px; display: flex; flex-direction: column; gap: 6px; box-sizing: border-box; }
+.tone-preview__head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; color: #6b7078; }
+.tone-preview__labels { display: flex; gap: 0; width: 100%; }
+.tone-preview__labels b { flex: 1; font-weight: 650; color: #c3c6cc; transition: color .3s; }
+.tone-preview__labels b.is-on { color: #292a33; }
+.tone-preview__live { flex: 0 0 auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tone-preview__live em { font-style: normal; font-weight: 650; }
+.tone-preview__live .is-in { color: #4f8a45; } .tone-preview__live .is-near { color: #c3881f; } .tone-preview__live .is-off { color: #c54a3d; }
+.tone-preview svg { flex: 1; min-height: 0; width: 100%; background: #fff; border-radius: 8px; }
+.tone-preview__band { fill: #edf3ea; }
+.tone-preview__grid { stroke: #eceee9; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.tone-preview__zero { stroke: #b3bcb0; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.tone-preview__divider { stroke: #c9ccd0; stroke-dasharray: 3 4; vector-effect: non-scaling-stroke; }
+.tone-preview__volume { fill: #8f9be0; opacity: .16; }
+.tone-preview__line { fill: none; stroke-width: 2.75; vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; }
+.tone-preview__line.is-in { stroke: #4f8a45; } .tone-preview__line.is-near { stroke: #c3881f; } .tone-preview__line.is-off { stroke: #c54a3d; }
+.tone-preview__cards { display: flex; gap: 6px; }
+.tone-preview__cards span { flex: 1; padding: 4px 8px; border-radius: 8px; font-size: 12px; font-weight: 600; text-align: center; opacity: 0; transform: translateY(3px); transition: opacity .3s, transform .3s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tone-preview__cards span.is-on { opacity: 1; transform: none; }
+.tone-preview__cards .grade-green { background: #edf3ea; color: #46633d; }
+.tone-preview__cards .grade-amber { background: #faeeda; color: #6f4210; }
+.tone-preview__cards .grade-red { background: #fbe3e0; color: #8a2a21; }
+
+/* Browse music card: the reader's overlays one at a time, in the reader's colours
+   (beat sticks #d65b43, counts #b65a3c, note names #316b53). Same padding and viewBox
+   as the Scale Studio card, so the two staffs sit level. */
+.music-demo { position: relative; width: 100%; height: 100%; padding: 12px 24px 16px; display: flex; flex-direction: column; align-items: center; box-sizing: border-box; }
+.music-demo svg { flex: 1; min-height: 0; width: 100%; fill: #1c1c22; color: #1c1c22; }
+.music-demo__staff { stroke: #4d4e56; stroke-width: 1.3; }
+.music-demo__bar { stroke: #4d4e56; stroke-width: 2; }
+.music-demo__note.is-played { color: #b9362e; fill: #b9362e; }
+.music-demo__stick { stroke: #d65b43; stroke-width: 3; animation: scale-preview-in .3s ease both; }
+.music-demo__count { font: 700 24px Arial, sans-serif; fill: #b65a3c; text-anchor: middle; animation: scale-preview-in .3s ease both; }
+.music-demo__name { font: 700 24px Arial, sans-serif; fill: #316b53; text-anchor: middle; animation: scale-preview-in .3s ease both; }
+.music-demo__tap { fill: #b9362e; fill-opacity: .12; stroke: #b9362e; stroke-opacity: .5; stroke-width: 2; transform-box: fill-box; transform-origin: center; animation: music-demo-tap 1s ease-out both; }
+@keyframes music-demo-tap { from { transform: scale(.4); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+.music-demo__tip { position: absolute; top: 6px; transform: translateX(-50%); z-index: 1; display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: #fff; border: 1px solid #dedfd9; border-radius: 12px; box-shadow: 0 6px 18px rgba(41, 42, 51, .12); animation: scale-preview-in .3s ease .35s both; }
+.music-demo__tip b { font-size: 14px; font-weight: 700; color: #292a33; }
+.music-demo__tip .flute-diagram { width: 150px; height: auto; }
+.music-demo__drone { position: absolute; top: 12px; right: 18px; display: inline-flex; align-items: center; gap: 7px; padding: 4px 10px; border-radius: 999px; background: #fce7fd; color: #68466b; font-size: 12px; font-weight: 650; animation: scale-preview-in .3s ease both; }
+.music-demo__drone i { width: 8px; height: 8px; border-radius: 50%; background: #d98ed3; box-shadow: 0 0 0 0 rgba(217, 142, 211, .6); animation: music-demo-pulse 1.3s ease-out infinite; }
+@keyframes music-demo-pulse { to { box-shadow: 0 0 0 9px rgba(217, 142, 211, 0); } }
+.music-demo__caption > span { display: inline-flex; gap: 8px; }
+@media (prefers-reduced-motion: reduce) { .music-demo__tap, .music-demo__drone i { animation: none; } }
+
+/* Breathing Lab card: the lab's own ring, phase and count, with one of its cues beside it. */
+.breath-demo { width: 100%; height: 100%; padding: 14px 28px 16px; display: flex; flex-direction: column; box-sizing: border-box; }
+.breath-demo__main { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; gap: 26px; }
+.breath-demo__ring { height: 100%; max-height: 150px; aspect-ratio: 1; overflow: visible; }
+.breath-demo__arc { transition: stroke-dasharray .5s ease; }
+.breath-demo__phase { font: 600 20px var(--font, sans-serif); fill: #71747e; }
+.breath-demo__count { font: 740 40px var(--font, sans-serif); fill: #292a33; font-variant-numeric: tabular-nums; }
+.breath-demo__total { font-size: 22px; font-weight: 500; fill: #85868e; }
+.breath-demo__side { width: 200px; display: flex; flex-direction: column; gap: 6px; }
+.breath-demo__side b { font-size: 15px; font-weight: 650; color: #292a33; animation: scale-preview-in .3s ease both; }
+.breath-demo__side p { margin: 0; font-size: 14px; line-height: 1.4; color: #53656a; animation: scale-preview-in .4s ease both; }
+.breath-demo__caption { align-self: center; }
+.breath-demo__caption > span { display: inline-flex; gap: 8px; }
+@media (prefers-reduced-motion: reduce) { .breath-demo__arc { transition: none; } }
+
+/* Learn cards: small demos built from the real pages (LearnPreviews.tsx). */
+.learn-demo { width: 100%; height: 100%; padding: 12px 18px; display: flex; align-items: center; justify-content: center; gap: 12px; box-sizing: border-box; }
+.learn-demo svg { fill: #1c1c22; color: #1c1c22; }
+.learn-staff { height: 100%; max-height: 160px; width: auto; flex: 0 0 auto; }
+.learn-staff__line { stroke: #4d4e56; stroke-width: 1.5; }
+.learn-staff__note { transition: transform .45s cubic-bezier(.2, .8, .2, 1); }
+
+/* Theory: the clef draws itself, then a note lands on the G line it names. 5s loop. */
+.theory-demo svg { width: 100%; height: 100%; }
+.theory-demo__clef { fill: none; stroke: #1c1c22; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 0; }
+.theory-demo__drop, .theory-demo__label { opacity: 1; }
+.theory-demo__label { font: 700 26px var(--font, sans-serif); fill: #46633d; }
+.theory-demo.is-on .theory-demo__clef { animation: theory-demo-clef 5s ease-in-out infinite; }
+.theory-demo.is-on .theory-demo__drop { animation: theory-demo-drop 5s cubic-bezier(.3, 1.4, .5, 1) infinite; }
+.theory-demo.is-on .theory-demo__label { animation: theory-demo-label 5s ease infinite; }
+.theory-demo.is-on .theory-demo__g { animation: theory-demo-g 5s ease infinite; }
+@keyframes theory-demo-clef { 0% { stroke-dashoffset: 1; } 38%, 92% { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+@keyframes theory-demo-drop { 0%, 44% { transform: translateY(-70px); opacity: 0; } 54%, 92% { transform: none; opacity: 1; } 100% { opacity: 0; } }
+@keyframes theory-demo-label { 0%, 54% { opacity: 0; } 62%, 92% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes theory-demo-g { 0%, 40% { stroke: #4d4e56; stroke-width: 1.5; } 46%, 92% { stroke: #bb352e; stroke-width: 3; } 100% { stroke: #4d4e56; stroke-width: 1.5; } }
+
+/* Body & embouchure: note, register cue, and where it sits in the range. */
+.emb-demo__side { width: 190px; display: flex; flex-direction: column; gap: 6px; }
+.emb-demo__side b { font-size: 26px; font-weight: 740; letter-spacing: -.03em; color: #292a33; }
+.emb-demo__side p { margin: 0; font-size: 13px; line-height: 1.35; color: #53656a; animation: scale-preview-in .35s ease both; }
+.emb-demo__side p em { display: block; font-style: normal; font-size: 16px; font-weight: 650; color: #4b6378; }
+.emb-demo__track { position: relative; height: 4px; margin-top: 6px; border-radius: 2px; background: #d7dde3; }
+.emb-demo__track i { position: absolute; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: #4b6378; transition: left .45s cubic-bezier(.2, .8, .2, 1); }
+
+/* Fingering and trill charts: the note beside the real diagram. */
+.finger-demo__side { flex: 1; min-width: 0; max-width: 200px; display: flex; flex-direction: column; gap: 8px; }
+.finger-demo__side b { font-size: 22px; font-weight: 740; letter-spacing: -.02em; color: #292a33; }
+.finger-demo__side b span { font-weight: 400; color: #9aa0a6; }
+.finger-demo__side .flute-diagram { width: 100%; height: auto; }
+.trill-demo__mark { fill: #1c1c22; }
+@media (prefers-reduced-motion: reduce) { .learn-staff__note, .emb-demo__track i { transition: none; } }

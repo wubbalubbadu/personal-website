@@ -1,7 +1,7 @@
 'use client';
 import {traceSegment,traceComplete} from './traceProgress';
 import {useRef,useState,type PointerEvent} from 'react';
-const GUIDE='M 382 176 C 374 187 355 177 360 162 C 368 141 403 153 406 177 C 410 207 361 216 347 191 C 324 151 409 120 399 80 C 396 68 391 60 386 56 C 372 75 381 121 383 156 L 383 225 C 384 247 368 252 360 239';
+export const CLEF_GUIDE='M 382 176 C 374 187 355 177 360 162 C 368 141 403 153 406 177 C 410 207 361 216 347 191 C 324 151 409 120 399 80 C 396 68 391 60 386 56 C 372 75 381 121 383 156 L 383 225 C 384 247 368 252 360 239';
 export default function ClefTracing({zh,onComplete,onReset,onIncomplete}:{zh:boolean;onComplete?:()=>void;onReset?:()=>void;onIncomplete?:()=>void}){
   const guide=useRef<SVGPathElement|null>(null),last=useRef<{x:number;y:number}|null>(null);
   const covered=useRef(new Set<number>()),length=useRef(0),matched=useRef(0);
@@ -29,7 +29,7 @@ export default function ClefTracing({zh,onComplete,onReset,onIncomplete}:{zh:boo
   return <div className="theory-tracing">
     <svg viewBox="0 40 760 245" preserveAspectRatio="xMidYMax meet" role="img" aria-label={zh?'沿虚线画高音谱号。':'Draw a treble clef along the dotted guide.'} onPointerDown={e=>trace(e,true)} onPointerMove={e=>trace(e)} onPointerUp={finish} onPointerCancel={()=>{last.current=null}}>
       {[0,1,2,3,4].map(i=><line key={i} x1="55" x2="705" y1={104+i*24} y2={104+i*24} stroke={i===3?'#bb352e':'#333'} strokeWidth={i===3?2:1}/>)}
-      <path ref={guide} d={GUIDE} fill="none" stroke={complete?'#171717':'#aaa'} strokeWidth={complete?4:3} strokeDasharray={complete?undefined:'1 9'} strokeLinecap="round"/>
+      <path ref={guide} d={CLEF_GUIDE} fill="none" stroke={complete?'#171717':'#aaa'} strokeWidth={complete?4:3} strokeDasharray={complete?undefined:'1 9'} strokeLinecap="round"/>
       {strokes.map((stroke,i)=><polyline key={i} points={stroke.map(p=>`${p.x},${p.y}`).join(' ')} fill="none" stroke="#171717" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>)}
       <line x1="412" x2="525" y1="176" y2="150" stroke="#bb352e"/>
       <text x="535" y="150" className="theory-pitch-label">{complete?'G · sol':zh?'第二线':'the second line'}</text>

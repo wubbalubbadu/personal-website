@@ -1,14 +1,9 @@
 'use client';
 import {lazy,Suspense,useEffect,useRef,useState} from 'react';
 import Sequence from './Sequence';
-import {breathAt,counts,patterns,type Settings} from './timing';
+import {breathAt,counts,cueBank,patterns,type Settings} from './timing';
 import './breathing-lab.css';
 const BodyView=lazy(()=>import('./BodyView'));
-const cueBank={
- Inhale:['Make space. Let air in.','Relax the back of your throat.','Imagine sniffing a flower.','Release your belly.','Feel expansion around your lower ribs.','Imagine the breath filling low, around your rib cage.','Jaw releases. Throat opens.','Listen to your breath.'],
- Hold:['Stay easy.','Keep the throat relaxed.'],
- Exhale:['Keep the air even.','Stay open as you blow.','Manage your air to last through all the beats.','Feel support through your core.','Keep your body free of tension.','Support without bracing.','Keep the air moving.']
-};
 export default function BreathingLab(){
  const [settings,setSettings]=useState<Settings>({pattern:'even',inhale:8,exhale:8,hold:0});
  const [bpm,setBpm]=useState(60),[playing,setPlaying]=useState(false),[beats,setBeats]=useState(0),[sound,setSound]=useState(true),[visual,setVisual]=useState('cycle'),[cueSeed,setCueSeed]=useState(0),[audioError,setAudioError]=useState(false);
