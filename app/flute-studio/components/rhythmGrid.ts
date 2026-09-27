@@ -1,5 +1,5 @@
 export type Meter={beats:number;beatType:number};
-export type FractionLike={Numerator:number;Denominator:number};
+export type FractionLike={Numerator:number;Denominator:number;WholeValue?:number};
 
 const gcd=(a:number,b:number)=>{a=Math.abs(a);b=Math.abs(b);while(b)[a,b]=[b,a%b];return a||1};
 const lcm=(a:number,b:number)=>Math.abs(a/gcd(a,b)*b);
@@ -13,13 +13,14 @@ const lcm=(a:number,b:number)=>Math.abs(a/gcd(a,b)*b);
  */
 export function exactUnitsPerWhole(lengths:FractionLike[],minimum=16){
   return lengths.reduce((units,length)=>{
-    const numerator=Math.abs(length.Numerator)||1,denominator=Math.abs(length.Denominator)||1;
+    const numerator=Math.abs((length.WholeValue??0)*length.Denominator+length.Numerator)||1,denominator=Math.abs(length.Denominator)||1;
     return lcm(units,denominator/gcd(numerator,denominator));
   },minimum);
 }
 
 export function durationUnits(length:FractionLike,unitsPerWhole:number){
-  return length.Numerator*unitsPerWhole/length.Denominator;
+  const numerator=(length.WholeValue??0)*length.Denominator+length.Numerator;
+  return numerator*unitsPerWhole/length.Denominator;
 }
 
 /** The audible pulse and written bar length in the score's integer units. */

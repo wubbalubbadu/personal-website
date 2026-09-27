@@ -298,7 +298,7 @@ export function scaleNotes(key:MajorKey,range:ScaleRange,typeId:ScaleTypeId="maj
   // minor differs between the two, but the flag has to travel per note
   // because one exercise contains both directions.
   const path:{degree:number;up:boolean}[]=[];
-  if(form==="scale"&&start==="lowest"){
+  if(form==="scale"&&(start==="lowest"||range==="custom")){
     // Straight up the span and back down, so the exercise opens on the
     // lowest note it will play rather than in the middle of its range.
     for(let i=low;i<=high;i++)path.push({degree:i,up:true});
@@ -329,7 +329,14 @@ export function scaleNotes(key:MajorKey,range:ScaleRange,typeId:ScaleTypeId="maj
   // render time — the practice overlays (names, solfège, syllables) index
   // straight into this array, so anything the engraver draws has to exist
   // here or every label after it shifts by one.
-  if(ending==="hold")notes.push(noteAt(spelled,0,type));
+  if(ending==="hold"){
+    // A custom range is the hard boundary for the exercise. Its held ending
+    // returns to the note the run actually started on, even when the saved
+    // "starts on tonic" preference would otherwise select an out-of-range
+    // tonic. Lowest-start exercises follow the same musical shape.
+    const heldDegree=(range==="custom"||start==="lowest")?(path[0]?.degree??low):0;
+    notes.push(noteAt(spelled,heldDegree,type));
+  }
   return notes;
 }
 

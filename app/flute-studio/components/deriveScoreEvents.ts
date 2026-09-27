@@ -239,7 +239,7 @@ export function deriveScoreEvents(osmd: OSMDType) {
         // denominators, so this is exact for tuplets as well as binary note
         // values. No running rounded onset means no accumulated drift.
         const duration = durationUnits(note.Length,unitsPerWhole);
-        if(!Number.isInteger(duration)||duration<=0)throw new Error(`Unsupported score duration ${note.Length.Numerator}/${note.Length.Denominator}`);
+        if(!Number.isInteger(duration)||duration<=0)throw new Error(`Unsupported score duration ${note.Length.toString()}`);
         pitches.push(short);
         const ornament = voiceEntry.OrnamentContainer;
         const trill = short && ornament?.GetOrnament === OrnamentEnum.Trill ? trillUpper(note as unknown as Parameters<typeof trillUpper>[0], fifths, ornament.AccidentalAbove as number | undefined) : null;

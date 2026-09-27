@@ -3,13 +3,17 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import ts from 'typescript';
 
+const transpile=source=>ts.transpile(source,{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022});
+const patternsSource=fs.readFileSync(new URL('../app/flute-studio/components/notePatterns.ts',import.meta.url),'utf8');
+const patternsUrl=`data:text/javascript;base64,${Buffer.from(transpile(patternsSource)).toString('base64')}`;
 const source=fs.readFileSync(new URL('../app/flute-studio/exercises/scales/scale-score.ts',import.meta.url),'utf8');
-const compiled=ts.transpile(source,{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022});
+const compiled=transpile(source).replace('../../components/notePatterns',patternsUrl);
 const {majorKeys,ranges,scaleNotes,scaleMusicXML,scaleBookMusicXML}=await import(`data:text/javascript;base64,${Buffer.from(compiled).toString('base64')}`);
 
 test('line layout changes breaks without changing the notes or repeating clefs',()=>{
-  const continuous=scaleBookMusicXML(majorKeys,'full');
-  const separate=scaleBookMusicXML(majorKeys,'full',true);
+  const blocks=majorKeys.map(key=>({key,type:'major',form:'scale',label:key.label}));
+  const continuous=scaleBookMusicXML(blocks,'full');
+  const separate=scaleBookMusicXML(blocks,'full',true);
   assert.equal((continuous.match(/new-system/g)||[]).length,0);
   assert.equal((separate.match(/new-system/g)||[]).length,12);
   assert.equal((separate.match(/<clef>/g)||[]).length,1);
@@ -18,7 +22,7 @@ test('line layout changes breaks without changing the notes or repeating clefs',
 });
 
 test('all 48 scales stay in range and loop by step without doubling the tonic',()=>{
-  for(const key of majorKeys)for(const range of ranges){
+  for(const key of majorKeys)for(const range of ranges.filter(range=>range.id!=='custom')){
     const notes=scaleNotes(key,range.id),pitches=notes.map(n=>n.midi);
     const bottom=range.id==='full'?59:range.id==='standard'?60:60+key.pc;
     const top=range.id==='full'?98:range.id==='standard'?96:60+key.pc+(range.id==='one'?12:24);
@@ -38,6 +42,17 @@ test('flat and sharp keys use diatonic spelling, including C-flat',()=>{
   assert.deepEqual(gb.slice(0,7).map(n=>`${n.step}:${n.alter}`),['G:-1','A:-1','B:-1','C:-1','D:-1','E:-1','F:0']);
   const b=scaleNotes(majorKeys.find(k=>k.id==='B'),'one');
   assert.deepEqual(b.slice(0,7).map(n=>`${n.step}:${n.alter}`),['B:0','C:1','D:1','E:0','F:1','G:1','A:1']);
+});
+
+test('a custom range overrides tonic start and contains the held ending',()=>{
+  const c=majorKeys.find(key=>key.id==='C');
+  for(const span of [{low:72,high:79},{low:62,high:69},{low:69,high:62}]){
+    const pitches=scaleNotes(c,'custom','major','scale','hold','tonic',span).map(note=>note.midi);
+    const low=Math.min(span.low,span.high),high=Math.max(span.low,span.high);
+    assert.equal(pitches[0],low);
+    assert.equal(pitches.at(-1),low);
+    assert.ok(pitches.every(pitch=>pitch>=low&&pitch<=high));
+  }
 });
 
 test('notation is sixteenths with balanced beams, hidden internal bars and one ending repeat',()=>{

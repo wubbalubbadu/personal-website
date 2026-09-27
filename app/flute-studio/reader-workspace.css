@@ -286,6 +286,8 @@ html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document"
 .score-spread>div:has(>svg){border-radius:0;box-shadow:none}
 .score-spread>div:has(>svg):nth-child(even){border-left:1px solid #e5e5e0}
 .score-spread[data-odd-pages="true"]::after{content:"";display:block;background:white;border-left:1px solid #e5e5e0;aspect-ratio:210/297}
+.score-spread[data-single-page="true"]{display:block;width:50%!important;margin-inline:auto!important}
+.score-spread[data-single-page="true"]::after{display:none}
 /* Fit the complete book to the reading viewport; its title is engraved on page one. */
 .restored-reader .score-scroll.spread-viewport{overflow:hidden!important}
 .spread-viewport .custom-score-heading{display:none}

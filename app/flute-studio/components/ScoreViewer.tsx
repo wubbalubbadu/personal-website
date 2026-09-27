@@ -463,8 +463,12 @@ for(let measure=1;measure<=measureStarts.length;measure++){const group=byMeasure
 // bar holding less than its meter is a pickup: it is the END of a bar, so its
 // first note does not fall on beat 1 (Amazing Grace starts on beat 3), and
 // `pickup` shifts it there.
-meter=meters?.[measure-1]??{beats:4,beatType:4},plan=measureBeatOffsets(scoreEvents.slice(start,end).map(event=>event.d),meter,unitsPerBeat,measure===1),
-fullBar=plan.barLength,content=plan.contentLength,pickup=plan.pickup,ancestor=group[0].closest<SVGGElement>(".vf-measure"),measureBox=ancestor?measureBoxes.get(ancestor):undefined,frame=staffFrame(ancestor??undefined,rootBox),groupBottom=Math.max(...group.map(n=>noteBox.get(n)!.bottom)),labelLane=frame?frame.bottom+18:(measureBox?.bottom??groupBottom)-rootBox.top+18,countLane=labelLane+32;
+meter=meters?.[measure-1]??{beats:4,beatType:4},
+// Scale and exercise books marked unmetered never build a beat plan. Their
+// note durations still drive playback, but no meter, pickup, count or guide
+// calculation runs for the page overlay.
+plan=unmetered?null:measureBeatOffsets(scoreEvents.slice(start,end).map(event=>event.d),meter,unitsPerBeat,measure===1),
+fullBar=plan?.barLength??0,content=plan?.contentLength??0,pickup=plan?.pickup??0,ancestor=group[0].closest<SVGGElement>(".vf-measure"),measureBox=ancestor?measureBoxes.get(ancestor):undefined,frame=staffFrame(ancestor??undefined,rootBox),groupBottom=Math.max(...group.map(n=>noteBox.get(n)!.bottom)),labelLane=frame?frame.bottom+18:(measureBox?.bottom??groupBottom)-rootBox.top+18,countLane=labelLane+32;
 // Two notes rendered close together (a fast run, or a note right after a
 // dotted/off-grid one that got no syllable of its own) can sit closer than
 // a label's own text is wide — labels would print on top of each other.
@@ -546,7 +550,7 @@ group.forEach(note=>{const index=Number(note.dataset.event),event=scoreEvents[in
 // Grace notes are excluded here too (same reasoning) — a duplicate onset
 // with a real note right after it, rather than a proper beat position of
 // its own, was throwing off the left/right anchor search below.
-if(unmetered)continue;
+if(unmetered||!plan)continue;
 if(!visible.sticks)continue;
 const onsets=new Map<number,number>();let measureOnset=0;for(let eventIndex=start;eventIndex<end;eventIndex++){onsets.set(eventIndex,measureOnset);measureOnset+=scoreEvents[eventIndex]?.d??0}
 const anchors:{t:number;x:number}=[];group.forEach(node=>{const eventIndex=Number(node.dataset.event),d=scoreEvents[eventIndex]?.d??0;if(d>0){const box=noteBox.get(node)!;anchors.push({t:onsets.get(eventIndex)??0,x:box.left-rootBox.left+box.width/2})}});const right=frame?.right??(measureBox?measureBox.right-rootBox.left:anchors.at(-1)!.x+34),
@@ -771,6 +775,9 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   // the tap trigger and the effect further down for the fullscreen attempt.
   const [focusMode,setFocusMode]=useState(false);
   const [noteDisplay,setNoteDisplay]=useState<NoteDisplay>("off"); const [accidentals,setAccidentals]=useState(false); const [tonguing,setTonguing]=useState(true); const [fingering,setFingering]=useState(false); const [rhythmMode,setRhythmMode]=useState<RhythmMode>("off");  const [magnify,setMagnify]=useState(1); const [fingerTip,setFingerTip]=useState<{pitch:string;name:string;octave:string;solfege:string;beat:string;x:number;y:number}|null>(null); const [theoryTip,setTheoryTip]=useState<{title:string;text:string;x:number;y:number}|null>(null); const [storyCard,setStoryCard]=useState<{x:number;y:number}|null>(null); const [favorite,setFavorite]=useState(false);
+  // Unmetered exercise books have no beat grid. Keep this effective value
+  // off even if an older saved exercise preference contains a rhythm mode.
+  const activeRhythmMode:RhythmMode=unmetered?"off":rhythmMode;
   const [theoryEnabled,setTheoryEnabled]=useState(false),[sizePreference,setSizePreference]=useState(.8);
   const sizePreferenceRef=useRef(sizePreference);
   // How much vertical gap OSMD leaves between systems — user-adjustable
@@ -922,11 +929,13 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     if(root.classList.contains("score-spread")){
       const pages=[...root.querySelectorAll<SVGSVGElement>(":scope > div > svg")];
       root.dataset.oddPages=String(pages.length%2===1);
+      root.dataset.singlePage=String(pages.length===1);
       setSpreadPageCount(pages.length);
       const max=Math.max(0,scroller.scrollHeight-scroller.clientHeight);
       const offsets=pages.filter((_,i)=>i%2===0).map((p,i)=>i===0?0:Math.min(max,p.getBoundingClientRect().top-scrollerBox.top+scroller.scrollTop-12));
       if(offsets.length){pageOffsetsRef.current=offsets;setPageCount(offsets.length);if(pageTargetRef.current===null)setPageIndex(pageAt(offsets,scroller.scrollTop));return}
     }
+    delete root.dataset.singlePage;
     setSpreadPageCount(0);
     const measures=[...root.querySelectorAll<SVGGElement>(".vf-measure")];
     if(!measures.length){pageOffsetsRef.current=[0];setPageCount(1);return}
@@ -1272,14 +1281,14 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
         setLoading(false);
       },0);
       } catch(e){setError(e instanceof Error?e.message:t.scoreViewer.engravingFailed);setLoading(false);} } load(); return()=>{mounted=false};},[asset]);
-  useEffect(()=>{const root=scoreRef.current;if(!root)return;root.dataset.noteDisplay=noteDisplay;root.classList.toggle("show-accidentals",accidentals);root.dataset.rhythm=rhythmMode;root.dataset.tonguing=tonguing?"on":"off";
-    const next={names:noteDisplay==="names",solfege:noteDisplay==="solfege",accidentals,tonguing,counts:rhythmMode==="counts",sticks:rhythmMode==="bars"};
+  useEffect(()=>{const root=scoreRef.current;if(!root)return;root.dataset.noteDisplay=noteDisplay;root.classList.toggle("show-accidentals",accidentals);root.dataset.rhythm=activeRhythmMode;root.dataset.tonguing=tonguing?"on":"off";
+    const next={names:noteDisplay==="names",solfege:noteDisplay==="solfege",accidentals,tonguing,counts:activeRhythmMode==="counts",sticks:activeRhythmMode==="bars"};
     const previous=overlayVisibilityRef.current;
     overlayVisibilityRef.current=next;
     // Turning a row on now has to build it, since it is no longer built
     // upfront and hidden with CSS.
     const changed=(Object.keys(next) as (keyof OverlayVisibility)[]).some(key=>next[key]!==previous[key]);
-    if(changed&&!loading&&osmdRef.current)syncNotesAndOverlays();},[noteDisplay,accidentals,rhythmMode,tonguing,loading]);
+    if(changed&&!loading&&osmdRef.current)syncNotesAndOverlays();},[noteDisplay,accidentals,activeRhythmMode,tonguing,loading]);
   // The spinner announces a real wait, not the ~150ms a re-engrave takes
   // after a settings change. Flashing it on every click was half of what
   // made changing a scale feel glitchy: spinner in, spinner out, before
@@ -1355,7 +1364,33 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     // fromIndex onward pick up the new tempo.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },[bpm]);
-  function fluteTone(pitch:string,start:number,duration:number,peakGain=.075){const match=pitch.match(/^([A-G][♯♭]?)(\d)$/);if(!match)return;const c=audio(),fund=c.createOscillator(),gain=c.createGain(),vibrato=c.createOscillator(),vibGain=c.createGain(),frequency=pitchFrequency(match[1],+match[2]);fund.type="sine";fund.frequency.value=frequency;vibrato.frequency.value=5.2;vibGain.gain.value=frequency*.004;vibrato.connect(vibGain);vibGain.connect(fund.frequency);gain.gain.setValueAtTime(.0001,start);gain.gain.exponentialRampToValueAtTime(peakGain,start+.035);gain.gain.setValueAtTime(peakGain*.933,start+Math.max(.05,duration-.07));gain.gain.exponentialRampToValueAtTime(.0001,start+duration);fund.connect(gain).connect(c.destination);fund.start(start);vibrato.start(start);fund.stop(start+duration);vibrato.stop(start+duration);playbackNodes.current.push(fund,vibrato)}
+  /**
+   * A light electric-piano voice. The old sine wave with continuous vibrato
+   * sounded synthetic, while the first piano replacement stacked too many
+   * harmonics and became heavy in fast passages. This uses a clean sine
+   * fundamental, one quiet overtone and a short release. It remains fully
+   * scheduled on the AudioContext clock, so changing the timbre does not
+   * change rhythm, ties, articulation or playback highlighting.
+   */
+  function pianoTone(pitch:string,start:number,duration:number,peakGain=.075){
+    const match=pitch.match(/^([A-G][♯♭]?)(\d)$/);if(!match)return;
+    const c=audio(),frequency=pitchFrequency(match[1],+match[2]),master=c.createGain(),level=peakGain*.68;
+    const attackEnd=start+.004,releaseStart=start+Math.max(.022,duration-.045),stopAt=Math.max(attackEnd+.055,start+duration+.025);
+    master.gain.setValueAtTime(.0001,start);
+    master.gain.exponentialRampToValueAtTime(Math.max(.0002,level),attackEnd);
+    master.gain.exponentialRampToValueAtTime(Math.max(.0002,level*.32),Math.min(releaseStart,attackEnd+.11));
+    master.gain.setValueAtTime(Math.max(.0002,level*.32),releaseStart);
+    master.gain.exponentialRampToValueAtTime(.0001,stopAt);
+    master.connect(c.destination);
+    const partials:[[number,number],[number,number]]=[[1,1],[2,.12]];
+    partials.forEach(([multiple,partialLevel],index)=>{
+      const oscillator=c.createOscillator(),color=c.createGain();
+      oscillator.type="sine";oscillator.frequency.setValueAtTime(frequency*multiple,start);
+      color.gain.setValueAtTime(partialLevel,start);
+      color.gain.exponentialRampToValueAtTime(Math.max(.001,partialLevel*(index ? .08 : .82)),Math.min(stopAt-.01,start+(index ? .09 : .45)));
+      oscillator.connect(color).connect(master);oscillator.start(start);oscillator.stop(stopAt);playbackNodes.current.push(oscillator);
+    });
+  }
   function stopPlayback(){playbackTimers.current.forEach(window.clearTimeout);playbackTimers.current=[];playbackNodes.current.forEach(o=>{try{o.stop()}catch{/* Already-ended notes need no further cleanup. */}});playbackNodes.current=[];playbackPosition.current=null;alignMetronome(null);scoreRef.current?.querySelectorAll(".playback-active").forEach(n=>n.classList.remove("playback-active"));setPlaying(false);setPlayingFrom(null);setPlayingEvent(null)}
   // Articulation only ever changes how long a note's own envelope rings,
   // never the start-to-start spacing between notes (that stays `event.d*unit`
@@ -1386,6 +1421,9 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     const soundUnits:number[]=new Array(slice.length);for(let i=slice.length-1;i>=0;i--)soundUnits[i]=slice[i].d+(i+1<slice.length&&slice[i+1].tied?soundUnits[i+1]:0);
     slice.forEach((event,offset)=>{
       const index=fromIndex+offset,start=cursor;
+      // Grace notes borrow time from the following note. Keep their index for
+      // DOM alignment, but do not schedule them as independent playback beats.
+      if(event.d<=0)return;
       playbackTimers.current.push(window.setTimeout(()=>{nodes.forEach(n=>n.classList.remove("playback-active"));nodes[index]?.classList.add("playback-active");setPlayingEvent(index)},start+80));
       // The first note always sounds: starting on the second half of a tie
       // (bar 102 of the Pavane) has no earlier note ringing to continue.
@@ -1395,12 +1433,12 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
         // level, 1 = mf); an accent (sf, fz…) pushes just this one note.
         const gain=Math.min(.13,peakGain*(event.level??1)*(event.accent?1.3:1)),trill=event.trill;
         playbackTimers.current.push(window.setTimeout(()=>{
-          if(!trill){fluteTone(pitch,absoluteStart,soundDuration,gain);return}
+          if(!trill){pianoTone(pitch,absoluteStart,soundDuration,gain);return}
           // A trill alternates main and upper note, starting on the main note
           // and ending on it, at 32nd notes of the current tempo (kept
           // between about 11 and 18 notes a second so it stays a trill).
           const step=Math.min(.09,Math.max(.055,60/bpm/8)),count=Math.max(3,Math.floor(soundDuration/step)|1);
-          for(let i=0;i<count;i++)fluteTone(i%2?trill:pitch,absoluteStart+i*step,i===count-1?Math.max(step*1.05,soundDuration-i*step):step*1.08,gain*(i%2?.92:1));
+          for(let i=0;i<count;i++)pianoTone(i%2?trill:pitch,absoluteStart+i*step,i===count-1?Math.max(step*1.05,soundDuration-i*step):step*1.08,gain*(i%2?.92:1));
         },start));
       }
       cursor+=event.d*unit;
@@ -1441,7 +1479,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     setPlaying(true);setPlayingFrom(index);scheduleNotes(index);
   }
   function showNoteInfo(node:SVGGElement,x:number,y:number){
-    if(noteDisplay==="off"&&!fingering&&rhythmMode==="off"){setFingerTip(null);return}
+    if(noteDisplay==="off"&&!fingering&&activeRhythmMode==="off"){setFingerTip(null);return}
     setFingerTip({pitch:node.dataset.pitch!,name:node.dataset.noteName??node.dataset.pitch!.replace(/\d/,""),octave:node.dataset.noteOctave??node.dataset.pitch!.match(/\d/)?.[0]??"",solfege:node.dataset.solfege??"",beat:node.dataset.beat??"",x,y});
   }
   function scoreMove(e:React.MouseEvent<HTMLDivElement>){
@@ -1696,10 +1734,10 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
 </div>
 </div>
       <div className="reader-rows">{practiceRow}<div className="markup-row" ref={setAnnotationToolbar}/></div>
-      <div className="score-scroll" ref={scoreScrollRef}><div className="score-paper engraved" data-loading={loading}><div className="custom-score-heading"><h1>{title}</h1>{config.story?<button type="button" className="score-composer" aria-expanded={!!storyCard} onClick={e=>{e.stopPropagation();setTheoryTip(null);setStoryCard(storyCard?null:{x:e.clientX,y:e.clientY})}}>{composer}</button>:<div className="score-composer">{composer}</div>}</div>{showSpinner&&<div className="score-loading"><i className="score-loading__spinner" aria-hidden="true"/><span>{t.scoreViewer.engraving}</span></div>}{error&&<div className="score-error">{error}</div>}<div ref={scoreRef} className="osmd-score" data-theory-enabled={theoryEnabled} data-note-tap={droneArmed||fingering||noteDisplay!=="off"||rhythmMode!=="off"||!!onPracticeNote?"on":undefined} onMouseMove={scoreMove} onMouseLeave={()=>{setFingerTip(null);setTheoryTip(null)}} onClick={scoreClick}/>{scoreMarks&&marksLayer&&createPortal(scoreMarks({root:scoreRef.current,version:layoutVersion,magnify,controls:readerControls}),marksLayer)}<AnnotationLayer key={id} id={id} active={annotating} layoutReady={!loading} layoutVersion={layoutVersion} toolbar={annotationToolbar} zh={zh} onClose={()=>setAnnotating(false)} zoom={magnify} onZoom={zoomAnnotations}/>
+      <div className="score-scroll" ref={scoreScrollRef}><div className="score-paper engraved" data-loading={loading}><div className="custom-score-heading"><h1>{title}</h1>{config.story?<button type="button" className="score-composer" aria-expanded={!!storyCard} onClick={e=>{e.stopPropagation();setTheoryTip(null);setStoryCard(storyCard?null:{x:e.clientX,y:e.clientY})}}>{composer}</button>:<div className="score-composer">{composer}</div>}</div>{showSpinner&&<div className="score-loading"><i className="score-loading__spinner" aria-hidden="true"/><span>{t.scoreViewer.engraving}</span></div>}{error&&<div className="score-error">{error}</div>}<div ref={scoreRef} className="osmd-score" data-theory-enabled={theoryEnabled} data-note-tap={droneArmed||fingering||noteDisplay!=="off"||activeRhythmMode!=="off"||!!onPracticeNote?"on":undefined} onMouseMove={scoreMove} onMouseLeave={()=>{setFingerTip(null);setTheoryTip(null)}} onClick={scoreClick}/>{scoreMarks&&marksLayer&&createPortal(scoreMarks({root:scoreRef.current,version:layoutVersion,magnify,controls:readerControls}),marksLayer)}<AnnotationLayer key={id} id={id} active={annotating} layoutReady={!loading} layoutVersion={layoutVersion} toolbar={annotationToolbar} zh={zh} onClose={()=>setAnnotating(false)} zoom={magnify} onZoom={zoomAnnotations}/>
       </div>{aside&&<div className="score-aside">{aside}</div>}</div>{stage&&<div className="reader-stage">{typeof stage==="function"?stage({fingering}):stage}</div>}{dock&&<div className="reader-dock">{dock}</div>}
 
-    </section>{theoryTip&&<div className="theory-tip" style={clampTip(theoryTip.x,theoryTip.y,280,150,"below")}><strong>{theoryTip.title}</strong><p>{theoryTip.text}</p></div>}{storyCard&&config.story&&<StoryCard composer={composer} title={title} story={config.story} style={clampTip(storyCard.x,storyCard.y,340,260,"below")} onClose={()=>setStoryCard(null)}/>}{fingerTip&&<div className={fingering?"flute-tip finger-chart":"flute-tip note-info-tip"} style={clampTip(fingerTip.x,fingerTip.y,340,255,"above")}>{(noteDisplay!=="off"||fingering)&&<strong>{noteDisplay==="solfege"?fingerTip.solfege:fingerTip.name}<sup>{fingerTip.octave}</sup></strong>}{rhythmMode!=="off"&&!unmetered&&<p className="note-info-beat">{zh?"拍位":"Beat"} {fingerTip.beat}</p>}{fingering&&<><div className="finger-diagram">{(()=>{
+    </section>{theoryTip&&<div className="theory-tip" style={clampTip(theoryTip.x,theoryTip.y,280,150,"below")}><strong>{theoryTip.title}</strong><p>{theoryTip.text}</p></div>}{storyCard&&config.story&&<StoryCard composer={composer} title={title} story={config.story} style={clampTip(storyCard.x,storyCard.y,340,260,"below")} onClose={()=>setStoryCard(null)}/>}{fingerTip&&<div className={fingering?"flute-tip finger-chart":"flute-tip note-info-tip"} style={clampTip(fingerTip.x,fingerTip.y,340,255,"above")}>{(noteDisplay!=="off"||fingering)&&<strong>{noteDisplay==="solfege"?fingerTip.solfege:fingerTip.name}<sup>{fingerTip.octave}</sup></strong>}{activeRhythmMode!=="off"&&<p className="note-info-beat">{zh?"拍位":"Beat"} {fingerTip.beat}</p>}{fingering&&<><div className="finger-diagram">{(()=>{
         const entry=fingeringsForMidi(midiForPitch(fingerTip.pitch));
         return entry?<FluteDiagramMini pressed={entry.fingerings[0].keys}/>:<em className="finger-diagram__none">{t.scoreViewer.noFingering}</em>;
       })()}</div>{(()=>{

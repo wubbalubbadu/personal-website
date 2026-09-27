@@ -20,13 +20,15 @@ Updated September 26, 2026 from the pasted notes and current local source, inclu
 
 - [ ] **iPad regression pass:** write with a resting palm, tap notes with the drone off/on, edit and move annotations, and use settings controls with touch. Record a specific reproduction only if a problem remains.
 - [ ] **Markup after layout changes (implemented; verify only):** change notation size, spacing and orientation; verify new annotations stay attached. Check legacy bitmap ink separately and check whether annotations appear in PDF exports.
-- [ ] **Scale ending:** when a scale starts at the lowest note, check that its held ending is the intended lowest/final note. Current hold logic still appends the tonic. Choose wording that matches the resulting behavior.
+- [ ] **Scale custom range and ending (implemented; verify only):** a custom range now overrides “starts on tonic,” and the held ending returns to the actual starting note without leaving the range. Verify several ranges above and below the tonic in Scale Studio.
 - [ ] **Long-tone repeats with a real flute:** repeat a group, breathe and restart, then move to another group. Check same-pitch boundaries, quiet endings, noise and accidental pitch jumps. Do not use “100 cents off” alone as a jump rule.
 - [ ] **Practice/session history:** test the existing experience before changing it. The earlier source audit found a history reader and session schema, but could not establish a working recording path while the timer was being removed. This is an observation to verify, not authorization to restore the timer or redesign session storage.
 - [ ] **Remember tempos consistently:** scale tempos already persist; the shared audio provider remembers user-picked score tempos only in memory. Verify reload behavior and distinguish remembered tempo from a user-selected default tempo.
 - [ ] **Saved sets:** reproduce the stale-name complaint when switching between a named set, preset and custom configuration. Named-set switching already updates the field. Also check custom range round-tripping and whether reader view preferences should belong to a set.
 - [ ] **Spacing controls:** retest note spacing with “start on a new line” enabled before treating it as an active bug.
 - [ ] **Mixed-meter metronome:** the audio engine already accepts a beat grid. Verify that score playback supplies meter changes correctly before adding another metronome implementation.
+- [ ] **Reader title and composer consistency:** decide whether the score heading should scale with notation size, then keep the same title sizing and centered composer placement in Portrait, Fit window and Two pages.
+- [ ] **Saved exercises model:** add a Saved tab to Exercises and define one model that can contain named scale sets and future saveable exercises such as long tones. Avoid a late-loading layout jump, show when the current configuration is saved, clear the active saved-set name on Restore Defaults, and provide deletion.
 
 
 ## Confirmed additions
