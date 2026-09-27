@@ -24,6 +24,12 @@
 @media(prefers-reduced-motion:reduce){.cookie-pomodoro{animation:none}}
 .cookie-pet-wrap.is-lesson-companion{display:block}.is-lesson-companion .cookie-pet-bubble{max-width:min(260px,60vw);font-size:14px;font-weight:400;line-height:1.45}.cookie-pet-wrap:has(.cookie-pet:active) .cookie-pet{animation:none}
 .cookie-pet-wrap.is-docked{position:relative;inset:auto!important;display:flex;align-items:center;gap:16px;width:min(100%,620px);height:auto;z-index:2;touch-action:auto}.is-docked .cookie-pet{flex:0 0 60px;order:0;touch-action:none}.is-docked .cookie-pet-bubble{position:relative;inset:auto!important;order:1;max-width:none;width:auto;box-shadow:none;font-size:16px;line-height:1.45;font-weight:400;padding:12px 16px;text-wrap:pretty}.is-docked .cookie-pet-bubble:after{display:none}
+.is-docked .cookie-pet{cursor:pointer;touch-action:manipulation}.is-docked .cookie-pet:active{cursor:pointer;transform:scale(.95)}
+.cookie-pet.expression-1 .eye{height:2px;border-radius:3px;top:30px}.cookie-pet.expression-1 .smile{width:14px;left:23px;border-bottom-width:3px}
+.cookie-pet.expression-2 .eye.left{height:2px;border-radius:3px;transform:rotate(12deg)}.cookie-pet.expression-2 .smile{border-bottom:0;border-top:2px solid #292a33;border-radius:9px 9px 0 0;top:39px}
+.lesson-talk:has(.measure-answers) .cookie-pet .eye{width:5px;height:7px;top:27px}.lesson-talk:has(.measure-answers) .cookie-pet .smile{width:7px;left:27px}
+.lesson-talk:has(.lesson-bubble.is-correct) .cookie-pet .eye{height:2px;top:30px;border-radius:4px}.lesson-talk:has(.lesson-bubble.is-correct) .cookie-pet .smile{width:15px;left:22px;border-bottom-width:3px}
+.lesson-talk:has(.lesson-bubble.is-wrong) .cookie-pet .eye.left{width:8px;height:2px;left:16px;top:27px;border-radius:3px;transform:rotate(18deg)}.lesson-talk:has(.lesson-bubble.is-wrong) .cookie-pet .eye.right{width:8px;height:2px;right:15px;top:27px;border-radius:3px;transform:rotate(-18deg)}.lesson-talk:has(.lesson-bubble.is-wrong) .cookie-pet .smile{border-bottom:0;border-top:2px solid #292a33;border-radius:9px 9px 0 0;top:40px}
 
 /* The lesson conversation belongs to the staff scene, with room for a full prompt. */
 .is-docked .cookie-pet-bubble{flex:1;min-height:76px;display:flex;align-items:center;background:#fff6e7;color:#453526;border:1px solid #e8cfaa;border-radius:20px;padding:18px 24px;font-size:clamp(18px,2vw,22px);line-height:1.4;transition:background .25s,border-color .25s,color .25s}

@@ -1,0 +1,81 @@
+/* Lesson 3. Notation itself comes from EngravedRow (engraved-row.css); this file is the page around it. */
+.measures-lesson{--scene-h:clamp(230px,34vh,340px)}
+.measures-scene{width:100%;display:flex;flex-direction:column;align-items:center;gap:10px}
+.measures-scene .engraved-row{max-height:var(--scene-h)}
+
+/* Time-signature digits blink red when they're being explained or changed. */
+@keyframes sig-blink{0%,100%{fill:#1b1b1f}20%,60%{fill:#b9362e}40%,80%{fill:#e3a19b}}
+.is-flash-top .time-sig__top,.is-flash-bottom .time-sig__bottom{animation:sig-blink .9s ease both}
+.time-sig{animation:sig-in .35s ease both}
+@keyframes sig-in{from{opacity:0}}
+
+/* Counts under the notes, in the score reader's colours; the sounding one lights red. */
+.count{font:700 22px Arial,sans-serif;fill:#b65a3c;text-anchor:middle;transition:fill .12s}
+.count.is-held{fill:#b5b1aa;font-weight:500}
+.count.is-lit{fill:#b9362e}
+/* Two eighths that share one beat: one count under a small bracket. */
+.count-bracket{fill:none;stroke:#cfa593;stroke-width:1.5}
+
+/* Page 1: the running count while bar lines drop in, and the legend for 4/4. */
+.beat-counter{display:flex;gap:18px;font:700 22px Arial,sans-serif;color:#cfc8bd}
+.beat-counter span{transition:color .1s}
+.beat-counter .is-lit{color:#b9362e}
+.measure-hit{fill:#b9362e;fill-opacity:0;cursor:pointer;transition:fill-opacity .15s}
+.measure-hit:hover{fill-opacity:.04}
+.measure-hit.is-playing{fill-opacity:.07}
+.measure-hit:focus{outline:none}
+.measure-hit:focus-visible{fill-opacity:.07}
+
+/* Page 5: the time signature can be tapped to show its symbol (C, cut time); Cookie says so. */
+.sig-hit{fill:#b9362e;fill-opacity:0;cursor:pointer;transition:fill-opacity .15s}
+.sig-hit:hover,.sig-hit:focus-visible{fill-opacity:.06}
+.sig-hit:focus{outline:none}
+
+/* Controls: at most one row, directly under the music. */
+.measures-tools{min-height:56px;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:12px}
+.measures-choices{display:flex;gap:10px}
+.lesson-shell .measures-choices button,.lesson-shell .measures-primary,.lesson-shell .measures-secondary{min-height:44px;min-width:64px;padding:8px 16px;border:1px solid #e5dccb;border-radius:12px;background:#fff;color:#292a33;font:600 16px var(--font,sans-serif);cursor:pointer}
+.lesson-shell .measures-choices button.is-picked{border-color:#678956;background:#f1f6ee;color:#40553d}
+.lesson-shell .measures-choices button.is-correct{border-color:#8eaf86;background:#dfeedd}
+.lesson-shell .measures-choices button.is-wrong{border-color:#d59575;background:#ffe3d8}
+.lesson-shell .measures-primary{background:#f3f0e9;border-color:transparent}
+.measures-pending{margin:40px 0!important;color:#9a9ca3!important}
+
+@media(prefers-reduced-motion:reduce){.is-flash-top .time-sig__top,.is-flash-bottom .time-sig__bottom,.time-sig{animation:none}.count,.measure-hit{transition:none}.beat-stick{animation:none}}
+/* Answers inside Cookie's bubble, next to the question. */
+.lesson-actions .measures-choices{gap:8px}
+.lesson-shell .lesson-actions .measures-choices button{min-width:52px;min-height:44px;padding:6px 12px}
+
+/* Page 2 and 8: the note a question is about. */
+.measure-circle{fill:none;stroke:#b9362e;stroke-width:2.5}
+/* Page 3: beat lines above the staff (the library's style), drawn in like a pencil stroke. */
+.beat-stick{stroke:#d65b43;stroke-width:3;stroke-linecap:round;stroke-dasharray:44;animation:stick-draw .3s ease-out both}
+@keyframes stick-draw{from{stroke-dashoffset:44}}
+.beat-stick.is-miss{opacity:.35}
+.stick-key{fill:transparent;pointer-events:none}
+.stick-key:focus{outline:none}
+.stick-key:focus-visible{fill:#b9362e;fill-opacity:.12}
+/* Pages 6 and 8: drawing bar lines, and each measure's beat total. */
+.barline-drawing__pad{fill:transparent;cursor:crosshair;touch-action:none}
+.barline-drawing__pencil{fill:none;stroke:#6f7178;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;opacity:.7}
+.barline-drawing__gap{fill:transparent;pointer-events:none}
+.barline-drawing__gap:focus{outline:none}
+.barline-drawing__gap:focus-visible{fill:#b9362e;fill-opacity:.12}
+.measure-total{font:600 18px var(--font,sans-serif);text-anchor:middle}
+.measure-total.is-full{fill:#46633d}
+.measure-total.is-off{fill:#b36a3d}
+/* Page 7 taps on CookieButton (../cookie-button.css). */
+.measures-score{margin:48px 0!important;font:700 28px var(--font,sans-serif);color:#292a33!important}
+/* Answers that are phrases, not numbers: one per line in Cookie's bubble. */
+.lesson-actions .measures-choices.is-stacked{flex-direction:column;align-items:stretch}
+.lesson-shell .lesson-actions .measures-choices.is-stacked button{text-align:left;font-weight:500}
+/* Page 3 hint: where the next beat goes, dashed, until you draw it. */
+.beat-hint{stroke:#d65b43;stroke-width:2;stroke-dasharray:5 5;opacity:.6}
+/* With phrase answers the bubble wraps: message on top, answers underneath, Next on the right. */
+.lesson-bubble:has(.measures-choices.is-stacked){flex-wrap:wrap}
+.lesson-shell .lesson-bubble:has(.measures-choices.is-stacked)>p{flex-basis:100%}
+.lesson-bubble:has(.measures-choices.is-stacked) .lesson-actions{flex:1;justify-content:space-between;align-items:flex-end}
+/* Page 7: a mark where each tap landed; judged once every note has one. */
+.tap-mark{fill:#9a9ca3;animation:sig-in .12s ease both}
+.tap-mark.is-on{fill:#678956}
+.tap-mark.is-off{fill:#d08a5c}

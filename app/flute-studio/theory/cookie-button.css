@@ -1,0 +1,17 @@
+/* The lessons' press-me cookie: the Cookie pet itself (colours, chips, face) at button size.
+   Tripled class so lesson-wide button styles (.rhythm-lesson .lesson-scene button, .lesson-tools button) can't flatten it. */
+.cookie-button.cookie-button.cookie-button{position:relative;width:76px;height:76px;min-width:0;min-height:0;padding:0;border-radius:48% 52% 46% 54%;border:3px solid #ba8135;background:#d9a24d;box-shadow:0 6px 16px #292a3322,inset -6px -7px 0 #c78e3c;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;transition:transform .07s ease,box-shadow .07s ease}
+.cookie-button.cookie-button.cookie-button:hover:not(:disabled){background:#d9a24d;box-shadow:0 8px 20px #292a332e,inset -6px -7px 0 #c78e3c}
+.cookie-button.cookie-button.cookie-button:active:not(:disabled),.cookie-button.cookie-button.is-pressed{transform:scale(.9);box-shadow:0 2px 6px #292a3322,inset -3px -4px 0 #c78e3c}
+.cookie-button.cookie-button.cookie-button:disabled{opacity:.45;cursor:default}
+.cookie-button.cookie-button.cookie-button:focus-visible{outline:3px solid #f49fff;outline-offset:3px}
+.cookie-button span{position:absolute;pointer-events:none}
+.cookie-button__chip{width:9px;height:9px;border-radius:50%;background:#6c4429}
+.cookie-button .c1{left:18px;top:14px}.cookie-button .c2{right:14px;top:21px}.cookie-button .c3{left:11px;bottom:18px}.cookie-button .c4{right:15px;bottom:11px}.cookie-button .c5{left:34px;top:8px}
+.cookie-button__eye{top:35px;width:5px;height:6px;border-radius:50%;background:#292a33}
+.cookie-button .left{left:25px}.cookie-button .right{right:24px}
+.cookie-button__smile{left:31px;top:45px;width:13px;height:6px;border-bottom:2px solid #292a33;border-radius:0 0 10px 10px;transition:height .07s}
+/* Pressed: eyes squeeze shut, mouth opens. */
+.cookie-button.is-pressed .cookie-button__eye,.cookie-button:active:not(:disabled) .cookie-button__eye{height:2px;top:37px}
+.cookie-button.is-pressed .cookie-button__smile,.cookie-button:active:not(:disabled) .cookie-button__smile{height:9px;background:#6c4429;border-color:#6c4429}
+@media(prefers-reduced-motion:reduce){.cookie-button.cookie-button.cookie-button{transition:none}}

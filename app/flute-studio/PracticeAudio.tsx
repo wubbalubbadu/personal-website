@@ -2,10 +2,17 @@
 import {createContext,useContext,useEffect,useRef,useState,type ReactNode} from "react";
 
 type Voice={oscillator:OscillatorNode;gain:GainNode};
+/**
+ * Score playback's beat grid, in AudioContext time. While one is set the
+ * metronome clicks on it (so the clicks land on the notes' beats, pickup and
+ * all) instead of free-running from whenever it was switched on.
+ * `beatInBar` is which beat of the bar `time` falls on (0 = downbeat).
+ */
+export type MetronomeGrid={time:number;beatSeconds:number;beatInBar:number;beatsPerBar:number};
 const semitones:Record<string,number>={C:0,"C♯":1,"D♭":1,D:2,"D♯":3,"E♭":3,E:4,F:5,"F♯":6,"G♭":6,G:7,"G♯":8,"A♭":8,A:9,"A♯":10,"B♭":10,B:11};
 export function pitchFrequency(note:string,octave:number){return 440*2**(((octave+1)*12+semitones[note]-69)/12)}
 function useAudioEngine(){
-  const [bpm,setBpmState]=useState(76),[metro,setMetro]=useState(false),[accent,setAccent]=useState(true),[beats,setBeats]=useState(4),[drones,setDrones]=useState<string[]>([]);
+  const [bpm,setBpmState]=useState(76),[metro,setMetro]=useState(false),[accent,setAccent]=useState(true),[beats,setBeats]=useState(4),[drones,setDrones]=useState<string[]>([]),[grid,setGrid]=useState<MetronomeGrid|null>(null);
   const context=useRef<AudioContext|null>(null),voices=useRef(new Map<string,Voice>()),tempoByScore=useRef(new Map<string,number>()),score=useRef<string|null>(null);
   const getAudio=()=>{const audio=context.current??(context.current=new AudioContext());void audio.resume();return audio};
   function setBpm(value:number){if(!Number.isFinite(value))return;const next=Math.max(40,Math.min(220,Math.round(value)));if(score.current)tempoByScore.current.set(score.current,next);setBpmState(next)}
@@ -33,7 +40,7 @@ function useAudioEngine(){
   useEffect(()=>{
     if(!metro)return;
     const audio=getAudio();
-    const secondsPerBeat=60/bpm;
+    const secondsPerBeat=grid?grid.beatSeconds:60/bpm,barLength=grid?grid.beatsPerBar:beats;
     const lookahead=1.6;
     let beat=0;
     let nextTime=0;
@@ -45,7 +52,7 @@ function useAudioEngine(){
     const booked=new Set<OscillatorNode>();
     const bookBeat=(time:number)=>{
       const oscillator=audio.createOscillator(),gain=audio.createGain();
-      const strong=accent&&beat%beats===0;
+      const strong=accent&&beat%barLength===0;
       oscillator.frequency.value=strong?1500:1100;
       // Loud enough to hear over a flute. A click is 50ms of sound, so it
       // needs a peak well above what a sustained tone would use.
@@ -68,10 +75,12 @@ function useAudioEngine(){
     // re-ran this effect on every press, and each run started a beat
     // immediately — so a handful of taps produced a burst of clicks
     // jammed together instead of a tempo change.
+    // Following playback: no settle, join the grid at its next beat.
     const start=window.setTimeout(()=>{
-      nextTime=audio.currentTime+0.06;
+      if(grid){const k=Math.max(0,Math.ceil((audio.currentTime+.02-grid.time)/grid.beatSeconds));nextTime=grid.time+k*grid.beatSeconds;beat=grid.beatInBar+k}
+      else nextTime=audio.currentTime+0.06;
       schedule();
-    },260);
+    },grid?0:260);
     const timer=window.setInterval(()=>{if(nextTime)schedule()},250);
     return()=>{
       window.clearTimeout(start);
@@ -80,7 +89,7 @@ function useAudioEngine(){
       booked.forEach(oscillator=>{try{oscillator.stop(now)}catch{/* already ended */}});
       booked.clear();
     };
-  },[metro,bpm,accent,beats]);
+  },[metro,bpm,accent,beats,grid]);
   function toggleDrone(note:string,octave:number){
     const key=`${note}${octave}`,audio=getAudio(),existing=voices.current.get(key);
     if(existing){existing.gain.gain.setTargetAtTime(.0001,audio.currentTime,.025);existing.oscillator.stop(audio.currentTime+.12);voices.current.delete(key)}
@@ -89,7 +98,7 @@ function useAudioEngine(){
   }
   function stopAllDrones(){const audio=context.current;voices.current.forEach(({oscillator,gain})=>{if(audio){gain.gain.setTargetAtTime(.0001,audio.currentTime,.025);oscillator.stop(audio.currentTime+.12)}else oscillator.stop()});voices.current.clear();setDrones([])}
   useEffect(()=>()=>{voices.current.forEach(({oscillator})=>oscillator.stop());void context.current?.close()},[]);
-  return {bpm,setBpm,metro,toggleMetro,accent,setAccent,beats,setBeats,drones,toggleDrone,stopAllDrones,initializeScore,getAudio};
+  return {bpm,setBpm,metro,toggleMetro,accent,setAccent,beats,setBeats,drones,toggleDrone,stopAllDrones,initializeScore,getAudio,alignMetronome:setGrid};
 }
 const Context=createContext<ReturnType<typeof useAudioEngine>|null>(null);
 export function PracticeAudioProvider({children}:{children:ReactNode}){const value=useAudioEngine();return <Context.Provider value={value}>{children}</Context.Provider>}

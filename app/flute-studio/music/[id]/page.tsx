@@ -1,7 +1,7 @@
 "use client";
 
 import {useParams} from "next/navigation";
-import {musicLibrary} from "../../../../content/music-library";
+import {musicLibrary,composerInfo} from "../../../../content/music-library";
 import {ScoreViewer,type ScoreViewerConfig} from "../../components/ScoreViewer";
 
 export default function UploadedMusicPage(){
@@ -16,6 +16,7 @@ export default function UploadedMusicPage(){
     backHref:"/flute-studio/music",
     ...(item.pdfPath?{pdfPath:item.pdfPath}:{}),
     ...(item.defaultTempo?{defaultTempo:item.defaultTempo}:{}),
+    ...(composerInfo(item.composer)||item.about?{story:{composer:composerInfo(item.composer),year:item.year,about:item.about}}:{}),
   };
   return <ScoreViewer config={config}/>;
 }

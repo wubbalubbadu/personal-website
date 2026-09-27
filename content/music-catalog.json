@@ -15,6 +15,36 @@
     "viewerPath": "/flute-studio/music/traditional-amazing-grace"
   },
   {
+    "id": "johann-sebastian-bach-badinerie",
+    "title": "Badinerie",
+    "composer": "Johann Sebastian Bach",
+    "year": 1739,
+    "about": "The last movement of Bach's Orchestral Suite No. 2 in B minor, where the flute leads the strings. Badinerie means playful teasing. The surviving parts date from about 1739, though he may have written it earlier.",
+    "status": "published",
+    "scorePath": "/music/johann-sebastian-bach-badinerie/score.musicxml",
+    "fullScorePath": "/music/johann-sebastian-bach-badinerie/full-score.musicxml",
+    "readingPartId": "P1",
+    "partCount": 1,
+    "viewerPath": "/flute-studio/music/johann-sebastian-bach-badinerie",
+    "tags": [
+      "Classical"
+    ]
+  },
+  {
+    "id": "christoph-willibald-gluck-dance-of-the-blessed-spirits",
+    "title": "Dance of the Blessed Spirits",
+    "composer": "Christoph Willibald Gluck",
+    "status": "published",
+    "scorePath": "/music/christoph-willibald-gluck-dance-of-the-blessed-spirits/score.musicxml",
+    "fullScorePath": "/music/christoph-willibald-gluck-dance-of-the-blessed-spirits/full-score.musicxml",
+    "readingPartId": "P1",
+    "partCount": 2,
+    "viewerPath": "/flute-studio/music/christoph-willibald-gluck-dance-of-the-blessed-spirits",
+    "tags": [
+      "Classical"
+    ]
+  },
+  {
     "id": "english-traditional-danny-boy",
     "title": "Danny Boy",
     "composer": "Traditional",
@@ -58,6 +88,20 @@
     "defaultTempo": 135
   },
   {
+    "id": "nikolai-rimsky-korsakov-flight-of-the-bumble-bee",
+    "title": "Flight of the Bumble Bee",
+    "composer": "Nikolai Rimsky-Korsakov",
+    "status": "published",
+    "scorePath": "/music/nikolai-rimsky-korsakov-flight-of-the-bumble-bee/score.musicxml",
+    "fullScorePath": "/music/nikolai-rimsky-korsakov-flight-of-the-bumble-bee/full-score.musicxml",
+    "readingPartId": "P1",
+    "partCount": 1,
+    "viewerPath": "/flute-studio/music/nikolai-rimsky-korsakov-flight-of-the-bumble-bee",
+    "tags": [
+      "Classical"
+    ]
+  },
+  {
     "id": "gold-dust",
     "title": "Gold Dust",
     "composer": "NCT 127",
@@ -69,7 +113,10 @@
     "scorePath": "/music/gold-dust/score.mxl",
     "viewerPath": "/flute-studio/music/gold-dust",
     "pdfPath": "/music/gold-dust/score.pdf",
-    "defaultTempo": 76
+    "defaultTempo": 76,
+    "fullScorePath": "/music/gold-dust/full-score.musicxml",
+    "readingPartId": "P1",
+    "partCount": 1
   },
   {
     "id": "traditional-greensleeves",
@@ -90,6 +137,8 @@
     "id": "christian-petzold-minuet-in-g-major",
     "title": "Minuet in G major",
     "composer": "Christian Petzold",
+    "year": 1725,
+    "about": "Copied into the 1725 notebook Bach gave his wife Anna Magdalena, and for a long time printed as Bach's. In the 1970s scholars showed it was written by Christian Petzold.",
     "tags": [
       "Classical"
     ],
@@ -110,12 +159,17 @@
     ],
     "status": "published",
     "scorePath": "/mystery-of-love.mxl",
-    "viewerPath": "/flute-studio/music/mystery-of-love"
+    "viewerPath": "/flute-studio/music/mystery-of-love",
+    "fullScorePath": "/music/mystery-of-love/full-score.musicxml",
+    "readingPartId": "P1",
+    "partCount": 1
   },
   {
     "id": "beethoven-ode-to-joy",
     "title": "Ode to Joy",
-    "composer": "Beethoven",
+    "composer": "Ludwig van Beethoven",
+    "year": 1824,
+    "about": "The main theme of the last movement of Beethoven's Ninth Symphony, first performed in Vienna. The words are Friedrich Schiller's poem An die Freude. Today the melody is the anthem of the European Union.",
     "tags": [
       "Classical"
     ],
@@ -123,6 +177,22 @@
     "status": "published",
     "scorePath": "/music/beethoven-ode-to-joy/score.musicxml",
     "viewerPath": "/flute-studio/music/beethoven-ode-to-joy"
+  },
+  {
+    "id": "faure-pavane",
+    "title": "Pavane",
+    "composer": "Gabriel Fauré",
+    "year": 1887,
+    "about": "Written for orchestra as the Pavane, Op. 50, with a choir part added later. In the orchestra the flute plays this opening melody over plucked strings.",
+    "status": "published",
+    "scorePath": "/music/faure-pavane/score.musicxml",
+    "fullScorePath": "/music/faure-pavane/full-score.musicxml",
+    "readingPartId": "P1",
+    "partCount": 2,
+    "viewerPath": "/flute-studio/music/faure-pavane",
+    "tags": [
+      "Classical"
+    ]
   },
   {
     "id": "traditional-scarborough-fair",
@@ -138,6 +208,23 @@
     "readingPartId": "P1",
     "partCount": 1,
     "viewerPath": "/flute-studio/music/traditional-scarborough-fair"
+  },
+  {
+    "id": "claude-debussy-syrinx",
+    "title": "Syrinx",
+    "composer": "Claude Debussy",
+    "year": 1913,
+    "about": "Written as music for Gabriel Mourey's play Psyché, where it is the last melody the god Pan plays. Syrinx is the nymph who turned into the reeds of Pan's pipes. It is one of the first major pieces for flute alone of the 20th century.",
+    "status": "published",
+    "scorePath": "/music/claude-debussy-syrinx/score.musicxml",
+    "fullScorePath": "/music/claude-debussy-syrinx/full-score.musicxml",
+    "readingPartId": "P1",
+    "partCount": 1,
+    "viewerPath": "/flute-studio/music/claude-debussy-syrinx",
+    "tags": [
+      "Classical"
+    ],
+    "defaultTempo": 50
   },
   {
     "id": "traditional-twinkle-twinkle-little-star",

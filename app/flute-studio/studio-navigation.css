@@ -13,10 +13,10 @@
    so it comes back at the ≤760px breakpoint below. */
 .studio-navigation__tab[data-key="home"]{display:none}
 /* Conventional tabs: words, with a dark underline under the current page. */
-.studio-navigation__tab{position:relative;height:100%;padding:0 14px;display:flex;align-items:center;gap:7px;color:#6f7178;text-decoration:none;font-size:15px;font-weight:560;letter-spacing:-.01em;transition:color .16s ease}
+.studio-navigation__tab{position:relative;height:100%;padding:0 14px;display:flex;align-items:center;gap:7px;color:#6f7178;text-decoration:none;font-size:13px;font-weight:500;letter-spacing:-.005em;transition:color .16s ease}
 .studio-navigation__tab::after{content:"";position:absolute;left:14px;right:14px;bottom:0;height:2px;border-radius:2px 2px 0 0;background:#292a33;opacity:0;transition:opacity .16s ease}
 .studio-navigation__tab:hover{color:#292a33}
-.studio-navigation__tab.is-active{color:#292a33;font-weight:650}
+.studio-navigation__tab.is-active{color:#292a33;font-weight:600}
 .studio-navigation__tab.is-active::after{opacity:1}
 .studio-navigation__actions{margin-left:auto;display:flex;align-items:center;gap:12px}
 .studio-navigation__tools{height:36px;padding:0 14px;border:0;border-radius:12px;display:flex;align-items:center;gap:7px;background:#e9ece6;color:#46633d;font:inherit;font-size:12px;font-weight:680;line-height:1;cursor:pointer;transition:background-color .16s ease,transform .16s ease}

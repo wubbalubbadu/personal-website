@@ -9,15 +9,16 @@ import "./cookie-pet.css";
 type Point={x:number;y:number};
 
 export default function CookiePet(){
-  const lessonPage=usePathname().startsWith("/flute-studio/theory");
+  const pathname=usePathname();
+  const lessonPage=pathname.startsWith("/flute-studio/theory/");
   const {t,focusMinutes,remaining,running,rounds,message,canEditDuration,minFocusMinutes,maxFocusMinutes,start,pause,reset,adjustFocusMinutes}=usePomodoro();
   const [savedPoint,setSavedPoint]=useState<Point|null>(null);
-  const [lessonPoint,setLessonPoint]=useState<Point|null>(null);
   const [lessonHost,setLessonHost]=useState<Element|null>(null);
-  const point=lessonPage?lessonPoint:savedPoint;
-  const setPoint=lessonPage?setLessonPoint:setSavedPoint;
-  const docked=lessonPage&&lessonHost&&!lessonPoint;
+  const point=lessonPage?null:savedPoint;
+  const setPoint=setSavedPoint;
+  const docked=Boolean(lessonPage&&lessonHost);
   const [open,setOpen]=useState(false);
+  const [expression,setExpression]=useState(0);
   const [lessonText,setLessonText]=useState("");
   const drag=useRef<{dx:number;dy:number;moved:boolean;startX:number;startY:number}|null>(null);
 
@@ -25,7 +26,7 @@ export default function CookiePet(){
     const clamp=(p:Point)=>({x:Math.max(10,Math.min(window.innerWidth-70,p.x)),y:Math.max(76,Math.min(window.innerHeight-76,p.y))});
     const hydration=requestAnimationFrame(()=>{try{const value=JSON.parse(localStorage.getItem("cookie:pet-position")??'null');if(value&&Number.isFinite(value.x)&&Number.isFinite(value.y))setSavedPoint(clamp(value))}catch{/* Storage may be unavailable. */}});
     const lesson=(event:Event)=>{const text=(event as CustomEvent<string>).detail;setLessonText(text);setLessonHost(document.getElementById("lesson-companion"));};
-    const resize=()=>{setSavedPoint(p=>p?clamp(p):p);setLessonPoint(p=>p?clamp(p):p)};
+    const resize=()=>{setSavedPoint(p=>p?clamp(p):p)};
     window.addEventListener('cookie:lesson',lesson);window.addEventListener('resize',resize);
     return()=>{cancelAnimationFrame(hydration);window.removeEventListener('cookie:lesson',lesson);window.removeEventListener('resize',resize)};
   },[]);
@@ -47,11 +48,13 @@ export default function CookiePet(){
     setCardPlace(current=>current.below===below&&current.left===left?current:{below,left});
   },[open,point]);
   function down(event:PointerEvent<HTMLDivElement>){
+    if(lessonPage)return;
     const rect=event.currentTarget.getBoundingClientRect();
     drag.current={dx:event.clientX-rect.left,dy:event.clientY-rect.top,moved:false,startX:event.clientX,startY:event.clientY};
     event.currentTarget.setPointerCapture(event.pointerId);
   }
   function move(event:PointerEvent<HTMLDivElement>){
+    if(lessonPage)return;
     if(!drag.current)return;
     const dragged=Math.hypot(event.clientX-drag.current.startX,event.clientY-drag.current.startY)>4;
     if(!dragged)return;
@@ -61,6 +64,7 @@ export default function CookiePet(){
     setPoint({x,y});
   }
   function up(event:PointerEvent<HTMLDivElement>){
+    if(lessonPage){setExpression(value=>(value+1)%3);return}
     if(!drag.current)return;
     const wasMoved=drag.current.moved;
     drag.current=null;
@@ -94,7 +98,7 @@ export default function CookiePet(){
       </div>
       <small>{t.pomodoro.roundsDone(rounds)}</small>
     </section>}
-    <div className="cookie-pet" role="button" tabIndex={0} aria-label={lessonPage?"Cookie lesson companion. Drag to move, or use arrow keys.":"Cookie practice companion. Drag to move or click for a focus timer."} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();if(!lessonPage)setOpen(v=>!v)}else if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)){event.preventDefault();const rect=event.currentTarget.getBoundingClientRect();setPoint({x:Math.max(10,Math.min(window.innerWidth-70,rect.left+(event.key==='ArrowRight'?15:event.key==='ArrowLeft'?-15:0))),y:Math.max(76,Math.min(window.innerHeight-76,rect.top+(event.key==='ArrowDown'?15:event.key==='ArrowUp'?-15:0)))})}}} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={()=>{drag.current=null}}>
+    <div className={`cookie-pet expression-${expression}`} role="button" tabIndex={0} aria-label={lessonPage?"Cookie lesson companion. Click for a new expression.":"Cookie practice companion. Drag to move or click for a focus timer."} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();if(lessonPage)setExpression(value=>(value+1)%3);else setOpen(v=>!v)}else if(!lessonPage&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)){event.preventDefault();const rect=event.currentTarget.getBoundingClientRect();setPoint({x:Math.max(10,Math.min(window.innerWidth-70,rect.left+(event.key==='ArrowRight'?15:event.key==='ArrowLeft'?-15:0))),y:Math.max(76,Math.min(window.innerHeight-76,rect.top+(event.key==='ArrowDown'?15:event.key==='ArrowUp'?-15:0)))})}}} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={()=>{drag.current=null}}>
       <span className="chip c1"/><span className="chip c2"/><span className="chip c3"/><span className="chip c4"/><span className="chip c5"/>
       <i className="eye left"/><i className="eye right"/><b className="smile"/>
     </div>

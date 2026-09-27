@@ -1,3 +1,4 @@
+import musicTerms from "../../../content/music-terms.json";
 /**
  * What the "Musical terms" layer says about a score, worked out from the
  * score itself.
@@ -189,97 +190,21 @@ export function metronomeText(mark:MetronomeFacts|undefined,meter:MeasureFacts|u
   return {title:"Metronome mark",text};
 }
 
-type Term={meaning:string;bpm?:[number,number]};
+type Term={meaning:string;/** [low, high] beats per minute. */bpm?:number[]};
 /**
- * Common Italian (and a few French and German) performance words. BPM
- * ranges are the usual textbook ones: a starting point, since the same
- * word runs faster in one era and slower in another.
- * Multi-word entries come first so "con brio" wins over "con".
+ * Performance words (Italian, French, German, abbreviations, dynamics) live in
+ * content/music-terms.json, so the music uploader can add the ones a new
+ * score uses (it lists unknown markings on convert and writes the meanings
+ * you give it). BPM ranges are the usual textbook ones: a starting point,
+ * since the same word runs faster in one era and slower in another. Keys are
+ * lowercase; multi-word phrases win over their single words (see PHRASES).
  */
-const TERMS:Record<string,Term>={
-  "ma non troppo":{meaning:"but not too much"},
-  "non troppo":{meaning:"not too much"},
-  "poco a poco":{meaning:"little by little"},
-  "con brio":{meaning:"with spirit and fire"},
-  "con moto":{meaning:"with motion, keep it moving"},
-  "a tempo":{meaning:"back to the main speed"},
-  "tempo primo":{meaning:"back to the opening speed"},
-  "tempo i":{meaning:"back to the opening speed"},
-  "sotto voce":{meaning:"in an undertone, very quietly"},
-  "da capo":{meaning:"go back to the beginning"},
-  "dal segno":{meaning:"go back to the sign 𝄋"},
-  "al fine":{meaning:"and play until Fine"},
-  "al coda":{meaning:"and then jump to the Coda"},
-  grave:{meaning:"very slow and solemn",bpm:[25,45]},
-  largo:{meaning:"broad and slow",bpm:[40,60]},
-  lento:{meaning:"slow",bpm:[45,60]},
-  larghetto:{meaning:"rather broad, a little faster than largo",bpm:[60,66]},
-  adagio:{meaning:"slow and at ease",bpm:[66,76]},
-  andante:{meaning:"at a walking pace",bpm:[76,108]},
-  andantino:{meaning:"a little quicker than andante",bpm:[80,108]},
-  moderato:{meaning:"at a moderate speed",bpm:[108,120]},
-  allegretto:{meaning:"moderately fast, lighter than allegro",bpm:[100,128]},
-  allegro:{meaning:"fast and bright",bpm:[120,156]},
-  vivace:{meaning:"lively and fast",bpm:[156,176]},
-  vivo:{meaning:"lively",bpm:[156,176]},
-  presto:{meaning:"very fast",bpm:[168,200]},
-  prestissimo:{meaning:"as fast as possible",bpm:[200,240]},
-  assai:{meaning:"very"},
-  molto:{meaning:"very, much"},
-  poco:{meaning:"a little"},
-  più:{meaning:"more"},
-  meno:{meaning:"less"},
-  sempre:{meaning:"always, keep doing it"},
-  subito:{meaning:"suddenly"},
-  simile:{meaning:"keep going in the same way"},
-  cantabile:{meaning:"in a singing style"},
-  dolce:{meaning:"sweetly, softly"},
-  dolcissimo:{meaning:"very sweetly"},
-  espressivo:{meaning:"with expression"},
-  "espr.":{meaning:"with expression"},
-  legato:{meaning:"smoothly connected"},
-  staccato:{meaning:"short and detached"},
-  tenuto:{meaning:"held for its full value"},
-  marcato:{meaning:"marked, accented"},
-  leggiero:{meaning:"lightly"},
-  pesante:{meaning:"heavily"},
-  maestoso:{meaning:"majestic"},
-  grazioso:{meaning:"gracefully"},
-  tranquillo:{meaning:"calm"},
-  animato:{meaning:"animated, with life"},
-  sostenuto:{meaning:"sustained, a little held back"},
-  rubato:{meaning:"flexible time: stretch and push the beat for expression"},
-  ritardando:{meaning:"gradually slow down"},
-  "rit.":{meaning:"gradually slow down"},
-  "ritard.":{meaning:"gradually slow down"},
-  rallentando:{meaning:"gradually slow down"},
-  "rall.":{meaning:"gradually slow down"},
-  accelerando:{meaning:"gradually speed up"},
-  "accel.":{meaning:"gradually speed up"},
-  crescendo:{meaning:"gradually get louder"},
-  "cresc.":{meaning:"gradually get louder"},
-  diminuendo:{meaning:"gradually get softer"},
-  "dim.":{meaning:"gradually get softer"},
-  decrescendo:{meaning:"gradually get softer"},
-  "decresc.":{meaning:"gradually get softer"},
-  "d.c.":{meaning:"da capo: go back to the beginning"},
-  "d.s.":{meaning:"dal segno: go back to the sign 𝄋"},
-  fine:{meaning:"the end, after a D.C. or D.S."},
-  coda:{meaning:"the closing section"},
-  con:{meaning:"with"},
-  ma:{meaning:"but"},
-  e:{meaning:"and"},
-  // French and German, as they turn up in flute repertoire.
-  lent:{meaning:"slow (French)",bpm:[45,60]},
-  modéré:{meaning:"moderate (French)",bpm:[108,120]},
-  vif:{meaning:"lively (French)",bpm:[156,176]},
-  langsam:{meaning:"slow (German)",bpm:[45,60]},
-  mässig:{meaning:"moderate (German)",bpm:[108,120]},
-  schnell:{meaning:"fast (German)",bpm:[156,176]},
-};
+const TERMS=musicTerms as Record<string,Term>;
 const PHRASES=Object.keys(TERMS).sort((a,b)=>b.split(" ").length-a.split(" ").length);
 /** Words that only modify another term; a line made of nothing but these is not worth a tooltip. */
-const CONNECTIVES=new Set(["con","ma","e","poco","molto","assai","più","meno","sempre"]);
+const CONNECTIVES=new Set(["con","ma","e","poco","molto","assai","più","meno","sempre","un peu","très","peu","sans","avec","mais"]);
+/** Dynamics keep their lowercase ("pp", not "Pp"): that is how they are printed. */
+const DYNAMICS=new Set(["ppp","pp","p","mp","mf","f","ff","fff","sf","sfz","fp"]);
 
 const capitalize=(text:string)=>text[0].toUpperCase()+text.slice(1);
 
@@ -290,7 +215,7 @@ const capitalize=(text:string)=>text[0].toUpperCase()+text.slice(1);
  * would read them.
  */
 export function performanceTermText(raw:string,written?:MetronomeFacts){
-  const words=raw.toLowerCase().replace(/[()]/g," ").split(/\s+/).filter(Boolean);
+  const words=raw.toLowerCase().replace(/[(),;:]/g," ").split(/\s+/).filter(Boolean);
   const found:{phrase:string;term:Term}[]=[];
   for(let i=0;i<words.length;){
     const phrase=PHRASES.find(candidate=>{const parts=candidate.split(" ");return parts.every((part,k)=>words[i+k]===part)});
@@ -298,12 +223,17 @@ export function performanceTermText(raw:string,written?:MetronomeFacts){
     else i++;
   }
   if(!found.length||found.every(({phrase})=>CONNECTIVES.has(phrase)))return null;
-  const lines=found.map(({phrase,term})=>`${capitalize(phrase)}: ${term.meaning}.`);
+  const lines=found.map(({phrase,term})=>`${DYNAMICS.has(phrase)?phrase:capitalize(phrase)}: ${term.meaning}.`);
   const tempo=found.find(({term})=>term.bpm);
   if(tempo){
     const [low,high]=tempo.term.bpm!;
-    const faster=words.some(word=>word==="assai"||word==="molto"),gentler=words.includes("poco")||words.includes("troppo");
-    const lean=faster?" Toward the faster end, since it says very.":gentler?" Toward the middle, since it asks for restraint.":"";
+    // "Very" pushes a tempo word further in its own direction: molto allegro
+    // is faster, molto adagio slower, and très modéré (very measured) calmer,
+    // not quicker. A phrase with its own range ("très modéré") already
+    // includes its modifier, so it is not nudged again.
+    const own=tempo.phrase.split(" "),very=words.some(word=>["assai","molto","très","sehr"].includes(word)&&!own.includes(word)),gentler=words.includes("poco")||words.includes("troppo");
+    const pace=low>=120?"fast":high<=80?"slow":"moderate";
+    const lean=very?(pace==="fast"?" Toward the faster end, since it says very.":pace==="slow"?" Toward the slower end, since it says very.":" Very moderate means calmer, so toward the slower end."):gentler?" Toward the middle, since it asks for restraint.":"";
     lines.push(`${capitalize(tempo.phrase)} is usually about ${low} to ${high} beats per minute.${lean}`);
     if(written){
       const where=written.perMinute<low?", slower than usual":written.perMinute>high?", faster than usual":", inside that range";

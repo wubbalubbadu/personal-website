@@ -1,6 +1,11 @@
 import type { OpenSheetMusicDisplay as OSMDType } from "opensheetmusicdisplay";
-import { ArticulationEnum } from "opensheetmusicdisplay";
+import { ArticulationEnum, OrnamentEnum } from "opensheetmusicdisplay";
+
+/** OSMD's DynamicEnum and ContDynamicEnum values; the package does not export them. */
+enum DynamicEnum { pppppp, ppppp, pppp, ppp, pp, p, mp, mf, f, ff, fff, ffff, fffff, ffffff, sf, sff, sfp, sfpp, fp, rf, rfz, sfz, sffz, fz, other }
+enum ContDynamicEnum { crescendo, diminuendo }
 import type { ArticulationMode } from "./notePatterns";
+import {durationUnits,exactUnitsPerWhole} from "./rhythmGrid";
 
 // Same canonical 12-tone spelling the rest of the app already uses for
 // playback/drone/tuner lookups (see ScoreViewer's pitchClasses/semitones,
@@ -24,8 +29,6 @@ function pitchFromHalfTone(halfTone: number): string {
   const pitchClass = PITCH_CLASSES[((halfTone % 12) + 12) % 12];
   return `${pitchClass}${octave}`;
 }
-
-const EPSILON = 1e-6;
 
 // OSMD's NoteEnum: C=0, D=2, E=4, F=5, G=7, A=9, B=11 (whole/half-step
 // spacing of the natural letters, not a plain 0-6 index).
@@ -81,21 +84,14 @@ export function resolveKeyAccidentals(osmd: OSMDType): Set<string> {
  * error either way.
  */
 function resolveUnitsPerWhole(osmd: OSMDType): number {
-  for (const candidate of [16, 32, 64]) {
-    let exact = true;
-    scan: for (const measure of osmd.Sheet.SourceMeasures) {
-      for (const container of measure.VerticalSourceStaffEntryContainers) {
-        for (const voiceEntry of container.StaffEntries[0]?.VoiceEntries ?? []) {
-          const note = voiceEntry.Notes[0];
-          if (!note || note.IsGraceNote) continue;
-          const scaled = note.Length.RealValue * candidate;
-          if (Math.abs(scaled - Math.round(scaled)) > EPSILON) { exact = false; break scan; }
-        }
-      }
+  const lengths:{Numerator:number;Denominator:number}[]=[];
+  for (const measure of osmd.Sheet.SourceMeasures) for (const container of measure.VerticalSourceStaffEntryContainers) {
+    for (const voiceEntry of container.StaffEntries[0]?.VoiceEntries ?? []) {
+      const note=voiceEntry.Notes[0];
+      if(note&&!note.IsGraceNote)lengths.push(note.Length);
     }
-    if (exact) return candidate;
   }
-  return 64; // finer than a 64th is vanishingly rare in solo flute repertoire; closest available grid
+  return exactUnitsPerWhole(lengths);
 }
 
 /**
@@ -141,21 +137,88 @@ function resolveUnitsPerWhole(osmd: OSMDType): number {
  * enough: nothing needs a labeled position inside the triplet itself, and
  * the downbeats around it stay correct.
  */
+/**
+ * How loud each dynamic plays, relative to mf. Gentler than OSMD's MIDI table
+ * (where pp is 12/127): playback is one quiet synth voice, and pp still has to
+ * be heard. Accents change one note only; fp/sfp drop to soft after it.
+ */
+const DYNAMIC_LEVEL: Partial<Record<DynamicEnum, number>> = {
+  [DynamicEnum.pppppp]: .45, [DynamicEnum.ppppp]: .45, [DynamicEnum.pppp]: .45, [DynamicEnum.ppp]: .45,
+  [DynamicEnum.pp]: .55, [DynamicEnum.p]: .68, [DynamicEnum.mp]: .84, [DynamicEnum.mf]: 1,
+  [DynamicEnum.f]: 1.18, [DynamicEnum.ff]: 1.32, [DynamicEnum.fff]: 1.42, [DynamicEnum.ffff]: 1.42, [DynamicEnum.fffff]: 1.42, [DynamicEnum.ffffff]: 1.42,
+};
+const ACCENTS = new Set([DynamicEnum.sf, DynamicEnum.sff, DynamicEnum.sfz, DynamicEnum.sffz, DynamicEnum.fz, DynamicEnum.rf, DynamicEnum.rfz, DynamicEnum.sfp, DynamicEnum.sfpp, DynamicEnum.fp]);
+const AFTER_ACCENT: Partial<Record<DynamicEnum, number>> = { [DynamicEnum.sfp]: .68, [DynamicEnum.fp]: .68, [DynamicEnum.sfpp]: .55 };
+
+/** Letters as OSMD's NoteEnum semitones, and the order sharps and flats are added to a key. */
+const LETTERS = [0, 2, 4, 5, 7, 9, 11];
+const SHARP_ORDER = [5, 0, 7, 2, 9, 4, 11], FLAT_ORDER = [11, 4, 9, 2, 7, 0, 5];
+/** AccidentalEnum values to semitones: SHARP, FLAT, NONE, NATURAL, DOUBLESHARP, DOUBLEFLAT. */
+const ACCIDENTAL_STEPS: Record<number, number> = { 0: 1, 1: -1, 3: 0, 4: 2, 5: -2 };
+/**
+ * The note a trill alternates with: the next letter up, sharpened or
+ * flattened by the key signature, unless the trill prints its own
+ * accidental (tr♯, tr♭). Accidentals earlier in the bar are not tracked.
+ */
+function trillUpper(note: { halfTone: number; Pitch: { FundamentalNote: number; AccidentalHalfTones: number } }, fifths: number, printed: number | undefined) {
+  const at = LETTERS.indexOf(note.Pitch.FundamentalNote);
+  if (at < 0) return null;
+  const letter = LETTERS[(at + 1) % 7], step = (letter - LETTERS[at] + 12) % 12;
+  const fromKey = fifths > 0 && SHARP_ORDER.slice(0, fifths).includes(letter) ? 1 : fifths < 0 && FLAT_ORDER.slice(0, -fifths).includes(letter) ? -1 : 0;
+  const alter = printed !== undefined && printed in ACCIDENTAL_STEPS ? ACCIDENTAL_STEPS[printed] : fromKey;
+  return pitchFromHalfTone(note.halfTone - note.Pitch.AccidentalHalfTones + step + alter);
+}
+
 export function deriveScoreEvents(osmd: OSMDType) {
   const unitsPerWhole = resolveUnitsPerWhole(osmd);
   const pitches: (string | null)[] = [];
-  const events: { p: string | null; d: number; tied: boolean; articulation: ArticulationMode; slurContinuation: boolean }[] = [];
+  const events: { p: string | null; d: number; tied: boolean; articulation: ArticulationMode; slurContinuation: boolean; level: number; accent?: boolean; trill?: string }[] = [];
+  // Every dynamic and hairpin in the first staff, in score time (whole notes
+  // from the start), so each note can look up how loud it should play.
+  type Mark = { at: number; dynamic?: DynamicEnum; wedge?: { rising: boolean; until: number } };
+  const marks: Mark[] = [];
+  for (const measure of osmd.Sheet.SourceMeasures) {
+    for (const expression of measure.StaffLinkedExpressions?.[0] ?? []) {
+      const at = measure.AbsoluteTimestamp.RealValue + expression.Timestamp.RealValue;
+      if (expression.InstantaneousDynamic) marks.push({ at, dynamic: expression.InstantaneousDynamic.DynEnum });
+      const wedge = expression.StartingContinuousDynamic;
+      if (wedge?.EndMultiExpression) marks.push({ at, wedge: { rising: wedge.DynamicType === ContDynamicEnum.crescendo, until: wedge.EndMultiExpression.AbsoluteTimestamp.RealValue } });
+    }
+  }
+  marks.sort((a, b) => a.at - b.at);
+  let level = 1, markIndex = 0, fifths = 0, wedge: { from: number; start: number; until: number; to: number } | null = null;
+  const EPS = 1e-6;
   const measureStarts: number[] = [];
-  let exactOnset = 0, roundedOnset = 0;
 
   for (const measure of osmd.Sheet.SourceMeasures) {
     measureStarts.push(pitches.length);
+    for (const entry of measure.FirstInstructionsStaffEntries ?? []) for (const instruction of entry?.Instructions ?? []) {
+      const key = (instruction as { Key?: unknown; keyTypeOriginal?: unknown });
+      if ("keyTypeOriginal" in key && typeof key.Key === "number") fifths = key.Key;
+    }
     for (const container of measure.VerticalSourceStaffEntryContainers) {
+      // Catch up on the marks up to this moment. An accent printed right here
+      // belongs to this note only; a hairpin ramps toward the next dynamic
+      // after it ends, or one step louder/softer if none follows.
+      const now = measure.AbsoluteTimestamp.RealValue + container.Timestamp.RealValue;
+      let accentHere = false;
+      while (markIndex < marks.length && marks[markIndex].at <= now + EPS) {
+        const mark = marks[markIndex++];
+        if (mark.dynamic !== undefined && ACCENTS.has(mark.dynamic)) { if (Math.abs(mark.at - now) < EPS) accentHere = true; level = AFTER_ACCENT[mark.dynamic] ?? level; wedge = null; }
+        else if (mark.dynamic !== undefined && DYNAMIC_LEVEL[mark.dynamic] !== undefined) { level = DYNAMIC_LEVEL[mark.dynamic]!; wedge = null; }
+        else if (mark.wedge && mark.wedge.until > mark.at) {
+          const next = marks.find(later => later.dynamic !== undefined && DYNAMIC_LEVEL[later.dynamic] !== undefined && later.at >= mark.wedge!.until - EPS && later.at <= mark.wedge!.until + .25);
+          const to = next ? DYNAMIC_LEVEL[next.dynamic!]! : Math.min(1.42, Math.max(.45, level + (mark.wedge.rising ? .2 : -.2)));
+          wedge = { from: level, start: mark.at, until: mark.wedge.until, to };
+        }
+      }
+      if (wedge && now >= wedge.until - EPS) { level = wedge.to; wedge = null; }
+      const loudness = wedge ? wedge.from + (wedge.to - wedge.from) * (now - wedge.start) / (wedge.until - wedge.start) : level;
       for (const voiceEntry of container.StaffEntries[0]?.VoiceEntries ?? []) {
         const note = voiceEntry.Notes[0];
         if (!note) continue;
         const short = note.isRest() ? null : pitchFromHalfTone(note.halfTone);
-        if (note.IsGraceNote) { pitches.push(short); events.push({ p: short, d: 0, tied: false, articulation: "tongue", slurContinuation: false }); continue; }
+        if (note.IsGraceNote) { pitches.push(short); events.push({ p: short, d: 0, tied: false, articulation: "tongue", slurContinuation: false, level: loudness }); continue; }
         // A tie is two separate written notes (that's how MusicXML/OSMD
         // represent it — see .NoteTie/.Tie.StartNote), not one continuous
         // one; nothing here merges them. So without this check, the second
@@ -172,12 +235,15 @@ export function deriveScoreEvents(osmd: OSMDType) {
         const hasMark = (kind: ArticulationEnum) => voiceEntry.Articulations.some(a => a.articulationEnum === kind);
         const articulation: ArticulationMode = slur ? "slur" : hasMark(ArticulationEnum.staccato) ? "staccato" : hasMark(ArticulationEnum.tenuto) ? "tenuto" : "tongue";
         const slurContinuation = !!slur && slur.StartNote !== note;
-        exactOnset += note.Length.RealValue * unitsPerWhole;
-        const nextRounded = Math.round(exactOnset);
-        const duration = Math.max(1, nextRounded - roundedOnset);
-        roundedOnset = nextRounded;
+        // The score-wide grid is the LCM of OSMD's rational duration
+        // denominators, so this is exact for tuplets as well as binary note
+        // values. No running rounded onset means no accumulated drift.
+        const duration = durationUnits(note.Length,unitsPerWhole);
+        if(!Number.isInteger(duration)||duration<=0)throw new Error(`Unsupported score duration ${note.Length.Numerator}/${note.Length.Denominator}`);
         pitches.push(short);
-        events.push({ p: short, d: duration, tied, articulation, slurContinuation });
+        const ornament = voiceEntry.OrnamentContainer;
+        const trill = short && ornament?.GetOrnament === OrnamentEnum.Trill ? trillUpper(note as unknown as Parameters<typeof trillUpper>[0], fifths, ornament.AccidentalAbove as number | undefined) : null;
+        events.push({ p: short, d: duration, tied, articulation, slurContinuation, level: Math.round(loudness * 100) / 100, ...(accentHere ? { accent: true } : {}), ...(trill ? { trill } : {}) });
       }
     }
   }

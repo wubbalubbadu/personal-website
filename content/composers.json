@@ -1,0 +1,7 @@
+{
+  "Ludwig van Beethoven": {"born":1770,"died":1827,"nationality":"German","era":"Classical and Romantic","bio":"Born in Bonn, he spent his working life in Vienna. He kept composing as he lost his hearing, and his nine symphonies carry music from the Classical style into the Romantic."},
+  "Gabriel Fauré": {"born":1845,"died":1924,"nationality":"French","era":"Romantic","bio":"Organist, teacher and director of the Paris Conservatoire from 1905 to 1920, where his students included Maurice Ravel. Best known for his songs, his Requiem and his chamber music."},
+  "Claude Debussy": {"born":1862,"died":1918,"nationality":"French","era":"Early modern","bio":"A Paris composer whose free harmonies and new scales changed music at the start of the 20th century. His Prélude à l'après-midi d'un faune opens with one of the best known flute solos in the orchestra."},
+  "Christian Petzold": {"born":1677,"died":1733,"nationality":"German","era":"Baroque","bio":"Organist at the Sophienkirche in Dresden and a composer at the Dresden court. Little of his music survives, and for a long time his best known piece was thought to be by Bach."},
+  "Johann Sebastian Bach": {"born":1685,"died":1750,"nationality":"German","era":"Baroque","bio":"Organist and composer who spent his last 27 years as music director at St Thomas Church in Leipzig. His music, from the Brandenburg Concertos to the Mass in B minor, sums up the Baroque style."}
+}

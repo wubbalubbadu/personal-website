@@ -1,14 +1,27 @@
 # Cookie Flute Studio content
 
-Each piece or exercise gets its own folder containing `metadata.json` and, when available, a MusicXML or MXL score.
+## Library music
 
-Browser-readable score files belong in `public/music/<music-id>/score.mxl` (and `score.pdf` alongside it, if you have a PDF version — set `pdfPath` in the metadata to enable the download button in the viewer). The original Mystery of Love prototype predates this structure and is currently stored at `public/mystery-of-love.mxl`.
+Add, replace or edit pieces with the local uploader:
 
-Required categories are `exercise`, `repertoire`, `etude`, or `pop`. Required difficulties are `beginner`, `early-intermediate`, `intermediate`, or `advanced`.
+```
+npm run music:uploader
+```
 
-When adding a piece with a real score (not a generated exercise like Scale Studio):
-1. Copy an existing content folder, give it a unique lowercase ID, fill in every metadata field, and add its metadata import to `content/music-library.ts`.
-2. Drop the score at `public/music/<id>/score.mxl` (+ `score.pdf` if you have one).
-3. Add `app/flute-studio/music/<id>/page.tsx`, modeled on `music/txt-deja-vu/page.tsx` — just a `ScoreViewer` with `title`/`composer`/`asset`/`id`/`backHref` (and `pdfPath` if applicable). **You do not need to transcribe the notes by hand** — `ScoreViewer` derives the note/rhythm data straight from the loaded score itself (see `components/deriveScoreEvents.ts`). Only pass `pitches`/`events`/`measureStarts` explicitly if a piece needs the sequence overridden (e.g. one melodic line pulled out of a multi-voice/chord score — the auto-derivation currently assumes a single staff, single voice, no chords, which covers solo flute pieces).
+It converts a MuseScore file (`.mscz` / `.mscx`), lets you pick the part the student reads, and writes:
 
-Set `status` to `coming-soon` until the viewer page exists.
+- `public/music/<id>/score.musicxml`: the reading part the viewer loads
+- `public/music/<id>/full-score.musicxml`: every part, kept for a future accompaniment
+- an entry in `content/music-catalog.json`: title, composer, `tags`, optional `beginner` and `defaultTempo`
+
+Every piece is served by the one shared page, `app/flute-studio/music/[id]/page.tsx`. Don't add a page per piece: `ScoreViewer` reads the notes, rhythm, ties and bars straight from the score (see `app/flute-studio/components/deriveScoreEvents.ts`), so nothing is transcribed by hand. A hand-typed copy is how Mystery of Love ended up playing tied notes twice.
+
+Musical-term explanations come from `content/music-terms.json`. On convert, the uploader lists any marking in the score that the glossary can't explain, with a box for its meaning; meanings you fill in are added to the file when you save. You can also edit the file by hand (one term per line, lowercase keys).
+
+Tags are free text and a piece can have several. The metronome starts at `defaultTempo` if set, otherwise the score's tempo marking, otherwise 76.
+
+A few older pieces keep their files at other paths (`public/mystery-of-love.mxl`, `public/music/<id>/score.mxl` with a `score.pdf`); the catalog's `scorePath` and `pdfPath` point at them.
+
+## Exercises
+
+Exercises come from `content/exercise-catalog.ts`.

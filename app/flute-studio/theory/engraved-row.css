@@ -1,0 +1,14 @@
+/* The shared engraved staff (EngravedRow). Printed-music weights: thin staff lines, heavier final bar. */
+.engraved-row{animation:engraved-in .25s ease both;display:block;width:100%;height:auto;overflow:visible;color:#1b1b1f;fill:#1b1b1f;user-select:none;-webkit-user-select:none}
+.engraved-row__line{stroke:#2a2a2e;stroke-width:1.3}
+.engraved-row__ledger{stroke:#1b1b1f;stroke-width:1.6}
+.engraved-row__bar{stroke:#1b1b1f;stroke-width:1.8;transition:transform .4s cubic-bezier(.2,.8,.2,1)}
+.engraved-row__final{stroke:#1b1b1f;stroke-width:5}
+.engraved-row__stem{stroke:#1b1b1f;stroke-width:2.2}
+.engraved-row__note{transition:transform .4s cubic-bezier(.2,.8,.2,1)}
+.engraved-row__note.is-active{color:#b9362e;fill:#b9362e}
+.engraved-row__below{transition:transform .4s cubic-bezier(.2,.8,.2,1)}
+.time-sig{fill:#1b1b1f}
+@media(prefers-reduced-motion:reduce){.engraved-row__bar,.engraved-row__note,.engraved-row__below{transition:none}}
+@keyframes engraved-in{from{opacity:0}}
+@media(prefers-reduced-motion:reduce){.engraved-row{animation:none}}

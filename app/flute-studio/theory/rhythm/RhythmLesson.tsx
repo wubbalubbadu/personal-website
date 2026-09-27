@@ -1,11 +1,12 @@
 'use client';
-import {useEffect, useRef, useState, type PointerEvent, type ReactNode} from 'react';
+import {useEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode} from 'react';
 import {useLanguage} from '../../i18n/LanguageContext';
 import TrebleClef from '../TrebleClef';
 import {pitchAt, readSaved, SAVE_KEY, noteY, positionAt, ledgerLines} from '../model';
 import RhythmNote, {STEM_HEIGHT, STEM_X} from './RhythmNote';
 import DurationTree from './DurationTree';
 import NoteBuilder from './NoteBuilder';
+import CookieButton from '../CookieButton';
 import {assessHold, assessTaps, VALUES, type NoteValue} from './rhythmModel';
 import {useRhythmAudio} from './useRhythmAudio';
 import LessonFrame, {type LessonNext} from '../LessonFrame';
@@ -74,15 +75,15 @@ export default function RhythmLesson() {
     if(FLOW[next]==='tap')setTapRhythms(pickTaps());
     if(FLOW[next]==='melody'){try{const saved=readSaved(localStorage.getItem(SAVE_KEY));if(saved.phrase.every(p=>p!==null))setPositions(saved.phrase as number[])}catch{/* Optional saved phrase. */}}
   }
-  const nextRound=()=>{cancelHold();setRound(r=>r+1);setCorrect(false);setFeedback('');setTaps([])};
+  const nextRound=()=>{cancelHold();setHeldMs(0);setRound(r=>r+1);setCorrect(false);setFeedback('');setTaps([])};
   function joinBeam(){const next=Math.min(requiredBeams,beams+1);setBeams(next);setCorrect(next===requiredBeams);setFeedback(next===requiredBeams?tr('Connected! Listen: it sounds exactly the same as with flags.','连好了！听一听，和用符尾时一模一样。'):tr('One beam in place. Add the second one just under it.','第一条连好了。在它下面再加一条。'))}
   function hear(){if(audio.active>=0)audio.stop();else void audio.play(notes,pitches,0,id!=='rhythm')}
-  function startHold(time:number){if(holdStart.current!==null)return;setFeedback('');setCorrect(false);holdStart.current=time;setHeldMs(0);setHolding(true);void audio.play([16],[67]);holdTimeout.current=setTimeout(()=>{cancelHold();setFeedback(tr('Much too long. Let go when the last dot fills.','太长了。最后一个点亮起时就松开。'))},BEAT*10)}
+  function startHold(time:number){if(holdStart.current!==null)return;setFeedback('');setCorrect(false);holdStart.current=time;setHeldMs(0);setHolding(true);void audio.play([16],[67]);holdTimeout.current=setTimeout(()=>{cancelHold();setFeedback(tr('Much too long. Let go when the line reaches the end mark.','太长了。线走到终点标记时就松开。'))},BEAT*10)}
   function endHold(time:number){const start=holdStart.current;if(start===null)return;const elapsed=time-start;cancelHold();const match=assessHold(elapsed,target);setCorrect(match);const ratio=elapsed/(target*BEAT);setFeedback(match?tr(`Yes! That’s a full ${nameOf(target)}.`,`对！这就是一个完整的${nameOf(target)}。`)
     :ratio<.6?tr(target===1?'Much too short. Keep holding until the whole beat has gone by.':`Much too short. Keep holding until all ${beats(target)} have gone by.`,`太短了。要一直按住，直到 ${beats(target)}都过去。`)
-    :ratio<1?tr('A little short. Let go just as the last dot fills.','短了一点。最后一个点亮起后再松开。')
-    :ratio<1.4?tr('A little long. Let go as soon as the last dot fills.','长了一点。最后一个点亮起就松开。')
-    :tr('Much too long. Let go when the last dot fills.','太长了。最后一个点亮起时就松开。'))}
+    :ratio<1?tr('A little short. Hold until the line reaches the end mark.','短了一点。按住，直到线走到终点标记。')
+    :ratio<1.4?tr('A little long. Let go as soon as the line reaches the end mark.','长了一点。线一到终点标记就松开。')
+    :tr('Much too long. Let go when the line reaches the end mark.','太长了。线走到终点标记时就松开。'))}
   // Each tap is a note onset. After the last note's tap, the gaps are compared with the written lengths.
   function tap(time:number){
     void audio.clap();
@@ -92,8 +93,8 @@ export default function RhythmLesson() {
     if(next.length===tapPattern.length){const ok=assessTaps(next,tapPattern,BEAT);setCorrect(ok);setFeedback(ok?tr('That’s the rhythm!','就是这个节奏！'):tr('Close, but the gaps were uneven. Listen once more, then clap again.','差一点，间隔不太均匀。再听一次，然后重新拍。'))}
   }
   const beat=audio.elapsed<0?-1:Math.floor(audio.elapsed/(BEAT/1000))%4;
-  // Beat dots under the staff. On the hold step there is one dot per beat of the note, filling as you hold.
-  const dots=id==='hold'?Array.from({length:target},(_,i)=>holding?heldMs>=(i+1)*BEAT:correct):[0,1,2,3].map(i=>beat===i);
+  // Beat dots under the staff while the clicks play.
+  const dots=[0,1,2,3].map(i=>beat===i);
 
   // narration explains the idea above the music; message is Cookie: what to try, then how it went.
   let narration:ReactNode='',message:ReactNode='',tools:ReactNode=null,clicks=true;
@@ -136,7 +137,7 @@ export default function RhythmLesson() {
       break;
     case 'hold':
       narration=tr(`This is a ${nameOf(target)}. It lasts ${beats(target)}. When you play, you hold each note for its full length.`,`这是一个${nameOf(target)}，持续 ${beats(target)}。演奏时，每个音都要保持完整的时值。`);
-      message=feedback||(holding?tr('Keep holding… let go when the last dot fills.','继续按住……最后一个点亮起时松开。'):tr(`Press and hold the cat for the whole ${nameOf(target)}: ${beats(target)}.`,`按住小猫，保持整个${nameOf(target)}：${beats(target)}。`));
+      message=feedback||(holding?tr('Keep holding… let go when the line reaches the end mark.','继续按住……线走到终点标记时松开。'):tr(`Press and hold the cookie for the whole ${nameOf(target)}: ${beats(target)}.`,`按住饼干，保持整个${nameOf(target)}：${beats(target)}。`));
       break;
     case 'tap':
       narration=tr('Now read a rhythm and clap it. Clap once for each note. A long note leaves a longer gap before the next clap.','现在读一个节奏，把它拍出来。每个音拍一下手。长音符后面，要等久一点再拍下一下。');
@@ -187,12 +188,18 @@ export default function RhythmLesson() {
     heading={names[step]} narration={narration} message={message} tone={tone} next={next}
     status={audio.error?tr('Sound could not start. Tap Listen to retry.','声音未能启动，请点“听一听”重试。'):''}>
     <div className="rhythm-visual">{visual}</div>
-    {clicks&&id!=='build'&&<div className={`rhythm-pulse ${id==='hold'?'is-hold':''}`} aria-label={tr('Beats','拍子')}>{dots.map((on,i)=><i key={i} className={on?'is-on':''}/>)}</div>}
+    {clicks&&id!=='build'&&id!=='hold'&&<div className="rhythm-pulse" aria-label={tr('Beats','拍子')}>{dots.map((on,i)=><i key={i} className={on?'is-on':''}/>)}</div>}
+    {/* Hold: a line grows while you hold, over a track marked with the note's beats; let go at the end mark. */}
+    {id==='hold'&&<div className="rhythm-hold-line" style={{'--beats':target} as CSSProperties} aria-hidden="true">
+      <div className="rhythm-hold-line__track">{Array.from({length:target},(_,i)=><span key={i} className="rhythm-hold-line__beat">{i+1}</span>)}</div>
+      <div className={`rhythm-hold-line__fill ${holding?'':correct?'is-right':heldMs>0?'is-off':''}`} style={{width:`${Math.min(heldMs/BEAT,target*1.5)*100/(target*1.5)}%`}}/>
+      <div className="rhythm-hold-line__end"/>
+    </div>}
     {id==='values'&&<p className="rhythm-pulse-caption">{tr('One click = one beat = one quarter note.','一声点击 = 一拍 = 一个四分音符。')}</p>}
     <div className="rhythm-controls">
       {tools}
       {id==='hold'&&<div className="rhythm-hold">
-        <button className={`rhythm-cat ${holding?'is-held':''}`} aria-label={tr('Hold the cat for the note length','按住小猫保持音符时值')} onPointerDown={e=>{e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);startHold(e.timeStamp)}} onPointerUp={e=>endHold(e.timeStamp)} onPointerCancel={cancelHold} onLostPointerCapture={()=>{if(holdStart.current!==null)cancelHold()}} onKeyDown={e=>{if((e.key===' '||e.key==='Enter')&&!e.repeat){e.preventDefault();startHold(e.timeStamp)}}} onKeyUp={e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();endHold(e.timeStamp)}}} onBlur={()=>{if(holdStart.current!==null)cancelHold()}}><svg viewBox="0 0 100 85" aria-hidden="true"><path d="M20 35L19 8L39 22Q50 18 61 22L81 8L80 35Q91 71 50 73Q9 71 20 35Z" fill="#e3c89e" stroke="#7c6245" strokeWidth="2"/><path d="M34 42v6m32-6v6M46 54l4 3 4-3M50 57v5" stroke="#493b2b" strokeWidth="3" fill="none"/><ellipse className="cat-paw" cx="28" cy="75" rx="13" ry="7" fill="#bc9361"/><ellipse className="cat-paw" cx="72" cy="75" rx="13" ry="7" fill="#bc9361"/></svg></button>
+        <CookieButton pressed={holding} aria-label={tr('Hold the cookie for the note length','按住饼干保持音符时值')} onPointerDown={e=>{e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);startHold(e.timeStamp)}} onPointerUp={e=>endHold(e.timeStamp)} onPointerCancel={cancelHold} onLostPointerCapture={()=>{if(holdStart.current!==null)cancelHold()}} onKeyDown={e=>{if((e.key===' '||e.key==='Enter')&&!e.repeat){e.preventDefault();startHold(e.timeStamp)}}} onKeyUp={e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();endHold(e.timeStamp)}}} onBlur={()=>{if(holdStart.current!==null)cancelHold()}}/>
       </div>}
       {id==='tap'&&<button className="rhythm-count-in" onClick={()=>{setTaps([]);setCorrect(false);setFeedback('');void audio.clicks(8)}}>{tr('Count me in','数拍开始')}</button>}
       {id==='tap'&&<button className="rhythm-clap" aria-label={tr('Clap','拍手')} onPointerDown={e=>{e.preventDefault();tap(e.timeStamp)}} onKeyDown={e=>{if((e.key===' '||e.key==='Enter')&&!e.repeat){e.preventDefault();tap(e.timeStamp)}}}><span aria-hidden="true">👏</span></button>}
