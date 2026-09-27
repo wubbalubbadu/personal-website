@@ -157,3 +157,11 @@
 .tone-plot-line.is-in{stroke:#4f8a45}.tone-plot-line.is-near{stroke:#c3881f}.tone-plot-line.is-off{stroke:#c54a3d}
 .tone-closeup .tone-graph{--plot-h:220px}
 .tone-dock{--plot-h:160px!important}
+
+/* The Mic button shows what it hears: while listening, a red ring swells with the input level
+   and a red dot pulses, so on and off are obvious at a glance and a dead mic shows as a flat ring. */
+.reader-workspace .pitch-row .pitch-start{position:relative;transition:box-shadow .08s linear}
+.reader-workspace .pitch-row .pitch-start.is-on{box-shadow:0 0 0 calc(2px + var(--level,0) * 8px) #e0574a55}
+.reader-workspace .pitch-row .pitch-start.is-on::after{content:"";position:absolute;top:5px;right:6px;width:7px;height:7px;border-radius:50%;background:#d23a2c;animation:pitchLive 1.4s ease-in-out infinite}
+.reader-workspace .pitch-row .pitch-start:not(.is-on){color:#8d8f96}
+@media(prefers-reduced-motion:reduce){.reader-workspace .pitch-row .pitch-start.is-on::after{animation:none}.reader-workspace .pitch-row .pitch-start{transition:none}}

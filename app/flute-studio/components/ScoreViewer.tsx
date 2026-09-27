@@ -12,7 +12,7 @@ import { useLanguage } from "../i18n/LanguageContext";
 import { useRecents } from "../lib/storage";
 import { deriveScoreEvents, resolveKeyAccidentals } from "./deriveScoreEvents";
 import type { ComposerInfo } from "../../../content/music-library";
-import {readScoreFacts,keySignatureFromFifths,keySignatureFromNotes,timeSignatureText,metronomeText,performanceTermText,tuckMetronomeMarks,spaceMetronomeMarks,METRONOME_TUCK_SHIFT,type ScoreFacts} from "./scoreTheory";
+import {readScoreFacts,keySignatureFromFifths,keySignatureFromNotes,timeSignatureText,metronomeText,performanceTermText,directionStyle,tuckMetronomeMarks,spaceMetronomeMarks,METRONOME_TUCK_SHIFT,type ScoreFacts} from "./scoreTheory";
 import {measureBeatOffsets,meterGrid} from "./rhythmGrid";
 import {usePracticeAudio,pitchFrequency} from "../PracticeAudio";
 import {PracticeIcon} from "./PracticeIcon";
@@ -553,7 +553,7 @@ group.forEach(note=>{const index=Number(note.dataset.event),event=scoreEvents[in
 if(unmetered||!plan)continue;
 if(!visible.sticks)continue;
 const onsets=new Map<number,number>();let measureOnset=0;for(let eventIndex=start;eventIndex<end;eventIndex++){onsets.set(eventIndex,measureOnset);measureOnset+=scoreEvents[eventIndex]?.d??0}
-const anchors:{t:number;x:number}=[];group.forEach(node=>{const eventIndex=Number(node.dataset.event),d=scoreEvents[eventIndex]?.d??0;if(d>0){const box=noteBox.get(node)!;anchors.push({t:onsets.get(eventIndex)??0,x:box.left-rootBox.left+box.width/2})}});const right=frame?.right??(measureBox?measureBox.right-rootBox.left:anchors.at(-1)!.x+34),
+const anchors:{t:number;x:number}[]=[];group.forEach(node=>{const eventIndex=Number(node.dataset.event),d=scoreEvents[eventIndex]?.d??0;if(d>0){const box=noteBox.get(node)!;anchors.push({t:onsets.get(eventIndex)??0,x:box.left-rootBox.left+box.width/2})}});const right=frame?.right??(measureBox?measureBox.right-rootBox.left:anchors.at(-1)!.x+34),
 // One stick per beat of the music actually in the bar. A bar can hold more
 // or less than its time signature (a pickup, the shortened last bar that
 // balances it, or a bar that genuinely runs long), so the count comes from
@@ -650,6 +650,9 @@ function addTheoryTargets(root:HTMLDivElement,noteKeys?:string[][],facts?:ScoreF
     const words=node.textContent?.trim()??"";
     const explained=performanceTermText(words,facts?.metronomes.find(entry=>entry.words===words));
     if(explained)tag(node,explained.title,explained.text);
+    // One style per kind of marking, whatever OSMD's own tempo-word list happened to catch.
+    const style=directionStyle(words);
+    if(style){node.setAttribute("font-weight",style==="tempo"?"bold":"normal");node.setAttribute("font-style",style==="tempo"?"normal":"italic")}
   });
 }
 
@@ -1551,12 +1554,28 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     const measure=Number(bar?.querySelector<SVGGElement>(".vf-stavenote[data-measure]")?.dataset.measure);
     return measure>0?measure:null;
   }
+  /**
+   * A term (mf, cresc., a fermata…) within a fingertip of the tap. The glyphs are small, so on a
+   * tablet a tap usually lands just beside one and would otherwise select the bar underneath.
+   */
+  function theoryNear(x:number,y:number){
+    const root=scoreRef.current;if(!root)return null;
+    const slop=14;let best:SVGElement|null=null,dist=Infinity;
+    root.querySelectorAll<SVGElement>("[data-theory]").forEach(el=>{
+      const r=el.getBoundingClientRect();if(!r.width&&!r.height)return;
+      const dx=Math.max(r.left-x,0,x-r.right),dy=Math.max(r.top-y,0,y-r.bottom),d=Math.hypot(dx,dy);
+      if(d<=slop&&d<dist){best=el;dist=d}
+    });
+    return best as SVGElement|null;
+  }
   function scoreClick(e:React.MouseEvent<HTMLDivElement>){
     if(annotating)return;
     if(config.story&&(e.target as Element).closest("[data-composer-card]")){setTheoryTip(null);setStoryCard(storyCard?null:{x:e.clientX,y:e.clientY});return}
     setStoryCard(null);
     const node=(e.target as Element).closest<SVGGElement>(".vf-stavenote[data-pitch]")??noteNear(e.clientX,e.clientY);
-    const theory=(e.target as Element).closest<SVGElement>("[data-theory]");
+    // Directly on a term, or near one when the tap isn't right on a note.
+    const onNote=!!(e.target as Element).closest(".vf-stavenote");
+    const theory=(e.target as Element).closest<SVGElement>("[data-theory]")??(theoryEnabled&&!onNote?theoryNear(e.clientX,e.clientY):null);
     if(theoryEnabled&&theory){setTheoryTip({title:theory.dataset.theoryTitle??"",text:theory.dataset.theory!,x:e.clientX,y:e.clientY});return}
     setTheoryTip(null);
     if(onPracticeNote){if(node)onPracticeNote(Number(node.dataset.event));else setFingerTip(null);return}

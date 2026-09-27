@@ -6,10 +6,12 @@ import {metronomeSamples, clapSamples} from './metronomeSamples';
 export function useRhythmAudio() {
   const ctx = useRef<AudioContext | null>(null), voices = useRef(new Map<AudioBufferSourceNode, GainNode>());
   const generation = useRef(0), frame = useRef(0);
+  // When the current `counted` run started and ends, on the audio clock (for timing taps against it).
+  const run = useRef<{start: number; end: number} | null>(null);
   const [active, setActive] = useState(-1), [error, setError] = useState(false), [elapsed, setElapsed] = useState(-1), [beat, setBeat] = useState(-1);
   const countClips = useRef(new Map<string, AudioBuffer>());
   const stop = useCallback(() => {
-    generation.current++; cancelAnimationFrame(frame.current); setActive(-1); setElapsed(-1); setBeat(-1);
+    generation.current++; run.current = null; cancelAnimationFrame(frame.current); setActive(-1); setElapsed(-1); setBeat(-1);
     const now = ctx.current?.currentTime ?? 0;
     voices.current.forEach((gain, source) => {
       gain.gain.cancelScheduledValues(now); gain.gain.setValueAtTime(1, now); gain.gain.linearRampToValueAtTime(0, now + .06);
@@ -102,7 +104,7 @@ export function useRhythmAudio() {
         if (click) voice(audio, metronomeSamples(audio.sampleRate), at, first ? 1.5 : .85);
         if (speak) voice(audio, clips[count] ?? clips[0], at, onsets.has(b * 1000) ? .12 : .05);
       }
-      const end = beats * beatSeconds;
+      const end = beats * beatSeconds; run.current = {start, end};
       const tick = () => {
         if (token !== generation.current) return;
         const time = audio.currentTime - start, playing = time < end;
@@ -120,5 +122,14 @@ export function useRhythmAudio() {
     const hide = () => { if (document.hidden) stop(); }; document.addEventListener('visibilitychange', hide);
     return () => { document.removeEventListener('visibilitychange', hide); stop(); const audio=ctx.current; ctx.current=null; void audio?.close().catch(() => {}); };
   }, [stop]);
-  return {play, stop, clicks, clap, counted, active, error, elapsed, beat};
+  /**
+   * Seconds into the current `counted` run as the listener hears it now (the audio clock minus the
+   * output latency), read at the moment of a tap rather than from the last animation frame. -1 when nothing runs.
+   */
+  const position = useCallback(() => {
+    const audio = ctx.current, r = run.current; if (!audio || !r) return -1;
+    const heard = audio.currentTime - (audio.outputLatency || audio.baseLatency || 0) - r.start;
+    return heard <= r.end + .5 ? heard : -1;
+  }, []);
+  return {play, stop, clicks, clap, counted, position, active, error, elapsed, beat};
 }

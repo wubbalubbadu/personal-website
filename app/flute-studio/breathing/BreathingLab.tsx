@@ -3,8 +3,10 @@ import {lazy,Suspense,useEffect,useRef,useState} from 'react';
 import Sequence from './Sequence';
 import {breathAt,counts,cueBank,patterns,type Settings} from './timing';
 import './breathing-lab.css';
+import {useLanguage} from '../i18n/LanguageContext';
 const BodyView=lazy(()=>import('./BodyView'));
 export default function BreathingLab(){
+ const {lang}=useLanguage();
  const [settings,setSettings]=useState<Settings>({pattern:'even',inhale:8,exhale:8,hold:0});
  const [bpm,setBpm]=useState(60),[playing,setPlaying]=useState(false),[beats,setBeats]=useState(0),[sound,setSound]=useState(true),[visual,setVisual]=useState('cycle'),[cueSeed,setCueSeed]=useState(0),[audioError,setAudioError]=useState(false);
  const audio=useRef<AudioContext|null>(null),nodes=useRef<OscillatorNode[]>([]),soundRef=useRef(sound);
@@ -39,7 +41,7 @@ export default function BreathingLab(){
   <text x="120" y="108" textAnchor="middle" className="bl-phase">{sample.phase}</text><text x="120" y="151" textAnchor="middle" className="bl-count">{playing?sample.beat:0}<tspan className="bl-total"> / {sample.phase==='Inhale'?sample.inhale:sample.phase==='Hold'?sample.hold:sample.exhale}</tspan></text>
  </svg>;
  return <main className="breathing-lab">
-  <header className="bl-header"><h1>Breathing Lab</h1></header>
+  <header className="bl-header"><h1>{lang==="zh"?"呼吸实验室":"Breathing Lab"}</h1></header>
   <div className="bl-workspace">
    <nav className="bl-exercises" aria-label="Breathing exercises">{patterns.map(p=><button key={p.id} aria-pressed={settings.pattern===p.id} onClick={()=>{stop();setSettings(s=>({...s,pattern:p.id}))}}><div><strong>{p.name}</strong><small>{(()=>{const first=counts({...settings,pattern:p.id},0),last=counts({...settings,pattern:p.id},7);return `In ${first.inhale}${p.id!=='even'?` → ${last.inhale}`:''} · Out ${first.exhale}${p.id!=='even'?` → ${last.exhale}`:''}`})()}</small></div></button>)}</nav>
    <section className="bl-stage" aria-label="Breathing visualization">

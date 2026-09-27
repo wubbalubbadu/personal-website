@@ -53,13 +53,13 @@
 .rhythm-lesson .rhythm-controls>.rhythm-clap{width:76px;height:76px;padding:0;border-radius:50%;background:#fff6e7;border:1px solid #e8cfaa;font-size:36px;line-height:1;touch-action:manipulation;user-select:none;-webkit-user-select:none;transition:transform .06s,background .12s}
 .rhythm-lesson .rhythm-controls>.rhythm-clap:hover:not(:disabled){background:#fdeed6}
 .rhythm-lesson .rhythm-controls>.rhythm-clap:active{transform:scale(.92)}
-/* Hold the note: the track is the note's length (2/3 of the width, one segment per beat, numbered);
-   the fill grows while you hold and can run past the end mark into the last third. */
-.rhythm-hold-line{position:relative;width:min(300px,80vw);height:34px;margin:0 auto;align-self:center;justify-self:center}
-.rhythm-hold-line__track{position:absolute;left:0;top:6px;width:66.667%;height:8px;display:flex;border-radius:4px;background:#ebe6db}
+/* Hold the note: --beat px per beat in every round. The track (the note's length, one numbered
+   segment per beat) is centred; the fill grows from its left edge and may run 1.5 beats past the end mark. */
+.rhythm-hold-line{--beat:min(58px,calc((100vw - 64px) / 7));position:relative;width:calc(var(--beat) * (var(--beats) + 3));height:34px;margin:0 auto;align-self:center;justify-self:center}
+.rhythm-hold-line__track{position:absolute;left:calc(var(--beat) * 1.5);top:6px;width:calc(var(--beat) * var(--beats));height:8px;display:flex;border-radius:4px;background:#ebe6db}
 .rhythm-hold-line__beat{flex:1;border-left:2px solid #fff;font-size:13px;color:#8d8a84;padding:14px 0 0 4px;line-height:1}
 .rhythm-hold-line__beat:first-child{border-left:0}
-.rhythm-hold-line__fill{position:absolute;left:0;top:6px;height:8px;border-radius:4px;background:#b9362e}
+.rhythm-hold-line__fill{position:absolute;left:calc(var(--beat) * 1.5);top:6px;width:calc(var(--beat) * var(--held,0));height:8px;border-radius:4px;background:#b9362e}
 .rhythm-hold-line__fill.is-right{background:#678956}
 .rhythm-hold-line__fill.is-off{background:#d08a5c}
-.rhythm-hold-line__end{position:absolute;left:66.667%;top:0;width:3px;height:20px;margin-left:-1px;border-radius:2px;background:#292a33}
+.rhythm-hold-line__end{position:absolute;left:calc(var(--beat) * (var(--beats) + 1.5));top:0;width:3px;height:20px;margin-left:-1px;border-radius:2px;background:#292a33}

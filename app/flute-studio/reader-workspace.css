@@ -785,12 +785,11 @@ html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document"
   box-shadow:0 14px 36px rgb(41 42 51 / 14%)!important;
   border-radius:12px;
 }
-.restored-reader .theory-tip{padding:11px 13px;max-width:290px}
-.restored-reader .theory-tip strong{
-  display:block;margin-bottom:4px;
-  font:600 13px Georgia,serif;color:var(--ink)!important;
-}
-.restored-reader .theory-tip p{margin:0;font-size:12px;line-height:1.45;color:#5c5f57!important}
+/* Term popovers (mf, crescendo…) look like the composer card (.story-card in viewer-fixes.css):
+   white, rounded 14px, system font, not the paper tint and serif title the other panels use. */
+.restored-reader .theory-tip{padding:14px 16px;max-width:300px;border-radius:14px;background:white!important;border-color:var(--line,#dcded5)!important;box-shadow:0 12px 30px #26352e2b!important;font:14px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",Arial,sans-serif!important}
+.restored-reader .theory-tip strong{display:block;margin-bottom:6px;font:650 15px/1.3 -apple-system,BlinkMacSystemFont,"SF Pro Text",Arial,sans-serif;letter-spacing:-.01em;color:#292a33!important}
+.restored-reader .theory-tip p{margin:0;font-size:13px;line-height:1.5;color:#4a4c55!important}
 .restored-reader .flute-tip strong{color:var(--ink)}
 .restored-reader .flute-tip small,
 .restored-reader .flute-tip .finger-diagram__legend{color:#6d7069}

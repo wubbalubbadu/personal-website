@@ -10,7 +10,9 @@ export function useToneSession(targets: ToneTarget[]) {
   const [snapshot, setSnapshot] = useState<ToneSnapshot>({cursor:0,live:null,attempts:[],heard:false,cursorAfter:false});
   const [status, setStatus] = useState<'idle' | 'starting' | 'listening' | 'paused'>('idle');
   const [error, setError] = useState('');
-  const resources = useRef<{ stream: MediaStream; source: MediaStreamAudioSourceNode; filter: BiquadFilterNode; analyser: AnalyserNode } | null>(null);
+  // How loud the mic is right now (RMS, 0 to about 0.3), for the live ring on the Mic button.
+  const [level, setLevel] = useState(0);
+  const resources = useRef<{ stream: MediaStream; source: MediaStreamAudioSourceNode; filter: BiquadFilterNode; analyser: AnalyserNode; sink: GainNode } | null>(null);
   const animation = useRef(0), generation = useRef(0), origin = useRef<number | null>(null);
   const wake = useRef<WakeLockSentinel | null>(null);
   const publish = useCallback(() => setSnapshot(session.current.snapshot()), []);
@@ -19,8 +21,8 @@ export function useToneSession(targets: ToneTarget[]) {
     cancelAnimationFrame(animation.current);
     const r = resources.current;
     r?.stream.getTracks().forEach(t => t.stop());
-    r?.source.disconnect(); r?.filter.disconnect(); r?.analyser.disconnect();
-    resources.current = null;
+    r?.source.disconnect(); r?.filter.disconnect(); r?.analyser.disconnect(); r?.sink.disconnect();
+    resources.current = null; setLevel(0);
     void wake.current?.release(); wake.current = null;
   }, []);
   const pause = useCallback(() => { release(); session.current.pause(); publish(); setStatus('paused'); }, [release, publish]);
@@ -38,11 +40,15 @@ export function useToneSession(targets: ToneTarget[]) {
       const source = context.createMediaStreamSource(acquired), filter = context.createBiquadFilter(), analyser = context.createAnalyser();
       filter.type = 'highpass'; filter.frequency.value = 150; filter.Q.value = .7;
       analyser.fftSize = 4096;
-      source.connect(filter).connect(analyser);
-      resources.current = {stream:acquired,source,filter,analyser};
+      // Safari only runs nodes that lead to an output: an analyser left dangling reads silence on
+      // iPad. A muted gain to the speakers keeps it running without sending the mic anywhere audible.
+      const sink = context.createGain(); sink.gain.value = 0;
+      source.connect(filter).connect(analyser).connect(sink).connect(context.destination);
+      resources.current = {stream:acquired,source,filter,analyser,sink};
       if (origin.current === null) origin.current = performance.now();
       const data = new Float32Array(4096);
-      let last = -Infinity;
+      let last = -Infinity, heardAnything = false;
+      const opened = performance.now();
       setStatus('listening');
       if ('wakeLock' in navigator) void navigator.wakeLock.request('screen').then(lock => {
         if (token !== generation.current) void lock.release(); else wake.current = lock;
@@ -52,6 +58,12 @@ export function useToneSession(targets: ToneTarget[]) {
         if (now - last >= 30) {
           last = now;
           analyser.getFloatTimeDomainData(data);
+          let sum = 0, peak = 0;
+          for (let i = 0; i < data.length; i += 4) { const v = data[i]; sum += v * v; if (Math.abs(v) > peak) peak = Math.abs(v); }
+          setLevel(Math.round(Math.sqrt(sum / (data.length / 4)) * 200) / 200);
+          // A real mic is never exactly 0, even in a quiet room. Pure zeros for 2 s means no input is arriving.
+          if (peak > 0) { if (!heardAnything) setError(e => e === 'silent' ? '' : e); heardAnything = true; }
+          else if (!heardAnything && now - opened > 2000) { setError('silent'); }
           // Keep the gate identical across breaths and explicit restarts.
           // Periodicity checks plus onset confirmation reject transient noise.
           const estimate = detectPitch(data, context.sampleRate, TONE_MIN_RMS);
@@ -74,7 +86,7 @@ export function useToneSession(targets: ToneTarget[]) {
     document.addEventListener('visibilitychange', hidden);
     return () => { document.removeEventListener('visibilitychange', hidden); release(); };
   }, [pause, release]);
-  return { ...snapshot, status, error, start, pause,
+  return { ...snapshot, status, error, level, start, pause,
     select: (index: number) => { session.current.select(index); publish(); },
     clear: () => { session.current.clear(); publish(); },
     firstTry: (targetId: number) => session.current.firstTry(targetId),

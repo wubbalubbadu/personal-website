@@ -16,6 +16,20 @@ Updated September 26, 2026 from the pasted notes and current local source, inclu
 - A practice routine checklist with links to pieces/exercises. This is not yet an automatic routine runner.
 - Long-tone close-up mode. Extending it to ordinary pieces is a separate idea.
 
+## Bugs from iPad testing (September 27, before sharing with family and friends)
+
+Found while testing on iPad. Items marked *fixed, verify* were changed in code but could not be checked on a real iPad from the desktop.
+
+- [ ] **Pitch detection hears nothing on iPad** *(fixed, verify)*. Likely cause: Safari only processes audio nodes that lead to an output, and the mic analyser was left unconnected, so it read silence. The analyser now feeds a muted gain to the speakers (`lib/useToneSession.ts`, `PracticeToolDock.tsx`). If it is still silent, the next suspect is the shared AudioContext being created before the mic at a different sample rate than the iPad microphone; try creating the mic graph on a context opened after `getUserMedia`. The Mic button now shows a live level ring, and after 2 seconds of pure silence the readout says the mic isn't sending sound, which tells these two cases apart.
+- [ ] **Mic on/off was hard to see** *(fixed, verify)*: the Mic button now has a red ring that swells with the input level plus a pulsing dot while listening, and turns grey when paused.
+- [ ] **Can't mark up while the score is playing.** Not reproduced yet. Nothing in `AnnotationLayer` checks playback, so suspects are things playback does to the page: page turns or scrolling that follow the playhead, or the marks layer being re-measured (`layoutVersion`) mid-stroke. Reproduce on iPad: start playback, open Mark Up, draw. If marking during playback should be off by design instead, grey the Mark Up tools while playing rather than silently ignoring strokes.
+- [ ] **The selected measure stays green during playback, and it's distracting.** Needs a different design for "where playback starts / where it is now" rather than a permanent green bar. Design first.
+- [ ] **Music terms (mf, crescendo…) were hard to tap: the tap selected the bar instead** *(fixed, verify)*. Terms now accept a tap within about 14 px of the glyph, unless the tap is directly on a note.
+- [ ] **Breathing Lab has no Chinese.** The page title is translated now; the exercise names, controls and cues are still English only.
+- [ ] **Composer cards for the rest of the library.** Gluck and Rimsky-Korsakov were added. Pop, K-pop and folk pieces have no card; decide whether they should (artist notes, or nothing for "Traditional").
+- [ ] **Theory lesson 3, Read and play:** the 6/8 round and the new tap judging (every tap must land near its own note) have not been tried on iPad.
+- [ ] **Theory housekeeping:** move lesson 2 onto EngravedRow like lesson 3. (The temporary engraved-preview page is deleted.)
+
 ## Testing to-dos: existing work, not requests to rebuild
 
 - [ ] **iPad regression pass:** write with a resting palm, tap notes with the drone off/on, edit and move annotations, and use settings controls with touch. Record a specific reproduction only if a problem remains.

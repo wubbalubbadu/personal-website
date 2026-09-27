@@ -129,7 +129,3 @@
 .theory-memory-methods button:nth-child(2){animation-delay:.1s}.theory-memory-methods button:nth-child(3){animation-delay:.2s}
 .theory-memory-methods button[aria-pressed=true]{background:transparent;border-color:#b58745}
 .theory-memory-methods button:hover{border-color:#b58745}
-/* The course index fits in one screen; the lesson owns its review scroll. */
-.theory-home{height:100dvh;min-height:0;max-width:1100px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto minmax(0,1fr);gap:12px 22px;padding:76px 30px 30px;overflow:hidden}
-.theory-home>h1,.theory-home>p{grid-column:1/-1}.theory-home>h1{margin:8px 0 0}.theory-home .theory-course{margin-top:16px;align-self:start}.theory-home .theory-course>svg{height:clamp(160px,30vh,280px)}.theory-home .theory-course>div{padding:18px;align-items:flex-start}.theory-home .theory-course h2{font-size:17px}.theory-home .theory-course p{font-size:13px}
-@media(max-width:600px){.theory-home{grid-template-columns:1fr;grid-template-rows:auto auto minmax(0,1fr) minmax(0,1fr);gap:8px;padding:66px 18px 12px}.theory-home .theory-course{height:100%;margin:0;display:grid;grid-template-rows:minmax(0,1fr) auto}.theory-home .theory-course>svg{height:100%;min-height:0}.theory-home .theory-course>div{padding:10px 14px}.theory-home>h1{font-size:24px}.theory-home .theory-course h2{font-size:16px}}

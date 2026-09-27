@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState, type ComponentProps } from 'react';
+import { useEffect, useMemo, useRef, useState, type ComponentProps, type CSSProperties } from 'react';
 import { ScoreViewer, type ScoreMarksContext } from '../../components/ScoreViewer';
 import { useToneSession } from '../../lib/useToneSession';
 import { toneFinding, type ToneAttempt } from '../../lib/toneSession';
@@ -79,6 +79,7 @@ export function TonePracticeReader({groups:providedGroups,pattern,zh,...reader}:
   const liveCents=session.live?Math.round(median(session.live.frames.slice(-6).map(f=>centsFromMidi(f.hz,session.live!.target.midi)))):0;
   const liveTone=Math.abs(liveCents)<=10?'green':Math.abs(liveCents)<=25?'amber':'red';
   const readout=session.error==='permission'?(zh?'请允许使用麦克风，然后点麦克风':'Allow the microphone, then tap Mic')
+    :session.error==='silent'?(zh?'麦克风没有收到声音。检查浏览器的麦克风权限，或关掉再打开麦克风':'The microphone isn’t sending any sound. Check the browser’s mic permission, or turn Mic off and on')
     :session.error?(zh?'无法打开麦克风':'Couldn’t open the microphone')
     :session.status==='starting'?(zh?'正在打开麦克风…':'Opening microphone…')
     :running?(session.live?null:(zh?'从标记处开始吹，或点任意音符':'Play from the marker, or tap any note'))
@@ -86,7 +87,7 @@ export function TonePracticeReader({groups:providedGroups,pattern,zh,...reader}:
     :(zh?'已暂停':'Paused');
   const pitchRow=enabled&&<div className="pitch-row"><div className="pitch-row-surface" role="toolbar" aria-label={zh?'音准工具':'Pitch tools'}>
     {/* A mic switch, like Metronome: lit while listening. Opening Pitch turns it on; this only pauses, for talking or noise between takes. */}
-    <button className={`pitch-start has-tip ${running?'is-on':''}`} aria-pressed={running} disabled={!targets.length} data-tip={running?(zh?'正在聆听 · 点一下暂停':'Listening · tap to pause'):(zh?'已暂停 · 点一下继续聆听':'Paused · tap to listen')} onClick={toggleListening}><PracticeIcon name="mic"/>{zh?'麦克风':'Mic'}</button>
+    <button className={`pitch-start has-tip ${running?'is-on':''}`} style={{'--level':Math.min(1,session.level*8)} as CSSProperties} aria-pressed={running} disabled={!targets.length} data-tip={running?(zh?'正在聆听 · 点一下暂停':'Listening · tap to pause'):(zh?'已暂停 · 点一下继续聆听':'Paused · tap to listen')} onClick={toggleListening}><PracticeIcon name="mic"/>{zh?'麦克风':'Mic'}</button>
     {readout===null&&session.live
       ?<span className="pitch-readout is-live" aria-live="off"><b>{session.live.target.pitch}</b><span>{((session.live.frames.at(-1)!.at-session.live.startedAt)/1000).toFixed(1)}s</span><span className={`grade-${liveTone}`}>{liveCents>0?`↑ ${liveCents}¢`:liveCents<0?`↓ ${-liveCents}¢`:'0¢'}</span></span>
       :<span className={`pitch-readout ${session.error?'is-error':''}`} role="status">{readout}</span>}

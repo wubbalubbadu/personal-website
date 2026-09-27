@@ -214,7 +214,7 @@ const capitalize=(text:string)=>text[0].toUpperCase()+text.slice(1);
  * word gets its usual speed, nudged by assai/molto/poco the way a player
  * would read them.
  */
-export function performanceTermText(raw:string,written?:MetronomeFacts){
+function findTerms(raw:string){
   const words=raw.toLowerCase().replace(/[(),;:]/g," ").split(/\s+/).filter(Boolean);
   const found:{phrase:string;term:Term}[]=[];
   for(let i=0;i<words.length;){
@@ -222,6 +222,26 @@ export function performanceTermText(raw:string,written?:MetronomeFacts){
     if(phrase){found.push({phrase,term:TERMS[phrase]});i+=phrase.split(" ").length}
     else i++;
   }
+  return {words,found};
+}
+
+/** Words that set a section's speed or character without a textbook BPM of their own. */
+const TEMPO_HEADINGS=new Set(["rubato","mouvementé","a tempo","tempo primo","tempo i","au mouvement","au mouvᵗ","mouvᵗ"]);
+/**
+ * How a text marking is printed, by the engraving convention: words that set the tempo of a
+ * section ("Très modéré", "Un peu mouvementé", "Rubato", "a tempo") in bold upright, and words that
+ * change pace or expression along the way ("Retenu", "Cédez", "rit.", "cresc.", "dolce") in italic.
+ * OSMD instead bolds only the tempo words on its own list and leaves the rest plain. Null when the
+ * glossary knows none of the words (a title, a lyric, a rehearsal note), which are left alone.
+ */
+export function directionStyle(raw:string):"tempo"|"expression"|null{
+  const known=findTerms(raw).found.filter(({phrase})=>!CONNECTIVES.has(phrase));
+  if(!known.length||known.every(({phrase})=>DYNAMICS.has(phrase)))return null;
+  return known.some(({phrase,term})=>term.bpm||TEMPO_HEADINGS.has(phrase))?"tempo":"expression";
+}
+
+export function performanceTermText(raw:string,written?:MetronomeFacts){
+  const {words,found}=findTerms(raw);
   if(!found.length||found.every(({phrase})=>CONNECTIVES.has(phrase)))return null;
   const lines=found.map(({phrase,term})=>`${DYNAMICS.has(phrase)?phrase:capitalize(phrase)}: ${term.meaning}.`);
   const tempo=found.find(({term})=>term.bpm);

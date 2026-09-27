@@ -66,15 +66,8 @@
 .measure-total.is-off{fill:#b36a3d}
 /* Page 7 taps on CookieButton (../cookie-button.css). */
 .measures-score{margin:48px 0!important;font:700 28px var(--font,sans-serif);color:#292a33!important}
-/* Answers that are phrases, not numbers: one per line in Cookie's bubble. */
-.lesson-actions .measures-choices.is-stacked{flex-direction:column;align-items:stretch}
-.lesson-shell .lesson-actions .measures-choices.is-stacked button{text-align:left;font-weight:500}
 /* Page 3 hint: where the next beat goes, dashed, until you draw it. */
 .beat-hint{stroke:#d65b43;stroke-width:2;stroke-dasharray:5 5;opacity:.6}
-/* With phrase answers the bubble wraps: message on top, answers underneath, Next on the right. */
-.lesson-bubble:has(.measures-choices.is-stacked){flex-wrap:wrap}
-.lesson-shell .lesson-bubble:has(.measures-choices.is-stacked)>p{flex-basis:100%}
-.lesson-bubble:has(.measures-choices.is-stacked) .lesson-actions{flex:1;justify-content:space-between;align-items:flex-end}
 /* Page 7: a mark where each tap landed; judged once every note has one. */
 .tap-mark{fill:#9a9ca3;animation:sig-in .12s ease both}
 .tap-mark.is-on{fill:#678956}

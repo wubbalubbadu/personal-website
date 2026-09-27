@@ -241,7 +241,10 @@ export default function PracticeToolDock() {
       highPass.Q.value = 0.7;
       analyser.fftSize = 4096;
       analyser.smoothingTimeConstant = 0;
-      source.connect(highPass).connect(analyser);
+      // Safari only runs nodes that lead to an output; a muted gain keeps the analyser live on iPad.
+      const sink = context.createGain();
+      sink.gain.value = 0;
+      source.connect(highPass).connect(analyser).connect(sink).connect(context.destination);
 
       candidateMidi.current = null;
       candidateCount.current = 0;

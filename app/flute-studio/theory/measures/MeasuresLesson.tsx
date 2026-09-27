@@ -6,7 +6,6 @@ import EngravedRow,{layoutRow,type RowNote,type RowLayout,type Meter} from '../E
 import {noteY} from '../model';
 import {useRhythmAudio} from '../rhythm/useRhythmAudio';
 import {useCourseProgress} from '../useCourseProgress';
-import {assessTaps} from '../rhythm/rhythmModel';
 import BarLineDrawing from './BarLineDrawing';
 import CookieButton from '../CookieButton';
 import {makeRhythm,makeBeatQuestions,measureTotals,beamGroups,type Rhythm,type BeatQuestion} from './rhythms';
@@ -117,7 +116,7 @@ export default function MeasuresLesson(){
   // Page 4 has three parts: switch the top number, hear music in 3, then two questions.
   const [top,setTop]=useState(4),[triedTops,setTriedTops]=useState<number[]>([4]),[topPhase,setTopPhase]=useState<'switch'|'birthday'|'quiz'>('switch'),[heardBirthday,setHeardBirthday]=useState(false),[topQ,setTopQ]=useState(0),[topPick,setTopPick]=useState<number|null>(null),[topQs,setTopQs]=useState<TopQuestion[]>(makeTopQuestions);
   // Page 5: bottom number.
-  const [bottomMeter,setBottomMeter]=useState<'4/4'|'2/2'|'6/8'>('4/4'),[triedBottoms,setTriedBottoms]=useState<string[]>(['4/4']),[symbol,setSymbol]=useState(false),[bottomQuiz,setBottomQuiz]=useState(false),[bottomPick,setBottomPick]=useState<number|null>(null);
+  const [bottomMeter,setBottomMeter]=useState<'4/4'|'2/2'|'6/8'>('4/4'),[triedBottoms,setTriedBottoms]=useState<string[]>(['4/4']),[symbol,setSymbol]=useState(false),[bottomQuiz,setBottomQuiz]=useState(false),[bottomPick,setBottomPick]=useState<number|null>(null),[bottomQ,setBottomQ]=useState(0);
   // Page 2: listen with counts, then four "which beat?" questions.
   const [p2Heard,setP2Heard]=useState(false),[p2Quiz,setP2Quiz]=useState(false),[p2Qs,setP2Qs]=useState<BeatQuestion[]>([]),[p2Q,setP2Q]=useState(0),[p2Pick,setP2Pick]=useState<number|null>(null);
   // Page 3: Cookie marks the beats of one measure, one at a time; then you mark two measures with a pencil stroke.
@@ -141,7 +140,7 @@ export default function MeasuresLesson(){
     if(target==='beats'){setP3Phase('demo');setP3Demo(0);setP3Try(Math.floor(Math.random()*STICK_TRIES.length));setP3Sticks([]);setP3Miss(null);setP3Tapped(false);setP3Misses(0);setP3Hint(null);setP3Revealed(false)}
     if(target==='bars'){setP6Rounds([makeRhythm(4,3,'mixed'),makeRhythm(4,3,'eighths'),makeRhythm(3,4,'eighths')]);setP6Round(0);setP6Bars([])}
     if(target==='top'){setTopPhase('switch');setTopQs(makeTopQuestions());setTopQ(0);setTopPick(null)}
-    if(target==='bottom'){setBottomQuiz(false);setBottomPick(null)}
+    if(target==='bottom'){setBottomQuiz(false);setBottomPick(null);setBottomQ(0)}
     if(target==='clap'){setP7Round(0);setP7Taps([]);setP7Result(null);setP7Mode(null);setP7Waiting(false)}
   }
   // Timers for page 1's bar lines and page 7's pause before the count-in.
@@ -231,20 +230,22 @@ export default function MeasuresLesson(){
 
   else if(id==='bottom'){
   if(bottomQuiz){
-    // One question on a time signature they haven't seen: what do both numbers of 9/16 mean?
-    const CHOICES=[tr('9 beats, and a sixteenth note gets one beat','9 拍，十六分音符算一拍'),tr('16 beats, and a ninth note gets one beat','16 拍，九分音符算一拍'),tr('9 beats, and a quarter note gets one beat','9 拍，四分音符算一拍')];
-    const solved=bottomPick===0;
+    // Two short questions on a time signature they haven't seen: the top number, then the bottom number of 9/16.
+    const Q=[{ask:tr('This one is 9/16. How many beats are in each measure?','这个是 9/16。每个小节有几拍？'),choices:[{label:'9',right:true},{label:'16',right:false}],
+        yes:tr('Yes, the top number: 9 beats.','对，看上方数字：9 拍。'),no:tr('The top number is the beat count.','上方数字才是拍数。')},
+      {ask:tr('And which note gets one beat?','那么哪种音符算一拍？'),choices:[{label:tr('Quarter','四分音符'),right:false},{label:tr('Eighth','八分音符'),right:false},{label:tr('Sixteenth','十六分音符'),right:true}],
+        yes:tr('Yes! A 16 on the bottom means the sixteenth note gets one beat, so these 9 sixteenths fill the measure.','对！下方是 16，表示十六分音符算一拍，所以这 9 个十六分音符正好填满一个小节。'),
+        no:tr('The bottom number names the note: 4 is the quarter note, 8 the eighth note, so 16 is…','下方数字表示音符：4 是四分音符，8 是八分音符，那 16 就是……')}][bottomQ];
+    const picked=bottomPick===null?null:Q.choices[bottomPick],solved=!!picked?.right,lastQ=bottomQ===1;
     narration=tr('Now a time signature you haven’t seen. Read the top number, then the bottom number.','来看一个你没见过的拍号。先读上方数字，再读下方数字。');
-    message=bottomPick===null?tr('What does 9/16 mean?','9/16 是什么意思？')
-      :solved?tr('Yes! The top 9 is the number of beats, and the bottom 16 means the sixteenth note gets one beat.','对！上面的 9 是拍数，下面的 16 表示十六分音符算一拍。')
-      :bottomPick===1?tr('The top number is the beats. And the bottom number names a note: 16 is the sixteenth note (there’s no ninth note).','上方数字才是拍数。下方数字表示一种音符：16 就是十六分音符（没有九分音符）。')
-      :tr('The bottom number names the note that gets one beat: 4 is the quarter note, so 16 is the sixteenth note.','下方数字表示哪种音符算一拍：4 是四分音符，那 16 就是十六分音符。');
-    tone=bottomPick===null?null:solved?'correct':'wrong';
-    ready=solved;
-    extra=<div className="measures-choices is-stacked" role="group" aria-label={tr('What 9/16 means','9/16 的意思')}>{CHOICES.map((c,k)=><button key={k} className={bottomPick===k?(k===0?'is-correct':'is-wrong'):''}
-      onClick={()=>{setBottomPick(k);if(k===0)void audio.counted({values:NINE_SIXTEEN.map(n=>n.v),pitches:rhythmPitches(NINE_SIXTEEN),top:9,beatUnit:.25,secondsPerQuarter:1.6,speak:false})}}>{c}</button>)}</div>;
+    message=picked===null?Q.ask:solved?Q.yes:Q.no;
+    tone=picked===null?null:solved?'correct':'wrong';
+    ready=solved&&lastQ;
+    if(solved&&!lastQ)pageNext={label:tr('Next question →','下一题 →'),ready:true,onClick:()=>{setBottomQ(1);setBottomPick(null)}};
+    extra=<div className="measures-choices" role="group" aria-label="9/16">{Q.choices.map((c,k)=><button key={k} className={bottomPick===k?(c.right?'is-correct':'is-wrong'):''}
+      onClick={()=>{setBottomPick(k);if(c.right)blink(lastQ?'bottom':'top');if(c.right&&lastQ)void audio.counted({values:NINE_SIXTEEN.map(n=>n.v),pitches:rhythmPitches(NINE_SIXTEEN),top:9,beatUnit:.25,secondsPerQuarter:1.6,speak:false})}}>{c.label}</button>)}</div>;
     scene=<EngravedRow key="nine-sixteen" clef={false} meter={{top:9,bottom:16}} notes={NINE_SIXTEEN} beams={beamGroups(NINE_SIXTEEN,.75)} active={audio.active}
-      below={solved?counts({notes:NINE_SIXTEEN,beatUnit:.25,top:9,litBeat:audio.beat}):undefined} label="9/16"/>;
+      className={flash?`is-flash-${flash}`:''} below={solved&&lastQ?counts({notes:NINE_SIXTEEN,beatUnit:.25,top:9,litBeat:audio.beat}):undefined} label="9/16"/>;
   }else{
       // Each example is one measure of the note that gets the beat, so the bottom number is easy to see.
       const EXAMPLES={'4/4':{m:{top:4,bottom:4},unit:1,notes:quarters(4)},'2/2':{m:{top:2,bottom:2},unit:2,notes:[{v:2},{v:2}] as RowNote[]},'6/8':{m:{top:6,bottom:8},unit:.5,notes:Array.from({length:6},()=>({v:.5})) as RowNote[]}};
@@ -445,21 +446,24 @@ export default function MeasuresLesson(){
     // The red note follows the clock (where you should be), not your taps. The count-in is the first r.top events.
     const clockNote=audio.active>=r.top?audio.active-r.top:-1,starts=onsets(r.notes);
     // Each tap leaves a mark where it landed in time. Once all are in, each is green if it was close to its note, orange if early or late.
-    const closeEnough=Math.max(.2,.15/r.spq);
+    // One rule for the marks and for passing: every tap within this many quarter notes of its own note (at least 150 ms).
+    const closeEnough=Math.max(.22,.15/r.spq),onTime=(t:{at:number},i:number)=>i<starts.length&&Math.abs(t.at-starts[i])<=closeEnough;
     scene=<EngravedRow key={`p7-${p7Round}`} clef={false} notes={r.notes} bars={r.bars} beams={r.beams} meter={{top:r.top,bottom:r.bottom}}
       active={p7Mode==='clap'?clockNote:audio.active} below={counts({notes:r.notes,beatUnit:r.unit,top:r.top,litBeat})} label={tr('Rhythm to tap','要点的节奏')}>
       {layout=><>{p7Taps.map((t,i)=>{
-        const judged=p7Taps.length===values.length,on=i<starts.length&&Math.abs(t.at-starts[i])<=closeEnough;
-        const total=starts[starts.length-1]+values[values.length-1],x=layout.beatX(Math.max(0,Math.min(total,t.at)));
+        const judged=p7Taps.length===values.length,on=onTime(t,i);
+        const total=starts[starts.length-1]+values[values.length-1],x=layout.beatX(Math.max(0,Math.min(total,t.at)))-(t.at<0?16:0);
         return <circle key={i} cx={x} cy={noteY(8)-22} r="7" className={`tap-mark ${judged?(on?'is-on':'is-off'):''}`}/>;
       })}</>}
     </EngravedRow>;
     const tap=(time:number)=>{
-      if(p7Mode!=='clap'||p7Waiting||p7Result!==null)return;void audio.clap();
-      // Where in the rhythm (in quarter notes) this tap landed, from the playback clock, after the count-in.
-      const at=audio.elapsed<0?Infinity:audio.elapsed/r.spq-r.top*r.unit;
+      // Only while the count runs: read the audio clock at the tap itself.
+      const heard=audio.position();
+      if(p7Mode!=='clap'||p7Waiting||p7Result!==null||heard<0)return;void audio.clap();
+      // Where in the rhythm (in quarter notes) this tap landed, after the count-in. Taps during the count-in land before 0: early.
+      const at=heard/r.spq-r.top*r.unit;
       const taps=[...p7Taps,{time,at}];setP7Taps(taps);
-      if(taps.length===values.length)setP7Result(assessTaps(taps.map(t=>t.time),values,r.spq*1000));
+      if(taps.length===values.length)setP7Result(taps.every(onTime));
     };
     const play={top:r.top,beatUnit:r.unit,secondsPerQuarter:r.spq};
     tools=<>

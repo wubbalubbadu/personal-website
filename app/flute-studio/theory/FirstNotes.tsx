@@ -35,14 +35,14 @@ export default function FirstNotes(){
   const [method,setMethod]=useState<number|null>(null),[sceneRun,setSceneRun]=useState(0);
   const [edits,setEdits]=useState<Record<string,number>>({}),[keyboardPitch,setKeyboardPitch]=useState<number|null>(null);
   const [melody,setMelody]=useState<(number|null)[]>(Array(TWINKLE.length).fill(null)),[selected,setSelected]=useState(0);
-  const [quiz,setQuiz]=useState<Quiz>(emptyQuiz()),[passed,setPassed]=useState(false);
+  const [quiz,setQuiz]=useState<Quiz>(emptyQuiz());
   const [notePos,setNotePos]=useState(3),[clef,setClef]=useState<ClefName>('treble'),[seenOtherClef,setSeenOtherClef]=useState(false);
   const note=(p:number)=>`${notationPitch(p).name} (${SOLFEGE[notationPitch(p).name]})`;
   const dots=[tr('Staff','五线谱'),tr('Spaces','间'),tr('Notes','音符'),tr('Clef','谱号'),tr('Other clefs','其他谱号'),tr('Note names','音名'),tr('Finding notes','找音'),tr('Practice','练习'),tr('Ledger lines','加线'),tr('Twinkle','小星星'),tr('Read new notes','认新音'),tr('Free play','自由写')];
 
   function go(next:number){
     audio.stop();setData(old=>({...old,step:next}));
-    setResult(null);setHighlight(null);setMethod(null);setSceneRun(v=>v+1);setEdits({});setKeyboardPitch(null);setSelected(0);setPassed(false);
+    setResult(null);setHighlight(null);setMethod(null);setSceneRun(v=>v+1);setEdits({});setKeyboardPitch(null);setSelected(0);
     setNotePos(3);setClef('treble');setSeenOtherClef(false);
     const target=FLOW[next];
     setQuiz(emptyQuiz(target==='practice'?makePractice():target==='check'?makeCheck():[]));
@@ -65,7 +65,7 @@ export default function FirstNotes(){
     const firstTry=quiz.firstTry+(correct&&!quiz.missed?1:0);
     setQuiz(old=>({...old,correct,missed:old.missed||!correct,firstTry,hint}));
     const last=quiz.round===quiz.questions.length-1;
-    if(correct&&last&&id==='check'&&firstTry>=3){setPassed(true);course.finish('staff');setData(old=>({...old,completed:true}))}
+    if(correct&&last&&id==='check'){course.finish('staff');setData(old=>({...old,completed:true}))}
   }
   const nextRound=()=>{audio.stop();setQuiz(old=>({...old,round:old.round+1,correct:null,missed:false,hint:''}))};
 
@@ -156,17 +156,15 @@ export default function FirstNotes(){
     case 'practice':
     case 'check':{
       const isCheck=id==='check';
-      narration=isCheck?tr('Last one: notes on ledger lines, above and below the staff. Get 3 of 4 on the first try to finish the lesson.','最后一关：五线谱上下加线上的音。第一次就答对 4 题中的 3 题，就完成课程。')
+      narration=isCheck?tr('Last one: notes on ledger lines, above and below the staff.','最后一关：五线谱上下加线上的音。')
         :tr('Time to use those shortcuts. Find each note from the G line, or with FACE and E G B D F.','来用刚才的方法吧。从 G 线出发，或者用 FACE 和 E G B D F 来找音。');
       if(!q)break;
       const ask=q.kind==='place'?tr(`Put ${note(q.position)} on the staff. Tap or drag.`,`把 ${note(q.position)} 放到谱上。点或拖动。`)
         :isCheck&&quiz.round>0&&!quiz.hint?tr('And this one?','那这个呢？'):tr('What’s this note?','这个音叫什么？');
-      message=quiz.correct?(last?(isCheck?(passed?tr('You did it! You can read treble clef notes now, even on ledger lines.','你做到了！现在你会读高音谱号的音了，连加线上的音也会。')
-          :tr(`You got ${quiz.firstTry} of 4 on the first try. Want a new set? Aim for 3.`,`第一次答对了 ${quiz.firstTry} 题，共 4 题。再来一组吧？争取答对 3 题。`))
+      message=quiz.correct?(last?(isCheck?tr('You did it! You can read treble clef notes now, even on ledger lines.','你做到了！现在你会读高音谱号的音了，连加线上的音也会。')
           :tr('All six done, nice work!','六题都做完了，真棒！')):tr('That’s right!','答对了！')):quiz.hint?`${quiz.hint} ${ask}`:ask;
-      tone=quiz.correct?(isCheck&&last&&!passed?null:'correct'):quiz.correct===false?'wrong':null;
+      tone=quiz.correct?'correct':quiz.correct===false?'wrong':null;
       if(quiz.correct&&!last)next={label:tr('Next question →','下一题 →'),ready:true,onClick:nextRound,onSkip:()=>go(step+1)};
-      else if(quiz.correct&&isCheck&&!passed)next={label:tr('New set →','再来一组 →'),ready:true,onClick:()=>setQuiz(emptyQuiz(makeCheck()))};
       else if(quiz.correct)markDone();
       scene=<>
         <NotePractice key={`${quiz.questions.length}-${quiz.round}-${q.position}`} question={q} locked={quiz.correct===true} zh={zh} onAnswer={answer} onHear={p=>hear(p)}/>
