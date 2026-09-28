@@ -30,7 +30,6 @@ export default function TechniqueRoadmapPage(){
 
   return <main className="roadmap-page"><div className="roadmap-page__content">
     <header className="roadmap-header">
-      <p>{t.roadmap.eyebrow}</p>
       <div><h1>{t.roadmap.title}</h1></div>
     </header>
     <div className="roadmap-progress"><div className="roadmap-progress__track"><span style={{width:totalSkills?`${Math.round(learned.length/totalSkills*100)}%`:"0%"}}/></div><small>{t.roadmap.learnedCount(learned.length,totalSkills)}</small></div>

@@ -1,5 +1,6 @@
 'use client';
 import {useRef,useState,type PointerEvent} from 'react';
+import {usePhoneNotation} from '../usePhoneNotation';
 import RhythmNote,{STEM_X,STEM_HEIGHT} from './RhythmNote';
 import {VALUES} from './rhythmModel';
 import {traceSegment,type TracePoint} from '../traceProgress';
@@ -14,9 +15,10 @@ const GUIDES:Record<number,string>={
   2:`M${STEM_X} ${TOP} C${STEM_X+2} ${TOP+16} ${STEM_X+22} ${TOP+24} ${STEM_X+18} ${TOP+54}`,
   3:`M${STEM_X} ${TOP+24} C${STEM_X+2} ${TOP+40} ${STEM_X+26} ${TOP+48} ${STEM_X+22} ${TOP+78}`,
 };
-const SCALE=2,LEFT=220,RIGHT=540,BASE=214;
+const SCALE=2,BASE=214;
 
 export default function NoteBuilder({stage,drawn,labels,zh,onDrawn}:{stage:number;drawn:boolean;labels:string[];zh:boolean;onDrawn:()=>void}){
+  const phone=usePhoneNotation(),LEFT=phone?120:220,RIGHT=phone?380:540;
   const group=useRef<SVGGElement>(null),guide=useRef<SVGPathElement>(null),last=useRef<TracePoint|null>(null);
   const covered=useRef(new Set<number>()),length=useRef(0),matched=useRef(0);
   const [stroke,setStroke]=useState<TracePoint[]>([]);
@@ -41,7 +43,7 @@ export default function NoteBuilder({stage,drawn,labels,zh,onDrawn}:{stage:numbe
     reset();if(done)onDrawn();
   }
   const before=VALUES[stage],after=VALUES[Math.min(stage+1,4)];
-  return <svg className="rhythm-score note-builder" viewBox="0 0 760 285" preserveAspectRatio="xMidYMid meet" role="group"
+  return <svg className="rhythm-score note-builder" viewBox={phone?"0 0 520 285":"0 0 760 285"} preserveAspectRatio="xMidYMid meet" role="group"
     aria-label={zh?'把左边的音符改成更短的音符':'Change the note on the left into a shorter one'} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={reset}>
     <g transform={`translate(${LEFT} ${BASE}) scale(${SCALE})`}><g key={`left-${stage}`} className="note-builder-note"><RhythmNote value={before}/></g></g>
     <text x={LEFT+8} y="262" textAnchor="middle" className="note-builder-label">{labels[stage]}</text>

@@ -12,7 +12,8 @@
     "fullScorePath": "/music/traditional-amazing-grace/full-score.musicxml",
     "readingPartId": "P1",
     "partCount": 2,
-    "viewerPath": "/flute-studio/music/traditional-amazing-grace"
+    "viewerPath": "/flute-studio/music/traditional-amazing-grace",
+    "defaultTempo": 100
   },
   {
     "id": "johann-sebastian-bach-badinerie",
@@ -28,7 +29,8 @@
     "viewerPath": "/flute-studio/music/johann-sebastian-bach-badinerie",
     "tags": [
       "Classical"
-    ]
+    ],
+    "defaultTempo": 120
   },
   {
     "id": "christoph-willibald-gluck-dance-of-the-blessed-spirits",
@@ -44,7 +46,8 @@
     "viewerPath": "/flute-studio/music/christoph-willibald-gluck-dance-of-the-blessed-spirits",
     "tags": [
       "Classical"
-    ]
+    ],
+    "defaultTempo": 76
   },
   {
     "id": "english-traditional-danny-boy",
@@ -59,7 +62,8 @@
     "fullScorePath": "/music/english-traditional-danny-boy/full-score.musicxml",
     "readingPartId": "P1",
     "partCount": 2,
-    "viewerPath": "/flute-studio/music/english-traditional-danny-boy"
+    "viewerPath": "/flute-studio/music/english-traditional-danny-boy",
+    "defaultTempo": 72
   },
   {
     "id": "txt-deja-vu",
@@ -103,7 +107,8 @@
     "viewerPath": "/flute-studio/music/nikolai-rimsky-korsakov-flight-of-the-bumble-bee",
     "tags": [
       "Classical"
-    ]
+    ],
+    "defaultTempo": 184
   },
   {
     "id": "gold-dust",
@@ -135,7 +140,8 @@
     "fullScorePath": "/music/traditional-greensleeves/full-score.musicxml",
     "readingPartId": "P1",
     "partCount": 1,
-    "viewerPath": "/flute-studio/music/traditional-greensleeves"
+    "viewerPath": "/flute-studio/music/traditional-greensleeves",
+    "defaultTempo": 112
   },
   {
     "id": "christian-petzold-minuet-in-g-major",
@@ -151,7 +157,8 @@
     "fullScorePath": "/music/christian-petzold-minuet-in-g-major/full-score.musicxml",
     "readingPartId": "P1",
     "partCount": 1,
-    "viewerPath": "/flute-studio/music/christian-petzold-minuet-in-g-major"
+    "viewerPath": "/flute-studio/music/christian-petzold-minuet-in-g-major",
+    "defaultTempo": 120
   },
   {
     "id": "mystery-of-love",
@@ -169,6 +176,291 @@
     "partCount": 1
   },
   {
+    "id": "ernesto-kohler-op-33-book-1-no-01",
+    "title": "No. 1",
+    "composer": "Ernesto Köhler",
+    "status": "published",
+    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-01.musicxml",
+    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-01",
+    "book": {
+      "id": "ernesto-kohler-op-33-book-1",
+      "number": 1,
+      "opening": "Allegro moderato",
+      "bars": 51,
+      "time": "4/4"
+    },
+    "tags": [
+      "Etude"
+    ],
+    "defaultTempo": 126
+  },
+  {
+    "id": "ernesto-kohler-op-33-book-1-no-10",
+    "title": "No. 10",
+    "composer": "Ernesto Köhler",
+    "status": "published",
+    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-10.musicxml",
+    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-10",
+    "book": {
+      "id": "ernesto-kohler-op-33-book-1",
+      "number": 10,
+      "opening": "Moderato",
+      "bars": 38,
+      "time": "4/4"
+    },
+    "tags": [
+      "Etude"
+    ],
+    "defaultTempo": 114
+  },
+  {
+    "id": "ernesto-kohler-op-33-book-1-no-11",
+    "title": "No. 11",
+    "composer": "Ernesto Köhler",
+    "status": "published",
+    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-11.musicxml",
+    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-11",
+    "book": {
+      "id": "ernesto-kohler-op-33-book-1",
+      "number": 11,
+      "opening": "Allegro",
+      "bars": 49,
+      "time": "4/4"
+    },
+    "tags": [
+      "Etude"
+    ],
+    "defaultTempo": 138
+  },
+  {
+    "id": "ernesto-kohler-op-33-book-1-no-12",
+    "title": "No. 12",
+    "composer": "Ernesto Köhler",
+    "status": "published",
+    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-12.musicxml",
+    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-12",
+    "book": {
+      "id": "ernesto-kohler-op-33-book-1",
+      "number": 12,
+      "opening": "Moderato",
+      "bars": 51,
+      "time": "3/4"
+    },
+    "tags": [
+      "Etude"
+    ],
+    "defaultTempo": 114
+  },
+  {
+    "id": "ernesto-kohler-op-33-book-1-no-13",
+    "title": "No. 13",
+    "composer": "Ernesto Köhler",
+    "status": "published",
+    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-13.musicxml",
+    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-13",
+    "book": {
+      "id": "ernesto-kohler-op-33-book-1",
+      "number": 13,
+      "opening": "Andantino",
+      "bars": 68,
+      "time": "6/8"
+    },
+    "tags": [
+      "Etude"
+    ],
+    "defaultTempo": 62
+  },
+  {
+    "id": "ernesto-kohler-op-33-book-1-no-14",
+    "title": "No. 14",
+    "composer": "Ernesto Köhler",
+    "status": "published",
+    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-14.musicxml",
+    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-14",
+    "book": {
+      "id": "ernesto-kohler-op-33-book-1",
+      "number": 14,
+      "opening": "Allegro",
+      "bars": 48,
+      "time": "4/4"
+    },
+    "tags": [
+      "Etude"
+    ],
+    "defaultTempo": 138
+  },
+  {
+    "id": "ernesto-kohler-op-33-book-1-no-15",
+    "title": "No. 15",
+    "composer": "Ernesto Köhler",
+    "status": "published",
+    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-15.musicxml",
+    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-15",
+    "book": {
+      "id": "ernesto-kohler-op-33-book-1",
+      "number": 15,
+      "opening": "Moderato",
+      "bars": 25,
+      "time": "4/4"
+    },
+    "tags": [
+      "Etude"
+    ],
+    "defaultTempo": 114
+  },
+  {
+    "id": "ernesto-kohler-op-33-book-1-no-02",
+    "title": "No. 2",
+    "composer": "Ernesto Köhler",
+    "status": "published",
+    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-02.musicxml",
+    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-02",
+    "book": {
+      "id": "ernesto-kohler-op-33-book-1",
+      "number": 2,
+      "opening": "Allegretto",
+      "bars": 65,
+      "time": "2/4"
+    },
+    "tags": [
+      "Etude"
+    ],
+    "defaultTempo": 114
+  },
+  {
+    "id": "ernesto-kohler-op-33-book-1-no-03",
+    "title": "No. 3",
+    "composer": "Ernesto Köhler",
+    "status": "published",
+    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-03.musicxml",
+    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-03",
+    "book": {
+      "id": "ernesto-kohler-op-33-book-1",
+      "number": 3,
+      "opening": "Allegro",
+      "bars": 67,
+      "time": "3/4"
+    },
+    "tags": [
+      "Etude"
+    ],
+    "defaultTempo": 138
+  },
+  {
+    "id": "ernesto-kohler-op-33-book-1-no-04",
+    "title": "No. 4",
+    "composer": "Ernesto Köhler",
+    "status": "published",
+    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-04.musicxml",
+    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-04",
+    "book": {
+      "id": "ernesto-kohler-op-33-book-1",
+      "number": 4,
+      "opening": "Allegretto vivo",
+      "bars": 63,
+      "time": "6/8"
+    },
+    "tags": [
+      "Etude"
+    ],
+    "defaultTempo": 94
+  },
+  {
+    "id": "ernesto-kohler-op-33-book-1-no-05",
+    "title": "No. 5",
+    "composer": "Ernesto Köhler",
+    "status": "published",
+    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-05.musicxml",
+    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-05",
+    "book": {
+      "id": "ernesto-kohler-op-33-book-1",
+      "number": 5,
+      "opening": "Allegretto",
+      "bars": 72,
+      "time": "4/4"
+    },
+    "tags": [
+      "Etude"
+    ],
+    "defaultTempo": 114
+  },
+  {
+    "id": "ernesto-kohler-op-33-book-1-no-06",
+    "title": "No. 6",
+    "composer": "Ernesto Köhler",
+    "status": "published",
+    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-06.musicxml",
+    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-06",
+    "book": {
+      "id": "ernesto-kohler-op-33-book-1",
+      "number": 6,
+      "opening": "Allegro",
+      "bars": 63,
+      "time": "4/4"
+    },
+    "tags": [
+      "Etude"
+    ],
+    "defaultTempo": 138
+  },
+  {
+    "id": "ernesto-kohler-op-33-book-1-no-07",
+    "title": "No. 7",
+    "composer": "Ernesto Köhler",
+    "status": "published",
+    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-07.musicxml",
+    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-07",
+    "book": {
+      "id": "ernesto-kohler-op-33-book-1",
+      "number": 7,
+      "opening": "Allegretto",
+      "bars": 92,
+      "time": "2/4"
+    },
+    "tags": [
+      "Etude"
+    ],
+    "defaultTempo": 114
+  },
+  {
+    "id": "ernesto-kohler-op-33-book-1-no-08",
+    "title": "No. 8",
+    "composer": "Ernesto Köhler",
+    "status": "published",
+    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-08.musicxml",
+    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-08",
+    "book": {
+      "id": "ernesto-kohler-op-33-book-1",
+      "number": 8,
+      "opening": "Allegro moderato",
+      "bars": 48,
+      "time": "3/4"
+    },
+    "tags": [
+      "Etude"
+    ],
+    "defaultTempo": 126
+  },
+  {
+    "id": "ernesto-kohler-op-33-book-1-no-09",
+    "title": "No. 9",
+    "composer": "Ernesto Köhler",
+    "status": "published",
+    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-09.musicxml",
+    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-09",
+    "book": {
+      "id": "ernesto-kohler-op-33-book-1",
+      "number": 9,
+      "opening": "Allegretto",
+      "bars": 72,
+      "time": "3/8"
+    },
+    "tags": [
+      "Etude"
+    ],
+    "defaultTempo": 172
+  },
+  {
     "id": "beethoven-ode-to-joy",
     "title": "Ode to Joy",
     "composer": "Ludwig van Beethoven",
@@ -180,7 +472,8 @@
     "beginner": true,
     "status": "published",
     "scorePath": "/music/beethoven-ode-to-joy/score.musicxml",
-    "viewerPath": "/flute-studio/music/beethoven-ode-to-joy"
+    "viewerPath": "/flute-studio/music/beethoven-ode-to-joy",
+    "defaultTempo": 72
   },
   {
     "id": "faure-pavane",
@@ -196,7 +489,8 @@
     "viewerPath": "/flute-studio/music/faure-pavane",
     "tags": [
       "Classical"
-    ]
+    ],
+    "defaultTempo": 84
   },
   {
     "id": "traditional-scarborough-fair",
@@ -211,7 +505,8 @@
     "fullScorePath": "/music/traditional-scarborough-fair/full-score.musicxml",
     "readingPartId": "P1",
     "partCount": 1,
-    "viewerPath": "/flute-studio/music/traditional-scarborough-fair"
+    "viewerPath": "/flute-studio/music/traditional-scarborough-fair",
+    "defaultTempo": 132
   },
   {
     "id": "claude-debussy-syrinx",
@@ -243,6 +538,7 @@
     "fullScorePath": "/music/traditional-twinkle-twinkle-little-star/full-score.musicxml",
     "readingPartId": "P1",
     "partCount": 2,
-    "viewerPath": "/flute-studio/music/traditional-twinkle-twinkle-little-star"
+    "viewerPath": "/flute-studio/music/traditional-twinkle-twinkle-little-star",
+    "defaultTempo": 100
   }
 ]

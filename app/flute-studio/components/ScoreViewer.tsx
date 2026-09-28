@@ -12,7 +12,7 @@ import { useLanguage } from "../i18n/LanguageContext";
 import { useRecents } from "../lib/storage";
 import { deriveScoreEvents, resolveKeyAccidentals } from "./deriveScoreEvents";
 import type { ComposerInfo } from "../../../content/music-library";
-import {readScoreFacts,keySignatureFromFifths,keySignatureFromNotes,timeSignatureText,metronomeText,performanceTermText,directionStyle,tuckMetronomeMarks,spaceMetronomeMarks,METRONOME_TUCK_SHIFT,type ScoreFacts} from "./scoreTheory";
+import {readScoreFacts,keySignatureFromFifths,keySignatureFromNotes,timeSignatureText,metronomeText,performanceTermText,directionStyle,directionRuns,tuckMetronomeMarks,spaceMetronomeMarks,METRONOME_TUCK_SHIFT,type ScoreFacts} from "./scoreTheory";
 import {measureBeatOffsets,meterGrid} from "./rhythmGrid";
 import {usePracticeAudio,pitchFrequency} from "../PracticeAudio";
 import {PracticeIcon} from "./PracticeIcon";
@@ -221,6 +221,13 @@ const labelWidth=(()=>{
   };
 })();
 /** What a host needs to place its own marks on the engraving. */
+/** Slur end placement for OSMD; the arch itself is redrawn by reshapeSlurs. Shared by the reader and the PDF export. */
+function applySlurRules(osmd:OSMDType){
+  // Ends start a little off the notehead instead of touching it. The
+  // curve itself is redrawn after engraving, in reshapeSlurs.
+  osmd.EngravingRules.SlurNoteHeadYOffset=0.9;
+}
+
 /**
  * The exercise-book engraving rules, in one place so the reader and the PDF
  * export cannot drift apart: an exercise book has no bar numbers, no time
@@ -572,6 +579,79 @@ measureUnits=content||fullBar;anchors.push({t:measureUnits,x:right});const top=f
  * first say and return, so tagging the fermata is also what stops a tap on
  * it being read as a tap on the note underneath — which was starting a drone.
  */
+/**
+ * Redraws every slur as an even arch.
+ *
+ * OSMD hands VexFlow a curve whose two control points sit near its own
+ * ends, so a slur over a leap came out as a slanted stroke with a hook at
+ * one end, and a slur between neighbouring notes was nearly flat. Engraved
+ * slurs (and MuseScore's) are symmetric arches whose height grows with
+ * their length but stays within bounds. So each slur keeps OSMD's two end
+ * points (the one nearer the notes moved out on a steep leap, so the slope
+ * stays under 45°) and the side it bows to, and gets a new symmetric
+ * curve that bows straight up or down:
+ *
+ * - height ≈ 0.45 × √(length in staff spaces), held between 0.8 and 2.2
+ *   staff spaces, so a two-note slur visibly curves and a long phrase
+ *   doesn't balloon;
+ * - raised further only where a note in between would otherwise poke
+ *   through it (at most 4 spaces);
+ * - thin at the ends and about 0.18 of a space thick in the middle, the
+ *   way VexFlow draws it.
+ *
+ * Runs after every engrave (reader and PDF), on the SVG itself.
+ */
+function reshapeSlurs(root:Element){
+  root.querySelectorAll<SVGSVGElement>("svg").forEach(svg=>{
+    const curves=[...svg.querySelectorAll<SVGPathElement>("g.vf-curve > path")];
+    if(!curves.length)return;
+    // One staff space in this SVG's units, from the noteheads.
+    const heads=[...svg.querySelectorAll<SVGGraphicsElement>(".vf-notehead")].slice(0,40).map(head=>head.getBBox().height).filter(height=>height>0).sort((a,b)=>a-b);
+    const space=heads.length?heads[Math.floor(heads.length/2)]:10;
+    const notes=[...svg.querySelectorAll<SVGGraphicsElement>("g.vf-stavenote")].map(note=>note.getBBox());
+    curves.forEach(path=>{
+      const n=(path.getAttribute("d")?.match(/-?\d*\.?\d+(?:e-?\d+)?/g)??[]).map(Number);
+      if(n.length<12)return;
+      const [x0,rawY0,c1x,c1y,c2x,c2y,x3,rawY3,,y3b]=n;
+      const dx=x3-x0;
+      if(!(Math.abs(dx)>1))return;
+      // Up or down, whichever side OSMD put it on (the control points'
+      // side of the line between the ends).
+      const chordAt=(x:number)=>rawY0+(rawY3-rawY0)*(x-x0)/dx;
+      const up=((c1y-chordAt(c1x))+(c2y-chordAt(c2x)))<0,dir=up?-1:1;
+      // A slur over a big leap does not have to run from notehead to
+      // notehead: the end nearer the notes is moved out (up for a slur
+      // above) until the slope is at most 45°, as engravers do. Any
+      // stricter and a slur over an octave leap floats off its first note.
+      const maxRise=Math.abs(dx);
+      let y0=rawY0,y3=rawY3;
+      if(Math.abs(y3-y0)>maxRise){
+        if(up){if(y0>y3)y0=y3+maxRise;else y3=y0+maxRise}
+        else{if(y0<y3)y0=y3-maxRise;else y3=y0-maxRise}
+      }
+      const dy=y3-y0,width=Math.abs(dx);
+      const ends=Math.min(Math.abs(y3b-rawY3)||.5,1);
+      let height=Math.min(2.2,Math.max(.8,.45*Math.sqrt(width/space)))*space;
+      // Clear any note between the two ends (the end notes themselves are
+      // what the slur starts and stops at, so they are not obstacles).
+      const margin=.5*space;
+      for(const box of notes){
+        const t=(box.x+box.width/2-x0)/dx;
+        if(t<.12||t>.88)continue;
+        const chordY=y0+dy*t,edge=up?box.y:box.y+box.height;
+        if(Math.abs(edge-chordY)>8*space)continue;
+        const reach=up?chordY-(edge-margin):(edge+margin)-chordY;
+        if(reach>0)height=Math.max(height,Math.min(4*space,reach/(3*t*(1-t))*.75));
+      }
+      // Symmetric cubic: both control points lifted by c gives an apex of
+      // 0.75c; the second edge is lifted a little more for the thickness.
+      const c=height/.75,k=.18*space/.75;
+      const at=(f:number,off:number)=>`${x0+dx*f} ${y0+dy*f+dir*off}`;
+      path.setAttribute("d",`M${x0} ${y0}C${at(.2,c)},${at(.8,c)},${x3} ${y3}L${x3} ${y3+dir*ends}C${at(.8,c+k)},${at(.2,c+k)},${x0} ${y0+dir*ends}Z`);
+    });
+  });
+}
+
 function tagFermatas(root:HTMLDivElement,text:string){
   root.querySelectorAll<SVGPathElement>(".vf-modifiers path").forEach(path=>{
     const box=path.getBoundingClientRect();
@@ -653,6 +733,18 @@ function addTheoryTargets(root:HTMLDivElement,noteKeys?:string[][],facts?:ScoreF
     // One style per kind of marking, whatever OSMD's own tempo-word list happened to catch.
     const style=directionStyle(words);
     if(style){node.setAttribute("font-weight",style==="tempo"?"bold":"normal");node.setAttribute("font-style",style==="tempo"?"normal":"italic")}
+    // A mixed marking ("un poco rit. a tempo.") gets each part its own style.
+    const runs=directionRuns(words);
+    if(runs){
+      node.textContent="";
+      runs.forEach((run,index)=>{
+        const span=document.createElementNS("http://www.w3.org/2000/svg","tspan");
+        span.textContent=(index?" ":"")+run.text;
+        span.setAttribute("font-weight",run.style==="tempo"?"bold":"normal");
+        span.setAttribute("font-style",run.style==="tempo"?"normal":"italic");
+        node.appendChild(span);
+      });
+    }
   });
 }
 
@@ -899,6 +991,26 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     root.querySelectorAll<SVGTextElement>("svg text").forEach(text=>{const words=text.textContent?.trim();if(words===title)text.dataset.scoreTitle="";else if(words===composer){text.dataset.composer="";if(config.story)text.dataset.composerCard=""}});
   }
   useEffect(()=>{if(scoreRef.current)markPlayStart(scoreRef.current,selectedMeasure)},[selectedMeasure]);
+  // While it plays, the start-bar tint steps aside: the moving note shows
+  // where you are, and a tinted bar left behind reads as a second cursor.
+  // The selection itself stays, so the next Play starts there again.
+  useEffect(()=>{scoreRef.current?.classList.toggle("is-playing",playing)},[playing]);
+  // A long piece: the back link and title row tucks away while you scroll
+  // down through the music and comes back as soon as you scroll up (or reach
+  // the top), like Safari's own toolbar. The practice controls stay.
+  useEffect(()=>{
+    const scroller=scoreScrollRef.current,workspace=scroller?.closest(".workspace");
+    if(!scroller||!workspace)return;
+    let last=scroller.scrollTop;
+    const onScroll=()=>{
+      const top=scroller.scrollTop,delta=top-last;last=top;
+      if(top<40)workspace.classList.remove("is-tucked");
+      else if(delta>6)workspace.classList.add("is-tucked");
+      else if(delta<-6)workspace.classList.remove("is-tucked");
+    };
+    scroller.addEventListener("scroll",onScroll,{passive:true});
+    return()=>{scroller.removeEventListener("scroll",onScroll);workspace.classList.remove("is-tucked")};
+  },[]);
   // A droned note needs its own color, distinct from the coral
   // playback-highlight, or there's no visual way to tell which pitch is
   // currently sounding a drone. Re-run whenever the active drone set
@@ -1024,6 +1136,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   function renderScore(osmd:OSMDType){
     suppressArticulationSpacing=unmetered;
     try{osmd.render()}finally{suppressArticulationSpacing=false}
+    if(scoreRef.current)reshapeSlurs(scoreRef.current);
     if(scoreRef.current)spaceMetronomeMarks(scoreRef.current);
     if(scoreFactsRef.current?.tempoWordsWithMetronome&&scoreRef.current)tuckMetronomeMarks(scoreRef.current);
   }
@@ -1202,7 +1315,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     return()=>{cancelAnimationFrame(frame);window.clearTimeout(commit);el.removeEventListener("wheel",wheel);el.removeEventListener("touchstart",start);el.removeEventListener("touchmove",move);el.removeEventListener("touchend",end);el.removeEventListener("touchcancel",end);el.removeEventListener("gesturestart",gestureStart);el.removeEventListener("gesturechange",gestureChange)};
   },[]);
 
-  useEffect(()=>{const saved=JSON.parse(localStorage.getItem("cookie:music-favorites")||"[]") as string[];setFavorite(saved.includes(id));let mounted=true; async function load(){ try { if(unmetered&&!asset.includes("<note>")){scoreRef.current?.replaceChildren();osmdRef.current=null;setLoading(false);return;} setLoading(true); const {OpenSheetMusicDisplay}=await import("opensheetmusicdisplay"); if(!mounted||!scoreRef.current)return; scoreRef.current.replaceChildren(); const osmd=new OpenSheetMusicDisplay(scoreRef.current,{backend:"svg",autoResize:false,drawTitle:false,drawComposer:false,drawingParameters:"compacttight"}); osmd.setOptions({pageFormat:"Endless",drawMeasureNumbers:true,drawPartNames:false,drawMetronomeMarks:true}); /* Chord symbols stay in the MusicXML (for a future accompaniment) but are never drawn. OSMD builds them inside load(), so this has to be set first. */ osmd.EngravingRules.RenderChordSymbols=false; /* Each rest bar drawn on its own, never folded into a multi-bar rest: notes are matched to the event list by drawing order, so three rests drawn as one "3" shifted every later note (and bar selection, and playback start) by three. */ osmd.EngravingRules.RenderMultipleRestMeasures=false; osmd.EngravingRules.AutoGenerateMultipleRestMeasuresFromRestMeasures=false; osmd.OnXMLRead = xml=>{scoreFactsRef.current=readScoreFacts(xml);if(config.defaultTempo===undefined){const doc=new DOMParser().parseFromString(xml,"application/xml");const marked=Number(doc.querySelector("sound[tempo]")?.getAttribute("tempo"));if(marked>0)initializeScore(id,marked)}return prepareScore(xml,title,composer)}; await osmd.load(asset,title); if(!mounted||!scoreRef.current)return;
+  useEffect(()=>{const saved=JSON.parse(localStorage.getItem("cookie:music-favorites")||"[]") as string[];setFavorite(saved.includes(id));let mounted=true; async function load(){ try { if(unmetered&&!asset.includes("<note>")){scoreRef.current?.replaceChildren();osmdRef.current=null;setLoading(false);return;} setLoading(true); const {OpenSheetMusicDisplay}=await import("opensheetmusicdisplay"); if(!mounted||!scoreRef.current)return; scoreRef.current.replaceChildren(); const osmd=new OpenSheetMusicDisplay(scoreRef.current,{backend:"svg",autoResize:false,drawTitle:false,drawComposer:false,drawingParameters:"compacttight"}); osmd.setOptions({pageFormat:"Endless",drawMeasureNumbers:true,drawPartNames:false,drawMetronomeMarks:true}); applySlurRules(osmd); /* Chord symbols stay in the MusicXML (for a future accompaniment) but are never drawn. OSMD builds them inside load(), so this has to be set first. */ osmd.EngravingRules.RenderChordSymbols=false; /* Each rest bar drawn on its own, never folded into a multi-bar rest: notes are matched to the event list by drawing order, so three rests drawn as one "3" shifted every later note (and bar selection, and playback start) by three. */ osmd.EngravingRules.RenderMultipleRestMeasures=false; osmd.EngravingRules.AutoGenerateMultipleRestMeasuresFromRestMeasures=false; osmd.OnXMLRead = xml=>{scoreFactsRef.current=readScoreFacts(xml);if(config.defaultTempo===undefined){const doc=new DOMParser().parseFromString(xml,"application/xml");const marked=Number(doc.querySelector("sound[tempo]")?.getAttribute("tempo"));if(marked>0)initializeScore(id,marked)}return prepareScore(xml,title,composer)}; await osmd.load(asset,title); if(!mounted||!scoreRef.current)return;
       // One line for "Allegro assai ♩ = 144" instead of two; see tuckMetronomeMarks.
       osmd.EngravingRules.MetronomeMarkYShift=scoreFactsRef.current?.tempoWordsWithMetronome?METRONOME_TUCK_SHIFT:-1;
       // React's Strict Mode runs this whole effect twice in dev (mount,
@@ -1636,7 +1749,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
       const [{OpenSheetMusicDisplay},{jsPDF},{svg2pdf}]=await Promise.all([
         import("opensheetmusicdisplay"),import("jspdf"),import("svg2pdf.js"),
       ]);
-      const osmd=new OpenSheetMusicDisplay(stage,{backend:"svg",autoResize:false,drawTitle:false,drawComposer:false,drawingParameters:"compacttight"});
+      const osmd=new OpenSheetMusicDisplay(stage,{backend:"svg",autoResize:false,drawTitle:false,drawComposer:false,drawingParameters:"compacttight"});applySlurRules(osmd);
       osmd.setOptions({pageFormat:"A4 P",drawMeasureNumbers:true,drawPartNames:false,drawMetronomeMarks:true});
       osmd.EngravingRules.RenderChordSymbols=false;
       osmd.EngravingRules.RenderMultipleRestMeasures=false;osmd.EngravingRules.AutoGenerateMultipleRestMeasuresFromRestMeasures=false;
@@ -1671,6 +1784,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
       // the whole book; at the extremes it just engraves at zoom 1.
       const scale=measured?Math.min(3,Math.max(.3,STAFF_SPACE_MM/measured)):1;
       if(Math.abs(scale-1)>0.01){osmd.zoom=scale;suppress();osmd.render()}
+      reshapeSlurs(stage);
       spaceMetronomeMarks(stage);
       if(tuck)tuckMetronomeMarks(stage);
       const pages=[...stage.querySelectorAll<SVGSVGElement>(":scope > div > svg")];
@@ -1749,7 +1863,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
         <div className="reader-pages" data-mode="pages">{/* Back to the first page. A long exercise book is a lot of
             arrow presses to get home, and in scroll mode there are no
             arrows at all — this is the only way back to the top. */}
-          <button className="reader-pages__top" aria-label={zh?"回到开头":"Back to top"} data-tip={zh?"回到开头":"Back to top"} disabled={pageIndex<=0&&(scoreScrollRef.current?.scrollTop??0)<8} onClick={backToTop}><PracticeIcon name="top"/></button><button aria-label={t.scoreViewer.previousPage} disabled={pageIndex<=0} onClick={()=>goToPage(pageIndex-1)}><PracticeIcon name="previous"/></button><button aria-label={t.scoreViewer.nextPage} disabled={pageIndex>=pageCount-1} onClick={()=>goToPage(pageIndex+1)}><PracticeIcon name="next"/></button><span aria-live="polite">{spreadPageCount?`${pageIndex*2+1}${pageIndex*2+2<=spreadPageCount?`–${pageIndex*2+2}`:""} / ${spreadPageCount}`:`${pageIndex+1} / ${pageCount}`}</span><button className={focusMode?"tool on has-tip":"tool has-tip"} aria-pressed={focusMode} data-tip={t.scoreViewer.focusModeTip} aria-label={focusMode?t.scoreViewer.exitFocusMode:t.scoreViewer.enterFocusMode} onClick={toggleFocusMode}><PracticeIcon name={focusMode?"close":"fullscreen"}/></button></div>
+          <button className="reader-pages__top" aria-label={zh?"回到开头":"Back to top"} data-tip={zh?"回到开头":"Back to top"} disabled={pageIndex<=0&&(scoreScrollRef.current?.scrollTop??0)<8} onClick={backToTop}><PracticeIcon name="top"/></button><button aria-label={t.scoreViewer.previousPage} disabled={pageIndex<=0} onClick={()=>goToPage(pageIndex-1)}><PracticeIcon name="previous"/></button><button aria-label={t.scoreViewer.nextPage} disabled={pageIndex>=pageCount-1} onClick={()=>goToPage(pageIndex+1)}><PracticeIcon name="next"/></button><span aria-live="polite">{spreadPageCount?`${pageIndex*2+1}${pageIndex*2+2<=spreadPageCount?`–${pageIndex*2+2}`:""} / ${spreadPageCount}`:`${pageIndex+1} / ${pageCount}`}</span><button className="tool has-tip" aria-pressed={focusMode} data-tip={focusMode?t.scoreViewer.exitFocusMode:t.scoreViewer.focusModeTip} aria-label={focusMode?t.scoreViewer.exitFocusMode:t.scoreViewer.enterFocusMode} onClick={toggleFocusMode}><PracticeIcon name={focusMode?"exitFullscreen":"fullscreen"}/></button></div>
 </div>
 </div>
       <div className="reader-rows">{practiceRow}<div className="markup-row" ref={setAnnotationToolbar}/></div>

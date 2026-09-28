@@ -72,3 +72,40 @@
 .lesson-shell .clef-compare .theory-staff{height:calc(var(--scene-h) - 50px)}
 .note-practice-ghost{opacity:.22;pointer-events:none}
 .sequence-figure.is-static .sequence-note{cursor:pointer}
+
+/* Phone lessons use the available screen, not the desktop's reserved header.
+   Keep the existing phone navigation allowance until its owner changes it. */
+@media(max-width:760px){
+  .studio-route .theory-shell.lesson-shell{height:calc(100dvh - 76px - env(safe-area-inset-bottom));min-height:0;padding:4px 12px 8px;--scene-h:clamp(150px,30dvh,220px);overflow-y:auto;overscroll-behavior-y:contain}
+  .lesson-shell .lesson-top{min-height:28px;flex:none}
+  .lesson-shell .theory-timeline{flex:none;min-height:44px}
+  .studio-route .theory-shell.lesson-shell .theory-timeline button{min-height:44px;padding:24px 0 2px;font-size:10px;line-height:1.1}
+  .lesson-shell .lesson-narration{flex:none;min-height:0;padding-top:8px;font-size:15px;line-height:1.35}
+  .lesson-shell .lesson-scene{flex:1 0 auto;min-height:0;padding:4px 0;gap:6px;justify-content:center}
+  .lesson-shell .lesson-talk{flex:none;padding:0;gap:0}
+  .lesson-shell .lesson-bubble{min-height:0;padding:10px 12px;gap:6px;border-radius:16px}
+  .lesson-shell .lesson-bubble>p{font-size:14px;line-height:1.35}
+  .lesson-shell .lesson-actions{justify-content:flex-end;flex-wrap:wrap;gap:6px}
+  .lesson-shell .lesson-next,.lesson-shell .lesson-skip,.lesson-shell .lesson-secondary{min-height:44px;padding:6px 12px;font-size:14px}
+  .lesson-shell .lesson-tools{gap:6px}
+  .lesson-shell .lesson-tools button{padding:6px 10px;font-size:14px}
+  .lesson-shell .lesson-choices{gap:8px}
+  .lesson-shell .lesson-choices button{min-width:60px;min-height:44px;padding:4px 10px;font-size:18px}
+  .lesson-shell .note-practice,.lesson-shell .clef-compare{gap:6px}
+  .lesson-shell .sequence-keyboard.is-visible{max-width:260px;margin:0 auto}
+  .lesson-shell .lesson-scene:has(.sequence-keyboard.is-visible) .sequence-staff{height:calc(var(--scene-h) - 20px)}
+  .lesson-shell .clef-compare .theory-staff{height:var(--scene-h)}
+  .lesson-shell .theory-memory-methods{gap:6px}
+  .lesson-shell .theory-memory-methods button{padding:6px;font-size:12px;min-height:44px}
+  .lesson-shell .measures-tools{min-height:44px;margin-top:4px;gap:6px;flex-wrap:wrap}
+  .lesson-shell .measures-choices{gap:6px}
+  .lesson-shell .measures-choices button{min-width:44px;padding:6px 10px}
+  .lesson-shell .rhythm-controls{height:60px;min-height:44px;gap:8px}
+  .lesson-shell .rhythm-controls>.rhythm-clap{width:52px;height:52px;font-size:28px}
+  .lesson-shell.rhythm-lesson .lesson-scene .rhythm-score,.lesson-shell.rhythm-lesson .lesson-scene .rhythm-tree{height:var(--scene-h)}
+  .lesson-shell .lesson-status{margin:2px 0 0!important;font-size:12px}
+}
+
+@media(max-width:760px){
+  body:has(.lesson-shell){padding-bottom:0!important}
+}

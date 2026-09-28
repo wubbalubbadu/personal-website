@@ -11,3 +11,104 @@
 
 /* Shared pointer feedback for interactive controls on every Studio route. */
 .studio-route button,.studio-route a{transition:background-color .16s ease,color .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease}.studio-route button:not(:disabled):hover{transform:translateY(-1px)}.studio-route button:not(:disabled):active,.studio-route a:active{transform:scale(.98)}.studio-route button:focus-visible,.studio-route a:focus-visible{outline:3px solid rgba(103,137,86,.32);outline-offset:2px}@media(prefers-reduced-motion:reduce){.studio-route button,.studio-route a{transition:none}.studio-route button:not(:disabled):hover,.studio-route button:not(:disabled):active,.studio-route a:active{transform:none}}
+
+/* Phone: every page starts just below the slim top bar, with the same gap,
+   and nothing is reserved at the bottom any more (the bottom bar is gone).
+   White behind everything: the site-wide cream showed as a yellowish strip
+   at the top in Safari. */
+@media(max-width:760px){
+  :root{--phone-nav:calc(48px + env(safe-area-inset-top))}
+  body:has(.studio-route){background:#fff!important;padding-bottom:0!important}
+  /* Scoped to .studio-route so they outrank each page's own phone padding,
+     which loads after this file. */
+  .studio-route :is(.studio-main,.library-main,.exercise-hub,.practice-page,.studio-page,.theory-home,.fingering-chart,.roadmap-page,.breathing-lab){padding-top:calc(var(--phone-nav) + 14px)!important;padding-bottom:calc(40px + env(safe-area-inset-bottom))!important}
+  .studio-route .home-content{padding-top:0!important}
+  .studio-route :is(.library-page-header,.exercise-hub__header,.practice-page__header,.studio-page__head,.theory-home__header,.fingering-chart__header){padding-top:0!important}
+  .book-page__back{margin-top:0!important}
+  /* Filter chips: one row you swipe, not three wrapped rows. */
+  .studio-route .category-tabs{flex-wrap:nowrap!important;overflow-x:auto;margin-right:-16px;padding-right:16px}
+  .studio-route .category-tabs button{flex:0 0 auto}
+  /* Theory lesson cards (the course list only; the lessons themselves are
+     untouched): a compact row, drawing on the left and words on the right. */
+  .studio-route .theory-course-grid{gap:10px!important}
+  .studio-route .theory-course{height:auto!important;min-height:104px;grid-template-rows:none!important;grid-template-columns:118px minmax(0,1fr)!important;align-items:stretch;border-radius:16px;overflow:hidden}
+  .studio-route .theory-course>svg{height:100%!important;min-height:104px}
+  .studio-route .theory-course>div{padding:12px 14px!important;align-self:center}
+  .studio-route .theory-course h2{font-size:15px!important;margin:0 0 4px!important}
+  .studio-route .theory-course p{font-size:13px!important;margin:0!important}
+  /* Score reader settings (Customize scales, View…) open as a sheet from the
+     bottom, about half the screen, so the music stays in view above it and
+     you can watch it change. The panel is portaled to <body>, and its
+     position comes inline from ReaderPopover, hence !important. */
+  body .reader-settings-panel{left:0!important;right:0!important;top:auto!important;bottom:0!important;width:auto!important;max-height:56dvh!important;border-radius:18px 18px 0 0!important;padding-bottom:calc(14px + env(safe-area-inset-bottom))!important;overflow-y:auto!important;box-shadow:0 -10px 30px rgba(41,42,51,.16)!important;max-width:none!important}
+  /* Sections keep their height and the sheet scrolls; squeezed, they drew
+     their labels over their buttons. */
+  body .reader-settings-panel>*{flex-shrink:0!important}
+  /* No close button on a phone: tapping above the sheet closes it. A grip
+     bar says it is a sheet. */
+  body .reader-settings-panel .reader-panel-heading button{display:none!important}
+  body .reader-settings-panel::before{content:"";flex:0 0 auto;align-self:center;width:34px;height:4px;border-radius:2px;background:#d6d8dc;margin:-4px 0 6px}
+  /* Scale Studio: the summary under the back link ("Major scales · Two
+     octaves · 12 keys") repeats the title printed on the score, and the
+     Scales button opens the same settings. */
+  .studio-route .topbar .scale-book__chapter-inline{display:none!important}
+  /* Score viewer header on a phone: the toolbar slot only holds something
+     in Scale Studio; empty, it still claimed a whole row and pushed the
+     tuning fork onto a line of its own. */
+  body .restored-reader .topbar .topbar-toolbar-slot:empty{display:none!important}
+  /* A book piece's header also carries the "‹ 1 / 15 ›" stepper; the back
+     arrow alone is enough there, since the book's name is printed under the
+     title. */
+  body .restored-reader .topbar:has(.book-stepper) .back-label{display:none!important}
+  /* Breathing Lab grew to its full height on a phone while the page behind
+     it cannot scroll, so everything below the first screen was out of reach.
+     It scrolls itself now, like every other page. */
+  .studio-route .breathing-lab{height:100dvh!important;min-height:0!important;overflow-y:auto!important;overscroll-behavior-y:contain}
+  /* Score viewer toolbar on a phone, in two ordered rows of same-size
+     buttons instead of a jumble:
+       1. playing: Listen · Record · [metronome − 76 +] · Tap
+       2. page: Mark up (and the page's own tools) · View · Drone, then the
+          page controls (↑ ‹ 1/3 › ⤢) as one compact group on the right.
+     The wrappers around these are display:contents on a phone, so the
+     buttons are the bar's own flex items and `order` places them. */
+  body .restored-reader .practice-bar{row-gap:4px;column-gap:2px;padding:4px 6px!important}
+  body .restored-reader .practice-bar::after{content:"";order:5;flex-basis:100%;height:0}
+  body .restored-reader .practice-bar .transport>button:not(.reader-tap){order:1}
+  body .restored-reader .practice-bar .score-recorder{order:2}
+  body .restored-reader .practice-bar .tempo-group{order:3;height:44px;padding:0 2px 0 0;border-radius:12px;background:#f4f4f5;align-items:center}
+  body .restored-reader .practice-bar .tempo-group>.tool{font-size:0!important;width:40px!important;min-width:0!important}
+  body .restored-reader .practice-bar .tempo-group>.tool svg{width:20px;height:20px}
+  body .restored-reader .practice-bar .tempo{background:transparent!important;height:44px;padding:0!important;gap:0}
+  body .restored-reader .practice-bar .tempo .tempo-step{width:30px!important;height:36px!important}
+  body .restored-reader .practice-bar .tempo input{width:38px!important;font-size:17px!important}
+  body .restored-reader .practice-bar .reader-tap{order:4}
+  body .restored-reader .practice-bar .tool-group{order:6}
+  body .restored-reader .practice-bar .reader-popover-anchor{order:7}
+  body .restored-reader .practice-bar .transport-menu{order:8}
+  body .restored-reader .practice-bar .reader-pages>*{order:9!important}
+  body .restored-reader .practice-bar .reader-pages>:first-child{margin-left:auto}
+  body .restored-reader .practice-bar .reader-pages button{width:34px!important;min-width:0!important}
+  body .restored-reader .practice-bar .reader-pages>span{font-size:12px;padding:0 2px;align-self:center;color:#6f7178;white-space:nowrap}
+  /* Back to top is a swipe on a phone; dropping it keeps the page group on
+     one line even in Scale Studio, whose row has two tools more. */
+  body .restored-reader .practice-bar .reader-pages__top{display:none!important}
+  body .restored-reader .practice-bar .reader-pages>:nth-child(2){margin-left:auto}
+  /* The tab bar already names Library, Exercises, Learn and My Studio. */
+  .studio-route [data-tab-title]{display:none!important}
+  .cookie-pet-wrap{bottom:calc(20px + env(safe-area-inset-bottom))!important;right:16px!important}
+}
+
+/* Every studio page's title in the same place on wide screens: the tab
+   pages' 1120px column, 64px of page padding plus 50px above the title, and
+   the same 42px weight-760 heading. Pages that grew their own values over
+   time (the charts at 980px, Theory at 1040px and 88px down, Embouchure at
+   34px, the trill chart at 24px) are brought in line here. */
+@media(min-width:761px){
+  .studio-route :is(.fingering-chart__content,.roadmap-page__content){width:min(1120px,100%)}
+  .studio-route .trill-chart .fingering-chart__header{padding-top:50px}
+  .studio-route .studio-page__head{padding-top:50px}
+  .studio-route .studio-page__head h1{font-weight:760}
+  .studio-route .roadmap-header h1{font-weight:760}
+  .studio-route .theory-shell.theory-home{max-width:1200px;padding-top:64px}
+  .studio-route .theory-home__header{padding-top:50px}
+}

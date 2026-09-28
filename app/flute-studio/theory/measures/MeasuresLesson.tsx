@@ -2,8 +2,9 @@
 import {useEffect,useRef,useState,type ReactNode} from 'react';
 import {useLanguage} from '../../i18n/LanguageContext';
 import LessonFrame,{type LessonNext} from '../LessonFrame';
-import EngravedRow,{layoutRow,type RowNote,type RowLayout,type Meter} from '../EngravedRow';
-import {noteY} from '../model';
+import {usePhoneNotation} from '../usePhoneNotation';
+import EngravedRow,{layoutRow,phoneRowRight,type RowNote,type RowLayout,type Meter} from '../EngravedRow';
+import {noteY,pitchAt} from '../model';
 import {useRhythmAudio} from '../rhythm/useRhythmAudio';
 import {useCourseProgress} from '../useCourseProgress';
 import BarLineDrawing from './BarLineDrawing';
@@ -29,10 +30,13 @@ const JINGLE_BARS=[3,6,10];
 const JACQUES:RowNote[]=[{v:1,p:-2},{v:1,p:-1},{v:1,p:0},{v:1,p:-2},{v:1,p:0},{v:1,p:1},{v:2,p:2},{v:.5,p:2},{v:.5,p:3},{v:.5,p:2},{v:.5,p:1},{v:1,p:0},{v:1,p:-2}];
 const JACQUES_MIDI=[60,62,64,60,64,65,67,67,69,67,65,64,60];
 const JACQUES_BARS=[4,7];
-// Happy Birthday (public domain), first two lines. Shown with its clef and no bar lines on page 4.
-// It starts one beat before beat 1 (a pickup), so its first count is 3.
-const BIRTHDAY:RowNote[]=[{v:.75,p:2},{v:.25,p:2},{v:1,p:3},{v:1,p:2},{v:1,p:5},{v:2,p:4},{v:.75,p:2},{v:.25,p:2},{v:1,p:3},{v:1,p:2},{v:1,p:6},{v:2,p:5}];
-const BIRTHDAY_MIDI=[67,67,69,67,72,71,67,67,69,67,74,72];
+// A short teaching melody: two complete measures of 3/4, starting on beat 1.
+const TRIPLE_MELODY=[
+  {v:1,p:-2},{v:1,p:0},{v:1,p:2},
+  {v:1,p:1},{v:1,p:-1},{v:1,p:-2},
+] satisfies RowNote[];
+const TRIPLE_MELODY_MIDI=TRIPLE_MELODY.map(note=>pitchAt(note.p).midi);
+const TRIPLE_MELODY_BARS=[3];
 // Rhythm-only rows sit in the bottom space (F4), so they are played on F4 too.
 const RHYTHM_MIDI=65;
 const rhythmPitches=(notes:RowNote[])=>notes.map(()=>RHYTHM_MIDI);
@@ -107,6 +111,7 @@ function beatSlice(notes:RowNote[],beat:number){
 }
 
 export default function MeasuresLesson(){
+  const phone=usePhoneNotation();
   const {lang}=useLanguage(),zh=lang==='zh',tr=(en:string,cn:string)=>zh?cn:en;
   const [step,setStep]=useState(0),[done,setDone]=useState(false);
   const audio=useRhythmAudio(),course=useCourseProgress(),id:StepId=FLOW[step];
@@ -114,7 +119,7 @@ export default function MeasuresLesson(){
   const [p1,setP1]=useState<'even'|'playing'|'barred'|'signed'>('even'),[p1Bars,setP1Bars]=useState<number[]>([]),[p1Measure,setP1Measure]=useState<number|null>(null);
   // Page 4: top number.
   // Page 4 has three parts: switch the top number, hear music in 3, then two questions.
-  const [top,setTop]=useState(4),[triedTops,setTriedTops]=useState<number[]>([4]),[topPhase,setTopPhase]=useState<'switch'|'birthday'|'quiz'>('switch'),[heardBirthday,setHeardBirthday]=useState(false),[topQ,setTopQ]=useState(0),[topPick,setTopPick]=useState<number|null>(null),[topQs,setTopQs]=useState<TopQuestion[]>(makeTopQuestions);
+  const [top,setTop]=useState(4),[triedTops,setTriedTops]=useState<number[]>([4]),[topPhase,setTopPhase]=useState<'switch'|'melody'|'quiz'>('switch'),[heardMelody,setHeardMelody]=useState(false),[topQ,setTopQ]=useState(0),[topPick,setTopPick]=useState<number|null>(null),[topQs,setTopQs]=useState<TopQuestion[]>(makeTopQuestions);
   // Page 5: bottom number.
   const [bottomMeter,setBottomMeter]=useState<'4/4'|'2/2'|'6/8'>('4/4'),[triedBottoms,setTriedBottoms]=useState<string[]>(['4/4']),[symbol,setSymbol]=useState(false),[bottomQuiz,setBottomQuiz]=useState(false),[bottomPick,setBottomPick]=useState<number|null>(null),[bottomQ,setBottomQ]=useState(0);
   // Page 2: listen with counts, then four "which beat?" questions.
@@ -195,19 +200,19 @@ export default function MeasuresLesson(){
         3:tr('The top number is how many beats are in each measure. 3/4 has three beats, so you count 1 2 3.','上方数字是每小节有几拍。3/4 有三拍，所以数 1 2 3。'),
         4:tr('The top number is how many beats are in each measure. 4/4 has four beats, so you count 1 2 3 4.','上方数字是每小节有几拍。4/4 有四拍，所以数 1 2 3 4。')}[top];
       const both=triedTops.includes(2)&&triedTops.includes(3);
-      message=both?tr('Same beat, grouped differently. Now let’s hear a real song in 3.','同样的拍子，分组不同。现在听一首真正的三拍子歌。'):tr('Try the 2/4, 3/4 and 4/4 buttons below and count along.','点下面的 2/4、3/4 和 4/4，跟着一起数。');
-      if(both)pageNext={label:tr('Hear a song in 3 →','听一首三拍子的歌 →'),ready:true,onClick:()=>{audio.stop();setTopPhase('birthday')}};
+      message=both?tr('Same beat, grouped differently. Now let’s hear a melody in 3.','同样的拍子，分组不同。现在听一段三拍子的旋律。'):tr('Try the 2/4, 3/4 and 4/4 buttons below and count along.','点下面的 2/4、3/4 和 4/4，跟着一起数。');
+      if(both)pageNext={label:tr('Hear a melody in 3 →','听一段三拍子的旋律 →'),ready:true,onClick:()=>{audio.stop();setTopPhase('melody')}};
       scene=<EngravedRow key={`top-${top}`} clef={false} meter={{top,bottom:4}} notes={notes} bars={[top]} className={flash?`is-flash-${flash}`:''}
         below={counts({notes,top,litBeat:audio.beat})} label={`${top}/4`}/>;
       tools=<div className="measures-choices" role="group" aria-label={tr('Top number','上方数字')}>{[2,3,4].map(n=><button key={n} aria-pressed={top===n} className={top===n?'is-picked':''}
         onClick={()=>{setTop(n);setTriedTops(t=>t.includes(n)?t:[...t,n]);blink('top');void audio.counted({values:quarters(n*2).map(x=>x.v),pitches:rhythmPitches(quarters(n*2)),top:n})}}>{n}/4</button>)}</div>;
-    }else if(topPhase==='birthday'){
-      narration=tr('Happy Birthday is in 3/4: three beats in each measure. It starts just before beat 1, so its first count is 3.','《生日快乐》是 3/4 拍：每小节三拍。它从第 1 拍之前开始，所以第一下数 3。');
-      message=heardBirthday?tr('Could you hear the 1 2 3? Ready for three quick questions?','听出 1 2 3 了吗？来做三道小题？'):tr('Press Listen and count 1 2 3 along with it.','点“听一听”，跟着数 1 2 3。');
-      if(heardBirthday)pageNext={label:tr('Three quick questions →','三道小题 →'),ready:true,onClick:()=>{audio.stop();setTopPhase('quiz')}};
-      scene=<EngravedRow key="birthday" notes={BIRTHDAY} even meter={{top:3,bottom:4}} beams={[[0,1],[6,7]]} active={audio.active}
-        below={counts({notes:BIRTHDAY,top:3,litBeat:audio.beat,offset:2})} label={tr('Happy Birthday','《生日快乐》')}/>;
-      tools=<button className="measures-primary" onClick={()=>{setHeardBirthday(true);void audio.counted({values:BIRTHDAY.map(n=>n.v),pitches:BIRTHDAY_MIDI,top:3,countOffset:2})}}>{tr('Listen','听一听')}</button>;
+    }else if(topPhase==='melody'){
+      narration=tr('This melody is in 3/4. Count 1, 2, 3 in each measure, then start again at 1 after the bar line.','这段旋律是 3/4 拍。每小节数 1、2、3，过了小节线再从 1 开始。');
+      message=heardMelody?tr('Could you hear the 1 2 3? Ready for three quick questions?','听出 1 2 3 了吗？来做三道小题？'):tr('Press Listen and count 1 2 3 along with it.','点“听一听”，跟着数 1 2 3。');
+      if(heardMelody)pageNext={label:tr('Three quick questions →','三道小题 →'),ready:true,onClick:()=>{audio.stop();setTopPhase('quiz')}};
+      scene=<EngravedRow key="triple-melody" notes={TRIPLE_MELODY} bars={TRIPLE_MELODY_BARS} meter={{top:3,bottom:4}} active={audio.active}
+        below={counts({notes:TRIPLE_MELODY,top:3,litBeat:audio.beat})} label={tr('Two measures in 3/4','两个 3/4 拍小节')}/>;
+      tools=<button className="measures-primary" onClick={()=>{setHeardMelody(true);void audio.counted({values:TRIPLE_MELODY.map(n=>n.v),pitches:TRIPLE_MELODY_MIDI,top:3})}}>{tr('Listen','听一听')}</button>;
     }else{
       const q=topQs[topQ],solved=topPick===q.answer,lastQ=topQ===topQs.length-1;
       narration=q.given?tr('The top number can be any number of beats, not just 2, 3 or 4. Some music uses 5/4 or 7/4.','上方数字可以是任何拍数，不只是 2、3、4。有的音乐用 5/4 或 7/4。')
@@ -241,7 +246,7 @@ export default function MeasuresLesson(){
     message=picked===null?Q.ask:solved?Q.yes:Q.no;
     tone=picked===null?null:solved?'correct':'wrong';
     ready=solved&&lastQ;
-    if(solved&&!lastQ)pageNext={label:tr('Next question →','下一题 →'),ready:true,onClick:()=>{setBottomQ(1);setBottomPick(null)}};
+    if(solved&&!lastQ)pageNext={label:tr('Next question →','下一题 →'),ready:true,onClick:()=>{audio.stop();setBottomQ(1);setBottomPick(null)}};
     extra=<div className="measures-choices" role="group" aria-label="9/16">{Q.choices.map((c,k)=><button key={k} className={bottomPick===k?(c.right?'is-correct':'is-wrong'):''}
       onClick={()=>{setBottomPick(k);if(c.right)blink(lastQ?'bottom':'top');if(c.right&&lastQ)void audio.counted({values:NINE_SIXTEEN.map(n=>n.v),pitches:rhythmPitches(NINE_SIXTEEN),top:9,beatUnit:.25,secondsPerQuarter:1.6,speak:false})}}>{c.label}</button>)}</div>;
     scene=<EngravedRow key="nine-sixteen" clef={false} meter={{top:9,bottom:16}} notes={NINE_SIXTEEN} beams={beamGroups(NINE_SIXTEEN,.75)} active={audio.active}
@@ -296,7 +301,7 @@ export default function MeasuresLesson(){
       ready=solved&&last;
       extra=<div className="measures-choices" role="group" aria-label={tr('Beat','拍')}>{[1,2,3,4].map(n=><button key={n} className={p2Pick===n?(n===q.answer?'is-correct':'is-wrong'):''}
         onClick={()=>{setP2Pick(n);if(n===q.answer){const b=q.bars[0];void audio.counted({values:q.notes.slice(b).map(x=>x.v),pitches:rhythmPitches(q.notes.slice(b)),offset:b})}}}>{n}</button>)}</div>;
-      if(solved&&!last)pageNext={label:tr('Next question →','下一题 →'),ready:true,onClick:()=>{setP2Q(k=>k+1);setP2Pick(null)}};
+      if(solved&&!last)pageNext={label:tr('Next question →','下一题 →'),ready:true,onClick:()=>{audio.stop();setP2Q(k=>k+1);setP2Pick(null)}};
       const start=q.bars[0],starts=onsets(q.notes);
       scene=<EngravedRow key={`p2-q${p2Q}`} clef={false} notes={q.notes} bars={q.bars} meter={{top:4,bottom:4}} beams={beamGroups(q.notes)} active={audio.active}
         below={p2Pick!==null?counts({notes:q.notes,top:4,share:true,litBeat:audio.beat>=0?audio.beat+starts[start]:-1,show:i=>i>=start&&(solved||i<q.target)}):undefined}>
@@ -327,7 +332,7 @@ export default function MeasuresLesson(){
     }else{
       const r=STICK_TRIES[p3Try],total=8,done=p3Sticks.length===total,starts=onsets(r.notes);
       // The same layout the row draws with, so misses and hints can talk about the note they're near.
-      const layout=layoutRow(r.notes,{bars:r.bars,clef:false,meter:{top:4,bottom:4}}),beatXs=[...Array(total).keys()].map(b=>layout.beatX(b));
+      const layout=layoutRow(r.notes,{bars:r.bars,clef:false,meter:{top:4,bottom:4},right:phone?phoneRowRight(r.notes,false,{top:4,bottom:4}):860}),beatXs=[...Array(total).keys()].map(b=>layout.beatX(b));
       const onsetAt=(b:number)=>starts.findIndex(t=>Math.abs(t-b)<1e-6);
       const holder=(b:number)=>{let k=0;starts.forEach((t,i)=>{if(t<b)k=i});return r.notes[k]};
       /** Why beat b is where it is: on a note, or inside a long one. */
@@ -411,7 +416,7 @@ export default function MeasuresLesson(){
         :intro;
       tone=right?'correct':over>=0||short>=0?'wrong':null;
       ready=right&&p6Round===2;
-      if(right&&p6Round<2)pageNext={label:tr('Next rhythm →','下一个节奏 →'),ready:true,onClick:()=>{setP6Round(k=>k+1);setP6Bars([])}};
+      if(right&&p6Round<2)pageNext={label:tr('Next rhythm →','下一个节奏 →'),ready:true,onClick:()=>{audio.stop();setP6Round(k=>k+1);setP6Bars([])}};
       scene=<BarLineDrawing key={`p6-${p6Round}`} notes={r.notes} meter={{top:r.top,bottom:4}} bars={p6Bars} locked={right} zh={zh}
         onToggle={b=>setP6Bars(t=>t.includes(b)?t.filter(x=>x!==b):[...t,b])}/>;
       tools=<button className="measures-secondary" onClick={()=>void audio.counted({values:r.notes.map(n=>n.v),pitches:rhythmPitches(r.notes),top:r.top})}>{tr('Listen','听一听')}</button>;

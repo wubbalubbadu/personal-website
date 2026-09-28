@@ -3,9 +3,11 @@
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
 }
 
+/* Three tools, three columns: the grid used to allow five (from when the
+   charts sat here too), which squeezed each tool to a fifth of the row. */
 .quick-tool-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 

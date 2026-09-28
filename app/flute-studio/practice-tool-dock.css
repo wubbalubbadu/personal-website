@@ -861,3 +861,10 @@
   border:0;background:transparent!important;border-radius:12px;
   width:36px;height:36px;font-size:24px;cursor:pointer;color:inherit;
 }
+
+/* Phone pages have their own controls; do not float a launcher over content. */
+@media(max-width:760px){
+  body .dock-launcher,
+  body .studio-navigation__actions .dock-launcher,
+  body .topbar-tools-slot .dock-launcher{display:none!important}
+}

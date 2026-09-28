@@ -13,7 +13,6 @@ export default function TheoryHome(){
   const {lang}=useLanguage(),zh=lang==='zh';
   return <main className="theory-shell theory-home">
     <header className="theory-home__header">
-      <p>{zh?'初学者必修':'Beginner essentials'}</p>
       <h1>{zh?'乐理课':'Theory lessons'}</h1>
       <p>{zh?'学习识谱的互动教程。':'Interactive lessons for reading and playing beginner music.'}</p>
     </header>

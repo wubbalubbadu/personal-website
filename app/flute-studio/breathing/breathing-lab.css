@@ -23,3 +23,71 @@
 .bl-dot-group i.current{box-shadow:0 0 0 2px #40553d40;transform:scale(1.25)}
 .bl-current{font-size:14px;color:#40553d}
 @media(max-width:440px){.bl-sequence,.bl-current{grid-column:1/-1}.bl-sequence{max-height:220px}}
+
+/* Phone: the stage sat in a fixed 300px row, shorter than the ring, the cue
+   and the view buttons together, so they drew over each other. It takes its
+   natural height now: the ring at a set size, then the cue, then the views.
+   The page itself scrolls (see studio-shell.css). */
+@media(max-width:760px){
+  .bl-workspace{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto auto auto!important;flex:none}
+  .bl-stage{min-height:0!important;overflow:visible}
+  .bl-scene{flex:none;height:250px;min-height:0}
+  .bl-scene .bl-ring{max-height:240px}
+  .bl-cue{margin:6px 16px 10px}
+  .bl-visuals{padding:0 8px 12px}
+  .bl-header{padding-top:0}
+}
+
+/* Current studio look (replacing the green boxes): the title where every
+   other page has it, grey pills with the selected one dark, one compact
+   controls card, and a single dark Start. */
+.breathing-lab{padding:64px 24px 24px}
+.bl-header,.bl-workspace{width:min(1120px,100%);margin-inline:auto}
+.bl-header{padding:50px 4px 20px}
+.bl-header h1{margin:0;font-size:42px;line-height:1.04;font-weight:760;letter-spacing:-.04em}
+
+.bl-exercises button{border:0!important;background:#f4f4f5!important;box-shadow:none!important;color:#45464f}
+.bl-exercises button strong{color:#292a33;font-weight:650}
+.bl-exercises button small{color:#85868e}
+.bl-exercises button[aria-pressed=true]{background:#292a33!important}
+.bl-exercises button[aria-pressed=true] strong{color:#fff}
+.bl-exercises button[aria-pressed=true] small{color:#c9cad0}
+
+.bl-visuals button{background:transparent;color:#6f7178}
+.bl-visuals button[aria-pressed=true]{background:#fff;color:#292a33;box-shadow:0 1px 3px rgba(41,42,51,.1)}
+
+.bl-controls{display:flex!important;flex-direction:column;gap:14px;padding:16px!important;border:1px solid #ececef!important;border-radius:20px!important;background:#fff!important;box-shadow:none!important}
+.bl-counts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.bl-count-step{display:grid;gap:5px;justify-items:center}
+.bl-count-step>span{font-size:12px;font-weight:600;color:#6f7178}
+.bl-stepper{display:inline-flex;align-items:center;justify-content:space-between;width:100%;height:36px;padding:0 3px;border-radius:11px;background:#f1f1f2}
+.bl-stepper button{width:28px;height:30px;border:0;border-radius:8px;background:transparent;color:#45464f;font:inherit;font-size:17px;cursor:pointer}
+.bl-stepper button:hover{background:#e4e4e7}
+.bl-stepper b{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;color:#292a33}
+.bl-stepper small{font-size:11px;font-weight:600;color:#85868e}
+.bl-play-row{display:flex;align-items:center;gap:8px}
+.bl-tempo{width:auto;flex:0 0 140px}
+.bl-sound{width:36px;height:36px;flex:0 0 auto;border:0;border-radius:50%;background:#f1f1f2;color:#45464f;display:grid;place-items:center;cursor:pointer}
+.bl-sound svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.bl-sound[aria-pressed=false]{color:#a3a5ab}
+.bl-start{flex:1;height:40px!important;border:0!important;border-radius:12px!important;background:#292a33!important;color:#fff!important;font-size:15px!important;font-weight:650!important;box-shadow:none!important}
+.bl-start:hover{background:#3a3b45!important}
+
+/* Phone: one screen, no scrolling. The tab bar says where you are, so no
+   title; the patterns are a single swipe row of names; the ring is a set
+   size; the controls card sits right under it. */
+@media(max-width:760px){
+  .studio-route .breathing-lab{padding-bottom:12px!important}
+  .bl-header{display:none}
+  .bl-workspace{gap:10px!important}
+  .bl-exercises{gap:6px!important}
+  .bl-exercises button{flex:0 0 auto!important;padding:8px 14px!important;border-radius:999px!important}
+  .bl-exercises button small{display:none}
+  .bl-scene{height:210px}
+  .bl-scene .bl-ring{max-height:200px}
+  .bl-cue{margin:4px 12px 6px;font-size:13px}
+  .bl-visuals{padding:0 6px 8px;gap:2px}
+  .bl-visuals button{padding:6px 10px;font-size:12px}
+  .bl-controls{padding:12px!important;gap:10px}
+}
+.bl-controls{align-self:start}

@@ -829,3 +829,38 @@ html.score-focus-mode .restored-reader[data-dock] .workspace{grid-template-areas
 /* The dock is its own sheet: a gap and a hairline keep the cut-off edge of
    the score from running straight into it. */
 .reader-workspace .reader-dock{padding-top:10px;border-top:1px solid #dcded8}
+
+/* Phone reader: compact rows, with every control inside the viewport. */
+@media(max-width:760px){
+  .restored-reader .topbar{display:flex;flex-wrap:wrap;gap:0 6px;padding:0 8px!important}
+  .restored-reader .topbar>div:last-child{display:contents}
+  .restored-reader .topbar-toolbar-slot{min-width:0;margin:0}
+  .restored-reader .topbar-spacer{display:none}
+  .restored-reader .topbar>div:first-child{margin-right:auto}
+  .restored-reader .topbar .back,.restored-reader .topbar .icon-btn{min-height:44px;min-width:44px}
+  .restored-reader .topbar-toolbar-slot{flex:1 0 100%;order:2}
+  .restored-reader .practice-bar{display:flex;flex-wrap:wrap!important;gap:0!important;padding:2px 2px!important;overflow:visible!important;min-width:0}
+  .restored-reader .practice-bar>.tool-group{order:2}
+  .restored-reader .practice-bar>.transport{display:contents}
+  .restored-reader .practice-bar .transport-menu{order:0}
+  .restored-reader .practice-bar .tool{min-width:44px!important;min-height:44px!important;height:44px!important;padding:2px!important;font-size:10px!important;gap:0}
+  .restored-reader .practice-bar .tempo-group{gap:0;flex:none}
+  .restored-reader .practice-bar .tempo-group>.tool{min-width:62px!important}
+  .restored-reader .practice-bar .tempo{padding:0!important;gap:0!important;height:44px;min-width:0}
+  .restored-reader .practice-bar .tempo-step{min-width:44px!important;width:44px;min-height:44px!important;height:44px}
+  .restored-reader .practice-bar .tempo input{width:44px!important;min-width:0!important;height:44px;font-size:16px!important;padding:0!important}
+  .restored-reader .practice-bar .restored-view-controls{display:contents;margin:0!important}
+  .restored-reader .practice-bar .reader-view{display:contents}
+  .restored-reader .practice-bar .reader-view>*{order:2;flex:0 0 44px;width:44px;min-width:0}
+  .restored-reader .practice-bar .reader-pages{display:contents}
+  .restored-reader .reader-pages>button,.restored-reader .reader-pages>button:not(.tool){order:2;flex:0 0 44px;min-width:44px;width:44px;min-height:44px;height:44px}
+  .restored-reader .reader-pages>span{order:2;flex:0 0 26px;width:26px;padding:0;margin:0;min-width:0;font-size:10px;text-align:center}
+  .restored-reader .practice-bar .reader-view .scale-book__scales-trigger{min-width:44px!important;width:44px;min-height:44px;padding:2px!important}
+  .reader-settings-panel{max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);overflow:auto}
+  .reader-settings-panel button{min-height:44px}
+  .reader-settings-panel .reader-panel-heading>button{min-width:44px}
+}
+
+@media(max-width:760px){
+  body:has(.restored-reader){padding-bottom:0!important}
+}

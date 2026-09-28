@@ -1,0 +1,96 @@
+/* The tools panel: tuner, drones and metronome on one card (PracticeToolDock).
+   Desktop: a floating card under the header's tuning fork, draggable by its
+   grip. Phone: a bottom sheet, about half the screen, closed by pulling the
+   grip down (no close button on a phone). Studio look: white card, grey
+   pills, the cactus green for "on", sentence case throughout. */
+
+.practice-dock.tools-panel{
+  top:var(--dock-top)!important;right:var(--dock-right)!important;bottom:auto!important;left:auto!important;
+  width:min(368px,calc(100vw - 24px))!important;max-height:calc(100dvh - var(--dock-top) - 12px)!important;
+  display:flex;flex-direction:column;overflow:hidden;
+  border:1px solid #e6e7e3!important;border-radius:18px!important;background:#fff!important;
+  box-shadow:0 16px 44px rgba(41,42,51,.16)!important;color:#292a33;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",Inter,Arial,sans-serif;
+}
+
+/* Grip row: a short bar to drag by, and (desktop only) a small ×. */
+.tools-panel__grip{position:relative;height:22px;flex:0 0 auto;display:flex;align-items:center;justify-content:center}
+.tools-panel__handle{width:100%;height:22px;border:0;background:transparent;cursor:grab;touch-action:none;display:grid;place-items:center}
+.tools-panel__handle:active{cursor:grabbing}
+.tools-panel__handle>span{width:34px;height:4px;border-radius:2px;background:#d6d8dc}
+.tools-panel__close{position:absolute;right:6px;top:3px;width:26px;height:26px;border:0;border-radius:50%;background:transparent;color:#8a8d94;display:grid;place-items:center;cursor:pointer}
+.tools-panel__close:hover{background:#f1f1f2;color:#292a33}
+.tools-panel__close svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+
+.tools-panel__body{overflow-y:auto;padding:2px 14px 14px;display:grid;gap:12px}
+.tools-panel__body>section{outline:0}
+.tp-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tp-row--center{justify-content:center}
+.tp-label{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#45464f}
+
+/* Tuner: the note, a Listen switch, and one meter with the reading under
+   its needle. */
+.tp-tuner{padding:10px 12px 12px;border-radius:14px;background:#f6f7f4}
+.tp-tuner__top{display:flex;align-items:center;justify-content:space-between}
+.tp-tuner__note{border:0;background:transparent;padding:0;color:inherit;cursor:pointer;display:flex;align-items:baseline;border-radius:8px}
+.tp-tuner__note b{font-size:34px;font-weight:760;letter-spacing:-.03em;line-height:1}
+.tp-tuner__note sup{font-size:14px;font-weight:600;color:#73777f;margin-left:2px}
+.tp-tuner__note:hover b{color:#46633d}
+.tp-listen{height:30px;padding:0 12px 0 9px;border:0;border-radius:999px;background:#fff;color:#45464f;font:inherit;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:5px;cursor:pointer;box-shadow:inset 0 0 0 1px #e1e2df}
+.tp-listen svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round}
+.tp-listen.is-on{background:#46633d;color:#fff;box-shadow:none}
+.tp-meter{position:relative;margin-top:12px;padding-bottom:22px}
+.tp-meter__track{position:relative;height:10px;border-radius:5px;background:#e7e8e4}
+.tp-meter__band{position:absolute;left:44%;right:44%;top:0;bottom:0;border-radius:5px;background:#d6e4cf}
+.tp-meter__center{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:#9fa3aa}
+.tp-meter__needle{position:absolute;left:var(--cents-position,50%);top:-5px;width:4px;height:20px;margin-left:-2px;border-radius:2px;background:#9fa3aa;transition:left .12s linear}
+.tp-meter__cents{position:absolute;top:18px;left:var(--cents-position,50%);transform:translateX(-50%);white-space:nowrap;font-size:13px;font-weight:650;color:#73777f;font-variant-numeric:tabular-nums;transition:left .12s linear}
+.tp-tuner.is-idle .tp-meter__cents{left:50%!important}
+.tp-tuner.is-tuned .tp-meter__needle,.tp-tuner.is-tuned .tp-meter__cents{background-color:transparent;color:#4f8a45}
+.tp-tuner.is-tuned .tp-meter__needle{background:#4f8a45}
+.tp-tuner.is-flat .tp-meter__needle,.tp-tuner.is-sharp .tp-meter__needle{background:#c3881f}
+.tp-tuner.is-flat .tp-meter__cents,.tp-tuner.is-sharp .tp-meter__cents{color:#b07a1a}
+
+/* The twelve notes: tap for a drone (filled green), the heard note outlined. */
+.tp-notes{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;margin-top:6px}
+.tp-notes button{height:34px;border:0;border-radius:10px;background:#f1f1f2;color:#45464f;font:inherit;font-size:14px;font-weight:560;cursor:pointer;transition:background-color .14s ease,box-shadow .14s ease}
+.tp-notes button:hover{background:#e8e8ea}
+.tp-notes button.is-on{background:#e4ecdf;color:#46633d;font-weight:680}
+.tp-notes button.is-heard{box-shadow:inset 0 0 0 2px #4f8a45}
+.tp-notes button.is-heard.is-flat,.tp-notes button.is-heard.is-sharp{box-shadow:inset 0 0 0 2px #c3881f}
+.tp-stop{height:22px;padding:0 8px;border:0;border-radius:999px;background:#f1f1f2;color:#73777f;font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+
+/* Steppers and chips. */
+.tp-stepper{display:inline-flex;align-items:center;gap:2px;height:34px;padding:0 3px;border-radius:10px;background:#f1f1f2}
+.tp-stepper button{width:28px;height:28px;border:0;border-radius:8px;background:transparent;color:#45464f;font:inherit;font-size:17px;cursor:pointer}
+.tp-stepper button:hover:not(:disabled){background:#e4e4e7}
+.tp-stepper button:disabled{opacity:.35;cursor:default}
+.tp-stepper b{min-width:34px;text-align:center;font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.tp-stepper span{padding:0 4px;font-size:12px;font-weight:600;color:#6f7178;white-space:nowrap}
+.tp-stepper--small{height:28px}
+.tp-stepper--small button{width:24px;height:24px;font-size:15px}
+
+.tp-metro{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding-top:12px;border-top:1px solid #efefef}
+.tp-play{width:36px;height:36px;border:0;border-radius:50%;background:#f1f1f2;color:#292a33;display:grid;place-items:center;cursor:pointer;flex:0 0 auto}
+.tp-play svg{width:15px;height:15px;fill:currentColor}
+.tp-play.is-on{background:#46633d;color:#fff}
+.tp-chip{height:30px;padding:0 10px;border:0;border-radius:999px;background:#f1f1f2;color:#45464f;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.tp-chip:hover{background:#e8e8ea}
+.tp-chip.is-on{background:#e4ecdf;color:#46633d}
+
+/* Fingering view. */
+.tp-back{border:0;background:transparent;padding:4px 0;color:#45464f;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.tp-link{font-size:13px;color:#46633d;font-weight:600;text-decoration:none}
+.tp-fingering__now{display:flex;align-items:center;justify-content:center;gap:10px;padding:8px 0}
+.tp-fingering__now .dock-fingering-diagram{width:150px;height:auto}
+
+.tools-panel button:focus-visible,.tools-panel a:focus-visible{outline:2px solid rgba(70,99,61,.45);outline-offset:2px}
+
+/* Phone: a bottom sheet, no close button. Pull the grip down, or tap the
+   tuning fork again, to close it. */
+@media(max-width:760px){
+  .practice-dock.tools-panel{top:auto!important;left:0!important;right:0!important;bottom:0!important;width:auto!important;max-height:56dvh!important;border-radius:18px 18px 0 0!important;border-width:1px 0 0!important;box-shadow:0 -10px 30px rgba(41,42,51,.16)!important;padding-bottom:env(safe-area-inset-bottom)}
+  .tools-panel__grip{height:26px}
+  .tools-panel__close{display:none}
+}
+@media(prefers-reduced-motion:reduce){.tp-meter__needle,.tp-meter__cents,.tp-notes button{transition:none}}

@@ -1,0 +1,35 @@
+/* The home page's animated cards at a smaller, uniform size, for tab pages
+   (Learn, Exercises). Four across on a desktop, three on iPad, one column
+   on a phone. --three, --four and --five set the desktop count for a row
+   of that many cards; --four drops to two across on iPad (no orphan). */
+.preview-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:8px 0 42px;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Arial,sans-serif}
+.preview-grid .preview-card{border-radius:18px}
+.preview-grid .preview-card__stage{height:128px}
+.preview-grid .preview-card__copy{padding:12px 16px 16px}
+.preview-grid .preview-card__copy b{font-size:15px}
+.preview-grid .preview-card__copy small{font-size:13px}
+.preview-grid--three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.preview-grid--three .preview-card__stage{height:150px}
+/* The home page's Learn row: all five on one line on a desktop. */
+.preview-grid--five{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media(max-width:1100px){.preview-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.preview-grid--four{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.preview-grid{grid-template-columns:minmax(0,1fr);gap:12px}}
+/* Demos sized for the smaller card. The roadmap legend goes to one column
+   so its labels are not cut off; the embouchure cue drops its explanation
+   line and keeps the note name and the short cue. */
+.preview-grid .roadmap-preview{grid-template-columns:minmax(0,1fr);gap:3px 0}
+.preview-grid .roadmap-preview li{font-size:12px}
+.preview-grid .learn-demo{padding:10px 12px;gap:6px}
+.preview-grid .emb-demo__side{width:auto;flex:0 1 110px;min-width:0;gap:4px}
+.preview-grid .emb-demo__side b{font-size:20px}
+.preview-grid .emb-demo__side p{font-size:0;line-height:1.2}
+.preview-grid .emb-demo__side p em{font-size:13px}
+/* Browse music and Breathing Lab cycle through several modes and name them
+   all in a caption, which wraps to three lines in a small card. Here the
+   caption names only the mode playing now, and the breathing card drops
+   its side text so the ring has the room. */
+.preview-grid .scale-preview__caption{font-size:12.5px;white-space:nowrap}
+.preview-grid .music-demo__caption>span:not(:has(.is-changed)),
+.preview-grid .breath-demo__caption>span:not(:has(.is-changed)){display:none}
+.preview-grid .music-demo__caption i,.preview-grid .breath-demo__caption i{display:none}
+.preview-grid .breath-demo__side{display:none}

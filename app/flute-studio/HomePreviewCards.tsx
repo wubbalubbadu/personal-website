@@ -8,6 +8,7 @@ import MusicPreview from "./MusicPreview";
 import BreathingPreview from "./BreathingPreview";
 import {TheoryPreview,EmbouchurePreview,FingeringPreview,TrillPreview,RoadmapPreview} from "./LearnPreviews";
 import "./home-preview-cards.css";
+import "./components/preview-grid.css";
 
 const warmScoreReader=()=>{void import("opensheetmusicdisplay")};
 
@@ -56,10 +57,18 @@ export default function HomePreviewCards(){
 
     <h2 className="home-preview__group">{lang==="zh"?"学习":"Learn"}</h2>
     {/* Theory first: it is where a new player starts. */}
-    <section className="home-preview-grid home-preview-grid--trio" aria-label="Learn">
+    <section className="preview-grid" aria-label="Learn">
     <Link className="preview-card preview-card--theory" href="/flute-studio/theory">
       <div className="preview-card__stage"><TheoryPreview zh={lang==="zh"}/></div>
       <div className="preview-card__copy"><b>{lang==="zh"?"乐理课":"Theory lessons"}</b><small>{lang==="zh"?"像小游戏一样的互动乐理课。":"Hands-on theory lessons that play like little games."}</small></div>
+    </Link>
+    <Link className="preview-card preview-card--fingerings" href="/flute-studio/fingerings">
+      <div className="preview-card__stage"><FingeringPreview/></div>
+      <div className="preview-card__copy"><b>{lang==="zh"?"指法表":"Fingering chart"}</b><small>{lang==="zh"?"从低音 B 到最高音，每个音都有替代指法。":"Every note from low B to the top, with alternate fingerings."}</small></div>
+    </Link>
+    <Link className="preview-card preview-card--trills" href="/flute-studio/trills">
+      <div className="preview-card__stage"><TrillPreview/></div>
+      <div className="preview-card__copy"><b>{lang==="zh"?"颤音指法表":"Trill chart"}</b><small>{lang==="zh"?"四个八度的颤音指法。":"Four octaves of trill fingerings."}</small></div>
     </Link>
     <Link className="preview-card preview-card--embouchure" href="/flute-studio/embouchure">
       <div className="preview-card__stage"><EmbouchurePreview/></div>
@@ -68,19 +77,6 @@ export default function HomePreviewCards(){
     <Link className="preview-card preview-card--roadmap" href="/flute-studio/roadmap">
       <div className="preview-card__stage"><RoadmapPreview regions={regions}/></div>
       <div className="preview-card__copy"><b>{t.quickTools.roadmap}</b><small>{sentence(t.quickTools.roadmapDetail)}</small></div>
-    </Link>
-
-
-
-
-    <Link className="preview-card preview-card--fingerings" href="/flute-studio/fingerings">
-      <div className="preview-card__stage"><FingeringPreview/></div>
-      <div className="preview-card__copy"><b>{lang==="zh"?"指法表":"Fingering chart"}</b><small>{lang==="zh"?"从低音 B 到最高音，每个音都有替代指法。":"Every note from low B to the top, with alternate fingerings."}</small></div>
-    </Link>
-
-    <Link className="preview-card preview-card--trills" href="/flute-studio/trills">
-      <div className="preview-card__stage"><TrillPreview/></div>
-      <div className="preview-card__copy"><b>{lang==="zh"?"颤音指法表":"Trill chart"}</b><small>{lang==="zh"?"四个八度的颤音指法。":"Four octaves of trill fingerings."}</small></div>
     </Link>
 
     </section>

@@ -9,6 +9,7 @@ import NoteBuilder from './NoteBuilder';
 import CookieButton from '../CookieButton';
 import {assessHold, assessTaps, VALUES, type NoteValue} from './rhythmModel';
 import {useRhythmAudio} from './useRhythmAudio';
+import {usePhoneNotation} from '../usePhoneNotation';
 import LessonFrame, {type LessonNext} from '../LessonFrame';
 import {useCourseProgress} from '../useCourseProgress';
 import '../theory.css';
@@ -36,6 +37,7 @@ const pickTaps=()=>TAP_TIERS.map(tier=>tier[Math.floor(Math.random()*tier.length
 const fillBeat=(value:NoteValue)=>Array<NoteValue>(value<1?1/value:1).fill(value);
 
 export default function RhythmLesson() {
+  const phone=usePhoneNotation(),width=phone?520:760;
   const {lang}=useLanguage(), zh=lang==='zh', tr=(en:string,cn:string)=>zh?cn:en;
   const [step,setStep]=useState(0),[variant,setVariant]=useState(0),[shape,setShape]=useState<number|null>(null);
   const [depth,setDepth]=useState(0),[treeRow,setTreeRow]=useState(0),[built,setBuilt]=useState(0),[drawn,setDrawn]=useState(false);
@@ -64,7 +66,7 @@ export default function RhythmLesson() {
   if(id==='hold')notes=[target];
   if(id==='tap')notes=tapPattern;
   if(id==='melody')notes=melody;
-  const xs=notes.map((_,i)=>notes.length===1?390:id==='beams'?330+i*120:id==='shapes'?115+i*135:205+i*420/(notes.length-1));
+  const xs=notes.map((_,i)=>phone?(notes.length===1?270:id==='beams'?220+i*100:id==='shapes'?65+i*95:160+i*300/(notes.length-1)):(notes.length===1?390:id==='beams'?330+i*120:id==='shapes'?115+i*135:205+i*420/(notes.length-1)));
   const ys=notes.map((_,i)=>id==='rhythm'||id==='melody'?noteY(positions[i]):id==='shapes'?190:176);
   const pitches=id==='rhythm'||id==='melody'?positions.map(p=>pitchAt(p).midi):notes.map(()=>67);
 
@@ -163,8 +165,8 @@ export default function RhythmLesson() {
   const tone=correct||done||(id==='build'&&drawn)?'correct':(id==='hold'||id==='tap')&&feedback&&!correct?'wrong':null;
   const visual=id==='values'?<DurationTree depth={depth} selected={treeRow} active={audio.active} onSelect={row=>{setTreeRow(row);void audio.play(Array(2**row).fill(VALUES[row]))}} zh={zh}/>
     :id==='build'?<NoteBuilder stage={built} drawn={drawn} labels={buildLabels} zh={zh} onDrawn={()=>setDrawn(true)}/>
-    :<svg className={`rhythm-score ${id==='shapes'?'rhythm-shapes':''}`} viewBox={id==='shapes'?'0 0 760 310':'0 40 760 245'} preserveAspectRatio="xMidYMid meet" aria-label={notes.map(nameOf).join(', ')}>
-      {id!=='shapes'&&<>{[0,1,2,3,4].map(i=><line key={i} x1="55" x2="705" y1={104+i*24} y2={104+i*24} stroke="#555" strokeWidth="1"/>)}<TrebleClef/></>}
+    :<svg className={`rhythm-score ${id==='shapes'?'rhythm-shapes':''}`} viewBox={id==='shapes'?`0 0 ${width} 310`:`0 40 ${width} 245`} preserveAspectRatio="xMidYMid meet" aria-label={notes.map(nameOf).join(', ')}>
+      {id!=='shapes'&&<>{[0,1,2,3,4].map(i=><line key={i} x1="55" x2={width-25} y1={104+i*24} y2={104+i*24} stroke="#555" strokeWidth="1"/>)}<TrebleClef/></>}
       {notes.map((value,i)=><g key={`${step}-${i}`} transform={`translate(${xs[i]} ${ys[i]})`} className={`rhythm-note ${audio.active===i||(id==='tap'&&i<taps.length&&!correct)?'is-playing':''} ${id==='melody'?'is-draggable':''}`}>
         {id==='melody'&&selected===i&&<circle cx="0" cy="0" r="24" fill="#dbac65" fillOpacity=".16"/>}
         {(id==='rhythm'||id==='melody')&&ledgerLines(positions[i]).map(p=><line key={p} x1="-23" x2="23" y1={noteY(p)-ys[i]} y2={noteY(p)-ys[i]} stroke="currentColor" strokeWidth="1.5"/>)}

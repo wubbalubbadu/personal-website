@@ -38,3 +38,16 @@
 .trill-chart .fingering-chart__header{padding-top:24px;padding-bottom:20px}
 .trill-chart .fingering-chart__intro{margin-top:12px}
 .trill-chart .fingering-chart__sibling{margin-top:12px}
+
+/* Phone: tighter trill cards so the note picker below is closer. The key
+   hint is for a mouse; on a phone the moving keys already show in red. */
+@media(max-width:760px){
+  .trill-chart__results{gap:10px}
+  .trill-row{padding:12px 14px!important;gap:6px 12px!important;border-radius:18px}
+  .trill-notation{width:130px!important}
+  .trill-row__interval{margin-bottom:4px}
+  .trill-row__detail h2{font-size:20px}
+  .trill-row__fingering .flute-diagram,.trill-row__fingering svg{max-height:78px}
+  .trill-row__hint{display:none}
+  .trill-row__controls{margin-top:6px}
+}

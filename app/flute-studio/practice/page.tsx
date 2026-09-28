@@ -109,10 +109,8 @@ export default function PracticePage(){
 
   return <main className="practice-page">
     <div className="practice-page__content">
-      <header className="practice-page__header">
-        <p>{t.practicePage.eyebrow}</p>
+      <header className="practice-page__header" data-tab-title>
         <h1>{t.practicePage.title}</h1>
-        <p className="practice-page__intro">{t.practicePage.intro}</p>
       </header>
 
       <section className="practice-card stats-card" aria-label={zh?"练习统计":"Practice at a glance"}>

@@ -1,0 +1,34 @@
+/* Tool cards are buttons (a tool opens over the page rather than
+   navigating), so they need a button reset to look like the link cards. */
+button.preview-card{width:100%;padding:0;border:0;text-align:left;font:inherit;cursor:pointer}
+.preview-card--tuner .preview-card__stage{background:var(--tint-green)}
+.preview-card--metronome .preview-card__stage{background:var(--tint-sand)}
+.preview-card--drone .preview-card__stage{background:var(--tint-pink)}
+
+.tool-demo{width:100%;height:100%;padding:14px 22px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;gap:8px;color:#292a33}
+
+.tuner-demo__read{display:flex;align-items:baseline;justify-content:space-between}
+.tuner-demo__read b{font-size:30px;font-weight:760;letter-spacing:-.03em}
+.tuner-demo__read sup{font-size:13px;font-weight:600;color:#6b7078;margin-left:1px}
+.tuner-demo__read em{font-style:normal;font-size:14px;font-weight:650;font-variant-numeric:tabular-nums}
+.tool-demo .is-in{color:#4f8a45}.tool-demo .is-near{color:#c3881f}.tool-demo .is-off{color:#c54a3d}
+.tuner-demo__ruler{position:relative;height:22px;display:flex;justify-content:space-between;align-items:center}
+.tuner-demo__ruler i{width:1px;height:8px;background:#b9bcc2}
+.tuner-demo__ruler i.is-major{height:14px;background:#8a8d94}
+.tuner-demo__needle{position:absolute;top:-2px;bottom:-2px;width:3px;margin-left:-1.5px;border-radius:2px;background:currentColor;transition:left .5s cubic-bezier(.2,.8,.2,1)}
+.tuner-demo__scale{display:flex;justify-content:space-between;font-size:10px;color:#8a8d94;font-variant-numeric:tabular-nums}
+
+.metronome-demo{align-items:center;gap:14px}
+.metronome-demo__beats{display:flex;gap:14px}
+.metronome-demo__beats i{width:16px;height:16px;border-radius:50%;background:#e2d7c2;transition:background-color .08s ease,transform .08s ease}
+.metronome-demo__beats i.is-accent{width:20px;height:20px;margin-top:-2px}
+.metronome-demo__beats i.is-on{background:#8a6a2f;transform:scale(1.12)}
+.metronome-demo p{margin:0;font-size:15px;font-weight:650;color:#6b5a39}
+
+.drone-demo{flex-direction:row;align-items:center;gap:16px}
+.drone-demo b{font-size:30px;font-weight:760;color:#68466b}
+.drone-demo svg{flex:1;height:40px;overflow:hidden}
+.drone-demo__wave{fill:none;stroke:#b37ab0;stroke-width:2.5;stroke-linecap:round}
+.drone-demo.is-on .drone-demo__wave{animation:drone-wave 1.6s linear infinite}
+@keyframes drone-wave{to{transform:translateX(-50px)}}
+@media(prefers-reduced-motion:reduce){.tuner-demo__needle,.metronome-demo__beats i{transition:none}.drone-demo__wave{animation:none!important}}

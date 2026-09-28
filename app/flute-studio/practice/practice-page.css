@@ -1,5 +1,5 @@
 .practice-page{height:100vh;overflow-y:auto;background:#fff;color:#292a33;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Arial,sans-serif;padding:64px 24px 130px;scrollbar-gutter:stable}
-.practice-page__content{max-width:980px;margin:0 auto}
+.practice-page__content{max-width:1120px;margin:0 auto}
 .practice-page__header{padding:50px 4px 40px}
 .practice-page__header>p:first-child{margin:0 0 8px;color:#678956;font-size:12px;font-weight:720;letter-spacing:.08em;text-transform:uppercase}
 .practice-page__header h1{margin:0;font-size:42px;line-height:1.04;font-weight:780;letter-spacing:-.04em}

@@ -1,5 +1,6 @@
 'use client';
 import {useEffect,useState,useRef,type PointerEvent} from 'react';
+import {usePhoneNotation} from './usePhoneNotation';
 import TrebleClef from './TrebleClef';
 import QuarterNote from './QuarterNote';
 import {noteY,ledgerLines,SOLFEGE} from './model';
@@ -7,6 +8,7 @@ import {sceneNotes,notationPitch} from './sequence';
 
 type Props={draggable?:boolean;focusPitch?:number|null;memory?:number;keyboard?:boolean;step:number;edits:Record<string,number>;active:number;keyboardPitch:number|null;zh:boolean;onMove:(id:string,position:number)=>void;onHear:(position:number,index:number)=>void;onKey:(midi:number)=>void};
 export default function LessonDiagram({draggable=true,focusPitch=null,memory=-1,keyboard=false,step,edits,active,keyboardPitch,zh,onMove,onHear,onKey}:Props){
+  const phone=usePhoneNotation(),width=phone?560:760;
   const [arrival,setArrival]=useState<number|null>(null);
   const [exploring,setExploring]=useState(false);
   useEffect(()=>{
@@ -32,17 +34,17 @@ export default function LessonDiagram({draggable=true,focusPitch=null,memory=-1,
     if(position!==d.last){d.last=position;onMove(d.id,position);onHear(position,d.index)}
   }
   return <div className={`sequence-figure ${draggable?'':'is-static'}`}>
-    <svg ref={svg} className="sequence-staff" viewBox="0 40 760 245" preserveAspectRatio="xMidYMax meet" role="group" aria-label={zh?'高音谱表；点音符播放，拖动改变音高。':'Treble staff. Tap a note to hear it; drag to change its pitch.'}>
+    <svg ref={svg} className="sequence-staff" viewBox={`0 40 ${width} 245`} preserveAspectRatio="xMidYMax meet" role="group" aria-label={zh?'高音谱表；点音符播放，拖动改变音高。':'Treble staff. Tap a note to hear it; drag to change its pitch.'}>
       {[0,2,4,6,8].map((p,i)=><g key={p}>
-        <line x1="55" x2="705" y1={noteY(p)} y2={noteY(p)} className={`sequence-line ${step===9&&p===2?'is-anchor':''}`}/>
-        <text aria-hidden="true" x="724" y={noteY(p)+5} className={`sequence-number ${step===1?'is-visible':''}`}>{i+1}</text>
+        <line x1="55" x2={width-55} y1={noteY(p)} y2={noteY(p)} className={`sequence-line ${step===9&&p===2?'is-anchor':''}`}/>
+        <text aria-hidden="true" x={width-36} y={noteY(p)+5} className={`sequence-number ${step===1?'is-visible':''}`}>{i+1}</text>
       </g>)}
-      {[1,3,5,7].map((p,i)=><g key={p} aria-hidden="true" className={`sequence-spaces ${step===2?'is-visible':''}`} style={{transitionDelay:`${i*100}ms`}}><rect x="70" y={noteY(p)-11} width="840" height="22" fill="#edf0f2"/><text x="724" y={noteY(p)+5}>{i+1}</text></g>)}
+      {[1,3,5,7].map((p,i)=><g key={p} aria-hidden="true" className={`sequence-spaces ${step===2?'is-visible':''}`} style={{transitionDelay:`${i*100}ms`}}><rect x="70" y={noteY(p)-11} width="840" height="22" fill="#edf0f2"/><text x={width-36} y={noteY(p)+5}>{i+1}</text></g>)}
       <g className={`sequence-clef ${showClef?'is-visible':''}`} style={{transform:step===7?'translate(320px, 0px)':'translate(0px, 0px)'}}><TrebleClef/></g>
       <g aria-hidden="true" className={`sequence-g-anchor ${step===9?'is-visible':''}`}><circle cx="124" cy="176" r="23"/><line x1="148" x2="210" y1="176" y2="176"/><text x="226" y="182">G · sol</text></g>
       {Array.from({length:13},(_,i)=>i-2).map(p=>{
         const note=notes.find(n=>n.position===p),position=note?(edits[note.id]??p):p;
-        const visible=!!note,ghost=note?.ghost,index=notes.findIndex(n=>n.position===p),pitch=notationPitch(position),x=note?.x??220+(p-2)*76;
+        const visible=!!note,ghost=note?.ghost,index=notes.findIndex(n=>n.position===p),pitch=notationPitch(position),originalX=note?.x??220+(p-2)*76,x=phone?150+(originalX-150)*.67:originalX;
         return <g key={p} className={`sequence-note ${visible?'is-visible':''} ${ghost?'is-ghost':''} ${(active===index||keyboardPitch===pitch.midi||litPitch===position)&&visible?'is-playing':''}`} style={{transform:`translate(${x}px, ${noteY(position)}px)`,animationDelay:`${focusPitch!==null?0:note?.delay??0}ms`,transitionDelay:`${focusPitch!==null||note&&edits[note.id]!==undefined?0:note?.delay??0}ms`}}
           role={visible&&!ghost?'button':undefined} tabIndex={visible&&!ghost?0:-1} aria-hidden={!visible||undefined} aria-label={visible?`${pitch.name}${pitch.octave} · ${SOLFEGE[pitch.name]}`:undefined}
           onPointerDown={e=>{if(note&&!ghost)begin(e,note.id,position,index)}} onPointerMove={move} onPointerUp={()=>{drag.current=null}} onPointerCancel={()=>{drag.current=null}}

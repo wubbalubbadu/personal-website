@@ -218,7 +218,10 @@ function findTerms(raw:string){
   const words=raw.toLowerCase().replace(/[(),;:]/g," ").split(/\s+/).filter(Boolean);
   const found:{phrase:string;term:Term}[]=[];
   for(let i=0;i<words.length;){
-    const phrase=PHRASES.find(candidate=>{const parts=candidate.split(" ");return parts.every((part,k)=>words[i+k]===part)});
+    // Older editions end every marking with a full stop ("Allegro.", "a tempo."),
+    // so a word also matches without it; abbreviations like "decresc." still
+    // match as written.
+    const phrase=PHRASES.find(candidate=>{const parts=candidate.split(" ");return parts.every((part,k)=>words[i+k]!==undefined&&(words[i+k]===part||words[i+k].replace(/\.+$/,"")===part))});
     if(phrase){found.push({phrase,term:TERMS[phrase]});i+=phrase.split(" ").length}
     else i++;
   }
@@ -226,7 +229,7 @@ function findTerms(raw:string){
 }
 
 /** Words that set a section's speed or character without a textbook BPM of their own. */
-const TEMPO_HEADINGS=new Set(["rubato","mouvementé","a tempo","tempo primo","tempo i","au mouvement","au mouvᵗ","mouvᵗ"]);
+const TEMPO_HEADINGS=new Set(["rubato","mouvementé","a tempo","tempo primo","tempo i","au mouvement","au mouvᵗ","mouvᵗ","più mosso","piu mosso"]);
 /**
  * How a text marking is printed, by the engraving convention: words that set the tempo of a
  * section ("Très modéré", "Un peu mouvementé", "Rubato", "a tempo") in bold upright, and words that
@@ -238,6 +241,34 @@ export function directionStyle(raw:string):"tempo"|"expression"|null{
   const known=findTerms(raw).found.filter(({phrase})=>!CONNECTIVES.has(phrase));
   if(!known.length||known.every(({phrase})=>DYNAMICS.has(phrase)))return null;
   return known.some(({phrase,term})=>term.bpm||TEMPO_HEADINGS.has(phrase))?"tempo":"expression";
+}
+
+/**
+ * A marking that mixes kinds ("un poco rit. a tempo.") styled word by word:
+ * the tempo part bold and upright, the rest italic, as an engraver would set
+ * it. Words the glossary does not know take the style of the phrase before
+ * them ("un poco" before "rit." leans on what follows instead). Null when
+ * the marking is all one kind, which directionStyle already covers.
+ */
+export function directionRuns(raw:string):{text:string;style:"tempo"|"expression"}[]|null{
+  const tokens=raw.trim().split(/\s+/),{words,found}=findTerms(raw);
+  if(tokens.length!==words.length||found.length<2)return null;
+  const styles:("tempo"|"expression"|null)[]=tokens.map(()=>null);
+  for(let i=0,f=0;i<words.length&&f<found.length;){
+    const {phrase,term}=found[f],size=phrase.split(" ").length;
+    const matches=phrase.split(" ").every((part,k)=>words[i+k]!==undefined&&(words[i+k]===part||words[i+k].replace(/\.+$/,"")===part));
+    if(!matches){i++;continue}
+    const style=DYNAMICS.has(phrase)||CONNECTIVES.has(phrase)?null:term.bpm||TEMPO_HEADINGS.has(phrase)?"tempo":"expression";
+    for(let k=0;k<size;k++)styles[i+k]=style;
+    i+=size;f++;
+  }
+  // Unknown words and connectives join the next known phrase, else the previous one.
+  for(let i=tokens.length-1;i>=0;i--)if(!styles[i]&&styles[i+1])styles[i]=styles[i+1];
+  for(let i=0;i<tokens.length;i++)if(!styles[i]&&styles[i-1])styles[i]=styles[i-1];
+  if(styles.some(style=>!style)||new Set(styles).size<2)return null;
+  const runs:{text:string;style:"tempo"|"expression"}[]=[];
+  tokens.forEach((token,i)=>{const style=styles[i]!;if(runs.at(-1)?.style===style)runs.at(-1)!.text+=" "+token;else runs.push({text:token,style})});
+  return runs;
 }
 
 export function performanceTermText(raw:string,written?:MetronomeFacts){

@@ -244,7 +244,10 @@
 .home-preview-grid--trio { grid-template-columns: repeat(3, 1fr); }
 .home-preview-grid--quartet { grid-template-columns: repeat(4, 1fr); }
 .home-preview-grid--duo { grid-template-columns: repeat(2, 1fr); }
-.home-preview-grid--duo .preview-card__stage { height: 220px; }
+/* Demo areas kept short so a row of cards scrolls less; the cards keep
+   their width, which is what makes them readable. */
+.home-preview-grid--duo .preview-card__stage { height: 172px; }
+.home-preview-grid--trio .preview-card__stage { height: 150px; }
 @media (max-width: 1000px) {
   .home-preview-grid--quartet { grid-template-columns: repeat(3, 1fr); }
 }
@@ -253,6 +256,17 @@
 }
 @media (max-width: 760px) {
   .home-preview-grid--trio, .home-preview-grid--quartet, .home-preview-grid--duo { grid-template-columns: 1fr; }
+}
+/* Phone: shorter cards, so about three fit on the first screen instead of
+   two. The demo keeps its width; only its stage and the copy get tighter. */
+@media (max-width: 760px) {
+  .home-preview-grid { gap: 12px; margin-bottom: 28px; }
+  .home-preview-grid .preview-card { border-radius: 18px; }
+  .home-preview-grid .preview-card__stage { height: 128px !important; }
+  .home-preview-grid .preview-card__copy { padding: 10px 16px 14px; }
+  .home-preview-grid .preview-card__copy b { font-size: 15px; }
+  .home-preview-grid .preview-card__copy small { font-size: 13px; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .home-preview__group { margin-top: 0; }
 }
 
 /* The two chart cards.
@@ -384,3 +398,22 @@
 .finger-demo__side .flute-diagram { width: 100%; height: auto; }
 .trill-demo__mark { fill: #1c1c22; }
 @media (prefers-reduced-motion: reduce) { .learn-staff__note, .emb-demo__track i { transition: none; } }
+
+/* Less text inside the demos, at every size: a demo that cycles through
+   modes names only the one playing now, and the breathing demo drops its
+   side text. Words in the demo competed with the card's own title. */
+.home-preview-grid .scale-preview__caption{white-space:nowrap}
+.home-preview-grid .music-demo__caption>span:not(:has(.is-changed)),
+.home-preview-grid .breath-demo__caption>span:not(:has(.is-changed)){display:none}
+.home-preview-grid .music-demo__caption i,.home-preview-grid .breath-demo__caption i{display:none}
+.home-preview-grid .breath-demo__side{display:none}
+
+/* Phone: the Browse music card gets more height so the staff is readable,
+   and the fingering pop-up sits in the corner instead of over the notes. */
+@media (max-width: 760px) {
+  .home-preview-grid .preview-card--music .preview-card__stage { height: 156px !important; }
+  .home-preview-grid .music-demo { padding: 8px 12px 10px; }
+  .home-preview-grid .music-demo__tip { left: auto !important; right: 8px; top: 8px; transform: scale(.82); transform-origin: top right; }
+  .home-preview-grid .preview-card__stage { overflow: hidden; }
+  .home-preview-grid .tone-preview svg { max-height: 78px; }
+}

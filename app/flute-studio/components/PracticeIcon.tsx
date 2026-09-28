@@ -1,5 +1,5 @@
 import type {ReactNode} from "react";
-export type PracticeIconName = "metronome" | "tuner" | "mic" | "drone" | "markup" | "fullscreen" | "close" | "previous" | "next" | "settings" | "gear" | "tap" | "record" | "play" | "stop" | "undo" | "redo" | "saved" | "aids" | "tempo" | "print" | "top" | "highlighter" | "arrow" | "eraser" | "text" | "sticky" | "select";
+export type PracticeIconName = "metronome" | "tuner" | "mic" | "drone" | "markup" | "fullscreen" | "exitFullscreen" | "close" | "previous" | "next" | "settings" | "gear" | "tap" | "record" | "play" | "stop" | "undo" | "redo" | "saved" | "aids" | "tempo" | "print" | "top" | "highlighter" | "arrow" | "eraser" | "text" | "sticky" | "select";
 const paths:Record<PracticeIconName,ReactNode>={
   // Trapezoid body, base line, pendulum arm. The weight-dot and the extra
   // crossing stroke the old glyph had collapsed into a smudge at 22px.
@@ -20,6 +20,8 @@ const paths:Record<PracticeIconName,ReactNode>={
   saved:<path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3l-5.6 2.9 1.1-6.2L3 9.6l6.2-.9Z"/>,
   aids:<><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16M5.5 8h1M5.5 12h1M5.5 16h1"/></>,
   fullscreen:<path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/>,
+  // The same four corners turned inward: the usual way back out of fullscreen.
+  exitFullscreen:<path d="M3 8h5V3M21 8h-5V3M3 16h5v5M21 16h-5v5"/>,
   close:<path d="m6 6 12 12M18 6 6 18"/>,
   previous:<path d="m15 5-7 7 7 7"/>,next:<path d="m9 5 7 7-7 7"/>,top:<><path d="M5 5h14"/><path d="M12 20V9"/><path d="m7.5 13.5 4.5-4.5 4.5 4.5"/></>,
   settings:<><path d="M4 6h16M4 12h16M4 18h16"/><path d="M8 3v6M16 9v6M10 15v6"/></>,

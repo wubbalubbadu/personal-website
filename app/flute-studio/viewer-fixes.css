@@ -129,3 +129,10 @@ html.score-focus-mode .workspace{padding-top:0!important;margin-left:0!important
 .story-card p+p{margin-top:10px;padding-top:10px;border-top:1px solid #eeeeec}
 .story-card__piece b{color:#292a33;font-weight:650}
 @media(prefers-reduced-motion:reduce){.story-card{animation:none}}
+
+/* Tucked while scrolling down through a long piece (ScoreViewer adds
+   .is-tucked to the workspace): the back link and title row folds away,
+   the practice controls stay. */
+.workspace .topbar{transition:max-height .22s ease,opacity .18s ease,padding .22s ease}
+.workspace.is-tucked .topbar{max-height:0!important;height:0!important;min-height:0!important;flex-basis:0!important;padding-top:0!important;padding-bottom:0!important;border-bottom-width:0!important;opacity:0;overflow:hidden}
+@media(prefers-reduced-motion:reduce){.workspace .topbar{transition:none}}

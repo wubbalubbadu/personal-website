@@ -192,3 +192,15 @@
 .breath-cycle svg { display:block; width:100%; height:100%; }
 .breath-cycle text { font:11px sans-serif; fill:#626b68; }
 .breath-cycle:focus-visible { outline:2px solid #678956; border-radius:12px; }
+
+/* Current studio look (the green boxes were the old UI): grey pills, the
+   selected view dark like the Library's chips, a quiet Reset view, and one
+   dark button for the main action. */
+.emb button{border:0;background:#f1f1f2;color:#45464f;font-weight:600}
+.emb button:hover{background:#e8e8ea}
+.emb .body-model-nav{gap:6px}
+.emb .body-model-nav button{height:34px;padding:0 14px;border-radius:999px;background:#f1f1f2;color:#45464f;font-size:13px}
+.emb .body-model-nav button[aria-pressed="true"]{background:#292a33;color:#fff}
+.emb .emb-viewport-top button{background:rgba(255,255,255,.85);color:#6f7178;font-weight:560}
+.emb .emb-play{background:#292a33;color:#fff}
+.emb .emb-play:hover{background:#3a3b45}

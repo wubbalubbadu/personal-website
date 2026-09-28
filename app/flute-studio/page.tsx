@@ -1,7 +1,7 @@
 "use client";
 
 import HomePreviewCards from "./HomePreviewCards";
-import HomeQuickTools from "./HomeQuickTools";
+import ToolCards from "./tools/ToolCards";
 import ContinuePracticingRow from "./ContinuePracticingCard";
 import HomeStudioBrief from "./HomeStudioBrief";
 import "./studio-home.css";
@@ -18,7 +18,7 @@ export default function StudioHome(){
         <HomePreviewCards/>
 
         <h2 className="home-preview__group">Tools</h2>
-        <HomeQuickTools/>
+        <ToolCards/>
 
         {/* The way back in, plus a few lines from My Studio (this week,
             notes still off pitch, a long-tone habit). The month calendar

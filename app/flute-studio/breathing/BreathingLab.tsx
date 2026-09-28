@@ -6,7 +6,7 @@ import './breathing-lab.css';
 import {useLanguage} from '../i18n/LanguageContext';
 const BodyView=lazy(()=>import('./BodyView'));
 export default function BreathingLab(){
- const {lang}=useLanguage();
+ const {lang}=useLanguage(),zh=lang==='zh';
  const [settings,setSettings]=useState<Settings>({pattern:'even',inhale:8,exhale:8,hold:0});
  const [bpm,setBpm]=useState(60),[playing,setPlaying]=useState(false),[beats,setBeats]=useState(0),[sound,setSound]=useState(true),[visual,setVisual]=useState('cycle'),[cueSeed,setCueSeed]=useState(0),[audioError,setAudioError]=useState(false);
  const audio=useRef<AudioContext|null>(null),nodes=useRef<OscillatorNode[]>([]),soundRef=useRef(sound);
@@ -30,7 +30,7 @@ export default function BreathingLab(){
  const stop=()=>{setPlaying(false);setBeats(0)};
  const update=(key:'inhale'|'exhale'|'hold',value:number)=>{stop();setSettings(s=>({...s,[key]:Math.max(key==='hold'?0:.5,Math.min(key==='hold'?4:20,value))}))};
  const start=async()=>{if(playing){stop();return}setAudioError(false);try{audio.current??=new AudioContext();await audio.current.resume()}catch{setAudioError(true)}setBeats(0);setCueSeed(Math.floor(Math.random()*10000));setPlaying(true)};
- const sample=breathAt(beats,settings),pattern=patterns.find(p=>p.id===settings.pattern)!,total=sample.inhale+sample.exhale+sample.hold;
+ const sample=breathAt(beats,settings),total=sample.inhale+sample.exhale+sample.hold;
  const cueOptions=cueBank[sample.phase as keyof typeof cueBank],cue=cueOptions[Math.floor(Math.abs(Math.sin((sample.round*3+cueSeed+sample.phase.length)*12.9898))*10000)%cueOptions.length];
  const angle=sample.cycle*Math.PI*2,inhale=sample.phase==='Inhale';
  const ring=<svg viewBox="0 0 240 240" className="bl-ring" role="img" aria-label={`${sample.phase}, beat ${sample.beat} of ${sample.phase==='Inhale'?sample.inhale:sample.phase==='Hold'?sample.hold:sample.exhale}`}>
@@ -53,12 +53,24 @@ export default function BreathingLab(){
     <p className="bl-cue" key={sample.phase}>{cue}</p>
     <div className="bl-visuals" role="group" aria-label="Visual">{[['cycle','◯','Cycle'],['flower','✿','Flower & balls'],['body','♧','Body'],['embouchure','≈','Embouchure']].map(([id,icon,label])=><button key={id} aria-pressed={visual===id} onClick={()=>setVisual(id)}><span aria-hidden="true">{icon}</span>{label}</button>)}</div>
    </section>
-   <aside className="bl-controls"><div><h2>{pattern.name}</h2></div><Sequence settings={settings} beats={beats} playing={playing}/><div className="bl-current" aria-live="off">{sample.phase} · {playing?sample.beat:0} / {sample.phase==='Inhale'?sample.inhale:sample.phase==='Hold'?sample.hold:sample.exhale}</div>
-    <div className="bl-durations">{(['inhale','exhale'] as const).map(key=><label key={key}><span>{key==='inhale'?'Inhale':'Exhale'}</span><input aria-label={`${key} beats`} type="number" min=".5" max="20" step=".5" value={settings[key]} onChange={e=>{if(e.target.value)update(key,Number(e.target.value))}}/></label>)}</div>
-    <details className="bl-hold"><summary>Hold {settings.hold>0?`· ${settings.hold}`:''}</summary><label>After inhale<input aria-label="Hold beats" type="number" min="0" max="4" step=".5" value={settings.hold} onChange={e=>{if(e.target.value)update('hold',Number(e.target.value))}}/></label></details>
-    <div className="bl-metronome"><button aria-label={sound?'Mute metronome':'Enable metronome'} aria-pressed={sound} onClick={()=>setSound(!sound)}>{sound?'Sound on':'Sound off'}</button><label>♩ = <input aria-label="Tempo BPM" type="number" min="40" max="120" value={bpm} onChange={e=>{if(e.target.value){stop();setBpm(Math.max(40,Math.min(120,Number(e.target.value))))}}}/><small>BPM</small></label></div>
+   {/* One compact panel: the three counts, then tempo, sound and Start.
+       The ring already shows the phase and beat, so nothing here repeats
+       it; the round-by-round list only appears for the patterns whose
+       counts change from round to round. */}
+   <aside className="bl-controls">
+    {settings.pattern!=='even'&&<Sequence settings={settings} beats={beats} playing={playing}/>}
+    <div className="bl-counts">{(['inhale','hold','exhale'] as const).map(key=><div className="bl-count-step" key={key}>
+     <span>{zh?{inhale:'吸',hold:'屏',exhale:'呼'}[key]:{inhale:'In',hold:'Hold',exhale:'Out'}[key]}</span>
+     <div className="bl-stepper"><button type="button" aria-label={`${key} fewer beats`} onClick={()=>update(key,settings[key]-1)}>−</button><b>{settings[key]}</b><button type="button" aria-label={`${key} more beats`} onClick={()=>update(key,settings[key]+1)}>+</button></div>
+    </div>)}</div>
+    <div className="bl-play-row">
+     <div className="bl-stepper bl-tempo"><button type="button" aria-label="Slower" onClick={()=>{stop();setBpm(b=>Math.max(40,b-2))}}>−</button><b>{bpm}<small> bpm</small></b><button type="button" aria-label="Faster" onClick={()=>{stop();setBpm(b=>Math.min(120,b+2))}}>+</button></div>
+     <button type="button" className="bl-sound" aria-pressed={sound} aria-label={sound?'Mute the beat':'Play the beat'} onClick={()=>setSound(!sound)}>
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 8h3l4-3.5v11L6 12H3z"/>{sound?<path d="M13 7.5a3.5 3.5 0 0 1 0 5M15 5.5a6 6 0 0 1 0 9"/>:<path d="M13 8l4 4M17 8l-4 4"/>}</svg>
+     </button>
+     <button type="button" className="bl-start" onClick={()=>void start()}>{playing?(zh?'停止':'Stop'):(zh?'开始':'Start')}</button>
+    </div>
     {audioError&&<small role="status">Sound unavailable. The visual timer still works.</small>}
-    <button className="bl-start" onClick={()=>void start()}>{playing?'Stop':'Start'}</button>
    </aside>
   </div>
  </main>;

@@ -1,7 +1,8 @@
 .studio-page {
   min-height: 100vh;
   overflow-y: auto;
-  background: var(--ground);
+  /* White, like every other studio page. */
+  background: #fff;
   color: var(--ink);
   font-family: var(--font);
   padding: 64px var(--page-pad) 96px;

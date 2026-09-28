@@ -1,6 +1,6 @@
 "use client";
 
-import {useMemo,useState} from "react";
+import {useMemo,useState,useSyncExternalStore} from "react";
 import {useLanguage} from "./i18n/LanguageContext";
 import type {PracticeSession} from "./practice-data";
 import "./practice-calendar.css";
@@ -23,14 +23,23 @@ import "./practice-calendar.css";
  */
 const dayKey = (value: number | string | Date) => new Date(value).toDateString();
 
+// "Today" comes from the viewer's clock, which the server does not have: it
+// renders in its own timezone, so near midnight it lit a different day than
+// the browser and React reported a hydration mismatch. The server snapshot
+// is null, so the grid is drawn only once the browser's date is known.
+const noSubscription=()=>()=>{};
+const useToday=()=>useSyncExternalStore(noSubscription,()=>new Date().toDateString(),()=>null);
+
 export function PracticeCalendar({sessions}:{sessions:PracticeSession[]}){
   const {t,lang}=useLanguage();
   // Offset in months from the current one; 0 is this month.
   const [offset,setOffset]=useState(0);
   const [peek,setPeek]=useState<string|null>(null);
 
+  const todayKey=useToday();
   const {cells,practisedDays,totalMinutes,monthLabel}=useMemo(()=>{
-    const now=new Date();
+    if(!todayKey)return {cells:[],practisedDays:0,totalMinutes:0,monthLabel:""};
+    const now=new Date(todayKey);
     const month=new Date(now.getFullYear(),now.getMonth()+offset,1);
     const minutesByDay=new Map<string,number>();
     for(const session of sessions){
@@ -55,7 +64,7 @@ export function PracticeCalendar({sessions}:{sessions:PracticeSession[]}){
       cells,practisedDays,totalMinutes,
       monthLabel:month.toLocaleDateString(lang==="zh"?"zh-CN":undefined,{month:"long",year:"numeric"}),
     };
-  },[sessions,offset,lang]);
+  },[sessions,offset,lang,todayKey]);
 
   // Four bands, not a gradient: the eye reads "more than yesterday" from a
   // step far better than from a slightly darker green.

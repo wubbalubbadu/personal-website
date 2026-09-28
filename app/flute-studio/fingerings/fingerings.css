@@ -60,3 +60,23 @@
 }
 
 .fingering-chart__sibling{display:inline-block;margin-top:18px;color:#40553d;font-size:14px;font-weight:600;text-underline-offset:4px}
+
+/* Phone: less scrolling. The page opens on the fingering itself (the tab bar
+   already says Learn, and a phone has no room for a title and a paragraph),
+   the current-note card is compact (stave and name on one line, the diagram
+   under them), and the note picker is tighter. Shared by the trill chart,
+   which uses the same page frame. */
+@media(max-width:760px){
+  .studio-route .fingering-chart__header{display:none}
+  .fingering-chart__now{padding:12px 14px!important;gap:6px 12px!important;border-radius:18px}
+  .fingering-chart__stave svg{max-height:88px;width:auto}
+  .fingering-chart__detail h2{font-size:24px}
+  .fingering-chart__diagram{max-height:84px}
+  .fingering-chart__register{margin-top:16px}
+  .fingering-chart__register h3{margin-bottom:6px}
+  .fingering-chart__notes{gap:5px}
+  /* Every note button the same width, six to a row; a short last row stays
+     short instead of stretching its buttons (B₆ and C₇ were twice as wide). */
+  .fingering-chart__notes button{min-width:0;flex:0 0 calc((100% - 25px)/6);padding:8px 0}
+  .fingering-chart__note{margin-top:20px}
+}

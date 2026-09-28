@@ -1,0 +1,11 @@
+/* Tag pills, shared by the Library and Exercises rows. Words instead of an
+   icon: a row can carry several, and each one says something. */
+.tag-pills{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}
+.tag-pill{display:inline-flex;align-items:center;height:24px;padding:0 9px;border-radius:999px;background:#f1f1f2;color:#5f6169;font-size:12px;font-weight:560;white-space:nowrap}
+.tag-pill[data-tone="beginner"]{background:#e4ecdf;color:#46633d}
+.tag-pill[data-tone="exercise"]{background:#fff;color:#292a33;box-shadow:inset 0 0 0 1px #cfd0d4}
+.tag-pill[data-tone="soon"]{background:transparent;color:#9a9ba2;box-shadow:inset 0 0 0 1px #e4e4e7}
+@media(max-width:650px){
+  .tag-pills{justify-content:flex-start}
+  .tag-pill{height:22px;padding:0 8px;font-size:11.5px}
+}

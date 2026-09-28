@@ -1,5 +1,7 @@
 .exercise-hub{height:100vh;overflow-y:auto;background:#fff;color:#292a33;padding:64px 24px 96px;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",Inter,Arial,sans-serif;scrollbar-gutter:stable}
-.exercise-hub__content{width:min(980px,100%);margin:0 auto}
+/* 1120px, the same column as the home page, so every tab's title starts
+   at the same spot and switching tabs does not shift the page. */
+.exercise-hub__content{width:min(1120px,100%);margin:0 auto}
 .exercise-hub__header{padding:50px 4px 20px}
 .exercise-hub__header>p:first-child{margin:0 0 8px;color:#678956;font-size:12px;font-weight:720;letter-spacing:.08em;text-transform:uppercase}
 .exercise-hub__header>div{display:flex;align-items:baseline;gap:13px}
@@ -107,3 +109,14 @@
 button.exercise-hub__row-main{
   border:0;background:none;font:inherit;text-align:left;cursor:pointer;width:100%;
 }
+
+/* Rows without an icon: copy on the left, tag pills on the right; on a
+   phone the pills drop under the copy. */
+.exercise-hub__row--tagged .exercise-hub__row-main{grid-template-columns:minmax(0,1fr) auto;padding-left:4px}
+@media(max-width:650px){.exercise-hub__row--tagged .exercise-hub__row-main{grid-template-columns:minmax(0,1fr);gap:7px}}
+/* Featured rows draw a 2px ring instead of sitting 18px in, so their copy
+   needs its own inset to line up with the plain rows' titles. */
+.exercise-hub__row--tagged.exercise-hub__row--featured .exercise-hub__row-main{padding-left:20px}
+.exercise-hub__subtitle{margin:30px 0 10px 4px;font-size:15px;font-weight:650;color:#45464f}
+.exercise-hub__section--saved{margin-bottom:22px}
+.exercise-hub__section--saved .exercise-hub__subtitle{margin-top:0}

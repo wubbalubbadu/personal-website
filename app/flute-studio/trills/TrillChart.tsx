@@ -71,7 +71,7 @@ export default function TrillChart() {
   const pitch = selection ?? (trillPitches.includes(requested) ? requested : 'D4');
   return <main className="fingering-chart trill-chart"><div className="fingering-chart__content">
     <header className="fingering-chart__header">
-      <p>{zh ? '练习工具' : 'Practice tools'}</p><h1>{zh ? '颤音指法表' : 'Trill chart'}</h1>
+      <h1>{zh ? '颤音指法表' : 'Trill chart'}</h1>
       <p className="fingering-chart__intro">{zh ? '选择本音，对照半音与全音颤音。红色标记需要交替按放的键；实心表示按下，空心表示放开。' : 'Choose a base note. Compare half-step and whole-step trills. Red keys move; filled means pressed, outlined means released.'}</p>
       <Link className="fingering-chart__sibling" href={`/flute-studio/fingerings?note=${encodeURIComponent(pitch)}`}>{zh ? '指法表' : 'Fingering chart'} →</Link>
     </header>

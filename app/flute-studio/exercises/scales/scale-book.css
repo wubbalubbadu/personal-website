@@ -236,3 +236,8 @@
 .scale-book__note-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:4px; }
 .scale-book__note-grid .scale-book__chip { min-height:32px; padding:5px 2px; text-align:center; }
 .scale-book__note-grid .scale-book__chip:disabled { opacity:.3; cursor:default; }
+
+@media(max-width:760px){
+  .restored-reader .scale-book__chapter-inline{width:100%;min-width:0;gap:4px;flex-wrap:wrap;font-size:12px;white-space:normal}
+  .restored-reader .scale-book__chapter-inline .scale-book__crumb{min-height:44px;min-width:44px;padding:2px;font-size:12px}
+}

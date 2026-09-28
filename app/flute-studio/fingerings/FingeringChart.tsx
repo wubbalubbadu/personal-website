@@ -50,7 +50,6 @@ export default function FingeringChart() {
     <main className="fingering-chart">
       <div className="fingering-chart__content">
         <header className="fingering-chart__header">
-          <p>{zh ? "练习工具" : "Practice tools"}</p>
           <h1>{zh ? "指法表" : "Fingering chart"}</h1>
           <p className="fingering-chart__intro">
             {zh

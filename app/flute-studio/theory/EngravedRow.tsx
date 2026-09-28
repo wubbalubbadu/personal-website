@@ -1,5 +1,6 @@
 'use client';
 import type {ReactNode} from 'react';
+import {usePhoneNotation} from './usePhoneNotation';
 import TrebleClef from './TrebleClef';
 import {noteY,ledgerLines} from './model';
 import RhythmNote,{STEM_X} from './rhythm/RhythmNote';
@@ -103,14 +104,22 @@ type Props={
   viewBox?:string;
 };
 
+export function phoneRowRight(notes:RowNote[],clef:boolean,meter:Meter|null){
+  return Math.min(860,Math.max(480,40+(clef?122:14)+(meter?70:0)+notes.length*44));
+}
+
 export default function EngravedRow({notes,bars=[],even=false,clef=true,meter=null,beams=[],active=-1,below,children,className='',label,viewBox='20 62 870 222'}:Props){
-  const layout=layoutRow(notes,{bars,even,clef,meter});
+  const phone=usePhoneNotation();
+  const right=phone?phoneRowRight(notes,clef,meter):860;
+  const frame=viewBox.split(" ");
+  if(phone)frame[2]=String(right+10);
+  const layout=layoutRow(notes,{bars,even,clef,meter,right});
   const {xs,barXs,endX,meterX}=layout;
   const pos=notes.map(n=>clef?n.p??4:RHYTHM_P);
   const beamed=new Map<number,number[]>();beams.forEach(g=>g.forEach(i=>beamed.set(i,g)));
   const down=(i:number)=>{const g=beamed.get(i);return g?g.reduce((s,j)=>s+pos[j],0)/g.length>=4:pos[i]>=4};
   const left=40;
-  return <svg className={`engraved-row ${className}`} viewBox={viewBox} role="img" aria-label={label}>
+  return <svg className={`engraved-row ${className}`} viewBox={frame.join(" ")} role="img" aria-label={label}>
     {[0,2,4,6,8].map(l=><line key={l} x1={left} x2={endX} y1={noteY(l)} y2={noteY(l)} className="engraved-row__line"/>)}
     {clef&&<TrebleClef x={left+42}/>}
     {meter&&<TimeSignature meter={meter} x={meterX}/>}

@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import {useEffect} from "react";
+import {useEffect,useState} from "react";
 import {usePathname,useRouter} from "next/navigation";
 import AccountMenu from "./AccountMenu";
 import {useLanguage} from "./i18n/LanguageContext";
+import {LEARN_PAGES} from "./learn-pages";
+import StudioRail,{setRailOpen,useRailOpen} from "./StudioRail";
 import "./studio-navigation.css";
 
 function useDestinations(){
@@ -14,11 +16,13 @@ function useDestinations(){
     // tool — you practise at a stand with a laptop — so a phone gets the
     // two things you would actually reach for away from one: the library
     // and your own record.
-    {key:"home",label:t.nav.home,href:"/flute-studio"},
-    {key:"music",label:t.nav.music,href:"/flute-studio/music",phone:true},
-    {key:"exercises",label:t.nav.exercises,href:"/flute-studio/exercises"},
-    {key:"resources",label:t.nav.resources,href:"/flute-studio/resources"},
-    {key:"practice",label:t.nav.practice,href:"/flute-studio/practice",phone:true},
+    {key:"home",label:t.nav.home,href:"/flute-studio",icon:"home",also:[]},
+    {key:"music",label:t.nav.music,href:"/flute-studio/music",icon:"library",phone:true,also:[]},
+    {key:"exercises",label:t.nav.exercises,href:"/flute-studio/exercises",icon:"exercises",also:["/flute-studio/breathing"]},
+    // Learn is the Resources page plus every page it lists, so the tab stays
+    // lit while you are inside a lesson or a chart.
+    {key:"resources",label:t.nav.resources,href:"/flute-studio/resources",icon:"learn",also:LEARN_PAGES.map(page=>page.href)},
+    {key:"practice",label:t.nav.practice,href:"/flute-studio/practice",icon:"studio",phone:true,also:[]},
   ] as const;
 }
 
@@ -26,7 +30,7 @@ type Destination = ReturnType<typeof useDestinations>[number];
 
 function destinationIsActive(destination:Destination,pathname:string){
   if(destination.key==="home")return pathname==="/flute-studio";
-  return pathname.startsWith(destination.href);
+  return [destination.href,...destination.also].some(href=>pathname.startsWith(href));
 }
 
 export default function StudioNavigation(){
@@ -34,19 +38,54 @@ export default function StudioNavigation(){
   const router=useRouter();
   const {t}=useLanguage();
   const destinations=useDestinations();
+  // Folded by default, like YouTube's: icons with a word under each. The
+  // menu button opens it to show what is inside each tab, and the choice
+  // sticks between visits.
+  const railOpen=useRailOpen();
+  const toggleRail=()=>setRailOpen(!railOpen);
+
+  // Phone: the top bar slides away while you scroll down and comes back as
+  // soon as you scroll up (or reach the top), like Safari's own toolbar.
+  // Each page scrolls its own container, so this listens in the capture
+  // phase for any scroll and follows whichever element moved. The CSS only
+  // applies the slide at phone width.
+  // Remembered with the page it was hidden on, so opening another page
+  // always shows the bar again.
+  const [hiddenOn,setHiddenOn]=useState<string|null>(null);
+  const hidden=hiddenOn===pathname;
+  useEffect(()=>{
+    const setHidden=(value:boolean)=>setHiddenOn(value?window.location.pathname:null);
+    const last=new WeakMap<EventTarget,number>();
+    const onScroll=(event:Event)=>{
+      const target=event.target;
+      const top=target instanceof Element?target.scrollTop:window.scrollY;
+      if(target instanceof Element&&target.scrollHeight-target.clientHeight<80)return;
+      const before=last.get(target??window)??top;last.set(target??window,top);
+      if(top<40)setHidden(false);
+      else if(top-before>6)setHidden(true);
+      else if(before-top>6)setHidden(false);
+    };
+    document.addEventListener("scroll",onScroll,{capture:true,passive:true});
+    return()=>document.removeEventListener("scroll",onScroll,{capture:true});
+  },[]);
 
   // Production has a real network hop. Warm the persistent studio
   // destinations after the current page settles so brand and tab clicks do
   // not wait for their route payload before reacting.
   useEffect(()=>{
     const timer=window.setTimeout(()=>{
-      ["/flute-studio","/flute-studio/music","/flute-studio/exercises","/flute-studio/resources","/flute-studio/practice"].forEach(href=>router.prefetch(href));
+      ["/flute-studio","/flute-studio/music","/flute-studio/exercises","/flute-studio/resources","/flute-studio/practice","/flute-studio/tools"].forEach(href=>router.prefetch(href));
     },1000);
     return()=>window.clearTimeout(timer);
   },[router]);
 
-  return <header className="studio-navigation">
+  return <>
+  <header className="studio-navigation" data-rail={railOpen?"open":"folded"} data-hidden={hidden?"":undefined}>
     <div className="studio-navigation__inner">
+      {/* Only shown where the rail is (wide screens). */}
+      <button type="button" className="studio-navigation__menu" onClick={toggleRail} aria-expanded={railOpen} aria-controls="studio-rail" aria-label={t.nav.menu}>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
       <Link className="studio-navigation__brand" href="/flute-studio" aria-label={t.nav.brandHome}>
         <span className="studio-navigation__brand-mark" aria-hidden="true">
           <i className="crumb c1"/><i className="crumb c2"/><i className="crumb c3"/>
@@ -80,5 +119,10 @@ export default function StudioNavigation(){
         <AccountMenu/>
       </div>
     </div>
-  </header>;
+  </header>
+  {/* Wide screens only: the same destinations as a left rail, so the top
+      bar gives its height back to the page. Laptop screens are short and
+      wide; the rail spends width, which they have to spare. */}
+  <StudioRail open={railOpen} destinations={destinations.map(destination=>({key:destination.key,label:destination.label,href:destination.href,icon:destination.icon,active:destinationIsActive(destination,pathname)}))}/>
+  </>;
 }

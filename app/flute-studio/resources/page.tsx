@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import {ResourceIcon,type ResourceIconName} from "../components/ResourceIcon";
-import {openPracticeTool} from "../PracticeAudio";
+import {LEARN_PAGES} from "../learn-pages";
+import {TheoryPreview,EmbouchurePreview,FingeringPreview,TrillPreview,RoadmapPreview} from "../LearnPreviews";
+import "../home-preview-cards.css";
+import "../components/preview-grid.css";
 import {useLanguage} from "../i18n/LanguageContext";
 import "../exercises/exercises.css";
 
@@ -18,122 +20,44 @@ import "../exercises/exercises.css";
  *
  * The routes are unchanged. This is a way in, not a move — every existing
  * link and bookmark still works, and nothing had to be re-pathed.
- *
- * The tools belong here for the same reason: a tuner is something you
- * reach for while doing something else, never the thing you came to do.
- * They open the practice dock rather than navigating anywhere, so you keep
- * whatever page you were on — which is the whole point of a tool.
+
  */
-type Resource = {
-  key: string;
-  href: string;
-  en: string;
-  zh: string;
-  enDetail: string;
-  zhDetail: string;
-  icon: ResourceIconName;
-};
-
-const RESOURCES: readonly Resource[] = [
-  {
-    key: "theory", href: "/flute-studio/theory", en: "Theory lessons", zh: "乐理课",
-    enDetail: "Interactive tutorial for reading music.",
-    zhDetail: "学习识谱的互动教程。", icon: "theory",
-  },
-  {
-    key: "fingerings",
-    href: "/flute-studio/fingerings",
-    en: "Fingering chart",
-    zh: "指法表",
-    enDetail: "Every note from low B up through the altissimo, with alternates",
-    zhDetail: "从低音 B 到超高音区的所有指法，含替代指法",
-    icon: "fingerings",
-  },
-  {
-    key: "trills",
-    href: "/flute-studio/trills",
-    en: "Trill chart",
-    zh: "颤音指法表",
-    enDetail: "Four octaves of trill fingerings",
-    zhDetail: "四个八度的颤音指法",
-    icon: "trills",
-  },
-  {
-    key: "embouchure",
-    href: "/flute-studio/embouchure",
-    en: "Body & embouchure",
-    zh: "身体与嘴型",
-    enDetail: "An interactive model of posture, air and the aperture",
-    zhDetail: "姿势、气息与风口的交互模型",
-    icon: "embouchure",
-  },
-  {
-    key: "roadmap",
-    href: "/flute-studio/roadmap",
-    en: "Technique roadmap",
-    zh: "技巧路线图",
-    enDetail: "What to work on next, and what it builds on",
-    zhDetail: "接下来该练什么，以及它以什么为基础",
-    icon: "roadmap",
-  },
-];
-
-/** The dock's tools, which open in place rather than at a route of their own. */
-const TOOLS = ["tuner", "metronome", "drone"] as const;
-
 export default function ResourcesHub() {
   const { t, lang } = useLanguage();
   const zh = lang === "zh";
   const sentence=(text:string)=>/[.!?。！？]$/.test(text.trim())?text:`${text}${zh?"。":"."}`;
+  const preview=(key:string)=>{
+    switch(key){
+      case "theory": return <TheoryPreview zh={zh}/>;
+      case "fingerings": return <FingeringPreview/>;
+      case "trills": return <TrillPreview/>;
+      case "embouchure": return <EmbouchurePreview/>;
+      case "roadmap": return <RoadmapPreview regions={t.roadmap.regions}/>;
+      default: return null;
+    }
+  };
 
   return (
     <main className="exercise-hub">
       <div className="exercise-hub__content">
-        <header className="exercise-hub__header">
-          <p>{zh ? "资料" : "Reference"}</p>
+        <header className="exercise-hub__header" data-tab-title>
           <div>
-            <h1>{zh ? "资料" : "Resources"}</h1>
+            <h1>{zh ? "学习" : "Learn"}</h1>
           </div>
-          <p className="exercise-hub__intro">
-            {zh
-              ? "从乐理入门到指法查阅，找到你需要的学习资料。"
-              : "Learn something new or look something up: theory lessons, fingerings, and guides for your playing."}
-          </p>
         </header>
 
-        <section className="exercise-hub__section" aria-labelledby="resources-reference">
-          <h2 className="exercise-hub__section-title" id="resources-reference">{zh ? "查阅" : "Reference"}</h2>
-          <div className="exercise-hub__list">
-            {RESOURCES.map(resource => (
-              <article className="exercise-hub__row exercise-hub__row--available" key={resource.key}>
-                <Link className="exercise-hub__row-main" href={resource.href}>
-                  <ResourceIcon name={resource.icon} className="exercise-hub__icon" />
-                  <span className="exercise-hub__copy">
-                    <strong>{zh ? resource.zh : resource.en}</strong>
-                    <small>{sentence(zh ? resource.zhDetail : resource.enDetail)}</small>
-                  </span>
-                </Link>
-              </article>
-            ))}
-          </div>
+        {/* The same animated cards as the home page, so each page shows what
+            it does before you open it. Theory lessons comes first: it is
+            where a new player starts. */}
+        <section className="home-preview preview-grid" aria-label={zh ? "学习" : "Learn"}>
+          {LEARN_PAGES.map(page => (
+            <Link key={page.key} href={page.href} className={`preview-card preview-card--${page.key}`}>
+              <div className="preview-card__stage">{preview(page.key)}</div>
+              <div className="preview-card__copy"><b>{zh ? page.zh : page.en}</b><small>{sentence(zh ? page.zhDetail : page.enDetail)}</small></div>
+            </Link>
+          ))}
         </section>
 
-        <section className="exercise-hub__section" aria-labelledby="resources-tools">
-          <h2 className="exercise-hub__section-title" id="resources-tools">{zh ? "工具" : "Tools"}</h2>
-          <div className="exercise-hub__list">
-            {TOOLS.map(tool => (
-              <article className="exercise-hub__row exercise-hub__row--available" key={tool}>
-                <button type="button" className="exercise-hub__row-main" onClick={() => openPracticeTool(tool)}>
-                  <ResourceIcon name={tool} className="exercise-hub__icon" />
-                  <span className="exercise-hub__copy">
-                    <strong>{t.quickTools[tool]}</strong>
-                    <small>{t.quickTools[`${tool}Detail` as const]}</small>
-                  </span>
-                </button>
-              </article>
-            ))}
-          </div>
-        </section>
       </div>
     </main>
   );

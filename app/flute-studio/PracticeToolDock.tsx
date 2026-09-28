@@ -13,6 +13,7 @@ import {
 } from "react";
 import {useLanguage} from "./i18n/LanguageContext";
 import "./practice-tool-dock.css";
+import "./tools-panel.css";
 // The detector lives in lib/pitch.ts now — the tuner is one consumer of
 // it, not its owner.
 import {detectPitch, median} from "./lib/pitch";
@@ -32,7 +33,6 @@ type PitchReading = {
 
 
 const pitches = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"];
-const centsMarks = [-50, -25, 0, 25, 50];
 
 
 
@@ -76,9 +76,12 @@ export default function PracticeToolDock() {
     return () => { cancelAnimationFrame(frame); window.removeEventListener("resize", pick); };
   }, [pathname]);
   const [requestedTool, setRequestedTool] = useState<ToolKey | null>(null);
-  const [focusedTool, setFocusedTool] = useState<ToolKey>("tuner");
+  const [, setFocusedTool] = useState<ToolKey>("tuner");
 
-  const {bpm,setBpm,metro,toggleMetro,drones,toggleDrone:toggleSharedDrone,stopAllDrones,getAudio}=usePracticeAudio();
+  const {bpm,setBpm,metro,toggleMetro,accent,setAccent,beats,setBeats,drones,toggleDrone:toggleSharedDrone,stopAllDrones,getAudio}=usePracticeAudio();
+  // One panel now: the fingering lookup is the only other view, reached by
+  // tapping the note the tuner shows.
+  const [view,setView]=useState<"main"|"fingering">("main");
   const [, setTapHint] = useState("");
 
   const [reading, setReading] = useState<PitchReading>({
@@ -97,7 +100,6 @@ export default function PracticeToolDock() {
   const [lookupName, setLookupName] = useState("C");
   const [lookupOctave, setLookupOctave] = useState(4);
 
-  const [note, setNote] = useState("A");
   const [octave, setOctave] = useState(4);
 
 
@@ -120,7 +122,6 @@ export default function PracticeToolDock() {
   const droneSection = useRef<HTMLElement | null>(null);
   const fingeringSection = useRef<HTMLElement | null>(null);
 
-  const selectedDrone = `${note}${octave}`;
   const inTune = Math.abs(reading.cents) <= 4;
   // The twelve note names, in chromatic order, taken from the chart itself
   // so the dock cannot list a note the data does not have.
@@ -167,6 +168,7 @@ export default function PracticeToolDock() {
       window.dispatchEvent(new Event("cookie:open-tools-panel"));
       setRequestedTool(tool);
       setFocusedTool(tool);
+      setView(tool === "fingering" ? "fingering" : "main");
       setOpen(true);
     };
     window.addEventListener("cookie:open-practice-tools", openRequestedTool as EventListener);
@@ -209,7 +211,6 @@ export default function PracticeToolDock() {
     setTapHint(t.toolDock.tapsAveraged(tapTimes.current.length));
   };
 
-  const toggleDrone=()=>toggleSharedDrone(note,octave);
 
   const tuner = async () => {
     if (listening) {
@@ -368,12 +369,11 @@ export default function PracticeToolDock() {
       title={open ? t.toolDock.hideTools : t.toolDock.practiceTools}
       onClick={() => { if (!open) { window.dispatchEvent(new Event("cookie:open-tools-panel")); moved.current = false; setFocusedTool("tuner"); } setOpen((current) => !current); }}
     >
-      <svg className="dock-launcher__icon" viewBox="0 0 18 18" aria-hidden="true">
-        <path d="M3 5h12M3 13h12"/>
-        <circle cx="7" cy="5" r="1.8"/>
-        <circle cx="12" cy="13" r="1.8"/>
+      {/* A tuning fork: the tools are what you tune and keep time with. */}
+      <svg className="dock-launcher__icon dock-launcher__icon--fork" viewBox="0 0 20 20" aria-hidden="true">
+        <path d="M7 2.5v6a3 3 0 0 0 6 0v-6"/>
+        <path d="M10 11.5v6"/>
       </svg>
-      <span className="dock-launcher__label">{zh?"工具":"Tools"}</span>
       {(listening || metro || drones.length > 0) && <i aria-label={t.toolDock.toolRunning} />}
     </button>
   );
@@ -390,193 +390,116 @@ export default function PracticeToolDock() {
         <section
           ref={panelRef}
           id="practice-console"
-          className="practice-dock practice-dock--compact"
+          className="practice-dock tools-panel"
           style={{ "--dock-top": `${anchor.top}px`, "--dock-right": `${anchor.right}px` } as CSSProperties}
           aria-label={t.toolDock.practiceTools}
         >
-          <div className="dock-panel-heading">
-          <button type="button" className="dock-drag-handle"
-            aria-label={zh?"移动工具面板，或使用方向键":"Move tools panel, or use arrow keys"}
-            onPointerDown={startDrag}
-            onPointerMove={event=>{
-              const origin=drag.current;
-              if(origin?.id===event.pointerId)movePanel(origin.top+event.clientY-origin.y,origin.right-event.clientX+origin.x);
-            }}
-            onPointerUp={()=>{drag.current=null}}
-            onPointerCancel={()=>{drag.current=null}}
-            onKeyDown={event=>{
-              const directions:Record<string,[number,number]>={ArrowUp:[-10,0],ArrowDown:[10,0],ArrowLeft:[0,10],ArrowRight:[0,-10]};
-              const delta=directions[event.key];
-              if(delta){event.preventDefault();movePanel(anchor.top+delta[0],anchor.right+delta[1])}
-            }}
-          ><span aria-hidden="true"/></button>
-          <button type="button" className="dock-panel-close" aria-label={t.toolDock.close} onClick={()=>{setOpen(false);launcherRef.current?.focus()}}>×</button>
+          {/* The grip: drag to move the panel on a desktop; on a phone the
+              panel is a bottom sheet and pulling the grip down closes it
+              (phones get no close button, see tools-panel.css). */}
+          <div className="tools-panel__grip">
+            <button type="button" className="tools-panel__handle"
+              aria-label={zh?"移动工具面板，或使用方向键":"Move tools panel, or use arrow keys"}
+              onPointerDown={startDrag}
+              onPointerMove={event=>{
+                const origin=drag.current;
+                if(origin?.id!==event.pointerId)return;
+                if(matchMedia("(max-width: 760px)").matches){if(event.clientY-origin.y>70){drag.current=null;setOpen(false)}return}
+                movePanel(origin.top+event.clientY-origin.y,origin.right-event.clientX+origin.x);
+              }}
+              onPointerUp={()=>{drag.current=null}}
+              onPointerCancel={()=>{drag.current=null}}
+              onKeyDown={event=>{
+                const directions:Record<string,[number,number]>={ArrowUp:[-10,0],ArrowDown:[10,0],ArrowLeft:[0,10],ArrowRight:[0,-10]};
+                const delta=directions[event.key];
+                if(delta){event.preventDefault();movePanel(anchor.top+delta[0],anchor.right+delta[1])}
+              }}
+            ><span aria-hidden="true"/></button>
+            <button type="button" className="tools-panel__close" aria-label={t.toolDock.close} onClick={()=>{setOpen(false);launcherRef.current?.focus()}}>
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+            </button>
           </div>
-          <nav className="dock-tabs" aria-label={t.toolDock.showOneTool}>
-            {(["tuner", "metronome", "drone", "fingering"] as const).map((key) => (
-              <button
-                key={key}
-                type="button"
-                className={focusedTool === key ? "selected" : ""}
-                aria-pressed={focusedTool === key}
-                data-running={(key === "tuner" ? listening : key === "metronome" ? metro : key === "drone" ? drones.length > 0 : false) || undefined}
-                onClick={() => setFocusedTool(key)}
-              >
-                {key === "tuner" ? t.toolDock.tunerLabel : key === "metronome" ? t.toolDock.metronomeLabel : key === "drone" ? t.toolDock.droneLabel : t.toolDock.fingeringLabel}
-              </button>
-            ))}
-          </nav>
 
-          <div className="dock-tools" data-single="">
-            <section
-              ref={tunerSection}
-              className="dock-tool dock-tool-tuner"
-              data-requested={requestedTool === "tuner" || undefined}
-              hidden={focusedTool !== "tuner"}
-              tabIndex={-1}
-            >
-
-              <div className={`tuner-reading ${tunerTone}`} aria-live="polite">
-                <div className="tuner-note"><b>{reading.name}</b><sup>{reading.octave}</sup></div>
-                <span>{signalActive ? `${reading.hz.toFixed(1)} Hz` : t.toolDock.lastStablePitch}</span>
+          {view==="main"?<div className="tools-panel__body">
+            {/* Tuner. Tap the note to see how to finger it. */}
+            <section ref={tunerSection} className={`tp-tuner is-${tunerTone}`} tabIndex={-1} aria-live="polite">
+              <div className="tp-tuner__top">
+                <button type="button" className="tp-tuner__note" onClick={()=>{
+                  const match=fluteFingerings.find(n=>midiForPitch(n.pitch)===reading.midi);
+                  if(match){setLookupName(match.names[0]);setLookupOctave(Number(match.pitch.replace(/\D/g,"")))}
+                  setView("fingering");
+                }} aria-label={zh?`${reading.name}${reading.octave} 的指法`:`Fingering for ${reading.name}${reading.octave}`}>
+                  <b>{reading.name}</b><sup>{reading.octave}</sup>
+                </button>
+                <button type="button" className={`tp-listen ${listening?"is-on":""}`} onClick={tuner} aria-pressed={listening}>
+                  <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5"/><path d="M3 8a5 5 0 0 0 10 0M8 13v2"/></svg>
+                  {listening?(zh?"停止":"Stop"):(zh?"听音":"Listen")}
+                </button>
               </div>
+              <div className="tp-meter" style={rulerStyle}>
+                <div className="tp-meter__track"><span className="tp-meter__band"/><i className="tp-meter__center"/><em className="tp-meter__needle"/></div>
+                {/* The reading rides under the needle, so the eye stays on one spot. */}
+                <span className="tp-meter__cents">{signalActive?`${reading.cents>0?"+":""}${Math.round(reading.cents)}¢`:listening?tunerMessage:(zh?"点“听音”开始":"Tap Listen to start")}</span>
+              </div>
+            </section>
 
-              <div className={`cents-ruler ${tunerTone}`} style={rulerStyle}>
-                <div className="cents-track">
-                  {Array.from({ length: 21 }, (_, index) => <i key={index} className={index % 5 === 0 ? "major" : ""} />)}
-                  <em aria-hidden="true" />
-                </div>
-                <div className="cents-labels">
-                  {centsMarks.map((mark) => <span key={mark}>{mark > 0 ? `+${mark}` : mark}</span>)}
+            {/* Drones: tap a note to hold it, tap again to stop; several can
+                sound at once. The note the tuner hears is outlined. */}
+            <section ref={droneSection} className="tp-drones" tabIndex={-1}>
+              <div className="tp-row">
+                <span className="tp-label">{zh?"持续音":"Drone"}{drones.length>0&&<button type="button" className="tp-stop" onClick={stopAllDrones}>{zh?"全部停止":"Stop"}</button>}</span>
+                <div className="tp-stepper tp-stepper--small">
+                  <button type="button" aria-label={t.toolDock.lowerOctave} onClick={()=>setOctave(Math.max(3,octave-1))}>−</button>
+                  <span>{zh?`第 ${octave} 八度`:`Octave ${octave}`}</span>
+                  <button type="button" aria-label={t.toolDock.higherOctave} onClick={()=>setOctave(Math.min(6,octave+1))}>+</button>
                 </div>
               </div>
-
-              <p className="tuner-status">{tunerMessage}</p>
-              <button className={`primary-tool-button ${listening ? "is-running" : ""}`} onClick={tuner}>
-                {listening ? t.toolDock.stopListening : t.toolDock.listen}
-              </button>
+              <div className="tp-notes">
+                {pitches.map(pitch=>{
+                  const on=drones.includes(`${pitch}${octave}`),heard=signalActive&&reading.name===pitch;
+                  return <button key={pitch} type="button" aria-pressed={on} className={`${on?"is-on ":""}${heard?`is-heard is-${tunerTone}`:""}`} onClick={()=>toggleSharedDrone(pitch,octave)}>{pitch}</button>;
+                })}
+              </div>
             </section>
 
-            <section
-              ref={metroSection}
-              className="dock-tool dock-tool-metronome"
-              data-requested={requestedTool === "metronome" || undefined}
-              hidden={focusedTool !== "metronome"}
-              tabIndex={-1}
-            >
-
-              <div className="tempo-stepper">
-                <button aria-label={t.toolDock.decreaseTempo} onClick={() => setBpm(Math.max(40, bpm - 1))}>−</button>
-                <div><b>{bpm}</b><span>{t.toolDock.bpm}</span></div>
-                <button aria-label={t.toolDock.increaseTempo} onClick={() => setBpm(Math.min(220, bpm + 1))}>+</button>
-              </div>
-              <input
-                className="tempo-slider"
-                aria-label={t.toolDock.tempoAria}
-                type="range"
-                min="40"
-                max="220"
-                value={bpm}
-                onChange={(event) => setBpm(Number(event.target.value))}
-              />
-              <div className="metro-options">
-                <button className="tap-tempo-button" onClick={tapTempo}>{t.toolDock.tapTempo}</button>
-              </div>
-              <button className={`primary-tool-button ${metro ? "is-running" : ""}`} onClick={toggleMetro}>
-                {metro ? t.toolDock.stopMetronome : t.toolDock.startMetronome}
+            {/* Metronome. */}
+            <section ref={metroSection} className="tp-metro" tabIndex={-1}>
+              <button type="button" className={`tp-play ${metro?"is-on":""}`} onClick={toggleMetro} aria-label={metro?t.toolDock.stopMetronome:t.toolDock.startMetronome} aria-pressed={metro}>
+                {metro?<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1.5"/></svg>:<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.5v9l7.5-4.5z"/></svg>}
               </button>
+              <div className="tp-stepper">
+                <button type="button" aria-label={t.toolDock.decreaseTempo} onClick={()=>setBpm(Math.max(40,bpm-1))}>−</button>
+                <b>{bpm}</b>
+                <button type="button" aria-label={t.toolDock.increaseTempo} onClick={()=>setBpm(Math.min(220,bpm+1))}>+</button>
+              </div>
+              <button type="button" className="tp-chip" onClick={tapTempo}>{zh?"点拍":"Tap"}</button>
+              <button type="button" className="tp-chip" onClick={()=>setBeats(beats>=6?2:beats===4?6:beats+1)} aria-label={zh?`每小节 ${beats} 拍`:`${beats} beats a bar`}>{zh?`${beats} 拍`:`${beats} beats`}</button>
+              <button type="button" className={`tp-chip ${accent?"is-on":""}`} aria-pressed={accent} onClick={()=>setAccent(!accent)}>{zh?"重音":"Accent"}</button>
             </section>
-
-            <section
-              ref={droneSection}
-              className="dock-tool dock-tool-drone"
-              data-requested={requestedTool === "drone" || undefined}
-              hidden={focusedTool !== "drone"}
-              tabIndex={-1}
-            >
-
-              <div className="selected-pitch" aria-live="polite">
-                <span>{note}</span><sup>{octave}</sup>
+          </div>:<div className="tools-panel__body">
+            {/* Fingering lookup: the standard fingering for any note, with
+                the full chart one link away. */}
+            <section ref={fingeringSection} className="tp-fingering" tabIndex={-1}>
+              <div className="tp-row">
+                <button type="button" className="tp-back" onClick={()=>setView("main")}>‹ {zh?"返回":"Back"}</button>
+                <Link className="tp-link" href="/flute-studio/fingerings">{t.toolDock.fullChart}</Link>
               </div>
-              <div className="pitch-choices" aria-label={t.toolDock.selectDroneNote}>
-                {pitches.map((pitch) => (
-                  <button
-                    key={pitch}
-                    className={pitch === note ? "selected" : ""}
-                    aria-pressed={pitch === note}
-                    onClick={() => setNote(pitch)}
-                  >
-                    {pitch}
-                  </button>
-                ))}
-              </div>
-              <div className="octave-stepper">
-                <button aria-label={t.toolDock.lowerOctave} onClick={() => setOctave(Math.max(3, octave - 1))}>−</button>
-                <span><small>{t.toolDock.octave}</small><b>{octave}</b></span>
-                <button aria-label={t.toolDock.higherOctave} onClick={() => setOctave(Math.min(6, octave + 1))}>+</button>
-              </div>
-              {drones.length>0&&<div className="drone-active-inline"><span>{t.toolDock.playing}</span>{drones.map(pitch=><b key={pitch}>{pitch}</b>)}<button onClick={stopAllDrones}>{t.toolDock.stopAll}</button></div>}
-              <button className={`primary-tool-button ${drones.includes(selectedDrone) ? "is-running" : ""}`} onClick={toggleDrone}>
-                {drones.includes(selectedDrone) ? t.toolDock.stopDrone(selectedDrone) : t.toolDock.playDrone(selectedDrone)}
-              </button>
-            </section>
-            {/* Fingerings live in the dock as well as on their own page:
-                looking one up mid-practice should not cost you the score you
-                are reading. Picking a name and then an octave beats a strip
-                of 41 buttons — twelve names wrap into two short rows, and
-                the octaves are however many that name actually has. The
-                dock shows the standard fingering only; alternates stay on
-                the chart, where there is room to say when to use them. */}
-            <section
-              ref={fingeringSection}
-              className="dock-tool dock-tool-fingering"
-              data-requested={requestedTool === "fingering" || undefined}
-              hidden={focusedTool !== "fingering"}
-              tabIndex={-1}
-            >
-              <Link className="dock-fingering-link" href="/flute-studio/fingerings">{t.toolDock.fullChart}</Link>
-
-              {/* Stave and diagram share a line: the dock is short, and the
-                  two together are what you are actually reading. */}
-              <div className="dock-fingering-now">
+              <div className="tp-fingering__now">
                 <StaffNote midi={midiForPitch(lookupNote.pitch)} spelling={lookupNote.names[0]} width={116} />
                 <FluteDiagram pressed={lookupNote.fingerings[0].keys} className="dock-fingering-diagram" />
               </div>
-
-              {/* The drone's own pitch picker and octave stepper, same
-                  classes and all — the two tools ask the same question, so
-                  they should not answer it with different controls. */}
-              <div className="pitch-choices">
-                {lookupNames.map((name) => (
-                  <button
-                    key={name}
-                    className={name === lookupName ? "selected" : ""}
-                    aria-pressed={name === lookupName}
-                    onClick={() => setLookupName(name)}
-                  >
-                    {name}
-                  </button>
-                ))}
+              <div className="tp-notes">
+                {lookupNames.map(name=><button key={name} type="button" className={name===lookupName?"is-on":""} aria-pressed={name===lookupName} onClick={()=>setLookupName(name)}>{name}</button>)}
               </div>
-              <div className="octave-stepper">
-                <button
-                  aria-label={t.toolDock.lowerOctave}
-                  disabled={activeOctave <= lookupOctaves[0]}
-                  onClick={() => setLookupOctave(Math.max(lookupOctaves[0], activeOctave - 1))}
-                >
-                  −
-                </button>
-                <span><small>{t.toolDock.octave}</small><b>{activeOctave}</b></span>
-                <button
-                  aria-label={t.toolDock.higherOctave}
-                  disabled={activeOctave >= lookupOctaves[lookupOctaves.length - 1]}
-                  onClick={() => setLookupOctave(Math.min(lookupOctaves[lookupOctaves.length - 1], activeOctave + 1))}
-                >
-                  +
-                </button>
+              <div className="tp-row tp-row--center">
+                <div className="tp-stepper tp-stepper--small">
+                  <button type="button" aria-label={t.toolDock.lowerOctave} disabled={activeOctave<=lookupOctaves[0]} onClick={()=>setLookupOctave(Math.max(lookupOctaves[0],activeOctave-1))}>−</button>
+                  <span>{zh?`第 ${activeOctave} 八度`:`Octave ${activeOctave}`}</span>
+                  <button type="button" aria-label={t.toolDock.higherOctave} disabled={activeOctave>=lookupOctaves[lookupOctaves.length-1]} onClick={()=>setLookupOctave(Math.min(lookupOctaves[lookupOctaves.length-1],activeOctave+1))}>+</button>
+                </div>
               </div>
             </section>
-          </div>
+          </div>}
         </section>
       )}
     </>

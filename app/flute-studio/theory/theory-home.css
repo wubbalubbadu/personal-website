@@ -7,3 +7,15 @@
 /* Same frame and scale as the other cards' drawings (EngravedRow uses the same staff coordinates). */
 .theory-home .theory-course>.theory-course__art{height:100%;min-height:0;display:block;padding:0 14px;background:#fbfbfb}
 .theory-home .theory-course__art .engraved-row{width:100%;height:100%;animation:none}
+
+/* The course index owns its scroll area inside the fixed-height studio shell. */
+@media(max-width:760px){
+  .theory-shell.theory-home{height:100dvh;min-height:0;overflow-y:auto;overscroll-behavior-y:contain;padding:16px 16px calc(92px + env(safe-area-inset-bottom));}
+  .theory-home .theory-home__header{padding:8px 0 16px}
+  .theory-home .theory-home__header h1{font-size:30px}
+  .theory-home .theory-course-grid{margin-top:12px}
+}
+
+@media(max-width:760px){
+  body:has(.theory-home){padding-bottom:0!important}
+}
