@@ -32,3 +32,12 @@ button.preview-card{width:100%;padding:0;border:0;text-align:left;font:inherit;c
 .drone-demo.is-on .drone-demo__wave{animation:drone-wave 1.6s linear infinite}
 @keyframes drone-wave{to{transform:translateX(-50px)}}
 @media(prefers-reduced-motion:reduce){.tuner-demo__needle,.metronome-demo__beats i{transition:none}.drone-demo__wave{animation:none!important}}
+.preview-card--tendency .preview-card__stage{background:var(--tint-slate)}
+.tendency-demo{gap:6px}
+.tendency-demo__cells{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px}
+.tendency-demo__cells i{height:30px;border-radius:6px;background:#e3e6ea;transition:background-color .25s ease}
+.tendency-demo__cells i.is-tune{background:#d6e4cf}
+.tendency-demo__cells i.is-flat{background:color-mix(in srgb,#6b9ae0 calc(var(--lean)*70%),#e6edf7)}
+.tendency-demo__cells i.is-sharp{background:color-mix(in srgb,#e8925a calc(var(--lean)*70%),#f8ebe0)}
+.tendency-demo__names{display:flex;justify-content:space-between;font-size:11px;color:#8a8d94}
+@media(prefers-reduced-motion:reduce){.tendency-demo__cells i{transition:none}}

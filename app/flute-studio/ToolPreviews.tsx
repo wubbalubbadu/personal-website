@@ -55,3 +55,17 @@ export function DronePreview(){
     <svg viewBox="0 0 200 40" preserveAspectRatio="none"><path className="drone-demo__wave" d="M0 20 Q12.5 4 25 20 T50 20 T75 20 T100 20 T125 20 T150 20 T175 20 T200 20 T225 20 T250 20"/></svg>
   </div>;
 }
+
+/** Pitch tendency test: a row of notes fills in, each one sharp, flat or in tune. */
+const TENDENCY=[4,-6,1,14,-2,3,-11,0,18,-4,2,-9];
+export function TendencyPreview(){
+  const root=useRef<HTMLDivElement>(null),on=useOnScreen(root),step=useStep(TENDENCY.length+4,380,on);
+  const shown=on?step:TENDENCY.length;
+  return <div className="tool-demo tendency-demo" ref={root} aria-hidden="true">
+    <div className="tendency-demo__cells">{TENDENCY.map((cents,i)=>{
+      const side=Math.abs(cents)<8?"tune":cents<0?"flat":"sharp";
+      return <i key={i} className={i<shown?`is-${side}`:""} style={{"--lean":Math.min(1,Math.abs(cents)/20)} as React.CSSProperties}/>;
+    })}</div>
+    <div className="tendency-demo__names"><span>C</span><span>F♯</span><span>B</span></div>
+  </div>;
+}

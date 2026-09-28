@@ -4,6 +4,9 @@ import "./studio-shared.css";
 import "./ios-theme.css";
 import "./studio-shell.css";
 import "./viewer-fixes.css";
+// Preview geometry must be present before the server-rendered SVGs paint.
+import "./home-preview-cards.css";
+import "./components/preview-grid.css";
 import {PracticeAudioProvider} from "./PracticeAudio";
 import PracticeToolDock from "./PracticeToolDock";
 import CookiePet from "./CookiePet";

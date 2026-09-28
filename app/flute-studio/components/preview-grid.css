@@ -14,11 +14,11 @@
 .preview-grid--five{grid-template-columns:repeat(5,minmax(0,1fr))}
 @media(max-width:1100px){.preview-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.preview-grid--four{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.preview-grid{grid-template-columns:minmax(0,1fr);gap:12px}}
-/* Demos sized for the smaller card. The roadmap legend goes to one column
-   so its labels are not cut off; the embouchure cue drops its explanation
+/* Demos sized for the smaller card. The roadmap dots shrink to fit; the
+   embouchure cue drops its explanation
    line and keeps the note name and the short cue. */
-.preview-grid .roadmap-preview{grid-template-columns:minmax(0,1fr);gap:3px 0}
-.preview-grid .roadmap-preview li{font-size:12px}
+.preview-grid .roadmap-preview li{width:18px;height:18px}
+.preview-grid .roadmap-preview li svg{width:10px;height:10px}
 .preview-grid .learn-demo{padding:10px 12px;gap:6px}
 .preview-grid .emb-demo__side{width:auto;flex:0 1 110px;min-width:0;gap:4px}
 .preview-grid .emb-demo__side b{font-size:20px}

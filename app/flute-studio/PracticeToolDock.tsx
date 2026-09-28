@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { createPortal } from "react-dom";
+import BackChevron from "./components/BackChevron";
 import { usePathname } from "next/navigation";
 import {
   CSSProperties,
@@ -54,8 +55,7 @@ export default function PracticeToolDock() {
   const pathname = usePathname();
   useEffect(() => {
     // The reader has its own slot in its topbar; the rest of the studio
-    // uses the nav's. Whichever is actually on screen wins, and if neither
-    // is the launcher floats as before.
+    // uses the nav's. Render only after a slot is ready, with no floating fallback.
     //
     // Checked after paint: on a client-side navigation this effect runs
     // before the incoming route has laid out, so measuring immediately
@@ -64,16 +64,19 @@ export default function PracticeToolDock() {
     const pick = () => {
       const slot = ["reader-tools-slot", "practice-tools-slot"]
         .map(id => document.getElementById(id))
-        .find(el => {
-          if (!el || !el.getClientRects().length) return false;
-          const rect = el.getBoundingClientRect();
-          return rect.right > 0 && rect.left < window.innerWidth && rect.bottom > 0 && rect.top < window.innerHeight;
-        }) ?? null;
+        // Displayed, not "on screen": the phone's top bar slides away when
+        // you scroll, and iOS fires a resize whenever its address bar
+        // shows or hides, so an on-screen test lost the tuning fork until
+        // the next page change.
+        .find(el => !!el && el.getClientRects().length > 0) ?? null;
       setToolsSlot(slot);
     };
     frame = requestAnimationFrame(() => { frame = requestAnimationFrame(pick); });
+    // Frames can be held back (a background tab, a page still loading), so
+    // look once more a moment later rather than leaving the button floating.
+    const late = window.setTimeout(pick, 400);
     window.addEventListener("resize", pick);
-    return () => { cancelAnimationFrame(frame); window.removeEventListener("resize", pick); };
+    return () => { cancelAnimationFrame(frame); window.clearTimeout(late); window.removeEventListener("resize", pick); };
   }, [pathname]);
   const [requestedTool, setRequestedTool] = useState<ToolKey | null>(null);
   const [, setFocusedTool] = useState<ToolKey>("tuner");
@@ -382,9 +385,9 @@ export default function PracticeToolDock() {
     <>
       {/* Rendered into the nav's slot, keeping the dock's own state (the
           tuner is listening, the metronome is running) as the one source
-          for the running dot. Falls back to its old floating position if
-          the slot is not on the page. */}
-      {toolsSlot ? createPortal(launcher, toolsSlot) : launcher}
+          for the running dot. Nothing floats in a corner: with no slot on
+          the page there is no launcher. */}
+      {toolsSlot ? createPortal(launcher, toolsSlot) : null}
 
       {open && (
         <section
@@ -481,7 +484,7 @@ export default function PracticeToolDock() {
                 the full chart one link away. */}
             <section ref={fingeringSection} className="tp-fingering" tabIndex={-1}>
               <div className="tp-row">
-                <button type="button" className="tp-back" onClick={()=>setView("main")}>‹ {zh?"返回":"Back"}</button>
+                <button type="button" className="tp-back" onClick={()=>setView("main")}><BackChevron/>{zh?"返回":"Back"}</button>
                 <Link className="tp-link" href="/flute-studio/fingerings">{t.toolDock.fullChart}</Link>
               </div>
               <div className="tp-fingering__now">

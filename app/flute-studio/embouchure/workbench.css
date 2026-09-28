@@ -1,5 +1,5 @@
 /* Simulation — matches the rest of the studio's visual language directly
-   (same values as home-quick-tools.css / practice-tool-dock.css) rather than
+   (same values as practice-tool-dock.css) rather than
    the newer token system, so it doesn't stick out as the one page that looks
    different. The page header is <StudioPage>; the viewport / panel frame is
    <Workbench> (components/workbench.css) — these rules restyle that frame for

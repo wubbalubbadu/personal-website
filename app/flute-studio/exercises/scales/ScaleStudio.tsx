@@ -1,5 +1,6 @@
 "use client";
 import {ScoreViewer} from "../../components/ScoreViewer";
+import {DownloadIcon} from "../../components/HeaderIcons";
 import {ReaderPopover} from "../../components/ReaderPopover";
 import {PracticeIcon,SpectrumDef} from "../../components/PracticeIcon";
 import {useCallback,useEffect,useState} from "react";
@@ -235,6 +236,18 @@ function RhythmIcon({choice}:{choice:RhythmChoice}){
 }
 
 /**
+ * On a phone the panel is a bottom sheet, so instead of stacked sections
+ * that open inside one another (and a lot of scrolling) it shows a row of
+ * section tabs you swipe along, and only the chosen section below them,
+ * the way photo editing on a phone lays out its tools.
+ */
+const PHONE_SECTIONS:{id:string;en:string;zh:string}[]=[
+  {id:"presets",en:"Sets",zh:"组合"},{id:"type",en:"Type",zh:"类型"},{id:"form",en:"Form",zh:"形式"},{id:"keys",en:"Keys",zh:"调性"},
+  {id:"range",en:"Range",zh:"音域"},{id:"order",en:"Layout",zh:"编排"},{id:"articulation",en:"Articulation",zh:"演奏法"},
+  {id:"rhythm",en:"Rhythm",zh:"节奏"},
+];
+
+/**
  * A plain div/button accordion, not native <details>/<summary> — native
  * details fires real "toggle" events when React (re)sets its `open`
  * property during a remount, and those events land on the same onToggle
@@ -243,9 +256,9 @@ function RhythmIcon({choice}:{choice:RhythmChoice}){
  * a completely unrelated control elsewhere caused ScoreViewer to remount.
  * Fully React-controlled open state sidesteps the whole class of bug.
  */
-function AccordionSection({id,title,openSections,onToggle,className,children}:{id:string;title:string;openSections:string[];onToggle:(id:string)=>void;className?:string;children:React.ReactNode}){
+function AccordionSection({id,title,openSections,onToggle,className,phoneActive,children}:{id:string;title:string;openSections:string[];onToggle:(id:string)=>void;className?:string;phoneActive?:boolean;children:React.ReactNode}){
   const open=openSections.includes(id);
-  return <div data-scale-group={id} className={className?`scale-book__section ${className}`:"scale-book__section"}>
+  return <div data-scale-group={id} data-phone-active={phoneActive?"":undefined} className={className?`scale-book__section ${className}`:"scale-book__section"}>
     <button type="button" className="scale-book__section-summary" aria-expanded={open} onClick={()=>onToggle(id)}>
       <span className="scale-book__disclosure" aria-hidden="true">▸</span>{title}
     </button>
@@ -394,11 +407,14 @@ export default function ScaleStudio(){
   // type list is open should not shut the list you were just using.
   const [openSections,setOpenSections]=useState<string[]>(["type"]);
   function toggleSection(id:string){setOpenSections(current=>current.includes(id)?current.filter(s=>s!==id):[...current,id])}
+  // The one section a phone shows (see PHONE_SECTIONS); it is kept open so its body renders.
+  const [phoneSection,setPhoneSection]=useState("type");
+  function showPhoneSection(id:string){setPhoneSection(id);setOpenSections(current=>current.includes(id)?current:[...current,id])}
   // The header breadcrumb doubles as navigation: each segment opens
   // Customize scales on the section that controls it.
   const [customizeOpen,setCustomizeOpen]=useState(false);
   const [customizeFocus,setCustomizeFocus]=useState<{section:string}|null>(null);
-  function openCustomize(section:string){setCustomizeFocus({section});setOpenSections(current=>current.includes(section)?current:[...current,section]);setCustomizeOpen(true)}
+  function openCustomize(section:string){setCustomizeFocus({section});setPhoneSection(section);setOpenSections(current=>current.includes(section)?current:[...current,section]);setCustomizeOpen(true)}
   useEffect(()=>{
     if(!customizeOpen||!customizeFocus)return;
     let group:HTMLElement|null=null;
@@ -506,7 +522,11 @@ export default function ScaleStudio(){
   const savedMatch=sets.find(set=>configMatches(set.config))??null;
   function toggleSaved(){
     if(savedMatch){deleteScaleSet(savedMatch.id);if(activeSet?.id===savedMatch.id)setActiveSet(null);return}
+    // Saved straight away under a name taken from the settings; the Sets
+    // tab then opens with that name, so renaming is there if wanted but
+    // never a step you have to take.
     commitSave();
+    openCustomize("presets");
   }
   function commitSave(){
     const saved=saveScaleSet(setName||suggestedSetName,currentConfig());
@@ -702,15 +722,18 @@ export default function ScaleStudio(){
          line instead of spilling a short second line. One move of the
          Note spacing slider overrides it, and the choice is remembered. */
       defaultNoteSpacing={0.55} extraSystemSpacing={tempoMarks?3:0} practiceTempo={{value:tempoMarks,onChange:setTempoMarks}}
-      save={{saved:!!savedMatch,onToggle:toggleSaved,label:zh?"保存这个组合":"Save this set",savedLabel:zh?"从我的组合中移除":"Remove from my sets"}}
-      headerActions={reader=><button type="button" className="icon-btn has-tip" disabled={reader.exporting} data-tip={reader.exporting?(zh?"正在生成 PDF…":"Making the PDF\u2026"):(zh?"下载 PDF":"Download PDF")} aria-label={reader.exporting?(zh?"正在生成 PDF…":"Making the PDF\u2026"):(zh?"下载 PDF":"Download PDF")} onClick={()=>reader.download()}>{reader.exporting?"\u22ef":"\u2193"}</button>}
+      save={{saved:!!savedMatch,onToggle:toggleSaved,label:zh?"保存为我的组合":"Save as a set",savedLabel:zh?"已保存为组合，点按移除":"Saved as a set. Tap to remove"}}
+      headerActions={reader=><button type="button" className="icon-btn has-tip" disabled={reader.exporting} data-tip={reader.exporting?(zh?"正在生成 PDF…":"Making the PDF\u2026"):(zh?"下载 PDF":"Download PDF")} aria-label={reader.exporting?(zh?"正在生成 PDF…":"Making the PDF\u2026"):(zh?"下载 PDF":"Download PDF")} onClick={()=>reader.download()}>{reader.exporting?"\u22ef":<DownloadIcon/>}</button>}
       scoreMarks={tempoMarks?context=><ScaleTempoMarks root={context.root} version={context.version} marks={blocks.map(block=>{const id=blockTempoId(block,range);return {id,label:block.label,tempo:tempoForBlock(block,range,tempos)}})} onChange={(id,next)=>{setActiveBlock(id);setTempos(prev=>({...prev,[id]:next}));context.controls.setTempo(next)}} soundingId={context.controls.metronome?activeBlock||null:null} onSound={(id,tempo)=>{const running=context.controls.metronome&&activeBlock===id;setActiveBlock(id);context.controls.setTempo(tempo);if(running||!context.controls.metronome)context.controls.toggleMetronome()}}/>:undefined} printConfig={zh?{title:englishTitle,asset:scaleBookMusicXML(buildBlocks(true),range,newLines,articulationRotation.map(e=>e.articulation),rhythm,ending,scaleStart,customSpan)}:undefined} lineBreak={{value:newLines,onChange:setNewLines}} config={{title:bookTitle,composer:"",asset:scaleBookMusicXML(blocks,range,newLines,articulationRotation.map(e=>e.articulation),rhythm,ending,scaleStart,customSpan),displayPitches,noteKeySignatures,syllables,id:`scale-book-${rangeKey}-${grouping}-${ending}-${scaleStart}-${types.join("+")}-${forms.join("+")}-${selected.map(k=>k.id).join("-")}`,backHref:"/flute-studio/exercises",defaultTempo:(activeBlock?tempos[activeBlock]:undefined)??60}}
       toolbar={<div className="scale-book__chapter-inline"><button type="button" className="scale-book__crumb" onClick={()=>openCustomize("type")}>{typeWord}</button><button type="button" className="scale-book__crumb" onClick={()=>openCustomize("form")}>{formWord}</button><span aria-hidden="true">·</span><button type="button" className="scale-book__crumb" onClick={()=>openCustomize("range")}>{zh?chosenRange.zh:chosenRange.label}</button><span aria-hidden="true">·</span><button type="button" className="scale-book__crumb" onClick={()=>openCustomize("keys")}>{selected.length} {zh?"个调性":selected.length===1?"key":"keys"}</button></div>}
       settings={reader=><>
     {!selected.length&&<p className="scale-book__empty">Choose keys in Customize scales to display your scales.</p>}
     <ReaderPopover open={customizeOpen} onOpenChange={setCustomizeOpen} label={zh?"自定义音阶":"Customize scales"} trigger={<><SpectrumDef id="studio-spectrum"/><PracticeIcon name="settings" gradient="studio-spectrum"/><span className="scale-book__scales-label">{zh?"音阶":"Scales"}</span></>} className="tool has-tip scale-book__scales-trigger">
       <div className="scale-book__panel-body">
-        <AccordionSection id="presets" title={zh?"预设与我的组合":"Presets & saved sets"} openSections={openSections} onToggle={toggleSection}>
+        <div className="scale-book__phone-tabs" role="tablist" aria-label={zh?"设置分类":"Settings sections"}>
+          {PHONE_SECTIONS.map(section=><button type="button" role="tab" key={section.id} aria-selected={phoneSection===section.id} onClick={()=>showPhoneSection(section.id)}>{zh?section.zh:section.en}</button>)}
+        </div>
+        <AccordionSection id="presets" phoneActive={phoneSection==="presets"} title={zh?"预设与我的组合":"Presets & saved sets"} openSections={openSections} onToggle={toggleSection}>
           <p className="scale-book__field-label">{zh?"从预设开始":"Start from a preset"}</p>
           <div className="scale-book__ranges" role="group" aria-label={zh?"预设":"Presets"}>{presetList.map(preset=><button type="button" key={preset.id} className={presetActive(preset)?"scale-book__chip selected":"scale-book__chip"} aria-pressed={presetActive(preset)} onClick={()=>applyPreset(preset)}>{zh?preset.zh:preset.en}</button>)}</div>
           <p className="scale-book__field-label">{zh?"我保存的组合":"My saved sets"}</p>
@@ -721,23 +744,28 @@ export default function ScaleStudio(){
               </button>
               <button type="button" className="scale-book__set-delete" aria-label={zh?`删除 ${set.name}`:`Delete ${set.name}`} onClick={()=>{deleteScaleSet(set.id);if(activeSet?.id===set.id)setActiveSet(null)}}>×</button>
             </li>)}</ul>
-            :<p className="scale-book__sets-empty">{zh?"还没有保存的组合。调整下面的设置，再用底部的“保存这个组合”存起来——它会出现在练习页面。":"No saved sets yet. Set things up below, then use \u201cSave this set\u201d at the bottom \u2014 it shows up on the Exercises page."}</p>}
+            :<p className="scale-book__sets-empty">{zh?"还没有保存的组合。点顶部的 +，就能保存现在这组音阶，它会出现在练习页面。":"No saved sets yet. Tap + at the top to save the scales on screen. Saved sets also show on the Exercises page."}</p>}
+          {/* Saving sits with the saved sets it adds to. */}
+          <div className="scale-book__save">
+            <label className="scale-book__save-field">
+              <span>{zh?"组合名称":"Set name"}</span>
+              <input value={setName} placeholder={suggestedSetName} aria-label={zh?"组合名称":"Set name"} onChange={e=>setSetName(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();commitSave()}}}/>
+            </label>
+            <button type="button" className="scale-book__save-button" onClick={commitSave}>{activeSet&&activeSet.name===setName.trim()?(zh?"更新":"Update"):(zh?"保存":"Save")}</button>
+          </div>
+          {justSaved&&<p className="scale-book__save-note" role="status">{zh?`已保存“${justSaved}”，可在练习页面找到。`:`Saved as \u201c${justSaved}\u201d. It is on the Exercises page, and you can rename it here.`}</p>}
         </AccordionSection>
-        <AccordionSection id="type" title={zh?"音阶类型":"Scale type"} openSections={openSections} onToggle={toggleSection}>
+        <AccordionSection id="type" phoneActive={phoneSection==="type"} title={zh?"音阶类型":"Scale type"} openSections={openSections} onToggle={toggleSection}>
           <div className="scale-book__ranges" role="group" aria-label={zh?"音阶类型":"Scale type"}>{scaleTypes.map(t=><button type="button" key={t.id} className={types.includes(t.id)?"scale-book__chip selected":"scale-book__chip"} aria-pressed={types.includes(t.id)} onClick={()=>toggleFrom(types,t.id,setTypes)}>{zh?t.zh:t.label}</button>)}</div>
         </AccordionSection>
-        <AccordionSection id="form" title={zh?"练习形式":"Form"} openSections={openSections} onToggle={toggleSection}>
+        <AccordionSection id="form" phoneActive={phoneSection==="form"} title={zh?"练习形式":"Form"} openSections={openSections} onToggle={toggleSection}>
           <div className="scale-book__ranges" role="group" aria-label={zh?"练习形式":"Form"}>{scaleForms.map(f=><button type="button" key={f.id} className={forms.includes(f.id)?"scale-book__chip selected":"scale-book__chip"} aria-pressed={forms.includes(f.id)} onClick={()=>toggleFrom(forms,f.id,setForms)}>{zh?f.zh:f.label}</button>)}</div>
-          <p className="scale-book__field-label">{zh?"起始音":"Starts on"}</p>
-          <div className="scale-book__ranges" role="group" aria-label={zh?"起始音":"Starts on"}>{([["tonic",zh?"主音":"The tonic"],["lowest",zh?"最低音":"The lowest note"]] as [ScaleStart,string][]).map(([value,label])=><button type="button" key={value} className={scaleStart===value?"scale-book__chip selected":"scale-book__chip"} aria-pressed={scaleStart===value} onClick={()=>setScaleStart(value)}>{label}</button>)}</div>
-          <p className="scale-book__field-label">{zh?"结尾":"Ending"}</p>
-          <div className="scale-book__ranges" role="group" aria-label={zh?"结尾":"Ending"}>{([["none",zh?"直接反复":"Straight"],["hold",zh?"主音延长":"Hold the tonic"]] as [ScaleEnding,string][]).map(([value,label])=><button type="button" key={value} className={ending===value?"scale-book__chip selected":"scale-book__chip"} aria-pressed={ending===value} onClick={()=>setEnding(value)}>{label}</button>)}</div>
-        </AccordionSection>
-        <AccordionSection id="keys" title={zh?"调性":"Keys"} openSections={openSections} onToggle={toggleSection}>
+</AccordionSection>
+        <AccordionSection id="keys" phoneActive={phoneSection==="keys"} title={zh?"调性":"Keys"} openSections={openSections} onToggle={toggleSection}>
           <div className="scale-book__key-actions"><button onClick={()=>setKeys(allKeys)}>{zh?"全部":"All keys"}</button><button onClick={()=>{setKeys([]);}}>{zh?"清除":"Clear"}</button></div>
           <div className="scale-book__keys">{majorKeys.map(k=><button type="button" key={k.id} className={keys.includes(k.id)?"scale-book__chip selected":"scale-book__chip"} aria-pressed={keys.includes(k.id)} onClick={()=>toggleKey(k.id)}>{k.label}</button>)}</div>
         </AccordionSection>
-        <AccordionSection id="range" title={zh?"音域":"Range"} openSections={openSections} onToggle={toggleSection}>
+        <AccordionSection id="range" phoneActive={phoneSection==="range"} title={zh?"音域":"Range"} openSections={openSections} onToggle={toggleSection}>
           <div className="scale-book__ranges" role="group" aria-label={zh?"音域":"Range"}>{ranges.map(r=><button type="button" key={r.id} className={range===r.id?"scale-book__chip selected":"scale-book__chip"} aria-pressed={range===r.id} onClick={()=>changeRange(r.id)}>{zh?r.zh:r.label}{"notes" in r&&<small>{r.notes}</small>}</button>)}</div>
           {range==="custom"&&<div className="scale-book__note-pickers">
             {([["low",zh?"最低音":"Lowest"],["high",zh?"最高音":"Highest"]] as ["low"|"high",string][]).map(([edge,label])=>{
@@ -769,15 +797,19 @@ export default function ScaleStudio(){
             })}
           </div>}
         </AccordionSection>
-        <AccordionSection id="order" title={zh?"音阶顺序":"Scale order"} openSections={openSections} onToggle={toggleSection}>
+        <AccordionSection id="order" phoneActive={phoneSection==="order"} title={zh?"编排":"Layout"} openSections={openSections} onToggle={toggleSection}>
           <p className="scale-book__field-label">{zh?"调性顺序":"Key order"}</p>
           <div className="scale-book__ranges" role="group" aria-label={zh?"调性顺序":"Key order"}>{[["chromatic",zh?"半音顺序":"Chromatic"],["fifths",zh?"五度圈":"Circle of fifths"]].map(([value,label])=><button type="button" key={value} className={order===value?"scale-book__chip selected":"scale-book__chip"} aria-pressed={order===value} onClick={()=>setOrder(value)}>{label}</button>)}</div>
           <p className="scale-book__field-label">{zh?"换行":"Line breaks"}</p>
           <div className="scale-book__ranges" role="group" aria-label={zh?"换行":"Line breaks"}>{([[false,zh?"接续上一个":"Continue from previous"],[true,zh?"另起一行":"Start on a new line"]] as [boolean,string][]).map(([value,label])=><button type="button" key={String(value)} className={newLines===value?"scale-book__chip selected":"scale-book__chip"} aria-pressed={newLines===value} onClick={()=>setNewLines(value)}>{label}</button>)}</div>
           <p className="scale-book__field-label">{zh?"分组方式":"Group by"}</p>
           <div className="scale-book__ranges" role="group" aria-label={zh?"分组方式":"Group by"}>{[["type",zh?"音阶类型":"Scale type"],["key",zh?"调性":"Key"]].map(([value,label])=><button type="button" key={value} className={grouping===value?"scale-book__chip selected":"scale-book__chip"} aria-pressed={grouping===value} onClick={()=>setGrouping(value)}>{label}</button>)}</div>
+                  <p className="scale-book__field-label">{zh?"起始音":"Starts on"}</p>
+          <div className="scale-book__ranges" role="group" aria-label={zh?"起始音":"Starts on"}>{([["tonic",zh?"主音":"The tonic"],["lowest",zh?"最低音":"The lowest note"]] as [ScaleStart,string][]).map(([value,label])=><button type="button" key={value} className={scaleStart===value?"scale-book__chip selected":"scale-book__chip"} aria-pressed={scaleStart===value} onClick={()=>setScaleStart(value)}>{label}</button>)}</div>
+          <p className="scale-book__field-label">{zh?"结尾":"Ending"}</p>
+          <div className="scale-book__ranges" role="group" aria-label={zh?"结尾":"Ending"}>{([["none",zh?"直接反复":"Straight"],["hold",zh?"主音延长":"Hold the tonic"]] as [ScaleEnding,string][]).map(([value,label])=><button type="button" key={value} className={ending===value?"scale-book__chip selected":"scale-book__chip"} aria-pressed={ending===value} onClick={()=>setEnding(value)}>{label}</button>)}</div>
         </AccordionSection>
-        <AccordionSection id="articulation" title={zh?"演奏法":"Articulation"} openSections={openSections} onToggle={toggleSection}>
+        <AccordionSection id="articulation" phoneActive={phoneSection==="articulation"} title={zh?"演奏法":"Articulation"} openSections={openSections} onToggle={toggleSection}>
           {articulationRotation.length>1&&<p className="scale-book__rotation-hint">{zh?"按顺序轮流分配给每个调性":"Cycles across keys in the order selected"}</p>}
           <div className="scale-book__preset-grid">
             {articulationPresetIds.map(id=>{
@@ -801,18 +833,10 @@ export default function ScaleStudio(){
             <button type="button" className="scale-book__add-group" onClick={()=>editCustomGroups(groups=>[...groups,{size:4,mode:"tongue"}])}>{zh?"+ 添加一组":"+ Add group"}</button>
           </div>}
         </AccordionSection>
-        <AccordionSection id="rhythm" title={zh?"节奏型":"Rhythm"} openSections={openSections} onToggle={toggleSection}>
+        <AccordionSection id="rhythm" phoneActive={phoneSection==="rhythm"} title={zh?"节奏型":"Rhythm"} openSections={openSections} onToggle={toggleSection}>
           <div className="scale-book__preset-grid">{rhythmChoices.map(value=><button key={value} type="button" className={rhythm===value?"scale-book__preset selected":"scale-book__preset"} aria-label={zh?rhythmLabels[value].zh:rhythmLabels[value].en} onClick={()=>setRhythm(value)}><RhythmIcon choice={value}/></button>)}</div>
         </AccordionSection>
       </div>
-      <div className="scale-book__save">
-        <label className="scale-book__save-field">
-          <span>{zh?"组合名称":"Set name"}</span>
-          <input value={setName} placeholder={suggestedSetName} onChange={e=>setSetName(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();commitSave()}}}/>
-        </label>
-        <button type="button" className="scale-book__save-button" onClick={commitSave}>{activeSet&&activeSet.name===setName.trim()?(zh?"更新这个组合":"Update this set"):(zh?"保存这个组合":"Save this set")}</button>
-      </div>
-      {justSaved&&<p className="scale-book__save-note" role="status">{zh?`已保存“${justSaved}”，可在练习页面找到。`:`Saved \u201c${justSaved}\u201d \u2014 find it on the Exercises page.`}</p>}
       <button className="reader-settings-reset" onClick={()=>{setKeys(allKeys);setRange("two");setOrder("chromatic");setGrouping("type");setEnding("hold");setTypes(["major"]);setForms(["scale"]);setNewLines(false);setArticulationRotation([]);setCustomDraft([{size:4,mode:"tongue"}]);setRhythm("even")}}>{zh?"恢复默认":"Restore defaults"}</button>
     </ReaderPopover>
     {/* Tempos is its own button rather than the last section of Customize
@@ -838,7 +862,7 @@ export default function ScaleStudio(){
           // thing that counts, or the row you started from stays lit for
           // the rest of the book.
           const sounding=reader.playing&&(reader.playingEvent!==null?reader.playingEvent>=eventStart&&reader.playingEvent<blockEnd:reader.playingFrom===eventStart);
-          return <div className="scale-reader__tempo" key={id}><span className="scale-book__tempo-label"><b>{name}</b></span><div className="scale-book__metronome"><button disabled={tempo<=40} aria-label={`${name}: decrease tempo by 5`} onClick={()=>setTempo(tempo-5)}>−</button><label className="scale-book__tempo-field">♩ = <input type="number" min={40} max={220} aria-label={`${name}: tempo in BPM`} value={tempoDraft?.id===id?tempoDraft.value:tempo} onChange={e=>setTempoDraft({id,value:e.target.value})} onFocus={()=>setActiveBlock(id)} onBlur={()=>{if(tempoDraft?.id!==id)return;const next=Number(tempoDraft.value);const valid=Number.isFinite(next)&&tempoDraft.value.trim()!=="";setTempoDraft(null);if(valid)setTempo(Math.max(40,Math.min(220,Math.round(next))))}} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/></label><button disabled={tempo>=220} aria-label={`${name}: increase tempo by 5`} onClick={()=>setTempo(tempo+5)}>+</button><button className={sounding?"scale-book__row-tool on":"scale-book__row-tool"} aria-label={sounding?`${name}: stop playing`:`${name}: play from here`} aria-pressed={sounding} onClick={()=>{setTempo(tempo);reader.playFromEvent(eventStart)}}><PracticeIcon name={sounding?"stop":"play"}/></button><button className={running?"scale-book__row-tool on":"scale-book__row-tool"} aria-label={running?`${name}: stop metronome`:`${name}: start metronome`} aria-pressed={running} onClick={()=>{setTempo(tempo);if(running||!reader.metronome)reader.toggleMetronome()}}><PracticeIcon name="metronome"/></button></div></div>;
+          return <div className="scale-reader__tempo" key={id}><span className="scale-book__tempo-label"><b>{name}</b></span><div className="scale-book__metronome"><button disabled={tempo<=40} aria-label={`${name}: decrease tempo by 5`} onClick={()=>setTempo(tempo-5)}>−</button><label className="scale-book__tempo-field"><input type="number" min={40} max={220} aria-label={`${name}: tempo in BPM`} value={tempoDraft?.id===id?tempoDraft.value:tempo} onChange={e=>setTempoDraft({id,value:e.target.value})} onFocus={()=>setActiveBlock(id)} onBlur={()=>{if(tempoDraft?.id!==id)return;const next=Number(tempoDraft.value);const valid=Number.isFinite(next)&&tempoDraft.value.trim()!=="";setTempoDraft(null);if(valid)setTempo(Math.max(40,Math.min(220,Math.round(next))))}} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/></label><button disabled={tempo>=220} aria-label={`${name}: increase tempo by 5`} onClick={()=>setTempo(tempo+5)}>+</button><button className={sounding?"scale-book__row-tool on":"scale-book__row-tool"} aria-label={sounding?`${name}: stop playing`:`${name}: play from here`} aria-pressed={sounding} onClick={()=>{setTempo(tempo);reader.playFromEvent(eventStart)}}><PracticeIcon name={sounding?"stop":"play"}/></button><button className={running?"scale-book__row-tool on":"scale-book__row-tool"} aria-label={running?`${name}: stop metronome`:`${name}: start metronome`} aria-pressed={running} onClick={()=>{setTempo(tempo);if(running||!reader.metronome)reader.toggleMetronome()}}><PracticeIcon name="metronome"/></button></div></div>;
       })}</div>
       {/* A quiet text action in the corner rather than a full-width chip:
           it is a view preference, not one of the tempos this panel is

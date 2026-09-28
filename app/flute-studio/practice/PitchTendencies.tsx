@@ -40,6 +40,7 @@ export function PitchTendencies({zh}:{zh:boolean}){
     <div className="practice-card__heading">
       <h2 id="pitch-title">{zh?"音准倾向":"Pitch tendencies"}</h2>
       {records.length>0&&<span className="pitch-card__meta">{zh?`${records.length} 个音 · ${habit.sessions} 次练习`:`${records.length} notes · ${habit.sessions} ${habit.sessions===1?"session":"sessions"}`}</span>}
+      <Link className="pitch-card__test" href="/flute-studio/tools/tendency">{zh?"做音准测试 ›":"Take the pitch test ›"}</Link>
     </div>
     {!records.length
       ?<p className="practice-card__empty">{zh?"在长音练习中打开“音准”，这里会画出你每个音的倾向。":"Turn on Pitch in Long tones, and this map fills in note by note."} <Link href="/flute-studio/exercises/long-tones">{zh?"去练长音 ›":"Go to Long tones ›"}</Link></p>

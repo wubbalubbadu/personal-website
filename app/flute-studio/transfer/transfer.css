@@ -1,0 +1,32 @@
+/* Move to another device: see transfer/page.tsx. Cards come from practice-page.css. */
+.transfer-page__intro{margin:14px 0 0;max-width:620px;font-size:15px;line-height:1.55;color:#6b6d75}
+.transfer-page__grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.transfer-card{display:grid;gap:14px}
+.transfer-card__hint{margin:0;font-size:14px;line-height:1.5;color:#85868e}
+.transfer-card__option{display:flex;gap:10px;align-items:flex-start;font-size:14px;cursor:pointer}
+.transfer-card__option input{margin:2px 0 0;width:17px;height:17px;accent-color:#678956}
+.transfer-card__option span{display:grid;gap:2px}
+.transfer-card__option small{font-size:12px;color:#9a9ca3}
+.transfer-card__actions{display:flex;gap:8px;flex-wrap:wrap}
+.transfer-card__primary,.transfer-card__secondary{height:44px;padding:0 18px;border:0;border-radius:14px;font:inherit;font-size:14px;font-weight:650;cursor:pointer}
+.transfer-card__primary{background:#292a33;color:#fff}
+.transfer-card__primary:hover{background:#3a3b45}
+.transfer-card__secondary{background:#f1f1f4;color:#3d3e46}
+.transfer-card__secondary:hover{background:#e6e6ea}
+.transfer-card__code{width:100%;min-height:96px;box-sizing:border-box;padding:12px;border:1px solid #e3e3e8;border-radius:14px;background:#fafafb;resize:vertical;
+  font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;color:#3d3e46;word-break:break-all}
+.transfer-card__code:focus{outline:2px solid rgba(103,137,86,.45);outline-offset:1px;background:#fff}
+.transfer-card__file{justify-self:start;padding:0;border:0;background:none;font:inherit;font-size:14px;color:#46633d;font-weight:600;cursor:pointer}
+.transfer-card__note{margin:0;font-size:14px;line-height:1.5;color:#46633d}
+.transfer-card__note.is-error{color:#b04a3c}
+.transfer-card__found{display:grid;gap:10px;padding:14px;border-radius:14px;background:#f4f7f2}
+.transfer-card__found p{margin:0;font-size:14px;line-height:1.5}
+.transfer-card__found ul{margin:0;padding-left:18px;font-size:14px;line-height:1.6;color:#4d4f57}
+.transfer-card__found>.transfer-card__primary{justify-self:start}
+.transfer-card__confirm{display:grid;gap:10px}
+.transfer-card__confirm p{color:#6b6d75}
+@media(max-width:760px){
+  .transfer-page__grid{grid-template-columns:1fr}
+  .transfer-page__intro{font-size:14px}
+}
+

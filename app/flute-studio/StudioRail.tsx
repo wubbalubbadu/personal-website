@@ -8,6 +8,7 @@ import {exerciseCatalog} from "../../content/exercise-catalog";
 import {scaleSetsEvent,scaleSetsKey,type ScaleSet} from "./exercises/scales/saved-sets";
 import {useLanguage} from "./i18n/LanguageContext";
 import {LEARN_PAGES} from "./learn-pages";
+import {useStatusEntries,type MusicStatus} from "./lib/musicStatus";
 import {openPracticeTool} from "./PracticeAudio";
 
 /**
@@ -58,7 +59,6 @@ function parseList<T>(raw:string|null):T[]{
 const RAIL_KEY="cookie:rail-open";
 const RAIL_EVENT="cookie:rail-open";
 const subscribeRail=listenTo([RAIL_EVENT]);
-const subscribeSaved=listenTo(["studio:store","cookie:favorites-updated"]);
 const subscribeSets=listenTo([scaleSetsEvent]);
 
 /** Whether the rail is open. Folded by default; the choice sticks between visits. */
@@ -71,7 +71,7 @@ export function setRailOpen(open:boolean){
   window.dispatchEvent(new Event(RAIL_EVENT));
 }
 
-/** How many saved pieces the open rail lists before leaving the rest to the Library. */
+/** How many pieces from your lists the open rail shows before leaving the rest to the Library. */
 const SAVED_LIMIT=6;
 /** The exercises that are always listed: the fundamentals the Exercises tab features. */
 const FEATURED_EXERCISES=exerciseCatalog.filter(entry=>entry.featured&&entry.href);
@@ -79,19 +79,22 @@ const FEATURED_EXERCISES=exerciseCatalog.filter(entry=>entry.featured&&entry.hre
 export default function StudioRail({destinations,open}:{destinations:RailDestination[];open:boolean}){
   const pathname=usePathname();
   const {t,lang}=useLanguage(),zh=lang==="zh";
-  const savedIds=parseList<string>(useStoredString("cookie:music-favorites",subscribeSaved));
+  // Your lists, most recent first: what you are working on, then what you want to learn.
+  const entries=useStatusEntries();
+  const onList=(status:MusicStatus)=>entries.filter(entry=>entry.status===status).map(entry=>entry.id);
+  const activeIds=[...onList("working"),...onList("want")];
   const sets=parseList<ScaleSet>(useStoredString(scaleSetsKey,subscribeSets)).filter(set=>typeof set?.id==="string"&&typeof set?.name==="string");
 
   const childrenOf=(key:string):RailChild[]=>{
     if(key==="music"){
-      const saved=savedIds.map(id=>libraryShelf.find(item=>item.id===id)).filter(item=>item?.viewerPath&&!item.exercise).slice(0,SAVED_LIMIT);
+      const saved=activeIds.map(id=>libraryShelf.find(item=>item.id===id)).filter(item=>item?.viewerPath&&!item.exercise).slice(0,SAVED_LIMIT);
       return [
-        {key:"saved",label:zh?"收藏的曲目":"Saved music",href:"/flute-studio/music?favorites=1"},
+        {key:"saved",label:zh?"我的列表":"My lists",href:`/flute-studio/music?list=${onList("working").length?"working":"want"}`},
         ...saved.map(item=>({key:item!.id,label:item!.title,href:item!.viewerPath!,active:pathname===item!.viewerPath})),
       ];
     }
     if(key==="exercises"){
-      const savedExercises=exerciseCatalog.filter(entry=>entry.href&&!entry.featured&&savedIds.includes(entry.id));
+      const savedExercises=exerciseCatalog.filter(entry=>entry.href&&!entry.featured&&activeIds.includes(entry.id));
       const hasSaved=sets.length>0||savedExercises.length>0;
       // Your saved ones first, then the tools everyone has.
       return [

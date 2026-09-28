@@ -18,7 +18,9 @@ import {usePracticeAudio,pitchFrequency} from "../PracticeAudio";
 import {PracticeIcon} from "./PracticeIcon";
 import {FluteDiagramMini} from "./FluteDiagram";
 import {fingeringsForMidi, midiForPitch} from "../../../content/fingerings/flute";
-import {SaveButton} from "./SaveButton";
+import {StatusButton} from "./StatusButton";
+import BackChevron from "./BackChevron";
+import {DownloadIcon,PlusIcon,CheckIcon} from "./HeaderIcons";
 import AccountMenu from "../AccountMenu";
 import {notationScale,pageOffsets,pageAt,tabletReader,initialReaderLayout} from "./readerLayout";
 import "../reader-workspace.css";
@@ -37,7 +39,9 @@ import type { ArticulationMode } from "./notePatterns";
 export type ScoreViewerConfig={title:string;composer:string;
   /** What tapping the composer's name shows: a short bio and a line about this piece. */
   story?:{composer?:ComposerInfo;year?:number;about?:string};
-  asset:string;id:string;backHref:string;backLabel?:string;pdfPath?:string;defaultTempo?:number;pitches?:(string|null)[];events?:{p:string|null;d:number;tied?:boolean;articulation?:ArticulationMode;slurContinuation?:boolean;level?:number;accent?:boolean;trill?:string}[];measureStarts?:number[];subtitle?:string;displayPitches?:(string|null)[];noteKeySignatures?:string[][];syllables?:(string|null)[]};
+  asset:string;id:string;backHref:string;backLabel?:string;
+  /** Which list entry the list button changes, when not this score's own id (a book's numbers share the book's). */
+  listId?:string;pdfPath?:string;defaultTempo?:number;pitches?:(string|null)[];events?:{p:string|null;d:number;tied?:boolean;articulation?:ArticulationMode;slurContinuation?:boolean;level?:number;accent?:boolean;trill?:string}[];measureStarts?:number[];subtitle?:string;displayPitches?:(string|null)[];noteKeySignatures?:string[][];syllables?:(string|null)[]};
 /**
  * Fingerings come from content/fingerings/flute.ts, the same data the
  * fingering chart and the practice dock read. The two tables that used to
@@ -439,9 +443,13 @@ function meterBeat(meter:{beats:number;beatType:number},unitsPerBeat:number){con
 /** Staff-line geometry only. Text, slurs, dynamics and beams deliberately do
  * not participate, because their bounding boxes differ from bar to bar and
  * made the rhythm guides wander vertically. */
-function staffFrame(measure:SVGGElement|undefined,rootBox:DOMRect){
+function unscaledBox(element:Element,scale:number){
+  const box=element.getBoundingClientRect();
+  return new DOMRect(box.x/scale,box.y/scale,box.width/scale,box.height/scale);
+}
+function staffFrame(measure:SVGGElement|undefined,rootBox:DOMRect,scale=1){
   if(!measure)return null;
-  const lines=[...measure.children].filter((child):child is SVGPathElement=>child instanceof SVGPathElement&&!child.getAttribute("class")).map(line=>line.getBoundingClientRect()).filter(box=>box.width>20&&box.height<2);
+  const lines=[...measure.children].filter((child):child is SVGPathElement=>child instanceof SVGPathElement&&!child.getAttribute("class")).map(line=>unscaledBox(line,scale)).filter(box=>box.width>20&&box.height<2);
   if(!lines.length)return null;
   return {top:Math.min(...lines.map(line=>line.top))-rootBox.top,bottom:Math.max(...lines.map(line=>line.bottom))-rootBox.top,right:Math.max(...lines.map(line=>line.right))-rootBox.left};
 }
@@ -450,13 +458,15 @@ const all=[...root.querySelectorAll<SVGGElement>(".vf-stavenote[data-event]")],s
 // EVERY layout read happens here, before a single node is appended. Mixing
 // reads and writes forces the browser to re-lay-out the whole score on each
 // read; in a book of a few thousand notes that alone was seconds of work.
-const rootBox=root.getBoundingClientRect();
+// Overlay positions are paper coordinates, never magnified screen pixels.
+const scale=root.offsetWidth?root.getBoundingClientRect().width/root.offsetWidth:1;
+const rootBox=unscaledBox(root,scale);
 const markedThisMeasure=new Set<string>();
 let accidentalMeasure=-1;
 const noteBox=new Map<Element,DOMRect>(),headBox=new Map<Element,DOMRect>(),byMeasure=new Map<number,SVGGElement[]>();
 for(const note of all){
-  noteBox.set(note,note.getBoundingClientRect());
-  if(visible.accidentals){const head=note.querySelector(".vf-notehead");if(head)headBox.set(note,head.getBoundingClientRect())}
+  noteBox.set(note,unscaledBox(note,scale));
+  if(visible.accidentals){const head=note.querySelector(".vf-notehead");if(head)headBox.set(note,unscaledBox(head,scale))}
   // Bucket by measure once: the old code re-filtered all notes for every
   // measure, which is quadratic in the size of the book.
   const index=Number(note.dataset.measure);
@@ -464,7 +474,7 @@ for(const note of all){
   if(bucket)bucket.push(note);else byMeasure.set(index,[note]);
 }
 const measureBoxes=new Map<Element,DOMRect>();
-for(const node of root.querySelectorAll<SVGGElement>(".vf-measure"))measureBoxes.set(node,node.getBoundingClientRect());
+for(const node of root.querySelectorAll<SVGGElement>(".vf-measure"))measureBoxes.set(node,unscaledBox(node,scale));
 for(let measure=1;measure<=measureStarts.length;measure++){const group=byMeasure.get(measure);if(!group?.length)continue;const start=measureStarts[measure-1],end=measureStarts[measure]??scoreEvents.length,
 // The bar's own time signature, not an assumed 4/4 (see meterBeat). A first
 // bar holding less than its meter is a pickup: it is the END of a bar, so its
@@ -475,7 +485,7 @@ meter=meters?.[measure-1]??{beats:4,beatType:4},
 // note durations still drive playback, but no meter, pickup, count or guide
 // calculation runs for the page overlay.
 plan=unmetered?null:measureBeatOffsets(scoreEvents.slice(start,end).map(event=>event.d),meter,unitsPerBeat,measure===1),
-fullBar=plan?.barLength??0,content=plan?.contentLength??0,pickup=plan?.pickup??0,ancestor=group[0].closest<SVGGElement>(".vf-measure"),measureBox=ancestor?measureBoxes.get(ancestor):undefined,frame=staffFrame(ancestor??undefined,rootBox),groupBottom=Math.max(...group.map(n=>noteBox.get(n)!.bottom)),labelLane=frame?frame.bottom+18:(measureBox?.bottom??groupBottom)-rootBox.top+18,countLane=labelLane+32;
+fullBar=plan?.barLength??0,content=plan?.contentLength??0,pickup=plan?.pickup??0,ancestor=group[0].closest<SVGGElement>(".vf-measure"),measureBox=ancestor?measureBoxes.get(ancestor):undefined,frame=staffFrame(ancestor??undefined,rootBox,scale),groupBottom=Math.max(...group.map(n=>noteBox.get(n)!.bottom)),labelLane=frame?frame.bottom+18:(measureBox?.bottom??groupBottom)-rootBox.top+18,countLane=labelLane+32;
 // Two notes rendered close together (a fast run, or a note right after a
 // dotted/off-grid one that got no syllable of its own) can sit closer than
 // a label's own text is wide — labels would print on top of each other.
@@ -565,7 +575,7 @@ const anchors:{t:number;x:number}[]=[];group.forEach(node=>{const eventIndex=Num
 // or less than its time signature (a pickup, the shortened last bar that
 // balances it, or a bar that genuinely runs long), so the count comes from
 // the notes, and the sticks start on the first real beat after a pickup.
-measureUnits=content||fullBar;anchors.push({t:measureUnits,x:right});const top=frame?frame.top-54:(measureBox?.top??Math.min(...group.map(n=>n.getBoundingClientRect().top)))-rootBox.top-7;for(const target of plan.offsets){const left=[...anchors].reverse().find(a=>a.t<=target)??anchors[0],next=anchors.find(a=>a.t>=target)??anchors.at(-1)!,ratio=next.t===left.t?0:(target-left.t)/(next.t-left.t);overlay(root,"beat-stick","",left.x+(next.x-left.x)*ratio,top)}}}
+measureUnits=content||fullBar;anchors.push({t:measureUnits,x:right});const top=frame?frame.top-54:(measureBox?.top??Math.min(...group.map(n=>unscaledBox(n,scale).top)))-rootBox.top-7;for(const target of plan.offsets){const left=[...anchors].reverse().find(a=>a.t<=target)??anchors[0],next=anchors.find(a=>a.t>=target)??anchors.at(-1)!,ratio=next.t===left.t?0:(target-left.t)/(next.t-left.t);overlay(root,"beat-stick","",left.x+(next.x-left.x)*ratio,top)}}}
 
 /**
  * A fermata is a modifier glyph hanging off a notehead, and VexFlow gives it
@@ -869,7 +879,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   // "tap the page to read distraction-free" mode. See scoreClick below for
   // the tap trigger and the effect further down for the fullscreen attempt.
   const [focusMode,setFocusMode]=useState(false);
-  const [noteDisplay,setNoteDisplay]=useState<NoteDisplay>("off"); const [accidentals,setAccidentals]=useState(false); const [tonguing,setTonguing]=useState(true); const [fingering,setFingering]=useState(false); const [rhythmMode,setRhythmMode]=useState<RhythmMode>("off");  const [magnify,setMagnify]=useState(1); const [fingerTip,setFingerTip]=useState<{pitch:string;name:string;octave:string;solfege:string;beat:string;x:number;y:number}|null>(null); const [theoryTip,setTheoryTip]=useState<{title:string;text:string;x:number;y:number}|null>(null); const [storyCard,setStoryCard]=useState<{x:number;y:number}|null>(null); const [favorite,setFavorite]=useState(false);
+  const [noteDisplay,setNoteDisplay]=useState<NoteDisplay>("off"); const [accidentals,setAccidentals]=useState(false); const [tonguing,setTonguing]=useState(true); const [fingering,setFingering]=useState(false); const [rhythmMode,setRhythmMode]=useState<RhythmMode>("off");  const [magnify,setMagnify]=useState(1); const [fingerTip,setFingerTip]=useState<{pitch:string;name:string;octave:string;solfege:string;beat:string;x:number;y:number}|null>(null); const [theoryTip,setTheoryTip]=useState<{title:string;text:string;x:number;y:number}|null>(null); const [storyCard,setStoryCard]=useState<{x:number;y:number}|null>(null); 
   // Unmetered exercise books have no beat grid. Keep this effective value
   // off even if an older saved exercise preference contains a rhythm mode.
   const activeRhythmMode:RhythmMode=unmetered?"off":rhythmMode;
@@ -1004,6 +1014,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     let last=scroller.scrollTop;
     const onScroll=()=>{
       const top=scroller.scrollTop,delta=top-last;last=top;
+      if(magnifyRef.current!==1)return;
       if(top<40)workspace.classList.remove("is-tucked");
       else if(delta>6)workspace.classList.add("is-tucked");
       else if(delta<-6)workspace.classList.remove("is-tucked");
@@ -1145,7 +1156,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     if(!scroller)return;
     if(root?.parentElement){
       const padding=getComputedStyle(scroller);
-      root.parentElement.style.width=`${scroller.clientWidth-parseFloat(padding.paddingLeft)-parseFloat(padding.paddingRight)}px`;
+      root.parentElement.style.setProperty("--score-layout-width",`${Math.min(pageWidthRef.current==="900"?900:Infinity,scroller.clientWidth-parseFloat(padding.paddingLeft)-parseFloat(padding.paddingRight))}px`);
     }
     const spread=pageWidthRef.current==="spread"&&scroller.clientWidth>=1000;
     const zoom=notationScale(spread?scroller.clientWidth/2:scroller.clientWidth,scroller.clientHeight,sizePreferenceRef.current);
@@ -1164,7 +1175,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     if(margins){osmd.EngravingRules.PageLeftMargin=paged?8:margins.left;osmd.EngravingRules.PageRightMargin=paged?8:margins.right;osmd.EngravingRules.PageTopMargin=paged?8:margins.top;osmd.EngravingRules.PageTopMarginNarrow=paged?8:margins.narrow;osmd.EngravingRules.PageBottomMargin=paged?8:margins.bottom;}
     const padding=getComputedStyle(scroller);
     const width=scroller.clientWidth-parseFloat(padding.paddingLeft)-parseFloat(padding.paddingRight);
-    if(root.parentElement)root.parentElement.style.width=`${width}px`;
+    if(root.parentElement)root.parentElement.style.setProperty("--score-layout-width",`${Math.min(pageWidthRef.current==="900"?900:Infinity,width)}px`);
     osmd.zoom=notationScale(spread?scroller.clientWidth/2:scroller.clientWidth,scroller.clientHeight,sizePreferenceRef.current);
     osmd.EngravingRules.MinimumDistanceBetweenSystems=systemSpacingTotal();
     osmd.EngravingRules.VoiceSpacingMultiplierVexflow=noteSpacingRef.current;
@@ -1275,47 +1286,53 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
 
   // Keep engraving width fixed while magnifying; preserve the point under the gesture.
   const magnifyRef=useRef(magnify);
-  function zoomAnnotations(value:number,x:number,y:number){
-    const el=scoreScrollRef.current;if(!el)return;
-    const next=Math.max(.5,Math.min(3,value)),old=magnifyRef.current,box=el.getBoundingClientRect();
-    const px=x-box.left,py=y-box.top,left=(el.scrollLeft+px)*next/old-px,top=(el.scrollTop+py)*next/old-py;
+  function applyMagnify(value:number,x:number,y:number,dx=0,dy=0){
+    const el=scoreScrollRef.current,paper=scoreRef.current?.parentElement;if(!el||!paper)return;
+    const next=Math.max(.5,Math.min(3,value)),old=magnifyRef.current;
+    const box=paper.getBoundingClientRect();
+    // Anchor to the paper, including its inset in the scroller. Moving the
+    // midpoint pans the same musical point along with the fingers.
+    const left=el.scrollLeft+(x-dx-box.left)*(next/old-1)-dx;
+    const top=el.scrollTop+(y-dy-box.top)*(next/old-1)-dy;
     magnifyRef.current=next;
     el.closest<HTMLElement>(".restored-reader")?.style.setProperty("--viewer-magnify",String(next));
-    setMagnify(next);el.scrollLeft=left;el.scrollTop=top;
+    el.scrollLeft=left;el.scrollTop=top;
+  }
+  function zoomAnnotations(value:number,x:number,y:number){
+    applyMagnify(value,x,y);setMagnify(magnifyRef.current);
   }
   useEffect(()=>{magnifyRef.current=magnify},[magnify]);
   useEffect(()=>{
     const el=scoreScrollRef.current;if(!el)return;
-    let frame=0,touchDistance=0,touchZoom=1,gestureZoom=1;
-    // The magnification is written straight to the custom property while a
-    // gesture is running, and only committed to React state when it ends.
-    // Calling setMagnify on every touchmove re-rendered the whole reader
-    // dozens of times a second, which is what made a pinch shake and flash.
-    const surface=el.closest<HTMLElement>(".restored-reader");
-    let commit=0;
-    function apply(value:number,x:number,y:number){
-      const next=Math.max(.5,Math.min(3,value)),old=magnifyRef.current,box=el!.getBoundingClientRect();
-      const px=x-box.left,py=y-box.top,left=(el!.scrollLeft+px)*next/old-px,top=(el!.scrollTop+py)*next/old-py;
-      magnifyRef.current=next;
-      surface?.style.setProperty("--viewer-magnify",String(next));
-      cancelAnimationFrame(frame);
-      frame=requestAnimationFrame(()=>{el!.scrollLeft=left;el!.scrollTop=top;rememberPosition()});
-      // One state update once the fingers settle, so the scrollable area is
-      // re-reserved and anything else watching magnify sees the final value.
-      window.clearTimeout(commit);
-      commit=window.setTimeout(()=>setMagnify(magnifyRef.current),140);
+    let touchDistance=0,touchZoom=1,gestureZoom=1,midX=0,midY=0,commit=0;
+    const settle=()=>{window.clearTimeout(commit);setMagnify(magnifyRef.current);rememberPosition()};
+    function wheel(e:WheelEvent){
+      if(!e.ctrlKey)return;e.preventDefault();
+      if(el?.querySelector('.annotation-layer[data-drawing="true"]'))return;
+      applyMagnify(magnifyRef.current*Math.exp(-e.deltaY*.008),e.clientX,e.clientY);
+      window.clearTimeout(commit);commit=window.setTimeout(settle,140);
     }
-    function wheel(e:WheelEvent){if(!e.ctrlKey)return;e.preventDefault();if(el?.querySelector('.annotation-layer[data-drawing="true"]'))return;apply(magnifyRef.current*Math.exp(-e.deltaY*.008),e.clientX,e.clientY)}
-    function start(e:TouchEvent){if(annotatingRef.current||e.touches.length!==2)return;e.preventDefault();touchDistance=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);touchZoom=magnifyRef.current}
-    function move(e:TouchEvent){if(annotatingRef.current||e.touches.length!==2||!touchDistance)return;e.preventDefault();const [a,b]=[e.touches[0],e.touches[1]];apply(touchZoom*Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)/touchDistance,(a.clientX+b.clientX)/2,(a.clientY+b.clientY)/2)}
-    function end(){touchDistance=0}
+    function start(e:TouchEvent){
+      if(annotatingRef.current||e.touches.length!==2)return;e.preventDefault();
+      const [a,b]=[e.touches[0],e.touches[1]];
+      touchDistance=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);touchZoom=magnifyRef.current;
+      midX=(a.clientX+b.clientX)/2;midY=(a.clientY+b.clientY)/2;
+    }
+    function move(e:TouchEvent){
+      if(annotatingRef.current||e.touches.length!==2||!touchDistance)return;e.preventDefault();
+      const [a,b]=[e.touches[0],e.touches[1]],x=(a.clientX+b.clientX)/2,y=(a.clientY+b.clientY)/2;
+      applyMagnify(touchZoom*Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)/touchDistance,x,y,x-midX,y-midY);
+      midX=x;midY=y;
+    }
+    function end(){if(touchDistance){touchDistance=0;settle()}}
     function gestureStart(e:Event){e.preventDefault();if(annotatingRef.current)return;gestureZoom=magnifyRef.current}
-    function gestureChange(e:Event){e.preventDefault();if(annotatingRef.current||touchDistance)return;const g=e as Event&{scale:number;clientX:number;clientY:number};apply(gestureZoom*g.scale,g.clientX,g.clientY)}
-    el.addEventListener("wheel",wheel,{passive:false});el.addEventListener("touchstart",start,{passive:false});el.addEventListener("touchmove",move,{passive:false});el.addEventListener("touchend",end);el.addEventListener("touchcancel",end);el.addEventListener("gesturestart",gestureStart);el.addEventListener("gesturechange",gestureChange);
-    return()=>{cancelAnimationFrame(frame);window.clearTimeout(commit);el.removeEventListener("wheel",wheel);el.removeEventListener("touchstart",start);el.removeEventListener("touchmove",move);el.removeEventListener("touchend",end);el.removeEventListener("touchcancel",end);el.removeEventListener("gesturestart",gestureStart);el.removeEventListener("gesturechange",gestureChange)};
+    function gestureChange(e:Event){e.preventDefault();if(annotatingRef.current||touchDistance)return;const g=e as Event&{scale:number;clientX:number;clientY:number};applyMagnify(gestureZoom*g.scale,g.clientX,g.clientY)}
+    function gestureEnd(){if(!annotatingRef.current)settle()}
+    el.addEventListener("wheel",wheel,{passive:false});el.addEventListener("touchstart",start,{passive:false});el.addEventListener("touchmove",move,{passive:false});el.addEventListener("touchend",end);el.addEventListener("touchcancel",end);el.addEventListener("gesturestart",gestureStart,{passive:false});el.addEventListener("gesturechange",gestureChange,{passive:false});el.addEventListener("gestureend",gestureEnd);
+    return()=>{window.clearTimeout(commit);el.removeEventListener("wheel",wheel);el.removeEventListener("touchstart",start);el.removeEventListener("touchmove",move);el.removeEventListener("touchend",end);el.removeEventListener("touchcancel",end);el.removeEventListener("gesturestart",gestureStart);el.removeEventListener("gesturechange",gestureChange);el.removeEventListener("gestureend",gestureEnd)};
   },[]);
 
-  useEffect(()=>{const saved=JSON.parse(localStorage.getItem("cookie:music-favorites")||"[]") as string[];setFavorite(saved.includes(id));let mounted=true; async function load(){ try { if(unmetered&&!asset.includes("<note>")){scoreRef.current?.replaceChildren();osmdRef.current=null;setLoading(false);return;} setLoading(true); const {OpenSheetMusicDisplay}=await import("opensheetmusicdisplay"); if(!mounted||!scoreRef.current)return; scoreRef.current.replaceChildren(); const osmd=new OpenSheetMusicDisplay(scoreRef.current,{backend:"svg",autoResize:false,drawTitle:false,drawComposer:false,drawingParameters:"compacttight"}); osmd.setOptions({pageFormat:"Endless",drawMeasureNumbers:true,drawPartNames:false,drawMetronomeMarks:true}); applySlurRules(osmd); /* Chord symbols stay in the MusicXML (for a future accompaniment) but are never drawn. OSMD builds them inside load(), so this has to be set first. */ osmd.EngravingRules.RenderChordSymbols=false; /* Each rest bar drawn on its own, never folded into a multi-bar rest: notes are matched to the event list by drawing order, so three rests drawn as one "3" shifted every later note (and bar selection, and playback start) by three. */ osmd.EngravingRules.RenderMultipleRestMeasures=false; osmd.EngravingRules.AutoGenerateMultipleRestMeasuresFromRestMeasures=false; osmd.OnXMLRead = xml=>{scoreFactsRef.current=readScoreFacts(xml);if(config.defaultTempo===undefined){const doc=new DOMParser().parseFromString(xml,"application/xml");const marked=Number(doc.querySelector("sound[tempo]")?.getAttribute("tempo"));if(marked>0)initializeScore(id,marked)}return prepareScore(xml,title,composer)}; await osmd.load(asset,title); if(!mounted||!scoreRef.current)return;
+  useEffect(()=>{let mounted=true; async function load(){ try { if(unmetered&&!asset.includes("<note>")){scoreRef.current?.replaceChildren();osmdRef.current=null;setLoading(false);return;} setLoading(true); const {OpenSheetMusicDisplay}=await import("opensheetmusicdisplay"); if(!mounted||!scoreRef.current)return; scoreRef.current.replaceChildren(); const osmd=new OpenSheetMusicDisplay(scoreRef.current,{backend:"svg",autoResize:false,drawTitle:false,drawComposer:false,drawingParameters:"compacttight"}); osmd.setOptions({pageFormat:"Endless",drawMeasureNumbers:true,drawPartNames:false,drawMetronomeMarks:true}); applySlurRules(osmd); /* Chord symbols stay in the MusicXML (for a future accompaniment) but are never drawn. OSMD builds them inside load(), so this has to be set first. */ osmd.EngravingRules.RenderChordSymbols=false; /* Each rest bar drawn on its own, never folded into a multi-bar rest: notes are matched to the event list by drawing order, so three rests drawn as one "3" shifted every later note (and bar selection, and playback start) by three. */ osmd.EngravingRules.RenderMultipleRestMeasures=false; osmd.EngravingRules.AutoGenerateMultipleRestMeasuresFromRestMeasures=false; osmd.OnXMLRead = xml=>{scoreFactsRef.current=readScoreFacts(xml);if(config.defaultTempo===undefined){const doc=new DOMParser().parseFromString(xml,"application/xml");const marked=Number(doc.querySelector("sound[tempo]")?.getAttribute("tempo"));if(marked>0)initializeScore(id,marked)}return prepareScore(xml,title,composer)}; await osmd.load(asset,title); if(!mounted||!scoreRef.current)return;
       // One line for "Allegro assai ♩ = 144" instead of two; see tuckMetronomeMarks.
       osmd.EngravingRules.MetronomeMarkYShift=scoreFactsRef.current?.tempoWordsWithMetronome?METRONOME_TUCK_SHIFT:-1;
       // React's Strict Mode runs this whole effect twice in dev (mount,
@@ -1422,17 +1439,6 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   useEffect(()=>{extraSystemSpacingRef.current=extraSystemSpacing;rememberPosition();layoutScore()},[extraSystemSpacing]);
   useEffect(()=>{noteSpacingRef.current=noteSpacing;rememberPosition();layoutScore()},[noteSpacing]);
   useEffect(()=>{if(osmdRef.current)computePages()},[magnify]);
-  // A scaled element still occupies its unscaled box, so without this the
-  // scroller has nothing to scroll into and the magnified page is simply
-  // clipped. transform-origin is the top left corner, so the overflow is
-  // all to the right and below.
-  useEffect(()=>{
-    const paper=scoreRef.current?.closest<HTMLElement>(".score-paper");
-    if(!paper)return;
-    const grow=Math.max(0,magnify-1);
-    paper.style.marginRight=grow?`${grow*paper.offsetWidth}px`:"";
-    paper.style.marginBottom=grow?`${grow*paper.offsetHeight}px`:"";
-  },[magnify,layoutVersion]);
   useEffect(()=>{
     const scroller=scoreScrollRef.current;if(!scroller)return;
     let timer=0,lastWidth=scroller.clientWidth,lastHeight=scroller.clientHeight;
@@ -1440,7 +1446,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
       const {clientWidth:width,clientHeight:height}=scroller;
       if(width===lastWidth&&height===lastHeight)return;
       const widthChanged=width!==lastWidth;lastWidth=width;lastHeight=height;window.clearTimeout(timer);
-      timer=window.setTimeout(()=>{if(widthChanged||pageWidthRef.current==="spread")layoutScore();else computePages()},180);
+      timer=window.setTimeout(()=>{if(widthChanged||(pageWidthRef.current==="spread"&&scroller.clientWidth>=1000))layoutScore();else computePages()},180);
     });observer.observe(scroller);
     return()=>{window.clearTimeout(timer);observer.disconnect()};
   },[]);
@@ -1579,7 +1585,18 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     const position=units(barStart,fromIndex)+pickup,beatsPerBar=Math.max(1,Math.round(fullBar/beatLen)),next=Math.ceil(position/beatLen-1e-9);
     return {time:audioStart+(next*beatLen-position)*unit/1000,beatSeconds:beatLen*unit/1000,beatInBar:next%beatsPerBar,beatsPerBar};
   }
-  function togglePlayback(){if(playing){stopPlayback();return}setPlaying(true);const first=sequenceRef.current.measureStarts[startMeasure-1]??0;setPlayingFrom(first);scheduleNotes(first)}
+  // Play, pause, play again: pausing remembers the note playback reached,
+  // and the next Play carries on from it instead of starting over. Choosing
+  // a bar (a new selectedMeasure) forgets it, so that bar is where it starts.
+  const resumeAt=useRef<number|null>(null);
+  useEffect(()=>{resumeAt.current=null},[selectedMeasure]);
+  function togglePlayback(){
+    if(playing){resumeAt.current=playingEvent;stopPlayback();return}
+    setPlaying(true);
+    const first=resumeAt.current??sequenceRef.current.measureStarts[startMeasure-1]??0;
+    resumeAt.current=null;
+    setPlayingFrom(first);scheduleNotes(first);
+  }
   /**
    * Play from one note rather than from the transport's start measure.
    * Re-pressing the control that started it stops, so the caller can render
@@ -1651,7 +1668,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   /**
    * The bar under a tap, including its empty space between notes. Hit-testing
    * is left to the browser and the comparison done in the SVG's own
-   * coordinates, because the Magnify control's CSS zoom makes screen rects of
+   * coordinates, because score magnification makes screen rects of
    * SVG elements disagree with the pointer (see markPlayStart).
    */
   function measureAt(x:number,y:number){
@@ -1702,7 +1719,6 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     if(measure!==null)setSelectedMeasure(current=>current===measure?null:measure);
     if(node)showNoteInfo(node,e.clientX,e.clientY);else setFingerTip(null);
   }
-  function toggleFavorite(){const saved=JSON.parse(localStorage.getItem("cookie:music-favorites")||"[]") as string[],next=saved.includes(id)?saved.filter(item=>item!==id):[...saved,id];localStorage.setItem("cookie:music-favorites",JSON.stringify(next));setFavorite(next.includes(id));window.dispatchEvent(new Event("cookie:favorites-updated"))}
   /**
    * Re-engrave for paper, hand over to the browser's own print-to-PDF, then
    * put the screen layout back.
@@ -1821,11 +1837,11 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   const readerControls:ReaderControls={bpm,setTempo:setBpm,metronome:metro,toggleMetronome:toggleMetro,playing,playFromEvent,playingFrom,playingEvent,download:downloadPdf,exporting};
   return <main className="app-shell reader-workspace restored-reader" data-layout={pageWidth} data-annotating={annotating} data-dock={dock?"true":undefined} style={{"--reader-page-width":pageWidth==="900"?"900px":"100%","--viewer-magnify":magnify} as React.CSSProperties}>
     <section className="workspace">
-      <header className="topbar"><div><Link className="back has-tip" href={backHref} aria-label={backLabel?`${t.scoreViewer.back}: ${backLabel}`:t.scoreViewer.back} data-tip={backLabel||t.scoreViewer.back}><span className="back-arrow" aria-hidden="true">‹</span>{backLabel&&<span className="back-label">{backLabel}</span>}</Link>{!toolbar&&<strong>{title}</strong>}</div><div><span className="topbar-toolbar-slot">{toolbar}</span>{save?<SaveButton saved={save.saved} onToggle={save.onToggle} label={save.saved?save.savedLabel:save.label} tip={save.saved?save.savedLabel:save.label}/>:<SaveButton saved={favorite} onToggle={toggleFavorite} label={favorite?t.scoreViewer.removeFromSaved:t.scoreViewer.saveMusic} tip={favorite?t.scoreViewer.removeFromSaved:t.scoreViewer.saveMusic}/>}{headerActions?.(readerControls)}{pdfPath&&<a className="icon-btn has-tip" href={pdfPath} download data-tip={t.scoreViewer.downloadPdf} aria-label={t.scoreViewer.downloadPdf}>↓</a>}{/* The reader hides the studio nav, so the two controls that live there on every other page — practice tools and the account menu — come here instead, on the same row as the back link. */}<span className="topbar-spacer"/><div id="reader-tools-slot" className="topbar-tools-slot"/><AccountMenu/></div></header>
+      <header className="topbar"><div><Link className="back has-tip" href={backHref} aria-label={backLabel?`${t.scoreViewer.back}: ${backLabel}`:t.scoreViewer.back} data-tip={backLabel||t.scoreViewer.back}><BackChevron/>{backLabel&&<span className="back-label">{backLabel}</span>}</Link>{!toolbar&&<strong>{title}</strong>}</div><div><span className="topbar-toolbar-slot">{toolbar}</span>{/* No star: a score goes on one of your lists (want to learn, working on, learned). Scale Studio instead saves the panel as a set: a + that turns into a tick. */}{save?<button type="button" className="icon-btn has-tip reader-set-save" aria-pressed={save.saved} data-tip={save.saved?save.savedLabel:save.label} aria-label={save.saved?save.savedLabel:save.label} onClick={save.onToggle}>{save.saved?<CheckIcon/>:<PlusIcon/>}</button>:<StatusButton id={config.listId??config.id} zh={lang==="zh"}/>}{headerActions?.(readerControls)}{pdfPath&&<a className="icon-btn has-tip" href={pdfPath} download data-tip={t.scoreViewer.downloadPdf} aria-label={t.scoreViewer.downloadPdf}><DownloadIcon/></a>}{/* The reader hides the studio nav, so the two controls that live there on every other page — practice tools and the account menu — come here instead, on the same row as the back link. */}<span className="topbar-spacer"/><div id="reader-tools-slot" className="topbar-tools-slot"/><AccountMenu/></div></header>
 
       <div className="practice-bar"><div className="tool-group">        <button data-tip={t.scoreViewer.markUpTip} className={annotating?"tool on coral has-tip":"tool has-tip"} onClick={()=>setAnnotating(!annotating)}><PracticeIcon name="markup"/>{t.scoreViewer.markUp}</button>
       </div>
-        <div className="transport">{practiceActions}<button data-tip={t.scoreViewer.playTip(selectedMeasure)} className={playing?"tool on has-tip":"tool has-tip"} onClick={togglePlayback}><PracticeIcon name={playing?"stop":"play"}/>{playing?t.scoreViewer.stop:t.scoreViewer.play}</button><PracticeRecorder/>{/* Everything about tempo in one group: the metronome that sounds it, the number, and the steppers. The metronome used to sit after Listen, which is what made "Listen" read as "start the metronome"; the steppers reuse the − n + shape the on-page tempo marks already use rather than a spinner. */}<div className="tempo-group"><button data-tip={t.scoreViewer.metronomeTip} className={metro?"tool on has-tip":"tool has-tip"} onClick={toggleMetro}><PracticeIcon name="metronome"/>{t.scoreViewer.metronome}</button>{/* A div, not a label: buttons nested in a label get the label's hover applied to them as a set — hovering + lit up − too — and a tap on one activates the label, which focuses the number field and would raise the keyboard on a tablet. Only the field is labelled. */}<div className="tempo"><button type="button" className="tempo-step" aria-label={zh?"减慢":"Slower"} disabled={bpm<=40} onClick={()=>setBpm(bpm-1)}>−</button><label className="tempo-field"><input aria-label={t.scoreViewer.tempoAria} type="number" min="40" max="220" value={tempoDraft??bpm} onChange={e=>setTempoDraft(e.target.value)} onBlur={commitTempo} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/></label><button type="button" className="tempo-step" aria-label={zh?"加快":"Faster"} disabled={bpm>=220} onClick={()=>setBpm(bpm+1)}>+</button></div></div><button className="tool has-tip reader-tap" data-tip={t.scoreViewer.tapTempo} aria-label={t.scoreViewer.tapTempo} onClick={tapTempo}><PracticeIcon name="tap"/>{zh?"打拍":"Tap"}</button>
+        <div className="transport">{practiceActions}<button data-tip={t.scoreViewer.playTip(selectedMeasure)} className={playing?"tool on has-tip":"tool has-tip"} aria-label={playing?(lang==="zh"?"暂停":"Pause"):t.scoreViewer.play} onClick={togglePlayback}><PracticeIcon name={playing?"pause":"play"}/>{playing?(lang==="zh"?"暂停":"Pause"):t.scoreViewer.play}</button><PracticeRecorder/>{/* Everything about tempo in one group: the metronome that sounds it, the number, and the steppers. The metronome used to sit after Listen, which is what made "Listen" read as "start the metronome"; the steppers reuse the − n + shape the on-page tempo marks already use rather than a spinner. */}<div className="tempo-group"><button data-tip={t.scoreViewer.metronomeTip} className={metro?"tool on has-tip":"tool has-tip"} onClick={toggleMetro}><PracticeIcon name="metronome"/>{t.scoreViewer.metronome}</button>{/* A div, not a label: buttons nested in a label get the label's hover applied to them as a set — hovering + lit up − too — and a tap on one activates the label, which focuses the number field and would raise the keyboard on a tablet. Only the field is labelled. */}<div className="tempo"><button type="button" className="tempo-step" aria-label={zh?"减慢":"Slower"} disabled={bpm<=40} onClick={()=>setBpm(bpm-1)}>−</button><label className="tempo-field"><input aria-label={t.scoreViewer.tempoAria} type="number" min="40" max="220" value={tempoDraft??bpm} onChange={e=>setTempoDraft(e.target.value)} onBlur={commitTempo} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/></label><button type="button" className="tempo-step" aria-label={zh?"加快":"Faster"} disabled={bpm>=220} onClick={()=>setBpm(bpm+1)}>+</button></div></div><button className="tool has-tip reader-tap" data-tip={t.scoreViewer.tapTempo} aria-label={t.scoreViewer.tapTempo} onClick={tapTempo}><PracticeIcon name="tap"/>{zh?"打拍":"Tap"}</button>
           <div className="transport-menu">
             <button aria-label={t.scoreViewer.drone} aria-pressed={droneArmed||drones.length>0} data-tip={t.scoreViewer.droneTip} className={droneArmed||drones.length?"tool on has-tip":"tool has-tip"} onClick={()=>setDroneArmed(on=>{
               // Turning the drone off stops what is sounding. Keeping the

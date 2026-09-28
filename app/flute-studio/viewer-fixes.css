@@ -102,14 +102,8 @@ html.score-focus-mode .workspace{padding-top:0!important;margin-left:0!important
    container like this needs its look changed, change it here, not per-file. */
 .home-music-list,.saved-home-grid,.library-list{overflow:hidden!important;border:0!important;border-radius:20px!important;background:#fff!important;box-shadow:0 10px 30px rgba(41,42,51,.08)!important}
 
-/* Back control names its destination ("‹ Library") instead of a bare arrow
-   sitting flush against the piece title — that read as navigating within
-   the piece rather than away from it. Label is muted so it stays secondary
-   to the bold piece title beside it. (Overrides globals.css's old .back{}.) */
-.workspace .back{display:flex!important;align-items:center!important;gap:2px!important;height:42px!important;padding:0 12px 0 2px!important;border:0!important;border-radius:12px!important;background:transparent!important;color:#292a33!important;text-decoration:none!important;transition:background-color .16s ease!important}
-.workspace .back:hover{background:#f1f5ef!important}
-.workspace .back-arrow{font-size:26px!important;line-height:1!important}
-.workspace .back-label{font-size:14px!important;font-weight:500!important;color:#6f7178!important}
+/* The back control names its destination ("Library") so it reads as leaving
+   the piece; its look lives in components/back-button.css. */
 
 /* The loading message used to sit in normal flow, directly above the score
    container — but OSMD renders straight into that container as soon as

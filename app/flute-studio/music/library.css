@@ -142,8 +142,31 @@
 
 .library-search:focus-within{box-shadow:0 0 0 3px rgba(41,42,51,.16)!important}
 .library-content .category-tabs{flex-wrap:wrap;overflow:visible;row-gap:8px}
-/* The chip row: one line that scrolls sideways inside the page column
-   instead of running off its right edge, with a fade on the side that has
-   more chips. */
-.library-content .category-tabs.library-chips{flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden;scroll-snap-type:x proximity;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 36px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 36px),transparent);padding-right:36px!important}
+/* Every chip in view, wrapping onto as many lines as it takes (not a
+   sideways scroller, which hid most of the tags). studio-route scoping
+   outranks the phone rule in studio-shell.css that keeps chip rows on one line. */
+.studio-route .library-content .category-tabs.library-chips,.library-content .category-tabs.library-chips{flex-wrap:wrap!important;overflow:visible!important;-webkit-mask-image:none;mask-image:none;padding-right:2px!important;margin-right:0!important;row-gap:8px}
 .library-content .category-tabs.library-chips button{flex:0 0 auto;scroll-snap-align:start}
+
+/* Chips read like the tag pills on the rows (components/tag-pill.css): the
+   tag as written, not capitals, in the same tint as the pill (lib/tagTone.ts). Taller than a row pill because these are tapped. */
+.library-content .category-tabs.library-chips button{height:32px;padding:0 13px!important;text-transform:none;letter-spacing:0;font-size:13px!important;font-weight:560;background:#f1f1f2;color:#5f6169!important}
+.library-content .category-tabs.library-chips button:hover{background:#e6e6ea}
+.library-content .category-tabs.library-chips button[data-tone="sage"]{background:#e4ecdf;color:#46633d!important}
+.library-content .category-tabs.library-chips button[data-tone="sand"]{background:#f3ead6;color:#765d31!important}
+.library-content .category-tabs.library-chips button[data-tone="blue"]{background:#e2eaf1;color:#4b6378!important}
+.library-content .category-tabs.library-chips button[data-tone="pink"]{background:#f1e4ef;color:#7c4f78!important}
+.library-content .category-tabs.library-chips button[data-tone="lavender"]{background:#e9e5f1;color:#62567a!important}
+.library-content .category-tabs.library-chips button[data-tone="coral"]{background:#f4e4de;color:#825747!important}
+.library-content .category-tabs.library-chips button[data-tone]:hover{filter:brightness(.96)}
+.library-content .category-tabs.library-chips button.active{background:#292a33!important;color:#fff!important;font-weight:600}
+
+/* Your own chips (Saved and the three lists) share one look: grey, with a
+   star or a coloured dot. A thin divider separates them from the tags. */
+.library-content .category-tabs.library-chips button.is-mine{gap:6px}
+.library-content .category-tabs.library-chips button.is-mine .status-dot{width:7px;height:7px}
+.library-content .category-tabs.library-chips button.active .status-dot{box-shadow:0 0 0 1.5px #fff}
+.library-chips__divider{flex:0 0 1px;align-self:center;height:20px;margin:0 4px;background:#dcdce0}
+
+/* The row's end holds the list button: a round + or the list's name. */
+.library-list .music-row{grid-template-columns:minmax(0,1fr) auto;column-gap:10px;padding-right:14px}

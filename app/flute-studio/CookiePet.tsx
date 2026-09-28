@@ -103,5 +103,6 @@ export default function CookiePet(){
       <i className="eye left"/><i className="eye right"/><b className="smile"/>
     </div>
   </div>;
-  return lessonPage&&lessonHost?createPortal(content,lessonHost):content;
+  // Keep the lesson companion in its reserved slot, never in a floating corner.
+  return lessonPage&&lessonHost?createPortal(content,lessonHost):null;
 }

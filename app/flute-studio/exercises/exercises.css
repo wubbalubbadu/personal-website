@@ -45,8 +45,7 @@
 .exercise-hub__section+.exercise-hub__section{margin-top:26px}
 .exercise-hub__section-title{margin:0 0 10px 4px;font-size:12px;font-weight:720;letter-spacing:.08em;text-transform:uppercase;color:#8a8c93}
 
-/* Matches .studio-save's box exactly so a saved set's remove button and a
-   catalog row's save star occupy the same slot down the right edge. */
+/* A saved set's remove button: a quiet 40px square at the row's right edge. */
 .exercise-hub__remove{flex:0 0 40px;width:40px;height:40px;display:grid;place-items:center;border:0;border-radius:12px;background:transparent;color:#a8aab1;font-size:20px;line-height:1;cursor:pointer;transition:background-color .16s ease,color .16s ease}
 .exercise-hub__remove:hover{background:#ededf0;color:#5a5c63}
 .exercise-hub__remove:focus-visible{outline:2px solid rgba(103,137,86,.5);outline-offset:1px}

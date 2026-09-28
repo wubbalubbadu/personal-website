@@ -22,8 +22,8 @@
 .reader-pages>span{font-size:14px;font-variant-numeric:tabular-nums;min-width:54px;text-align:center}
 .reader-bpm{display:flex;align-items:center;gap:4px;font-size:12px;color:#71747e}
 .reader-bpm input,.dock-bpm input{width:60px;min-height:36px;border:1px solid #d8dcd3;border-radius:4px;padding:4px;font:inherit;font-size:16px;color:#292a33;background:white;text-align:center}
-.reader-workspace .score-scroll{grid-area:score;min-width:0;min-height:0;padding:12px!important;scrollbar-gutter:stable;overscroll-behavior:contain;background:#eeefeb!important;overflow:auto;scroll-behavior:auto}
-.reader-workspace .score-paper.engraved{box-sizing:border-box;max-width:none!important;min-width:0!important;margin:0!important;border-radius:0!important;box-shadow:none!important;padding:36px 48px 64px!important;min-height:100%;zoom:var(--viewer-magnify,1)}
+.reader-workspace .score-scroll{grid-area:score;min-width:0;min-height:0;padding:12px!important;scrollbar-width:none;overscroll-behavior:contain;background:#eeefeb!important;overflow:auto;scroll-behavior:auto}
+.reader-workspace .score-paper.engraved{box-sizing:border-box;max-width:none!important;min-width:0!important;margin:0!important;border-radius:0!important;box-shadow:none!important;padding:36px 48px 64px!important;min-height:100%;zoom:1;transform:scale(var(--viewer-magnify,1))!important;transform-origin:0 0}
 .reader-workspace .custom-score-heading{margin:0 0 24px!important}
 .reader-workspace .custom-score-heading h1{font-size:25px}
 .reader-workspace .osmd-score{min-height:0}
@@ -188,7 +188,7 @@ body:has(.restored-reader) .studio-navigation{display:none!important}
    settings) is a lot to fit on one line — compact everything a bit more
    rather than let it wrap to a second row, which reflows the page oddly. */
 .restored-reader .reader-view{gap:4px}
-.restored-reader .score-paper.engraved{width:var(--reader-page-width)!important;max-width:100%!important;margin:0 auto!important}
+.restored-reader .score-paper.engraved{width:var(--score-layout-width,var(--reader-page-width))!important;max-width:none!important;margin:0!important}
 /* The engraving fades back IN; it does not blink. Every settings change in
    Scale Studio re-engraves the whole book, and a hard visibility flip made
    that read as a glitch — the music vanished and snapped back a sixth of a
@@ -280,7 +280,7 @@ html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document"
 .reader-choice{flex-wrap:wrap}
 .score-spread>div:has(>svg){background:white;border-radius:12px;box-shadow:0 1px 6px #292a3314;overflow:hidden}
 .score-spread>div>svg{display:block;max-width:100%;height:auto}
-@media(max-width:999px){.restored-reader[data-layout="spread"] .score-paper.engraved{width:900px!important;background:white!important}}
+@media(max-width:999px){.restored-reader[data-layout="spread"] .score-paper.engraved{background:white!important}}
 /* Facing pages touch at the spine; engraving supplies the inside margins. */
 .score-spread{column-gap:0;row-gap:24px}
 .score-spread>div:has(>svg){border-radius:0;box-shadow:none}
@@ -618,6 +618,7 @@ html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document"
     box-shadow: none !important;
     background: #fff !important;
     zoom: 1 !important;
+    transform: none !important;
   }
   /* Annotations print; their controls do not. */
   .score-note__remove { display: none !important; }
@@ -864,3 +865,6 @@ html.score-focus-mode .restored-reader[data-dock] .workspace{grid-template-areas
 @media(max-width:760px){
   body:has(.restored-reader){padding-bottom:0!important}
 }
+
+/* Zoom must not add scrollbars that change the engraving viewport width. */
+.reader-workspace .score-scroll::-webkit-scrollbar{display:none}

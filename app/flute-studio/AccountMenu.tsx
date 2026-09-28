@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import {useEffect,useRef,useState} from "react";
 import {useLanguage} from "./i18n/LanguageContext";
 import {setPencilOnly,usePencilOnly} from "./lib/pencilMode";
+import {GearIcon} from "./components/HeaderIcons";
 import "./account-menu.css";
 
 /**
@@ -63,7 +65,10 @@ export default function AccountMenu(){
         }
         setOpen(value=>!value);
       }}
-    >HW</button>
+    >
+      {/* A gear rather than initials: there is no account, only settings. */}
+      <GearIcon/>
+    </button>
 
     {open&&<div className="account-menu__panel" role="menu" style={{top:position.top,right:position.right}}>
       <p className="account-menu__group">{t.settings.language}</p>
@@ -97,6 +102,14 @@ export default function AccountMenu(){
         </button>
       </div>
       <p className="account-menu__footnote">{t.settings.pencilOnlyNote}</p>
+
+      <hr className="account-menu__rule"/>
+      <p className="account-menu__group">{lang==="zh"?"数据":"Your data"}</p>
+      <div className="account-menu__choices">
+        <Link className="account-menu__item" role="menuitem" href="/flute-studio/transfer" onClick={()=>setOpen(false)}>
+          <span>{lang==="zh"?"换设备":"Move to another device"}</span><b aria-hidden="true">›</b>
+        </Link>
+      </div>
 
       <hr className="account-menu__rule"/>
       <p className="account-menu__group">{t.settings.about}</p>

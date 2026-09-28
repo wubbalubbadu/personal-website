@@ -30,7 +30,8 @@ export default function UploadedMusicPage(){
     asset:item.scorePath,
     id:item.id,
     backHref:book?bookPath(book.id):"/flute-studio/music",
-    ...(book?{backLabel:book.title}:{}),
+    // A book goes on your lists as a whole, from any of its numbers.
+    ...(book?{backLabel:book.title,listId:book.id}:{}),
     ...(item.pdfPath?{pdfPath:item.pdfPath}:{}),
     ...(item.defaultTempo?{defaultTempo:item.defaultTempo}:{}),
     ...(composerInfo(item.composer)||item.about?{story:{composer:composerInfo(item.composer),year:item.year,about:item.about}}:{}),

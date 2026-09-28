@@ -1,40 +1,49 @@
 /* The avatar and its menu — see AccountMenu.tsx. */
 .account-menu{position:relative}
 .account-menu__trigger{
-  width:36px;height:36px;border:0;border-radius:50%;
+  /* A plain icon, the same as the tuning fork beside it. */
+  width:36px;height:36px;border:0;border-radius:10px;
   display:grid;place-items:center;cursor:pointer;
-  background:#e5ece1;color:#46633d;
-  font:inherit;font-size:12px;font-weight:720;letter-spacing:.02em;
+  background:transparent;color:#5a5c63;padding:0;
   transition:background-color .16s ease;
 }
-.account-menu__trigger:hover,.account-menu__trigger[aria-expanded="true"]{background:#d6e3cf}
+/* !important because the reader gives every button a green hover
+   (reader-workspace.css); the gear should hover like the tuning fork. */
+.account-menu .account-menu__trigger:hover,.account-menu .account-menu__trigger[aria-expanded="true"]{background:#f1f1f4!important;color:#292a33}
+/* The reader bar spaces its items 12px apart; the fork and gear are one
+   pair, 8px apart, as in the main nav. */
+.topbar-tools-slot+.account-menu{margin-left:-4px}
 .account-menu__trigger:focus-visible{outline:2px solid rgba(103,137,86,.55);outline-offset:2px}
+/* The same card as the tools panel (tools-panel.css): white, a hairline
+   border, radius 18, the system font. Plain rows with a tick, light weights:
+   only the chosen row is a little heavier. */
 .account-menu__panel{
   position:absolute;top:calc(100% + 10px);right:0;z-index:60;
-  width:248px;padding:14px;border-radius:16px;background:#fff;
-  box-shadow:0 14px 40px rgba(41,42,51,.16);
-  text-align:left;
+  width:248px;padding:12px;box-sizing:border-box;
+  border:1px solid #e6e7e3;border-radius:18px;background:#fff;
+  box-shadow:0 16px 44px rgba(41,42,51,.16);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",Inter,Arial,sans-serif;
+  color:#292a33;text-align:left;
 }
-.account-menu__group{
-  margin:0 0 8px;padding:0 2px;
-  font-size:11px;font-weight:720;letter-spacing:.08em;text-transform:uppercase;color:#8a8c93;
-}
+.account-menu__group{margin:0 0 6px;padding:0 10px;font-size:12px;font-weight:500;color:#8a8c93}
 .account-menu__choices{display:grid;gap:2px}
 .account-menu__item{
+  text-decoration:none;box-sizing:border-box;
   display:flex;align-items:center;justify-content:space-between;gap:10px;
-  width:100%;padding:9px 10px;border:0;border-radius:10px;
-  background:none;font:inherit;font-size:13.5px;color:#292a33;cursor:pointer;text-align:left;
+  width:100%;padding:8px 10px;border:0;border-radius:10px;
+  background:none;font:inherit;font-size:14px;font-weight:400;color:#292a33;cursor:pointer;text-align:left;
 }
-.account-menu__item:hover{background:rgba(41,42,51,.06)}
-.account-menu__item.is-on{background:#e4ecdf;color:#40553d;font-weight:600}
-.account-menu__item b{font-size:12px}
-.account-menu__footnote{margin:8px 2px 0;font-size:11.5px;line-height:1.45;color:#9a9ca3}
-.account-menu__rule{margin:14px 0;border:0;border-top:1px solid #ededf0}
-.account-menu__about{margin:0;padding:0 2px;display:grid;gap:2px}
-.account-menu__about span{font-size:13.5px;font-weight:600}
-.account-menu__about small{font-size:11.5px;color:#9a9ca3}
+/* !important: the reader gives every button a green hover. */
+.account-menu .account-menu__item:hover{background-color:rgba(41,42,51,.05)!important}
+.account-menu .account-menu__item.is-on,.account-menu .account-menu__item.is-on:hover{background-color:#eef3eb!important;color:#40553d;font-weight:500}
+.account-menu__item b{font-size:13px;font-weight:500;color:inherit}
+.account-menu__footnote{margin:6px 10px 0;font-size:12px;line-height:1.45;color:#9a9ca3}
+.account-menu__rule{margin:10px 0;border:0;border-top:1px solid #efeff1}
+.account-menu__about{margin:0;padding:0 10px;display:grid;gap:2px}
+.account-menu__about span{font-size:14px;font-weight:500}
+.account-menu__about small{font-size:12px;color:#9a9ca3}
 @media(max-width:760px){
-  /* The avatar lives in the header, which the phone layout hides; the menu
-     is reachable from My Studio instead. */
-  .account-menu{display:none}
+  /* A plain icon in the slim phone bar, like the tuning fork beside it. */
+  .account-menu__trigger{width:40px;height:40px;border:0;background:transparent;color:#45464f}
+  .account-menu__panel{position:fixed;top:52px!important;right:10px!important}
 }

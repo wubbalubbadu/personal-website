@@ -1,0 +1,16 @@
+/* Back links, one look everywhere: a grey pill with a drawn chevron centred
+   on the label (the reader's bar, a book page, the tools panel). */
+.back-chevron{width:16px;height:16px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+.workspace .topbar .back,.book-page__back,.tp-back{
+  display:inline-flex!important;align-items:center!important;gap:4px!important;
+  height:34px!important;min-height:0!important;padding:0 14px 0 9px!important;
+  border:0!important;border-radius:999px!important;background:#f1f1f4!important;
+  color:#45464f!important;font:inherit;font-size:14px!important;font-weight:600!important;line-height:1!important;
+  text-decoration:none!important;white-space:nowrap;cursor:pointer;
+  transition:background-color .16s ease!important;
+}
+.workspace .topbar .back:hover,.book-page__back:hover,.tp-back:hover{background:#e6e6ea!important;color:#292a33!important}
+.workspace .back-label{font-size:14px!important;font-weight:600!important;color:inherit!important;line-height:1!important}
+/* Chevron only (the label is hidden when a book's stepper needs the room). */
+.workspace .topbar .back:not(:has(.back-label:not([hidden]))),.workspace .topbar:has(.book-stepper) .back{width:34px!important;padding:0!important;justify-content:center!important}

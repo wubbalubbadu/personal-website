@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import BackChevron from "../../../components/BackChevron";
+import {StatusButton} from "../../../components/StatusButton";
 import {useParams} from "next/navigation";
 import {bookPieces,musicBooks} from "../../../../../content/music-library";
 import {toggleDone,useBookProgress} from "../../../lib/bookProgress";
@@ -29,13 +31,14 @@ export default function BookPage(){
 
   return <main className="exercise-hub">
     <div className="exercise-hub__content">
-      <Link className="book-page__back" href="/flute-studio/music">‹ {t.library.title}</Link>
+      <Link className="book-page__back" href="/flute-studio/music"><BackChevron/>{t.library.title}</Link>
       <header className="exercise-hub__header book-page__header">
         <div><h1>{book.title}</h1></div>
         <p className="book-page__composer">{book.composer}{book.year?` · ${book.year}`:""}</p>
         {book.about&&<p className="book-page__about">{book.about}</p>}
         <div className="book-page__actions">
           <Link className="book-page__continue" href={next.viewerPath!}>{started?(zh?`继续：第 ${next.book!.number} 首`:`Continue with No. ${next.book!.number}`):(zh?"从第 1 首开始":"Start with No. 1")}</Link>
+          <StatusButton id={book.id} zh={zh}/>
           <span className="book-page__count">{zh?`已完成 ${doneCount} / ${pieces.length}`:`${doneCount} of ${pieces.length} done`}</span>
         </div>
       </header>
@@ -48,7 +51,7 @@ export default function BookPage(){
             <Link className="book-row__main" href={piece.viewerPath!}>
               <span className="book-row__number">{n}</span>
               <span className="book-row__copy"><strong>{zh?`第 ${n} 首`:`No. ${n}`}</strong><small>{detail}</small></span>
-              {last&&<span className="tag-pill" data-tone="beginner">{zh?"上次练到这里":"Last opened"}</span>}
+              {last&&<span className="tag-pill" data-tone="sage">{zh?"上次练到这里":"Last opened"}</span>}
             </Link>
             {/* Done is yours to set: opening a piece is not finishing it. */}
             <button type="button" className="book-row__done" aria-pressed={done} aria-label={zh?(done?`取消完成第 ${n} 首`:`标记第 ${n} 首为完成`):(done?`Mark No. ${n} as not done`:`Mark No. ${n} as done`)} onClick={()=>toggleDone(bookId,n)}>

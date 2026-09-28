@@ -1,0 +1,48 @@
+/* The list button (StatusButton.tsx), which replaced the save star. The
+   coloured dots are the tag pills' tints (lib/musicStatus STATUS_TONES). */
+.status-button{position:relative;display:inline-flex}
+.status-button__trigger{
+  display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 13px 0 10px;
+  border:0;border-radius:999px;background:#f1f1f4;color:#45464f;
+  font:inherit;font-size:13px;font-weight:500;white-space:nowrap;cursor:pointer;
+}
+/* !important: the reader gives every button a green hover. */
+.status-button .status-button__trigger:hover{background-color:#e6e6ea!important}
+.status-button__trigger svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+.status-dot[data-tone="blue"]{background:#6f8aa3}
+.status-dot[data-tone="sand"]{background:#b08a45}
+.status-dot[data-tone="sage"]{background:#6c8f5f}
+
+.status-button__menu{
+  position:absolute;top:calc(100% + 8px);left:0;z-index:70;width:190px;padding:8px;box-sizing:border-box;
+  display:grid;gap:2px;border:1px solid #e6e7e3;border-radius:16px;background:#fff;
+  box-shadow:0 16px 44px rgba(41,42,51,.16);
+}
+.status-button__menu button{
+  display:flex;align-items:center;gap:9px;width:100%;padding:8px 10px;border:0;border-radius:10px;
+  background:none;font:inherit;font-size:14px;font-weight:400;color:#292a33;text-align:left;cursor:pointer;
+}
+.status-button__menu button span{flex:1}
+.status-button__menu button b{font-size:13px;font-weight:500}
+.status-button .status-button__menu button:hover{background-color:rgba(41,42,51,.05)!important}
+.status-button .status-button__menu button.is-on{background-color:#f4f5f2!important;font-weight:500}
+.status-button__menu .status-button__remove{margin-top:4px;padding-top:10px;border-top:1px solid #efeff1;border-radius:0 0 10px 10px;color:#85868e}
+
+/* In a Library row: a round + until the item is on a list. The menu opens
+   leftwards, since the button sits at the row's right edge. */
+.status-button--compact .status-button__trigger:not([data-status]){width:34px;padding:0;justify-content:center}
+.status-button--compact .status-button__trigger:not([data-status])>span{display:none}
+.status-button--compact .status-button__menu{left:auto;right:0}
+
+/* In the reader's slim phone bar: the dot (or +) only. */
+@media(max-width:760px){
+  .restored-reader .status-button .status-button__trigger{width:36px;padding:0;justify-content:center}
+  .restored-reader .status-button .status-button__trigger>span{display:none}
+  .restored-reader .status-button__menu{left:auto;right:0}
+}
+
+/* Header icon buttons drawn with components/HeaderIcons (download, Scale
+   Studio's save-as-set + / tick). */
+.topbar .icon-btn svg{width:20px;height:20px;display:block}
+.topbar .reader-set-save[aria-pressed="true"]{color:#46633d}

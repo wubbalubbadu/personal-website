@@ -47,7 +47,6 @@
   /* No close button on a phone: tapping above the sheet closes it. A grip
      bar says it is a sheet. */
   body .reader-settings-panel .reader-panel-heading button{display:none!important}
-  body .reader-settings-panel::before{content:"";flex:0 0 auto;align-self:center;width:34px;height:4px;border-radius:2px;background:#d6d8dc;margin:-4px 0 6px}
   /* Scale Studio: the summary under the back link ("Major scales · Two
      octaves · 12 keys") repeats the title printed on the score, and the
      Scales button opens the same settings. */
@@ -66,29 +65,41 @@
   .studio-route .breathing-lab{height:100dvh!important;min-height:0!important;overflow-y:auto!important;overscroll-behavior-y:contain}
   /* Score viewer toolbar on a phone, in two ordered rows of same-size
      buttons instead of a jumble:
-       1. playing: Listen · Record · [metronome − 76 +] · Tap
-       2. page: Mark up (and the page's own tools) · View · Drone, then the
-          page controls (↑ ‹ 1/3 › ⤢) as one compact group on the right.
+       1. while you play: Mark up · Listen · Record · [metronome − 76 +] ·
+          Tap · Drone
+       2. the page: Scales · Tempos · View (the page's own settings), then
+          the page controls (‹ 1/3 › ⤢) as one compact group on the right.
      The wrappers around these are display:contents on a phone, so the
      buttons are the bar's own flex items and `order` places them. */
   body .restored-reader .practice-bar{row-gap:4px;column-gap:2px;padding:4px 6px!important}
-  body .restored-reader .practice-bar::after{content:"";order:5;flex-basis:100%;height:0}
-  body .restored-reader .practice-bar .transport>button:not(.reader-tap){order:1}
-  body .restored-reader .practice-bar .score-recorder{order:2}
-  body .restored-reader .practice-bar .tempo-group{order:3;height:44px;padding:0 2px 0 0;border-radius:12px;background:#f4f4f5;align-items:center}
+  body .restored-reader .practice-bar::after{content:"";order:7;flex-basis:100%;height:0}
+  body .restored-reader .practice-bar .tool-group{order:1}
+  body .restored-reader .practice-bar .transport>button:not(.reader-tap){order:2}
+  body .restored-reader .practice-bar .score-recorder{order:3}
+  body .restored-reader .practice-bar .tempo-group{order:4;height:44px;padding:0 2px 0 0;border-radius:12px;background:#f4f4f5;align-items:center}
   body .restored-reader .practice-bar .tempo-group>.tool{font-size:0!important;width:40px!important;min-width:0!important}
   body .restored-reader .practice-bar .tempo-group>.tool svg{width:20px;height:20px}
   body .restored-reader .practice-bar .tempo{background:transparent!important;height:44px;padding:0!important;gap:0}
   body .restored-reader .practice-bar .tempo .tempo-step{width:30px!important;height:36px!important}
   body .restored-reader .practice-bar .tempo input{width:38px!important;font-size:17px!important}
-  body .restored-reader .practice-bar .reader-tap{order:4}
-  body .restored-reader .practice-bar .tool-group{order:6}
-  body .restored-reader .practice-bar .reader-popover-anchor{order:7}
-  body .restored-reader .practice-bar .transport-menu{order:8}
+  body .restored-reader .practice-bar .reader-tap{order:5}
+  body .restored-reader .practice-bar .transport-menu{order:6}
+  body .restored-reader .practice-bar .reader-popover-anchor{order:8}
   body .restored-reader .practice-bar .reader-pages>*{order:9!important}
   body .restored-reader .practice-bar .reader-pages>:first-child{margin-left:auto}
   body .restored-reader .practice-bar .reader-pages button{width:34px!important;min-width:0!important}
   body .restored-reader .practice-bar .reader-pages>span{font-size:12px;padding:0 2px;align-self:center;color:#6f7178;white-space:nowrap}
+  /* Breathing room: the metronome group is trimmed, and every other button
+     shares what is left of its row equally, with a 6px gap, so a label
+     like "Mark up" never runs into the button beside it. */
+  html body .restored-reader .practice-bar{column-gap:6px!important}
+  html body .restored-reader .practice-bar :is(.tool-group,.transport-menu,.reader-popover-anchor,.score-recorder,.transport>button){flex:1 1 0!important;width:auto!important;min-width:0!important;max-width:64px}
+  html body .restored-reader .practice-bar :is(.tool-group,.transport-menu,.reader-popover-anchor)>.tool,
+  html body .restored-reader .practice-bar :is(.tool-group,.transport-menu,.reader-popover-anchor)>*>.tool{width:100%!important;min-width:0!important}
+  html body .restored-reader .practice-bar .tempo-group{flex:0 0 auto!important}
+  html body .restored-reader .practice-bar .tempo-group>.tool{width:34px!important;flex:0 0 34px!important}
+  html body .restored-reader .practice-bar .tempo .tempo-step{width:26px!important;min-width:0!important}
+  html body .restored-reader .practice-bar .tempo input{width:34px!important}
   /* Back to top is a swipe on a phone; dropping it keeps the page group on
      one line even in Scale Studio, whose row has two tools more. */
   body .restored-reader .practice-bar .reader-pages__top{display:none!important}
@@ -111,4 +122,532 @@
   .studio-route .roadmap-header h1{font-weight:760}
   .studio-route .theory-shell.theory-home{max-width:1200px;padding-top:64px}
   .studio-route .theory-home__header{padding-top:50px}
+}
+
+/* Reader page controls (to top, previous, next, page number) at the size of
+   the Tones and View buttons beside them: 21px icons in 50px-tall buttons
+   and a readable page number. Scoped with body to outrank the several
+   earlier sizes in reader-workspace.css. */
+@media(min-width:761px){
+  body .restored-reader .reader-pages>button:not(.tool){width:40px;height:50px;border-radius:12px}
+  body .restored-reader .reader-pages>button:not(.tool) svg{width:21px;height:21px}
+  body .restored-reader .reader-pages>span{min-width:52px;font-size:15px;font-weight:600;color:#45464f}
+}
+
+/* Scale Studio's Scales sheet on a phone: a swipeable row of section tabs
+   and only the chosen section under it (ScaleStudio PHONE_SECTIONS), not
+   stacked ▸ sections that open inside each other. The tabs are phone only. */
+.scale-book__phone-tabs{display:none}
+@media(max-width:760px){
+  body .reader-settings-panel .reader-panel-heading{display:none!important}
+  body .reader-settings-panel{padding:6px 14px 14px!important}
+  .scale-book__phone-tabs{
+    display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;
+    margin:0 -14px 12px;padding:2px 14px 2px;
+    position:sticky;top:0;z-index:2;background:#fff;
+  }
+  .scale-book__phone-tabs::-webkit-scrollbar{display:none}
+  .scale-book__phone-tabs button{
+    flex:0 0 auto;height:32px;padding:0 13px;border:0;border-radius:999px;
+    background:#f1f1f4;color:#45464f;font:inherit;font-size:13px;font-weight:500;white-space:nowrap;cursor:pointer;
+  }
+  .scale-book__phone-tabs button[aria-selected="true"]{background:#292a33;color:#fff}
+  body .reader-settings-panel .scale-book__section:not([data-phone-active]){display:none!important}
+  body .reader-settings-panel .scale-book__section-summary{display:none!important}
+  body .reader-settings-panel .scale-book__section,
+  body .reader-settings-panel .scale-book__section-body{margin:0!important;padding:0!important;border:0!important}
+}
+
+/* No green selection in the reader (it read as a highlight, not a choice).
+   An open toolbar button is soft grey; a chosen option in a settings panel
+   is dark with white text, like a chosen Library chip. The rules they
+   override live in reader-workspace.css and studio-shared.css. */
+html body .restored-reader .practice-bar .reader-popover-anchor>button[aria-expanded="true"],
+html body .reader-popover-anchor>button[aria-expanded="true"],
+html body .reader-header .audio-tool.active{background:#ececef!important;color:#292a33!important}
+html body :is(.reader-settings-panel,.restored-reader) :is(.scale-book__chip.selected,.scale-book__preset.selected,.reader-choice button[aria-pressed="true"],.reader-terms.on,.pitch-grid button.selected,.reader-display-options .tool.on){
+  background:#292a33!important;color:#fff!important;box-shadow:none!important;
+}
+html body .reader-settings-panel .scale-book__set.is-active{background:#f1f1f4!important}
+
+/* The Scales sheet on a phone: saving and restoring live in the Sets tab,
+   beside the saved sets, as phone buttons (the header's + also saves). */
+@media(max-width:760px){
+  body .reader-settings-panel:has(.scale-book__phone-tabs):not(:has([data-scale-group="presets"][data-phone-active])) :is(.scale-book__save,.scale-book__save-note,.reader-settings-reset){display:none!important}
+  body .reader-settings-panel:has(.scale-book__phone-tabs) .scale-book__save{margin-top:14px!important;padding-top:14px!important;align-items:stretch!important}
+  body .reader-settings-panel:has(.scale-book__phone-tabs) .scale-book__save-field input{height:40px;border-radius:12px}
+  body .reader-settings-panel:has(.scale-book__phone-tabs) .scale-book__save-button{
+    height:40px!important;padding:0 16px!important;border:0!important;border-radius:12px!important;align-self:flex-end;
+    background:#292a33!important;color:#fff!important;font-size:14px!important;font-weight:500!important;box-shadow:none!important;
+  }
+  body .reader-settings-panel:has(.scale-book__phone-tabs) .reader-settings-reset{
+    display:block!important;width:auto;height:30px;margin:10px 0 0 auto!important;padding:0 12px!important;border-radius:999px;
+    background:#f1f1f4!important;color:#6f7178!important;font-size:12.5px!important;font-weight:500;
+  }
+}
+
+/* Theory lessons on a phone: no title and intro line above the lesson
+   cards; the tab bar (Learn) already says where you are, as on the other
+   tab pages. */
+@media(max-width:760px){
+  .studio-route .theory-home__header{display:none!important}
+}
+
+/* The reader's settings sheets on a phone (ReaderPopover): a grip row like
+   the tools panel's, set a little below the top edge, that drags the sheet
+   down to close it; the sheet slides up to open and slides away to close.
+   The Scales sheet keeps one height while you switch tabs. */
+.reader-sheet-grip{display:none}
+@media(max-width:760px){
+  body .reader-settings-panel{padding-top:0!important;animation:reader-sheet-in .24s cubic-bezier(.2,.8,.2,1);transition:transform .22s cubic-bezier(.4,0,.2,1)}
+  body .reader-settings-panel.is-dragging{transition:none}
+  body .reader-settings-panel.is-closing{transform:translateY(100%)!important}
+  .reader-sheet-grip{display:grid;place-items:center;flex:0 0 auto;height:26px;margin:0 -14px 4px;cursor:grab;touch-action:none}
+  .reader-sheet-grip>span{width:34px;height:4px;border-radius:2px;background:#d6d8dc}
+  body .reader-settings-panel:has(.scale-book__phone-tabs){height:min(360px,44dvh)!important;max-height:none!important}
+}
+@keyframes reader-sheet-in{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){body .reader-settings-panel{animation:none!important;transition:none!important}}
+
+/* Theory lessons on a phone:
+   - the lesson (timeline first) starts below the slim top bar instead of
+     under it;
+   - nothing moves while you answer: the narration keeps a fixed height and
+     the staff sits at the top of its area rather than being centred in
+     whatever space the narration and the bubble leave, so a longer line or
+     a feedback message no longer shifts the staff up and down;
+   - Next is the dark studio button, not green. */
+@media(max-width:760px){
+  html body .studio-route main.lesson-shell{padding-top:calc(48px + 8px)!important}
+  html body .studio-route .lesson-shell .lesson-narration{flex:0 0 auto;min-height:72px;margin-bottom:0}
+  html body .studio-route .lesson-shell .lesson-scene{justify-content:flex-start!important;padding-top:28px}
+  html body .studio-route .lesson-shell .lesson-talk{margin-top:auto}
+  html body .studio-route .lesson-shell .lesson-bubble{min-height:96px}
+  html body .studio-route .lesson-shell .lesson-next{background:#292a33!important;color:#fff!important}
+  html body .studio-route .lesson-shell .lesson-next:hover{background:#3a3b45!important}
+}
+
+/* The shorter Scales sheet: rows of choices swipe sideways instead of
+   wrapping into a tall block, so a tab rarely needs vertical scrolling. */
+@media(max-width:760px){
+  body .reader-settings-panel:has(.scale-book__phone-tabs) :is(.scale-book__ranges,.scale-book__sets){
+    display:flex!important;flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none;gap:6px!important;
+    margin:0 -14px!important;padding:0 14px 2px!important;grid-template-columns:none!important;list-style:none;
+  }
+  body .reader-settings-panel:has(.scale-book__phone-tabs) :is(.scale-book__ranges,.scale-book__sets)::-webkit-scrollbar{display:none}
+  body .reader-settings-panel:has(.scale-book__phone-tabs) .scale-book__ranges>button{flex:0 0 auto!important;width:auto!important;min-width:0!important;height:36px!important;padding:0 14px!important;white-space:nowrap}
+  body .reader-settings-panel:has(.scale-book__phone-tabs) .scale-book__sets>li{flex:0 0 auto;max-width:230px}
+  body .reader-settings-panel:has(.scale-book__phone-tabs) .scale-book__field-label{margin:12px 0 6px!important;font-size:12px}
+  body .reader-settings-panel:has(.scale-book__phone-tabs) .scale-book__field-label:first-child{margin-top:0!important}
+  body .reader-settings-panel:has(.scale-book__phone-tabs) .scale-book__save{margin-top:12px!important;padding-top:12px!important}
+  body .reader-settings-panel:has(.scale-book__phone-tabs) :is(.scale-book__save-field input,.scale-book__save-button){height:36px!important}
+}
+
+/* Each label sits beside its row of choices (not above it), which is what
+   lets Layout's five settings fit the short sheet. Anything without a
+   label (the scale types, the range pickers) spans the full width. */
+@media(max-width:760px){
+  body .reader-settings-panel:has(.scale-book__phone-tabs) .scale-book__section-body{
+    display:grid!important;grid-template-columns:76px minmax(0,1fr);align-items:center;column-gap:8px;row-gap:10px;
+  }
+  body .reader-settings-panel:has(.scale-book__phone-tabs) .scale-book__section-body>:not(.scale-book__field-label):not(.scale-book__field-label + *){grid-column:1/-1}
+  body .reader-settings-panel:has(.scale-book__phone-tabs) .scale-book__section-body>.scale-book__field-label{margin:0!important;line-height:1.25;color:#85868e}
+  body .reader-settings-panel:has(.scale-book__phone-tabs) .scale-book__section-body>.scale-book__field-label+:is(.scale-book__ranges,.scale-book__sets){margin:0 -14px 0 0!important;padding:0 14px 2px 0!important}
+  body .reader-settings-panel:has(.scale-book__phone-tabs) .reader-settings-reset{min-height:0!important;height:30px!important}
+}
+@media(max-width:760px){
+  /* Articulation's pattern cards: one sideways row too. */
+  body .reader-settings-panel:has(.scale-book__phone-tabs) .scale-book__preset-grid{
+    display:flex!important;flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none;gap:8px!important;
+    margin:0 -14px!important;padding:0 14px 2px!important;grid-template-columns:none!important;
+  }
+  body .reader-settings-panel:has(.scale-book__phone-tabs) .scale-book__preset-grid::-webkit-scrollbar{display:none}
+  body .reader-settings-panel:has(.scale-book__phone-tabs) .scale-book__preset-grid>*{flex:0 0 150px!important;width:150px!important;min-width:0!important}
+  /* Less air between the grip and the tabs. */
+  body .reader-settings-panel:has(.scale-book__phone-tabs) .reader-sheet-grip{height:22px;margin-bottom:0}
+  body .reader-settings-panel:has(.scale-book__phone-tabs) .scale-book__phone-tabs{margin-bottom:10px}
+}
+@media(max-width:760px){
+  body .reader-settings-panel:has(.scale-book__phone-tabs) .scale-book__save{margin-top:8px!important;padding-top:8px!important}
+  body .reader-settings-panel:has(.scale-book__phone-tabs) .reader-settings-reset{margin-top:6px!important}
+}
+
+/* The score toolbar on a phone, cleaned up after MuseScore and Logic:
+   icons without captions where the icon says it (Mark up, Play, Record),
+   Play and Record joined into one transport pill so the red dot reads as
+   "record this", and a short word beside the icon only where it needs
+   explaining (Tap, Drone, Scales, Tempos, View). */
+@media(max-width:760px){
+  html body .restored-reader .practice-bar{column-gap:6px!important;row-gap:6px!important;padding:6px 8px!important}
+  /* Row 1 sizes itself; only the metronome pill stretches. */
+  html body .restored-reader .practice-bar :is(.tool-group,.transport-menu,.score-recorder,.transport>button,.reader-tap){flex:0 0 auto!important;max-width:none!important}
+  html body .restored-reader .practice-bar .tempo-group{flex:1 1 auto!important;justify-content:center;height:40px!important}
+  html body .restored-reader .practice-bar :is(.tool-group>.tool,.transport>button:not(.reader-tap),.score-recorder>.tool){
+    width:42px!important;height:40px!important;min-height:0!important;padding:0!important;font-size:0!important;
+    display:inline-grid!important;place-items:center!important;border-radius:12px!important;
+  }
+  html body .restored-reader .practice-bar :is(.tool-group>.tool,.transport>button:not(.reader-tap),.score-recorder>.tool) svg{width:21px!important;height:21px!important;margin:0!important}
+  /* Play and Record: one grey pill, split down the middle. */
+  html body .restored-reader .practice-bar .transport>button:not(.reader-tap){background:#f1f1f4!important;border-radius:12px 0 0 12px!important}
+  html body .restored-reader .practice-bar .score-recorder{margin-left:-6px!important}
+  html body .restored-reader .practice-bar .score-recorder>.tool{background:#f1f1f4!important;border-radius:0 12px 12px 0!important;box-shadow:inset 1px 0 0 #e2e2e6!important}
+  /* Tap and Drone: icon (or word) with a short word beside it. */
+  html body .restored-reader .practice-bar .reader-tap{
+    width:auto!important;height:40px!important;min-height:0!important;padding:0 12px!important;border-radius:12px!important;
+    display:inline-flex!important;align-items:center;font-size:13px!important;font-weight:500;background:#f1f1f4!important;
+  }
+  html body .restored-reader .practice-bar .reader-tap svg{display:none!important}
+  html body .restored-reader .practice-bar .transport-menu>.tool{
+    width:auto!important;height:40px!important;min-height:0!important;padding:0 10px 0 8px!important;border-radius:12px!important;
+    display:inline-flex!important;flex-direction:row!important;align-items:center;gap:5px;font-size:13px!important;font-weight:500;
+  }
+  html body .restored-reader .practice-bar .transport-menu>.tool svg{width:19px!important;height:19px!important;margin:0!important}
+  html body .restored-reader .practice-bar .transport-menu>.tool small{display:none!important}
+  html body .restored-reader .practice-bar .transport-menu>.tool[aria-pressed="true"]{background:#292a33!important;color:#fff!important}
+  /* Row 2: the page's settings as icon + word side by side. */
+  html body .restored-reader .practice-bar .reader-popover-anchor{flex:0 0 auto!important;max-width:none!important}
+  html body .restored-reader .practice-bar .reader-popover-anchor>.tool{
+    width:auto!important;height:36px!important;min-height:0!important;padding:0 11px 0 8px!important;border-radius:11px!important;
+    display:inline-flex!important;flex-direction:row!important;align-items:center;gap:5px;font-size:13px!important;font-weight:500;
+  }
+  html body .restored-reader .practice-bar .reader-popover-anchor>.tool svg{width:18px!important;height:18px!important;margin:0!important}
+  html body .restored-reader .practice-bar .reader-popover-anchor>.tool .scale-book__scales-label{font-size:13px!important}
+}
+@media(max-width:760px){
+  html body .restored-reader .practice-bar .score-recorder>.tool.record-button{border-radius:0 12px 12px 0!important}
+  html body .restored-reader .practice-bar .tempo-group{flex:1 1 0!important;min-width:0!important}
+}
+@media(max-width:760px){
+  /* The row break is an empty flex line; cancel one of its two gaps. */
+  html body .restored-reader .practice-bar::after{margin-top:-6px}
+}
+@media(max-width:760px){
+  html body .restored-reader .practice-bar .reader-pages>button,
+  html body .restored-reader .practice-bar .reader-pages>button:not(.tool){height:36px!important;min-height:0!important;flex-basis:36px!important;width:36px!important;min-width:0!important}
+}
+@media(max-width:760px){
+  html body .restored-reader .practice-bar .tempo-group{min-width:124px!important}
+  html body .restored-reader .practice-bar .tempo-group>.tool{background:transparent!important}
+  /* The list button in the reader bar: a plain icon like its neighbours. */
+  html body .restored-reader .topbar .status-button .status-button__trigger:not([data-status]){background:transparent!important;width:40px;height:40px}
+}
+/* Narrow phones: Drone drops its word so the metronome keeps its room. */
+@media(max-width:400px){
+  html body .restored-reader .practice-bar .transport-menu>.tool{font-size:0!important;width:40px!important;padding:0!important;justify-content:center}
+}
+@media(max-width:400px){
+  html body .restored-reader .practice-bar{column-gap:5px!important;padding:6px!important}
+  html body .restored-reader .practice-bar .score-recorder{margin-left:-5px!important}
+  html body .restored-reader .practice-bar :is(.tool-group>.tool,.transport>button:not(.reader-tap),.score-recorder>.tool){width:38px!important}
+  html body .restored-reader .practice-bar .reader-tap{padding:0 9px!important}
+  html body .restored-reader .practice-bar .tempo-group{min-width:112px!important}
+  html body .restored-reader .practice-bar .transport-menu>.tool{width:36px!important}
+}
+
+/* Phone toolbar, round two:
+   - icons sit in the exact middle: the hidden caption text was still a
+     second (invisible) line under each icon, so buttons lay out as a
+     centred flex row with no line height;
+   - − and + are real 34×40 targets;
+   - Tap is joined onto the metronome pill (tempo controls together), which
+     leaves room for Drone to keep its word on every phone. */
+@media(max-width:760px){
+  html body .restored-reader .practice-bar :is(.tool-group>.tool,.transport>button:not(.reader-tap),.score-recorder>.tool,.tempo-group>.tool){
+    display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:0!important;line-height:0!important;
+  }
+  html body .restored-reader .practice-bar .tempo-group{border-radius:12px 0 0 12px!important;padding:0!important;background:#f1f1f4!important;min-width:0!important}
+  html body .restored-reader .practice-bar .tempo-group>.tool{width:32px!important;flex:0 0 32px!important;height:40px!important}
+  html body .restored-reader .practice-bar .tempo{height:40px!important}
+  html body .restored-reader .practice-bar .tempo .tempo-step{width:34px!important;height:40px!important;font-size:20px!important}
+  html body .restored-reader .practice-bar .tempo input{width:36px!important;font-size:17px!important}
+  html body .restored-reader .practice-bar .reader-tap{margin-left:-6px!important;border-radius:0 12px 12px 0!important;box-shadow:inset 1px 0 0 #e2e2e6!important;padding:0 11px!important}
+  html body .restored-reader .practice-bar .transport-menu>.tool{font-size:13px!important;width:auto!important;padding:0 9px 0 7px!important;justify-content:flex-start}
+}
+@media(max-width:400px){
+  html body .restored-reader .practice-bar .reader-tap{margin-left:-5px!important;padding:0 9px!important}
+  html body .restored-reader .practice-bar .transport-menu>.tool{font-size:12.5px!important;width:auto!important;padding:0 7px 0 5px!important}
+  html body .restored-reader .practice-bar .tempo .tempo-step{width:30px!important}
+  html body .restored-reader .practice-bar .tempo input{width:34px!important}
+}
+@media(max-width:760px){
+  html body .restored-reader .practice-bar .tempo .tempo-step{flex:0 0 auto!important;min-width:0!important}
+}
+@media(max-width:400px){
+  html body .restored-reader .practice-bar .tempo-group{flex:0 0 auto!important}
+  html body .restored-reader .practice-bar .tempo .tempo-step{width:30px!important;height:40px!important}
+  html body .restored-reader .practice-bar .score-recorder>.tool.record-button{width:38px!important}
+  html body .restored-reader .practice-bar .reader-tap{padding:0 8px!important;font-size:12.5px!important}
+  html body .restored-reader .practice-bar .transport-menu>.tool{padding:0 6px 0 5px!important}
+}
+@media(max-width:400px){
+  html body .restored-reader .practice-bar .score-recorder>button.tool.record-button.has-tip{width:38px!important;min-width:0!important;flex:0 0 38px!important}
+  html body .restored-reader .practice-bar .transport-menu>button.tool{padding:0 5px 0 4px!important;gap:4px!important}
+}
+
+/* "On" in the reader, one look: a soft pink-purple from the Scales
+   rainbow (not green or blue), same 12px corners as the toolbar buttons.
+   Mark up, the metronome, Drone, the chosen markup tool and More. */
+:root{--studio-on-bg:#f1e5f5;--studio-on-ink:#6d4585}
+html body .restored-reader .practice-bar .tool:is(.on,[aria-pressed="true"]):not(.record-button),
+html body .restored-reader .practice-bar .transport-menu>.tool[aria-pressed="true"],
+html body .markup-row-surface .markup-icon:is(.chosen,[aria-expanded="true"]){
+  background:var(--studio-on-bg)!important;color:var(--studio-on-ink)!important;box-shadow:none!important;border-radius:12px!important;
+}
+html body .markup-row-surface .markup-icon{border-radius:12px!important}
+html body .restored-reader .markup-row-surface.annotation-toolbar .markup-icon:is(.chosen,[aria-expanded="true"]),
+html body .markup-row-surface.annotation-toolbar .markup-icon.has-tip.chosen{
+  background:var(--studio-on-bg)!important;color:var(--studio-on-ink)!important;box-shadow:none!important;border-radius:12px!important;
+}
+html body .restored-reader .markup-row-surface.annotation-toolbar .markup-icon{border-radius:12px!important}
+@media(max-width:760px){
+  /* The metronome's "on" is a rounded square inside the pill, not a block
+     reaching its edges. */
+  html body .restored-reader .practice-bar .tempo-group>.tool{width:38px!important;flex:0 0 38px!important;padding:4px!important;background-clip:content-box!important;border-radius:14px!important}
+  html body .restored-reader .practice-bar .tempo-group>.tool.on{background-color:var(--studio-on-bg)!important;border-radius:14px!important}
+}
+@media(max-width:760px){
+  html body .restored-reader .practice-bar .tempo-group>button.tool.has-tip{height:40px!important;min-height:0!important;width:38px!important;padding:4px!important;background-clip:content-box!important;border-radius:14px!important;align-self:center}
+  html body .restored-reader .practice-bar .tempo-group>button.tool.has-tip:not(.on){background-color:transparent!important}
+  html body .restored-reader .practice-bar .tempo-group>button.tool.has-tip.on{background-color:var(--studio-on-bg)!important}
+}
+
+/* Desktop and iPad: Tap joins the tempo pill too, as the word at its right
+   end ([− 60 + | Tap]), since tapping sets the tempo. */
+@media(min-width:761px){
+  html body .restored-reader .practice-bar .tempo-group .tempo{border-radius:9px 0 0 9px!important}
+  html body .restored-reader .practice-bar .transport>button.reader-tap{
+    align-self:center;height:40px!important;min-height:0!important;width:auto!important;min-width:0!important;
+    margin-left:-4px!important;padding:0 12px!important;border-radius:0 9px 9px 0!important;
+    display:inline-flex!important;flex-direction:row!important;align-items:center;justify-content:center;
+    background:rgba(41,42,51,.05)!important;box-shadow:inset 1px 0 0 rgba(41,42,51,.08)!important;
+    font-size:13px!important;font-weight:500;color:#45464f!important;
+  }
+  html body .restored-reader .practice-bar .transport>button.reader-tap svg{display:none!important}
+  html body .restored-reader .practice-bar .transport>button.reader-tap:hover{background:rgba(41,42,51,.09)!important}
+}
+
+/* The reader's settings panel on desktop and iPad (Customize scales and
+   the others): one left edge for the title, section names and their
+   content; a chevron on the right that turns when a section opens; thin
+   dividers between sections; no orange focus box; the dark studio button
+   for Save and a small quiet Restore. */
+@media(min-width:761px){
+  html body .reader-settings-panel{padding:16px 18px 16px!important}
+  html body .reader-settings-panel .reader-panel-heading{margin:0 0 6px!important}
+  html body .reader-settings-panel .reader-panel-heading strong{font-size:16px;font-weight:600}
+  html body .reader-settings-panel .reader-panel-heading>button{width:32px!important;height:32px!important;margin-right:-6px;font-size:22px!important;color:#6f7178}
+  html body .reader-settings-panel .scale-book__section{margin:0!important;border:0!important;border-top:1px solid #efeff1!important}
+  html body .reader-settings-panel .scale-book__section-summary{
+    display:flex!important;flex-direction:row-reverse;justify-content:space-between;align-items:center;gap:8px;
+    min-height:44px;padding:0!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;outline:0;
+    font-size:14.5px!important;font-weight:500!important;color:#292a33!important;
+  }
+  html body .reader-settings-panel .scale-book__section-summary:hover{color:#000!important}
+  html body .reader-settings-panel .scale-book__section-summary:focus-visible{outline:2px solid rgba(41,42,51,.2);outline-offset:2px;border-radius:8px!important}
+  html body .reader-settings-panel .scale-book__disclosure{font-size:0!important;width:8px;height:8px;border-right:1.6px solid #9a9ca3;border-bottom:1.6px solid #9a9ca3;transform:rotate(-45deg);margin-right:4px}
+  html body .reader-settings-panel .scale-book__section-summary[aria-expanded="true"] .scale-book__disclosure{transform:rotate(45deg)}
+  html body .reader-settings-panel .scale-book__section-body{padding:0 0 14px!important;margin:0!important}
+  html body .reader-settings-panel .scale-book__field-label{margin:10px 0 6px!important;padding:0!important;font-size:12.5px;color:#85868e}
+  html body .reader-settings-panel .scale-book__section-body>.scale-book__field-label:first-child{margin-top:0!important}
+  html body .reader-settings-panel .scale-book__save{margin-top:0!important;padding-top:14px!important;border-top:1px solid #efeff1!important}
+  html body .reader-settings-panel .scale-book__save-button{background:#292a33!important;color:#fff!important;font-weight:500!important;font-size:13px!important;border-radius:10px!important}
+  html body .reader-settings-panel .scale-book__save-button:hover{background:#3a3b45!important}
+  html body .reader-settings-panel .reader-settings-reset{display:block;margin:10px 0 0 auto!important;height:28px;padding:0 11px!important;border-radius:999px;background:#f1f1f4!important;color:#6f7178!important;font-size:12px!important}
+}
+@media(min-width:761px){
+  /* Sections had their own rounded corners, which bent the dividers into
+     arcs; the list is flat: straight hairlines only. */
+  html body .reader-settings-panel .scale-book__section{border-radius:0!important;background:none!important;box-shadow:none!important;padding:0!important}
+  html body .reader-settings-panel .scale-book__section:first-of-type{border-top:0!important}
+}
+
+/* Customize scales, fewer lines and pills (all sizes):
+   - no dividers between sections, spacing alone separates them;
+   - the name and Save are one control: a grey field with Save inside it,
+     the suggested name as its placeholder (no "Set name" label);
+   - Restore defaults is small plain text again. */
+html body .reader-settings-panel .scale-book__section{border-top:0!important}
+html body .reader-settings-panel .scale-book__save{
+  display:flex!important;align-items:center!important;gap:4px!important;
+  margin-top:14px!important;padding:4px 4px 4px 12px!important;border:0!important;border-top:0!important;
+  border-radius:12px;background:#f1f1f4;
+}
+html body .reader-settings-panel .scale-book__save-field{flex:1;min-width:0;display:block!important}
+html body .reader-settings-panel .scale-book__save-field>span{display:none!important}
+html body .reader-settings-panel .scale-book__save-field input{width:100%;height:34px!important;border:0!important;background:transparent!important;padding:0!important;font-size:14px;color:#292a33;outline:0;box-shadow:none!important}
+html body .reader-settings-panel .scale-book__save-button{height:32px!important;padding:0 14px!important;border-radius:9px!important;align-self:center!important;background:#292a33!important;color:#fff!important;font-size:13px!important;font-weight:500!important}
+html body .reader-settings-panel .reader-settings-reset{
+  display:block!important;width:auto!important;height:auto!important;min-height:0!important;margin:10px 2px 0 auto!important;padding:2px 0!important;
+  border:0!important;border-radius:0!important;background:none!important;color:#85868e!important;font-size:12.5px!important;font-weight:500!important;
+}
+html body .reader-settings-panel .reader-settings-reset:hover{color:#292a33!important}
+
+/* Touch screens keep :hover on whatever was last tapped, which left the
+   reader's green hover stuck on Scales, View or Drone after closing them. */
+@media(hover:none){
+  html body .restored-reader .practice-bar :is(.tool-group,.transport-menu,.reader-popover-anchor)>button:not(.on):not([aria-pressed="true"]):not([aria-expanded="true"]):hover,
+  html body .restored-reader .practice-bar .reader-pages>button:hover{background-color:transparent!important}
+}
+@media(max-width:760px){
+  html body .reader-settings-panel:has(.scale-book__phone-tabs) .reader-settings-reset{background:none!important;height:auto!important;padding:2px 0!important;margin:8px 2px 0 auto!important;color:#85868e!important;font-size:12.5px!important}
+  html body .reader-settings-panel:has(.scale-book__phone-tabs) .scale-book__save{padding:4px 4px 4px 12px!important;align-items:center!important}
+  html body .reader-settings-panel:has(.scale-book__phone-tabs) :is(.scale-book__save-field input,.scale-book__save-button){height:34px!important}
+}
+
+/* Softer choices and quieter panels (after "black is too strong"):
+   - a chosen option in the reader's panels, and the chosen phone tab, is the
+     soft pink-purple "on" tint rather than black;
+   - desktop panels have no title bar (the button that opened it already
+     names it); they close by clicking outside, or Escape;
+   - focus from opening the panel no longer makes the first row look chosen;
+   - Play keeps its grey half of the pill while playing; only the icon
+     turns purple. */
+html body :is(.reader-settings-panel,.restored-reader) :is(.scale-book__chip.selected,.scale-book__preset.selected,.reader-choice button[aria-pressed="true"],.reader-terms.on,.pitch-grid button.selected,.reader-display-options .tool.on){
+  background:var(--studio-on-bg)!important;color:var(--studio-on-ink)!important;font-weight:500!important;
+}
+html body .reader-settings-panel .scale-book__phone-tabs button[aria-selected="true"]{background:var(--studio-on-bg)!important;color:var(--studio-on-ink)!important}
+@media(min-width:761px){
+  html body .reader-settings-panel .reader-panel-heading{display:none!important}
+}
+html body .reader-settings-panel .scale-book__section-summary:focus,
+html body .reader-settings-panel .scale-book__section-summary:focus-visible{outline:0!important;box-shadow:none!important;background:none!important}
+html body .restored-reader .practice-bar .transport>button:not(.reader-tap):is(.on,[aria-pressed="true"]){background:#f1f1f4!important;color:var(--studio-on-ink)!important;border-radius:12px 0 0 12px!important}
+
+/* Phone: Play, Record, the metronome and Tap are one pill
+   ([▶ ● | 𝄞 − 60 + | Tap]); the gap that used to sit between the two
+   pills goes to + so it is not pressed against Tap. */
+@media(max-width:760px){
+  html body .restored-reader .practice-bar .score-recorder>.tool.record-button{border-radius:0!important}
+  html body .restored-reader .practice-bar .tempo-group{margin-left:-6px!important;border-radius:0!important;box-shadow:inset 1px 0 0 #e2e2e6!important}
+  html body .restored-reader .practice-bar .tempo .tempo-step:last-child{margin-right:4px!important}
+}
+@media(max-width:400px){
+  html body .restored-reader .practice-bar .tempo-group{margin-left:-5px!important}
+  html body .restored-reader .practice-bar .tempo .tempo-step:last-child{margin-right:3px!important}
+}
+/* The metronome part never squeezes narrower than its buttons (that is what
+   pushed + under Tap); Tap and Drone give up a few pixels instead. */
+@media(max-width:760px){
+  html body .restored-reader .practice-bar .tempo-group{flex:0 0 auto!important}
+  html body .restored-reader .practice-bar .tool-group>button.tool{width:36px!important}
+  html body .restored-reader .practice-bar .transport>button.reader-tap{padding:0 9px!important}
+  html body .restored-reader .practice-bar .transport-menu>button.tool{font-size:12.5px!important;padding:0 6px 0 5px!important;gap:4px!important}
+  /* One smooth pill: no divider lines between Play, Record, the metronome and Tap. */
+  html body .restored-reader .practice-bar :is(.score-recorder>.tool.record-button,.tempo-group,.transport>button.reader-tap){box-shadow:none!important}
+}
+/* The Record popup ("Latest recording"), restyled like the tools panel:
+   white card, hairline border, radius 18, system font, sentence-case title,
+   a soft grey level meter. On a phone it is a sheet along the bottom
+   instead of a card hanging off the toolbar (which pushed the bar sideways). */
+html body .recorder-pop{
+  width:300px!important;padding:14px!important;border:1px solid #e6e7e3!important;border-radius:18px!important;
+  background:#fff!important;box-shadow:0 16px 44px rgba(41,42,51,.16)!important;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",Inter,Arial,sans-serif;color:#292a33;
+}
+html body .recorder-pop header span{font-size:14px!important;font-weight:600;letter-spacing:0!important;text-transform:none!important;color:#292a33!important}
+html body .recorder-pop header button{width:28px;height:28px;border:0;background:none!important;color:#8a8d94;font-size:20px;line-height:1;cursor:pointer}
+html body .recorder-pop header button:hover{color:#292a33}
+html body .recorder-pop .input-level{height:44px!important;margin:12px 0 10px!important;border-radius:12px!important;background:#f4f4f5!important;gap:3px}
+html body .recorder-pop .input-level i{background:#8a8d94!important}
+html body .recorder-pop p{margin:0;font-size:13px!important;color:#6f7178!important;line-height:1.4}
+html body .recorder-pop p.record-error{color:#b04a3c!important}
+html body .recorder-pop small{font-size:12px!important;color:#85868e!important}
+@media(max-width:760px){
+  html body .recorder-pop{position:fixed!important;left:8px!important;right:8px!important;top:auto!important;bottom:calc(8px + env(safe-area-inset-bottom))!important;width:auto!important;z-index:300!important}
+}
+
+/* The Scales button had its own tinted hover; it now hovers grey like its
+   neighbours, and has no hover at all on touch screens (where hover only
+   sticks after a tap). */
+@media(hover:hover){
+  html body .restored-reader .practice-bar .reader-popover-anchor>button.scale-book__scales-trigger:not([aria-expanded="true"]):hover{background:#f1f1f4!important;background-image:none!important}
+}
+@media(hover:none){
+  html body .restored-reader .practice-bar .reader-popover-anchor>button.scale-book__scales-trigger:not([aria-expanded="true"]):hover{background:transparent!important;background-image:none!important}
+}
+
+/* Recording, phone style: the Record button turns into a pulsing red
+   square (no panel while recording); stopping opens "Keep this
+   recording?" with the take, Delete and Save to device. */
+.record-stop{display:inline-block;width:14px;height:14px;border-radius:4px;background:#e0483a;animation:record-pulse 1.2s ease-in-out infinite}
+@keyframes record-pulse{50%{opacity:.35}}
+@media(prefers-reduced-motion:reduce){.record-stop{animation:none}}
+html body .restored-reader .practice-bar .record-button.active{color:#c23a2d!important}
+html body .recorder-pop header{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+html body .recorder-pop header span.record-error{color:#b04a3c!important;font-weight:500}
+html body .recorder-pop header small{font-size:13px!important;color:#85868e!important;font-variant-numeric:tabular-nums;margin:0!important}
+html body .recorder-pop audio{width:100%;height:40px;margin:12px 0 10px}
+html body .recorder-pop .recorder-actions{display:flex;gap:8px}
+html body .recorder-pop .recorder-actions button{flex:1;height:40px;border:0;border-radius:12px;font:inherit;font-size:14px;font-weight:500;cursor:pointer}
+html body .recorder-pop .recorder-delete{background:#f1f1f4;color:#b04a3c}
+html body .recorder-pop .recorder-save{background:#292a33;color:#fff}
+html body .recorder-pop .recorder-note{display:block;margin-top:8px;text-align:center}
+
+/* Scales keeps its rainbow icon and word but loses the spinning border
+   around the button; open, it looks like Tempos and View. Tempos, View and
+   Scales share one box and one open colour (grey, never green). */
+html body .restored-reader .reader-view .scale-book__scales-trigger{border:0!important;background-image:none!important;background-color:transparent!important;animation:none!important}
+html body .restored-reader .practice-bar .reader-popover-anchor>button.tool[aria-expanded="true"]{background:#ececef!important;background-image:none!important;color:#292a33!important}
+@media(max-width:760px){
+  html body .restored-reader .practice-bar .reader-popover-anchor>button.tool{padding:0 11px 0 9px!important;min-width:0!important}
+}
+
+/* The Mark up row stays in the page when Mark up is off; empty, its padding
+   showed as an extra white strip under the toolbar. */
+html body .restored-reader .markup-row:not(:has(.markup-row-surface)){display:none!important}
+html body .restored-reader .reader-rows:not(:has(.markup-row-surface)){display:none!important}
+
+/* The page is centred again in the reader (the pinch-zoom change set its
+   margins to 0, which left a Portrait page hugging the left edge). Zooming
+   still scales from the page's top-left corner. */
+html body .restored-reader .score-paper.engraved{margin:0 auto!important}
+
+/* Playing: no highlighted box, the button simply shows pause bars (purple). */
+@media(min-width:761px){
+  html body .restored-reader .practice-bar .transport>button:not(.reader-tap):is(.on,[aria-pressed="true"]){background:transparent!important;color:var(--studio-on-ink)!important}
+}
+
+/* Scale Studio's header summary ("Harmonic minor · scales · Two octaves ·
+   12 keys"): the light underline stays (it says "you can change this");
+   hover or an open section shows a soft grey box with room around the
+   word, never green and never touching the text. */
+html body .scale-book__crumb{
+  padding:5px 8px!important;border-radius:9px!important;color:#45464f!important;
+  text-decoration:underline!important;text-decoration-color:#d3d5da!important;text-underline-offset:3px!important;
+}
+html body .scale-book__crumb:hover,
+html body .scale-book__crumb[aria-expanded="true"],
+html body .scale-book__crumb.is-active{background:#f1f1f4!important;color:#292a33!important;text-decoration-color:#8a8c93!important}
+/* Opening the panel onto a section flashed an outline hugging its edges;
+   scrolling to the section is enough. */
+html body :is([data-tone-group],[data-scale-group])[data-just-focused]::after{display:none!important}
+@media(hover:none){html body .scale-book__crumb:hover:not([aria-expanded="true"]){background:transparent!important}}
+
+/* Desktop shows every markup tool already, so no More (⋯) button there. */
+@media(min-width:761px){
+  html body .markup-row-surface .markup-icon.markup-more{display:none!important}
+}
+
+/* Tempos: each row is the key name and one grey pill in the toolbar's
+   order (▶ 𝄞 − 60 +), no "♩ =", the number in the studio's dark text; the
+   names at the size and weight of the Customize scales sections. */
+html body .reader-settings-panel .scale-reader__tempo{padding:5px 0!important;gap:10px}
+html body .reader-settings-panel .scale-book__tempo-label b{font-size:14.5px!important;font-weight:500!important;color:#292a33}
+html body .reader-settings-panel .scale-book__metronome{
+  display:flex!important;align-items:center;gap:0!important;height:36px;padding:0 2px!important;border-radius:12px!important;background:#f1f1f4!important;flex:0 0 auto;
+}
+html body .reader-settings-panel .scale-book__metronome>button{
+  width:32px!important;height:36px!important;min-width:0!important;margin:0!important;padding:0!important;border:0!important;border-radius:10px!important;
+  background:transparent!important;color:#45464f!important;font-size:18px!important;display:inline-grid!important;place-items:center!important;
+}
+html body .reader-settings-panel .scale-book__metronome>button.scale-book__row-tool{order:-1;width:34px!important}
+html body .reader-settings-panel .scale-book__metronome>button.scale-book__row-tool svg{width:18px!important;height:18px!important}
+html body .reader-settings-panel .scale-book__metronome>button.scale-book__row-tool.on{color:var(--studio-on-ink)!important;background:var(--studio-on-bg)!important;background-clip:content-box!important;padding:3px!important}
+html body .reader-settings-panel .scale-book__metronome>button:hover:not(:disabled){color:#292a33!important}
+html body .reader-settings-panel .scale-book__tempo-field input{width:38px!important;background:transparent!important;padding:0!important;font-size:15px!important;font-weight:600!important;color:#292a33!important;text-align:center}
+html body .reader-settings-panel .scale-book__tempo-field input:focus{outline:2px solid rgba(41,42,51,.2)!important;outline-offset:0}
+
+/* The narrowest phones: Drone shows its icon only. */
+@media(max-width:380px){
+  html body .restored-reader .practice-bar .transport-menu>button.tool{font-size:0!important;width:38px!important;padding:0!important;justify-content:center!important}
 }

@@ -5,8 +5,10 @@ import {useEffect,useState} from "react";
 import {useLanguage} from "../i18n/LanguageContext";
 import {usePomodoro,formatClock} from "../usePomodoro";
 import {readSessions,type PracticeSession} from "../practice-data";
-import {useRecents,useSavedItems} from "../lib/storage";
-import {musicLibrary} from "../../../content/music-library";
+import {useRecents} from "../lib/storage";
+import {useStatusEntries,STATUS_LABELS,STATUS_TONES} from "../lib/musicStatus";
+import "../components/status-button.css";
+import {musicLibrary,libraryShelf} from "../../../content/music-library";
 import {exerciseCatalog} from "../../../content/exercise-catalog";
 import {PracticeCalendar} from "../PracticeCalendar";
 import {PitchTendencies} from "./PitchTendencies";
@@ -56,7 +58,7 @@ export default function PracticePage(){
   // every piece it opens, and the star control writes favourites. Nothing
   // was reading them back anywhere you could actually browse.
   const {ids:recentIds}=useRecents("music",8);
-  const {items:savedIds}=useSavedItems("music");
+  const listEntries=useStatusEntries();
 
   useEffect(()=>{
     // Routine and sessions both live in localStorage, which is not readable
@@ -103,9 +105,12 @@ export default function PracticePage(){
   // Ids are all the stores keep, so titles come from the library — which
   // already contains the exercises as well as the pieces.
   const exerciseItems:StudioListItem[]=exerciseCatalog.map(item=>({id:item.id,title:zh?item.zhTitle:item.title,composer:zh?"练习":"Exercise",viewerPath:item.href}));
-  const byId=new Map<string,StudioListItem>([...musicLibrary,...exerciseItems].map(item=>[item.id,item]));
+  const byId=new Map<string,StudioListItem>([...musicLibrary,...libraryShelf.filter(item=>item.bookCount),...exerciseItems].map(item=>[item.id,item]));
   const recentItems=recentIds.map(id=>byId.get(id)).filter((item):item is StudioListItem=>!!item);
-  const savedItems=savedIds.map(id=>byId.get(id)).filter((item):item is StudioListItem=>!!item);
+  // Your lists in the order you would pick up from: working on, want to learn, learned.
+  const listItems=(["working","want","learned"] as const)
+    .flatMap(status=>listEntries.filter(entry=>entry.status===status).map(entry=>({entry,item:byId.get(entry.id)})))
+    .filter((row):row is {entry:typeof listEntries[number];item:StudioListItem}=>!!row.item);
 
   return <main className="practice-page">
     <div className="practice-page__content">
@@ -204,14 +209,14 @@ export default function PracticePage(){
         </section>
 
         <section className="practice-card" aria-labelledby="saved-title">
-          <h2 id="saved-title">{zh?"已收藏":"Saved"}</h2>
-          {savedItems.length
-            ?<ul className="studio-mini-list">{savedItems.map(item=><li key={item.id}>
+          <h2 id="saved-title">{zh?"我的列表":"My lists"}</h2>
+          {listItems.length
+            ?<ul className="studio-mini-list">{listItems.map(({entry,item})=><li key={item.id}>
               {item.viewerPath?<Link href={item.viewerPath}>
-                <strong>{item.title}</strong><small>{item.composer}</small>
+                <strong>{item.title}</strong><small><i className="status-dot" data-tone={STATUS_TONES[entry.status]} aria-hidden="true"/> {STATUS_LABELS[entry.status][zh?"zh":"en"]}{item.composer?` · ${item.composer}`:""}</small>
               </Link>:<span className="is-disabled"><strong>{item.title}</strong><small>{item.composer}</small></span>}
             </li>)}</ul>
-            :<p className="practice-card__empty">{zh?"还没有收藏。":"Nothing saved yet \u2014 tap the star on a piece or exercise."}</p>}
+            :<p className="practice-card__empty">{zh?"还没有内容。在曲目或谱子页面点 +，加入想学。":"Nothing yet. Tap + on a piece or score to add it to Want to learn."}</p>}
         </section>
         </div>
       </div>

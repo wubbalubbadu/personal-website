@@ -1,7 +1,7 @@
 # Cookie Flute Studio — Design Reference
 
 Every value below is pulled directly from the CSS actually running on the site
-today (`ios-theme.css`, `home-quick-tools.css`, `practice-tool-dock.css`,
+today (`ios-theme.css`, `practice-tool-dock.css`,
 `studio-home.css`, `saved-music.css`, `library.css`, `exercises.css`,
 `practice-activity-hero.css`). Nothing here is invented — if a page looks
 inconsistent, it's because it *isn't* using these values. Check here first.

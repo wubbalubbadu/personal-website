@@ -10,7 +10,7 @@ import StudioRail,{setRailOpen,useRailOpen} from "./StudioRail";
 import "./studio-navigation.css";
 
 function useDestinations(){
-  const {t}=useLanguage();
+  const {t,lang}=useLanguage();
   return [
     // `phone: true` marks the two a phone keeps. The studio is a desktop
     // tool — you practise at a stand with a laptop — so a phone gets the
@@ -22,7 +22,7 @@ function useDestinations(){
     // Learn is the Resources page plus every page it lists, so the tab stays
     // lit while you are inside a lesson or a chart.
     {key:"resources",label:t.nav.resources,href:"/flute-studio/resources",icon:"learn",also:LEARN_PAGES.map(page=>page.href)},
-    {key:"practice",label:t.nav.practice,href:"/flute-studio/practice",icon:"studio",phone:true,also:[]},
+    {key:"practice",label:t.nav.practice,short:lang==="zh"?"我的":"Me",href:"/flute-studio/practice",icon:"studio",phone:true,also:[]},
   ] as const;
 }
 
@@ -106,7 +106,10 @@ export default function StudioNavigation(){
             {/* Words only. Every tab having a glyph made the bar read as a
                 row of symbols with captions rather than as navigation, and
                 the labels already say it. */}
-            <span>{destination.label}</span>
+            {/* A short name for the phone bar, where "My Studio" was cut off. */}
+            {"short" in destination&&destination.short
+              ?<><span className="studio-navigation__label--long">{destination.label}</span><span className="studio-navigation__label--short">{destination.short}</span></>
+              :<span>{destination.label}</span>}
           </Link>;
         })}
       </nav>

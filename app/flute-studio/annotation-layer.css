@@ -1,5 +1,4 @@
-/* The paper uses CSS zoom only. A second transform scales pointer space twice. */
-.reader-workspace .score-paper.engraved{transform:none!important}
+/* Annotations share the paper transform and map pointers to its unscaled box. */
 .annotation-layer{position:absolute;inset:0;z-index:12;pointer-events:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .annotation-layer.is-active{pointer-events:auto;touch-action:none;cursor:crosshair}
 .annotation-layer.tool-select{cursor:default}
@@ -31,3 +30,31 @@
 @media(pointer:coarse){.reader-workspace .annotation-toolbar button{min-height:44px}.reader-workspace .annotation-colors button{width:28px;min-height:28px}}
 /* Close shares the tools' hover; the transparent reset above had outranked it. */
 .reader-workspace .markup-row .annotation-toolbar .markup-close:hover{background:#f0f3f6;color:#41464b}
+
+/* The markup bar on a phone: the everyday few in one row (pen, two
+   colours, undo, redo), with More opening everything else on a second
+   row. Desktop always shows the whole bar. See AnnotationLayer. */
+.annotation-toolbar .markup-more{display:none}
+@media(max-width:760px){
+  .annotation-toolbar .markup-more{display:inline-grid}
+  .annotation-toolbar .markup-more[aria-expanded="true"]{background:#ececef}
+  .annotation-toolbar:not(.is-expanded) [data-extra]{display:none!important}
+  .markup-row-surface.annotation-toolbar{overflow-x:visible!important;flex-wrap:wrap!important;row-gap:6px}
+  .markup-row-surface.annotation-toolbar.is-expanded .markup-more{order:1}
+  .markup-row-surface.annotation-toolbar.is-expanded .markup-close{order:2}
+}
+@media(max-width:760px){
+  /* Expanded: tools and Close on the first row, colours and history on the second. */
+  .markup-row-surface.annotation-toolbar.is-expanded>*{order:3}
+  .markup-row-surface.annotation-toolbar.is-expanded>.markup-icon:not(.history-control):not(.markup-more){order:1}
+  .markup-row-surface.annotation-toolbar.is-expanded>.markup-close{order:2!important;margin-left:auto}
+  .markup-row-surface.annotation-toolbar.is-expanded>.divider:first-of-type{display:none}
+}
+@media(max-width:760px){
+  /* Each row spread evenly across the bar, so it sits balanced. */
+  .markup-row-surface.annotation-toolbar{justify-content:space-between!important;column-gap:2px!important}
+  .markup-row-surface.annotation-toolbar.is-expanded>.markup-close{margin-left:0}
+}
+@media(max-width:760px){
+  .markup-row-surface.annotation-toolbar.is-expanded>.markup-close{order:4!important}
+}

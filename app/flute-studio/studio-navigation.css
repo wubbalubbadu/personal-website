@@ -54,11 +54,12 @@
   /* The cookie already goes home. */
   .studio-navigation__tab[data-key="home"]{display:none}
   .studio-navigation__actions{display:flex;flex:0 0 auto;gap:0}
-  .studio-navigation__actions .account-menu{display:none}
   /* Tools as a plain icon, the same size as a tab's tap area. */
   /* practice-tool-dock.css hides every launcher on a phone; the one in this
      bar stays, so the tools are always one tap away. */
   html body .studio-navigation__actions .dock-launcher,html body .topbar-tools-slot .dock-launcher{display:inline-flex!important}
+  /* The same 40px tap area as the gear beside it. */
+  html body .studio-navigation__actions .dock-launcher,html body .topbar-tools-slot .dock-launcher{width:40px!important;height:40px!important}
   .studio-navigation__actions .dock-launcher{width:40px!important;height:40px!important;padding:0!important;border:0!important;background:transparent!important;color:#45464f!important;justify-content:center!important}
   .studio-navigation__actions .dock-launcher__label{display:none}
   .studio-navigation__actions .dock-launcher__icon{width:20px;height:20px}
@@ -85,12 +86,12 @@
      upward nudge — which is why the button hung above its row. */
   position:relative!important;
   inset:auto!important;
-  /* A round icon button (a tuning fork), the size of the avatar beside it. */
-  width:34px!important;height:34px!important;
+  /* A plain icon (a tuning fork), no outline; the gear beside it matches. */
+  width:36px!important;height:36px!important;
   min-width:0!important;
   padding:0!important;
-  border:1px solid #dde1da!important;border-radius:50%!important;
-  background:rgba(255,255,255,.68)!important;color:#666a70!important;
+  border:0!important;border-radius:10px!important;
+  background:transparent!important;color:#5a5c63!important;
   font-size:12px!important;line-height:1!important;
   box-shadow:none!important;
   cursor:pointer;
@@ -98,11 +99,11 @@
 }
 .studio-navigation__actions .dock-launcher:hover,.topbar-tools-slot .dock-launcher:hover,
 .studio-navigation__actions .dock-launcher[aria-expanded="true"],
-.topbar-tools-slot .dock-launcher[aria-expanded="true"]{background:#edf3ea!important;color:#40553d!important;border-color:#cbd8c5!important;transform:translateY(-1px)}
+.topbar-tools-slot .dock-launcher[aria-expanded="true"]{background:#f1f1f4!important;color:#292a33!important}
 .studio-navigation__actions .dock-launcher:focus-visible,
 .topbar-tools-slot .dock-launcher:focus-visible{outline:2px solid rgba(103,137,86,.55);outline-offset:2px}
 .dock-launcher__icon{width:16px;height:16px;fill:#fff;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
-.dock-launcher__icon--fork{width:18px;height:18px;fill:none;stroke-width:1.7}
+.dock-launcher__icon--fork{width:20px;height:20px;fill:none;stroke-width:1.7}
 .dock-launcher__label{font-size:12px;font-weight:600;letter-spacing:-.005em;white-space:nowrap}
 
 .topbar-tools-slot{display:flex;align-items:center}
@@ -175,3 +176,35 @@
   body:has(.restored-reader) .studio-route,html.score-focus-mode .studio-route{padding-left:0!important}
 }
 @media(min-width:1200px) and (prefers-reduced-motion:reduce){.studio-rail__item,.studio-rail__children a,.studio-navigation__menu{transition:none}}
+
+/* "My Studio" becomes "Me" in the phone bar (StudioNavigation's short label). */
+.studio-navigation__label--short{display:none}
+@media(max-width:760px){
+  .studio-navigation__label--long{display:none}
+  .studio-navigation__label--short{display:inline}
+}
+
+/* The reader bar's other icon buttons (Scale Studio's save-as-set +, the
+   download arrow) match the tuning fork and gear exactly: same box, same
+   radius, same grey hover. Scoped high to beat the reader's green hover. */
+html body .restored-reader .topbar .icon-btn{
+  width:36px!important;height:36px!important;min-width:0!important;min-height:0!important;padding:3px!important;
+  display:inline-grid!important;place-items:center!important;box-sizing:border-box!important;
+  border:0!important;border-radius:11px!important;background-color:transparent!important;background-clip:content-box!important;box-shadow:none!important;
+  color:#5a5c63!important;transform:none!important;
+}
+html body .restored-reader .topbar .icon-btn:hover:not(:disabled){background-color:#f1f1f4!important;color:#292a33!important}
+html body .restored-reader .topbar .reader-set-save[aria-pressed="true"]{color:#46633d!important}
+@media(max-width:760px){
+  html body .restored-reader .topbar .icon-btn{width:40px!important;height:40px!important;padding:4px!important;border-radius:12px!important}
+}
+
+/* All four header icons (tuning fork, gear, +, download): the tap area stays
+   full size, but the grey hover is drawn only on the inner box (padding +
+   background-clip), so it hugs the 20px icon instead of filling the button. */
+html body :is(.studio-navigation__actions,.topbar) :is(.dock-launcher,.account-menu__trigger,.icon-btn){
+  padding:3px!important;background-clip:content-box!important;border-radius:11px!important;box-sizing:border-box!important;
+}
+@media(max-width:760px){
+  html body :is(.studio-navigation__actions,.topbar) :is(.dock-launcher,.account-menu__trigger,.icon-btn){padding:4px!important;border-radius:12px!important}
+}

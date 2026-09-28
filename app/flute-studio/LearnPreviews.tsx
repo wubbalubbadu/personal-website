@@ -103,10 +103,17 @@ export function TrillPreview(){
   </div>;
 }
 
-/** Technique roadmap: the region checklist ticks itself off, then resets. */
+/**
+ * Technique roadmap: six region dots along a path tick off one by one, then
+ * reset. Only the region being ticked is named, so the card has one short
+ * label rather than a list of six.
+ */
 export function RoadmapPreview({regions}:{regions:readonly {id:string;tone:string;title:string}[]}){
   const root=useRef<HTMLDivElement>(null),on=useOnScreen(root),step=useStep(regions.length+3,650,on);
-  return <ul className="roadmap-preview" ref={root as RefObject<HTMLUListElement|null>} aria-hidden="true">
-    {regions.map((region,index)=><li key={region.id} className={(on?step>index:index<2)?"is-done":""}><i className={region.tone}><svg viewBox="0 0 12 12"><path d="M2.5 6.3 4.8 8.6 9.5 3.6"/></svg></i><span>{region.title}</span></li>)}
-  </ul>;
+  const done=(index:number)=>on?step>index:index<2;
+  const named=regions[Math.min(Math.max(on?step-1:1,0),regions.length-1)];
+  return <div className="roadmap-preview" ref={root} aria-hidden="true">
+    <ol>{regions.map((region,index)=><li key={region.id} className={`${region.tone}${done(index)?" is-done":""}`}><svg viewBox="0 0 12 12"><path d="M2.5 6.3 4.8 8.6 9.5 3.6"/></svg></li>)}</ol>
+    <span className={named.tone}>{named.title}</span>
+  </div>;
 }

@@ -3,9 +3,10 @@
 import Link from "next/link";
 import type {MusicItem} from "../../content/music-library";
 import type {ExerciseFocus} from "../../content/exercise-catalog";
-import {SaveButton} from "./components/SaveButton";
+import {StatusButton} from "./components/StatusButton";
 import {useLanguage} from "./i18n/LanguageContext";
 import "./components/tag-pill.css";
+import {tagTone,BEGINNER_TONE,type TagTone} from "./lib/tagTone";
 import "./music-row.css";
 
 /**
@@ -17,7 +18,7 @@ import "./music-row.css";
  * at once. Exercises carry their own tag set (Exercise plus the skill it
  * trains), so a piece is never labelled "Breathing".
  */
-export default function MusicRow({item,saved,onToggleSave,tagLabel}:{item:MusicItem;saved:boolean;onToggleSave:()=>void;tagLabel:(tag:string)=>string}){
+export default function MusicRow({item,tagLabel}:{item:MusicItem;tagLabel:(tag:string)=>string}){
   const {t,lang}=useLanguage(),zh=lang==="zh";
   const focusLabels:Record<ExerciseFocus,string>={
     technique:t.exercises.categoryTechnique,
@@ -28,9 +29,11 @@ export default function MusicRow({item,saved,onToggleSave,tagLabel}:{item:MusicI
   const exercise=item.exercise;
   const title=exercise&&zh?exercise.zhTitle:item.title;
   const detail=exercise?(zh?exercise.zhDetail:exercise.detail):item.composer;
-  const pills:{label:string;tone?:"beginner"|"exercise"|"soon"}[]=[
-    ...(item.beginner?[{label:zh?"适合入门":"Good first piece",tone:"beginner" as const}]:[]),
-    ...item.tags.map(tag=>({label:tagLabel(tag),tone:exercise?"exercise" as const:undefined})),
+  // Tags wear a tint each (lib/tagTone); focus and count pills stay grey.
+  // Your list is not a tag: it is the button at the row's end.
+  const pills:{label:string;tone?:TagTone|"soon"}[]=[
+    ...(item.beginner?[{label:zh?"适合入门":"Good first piece",tone:BEGINNER_TONE}]:[]),
+    ...item.tags.map(tag=>({label:tagLabel(tag),tone:tagTone(tag)})),
     ...(exercise?[{label:focusLabels[exercise.focus]}]:[]),
     // A book's row says how many pieces are inside it.
     ...(item.bookCount?[{label:zh?`${item.bookCount} 首`:`${item.bookCount} ${item.tags.some(tag=>/^etudes?$/i.test(tag))?"etudes":"pieces"}`}]:[]),
@@ -42,6 +45,6 @@ export default function MusicRow({item,saved,onToggleSave,tagLabel}:{item:MusicI
   </>;
   return <article className="music-row">
     {item.viewerPath?<Link className="music-row__main" href={item.viewerPath}>{content}</Link>:<div className="music-row__main music-row__main--disabled">{content}</div>}
-    <SaveButton saved={saved} onToggle={onToggleSave} label={saved?t.musicRow.remove(title):t.musicRow.save(title)}/>
+    {item.viewerPath&&<StatusButton id={item.id} zh={zh} compact/>}
   </article>
 }
