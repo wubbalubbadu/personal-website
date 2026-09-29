@@ -7,12 +7,17 @@ import {exerciseCatalog,type ExerciseFocus} from "./exercise-catalog";
 // and a piece can have several, so Carmen can be both "Classical" and
 // "Excerpt". Matching is case-insensitive. `beginner` is a hand-checked flag
 // (the uploader only suggests it), shown as the "Good first pieces" shelf.
+export type ScorePage={src:string;width:number;height:number};
+export type ScoreRecording={id:string;title:string;performer:string;youtubeId:string;startSeconds?:number};
+export type ExcerptScore={part:string;passage:string;zhPassage?:string;sourceUrl:string;sourceLabel:string;pages:ScorePage[]};
+
 export type MusicItem={id:string;title:string;composer:string;
   /** Year written, as a plain number so pieces can be sorted on a timeline. */
   year?:number;
   /** One or two sentences about this piece: where it comes from, what it was written for. */
   about?:string;
   tags:string[];beginner?:boolean;
+  excerpt?:ExcerptScore;recordings?:ScoreRecording[];
   /** Set on exercises shown in the Library; their skill is a separate tag set from a piece's genre tags. */
   exercise?:{focus:ExerciseFocus;detail:string;zhDetail:string;zhTitle:string};
   /** A numbered piece inside a book (Köhler Op. 33 No. 4). The Library lists the book, not each piece. */

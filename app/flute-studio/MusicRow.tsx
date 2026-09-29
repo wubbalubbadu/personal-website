@@ -28,7 +28,7 @@ export default function MusicRow({item,tagLabel}:{item:MusicItem;tagLabel:(tag:s
   };
   const exercise=item.exercise;
   const title=exercise&&zh?exercise.zhTitle:item.title;
-  const detail=exercise?(zh?exercise.zhDetail:exercise.detail):item.composer;
+  const detail=exercise?(zh?exercise.zhDetail:exercise.detail):item.excerpt?`${item.composer} · ${zh?item.excerpt.zhPassage??item.excerpt.passage:item.excerpt.passage}`:item.composer;
   // Tags wear a tint each (lib/tagTone); focus and count pills stay grey.
   // Your list is not a tag: it is the button at the row's end.
   const pills:{label:string;tone?:TagTone|"soon"}[]=[

@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import {useEffect} from "react";
+import {useEffect,useState} from "react";
 import {useParams} from "next/navigation";
 import {musicLibrary,musicBooks,bookPieces,bookPath,composerInfo} from "../../../../content/music-library";
 import {ScoreViewer,type ScoreViewerConfig} from "../../components/ScoreViewer";
+import FixedScoreViewer from "../../components/FixedScoreViewer";
 import {recordOpened} from "../../lib/bookProgress";
 import {useLanguage} from "../../i18n/LanguageContext";
 import "../books/book.css";
@@ -12,6 +13,7 @@ import "../books/book.css";
 export default function UploadedMusicPage(){
   const params=useParams<{id:string}>();
   const {lang}=useLanguage(),zh=lang==="zh";
+  const [interactive,setInteractive]=useState(false);
   const item=musicLibrary.find(entry=>entry.id===params.id);
   // A numbered piece in a book: back goes to the book, and the header steps
   // to the neighbouring numbers so you can work through it in order.
@@ -21,6 +23,7 @@ export default function UploadedMusicPage(){
   const previous=position>0?siblings[position-1]:undefined,next=position>=0?siblings[position+1]:undefined;
   useEffect(()=>{if(item?.book)recordOpened(item.book.id,item.book.number)},[item?.book]);
 
+  if(item?.excerpt&&!interactive)return <FixedScoreViewer key={item.id} item={item} onInteractive={item.scorePath?()=>setInteractive(true):undefined}/>;
   if(!item?.scorePath)return <main style={{padding:"120px 24px",textAlign:"center"}}><h1>Score not found</h1></main>;
   const config:ScoreViewerConfig={
     // The back link already names the book, so the header just says which
@@ -41,5 +44,5 @@ export default function UploadedMusicPage(){
     <span className="book-stepper__label" aria-label={zh?`第 ${item.book.number} 首，共 ${siblings.length} 首`:`No. ${item.book.number} of ${siblings.length}`}>{item.book.number} / {siblings.length}</span>
     {next?<Link className="book-stepper__arrow" href={next.viewerPath!} aria-label={zh?`下一首：第 ${next.book!.number} 首`:`Next: No. ${next.book!.number}`}>›</Link>:<span className="book-stepper__arrow is-off" aria-hidden="true">›</span>}
   </span>:null;
-  return <ScoreViewer config={config} {...(stepper?{headerActions:()=>stepper}:{})}/>;
+  return <ScoreViewer config={config} headerActions={()=> <>{stepper}{item.excerpt&&<button className="icon-btn" onClick={()=>setInteractive(false)}>{zh?"原版乐谱":"Original score"}</button>}</>}/>;
 }

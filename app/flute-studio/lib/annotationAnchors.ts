@@ -7,6 +7,14 @@ export type AnnotationLayout=Map<string,AnchorSpot>;
 export function annotationLayout(root:Element,surface:HTMLElement):AnnotationLayout{
   const rect=surface.getBoundingClientRect(),sx=surface.clientWidth/rect.width,sy=surface.clientHeight/rect.height;
   const result:AnnotationLayout=new Map();
+  // A scan has no note identities. Its printed page is the stable reference,
+  // so marks follow the same point when Fit page/width changes its size.
+  const pages=[...(root.matches('[data-score-page]')?[root]:[]),...root.querySelectorAll('[data-score-page]')];
+  for(const page of pages){
+    const box=page.getBoundingClientRect();if(!box.width)continue;
+    const key=`page:${page.getAttribute('data-score-page')}`;
+    result.set(key,{key,x:(box.left-rect.left)*sx,y:(box.top-rect.top)*sy,space:box.width*sx/100,system:key,kind:'system'});
+  }
   const within=new Map<string,number>();
   const systems=new Map<string,string>();
   for(const node of root.querySelectorAll<SVGGElement>('.vf-stavenote[data-event]')){
