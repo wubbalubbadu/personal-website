@@ -528,6 +528,16 @@ export default function ScaleStudio(){
     commitSave();
     openCustomize("presets");
   }
+  /** A separate set under a name of its own (the suggested one, numbered if it is taken). */
+  function saveAsNew(){
+    const taken=new Set(sets.map(set=>set.name.toLowerCase()));
+    const base=suggestedSetName;let name=base;
+    for(let n=2;taken.has(name.toLowerCase());n++)name=`${base} ${n}`;
+    const saved=saveScaleSet(name,currentConfig());
+    if(!saved)return;
+    setActiveSet(saved);setSetName(saved.name);setJustSaved(saved.name);
+    window.setTimeout(()=>setJustSaved(""),2400);
+  }
   function commitSave(){
     const saved=saveScaleSet(setName||suggestedSetName,currentConfig());
     if(!saved)return;
@@ -752,6 +762,8 @@ export default function ScaleStudio(){
               <input value={setName} placeholder={suggestedSetName} aria-label={zh?"组合名称":"Set name"} onChange={e=>setSetName(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();commitSave()}}}/>
             </label>
             <button type="button" className="scale-book__save-button" onClick={commitSave}>{activeSet&&activeSet.name===setName.trim()?(zh?"更新":"Update"):(zh?"保存":"Save")}</button>
+            {/* Update overwrites the set you opened; once the settings have moved away from it, Save new keeps both. */}
+            {activeSet&&activeSet.name===setName.trim()&&!configMatches(activeSet.config)&&<button type="button" className="scale-book__save-button scale-book__save-new" onClick={saveAsNew}>{zh?"另存":"Save new"}</button>}
           </div>
           {justSaved&&<p className="scale-book__save-note" role="status">{zh?`已保存“${justSaved}”，可在练习页面找到。`:`Saved as \u201c${justSaved}\u201d. It is on the Exercises page, and you can rename it here.`}</p>}
         </AccordionSection>
@@ -837,7 +849,7 @@ export default function ScaleStudio(){
           <div className="scale-book__preset-grid">{rhythmChoices.map(value=><button key={value} type="button" className={rhythm===value?"scale-book__preset selected":"scale-book__preset"} aria-label={zh?rhythmLabels[value].zh:rhythmLabels[value].en} onClick={()=>setRhythm(value)}><RhythmIcon choice={value}/></button>)}</div>
         </AccordionSection>
       </div>
-      <button className="reader-settings-reset" onClick={()=>{setKeys(allKeys);setRange("two");setOrder("chromatic");setGrouping("type");setEnding("hold");setTypes(["major"]);setForms(["scale"]);setNewLines(false);setArticulationRotation([]);setCustomDraft([{size:4,mode:"tongue"}]);setRhythm("even")}}>{zh?"恢复默认":"Restore defaults"}</button>
+      <button className="reader-settings-reset" onClick={()=>{setActiveSet(null);setSetName("");setKeys(allKeys);setRange("two");setOrder("chromatic");setGrouping("type");setEnding("hold");setTypes(["major"]);setForms(["scale"]);setNewLines(false);setArticulationRotation([]);setCustomDraft([{size:4,mode:"tongue"}]);setRhythm("even")}}>{zh?"恢复默认":"Restore defaults"}</button>
     </ReaderPopover>
     {/* Tempos is its own button rather than the last section of Customize
         scales. A tempo is something you reach for mid-practice, between

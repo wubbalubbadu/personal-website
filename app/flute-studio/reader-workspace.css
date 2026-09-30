@@ -868,3 +868,23 @@ html.score-focus-mode .restored-reader[data-dock] .workspace{grid-template-areas
 
 /* Zoom must not add scrollbars that change the engraving viewport width. */
 .reader-workspace .score-scroll::-webkit-scrollbar{display:none}
+
+html body .restored-reader .reader-rows[data-smart-drone]{display:block!important}
+.smart-drone-panel{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:9px 16px;border-bottom:1px solid var(--line);font-size:13px;background:#f8faf6}
+.smart-drone-panel button{background:transparent;color:inherit;border:0;border-radius:0;min-height:44px;padding:4px 12px;cursor:pointer}
+.smart-drone-panel button:hover{color:#405e49;text-decoration:underline;text-underline-offset:3px}
+.smart-drone-panel button:focus-visible{outline:0!important;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px;color:#405e49}
+.reader-workspace .markup-row .markup-close,.reader-workspace .markup-row .annotation-toolbar .markup-close,.reader-workspace .markup-row .markup-close:hover{border:0!important;box-shadow:none!important;background:transparent!important;border-radius:0!important}
+
+.osmd-score .smart-drone-strip{fill:#83af9a;fill-opacity:.3;stroke:none;pointer-events:none}
+
+.smart-drone-cursor{display:none;position:absolute;width:1px;background:#4c765f80;pointer-events:none;z-index:3}
+.smart-drone-cursor::before{content:"";position:absolute;top:-5px;left:-4px;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid #4c765f}
+
+.smart-drone-count{display:inline-flex;align-items:center;gap:7px}
+.smart-drone-count b{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;font-weight:500;color:#626a64}
+.smart-drone-count b:nth-of-type(3){margin-left:8px}
+.smart-drone-count b.current{background:#506d58;color:white}
+
+html body .restored-reader .practice-bar .smart-drone-trigger:is(:hover,:focus){background:transparent!important;box-shadow:none!important;border:0!important}
+html body .restored-reader .practice-bar .smart-drone-trigger:focus-visible{outline:2px solid #678956;outline-offset:2px}

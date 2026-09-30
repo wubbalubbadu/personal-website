@@ -27,7 +27,78 @@ export type ScoreFacts={
   lastPitch:string|null;
   /** Every metronome mark shares its direction with tempo words above the staff, so the two can go on one line. */
   tempoWordsWithMetronome:boolean;
+  /**
+   * Where the playback speed changes, from the file's <sound tempo>: quarter
+   * notes per minute, whatever the printed mark counts in (a "♩. = 120" in
+   * 6/8 is 180 here). `beat` is the printed mark's beat in quarter notes
+   * (1.5 for that dotted quarter), so quarter/beat is the number on the page
+   * and the reader's tempo can show it. Playback converts back.
+   */
+  tempos:{measure:number;quarter:number;beat:number}[];
+  /** Gradual tempo changes (accel., rit., rall.), where they run and toward what. */
+  ramps:TempoRamp[];
 };
+/**
+ * An accelerando or ritardando. It starts at `measure` + `at` (a fraction of
+ * that bar) and reaches its end speed where bar `until` begins. `target` is
+ * the next tempo mark's speed when the ramp leads into one (Arnold: accel.
+ * in bar 16 into B's Vivace), otherwise null: about a quarter faster or
+ * slower, held until `release` (an "a tempo") if there is one.
+ */
+export type TempoRamp={measure:number;at:number;kind:"accel"|"rit";until:number;target:number|null;release:number|null};
+
+const RAMP_WORD=/(^|\s)(accel|accelerando|string|stringendo|stretto|rit|ritard|ritardando|riten|ritenuto|rall|rallentando|allarg|allargando)\.?(\s|$)/i;
+const SLOWER=/(^|\s)(rit|ritard|ritardando|riten|ritenuto|rall|rallentando|allarg|allargando)\.?(\s|$)/i;
+const RETURN_WORD=/\b(a tempo|tempo i|tempo primo|tempo 1)\b/i;
+
+/** Where each accel./rit. runs, by the rules in TempoRamp and the numbered steps below. */
+function readRamps(doc:Document,tempos:{measure:number;quarter:number}[]):TempoRamp[]{
+  const part=doc.querySelector("part");if(!part)return [];
+  const bars=[...part.querySelectorAll(":scope > measure")];
+  const wordsIn=(bar:Element)=>[...bar.querySelectorAll("direction words")].map(node=>node.textContent?.trim()??"");
+  const ramps:TempoRamp[]=[];
+  let divisions=1,beats=4,beatType=4;
+  bars.forEach((bar,i)=>{
+    const measure=i+1;
+    divisions=Number(bar.querySelector("attributes divisions")?.textContent)||divisions;
+    beats=Number(bar.querySelector("attributes time beats")?.textContent)||beats;
+    beatType=Number(bar.querySelector("attributes time beat-type")?.textContent)||beatType;
+    const length=beats*(4/beatType)*divisions;
+    // Walk the bar in order to know how far in each direction sits.
+    let position=0;
+    for(const child of [...bar.children]){
+      if(child.tagName==="note"){if(!child.querySelector("chord")&&!child.querySelector("grace"))position+=Number(child.querySelector("duration")?.textContent)||0;continue}
+      if(child.tagName==="backup"){position-=Number(child.querySelector("duration")?.textContent)||0;continue}
+      if(child.tagName==="forward"){position+=Number(child.querySelector("duration")?.textContent)||0;continue}
+      if(child.tagName!=="direction")continue;
+      const text=[...child.querySelectorAll("words")].map(node=>node.textContent??"").join(" ");
+      if(!RAMP_WORD.test(text))continue;
+      const kind=SLOWER.test(text)?"rit":"accel",cap=kind==="accel"?8:4;
+      let until:number|null=null,target:number|null=null;
+      // 1. A dashed line after the word ends where the dashes stop.
+      if(child.querySelector('dashes[type="start"]'))for(let k=i;k<bars.length&&until===null;k++)if(bars[k].querySelector('direction dashes[type="stop"]'))until=k+2;
+      // 2. A tempo mark soon after: end there, aiming at its speed when it lies the right way.
+      const nextMark=tempos.find(tempo=>tempo.measure>measure);
+      const current=[...tempos].reverse().find(tempo=>tempo.measure<=measure);
+      if(until===null&&nextMark&&nextMark.measure-measure<=cap){
+        until=nextMark.measure;
+        if(current&&(kind==="accel"?nextMark.quarter>current.quarter:nextMark.quarter<current.quarter))target=nextMark.quarter;
+      }
+      // 3. Otherwise "a tempo", a rehearsal mark or a double barline.
+      if(until===null)for(let k=i+1;k<bars.length&&k-i<=cap;k++){
+        const next=bars[k];
+        if(wordsIn(next).some(word=>RETURN_WORD.test(word))||next.querySelector("direction rehearsal")){until=k+1;break}
+        if(bars[k-1].querySelector('barline bar-style')?.textContent?.match(/light-light|light-heavy/)){until=k+1;break}
+      }
+      // 4. Otherwise a short default.
+      if(until===null)until=Math.min(bars.length+1,measure+(kind==="accel"?4:2));
+      let release:number|null=null;
+      if(target===null)for(let k=until-1;k<bars.length;k++){if(wordsIn(bars[k]).some(word=>RETURN_WORD.test(word))){release=k+1;break}if(tempos.some(tempo=>tempo.measure===k+1&&k+1>measure))break}
+      ramps.push({measure,at:length?Math.min(.99,Math.max(0,position/length)):0,kind,until,target,release});
+    }
+  });
+  return ramps;
+}
 
 const ALTER_SIGN:Record<string,string>={"-2":"𝄫","-1":"♭","0":"","1":"♯","2":"𝄪"};
 
@@ -36,6 +107,7 @@ export function readScoreFacts(xml:string):ScoreFacts{
   const part=doc.querySelector("part");
   const measures:MeasureFacts[]=[];
   const metronomes:MetronomeFacts[]=[];
+  const tempos:{measure:number;quarter:number;beat:number}[]=[];
   let current:MeasureFacts={fifths:0,mode:null,beats:4,beatType:4,symbol:null,pitches:[],keyWritten:false};
   let lastPitch:string|null=null;
   part?.querySelectorAll(":scope > measure").forEach(measure=>{
@@ -52,6 +124,8 @@ export function readScoreFacts(xml:string):ScoreFacts{
       current.symbol=time.getAttribute("symbol");
     }
     measures.push(current);
+    const sounded=Number(measure.querySelector("sound[tempo]")?.getAttribute("tempo"));
+    if(sounded>0&&sounded!==tempos.at(-1)?.quarter)tempos.push({measure:measures.length,quarter:sounded,beat:1});
     measure.querySelectorAll("direction metronome").forEach(mark=>{
       const perMinute=Number(mark.querySelector("per-minute")?.textContent);
       if(!(perMinute>0))return;
@@ -65,7 +139,16 @@ export function readScoreFacts(xml:string):ScoreFacts{
   });
   const marked=[...doc.querySelectorAll("direction")].filter(direction=>direction.querySelector("metronome"));
   const tempoWordsWithMetronome=marked.length>0&&marked.every(direction=>direction.querySelector("words")&&direction.getAttribute("placement")!=="below");
-  return {measures,metronomes,lastPitch,tempoWordsWithMetronome};
+  // Each tempo counts in its printed mark's beat; with no mark, the meter's
+  // felt beat (a dotted quarter in 6/8, 9/8, 12/8, a half in cut time).
+  const QUARTERS:Record<string,number>={whole:4,half:2,quarter:1,eighth:.5,"16th":.25};
+  tempos.forEach(tempo=>{
+    const mark=metronomes.find(m=>m.measure===tempo.measure),meter=measures[tempo.measure-1];
+    if(mark)tempo.beat=(QUARTERS[mark.unit]??1)*(mark.dotted?1.5:1);
+    else if(meter&&meter.beats%3===0&&meter.beats>3&&meter.beatType===8)tempo.beat=1.5;
+    else if(meter&&(meter.symbol==="cut"||(meter.beats===2&&meter.beatType===2)))tempo.beat=2;
+  });
+  return {measures,metronomes,lastPitch,tempoWordsWithMetronome,tempos,ramps:readRamps(doc,tempos)};
 }
 
 /* ------------------------------------------------------------ keys */
@@ -215,7 +298,7 @@ const capitalize=(text:string)=>text[0].toUpperCase()+text.slice(1);
  * would read them.
  */
 function findTerms(raw:string){
-  const words=raw.toLowerCase().replace(/[(),;:]/g," ").split(/\s+/).filter(Boolean);
+  const words=raw.toLowerCase().replace(/[(),;:!]/g," ").split(/\s+/).filter(Boolean);
   const found:{phrase:string;term:Term}[]=[];
   for(let i=0;i<words.length;){
     // Older editions end every marking with a full stop ("Allegro.", "a tempo."),
@@ -229,7 +312,7 @@ function findTerms(raw:string){
 }
 
 /** Words that set a section's speed or character without a textbook BPM of their own. */
-const TEMPO_HEADINGS=new Set(["rubato","mouvementé","a tempo","tempo primo","tempo i","au mouvement","au mouvᵗ","mouvᵗ","più mosso","piu mosso"]);
+const TEMPO_HEADINGS=new Set(["rubato","mouvementé","a tempo","tempo primo","tempo i","au mouvement","au mouv","au mouvᵗ","mouvᵗ","più mosso","piu mosso"]);
 /**
  * How a text marking is printed, by the engraving convention: words that set the tempo of a
  * section ("Très modéré", "Un peu mouvementé", "Rubato", "a tempo") in bold upright, and words that
@@ -262,6 +345,14 @@ export function directionRuns(raw:string):{text:string;style:"tempo"|"expression
     for(let k=0;k<size;k++)styles[i+k]=style;
     i+=size;f++;
   }
+  // A tempo heading carries its own qualifiers: "Andante con moto",
+  // "Allegro marziale", "Vivace e molto ritmico" are one bold heading, not a
+  // bold word followed by italic ones. Only a word that changes the pace
+  // along the way (rit., rall., accel.) after it goes back to italic.
+  // Whole words only: "ritmico" is not "rit.".
+  const PACE_CHANGE=/^(rit|ritard|ritardando|riten|ritenuto|rall|rallentando|accel|accelerando|allarg|allargando|string|stringendo|stretto|cédez|retenu)\.?$/;
+  const headingEnds=tokens.findIndex((_,i)=>i>0&&(PACE_CHANGE.test(words[i]??"")||(words[i]==="a"&&words[i+1]?.replace(/\.$/,"")==="tempo")));
+  if(styles.find(Boolean)==="tempo")for(let i=0;i<(headingEnds<0?tokens.length:headingEnds);i++)styles[i]="tempo";
   // Unknown words and connectives join the next known phrase, else the previous one.
   for(let i=tokens.length-1;i>=0;i--)if(!styles[i]&&styles[i+1])styles[i]=styles[i+1];
   for(let i=0;i<tokens.length;i++)if(!styles[i]&&styles[i-1])styles[i]=styles[i-1];
@@ -326,6 +417,29 @@ export function spaceMetronomeMarks(root:ParentNode){
     text.setAttribute("data-spaced","");
   });
 }
+/**
+ * A rehearsal box (A, B, F…) and the tempo words of the same bar are both
+ * set at the bar's start, so "Allegro marziale" ran into the F box (Arnold,
+ * bar 76). Engravers put the words just after the box: move any words that
+ * overlap it, or sit closer than a small gap, to its right. Runs before
+ * tuckMetronomeMarks, which then puts the ♩ = n mark after the moved words.
+ * The box is an unclassed, roughly square rect OSMD draws in the bar (its
+ * letter is a path; the other unclassed rects are 1px-wide barlines).
+ */
+export function clearRehearsalMarks(root:ParentNode){
+  const words=[...root.querySelectorAll<SVGTextElement>(".vf-text:not(.measure-number) text")];
+  root.querySelectorAll<SVGRectElement>(".vf-measure > rect:not([class])").forEach(rect=>{
+    const box=rect.getBBox(),gap=6;
+    if(box.width<6||box.height<6||Math.abs(box.width-box.height)>box.height)return;
+    words.filter(text=>text.ownerSVGElement===rect.ownerSVGElement).forEach(text=>{
+      const w=text.getBBox();
+      const sameRow=w.y<box.y+box.height&&w.y+w.height>box.y;
+      if(!sameRow||w.x+w.width<box.x||w.x>=box.x+box.width+gap)return;
+      const x=Number(text.getAttribute("x"));
+      if(Number.isFinite(x))text.setAttribute("x",String(x+box.x+box.width+gap-w.x));
+    });
+  });
+}
 export const METRONOME_TUCK_SHIFT=2.4;
 export function tuckMetronomeMarks(root:ParentNode){
   const words=[...root.querySelectorAll<SVGTextElement>(".vf-text:not(.measure-number) text")];
@@ -337,7 +451,9 @@ export function tuckMetronomeMarks(root:ParentNode){
     // The words it belongs to: in the same SVG, above it, and starting at
     // or before it horizontally. The nearest one wins.
     const owner=words.filter(text=>text.ownerSVGElement===svg).map(text=>({text,box:text.getBBox()}))
-      .filter(({box:w})=>w.y+w.height<=box.y+box.height/2&&w.x<=box.x+box.width&&box.y-(w.y+w.height)<box.height*4)
+      // Above it (by midpoints: without the up-front shift the words can
+      // overlap the mark's top by a pixel), starting at or before it.
+      .filter(({box:w})=>w.y+w.height/2<=box.y+box.height/2&&w.x<=box.x+box.width&&box.y-(w.y+w.height)<box.height*4)
       .sort((a,b)=>(b.box.y+b.box.height)-(a.box.y+a.box.height))[0];
     if(!owner)return;
     const size=parseFloat(owner.text.getAttribute("font-size")??"")||owner.box.height;

@@ -26,7 +26,17 @@ export default function TransferPage(){
 
   const makeCode=()=>encode(collect(withDrawings));
   async function copyCode(){
-    try{await navigator.clipboard.writeText(await makeCode());setSent("copied")}catch{setSent("failed")}
+    // Safari only lets a tap write to the clipboard synchronously; waiting
+    // for the code to compress first made it refuse ("some error" on iPhone).
+    // A ClipboardItem that takes the pending code keeps the write inside the tap.
+    try{
+      if(typeof ClipboardItem!=="undefined"&&navigator.clipboard?.write){
+        await navigator.clipboard.write([new ClipboardItem({"text/plain":makeCode().then(code=>new Blob([code],{type:"text/plain"}))})]);
+      }else await navigator.clipboard.writeText(await makeCode());
+      setSent("copied");
+    }catch{
+      try{await navigator.clipboard.writeText(await makeCode());setSent("copied")}catch{setSent("failed")}
+    }
   }
   async function sendFile(){
     try{

@@ -28,9 +28,9 @@ test('Daphnis has a reachable original score, PDF, attribution and recording',()
   const catalog=JSON.parse(fs.readFileSync(new URL('content/music-catalog.json',root),'utf8'));
   const item=catalog.find(i=>i.id==='ravel-daphnis-et-chloe-176');
   assert.equal(item.status,'published');assert.equal(item.viewerPath,'/flute-studio/music/'+item.id);
-  assert.equal(item.scorePath,null);assert.ok(item.tags.includes('Excerpt'));
+  assert.ok(item.scorePath.endsWith('.musicxml'));assert.ok(fs.existsSync(new URL('public'+item.scorePath,root)));assert.ok(item.tags.includes('Excerpt'));
   assert.ok(fs.existsSync(new URL('public'+item.pdfPath,root)));
   for(const page of item.excerpt.pages){assert.ok(page.width>0&&page.height>0);assert.ok(fs.existsSync(new URL('public'+page.src,root)))}
-  assert.ok(item.excerpt.sourceUrl.startsWith('https://'));
+  assert.equal(item.excerpt.sourceUrl,undefined);
   assert.match(item.recordings[0].youtubeId,/^[a-zA-Z0-9_-]{11}$/);
 });

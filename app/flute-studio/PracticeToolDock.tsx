@@ -76,7 +76,9 @@ export default function PracticeToolDock() {
     // look once more a moment later rather than leaving the button floating.
     const late = window.setTimeout(pick, 400);
     window.addEventListener("resize", pick);
-    return () => { cancelAnimationFrame(frame); window.clearTimeout(late); window.removeEventListener("resize", pick); };
+    const observer=new MutationObserver(()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(pick)});
+    observer.observe(document.body,{childList:true,subtree:true});
+    return () => { observer.disconnect();cancelAnimationFrame(frame); window.clearTimeout(late); window.removeEventListener("resize", pick); };
   }, [pathname]);
   const [requestedTool, setRequestedTool] = useState<ToolKey | null>(null);
   const [, setFocusedTool] = useState<ToolKey>("tuner");
@@ -210,7 +212,7 @@ export default function PracticeToolDock() {
     }
     const intervals = tapTimes.current.slice(1).map((time, index) => time - tapTimes.current[index]);
     const nextBpm = Math.round(60000 / median(intervals));
-    setBpm(Math.max(40, Math.min(220, nextBpm)));
+    setBpm(Math.max(30, Math.min(220, nextBpm)));
     setTapHint(t.toolDock.tapsAveraged(tapTimes.current.length));
   };
 
@@ -471,7 +473,7 @@ export default function PracticeToolDock() {
                 {metro?<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1.5"/></svg>:<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.5v9l7.5-4.5z"/></svg>}
               </button>
               <div className="tp-stepper">
-                <button type="button" aria-label={t.toolDock.decreaseTempo} onClick={()=>setBpm(Math.max(40,bpm-1))}>−</button>
+                <button type="button" aria-label={t.toolDock.decreaseTempo} onClick={()=>setBpm(Math.max(30,bpm-1))}>−</button>
                 <b>{bpm}</b>
                 <button type="button" aria-label={t.toolDock.increaseTempo} onClick={()=>setBpm(Math.min(220,bpm+1))}>+</button>
               </div>
@@ -484,7 +486,7 @@ export default function PracticeToolDock() {
                 the full chart one link away. */}
             <section ref={fingeringSection} className="tp-fingering" tabIndex={-1}>
               <div className="tp-row">
-                <button type="button" className="tp-back" onClick={()=>setView("main")}><BackChevron/>{zh?"返回":"Back"}</button>
+                <button type="button" className="tp-back" aria-label={zh?"返回工具":"Back to tools"} onClick={()=>setView("main")}><BackChevron/></button>
                 <Link className="tp-link" href="/flute-studio/fingerings">{t.toolDock.fullChart}</Link>
               </div>
               <div className="tp-fingering__now">

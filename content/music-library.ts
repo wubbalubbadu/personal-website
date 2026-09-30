@@ -9,7 +9,7 @@ import {exerciseCatalog,type ExerciseFocus} from "./exercise-catalog";
 // (the uploader only suggests it), shown as the "Good first pieces" shelf.
 export type ScorePage={src:string;width:number;height:number};
 export type ScoreRecording={id:string;title:string;performer:string;youtubeId:string;startSeconds?:number};
-export type ExcerptScore={part:string;passage:string;zhPassage?:string;sourceUrl:string;sourceLabel:string;pages:ScorePage[]};
+export type ExcerptScore={part:string;passage:string;zhPassage?:string;pages:ScorePage[]};
 
 export type MusicItem={id:string;title:string;composer:string;
   /** Year written, as a plain number so pieces can be sorted on a timeline. */
@@ -17,6 +17,7 @@ export type MusicItem={id:string;title:string;composer:string;
   /** One or two sentences about this piece: where it comes from, what it was written for. */
   about?:string;
   tags:string[];beginner?:boolean;
+  smartDrone?:import("../app/flute-studio/components/smartDrone").DroneChange[];
   excerpt?:ExcerptScore;recordings?:ScoreRecording[];
   /** Set on exercises shown in the Library; their skill is a separate tag set from a piece's genre tags. */
   exercise?:{focus:ExerciseFocus;detail:string;zhDetail:string;zhTitle:string};

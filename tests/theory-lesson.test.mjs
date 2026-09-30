@@ -46,7 +46,10 @@ test('lesson tones begin and end at silence with a soft attack and bounded peak'
     assert.equal(samples[0],0);assert.ok(Math.abs(samples.at(-1))<1e-9);
     let peak=0,earlyPeak=0;
     samples.forEach((v,i)=>{peak=Math.max(peak,Math.abs(v));if(i<rate*.005)earlyPeak=Math.max(earlyPeak,Math.abs(v))});
-    assert.ok(peak<.068);assert.ok(earlyPeak<.001);
+    // No click: the first 5 ms stay a small fraction of the tone's own peak
+    // (the 45 ms raised-cosine fade-in; a fuller onset was added later, so a
+    // fixed .001 was tighter than the fade itself).
+    assert.ok(peak<.068);assert.ok(earlyPeak<peak*.05);
   }
 });
 

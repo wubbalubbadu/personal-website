@@ -66,6 +66,85 @@
     "defaultTempo": 72
   },
   {
+    "id": "ravel-daphnis-et-chloe-176",
+    "title": "Daphnis et Chloé",
+    "composer": "Maurice Ravel",
+    "tags": [
+      "Classical",
+      "Excerpt"
+    ],
+    "status": "published",
+    "scorePath": "/music/ravel-daphnis-et-chloe-176/score.musicxml",
+    "viewerPath": "/flute-studio/music/ravel-daphnis-et-chloe-176",
+    "pdfPath": "/music/ravel-daphnis-et-chloe-176/score.pdf",
+    "excerpt": {
+      "part": "Flute 1",
+      "passage": "[176] to 2 measures after [179]",
+      "zhPassage": "[176] 至 [179] 后两小节",
+      "pages": [
+        {
+          "src": "/music/ravel-daphnis-et-chloe-176/score.jpg",
+          "width": 950,
+          "height": 979
+        }
+      ]
+    },
+    "recordings": [
+      {
+        "id": "walker-rattle-lso",
+        "title": "Daphnis et Chloé · Pantomime solo",
+        "performer": "Adam Walker · London Symphony Orchestra · Simon Rattle",
+        "youtubeId": "OCplcQ9gtKM"
+      }
+    ],
+    "year": 1912,
+    "about": "From the Pantomime in Ravel’s ballet Daphnis et Chloé, written for the Ballets Russes. Daphnis and Chloé enact the story of Pan and Syrinx; the flute solo evokes Pan’s reed flute.",
+    "smartDrone": [
+      {
+        "measure": 4,
+        "pitch": "G♯6"
+      },
+      {
+        "measure": 7,
+        "pitch": "C♯6"
+      },
+      {
+        "measure": 9,
+        "pitch": "C♯5"
+      },
+      {
+        "measure": 12,
+        "pitch": "B4"
+      },
+      {
+        "measure": 16,
+        "pitch": "B5"
+      },
+      {
+        "measure": 17,
+        "pitch": "D♯5"
+      },
+      {
+        "measure": 18,
+        "pitch": "A♯4",
+        "at": "last-note"
+      },
+      {
+        "measure": 22,
+        "pitch": "D6"
+      },
+      {
+        "measure": 25,
+        "pitch": "A♭4"
+      },
+      {
+        "measure": 26,
+        "pitch": null
+      }
+    ],
+    "defaultTempo": 33
+  },
+  {
     "id": "txt-deja-vu",
     "title": "Deja Vu",
     "composer": "TOMORROW X TOGETHER",
@@ -92,6 +171,20 @@
     "viewerPath": "/flute-studio/music/ditto",
     "pdfPath": "/music/ditto/score.pdf",
     "defaultTempo": 135
+  },
+  {
+    "id": "malcolm-arnold-fantasy-for-flute-solo",
+    "title": "Fantasy for Flute Solo",
+    "composer": "Malcolm Arnold",
+    "status": "published",
+    "scorePath": "/music/malcolm-arnold-fantasy-for-flute-solo/score.musicxml",
+    "fullScorePath": "/music/malcolm-arnold-fantasy-for-flute-solo/full-score.musicxml",
+    "readingPartId": "P1",
+    "partCount": 1,
+    "viewerPath": "/flute-studio/music/malcolm-arnold-fantasy-for-flute-solo",
+    "tags": [
+      "Classical"
+    ]
   },
   {
     "id": "nikolai-rimsky-korsakov-flight-of-the-bumble-bee",
@@ -540,40 +633,5 @@
     "partCount": 2,
     "viewerPath": "/flute-studio/music/traditional-twinkle-twinkle-little-star",
     "defaultTempo": 100
-  },
-  {
-    "id": "ravel-daphnis-et-chloe-176",
-    "title": "Daphnis et Chloé",
-    "composer": "Maurice Ravel",
-    "tags": [
-      "Classical",
-      "Excerpt"
-    ],
-    "status": "published",
-    "scorePath": null,
-    "viewerPath": "/flute-studio/music/ravel-daphnis-et-chloe-176",
-    "pdfPath": "/music/ravel-daphnis-et-chloe-176/score.pdf",
-    "excerpt": {
-      "part": "Flute 1",
-      "passage": "[176] to 2 measures after [179]",
-      "zhPassage": "[176] 至 [179] 后两小节",
-      "sourceUrl": "https://orchestraexcerpts.com/flute-ravel-daphnis-et-chloe-176-until-2m-after-179/",
-      "sourceLabel": "Orchestra Excerpts",
-      "pages": [
-        {
-          "src": "/music/ravel-daphnis-et-chloe-176/score.jpg",
-          "width": 950,
-          "height": 979
-        }
-      ]
-    },
-    "recordings": [
-      {
-        "id": "walker-rattle-lso",
-        "title": "Daphnis et Chloé · Pantomime solo",
-        "performer": "Adam Walker · London Symphony Orchestra · Simon Rattle",
-        "youtubeId": "OCplcQ9gtKM"
-      }
-    ]
   }
 ]

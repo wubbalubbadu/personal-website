@@ -4,6 +4,31 @@ Historical context: [September 26 retrospective and original notes](history/2026
 
 Updated September 26, 2026 from the pasted notes and current local source, including work in progress, and again on September 28 with the navigation, tools, book and pitch-test work from that session (see "Built September 28" and "Ideas from the September 28 session"). This is a source audit, not confirmation that every feature works on the deployed site or on iPad. The older BACKLOG.md is historical context. Items below are grouped, not a new priority decision.
 
+## Built September 29: reader fixes from Arnold's Fantasy
+
+- [ ] **Tempo follows the page:** starts at the score's own mark (69, not the catalog's 70); the number counts the printed beat, so B reads 120 (♩.) and the metronome clicks dotted quarters there. Your speed is kept as a share of the printed one across sections.
+- [ ] **accel. and rit. play:** Arnold's accel. poco a poco (bars 16–17) speeds up smoothly into B, and the rit. at 74 slows into Allegro marziale. Where a score is vague, the end is: a dashed line if drawn, else the next tempo mark (within 8 bars for accel., 4 for rit.), else a tempo / a rehearsal mark / a double bar, else 4 or 2 bars at about ±25%; a rit. with no target holds until "a tempo". The metronome clicks on the same bending beats.
+- [ ] **Dynamics are audible:** pp to ff now spans about 29 dB (was 9), hairpins included. **Grace notes play** just before their main note.
+- [ ] **Pausing** quiets the metronome until Listen or Metronome is pressed again (no free-running click in the wrong tempo).
+- [ ] **Playback cursor:** a purple line moves through the music, reaching each note as it sounds; the page follows it. Notes are no longer coloured red.
+- [ ] **Stems reach the middle line** on every score, so high runs keep their beams on the staff.
+- [ ] **Tap a bar while listening** jumps playback there; Pause and Play resume where you stopped.
+- [ ] **Drone on:** tap a note to drone it, anywhere else in the bar to select the bar.
+- [ ] **Smoother scrolling on long pieces;** the header no longer tucks away on desktop and iPad (phone keeps it).
+- [ ] **Markings:** tempo headings bold as one ("Andante con moto"); loco, ritmico, expressivo explained.
+- [x] Tempo mark at F no longer collides (rehearsal boxes and ♩ = n marks are placed clear of the words in every piece).
+- [ ] **Saved sets (September 30):** Restore defaults clears the set name; after opening a set and changing it, **Save new** sits beside Update so a different set never overwrites the old one. Verify on iPad.
+- [ ] **Copy code (Move to another device)** failed on iPhone: Safari needs the clipboard write inside the tap. Now uses a ClipboardItem with the pending code. Verify on iPhone.
+- [ ] **Next low-hanging items:**
+  - **Meter change with the same tempo** (4/4 to 6/8): keep the eighth notes the same length and regroup the metronome clicks.
+  - **A new tempo word with no ♩ = n** (Moderato, Allegro…): move to that word's usual speed from the glossary (textbook ranges only, never a wild jump).
+  - **Live tempo number through accel./rit.** (display only).
+  - **Remember a tempo you chose for a piece after reloading** (today it lasts until reload). Careful: playback now moves the number per section (69 → 120 at B), so store it as a share of the opening mark, not the raw number.
+  - ~~The two failing tests~~ fixed September 30: both were stale expectations (the embouchure model gained a surrounding-air layer; the lesson tone's onset is fuller but still click-free), now checked by intent. 75 of 75 pass.
+  - **A held note swelling under a hairpin** is a bigger job.
+- [ ] **Slurs cut through high runs** (Arnold bars 17, 19, 24): the even-arch reshape lifts a slur at most 4 spaces, so a long slur over a run that climbs to high notes crosses the noteheads. Fix: let the arch follow the highest note under it (an asymmetric curve, or raise the control points over the peak), as engravers do.
+- [ ] **Two unrelated tests fail** (`tests/embouchure-model.test.mjs` line 71, `tests/theory-lesson.test.mjs` line 49); not from the reader changes, worth a look.
+
 ## Built September 28: verify on a real phone, iPad and flute
 
 Built and checked in the desktop preview only. The preview cannot use the microphone, so nothing that listens has been tried with real playing.
@@ -84,6 +109,16 @@ Let people retain preferences that make repeated practice less repetitive. The e
 ## Product features to design before implementation
 
 These are distinct features worth retaining visibly. Inclusion is not a commitment to build them all, and order below is not a priority ranking.
+
+### Difficult passages as exercises (from Arnold's Fantasy, September 29)
+
+Pull hard passages out of a piece and practise them as small exercises.
+
+- **Find them:** flag runs of fast notes, for example four notes per beat at ♩ = 125 to 130 or faster (after the score's own tempo changes). Suggested, not forced: the player can also select bars by hand.
+- **Keep a list:** "Difficult passages I'm working on", global like the three lists, visible outside the piece (My Studio, Home's Today card), each opening the piece at that passage.
+- **Name the key of a run:** look at which accidentals a run uses (B♭ and F♯ suggests G minor) and say so.
+- **Generate drills from it:** a scale or thirds exercise in that key; the passage's own notes regrouped in threes or fives; dotted rhythms; a tenuto every 4 or 5 notes; fermatas on a few notes. Reuse Scale Studio's engine where possible.
+- **Later:** the passage looped with the metronome, stepping the tempo up.
 
 ### Guided practice and an activity library
 

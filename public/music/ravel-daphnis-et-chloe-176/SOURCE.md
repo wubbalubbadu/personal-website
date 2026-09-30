@@ -17,3 +17,7 @@ YouTube reference: https://www.youtube.com/watch?v=OCplcQ9gtKM
 The video's description identifies Adam Walker, flute; Gareth Davies,
 alto flute; Simon Rattle, conductor; and the London Symphony Orchestra.
 The clip is a reference performance, not synchronized score playback.
+
+Optional XML mode uses score.musicxml exported from the user-provided
+Desktop/Daphnis.mscz with MuseScore Studio 4.7.5. The original project
+was not modified. The PDF and displayed scan are independent of this XML.

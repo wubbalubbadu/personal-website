@@ -1,9 +1,7 @@
 /* Printed excerpts keep the existing reader's typography, controls and paper. */
-.fixed-score-reader .practice-bar{gap:12px!important}
+.fixed-score-reader .practice-bar{gap:4px!important}
 .fixed-score-reader .excerpt-caption{display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap;padding:9px 18px;font-size:13px;color:#777a80;border-bottom:1px solid var(--line);background:#fff}
 .fixed-score-reader .excerpt-caption strong{font-weight:500;color:#44474d}
-.excerpt-caption a{margin-left:auto;color:inherit;text-decoration:none}
-.excerpt-caption a:hover{text-decoration:underline}
 html body .fixed-score-reader .score-paper.fixed-score-paper{padding:0!important;min-height:0!important;border-radius:0!important;background:white;position:relative;--viewer-magnify:1}
 html body .fixed-score-reader .osmd-score.fixed-score-page{padding:0!important;line-height:0}
 .fixed-score-page>img{display:block;width:100%;height:auto;max-width:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
@@ -18,11 +16,9 @@ html body .fixed-score-reader .osmd-score.fixed-score-page{padding:0!important;l
 .excerpt-recording>div{display:flex;align-items:center;gap:14px}
 .excerpt-recordings a{color:#5b7251;font-size:13px;text-underline-offset:3px}
 .excerpt-recordings iframe{display:block;border:0;aspect-ratio:16/9;width:100%;margin:14px 0;border-radius:10px;background:#e8e9e5}
-.excerpt-more-recordings{display:block;margin-top:20px}
 .excerpt-load-error{position:absolute;inset:20px 12px auto;padding:15px;line-height:1.5;background:#fff}
 @media(max-width:760px){
   .fixed-score-reader .excerpt-caption{padding:7px 12px;font-size:12px;gap:4px 10px}
-  .excerpt-caption a{font-size:11px}
   .fixed-score-reader[data-listen] .workspace{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto auto auto minmax(120px,1fr) minmax(0,32dvh)!important;grid-template-areas:"document" "header" "markup" "score" "recordings"!important}
   .excerpt-recordings{border-left:0;border-top:1px solid var(--line);padding:10px 14px}
   .excerpt-recordings>header{margin-bottom:8px}
@@ -33,5 +29,3 @@ html body .fixed-score-reader .osmd-score.fixed-score-page{padding:0!important;l
   .excerpt-recordings,.excerpt-caption{display:none!important}
   html body .fixed-score-reader .score-paper.fixed-score-paper{width:100%!important;transform:none!important;break-inside:avoid}
 }
-
-html body .fixed-score-reader.reader-workspace.restored-reader .reader-rows{display:block!important}

@@ -8,19 +8,25 @@ type Voice={oscillator:OscillatorNode;gain:GainNode};
  * all) instead of free-running from whenever it was switched on.
  * `beatInBar` is which beat of the bar `time` falls on (0 = downbeat).
  */
-export type MetronomeGrid={time:number;beatSeconds:number;beatInBar:number;beatsPerBar:number};
+export type MetronomeGrid={time:number;beatSeconds:number;beatInBar:number;beatsPerBar:number;
+  /** Stay on but silent: playback paused, and the metronome waits for it (or for the player) rather than free-running. */
+  hold?:boolean;
+  /** Exact beat times (AudioContext seconds) when they are not evenly spaced: through an accel. or rit. Beat 0 is `beatInBar`. */
+  beatTimes?:number[];
+  /** Which of `beatTimes` are downbeats, when the meter changes along the way. */
+  beatAccents?:boolean[]};
 const semitones:Record<string,number>={C:0,"C♯":1,"D♭":1,D:2,"D♯":3,"E♭":3,E:4,F:5,"F♯":6,"G♭":6,G:7,"G♯":8,"A♭":8,A:9,"A♯":10,"B♭":10,B:11};
 export function pitchFrequency(note:string,octave:number){return 440*2**(((octave+1)*12+semitones[note]-69)/12)}
 function useAudioEngine(){
   const [bpm,setBpmState]=useState(76),[metro,setMetro]=useState(false),[accent,setAccent]=useState(true),[beats,setBeats]=useState(4),[drones,setDrones]=useState<string[]>([]),[grid,setGrid]=useState<MetronomeGrid|null>(null);
   const context=useRef<AudioContext|null>(null),voices=useRef(new Map<string,Voice>()),tempoByScore=useRef(new Map<string,number>()),score=useRef<string|null>(null);
   const getAudio=()=>{const audio=context.current??(context.current=new AudioContext());void audio.resume();return audio};
-  function setBpm(value:number){if(!Number.isFinite(value))return;const next=Math.max(40,Math.min(220,Math.round(value)));if(score.current)tempoByScore.current.set(score.current,next);setBpmState(next)}
+  function setBpm(value:number){if(!Number.isFinite(value))return;const next=Math.max(30,Math.min(220,Math.round(value)));if(score.current)tempoByScore.current.set(score.current,next);setBpmState(next)}
   // A piece's starting tempo is only a suggestion, so it is not remembered:
   // the reader calls this with 76 first and again with the score's marking once
   // the XML is read, and the marking must win. Only tempos the player picks
   // (setBpm) are kept per piece.
-  function initializeScore(id:string,tempo:number){score.current=id;const chosen=tempoByScore.current.get(id);if(chosen!==undefined){setBpmState(chosen);return}if(Number.isFinite(tempo))setBpmState(Math.max(40,Math.min(220,Math.round(tempo))))}
+  function initializeScore(id:string,tempo:number){score.current=id;const chosen=tempoByScore.current.get(id);if(chosen!==undefined){setBpmState(chosen);return}if(Number.isFinite(tempo))setBpmState(Math.max(30,Math.min(220,Math.round(tempo))))}
   function toggleMetro(){getAudio();setMetro(value=>!value)}
   /**
    * The metronome runs on the AudioContext clock, not on setInterval.
@@ -38,7 +44,7 @@ function useAudioEngine(){
    * is deliberately longer than the ~1s a throttled tab wakes at.
    */
   useEffect(()=>{
-    if(!metro)return;
+    if(!metro||grid?.hold)return;
     const audio=getAudio();
     const secondsPerBeat=grid?grid.beatSeconds:60/bpm,barLength=grid?grid.beatsPerBar:beats;
     const lookahead=1.6;
@@ -50,9 +56,9 @@ function useAudioEngine(){
     // left them to play out — which is why it kept ticking for about four
     // more beats after you pressed stop.
     const booked=new Set<OscillatorNode>();
-    const bookBeat=(time:number)=>{
+    const bookBeat=(time:number,downbeat?:boolean)=>{
       const oscillator=audio.createOscillator(),gain=audio.createGain();
-      const strong=accent&&beat%barLength===0;
+      const strong=accent&&(downbeat??beat%barLength===0);
       oscillator.frequency.value=strong?1500:1100;
       // Loud enough to hear over a flute. A click is 50ms of sound, so it
       // needs a peak well above what a sustained tone would use.
@@ -65,7 +71,17 @@ function useAudioEngine(){
       oscillator.onended=()=>booked.delete(oscillator);
       beat+=1;
     };
+    // Playback's own beat times, when it bends the tempo: book each one as it
+    // comes into the lookahead window, skipping any already past.
+    const listed=grid?.beatTimes;let listedAt=0;
     const schedule=()=>{
+      if(listed){
+        while(listedAt<listed.length&&listed[listedAt]<audio.currentTime+lookahead){
+          if(listed[listedAt]>=audio.currentTime)bookBeat(listed[listedAt],grid?.beatAccents?.[listedAt]);else beat+=1;
+          listedAt+=1;
+        }
+        return;
+      }
       while(nextTime<audio.currentTime+lookahead){
         bookBeat(nextTime);
         nextTime+=secondsPerBeat;
@@ -77,7 +93,8 @@ function useAudioEngine(){
     // jammed together instead of a tempo change.
     // Following playback: no settle, join the grid at its next beat.
     const start=window.setTimeout(()=>{
-      if(grid){const k=Math.max(0,Math.ceil((audio.currentTime+.02-grid.time)/grid.beatSeconds));nextTime=grid.time+k*grid.beatSeconds;beat=grid.beatInBar+k}
+      if(listed){beat=grid!.beatInBar;nextTime=1}
+      else if(grid){const k=Math.max(0,Math.ceil((audio.currentTime+.02-grid.time)/grid.beatSeconds));nextTime=grid.time+k*grid.beatSeconds;beat=grid.beatInBar+k}
       else nextTime=audio.currentTime+0.06;
       schedule();
     },grid?0:260);
@@ -98,7 +115,7 @@ function useAudioEngine(){
   }
   function stopAllDrones(){const audio=context.current;voices.current.forEach(({oscillator,gain})=>{if(audio){gain.gain.setTargetAtTime(.0001,audio.currentTime,.025);oscillator.stop(audio.currentTime+.12)}else oscillator.stop()});voices.current.clear();setDrones([])}
   useEffect(()=>()=>{voices.current.forEach(({oscillator})=>oscillator.stop());void context.current?.close()},[]);
-  return {bpm,setBpm,metro,toggleMetro,accent,setAccent,beats,setBeats,drones,toggleDrone,stopAllDrones,initializeScore,getAudio,alignMetronome:setGrid};
+  return {bpm,setBpm,metro,toggleMetro,accent,setAccent,beats,setBeats,drones,toggleDrone,stopAllDrones,initializeScore,getAudio,alignMetronome:setGrid,metroHeld:metro&&!!grid?.hold};
 }
 const Context=createContext<ReturnType<typeof useAudioEngine>|null>(null);
 export function PracticeAudioProvider({children}:{children:ReactNode}){const value=useAudioEngine();return <Context.Provider value={value}>{children}</Context.Provider>}

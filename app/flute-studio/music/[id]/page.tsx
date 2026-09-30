@@ -31,6 +31,8 @@ export default function UploadedMusicPage(){
     title:item.title,
     composer:book?`${item.composer} · ${book.title}`:item.composer,
     asset:item.scorePath,
+    hideRehearsalMarks:!!item.excerpt,
+    smartDrone:item.smartDrone,
     id:item.id,
     backHref:book?bookPath(book.id):"/flute-studio/music",
     // A book goes on your lists as a whole, from any of its numbers.
@@ -44,5 +46,5 @@ export default function UploadedMusicPage(){
     <span className="book-stepper__label" aria-label={zh?`第 ${item.book.number} 首，共 ${siblings.length} 首`:`No. ${item.book.number} of ${siblings.length}`}>{item.book.number} / {siblings.length}</span>
     {next?<Link className="book-stepper__arrow" href={next.viewerPath!} aria-label={zh?`下一首：第 ${next.book!.number} 首`:`Next: No. ${next.book!.number}`}>›</Link>:<span className="book-stepper__arrow is-off" aria-hidden="true">›</span>}
   </span>:null;
-  return <ScoreViewer config={config} headerActions={()=> <>{stepper}{item.excerpt&&<button className="icon-btn" onClick={()=>setInteractive(false)}>{zh?"原版乐谱":"Original score"}</button>}</>}/>;
+  return <ScoreViewer config={config} headerActions={()=> <>{stepper}{item.excerpt&&<div className="reader-choice" role="group" aria-label={zh?"乐谱格式":"Score format"}><button aria-pressed={false} onClick={()=>setInteractive(false)}>PDF</button><button aria-pressed={true}>XML</button></div>}</>}/>;
 }

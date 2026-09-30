@@ -138,17 +138,23 @@ function resolveUnitsPerWhole(osmd: OSMDType): number {
  * the downbeats around it stay correct.
  */
 /**
- * How loud each dynamic plays, relative to mf. Gentler than OSMD's MIDI table
- * (where pp is 12/127): playback is one quiet synth voice, and pp still has to
- * be heard. Accents change one note only; fp/sfp drop to soft after it.
+ * How loud each dynamic plays, relative to mf, as amplitude from decibels:
+ * ppp −20, pp −15, p −10, mp −5, mf 0, f +4, ff +7, fff +9. Loudness is
+ * heard in decibels, so the old linear table (pp .55 … ff 1.32, about 9 dB
+ * top to bottom) made p and ff hard to tell apart; this spans about 29 dB,
+ * close to MuseScore's playback. Accents change one note only; fp/sfp drop
+ * to soft after it.
  */
+const dB = (value: number) => Math.round(10 ** (value / 20) * 100) / 100;
 const DYNAMIC_LEVEL: Partial<Record<DynamicEnum, number>> = {
-  [DynamicEnum.pppppp]: .45, [DynamicEnum.ppppp]: .45, [DynamicEnum.pppp]: .45, [DynamicEnum.ppp]: .45,
-  [DynamicEnum.pp]: .55, [DynamicEnum.p]: .68, [DynamicEnum.mp]: .84, [DynamicEnum.mf]: 1,
-  [DynamicEnum.f]: 1.18, [DynamicEnum.ff]: 1.32, [DynamicEnum.fff]: 1.42, [DynamicEnum.ffff]: 1.42, [DynamicEnum.fffff]: 1.42, [DynamicEnum.ffffff]: 1.42,
+  [DynamicEnum.pppppp]: dB(-20), [DynamicEnum.ppppp]: dB(-20), [DynamicEnum.pppp]: dB(-20), [DynamicEnum.ppp]: dB(-20),
+  [DynamicEnum.pp]: dB(-15), [DynamicEnum.p]: dB(-10), [DynamicEnum.mp]: dB(-5), [DynamicEnum.mf]: 1,
+  [DynamicEnum.f]: dB(4), [DynamicEnum.ff]: dB(7), [DynamicEnum.fff]: dB(9), [DynamicEnum.ffff]: dB(9), [DynamicEnum.fffff]: dB(9), [DynamicEnum.ffffff]: dB(9),
 };
+/** The quietest and loudest a hairpin with no closing dynamic can reach. */
+const LEVEL_FLOOR = dB(-20), LEVEL_CEILING = dB(9);
 const ACCENTS = new Set([DynamicEnum.sf, DynamicEnum.sff, DynamicEnum.sfz, DynamicEnum.sffz, DynamicEnum.fz, DynamicEnum.rf, DynamicEnum.rfz, DynamicEnum.sfp, DynamicEnum.sfpp, DynamicEnum.fp]);
-const AFTER_ACCENT: Partial<Record<DynamicEnum, number>> = { [DynamicEnum.sfp]: .68, [DynamicEnum.fp]: .68, [DynamicEnum.sfpp]: .55 };
+const AFTER_ACCENT: Partial<Record<DynamicEnum, number>> = { [DynamicEnum.sfp]: dB(-10), [DynamicEnum.fp]: dB(-10), [DynamicEnum.sfpp]: dB(-15) };
 
 /** Letters as OSMD's NoteEnum semitones, and the order sharps and flats are added to a key. */
 const LETTERS = [0, 2, 4, 5, 7, 9, 11];
@@ -208,7 +214,8 @@ export function deriveScoreEvents(osmd: OSMDType) {
         else if (mark.dynamic !== undefined && DYNAMIC_LEVEL[mark.dynamic] !== undefined) { level = DYNAMIC_LEVEL[mark.dynamic]!; wedge = null; }
         else if (mark.wedge && mark.wedge.until > mark.at) {
           const next = marks.find(later => later.dynamic !== undefined && DYNAMIC_LEVEL[later.dynamic] !== undefined && later.at >= mark.wedge!.until - EPS && later.at <= mark.wedge!.until + .25);
-          const to = next ? DYNAMIC_LEVEL[next.dynamic!]! : Math.min(1.42, Math.max(.45, level + (mark.wedge.rising ? .2 : -.2)));
+          // With no dynamic at its end, a hairpin moves about one step (5 dB).
+          const to = next ? DYNAMIC_LEVEL[next.dynamic!]! : Math.min(LEVEL_CEILING, Math.max(LEVEL_FLOOR, level * (mark.wedge.rising ? dB(5) : dB(-5))));
           wedge = { from: level, start: mark.at, until: mark.wedge.until, to };
         }
       }

@@ -68,7 +68,10 @@ test('jet stays straight and becomes shallower toward high notes; lower teeth ad
 
 test('unsplit flow enters bore at low notes and clears it at high notes',()=>{
   const model=createModel();
-  assert.equal(model.root.getObjectByName('Airflow').children.length,2);
+  // The jet and its companion ribbon, plus the surrounding air gathering into the mouth (added later).
+  const airflow=model.root.getObjectByName('Airflow');
+  assert.equal(airflow.children.length,3);
+  assert.ok(airflow.getObjectByName('Surrounding air gathering into mouth'));
   const end=()=>{const p=model.root.getObjectByName('Lip jet').geometry.attributes.position;return new Vector3().fromBufferAttribute(p,160).add(new Vector3().fromBufferAttribute(p,161)).multiplyScalar(.5);};
   model.update(59,0,true);assert.ok(end().y<-.5);
   const teeth=model.root.getObjectByName('Lower incisors'),lowY=teeth.position.y;

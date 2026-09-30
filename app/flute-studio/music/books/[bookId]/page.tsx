@@ -31,7 +31,7 @@ export default function BookPage(){
 
   return <main className="exercise-hub">
     <div className="exercise-hub__content">
-      <Link className="book-page__back" href="/flute-studio/music"><BackChevron/>{t.library.title}</Link>
+      <Link className="book-page__back" href="/flute-studio/music" aria-label={t.library.title}><BackChevron/></Link>
       <header className="exercise-hub__header book-page__header">
         <div><h1>{book.title}</h1></div>
         <p className="book-page__composer">{book.composer}{book.year?` · ${book.year}`:""}</p>

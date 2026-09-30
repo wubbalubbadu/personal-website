@@ -647,7 +647,15 @@ html body .reader-settings-panel .scale-book__metronome>button:hover:not(:disabl
 html body .reader-settings-panel .scale-book__tempo-field input{width:38px!important;background:transparent!important;padding:0!important;font-size:15px!important;font-weight:600!important;color:#292a33!important;text-align:center}
 html body .reader-settings-panel .scale-book__tempo-field input:focus{outline:2px solid rgba(41,42,51,.2)!important;outline-offset:0}
 
+/* The playback cursor (components/playbackCursor.ts): a soft purple line
+   that moves through the music while Listen plays. */
+.playback-cursor{position:absolute;left:0;top:0;width:3px;margin-left:-1.5px;border-radius:2px;background:rgba(109,69,133,.55);pointer-events:none;z-index:5;opacity:0;will-change:transform;transition:opacity .15s ease}
+
+/* The bar Listen starts from, in the same soft purple as the cursor and Pause. */
+html body .osmd-score .play-start-bar{fill:rgba(109,69,133,.12)!important}
+
 /* The narrowest phones: Drone shows its icon only. */
 @media(max-width:380px){
   html body .restored-reader .practice-bar .transport-menu>button.tool{font-size:0!important;width:38px!important;padding:0!important;justify-content:center!important}
 }
+html body .reader-settings-panel .scale-book__save-new{background:#fff!important;color:#292a33!important;box-shadow:inset 0 0 0 1px #d6d7dc!important}
