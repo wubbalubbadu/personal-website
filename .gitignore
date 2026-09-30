@@ -39,3 +39,6 @@ yarn-error.log*
 /.wrangler/
 /outputs/
 /work/
+
+# Personal score originals and unlock code. Only encrypted library data is published.
+/.private-music/

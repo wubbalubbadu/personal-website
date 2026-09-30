@@ -1,6 +1,8 @@
 "use client";
 import {createContext,useContext,useEffect,useRef,useState,type ReactNode} from "react";
 
+import {SCORE_TEMPO_KEY,readTempoRatios,clampTempo} from "./lib/scoreTempo";
+
 type Voice={oscillator:OscillatorNode;gain:GainNode};
 /**
  * Score playback's beat grid, in AudioContext time. While one is set the
@@ -19,14 +21,34 @@ const semitones:Record<string,number>={C:0,"C♯":1,"D♭":1,D:2,"D♯":3,"E♭"
 export function pitchFrequency(note:string,octave:number){return 440*2**(((octave+1)*12+semitones[note]-69)/12)}
 function useAudioEngine(){
   const [bpm,setBpmState]=useState(76),[metro,setMetro]=useState(false),[accent,setAccent]=useState(true),[beats,setBeats]=useState(4),[drones,setDrones]=useState<string[]>([]),[grid,setGrid]=useState<MetronomeGrid|null>(null);
-  const context=useRef<AudioContext|null>(null),voices=useRef(new Map<string,Voice>()),tempoByScore=useRef(new Map<string,number>()),score=useRef<string|null>(null);
+  const context=useRef<AudioContext|null>(null),voices=useRef(new Map<string,Voice>()),tempoRatios=useRef<Record<string,number>|null>(null),printedTempo=useRef(76),score=useRef<string|null>(null);
   const getAudio=()=>{const audio=context.current??(context.current=new AudioContext());void audio.resume();return audio};
-  function setBpm(value:number){if(!Number.isFinite(value))return;const next=Math.max(30,Math.min(220,Math.round(value)));if(score.current)tempoByScore.current.set(score.current,next);setBpmState(next)}
-  // A piece's starting tempo is only a suggestion, so it is not remembered:
-  // the reader calls this with 76 first and again with the score's marking once
-  // the XML is read, and the marking must win. Only tempos the player picks
-  // (setBpm) are kept per piece.
-  function initializeScore(id:string,tempo:number){score.current=id;const chosen=tempoByScore.current.get(id);if(chosen!==undefined){setBpmState(chosen);return}if(Number.isFinite(tempo))setBpmState(Math.max(30,Math.min(220,Math.round(tempo))))}
+  function ratios(){
+    if(tempoRatios.current===null){try{tempoRatios.current=readTempoRatios(localStorage.getItem(SCORE_TEMPO_KEY))}catch{tempoRatios.current={}}}
+    return tempoRatios.current;
+  }
+  function setBpm(value:number){
+    if(!Number.isFinite(value))return;
+    const next=clampTempo(value);
+    if(score.current){
+      const saved=ratios();saved[score.current]=next/printedTempo.current;
+      try{localStorage.setItem(SCORE_TEMPO_KEY,JSON.stringify(saved))}catch{/* Keep this visit's preference when storage is unavailable. */}
+    }
+    setBpmState(next);
+  }
+  // Playback changes the section's reference and displayed base without saving a user preference.
+  function setPlaybackBpm(value:number,reference:number){
+    if(Number.isFinite(reference)&&reference>0)printedTempo.current=reference;
+    if(Number.isFinite(value))setBpmState(clampTempo(value));
+  }
+  // Called once with the catalog suggestion, then with the parsed opening mark.
+  // Apply the saved ratio to each reference so the score's real marking wins.
+  function initializeScore(id:string,tempo:number){
+    score.current=id;
+    if(!Number.isFinite(tempo)||tempo<=0)return;
+    printedTempo.current=tempo;
+    const saved=ratios();setBpmState(clampTempo(tempo*(saved[id]??1)));
+  }
   function toggleMetro(){getAudio();setMetro(value=>!value)}
   /**
    * The metronome runs on the AudioContext clock, not on setInterval.
@@ -115,7 +137,7 @@ function useAudioEngine(){
   }
   function stopAllDrones(){const audio=context.current;voices.current.forEach(({oscillator,gain})=>{if(audio){gain.gain.setTargetAtTime(.0001,audio.currentTime,.025);oscillator.stop(audio.currentTime+.12)}else oscillator.stop()});voices.current.clear();setDrones([])}
   useEffect(()=>()=>{voices.current.forEach(({oscillator})=>oscillator.stop());void context.current?.close()},[]);
-  return {bpm,setBpm,metro,toggleMetro,accent,setAccent,beats,setBeats,drones,toggleDrone,stopAllDrones,initializeScore,getAudio,alignMetronome:setGrid,metroHeld:metro&&!!grid?.hold};
+  return {bpm,setBpm,setPlaybackBpm,metro,toggleMetro,accent,setAccent,beats,setBeats,drones,toggleDrone,stopAllDrones,initializeScore,getAudio,alignMetronome:setGrid,metroHeld:metro&&!!grid?.hold};
 }
 const Context=createContext<ReturnType<typeof useAudioEngine>|null>(null);
 export function PracticeAudioProvider({children}:{children:ReactNode}){const value=useAudioEngine();return <Context.Provider value={value}>{children}</Context.Provider>}

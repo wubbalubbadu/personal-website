@@ -173,20 +173,6 @@
     "defaultTempo": 135
   },
   {
-    "id": "malcolm-arnold-fantasy-for-flute-solo",
-    "title": "Fantasy for Flute Solo",
-    "composer": "Malcolm Arnold",
-    "status": "published",
-    "scorePath": "/music/malcolm-arnold-fantasy-for-flute-solo/score.musicxml",
-    "fullScorePath": "/music/malcolm-arnold-fantasy-for-flute-solo/full-score.musicxml",
-    "readingPartId": "P1",
-    "partCount": 1,
-    "viewerPath": "/flute-studio/music/malcolm-arnold-fantasy-for-flute-solo",
-    "tags": [
-      "Classical"
-    ]
-  },
-  {
     "id": "nikolai-rimsky-korsakov-flight-of-the-bumble-bee",
     "title": "Flight of the Bumble Bee",
     "composer": "Nikolai Rimsky-Korsakov",
@@ -633,5 +619,810 @@
     "partCount": 2,
     "viewerPath": "/flute-studio/music/traditional-twinkle-twinkle-little-star",
     "defaultTempo": 100
+  },
+  {
+    "id": "reichert-op-5-no-01",
+    "title": "No. 1",
+    "composer": "Mathieu-André Reichert",
+    "tags": [
+      "Exercise"
+    ],
+    "status": "published",
+    "scorePath": "/music/reichert-op-5/no-01.musicxml",
+    "viewerPath": "/flute-studio/music/reichert-op-5-no-01",
+    "book": {
+      "id": "reichert-op-5",
+      "number": 1,
+      "opening": "All keys",
+      "time": "6/8"
+    },
+    "keySections": [
+      {
+        "id": "0-major",
+        "label": "C major"
+      },
+      {
+        "id": "0-minor",
+        "label": "a minor"
+      },
+      {
+        "id": "-1-major",
+        "label": "F major"
+      },
+      {
+        "id": "-1-minor",
+        "label": "d minor"
+      },
+      {
+        "id": "-2-major",
+        "label": "B♭ major"
+      },
+      {
+        "id": "-2-minor",
+        "label": "g minor"
+      },
+      {
+        "id": "-3-major",
+        "label": "E♭ major"
+      },
+      {
+        "id": "-3-minor",
+        "label": "c minor"
+      },
+      {
+        "id": "-4-major",
+        "label": "A♭ major"
+      },
+      {
+        "id": "-4-minor",
+        "label": "f minor"
+      },
+      {
+        "id": "-5-major",
+        "label": "D♭ major"
+      },
+      {
+        "id": "-5-minor",
+        "label": "b♭ minor"
+      },
+      {
+        "id": "-6-major",
+        "label": "G♭ major"
+      },
+      {
+        "id": "-6-minor",
+        "label": "e♭ minor"
+      },
+      {
+        "id": "5-major",
+        "label": "B major"
+      },
+      {
+        "id": "5-minor",
+        "label": "g♯ minor"
+      },
+      {
+        "id": "4-major",
+        "label": "E major"
+      },
+      {
+        "id": "4-minor",
+        "label": "c♯ minor"
+      },
+      {
+        "id": "3-major",
+        "label": "A major"
+      },
+      {
+        "id": "3-minor",
+        "label": "f♯ minor"
+      },
+      {
+        "id": "2-major",
+        "label": "D major"
+      },
+      {
+        "id": "2-minor",
+        "label": "b minor"
+      },
+      {
+        "id": "1-major",
+        "label": "G major"
+      },
+      {
+        "id": "1-minor",
+        "label": "e minor"
+      }
+    ]
+  },
+  {
+    "id": "reichert-op-5-no-02",
+    "title": "No. 2",
+    "composer": "Mathieu-André Reichert",
+    "tags": [
+      "Exercise"
+    ],
+    "status": "published",
+    "scorePath": "/music/reichert-op-5/no-02.musicxml",
+    "viewerPath": "/flute-studio/music/reichert-op-5-no-02",
+    "book": {
+      "id": "reichert-op-5",
+      "number": 2,
+      "opening": "All keys",
+      "time": "2/4"
+    },
+    "keySections": [
+      {
+        "id": "0-major",
+        "label": "C major"
+      },
+      {
+        "id": "0-minor",
+        "label": "a minor"
+      },
+      {
+        "id": "-1-major",
+        "label": "F major"
+      },
+      {
+        "id": "-1-minor",
+        "label": "d minor"
+      },
+      {
+        "id": "-2-major",
+        "label": "B♭ major"
+      },
+      {
+        "id": "-2-minor",
+        "label": "g minor"
+      },
+      {
+        "id": "-3-major",
+        "label": "E♭ major"
+      },
+      {
+        "id": "-3-minor",
+        "label": "c minor"
+      },
+      {
+        "id": "-4-major",
+        "label": "A♭ major"
+      },
+      {
+        "id": "-4-minor",
+        "label": "f minor"
+      },
+      {
+        "id": "-5-major",
+        "label": "D♭ major"
+      },
+      {
+        "id": "-5-minor",
+        "label": "b♭ minor"
+      },
+      {
+        "id": "-6-major",
+        "label": "G♭ major"
+      },
+      {
+        "id": "-6-minor",
+        "label": "e♭ minor"
+      },
+      {
+        "id": "5-major",
+        "label": "B major"
+      },
+      {
+        "id": "5-minor",
+        "label": "g♯ minor"
+      },
+      {
+        "id": "4-major",
+        "label": "E major"
+      },
+      {
+        "id": "4-minor",
+        "label": "c♯ minor"
+      },
+      {
+        "id": "3-major",
+        "label": "A major"
+      },
+      {
+        "id": "3-minor",
+        "label": "f♯ minor"
+      },
+      {
+        "id": "2-major",
+        "label": "D major"
+      },
+      {
+        "id": "2-minor",
+        "label": "b minor"
+      },
+      {
+        "id": "1-major",
+        "label": "G major"
+      },
+      {
+        "id": "1-minor",
+        "label": "e minor"
+      }
+    ]
+  },
+  {
+    "id": "reichert-op-5-no-03",
+    "title": "No. 3",
+    "composer": "Mathieu-André Reichert",
+    "tags": [
+      "Exercise"
+    ],
+    "status": "published",
+    "scorePath": "/music/reichert-op-5/no-03.musicxml",
+    "viewerPath": "/flute-studio/music/reichert-op-5-no-03",
+    "book": {
+      "id": "reichert-op-5",
+      "number": 3,
+      "opening": "All keys",
+      "time": "6/8"
+    },
+    "keySections": [
+      {
+        "id": "0-major",
+        "label": "C major"
+      },
+      {
+        "id": "0-minor",
+        "label": "a minor"
+      },
+      {
+        "id": "-1-major",
+        "label": "F major"
+      },
+      {
+        "id": "-1-minor",
+        "label": "d minor"
+      },
+      {
+        "id": "-2-major",
+        "label": "B♭ major"
+      },
+      {
+        "id": "-2-minor",
+        "label": "g minor"
+      },
+      {
+        "id": "-3-major",
+        "label": "E♭ major"
+      },
+      {
+        "id": "-3-minor",
+        "label": "c minor"
+      },
+      {
+        "id": "-4-major",
+        "label": "A♭ major"
+      },
+      {
+        "id": "-4-minor",
+        "label": "f minor"
+      },
+      {
+        "id": "-5-major",
+        "label": "D♭ major"
+      },
+      {
+        "id": "-5-minor",
+        "label": "b♭ minor"
+      },
+      {
+        "id": "-6-major",
+        "label": "G♭ major"
+      },
+      {
+        "id": "-6-minor",
+        "label": "e♭ minor"
+      },
+      {
+        "id": "5-major",
+        "label": "B major"
+      },
+      {
+        "id": "5-minor",
+        "label": "g♯ minor"
+      },
+      {
+        "id": "4-major",
+        "label": "E major"
+      },
+      {
+        "id": "4-minor",
+        "label": "c♯ minor"
+      },
+      {
+        "id": "3-major",
+        "label": "A major"
+      },
+      {
+        "id": "3-minor",
+        "label": "f♯ minor"
+      },
+      {
+        "id": "2-major",
+        "label": "D major"
+      },
+      {
+        "id": "2-minor",
+        "label": "b minor"
+      },
+      {
+        "id": "1-major",
+        "label": "G major"
+      },
+      {
+        "id": "1-minor",
+        "label": "e minor"
+      }
+    ]
+  },
+  {
+    "id": "reichert-op-5-no-04",
+    "title": "No. 4",
+    "composer": "Mathieu-André Reichert",
+    "tags": [
+      "Exercise"
+    ],
+    "status": "published",
+    "scorePath": "/music/reichert-op-5/no-04.musicxml",
+    "viewerPath": "/flute-studio/music/reichert-op-5-no-04",
+    "book": {
+      "id": "reichert-op-5",
+      "number": 4,
+      "opening": "All keys",
+      "time": "4/4"
+    },
+    "keySections": [
+      {
+        "id": "0-major",
+        "label": "C major"
+      },
+      {
+        "id": "0-minor",
+        "label": "a minor"
+      },
+      {
+        "id": "-1-major",
+        "label": "F major"
+      },
+      {
+        "id": "-1-minor",
+        "label": "d minor"
+      },
+      {
+        "id": "-2-major",
+        "label": "B♭ major"
+      },
+      {
+        "id": "-2-minor",
+        "label": "g minor"
+      },
+      {
+        "id": "-3-major",
+        "label": "E♭ major"
+      },
+      {
+        "id": "-3-minor",
+        "label": "c minor"
+      },
+      {
+        "id": "-4-major",
+        "label": "A♭ major"
+      },
+      {
+        "id": "-4-minor",
+        "label": "f minor"
+      },
+      {
+        "id": "-5-major",
+        "label": "D♭ major"
+      },
+      {
+        "id": "-5-minor",
+        "label": "b♭ minor"
+      },
+      {
+        "id": "-6-major",
+        "label": "G♭ major"
+      },
+      {
+        "id": "-6-minor",
+        "label": "e♭ minor"
+      },
+      {
+        "id": "5-major",
+        "label": "B major"
+      },
+      {
+        "id": "5-minor",
+        "label": "g♯ minor"
+      },
+      {
+        "id": "4-major",
+        "label": "E major"
+      },
+      {
+        "id": "4-minor",
+        "label": "c♯ minor"
+      },
+      {
+        "id": "3-major",
+        "label": "A major"
+      },
+      {
+        "id": "3-minor",
+        "label": "f♯ minor"
+      },
+      {
+        "id": "2-major",
+        "label": "D major"
+      },
+      {
+        "id": "2-minor",
+        "label": "b minor"
+      },
+      {
+        "id": "1-major",
+        "label": "G major"
+      },
+      {
+        "id": "1-minor",
+        "label": "e minor"
+      }
+    ]
+  },
+  {
+    "id": "reichert-op-5-no-05",
+    "title": "No. 5",
+    "composer": "Mathieu-André Reichert",
+    "tags": [
+      "Exercise"
+    ],
+    "status": "published",
+    "scorePath": "/music/reichert-op-5/no-05.musicxml",
+    "viewerPath": "/flute-studio/music/reichert-op-5-no-05",
+    "book": {
+      "id": "reichert-op-5",
+      "number": 5,
+      "opening": "All keys",
+      "time": "6/8"
+    },
+    "keySections": [
+      {
+        "id": "0-major",
+        "label": "C major"
+      },
+      {
+        "id": "0-minor",
+        "label": "a minor"
+      },
+      {
+        "id": "-1-major",
+        "label": "F major"
+      },
+      {
+        "id": "-1-minor",
+        "label": "d minor"
+      },
+      {
+        "id": "-2-major",
+        "label": "B♭ major"
+      },
+      {
+        "id": "-2-minor",
+        "label": "g minor"
+      },
+      {
+        "id": "-3-major",
+        "label": "E♭ major"
+      },
+      {
+        "id": "-3-minor",
+        "label": "c minor"
+      },
+      {
+        "id": "-4-major",
+        "label": "A♭ major"
+      },
+      {
+        "id": "-4-minor",
+        "label": "f minor"
+      },
+      {
+        "id": "-5-major",
+        "label": "D♭ major"
+      },
+      {
+        "id": "-5-minor",
+        "label": "b♭ minor"
+      },
+      {
+        "id": "-6-major",
+        "label": "G♭ major"
+      },
+      {
+        "id": "-6-minor",
+        "label": "e♭ minor"
+      },
+      {
+        "id": "5-major",
+        "label": "B major"
+      },
+      {
+        "id": "5-minor",
+        "label": "g♯ minor"
+      },
+      {
+        "id": "4-major",
+        "label": "E major"
+      },
+      {
+        "id": "4-minor",
+        "label": "c♯ minor"
+      },
+      {
+        "id": "3-major",
+        "label": "A major"
+      },
+      {
+        "id": "3-minor",
+        "label": "f♯ minor"
+      },
+      {
+        "id": "2-major",
+        "label": "D major"
+      },
+      {
+        "id": "2-minor",
+        "label": "b minor"
+      },
+      {
+        "id": "1-major",
+        "label": "G major"
+      },
+      {
+        "id": "1-minor",
+        "label": "e minor"
+      }
+    ]
+  },
+  {
+    "id": "reichert-op-5-no-06",
+    "title": "No. 6",
+    "composer": "Mathieu-André Reichert",
+    "tags": [
+      "Exercise"
+    ],
+    "status": "published",
+    "scorePath": "/music/reichert-op-5/no-06.musicxml",
+    "viewerPath": "/flute-studio/music/reichert-op-5-no-06",
+    "book": {
+      "id": "reichert-op-5",
+      "number": 6,
+      "opening": "All keys",
+      "time": "3/4"
+    },
+    "keySections": [
+      {
+        "id": "0-major",
+        "label": "C major"
+      },
+      {
+        "id": "0-minor",
+        "label": "a minor"
+      },
+      {
+        "id": "-1-major",
+        "label": "F major"
+      },
+      {
+        "id": "-1-minor",
+        "label": "d minor"
+      },
+      {
+        "id": "-2-major",
+        "label": "B♭ major"
+      },
+      {
+        "id": "-2-minor",
+        "label": "g minor"
+      },
+      {
+        "id": "-3-major",
+        "label": "E♭ major"
+      },
+      {
+        "id": "-3-minor",
+        "label": "c minor"
+      },
+      {
+        "id": "-4-major",
+        "label": "A♭ major"
+      },
+      {
+        "id": "-4-minor",
+        "label": "f minor"
+      },
+      {
+        "id": "-5-major",
+        "label": "D♭ major"
+      },
+      {
+        "id": "-5-minor",
+        "label": "b♭ minor"
+      },
+      {
+        "id": "-6-major",
+        "label": "G♭ major"
+      },
+      {
+        "id": "-6-minor",
+        "label": "e♭ minor"
+      },
+      {
+        "id": "5-major",
+        "label": "B major"
+      },
+      {
+        "id": "5-minor",
+        "label": "g♯ minor"
+      },
+      {
+        "id": "4-major",
+        "label": "E major"
+      },
+      {
+        "id": "4-minor",
+        "label": "c♯ minor"
+      },
+      {
+        "id": "3-major",
+        "label": "A major"
+      },
+      {
+        "id": "3-minor",
+        "label": "f♯ minor"
+      },
+      {
+        "id": "2-major",
+        "label": "D major"
+      },
+      {
+        "id": "2-minor",
+        "label": "b minor"
+      },
+      {
+        "id": "1-major",
+        "label": "G major"
+      },
+      {
+        "id": "1-minor",
+        "label": "e minor"
+      }
+    ]
+  },
+  {
+    "id": "reichert-op-5-no-07",
+    "title": "No. 7",
+    "composer": "Mathieu-André Reichert",
+    "tags": [
+      "Exercise"
+    ],
+    "status": "published",
+    "scorePath": "/music/reichert-op-5/no-07.musicxml",
+    "viewerPath": "/flute-studio/music/reichert-op-5-no-07",
+    "book": {
+      "id": "reichert-op-5",
+      "number": 7,
+      "opening": "All keys",
+      "time": "6/8"
+    },
+    "keySections": [
+      {
+        "id": "0-major",
+        "label": "C major"
+      },
+      {
+        "id": "0-minor",
+        "label": "a minor"
+      },
+      {
+        "id": "-1-major",
+        "label": "F major"
+      },
+      {
+        "id": "-1-minor",
+        "label": "d minor"
+      },
+      {
+        "id": "-2-major",
+        "label": "B♭ major"
+      },
+      {
+        "id": "-2-minor",
+        "label": "g minor"
+      },
+      {
+        "id": "-3-major",
+        "label": "E♭ major"
+      },
+      {
+        "id": "-3-minor",
+        "label": "c minor"
+      },
+      {
+        "id": "-4-major",
+        "label": "A♭ major"
+      },
+      {
+        "id": "-4-minor",
+        "label": "f minor"
+      },
+      {
+        "id": "-5-major",
+        "label": "D♭ major"
+      },
+      {
+        "id": "-5-minor",
+        "label": "b♭ minor"
+      },
+      {
+        "id": "-6-major",
+        "label": "G♭ major"
+      },
+      {
+        "id": "-6-minor",
+        "label": "e♭ minor"
+      },
+      {
+        "id": "5-major",
+        "label": "B major"
+      },
+      {
+        "id": "5-minor",
+        "label": "g♯ minor"
+      },
+      {
+        "id": "4-major",
+        "label": "E major"
+      },
+      {
+        "id": "4-minor",
+        "label": "c♯ minor"
+      },
+      {
+        "id": "3-major",
+        "label": "A major"
+      },
+      {
+        "id": "3-minor",
+        "label": "f♯ minor"
+      },
+      {
+        "id": "2-major",
+        "label": "D major"
+      },
+      {
+        "id": "2-minor",
+        "label": "b minor"
+      },
+      {
+        "id": "1-major",
+        "label": "G major"
+      },
+      {
+        "id": "1-minor",
+        "label": "e minor"
+      }
+    ]
   }
 ]

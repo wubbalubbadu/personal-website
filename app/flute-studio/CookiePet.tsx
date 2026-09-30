@@ -3,6 +3,7 @@
 import {createPortal} from "react-dom";
 import {usePathname} from "next/navigation";
 import {PointerEvent,useEffect,useLayoutEffect,useRef,useState} from "react";
+import {useLanguage} from "./i18n/LanguageContext";
 import {usePomodoro,formatClock} from "./usePomodoro";
 import "./cookie-pet.css";
 
@@ -10,6 +11,7 @@ type Point={x:number;y:number};
 
 export default function CookiePet(){
   const pathname=usePathname();
+  const {lang}=useLanguage();
   const lessonPage=pathname.startsWith("/flute-studio/theory/");
   const {t,focusMinutes,remaining,running,rounds,message,canEditDuration,minFocusMinutes,maxFocusMinutes,start,pause,reset,adjustFocusMinutes}=usePomodoro();
   const [savedPoint,setSavedPoint]=useState<Point|null>(null);
@@ -98,7 +100,7 @@ export default function CookiePet(){
       </div>
       <small>{t.pomodoro.roundsDone(rounds)}</small>
     </section>}
-    <div className={`cookie-pet expression-${expression}`} role="button" tabIndex={0} aria-label={lessonPage?"Cookie lesson companion. Click for a new expression.":"Cookie practice companion. Drag to move or click for a focus timer."} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();if(lessonPage)setExpression(value=>(value+1)%3);else setOpen(v=>!v)}else if(!lessonPage&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)){event.preventDefault();const rect=event.currentTarget.getBoundingClientRect();setPoint({x:Math.max(10,Math.min(window.innerWidth-70,rect.left+(event.key==='ArrowRight'?15:event.key==='ArrowLeft'?-15:0))),y:Math.max(76,Math.min(window.innerHeight-76,rect.top+(event.key==='ArrowDown'?15:event.key==='ArrowUp'?-15:0)))})}}} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={()=>{drag.current=null}}>
+    <div className={`cookie-pet expression-${expression}`} role="button" tabIndex={0} aria-label={lang==="zh"?(lessonPage?"Cookie 学习伙伴，点按切换表情。":"Cookie 练习伙伴，拖动可移动，点按打开专注计时器。"):(lessonPage?"Cookie lesson companion. Click for a new expression.":"Cookie practice companion. Drag to move or click for a focus timer.")} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();if(lessonPage)setExpression(value=>(value+1)%3);else setOpen(v=>!v)}else if(!lessonPage&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)){event.preventDefault();const rect=event.currentTarget.getBoundingClientRect();setPoint({x:Math.max(10,Math.min(window.innerWidth-70,rect.left+(event.key==='ArrowRight'?15:event.key==='ArrowLeft'?-15:0))),y:Math.max(76,Math.min(window.innerHeight-76,rect.top+(event.key==='ArrowDown'?15:event.key==='ArrowUp'?-15:0)))})}}} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={()=>{drag.current=null}}>
       <span className="chip c1"/><span className="chip c2"/><span className="chip c3"/><span className="chip c4"/><span className="chip c5"/>
       <i className="eye left"/><i className="eye right"/><b className="smile"/>
     </div>

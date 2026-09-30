@@ -15,6 +15,8 @@ import { deriveScoreEvents, resolveKeyAccidentals } from "./deriveScoreEvents";
 import type { ComposerInfo } from "../../../content/music-library";
 import {readScoreFacts,keySignatureFromFifths,keySignatureFromNotes,timeSignatureText,metronomeText,performanceTermText,directionStyle,directionRuns,tuckMetronomeMarks,clearRehearsalMarks,spaceMetronomeMarks,METRONOME_TUCK_SHIFT,type ScoreFacts} from "./scoreTheory";
 import {measureBeatOffsets,meterGrid} from "./rhythmGrid";
+import {installGhostNoteFix} from "../lib/ghostNoteFix";
+import {scheduledTempoAt,type TempoPoint} from "../lib/scoreTempo";
 import {usePracticeAudio,pitchFrequency} from "../PracticeAudio";
 import {PracticeIcon} from "./PracticeIcon";
 import {FluteDiagramMini} from "./FluteDiagram";
@@ -901,7 +903,7 @@ function StoryCard({composer,title,story,style,onClose}:{composer:string;title:s
 export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceActions,practiceRow,stage,dock,onPracticeNote,practiceEvent,defaultNoteSpacing,onTempoChange,unmetered=false,lineBreak,practiceTempo,scoreMarks,headerActions,save,extraSystemSpacing=0}:{config:ScoreViewerConfig;toolbar?:React.ReactNode;settings?:(controls:ReaderControls)=>React.ReactNode;/** Pinned below the music inside the scroll area — for a live readout that has to stay visible while the page scrolls. */aside?:React.ReactNode;/** Title and music to print instead of what is on screen. The PDF is written with jsPDF's built-in Latin-1 fonts, which cannot encode Chinese at all, so a Chinese book prints from an English copy of itself. */printConfig?:{title:string;asset:string};practiceActions?:React.ReactNode;/** A tool row of the host's own, stacked above mark-up's row so both modes can be open at once. */practiceRow?:React.ReactNode;/** Replaces the music area in place (e.g. a close-up view) while the toolbar stays. The engraving stays mounted underneath so its layout survives the switch. */stage?:React.ReactNode|((view:{fingering:boolean})=>React.ReactNode);/** A panel under the music, on the same canvas, that shrinks the score instead of covering it. */dock?:React.ReactNode;onPracticeNote?:(event:number)=>void;practiceEvent?:number;/** Starting note spacing, for books whose notes are faster than the exercise default assumes. Overridden by a saved preference. */defaultNoteSpacing?:number;onTempoChange?:(tempo:number)=>void;unmetered?:boolean;lineBreak?:{value:boolean;onChange:(value:boolean)=>void};practiceTempo?:{value:boolean;onChange:(value:boolean)=>void};scoreMarks?:(context:ScoreMarksContext)=>React.ReactNode;headerActions?:(controls:ReaderControls)=>React.ReactNode;save?:{saved:boolean;onToggle:()=>void;label:string;savedLabel:string};extraSystemSpacing?:number}) {
   const {t,lang}=useLanguage();
   const zh=lang==="zh";
-  const {bpm,setBpm,metro,toggleMetro,toggleDrone,stopAllDrones,drones,initializeScore,setAccent,getAudio,alignMetronome,metroHeld,setBeats}=usePracticeAudio();
+  const {bpm,setBpm,setPlaybackBpm,metro,toggleMetro,toggleDrone,stopAllDrones,drones,initializeScore,setAccent,getAudio,alignMetronome,metroHeld,setBeats}=usePracticeAudio();
   const [droneArmed,setDroneArmed]=useState(false);
   const [smartOpen,setSmartOpen]=useState(false),[smartRunning,setSmartRunning]=useState(false);
   const smartMode=useRef(false),countInPending=useRef(false);
@@ -1045,7 +1047,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   // The bar Listen starts from, read by syncNotesAndOverlays (which runs from
   // stale closures after a re-render) to put its highlight back.
   const selectedMeasureRef=useRef<number|null>(null);selectedMeasureRef.current=selectedMeasure;
-  useEffect(()=>{initializeScore(id,config.defaultTempo??76)},[id]);
+  useEffect(()=>{tempoSectionRef.current=1;initializeScore(id,config.defaultTempo??76)},[id]);
   // An unmetered book has no bar lines, so there is no downbeat for the
   // metronome to lean on — a stressed beat every four clicks implies a 4/4
   // that is not there.
@@ -1073,7 +1075,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     // Two pages draws the title and composer inside the score. Tag them so CSS
     // can give them the page heading's fonts (Georgia title, grey system-font
     // composer), and so the composer opens the same card when there is one.
-    root.querySelectorAll<SVGTextElement>("svg text").forEach(text=>{const words=text.textContent?.trim();if(words===title)text.dataset.scoreTitle="";else if(words===composer){text.dataset.composer="";if(config.story)text.dataset.composerCard=""}});
+    root.querySelectorAll<SVGTextElement>("svg text").forEach(text=>{const words=text.textContent?.trim();if(words===title)text.dataset.scoreTitle="";else if(words===composer){text.dataset.composer="";const svg=text.ownerSVGElement;const titleText=svg?Array.from(svg.querySelectorAll<SVGTextElement>("text")).find(node=>node.textContent?.trim()===title):undefined;if(titleText){const bounds=titleText.getBBox();text.setAttribute("x",String(bounds.x+bounds.width/2));text.setAttribute("text-anchor","middle");const composerBounds=text.getBBox();text.setAttribute("y",String(bounds.y+bounds.height+composerBounds.height*1.6));}if(config.story)text.dataset.composerCard=""}});
   }
   useEffect(()=>{if(scoreRef.current)markPlayStart(scoreRef.current,selectedMeasure)},[selectedMeasure]);
   // While it plays, the start-bar tint steps aside: the moving note shows
@@ -1440,7 +1442,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     return()=>{window.clearTimeout(commit);el.removeEventListener("wheel",wheel);el.removeEventListener("touchstart",start);el.removeEventListener("touchmove",move);el.removeEventListener("touchend",end);el.removeEventListener("touchcancel",end);el.removeEventListener("gesturestart",gestureStart);el.removeEventListener("gesturechange",gestureChange);el.removeEventListener("gestureend",gestureEnd)};
   },[]);
 
-  useEffect(()=>{let mounted=true;let backgroundTimer=0; async function load(){ try { if(unmetered&&!asset.includes("<note>")){scoreRef.current?.replaceChildren();osmdRef.current=null;setLoading(false);return;} setLoading(true); const {OpenSheetMusicDisplay}=await import("opensheetmusicdisplay"); if(!mounted||!scoreRef.current)return; scoreRef.current.replaceChildren(); const osmd=new OpenSheetMusicDisplay(scoreRef.current,{backend:"svg",autoResize:false,drawTitle:false,drawComposer:false,drawingParameters:"compacttight"}); osmd.setOptions({pageFormat:"Endless",drawMeasureNumbers:true,drawPartNames:false,drawMetronomeMarks:true}); applySlurRules(osmd); osmd.EngravingRules.RenderRehearsalMarks=!config.hideRehearsalMarks; /* Chord symbols stay in the MusicXML (for a future accompaniment) but are never drawn. OSMD builds them inside load(), so this has to be set first. */ osmd.EngravingRules.RenderChordSymbols=false; /* Each rest bar drawn on its own, never folded into a multi-bar rest: notes are matched to the event list by drawing order, so three rests drawn as one "3" shifted every later note (and bar selection, and playback start) by three. */ osmd.EngravingRules.RenderMultipleRestMeasures=false; osmd.EngravingRules.AutoGenerateMultipleRestMeasuresFromRestMeasures=false; osmd.OnXMLRead = xml=>{scoreFactsRef.current=readScoreFacts(xml);
+  useEffect(()=>{let mounted=true;let backgroundTimer=0; async function load(){ try { if(unmetered&&!asset.includes("<note>")){scoreRef.current?.replaceChildren();osmdRef.current=null;setLoading(false);return;} setLoading(true); const {OpenSheetMusicDisplay,VexFlowConverter}=await import("opensheetmusicdisplay");installGhostNoteFix(VexFlowConverter); if(!mounted||!scoreRef.current)return; scoreRef.current.replaceChildren(); const osmd=new OpenSheetMusicDisplay(scoreRef.current,{backend:"svg",autoResize:false,drawTitle:false,drawComposer:false,drawingParameters:"compacttight"}); osmd.setOptions({pageFormat:"Endless",drawMeasureNumbers:true,drawPartNames:false,drawMetronomeMarks:true}); applySlurRules(osmd); osmd.EngravingRules.RenderRehearsalMarks=!config.hideRehearsalMarks; /* Chord symbols stay in the MusicXML (for a future accompaniment) but are never drawn. OSMD builds them inside load(), so this has to be set first. */ osmd.EngravingRules.RenderChordSymbols=false; /* Each rest bar drawn on its own, never folded into a multi-bar rest: notes are matched to the event list by drawing order, so three rests drawn as one "3" shifted every later note (and bar selection, and playback start) by three. */ osmd.EngravingRules.RenderMultipleRestMeasures=false; osmd.EngravingRules.AutoGenerateMultipleRestMeasuresFromRestMeasures=false; osmd.OnXMLRead = xml=>{scoreFactsRef.current=readScoreFacts(xml);
         // The page's own opening mark wins over the catalog's suggestion (69,
         // not the uploader's rounded 70), counted in the mark's beat.
         const opening=scoreFactsRef.current.tempos[0];if(opening)initializeScore(id,opening.quarter/opening.beat);
@@ -1689,6 +1691,20 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
    * the opening down to 50 hears B slowed down by the same proportion.
    */
   const tempoSectionRef=useRef(1);
+  const liveTempoPoints=useRef<TempoPoint[]>([]);
+  const [liveTempo,setLiveTempo]=useState<number|null>(null);
+  useEffect(()=>{
+    if(!playing)return;
+    let frame=0,last:number|null=null;
+    const draw=()=>{
+      const next=scheduledTempoAt(liveTempoPoints.current,getAudio().currentTime);
+      if(next!==last){last=next;setLiveTempo(next)}
+      frame=requestAnimationFrame(draw);
+    };
+    frame=requestAnimationFrame(draw);
+    return()=>cancelAnimationFrame(frame);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- uses the current scheduled timeline ref
+  },[playing]);
   /** The notes playback has scheduled, on the audio clock, for the moving cursor. */
   const cursorBeats=useRef<CursorBeat[]>([]);
   useEffect(()=>{
@@ -1738,6 +1754,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     setBeats(Math.max(1,Math.round(fullBar/beatLen)));
   }
   function scheduleNotes(fromIndex:number,fresh=true){
+    setLiveTempo(null);
     const c=audio(),seq=sequenceRef.current,tempos=scoreFactsRef.current?.tempos??[];
     const fromMeasure=measureForEvent(fromIndex,seq.measureStarts);
     // Starting in another section than the number was set for converts it,
@@ -1745,7 +1762,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     let playBpm=bpm;
     if(fresh){
       const here=tempoSectionAt(fromMeasure),was=tempoSectionAt(tempoSectionRef.current);
-      if(here&&was&&here!==was){playBpm=Math.max(20,Math.min(300,Math.round(bpm*printed(here)/printed(was))));skipTempoReschedule.current=true;setBpm(playBpm)}
+      if(here&&was&&here!==was){playBpm=Math.max(20,Math.min(300,Math.round(bpm*printed(here)/printed(was))));skipTempoReschedule.current=true;setPlaybackBpm(playBpm,printed(here))}
       if(here){tempoSectionRef.current=here.measure;applySectionMeter(here.measure)}
     }
     // The number counts the section's printed beat; notes are timed in quarters.
@@ -1870,11 +1887,12 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
         if(!was)return;
         tempoSectionRef.current=nextChange.measure;applySectionMeter(nextChange.measure);
         resumeSectionAt.current=changeIndex??null;
-        setBpm(Math.max(20,Math.min(300,Math.round(playBpm*printed(nextChange)/printed(was)))));
+        setPlaybackBpm(Math.max(20,Math.min(300,Math.round(playBpm*printed(nextChange)/printed(was)))),printed(nextChange));
       },Math.max(0,at+countIn*1000-8)));
     }
     playbackPosition.current={audioStart,unit,from:fromIndex};
     cursorBeats.current=smartMode.current?[]:beats;
+    liveTempoPoints.current=smartMode.current?[]:timeline.map(point=>({at:audioStart+point.ms/1000,bpm:playBpm*point.speed}));
     const grid=playbackGrid(fromIndex,audioStart,unit);
     // When the beats are not one even grid (an accel. or rit., or a meter
     // change inside the section: 4/4 to 6/8 keeps the eighths the same length
@@ -2232,7 +2250,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
 
       <div className="practice-bar"><div className="tool-group">        <button data-tip={t.scoreViewer.markUpTip} className={annotating?"tool on coral has-tip":"tool has-tip"} onClick={()=>setAnnotating(!annotating)}><PracticeIcon name="markup"/>{t.scoreViewer.markUp}</button>
       </div>
-        <div className="transport">{practiceActions}<button data-tip={t.scoreViewer.playTip(selectedMeasure)} className={playing?"tool on has-tip":"tool has-tip"} aria-label={playing?(lang==="zh"?"暂停":"Pause"):t.scoreViewer.play} onClick={togglePlayback}><PracticeIcon name={playing?"pause":"play"}/>{playing?(lang==="zh"?"暂停":"Pause"):t.scoreViewer.play}</button><PracticeRecorder/>{/* Everything about tempo in one group: the metronome that sounds it, the number, and the steppers. The metronome used to sit after Listen, which is what made "Listen" read as "start the metronome"; the steppers reuse the − n + shape the on-page tempo marks already use rather than a spinner. */}<div className="tempo-group"><button data-tip={t.scoreViewer.metronomeTip} className={metro&&!metroHeld?"tool on has-tip":"tool has-tip"} onClick={()=>{if(metroHeld)alignMetronome(null);else toggleMetro()}}><PracticeIcon name="metronome"/>{t.scoreViewer.metronome}</button>{/* A div, not a label: buttons nested in a label get the label's hover applied to them as a set — hovering + lit up − too — and a tap on one activates the label, which focuses the number field and would raise the keyboard on a tablet. Only the field is labelled. */}<div className="tempo"><button type="button" className="tempo-step" aria-label={zh?"减慢":"Slower"} disabled={bpm<=30} onClick={()=>setBpm(bpm-1)}>−</button><label className="tempo-field"><input aria-label={t.scoreViewer.tempoAria} type="number" min="30" max="220" value={tempoDraft??bpm} onChange={e=>setTempoDraft(e.target.value)} onBlur={commitTempo} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/></label><button type="button" className="tempo-step" aria-label={zh?"加快":"Faster"} disabled={bpm>=220} onClick={()=>setBpm(bpm+1)}>+</button></div></div><button className="tool has-tip reader-tap" data-tip={t.scoreViewer.tapTempo} aria-label={t.scoreViewer.tapTempo} onClick={tapTempo}><PracticeIcon name="tap"/>{zh?"打拍":"Tap"}</button>
+        <div className="transport">{practiceActions}<button data-tip={t.scoreViewer.playTip(selectedMeasure)} className={playing?"tool on has-tip":"tool has-tip"} aria-label={playing?(lang==="zh"?"暂停":"Pause"):t.scoreViewer.play} onClick={togglePlayback}><PracticeIcon name={playing?"pause":"play"}/>{playing?(lang==="zh"?"暂停":"Pause"):t.scoreViewer.play}</button><PracticeRecorder/>{/* Everything about tempo in one group: the metronome that sounds it, the number, and the steppers. The metronome used to sit after Listen, which is what made "Listen" read as "start the metronome"; the steppers reuse the − n + shape the on-page tempo marks already use rather than a spinner. */}<div className="tempo-group"><button data-tip={t.scoreViewer.metronomeTip} className={metro&&!metroHeld?"tool on has-tip":"tool has-tip"} onClick={()=>{if(metroHeld)alignMetronome(null);else toggleMetro()}}><PracticeIcon name="metronome"/>{t.scoreViewer.metronome}</button>{/* A div, not a label: buttons nested in a label get the label's hover applied to them as a set — hovering + lit up − too — and a tap on one activates the label, which focuses the number field and would raise the keyboard on a tablet. Only the field is labelled. */}<div className="tempo"><button type="button" className="tempo-step" aria-label={zh?"减慢":"Slower"} disabled={bpm<=30} onClick={()=>setBpm(bpm-1)}>−</button><label className="tempo-field"><input aria-label={t.scoreViewer.tempoAria} type="number" min="30" max="220" value={tempoDraft??(playing?liveTempo??bpm:bpm)} onFocus={()=>setTempoDraft(String(bpm))} onChange={e=>setTempoDraft(e.target.value)} onBlur={commitTempo} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/></label><button type="button" className="tempo-step" aria-label={zh?"加快":"Faster"} disabled={bpm>=220} onClick={()=>setBpm(bpm+1)}>+</button></div></div><button className="tool has-tip reader-tap" data-tip={t.scoreViewer.tapTempo} aria-label={t.scoreViewer.tapTempo} onClick={tapTempo}><PracticeIcon name="tap"/>{zh?"打拍":"Tap"}</button>
           <div className="transport-menu">
             <button aria-label={t.scoreViewer.drone} aria-pressed={droneArmed||drones.length>0} data-tip={t.scoreViewer.droneTip} className={droneArmed||drones.length?"tool on has-tip":"tool has-tip"} onClick={()=>setDroneArmed(on=>{
               // Turning the drone off stops what is sounding. Keeping the

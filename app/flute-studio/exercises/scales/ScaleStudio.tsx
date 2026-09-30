@@ -2,6 +2,7 @@
 import {ScoreViewer} from "../../components/ScoreViewer";
 import {DownloadIcon} from "../../components/HeaderIcons";
 import {ReaderPopover} from "../../components/ReaderPopover";
+import {KeySelection} from "../../components/KeySelection";
 import {PracticeIcon,SpectrumDef} from "../../components/PracticeIcon";
 import {useCallback,useEffect,useState} from "react";
 import {useLanguage} from "../../i18n/LanguageContext";
@@ -774,8 +775,7 @@ export default function ScaleStudio(){
           <div className="scale-book__ranges" role="group" aria-label={zh?"练习形式":"Form"}>{scaleForms.map(f=><button type="button" key={f.id} className={forms.includes(f.id)?"scale-book__chip selected":"scale-book__chip"} aria-pressed={forms.includes(f.id)} onClick={()=>toggleFrom(forms,f.id,setForms)}>{zh?f.zh:f.label}</button>)}</div>
 </AccordionSection>
         <AccordionSection id="keys" phoneActive={phoneSection==="keys"} title={zh?"调性":"Keys"} openSections={openSections} onToggle={toggleSection}>
-          <div className="scale-book__key-actions"><button onClick={()=>setKeys(allKeys)}>{zh?"全部":"All keys"}</button><button onClick={()=>{setKeys([]);}}>{zh?"清除":"Clear"}</button></div>
-          <div className="scale-book__keys">{majorKeys.map(k=><button type="button" key={k.id} className={keys.includes(k.id)?"scale-book__chip selected":"scale-book__chip"} aria-pressed={keys.includes(k.id)} onClick={()=>toggleKey(k.id)}>{k.label}</button>)}</div>
+          <KeySelection options={majorKeys} selected={keys} onChange={setKeys} zh={zh}/>
         </AccordionSection>
         <AccordionSection id="range" phoneActive={phoneSection==="range"} title={zh?"音域":"Range"} openSections={openSections} onToggle={toggleSection}>
           <div className="scale-book__ranges" role="group" aria-label={zh?"音域":"Range"}>{ranges.map(r=><button type="button" key={r.id} className={range===r.id?"scale-book__chip selected":"scale-book__chip"} aria-pressed={range===r.id} onClick={()=>changeRange(r.id)}>{zh?r.zh:r.label}{"notes" in r&&<small>{r.notes}</small>}</button>)}</div>

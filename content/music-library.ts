@@ -11,7 +11,7 @@ export type ScorePage={src:string;width:number;height:number};
 export type ScoreRecording={id:string;title:string;performer:string;youtubeId:string;startSeconds?:number};
 export type ExcerptScore={part:string;passage:string;zhPassage?:string;pages:ScorePage[]};
 
-export type MusicItem={id:string;title:string;composer:string;
+export type MusicItem={private?:boolean;id:string;title:string;composer:string;
   /** Year written, as a plain number so pieces can be sorted on a timeline. */
   year?:number;
   /** One or two sentences about this piece: where it comes from, what it was written for. */
@@ -24,6 +24,7 @@ export type MusicItem={id:string;title:string;composer:string;
   /** A numbered piece inside a book (Köhler Op. 33 No. 4). The Library lists the book, not each piece. */
   book?:{id:string;number:number;opening?:string;bars?:number;time?:string};
   /** Set on a book's own Library row: how many pieces it holds. */
+  keySections?:{id:string;label:string}[];
   bookCount?:number;status:"published"|"coming-soon";scorePath:string|null;viewerPath:string|null;pdfPath?:string;defaultTempo?:number;fullScorePath?:string;readingPartId?:string;partCount?:number};
 /** Pieces only: the catalog the score reader's own routes are built from. */
 export const musicLibrary=catalog as MusicItem[];

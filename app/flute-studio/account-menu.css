@@ -47,3 +47,5 @@
   .account-menu__trigger{width:40px;height:40px;border:0;background:transparent;color:#45464f}
   .account-menu__panel{position:fixed;top:52px!important;right:10px!important}
 }
+
+.account-menu__private{display:grid;gap:8px;padding:4px 12px 12px}.account-menu__private label{display:grid;gap:5px;font-size:12px}.account-menu__private input{width:100%;box-sizing:border-box;padding:9px;border:1px solid #dadbe0;border-radius:8px;font:inherit}.account-menu__private button{padding:9px;border:0;border-radius:8px;background:#292a33;color:white;font:inherit;cursor:pointer}.account-menu__private p{margin:0;font-size:12px}

@@ -1,7 +1,8 @@
 "use client";
+import {usePrivateMusic} from "../lib/privateMusic";
 
 import {useMemo,useState,useSyncExternalStore} from "react";
-import {libraryShelf,libraryTags,hasTag,tagKey} from "../../../content/music-library";
+import {libraryShelf as publicShelf,libraryTags,hasTag,tagKey} from "../../../content/music-library";
 import MusicRow from "../MusicRow";
 import {tagTone,BEGINNER_TONE} from "../lib/tagTone";
 import {STATUSES,STATUS_LABELS,STATUS_TONES,useStatuses} from "../lib/musicStatus";
@@ -20,10 +21,12 @@ const LEAD_TAGS=["classical","exercise","etude","excerpt"];
 const noSubscribe=()=>()=>{};
 
 export default function MusicLibrary(){
+  const privateMusic=usePrivateMusic();
+  const libraryShelf=useMemo(()=>[...publicShelf,...privateMusic.items],[privateMusic.items]);
   const {t,lang}=useLanguage(),zh=lang==="zh";
   // Chips are built from the tags in use, so a new tag typed in the uploader
   // shows up here on its own. Known tags get a Chinese label; others show as typed.
-  const tags=useMemo(()=>libraryTags(libraryShelf),[]);
+  const tags=useMemo(()=>libraryTags(libraryShelf),[libraryShelf]);
   const tagLabel=(tag:string)=>zh?ZH_TAGS[tagKey(tag)]??tag:tagKey(tag)==="excerpt"?"Orchestral excerpts":tag;
   const [query,setQuery]=useState("");
   // A link can open the Library on a shelf (?shelf=beginner, ?tag=etude) or
@@ -54,7 +57,7 @@ export default function MusicLibrary(){
       const haystack=[item.title,item.composer,item.excerpt?.part??"",item.excerpt?.passage??"",item.excerpt?.zhPassage??"",...item.tags,...item.tags.map(tag=>ZH_TAGS[tagKey(tag)]??""),item.beginner?"good first piece beginner 适合入门":"",statuses[item.id]?`${STATUS_LABELS[statuses[item.id]].en} ${STATUS_LABELS[statuses[item.id]].zh}`:"",item.exercise?.detail??"",item.exercise?.zhTitle??"",item.exercise?.zhDetail??""].join(" ").toLowerCase();
       return query.toLowerCase().split(/\s+/).filter(Boolean).every(word=>haystack.includes(word));
     };
-    return libraryShelf.filter(item=>(shelf==="all"||(shelf==="beginner"?item.beginner:shelf.startsWith("status:")?statuses[item.id]===shelf.slice(7):hasTag(item,shelf)))&&matchesQuery(item)).sort((a,b)=>a.title.localeCompare(b.title))},[query,shelf,statuses]);
+    return libraryShelf.filter(item=>(shelf==="all"||(shelf==="beginner"?item.beginner:shelf.startsWith("status:")?statuses[item.id]===shelf.slice(7):hasTag(item,shelf)))&&matchesQuery(item)).sort((a,b)=>a.title.localeCompare(b.title))},[query,shelf,statuses,libraryShelf]);
 
   return <main className="library-shell">
     <section className="library-main">

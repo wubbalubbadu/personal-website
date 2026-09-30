@@ -1,9 +1,10 @@
 "use client";
+import {usePrivateMusic} from "./lib/privateMusic";
 
 import Link from "next/link";
 import {useSyncExternalStore} from "react";
 import {usePathname} from "next/navigation";
-import {libraryShelf} from "../../content/music-library";
+import {libraryShelf as publicShelf} from "../../content/music-library";
 import {exerciseCatalog} from "../../content/exercise-catalog";
 import {scaleSetsEvent,scaleSetsKey,type ScaleSet} from "./exercises/scales/saved-sets";
 import {useLanguage} from "./i18n/LanguageContext";
@@ -77,6 +78,8 @@ const SAVED_LIMIT=6;
 const FEATURED_EXERCISES=exerciseCatalog.filter(entry=>entry.featured&&entry.href);
 
 export default function StudioRail({destinations,open}:{destinations:RailDestination[];open:boolean}){
+  const privateMusic=usePrivateMusic();
+  const libraryShelf=[...publicShelf,...privateMusic.items];
   const pathname=usePathname();
   const {t,lang}=useLanguage(),zh=lang==="zh";
   // Your lists, most recent first: what you are working on, then what you want to learn.
@@ -109,7 +112,7 @@ export default function StudioRail({destinations,open}:{destinations:RailDestina
     return [];
   };
 
-  return <nav id="studio-rail" className="studio-rail" data-open={open?"":undefined} aria-label="Studio sections">
+  return <nav id="studio-rail" className="studio-rail" data-open={open?"":undefined} aria-label={zh?"工作室导航":"Studio sections"}>
     {destinations.map(destination=>{
       const children=open?childrenOf(destination.key):[];
       // Only the most specific place you are gets the highlight: inside a

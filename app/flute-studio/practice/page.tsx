@@ -1,4 +1,5 @@
 "use client";
+import {usePrivateMusic} from "../lib/privateMusic";
 
 import Link from "next/link";
 import {useEffect,useState} from "react";
@@ -8,7 +9,7 @@ import {readSessions,type PracticeSession} from "../practice-data";
 import {useRecents} from "../lib/storage";
 import {useStatusEntries,STATUS_LABELS,STATUS_TONES} from "../lib/musicStatus";
 import "../components/status-button.css";
-import {musicLibrary,libraryShelf} from "../../../content/music-library";
+import {musicLibrary as publicMusic,libraryShelf as publicShelf} from "../../../content/music-library";
 import {exerciseCatalog} from "../../../content/exercise-catalog";
 import {PracticeCalendar} from "../PracticeCalendar";
 import {PitchTendencies} from "./PitchTendencies";
@@ -46,6 +47,9 @@ function groupByDay(sessions:PracticeSession[]){
 }
 
 export default function PracticePage(){
+  const privateMusic=usePrivateMusic();
+  const libraryShelf=[...publicShelf,...privateMusic.items];
+  const musicLibrary=[...publicMusic,...privateMusic.items];
   const {t,lang}=useLanguage(),zh=lang==="zh";
   const pomodoro=usePomodoro();
   const [routine,setRoutine]=useState<RoutineItem[]>([]);

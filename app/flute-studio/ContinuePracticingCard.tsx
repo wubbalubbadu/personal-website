@@ -1,6 +1,7 @@
 'use client';
+import {usePrivateMusic} from './lib/privateMusic';
 import Link from 'next/link';
-import {musicLibrary, libraryShelf} from '../../content/music-library';
+import {musicLibrary as publicMusic, libraryShelf as publicShelf} from '../../content/music-library';
 import {useStatusEntries} from './lib/musicStatus';
 import {readSessions} from './practice-data';
 import {useLanguage} from './i18n/LanguageContext';
@@ -10,6 +11,9 @@ import {useLanguage} from './i18n/LanguageContext';
 // several pieces on it, so it doesn't jump into just one of them).
 // "Continue practicing" still goes straight to the specific piece.
 export default function ContinuePracticingRow(){
+  const privateMusic=usePrivateMusic();
+  const libraryShelf=[...publicShelf,...privateMusic.items];
+  const musicLibrary=[...publicMusic,...privateMusic.items];
   const {t, lang} = useLanguage(), zh = lang === 'zh';
   const entries = useStatusEntries();
   // What you are working on; before anything is, what you want to learn.

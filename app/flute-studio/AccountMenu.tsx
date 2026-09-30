@@ -1,5 +1,6 @@
 "use client";
 
+import {usePrivateMusic,unlockPrivateMusic,lockPrivateMusic} from "./lib/privateMusic";
 import Link from "next/link";
 import {useEffect,useRef,useState} from "react";
 import {useLanguage} from "./i18n/LanguageContext";
@@ -22,6 +23,8 @@ import "./account-menu.css";
  */
 export default function AccountMenu(){
   const {t,lang,setLang}=useLanguage();
+  const privateMusic=usePrivateMusic();
+  const [code,setCode]=useState("");
   const pencil=usePencilOnly();
   const [open,setOpen]=useState(false);
   const [position,setPosition]=useState({top:62,right:16});
@@ -111,6 +114,13 @@ export default function AccountMenu(){
         </Link>
       </div>
 
+      <hr className="account-menu__rule"/>
+      <p className="account-menu__group">{lang==="zh"?"私人曲库":"Private music"}</p>
+      {privateMusic.unlocked?<div className="account-menu__choices"><Link role="menuitem" className="account-menu__item" href="/flute-studio/music" onClick={()=>setOpen(false)}>{lang==="zh"?`已解锁 ${privateMusic.items.length} 首`:`${privateMusic.items.length} pieces unlocked`}</Link><button role="menuitem" className="account-menu__item" onClick={lockPrivateMusic}>{lang==="zh"?"锁定私人曲库":"Lock private music"}</button></div>:<form className="account-menu__private" onSubmit={event=>{event.preventDefault();void unlockPrivateMusic(code).then(ok=>{if(ok)setCode("")})}}>
+        <label><span>{lang==="zh"?"访问码":"Access code"}</span><input type="password" autoComplete="off" value={code} onChange={event=>setCode(event.target.value)} /></label>
+        <button disabled={privateMusic.loading} type="submit">{lang==="zh"?(privateMusic.loading?"正在解锁…":"解锁"):(privateMusic.loading?"Unlocking…":"Unlock")}</button>
+        {privateMusic.error&&<p role="status">{lang==="zh"?"无法解锁，请检查访问码。":"Could not unlock. Check the code."}</p>}
+      </form>}
       <hr className="account-menu__rule"/>
       <p className="account-menu__group">{t.settings.about}</p>
       <p className="account-menu__about">

@@ -2,7 +2,7 @@
 
 Historical context: [September 26 retrospective and original notes](history/2026-09-26-cookie-retrospective.md).
 
-Updated September 26, 2026 from the pasted notes and current local source, including work in progress, and again on September 28 with the navigation, tools, book and pitch-test work from that session (see "Built September 28" and "Ideas from the September 28 session"). This is a source audit, not confirmation that every feature works on the deployed site or on iPad. The older BACKLOG.md is historical context. Items below are grouped, not a new priority decision.
+Updated September 26, 2026 from the pasted notes and current local source, including work in progress, and again on September 28 with the navigation, tools, book and pitch-test work from that session (see "Built September 28" and "Ideas from the September 28 session"). This is a source audit, not confirmation that every feature works on the deployed site or on iPad. The older BACKLOG.md is historical context. September 30 product direction and exploratory ideas were added from the later pasted discussion, without a new source audit. Items below are grouped, not a new priority decision.
 
 ## Built September 29: reader fixes from Arnold's Fantasy
 
@@ -22,12 +22,29 @@ Updated September 26, 2026 from the pasted notes and current local source, inclu
 - [ ] **Next low-hanging items:**
   - **Meter change with the same tempo** (4/4 to 6/8): keep the eighth notes the same length and regroup the metronome clicks.
   - **A new tempo word with no ♩ = n** (Moderato, Allegro…): move to that word's usual speed from the glossary (textbook ranges only, never a wild jump).
-  - **Live tempo number through accel./rit.** (display only).
-  - **Remember a tempo you chose for a piece after reloading** (today it lasts until reload). Careful: playback now moves the number per section (69 → 120 at B), so store it as a share of the opening mark, not the raw number.
   - ~~The two failing tests~~ fixed September 30: both were stale expectations (the embouchure model gained a surrounding-air layer; the lesson tone's onset is fuller but still click-free), now checked by intent. 75 of 75 pass.
   - **A held note swelling under a hairpin** is a bigger job.
 - [ ] **Slurs cut through high runs** (Arnold bars 17, 19, 24): the even-arch reshape lifts a slur at most 4 spaces, so a long slur over a run that climbs to high notes crosses the noteheads. Fix: let the arch follow the highest note under it (an asymmetric curve, or raise the control points over the peak), as engravers do.
-- [ ] **Two unrelated tests fail** (`tests/embouchure-model.test.mjs` line 71, `tests/theory-lesson.test.mjs` line 49); not from the reader changes, worth a look.
+
+## Small fixes September 30
+
+- [x] **Breathing Lab Chinese:** completed remaining UI translations and adjusted the Start button/tempo row so the Chinese label fits. Local desktop preview checked.
+- [x] **Backlog cleanup:** removed the stale failing-test entry and consolidated repeated saved-set and tempo notes. Older session context remains.
+- [x] **Score tempo after reload:** save the user's speed as a ratio of the current printed tempo. Playback section changes update the reference without overwriting that preference. Verified Arnold at 46 after reload, B at 80 during playback, then 46 after another reload.
+- [x] **Live tempo through accel./rit.:** the reader's number follows the audio scheduler's sampled ramp speeds, including rests, without changing scheduling or saving those automatic values as a preference. Acceleration observed in local preview.
+- Chinese spot-check: theory cards and existing lesson narration/actions have bilingual text. Translated two shared accessibility labels found in the check (studio navigation and Cookie companion). This was not an exhaustive review of every exercise state.
+- Validation: production build and all 78 tests passed; reader lint errors and project TypeScript errors predate these edits.
+- [ ] **Device checks:** verify the translated layout and both tempo behaviors on iPhone/iPad. These changes are local, not deployed.
+
+## Private practice library September 30
+
+- [x] **Uploader visibility:** individual MusicXML pieces can be saved as Public library or Private practice. Private pieces are encrypted with the local access code before being included in the website.
+- [x] **Settings unlock:** enter the code to reveal private pieces in the library, navigation and practice pages. Access lasts for the current browser tab; Lock removes the pieces and revokes their score URLs. English and Chinese controls are included.
+- [x] **Personal scores:** Elysian Fields and Arnold’s Fantasy moved into the private library. Local originals are preserved outside the public files.
+- [x] **Elysian upload failure:** repaired OSMD’s handling of very short invisible spacing notes, which caused “Invalid note initialization object: {}”. Original musical timing is preserved.
+- Local validation: 80 tests and production build pass. Elysian Fields renders all 10 pages after unlocking and refresh; Lock removes the score. Both old Arnold MusicXML URLs return 404 locally. Existing project TypeScript errors remain.
+- [ ] Publish and verify the locked library and old public score URLs on the deployed site. Earlier public downloads cannot be revoked.
+- [ ] Check access and notation on physical iPhone/iPad. Private books and scanned excerpts are not supported by this upload option yet.
 
 ## Built September 28: verify on a real phone, iPad and flute
 
@@ -70,7 +87,7 @@ Found while testing on iPad. Items marked *fixed, verify* were changed in code b
 - [ ] **Can't mark up while the score is playing** (reported again September 28: "no markup at playback"). Not reproduced yet. Nothing in `AnnotationLayer` checks playback, so suspects are things playback does to the page: page turns or scrolling that follow the playhead, or the marks layer being re-measured (`layoutVersion`) mid-stroke. Reproduce on iPad: start playback, open Mark Up, draw. If marking during playback should be off by design instead, grey the Mark Up tools while playing rather than silently ignoring strokes.
 - [ ] **Playback selection like MuseScore.** The selected measure used to stay green during playback; since September 28 the tint hides while playing and returns when stopped, and the selection is kept so Play starts there again *(verify)*. Still wanted: MuseScore-style logic for choosing where playback starts and showing where it is now.
 - [ ] **Music terms (mf, crescendo…) were hard to tap: the tap selected the bar instead** *(fixed, verify)*. Terms now accept a tap within about 14 px of the glyph, unless the tap is directly on a note.
-- [ ] **Breathing Lab has no Chinese.** The page title is translated now; the exercise names, controls and cues are still English only.
+- [x] **Breathing Lab Chinese** (September 30): exercise names, phase/cue text, sequence, controls, accessibility labels and loading/model fallback messages translated. Checked in the local desktop preview; phone/iPad verification remains.
 - [ ] **Composer cards for the rest of the library.** Gluck and Rimsky-Korsakov were added. Pop, K-pop and folk pieces have no card; decide whether they should (artist notes, or nothing for "Traditional").
 - [ ] **Theory lesson 3, Read and play:** the 6/8 round and the new tap judging (every tap must land near its own note) have not been tried on iPad.
 - [ ] **Theory housekeeping:** move lesson 2 onto EngravedRow like lesson 3. (The temporary engraved-preview page is deleted.)
@@ -82,12 +99,12 @@ Found while testing on iPad. Items marked *fixed, verify* were changed in code b
 - [ ] **Scale custom range and ending (implemented; verify only):** a custom range now overrides “starts on tonic,” and the held ending returns to the actual starting note without leaving the range. Verify several ranges above and below the tonic in Scale Studio.
 - [ ] **Long-tone repeats with a real flute:** repeat a group, breathe and restart, then move to another group. Check same-pitch boundaries, quiet endings, noise and accidental pitch jumps. Do not use “100 cents off” alone as a jump rule.
 - [ ] **Practice/session history:** test the existing experience before changing it. The earlier source audit found a history reader and session schema, but could not establish a working recording path while the timer was being removed. This is an observation to verify, not authorization to restore the timer or redesign session storage.
-- [ ] **Remember tempos consistently:** scale tempos already persist; the shared audio provider remembers user-picked score tempos only in memory. Verify reload behavior and distinguish remembered tempo from a user-selected default tempo.
-- [ ] **Saved sets:** reproduce the stale-name complaint when switching between a named set, preset and custom configuration. Named-set switching already updates the field. Also check custom range round-tripping and whether reader view preferences should belong to a set.
+- [ ] **Remember tempos consistently:** score speed now persists as a ratio of the printed tempo (September 30), separately from automatic section changes. Arnold reload verified locally at 46 against the opening 69, including after playback reached B at 80. Check on iPhone/iPad; scale tempos already have separate persistence.
+- [ ] **Saved sets verification:** check the September 30 Restore defaults / Save new changes on iPad (listed above), preset/custom switching, and custom range round-tripping. Whether reader view preferences belong to a set remains a design question.
 - [ ] **Spacing controls:** retest note spacing with “start on a new line” enabled before treating it as an active bug.
 - [ ] **Mixed-meter metronome:** the audio engine already accepts a beat grid. Verify that score playback supplies meter changes correctly before adding another metronome implementation.
 - [ ] **Reader title and composer consistency:** decide whether the score heading should scale with notation size, then keep the same title sizing and centered composer placement in Portrait, Fit window and Two pages.
-- [ ] **Saved exercises model:** saved Scale Studio sets now sit above the Exercises cards and first in the rail (September 28). Still to do: define one model that can contain named scale sets and future saveable exercises such as long tones. Avoid a late-loading layout jump, show when the current configuration is saved, clear the active saved-set name on Restore Defaults, and provide deletion.
+- [ ] **Saved exercises model:** saved Scale Studio sets now sit above the Exercises cards and first in the rail (September 28). Still to do: define one model that can contain named scale sets and future saveable exercises such as long tones. Avoid a late-loading layout jump, show when the current configuration is saved, verify the built Restore Defaults name reset, and check deletion.
 
 
 ## Confirmed additions
@@ -229,6 +246,101 @@ Not built. Grouped by area; not a priority order.
 ### Housekeeping
 - ~~Delete HomeQuickTools.tsx and its stylesheet~~ done September 28.
 - ~~Library lint in `music/page.tsx`~~ done September 28 (favourites use the shared saved-items store; `?tag=` now lights its chip even in lower case).
+
+## September 30 product direction and exploratory ideas
+
+Added from the September 30 pasted discussion. These are product thoughts and possible experiments, not implemented features, audited capabilities, a priority ranking, or commitments to build. Overlap with existing ideas is intentional where this discussion adds a concrete interaction.
+
+### Quiet practice companion
+
+- Keep Cookie quiet: no Duolingo-style streak pressure, XP, notifications, or obsessive timers. Continuity should help players remember where they left off and what they were working on.
+- Opening a score does not equal practising. The earlier proposal to count Listen, Record, or metronome use as “practised” needs reconsideration: those actions alone do not establish actual playing. Saved recordings/takes could provide concrete evidence and become the practice history itself. A recording of even one measure can represent meaningful work.
+- Explore local-first storage of saved takes before requiring a backend or cloud system. This is a future storage idea, separate from the current recording/download flow.
+- Strengthen the curated, verified public-domain library and customizable exercises/scales. Content itself may be a major source of value.
+- Avoid adding more buttons to the phone reader toolbar. Group new controls or expose them contextually.
+- Connect existing tools around a passage: selecting bar 17 could connect its notes, tempo, loop, intervals, rhythm variants, recording, and later return to the same work. Each connection still needs its own design and validation; the discussion's claims that these combinations are cheap or already supported are not engineering estimates.
+
+### Passage practice, rhythm and fingering experiments
+
+- **Immediate “Practice this measure”:** long-press a measure to open a passage workspace with looping, slower playback, count-in, tempo steps and rhythm variations, then return to the score. A concrete interaction for the difficult-passage feature above.
+- **Freeze mode:** when a player stops, pause accompaniment/metronome and offer the last one or two bars as a loop. Requires reliable score position and stop detection; do not infer why the player stopped.
+- **Tempo staircase:** after two completed repetitions, increase tempo automatically. Manual completion can avoid relying on correctness detection; “again” keeps the current tempo.
+- **Reverse staircase:** begin with a tiny passage at a fast tempo, then add notes or measures instead of increasing speed.
+- **Rhythm surgery:** expand a bar into beat lines, subdivisions, durations, ties, metronome clicks and a moving cursor. Extends rhythm close-up.
+- **Silent fingering:** display/play a passage for fingering along without blowing, optionally showing difficult transitions.
+- **One-hand exercises:** derive patterns that isolate primarily left-hand or right-hand changes.
+- **Finger-change analysis:** use pitches and a fingering model to flag transitions with many simultaneous key changes. A mechanical description, not an automatic verdict that a passage is difficult.
+- **Interval X-ray:** label leaps with their interval; tap to drone the destination or alternate the two notes.
+- **Landing-note trainer:** hear the first note, then play the destination in silence; reveal cents only after the attack.
+
+### Intonation and ear-training experiments
+
+- **Blind intonation / “Don't chase the tuner”:** hide live cents during playing and reveal the result or pitch trace after release. These are variants of one delayed-feedback idea.
+- **Dynamic intonation map:** sustain pp → ff → pp and plot pitch against measured microphone level. Relative level is not a calibrated acoustic loudness measurement; interpretation needs real-flute validation.
+- **Attack map:** repeat a note five times and compare initial pitch, roughly the first 300 ms, with settled pitch.
+- **Long-tone stability:** report stable-region pitch variance, duration and drift, without judging tone beauty or quality.
+- **Drone roulette / harmony hearing:** give a reference note and a named interval, let the player find it, then reveal/check the target.
+
+### Memory, pulse and performance experiments
+
+- **Progressively obscured score:** white out increasing portions of a passage, potentially using generated mosaic or patch patterns. The player reconstructs missing music from memory. Manual progression can support this without automatic correctness detection.
+- **Scale memory:** briefly show the scale, then hide it, or remove more notes each repetition.
+- **Random starts:** choose a bar or rehearsal mark to test knowledge beyond sequential recall.
+- **Performance recovery:** cue a new starting point or jump the displayed score forward to practise recovery from memory gaps.
+- **No-stop run:** reduce distracting controls during a recorded run; review pauses afterward without interrupting the performance. Automatic pause marking needs validation.
+- **Random metronome interruptions:** remove clicks for one to four measures, then restore them to test internal pulse.
+- **Ghost metronome:** start with four clicks, disappear for eight beats, return briefly, and gradually lengthen the silence.
+- **Tempo wobble:** deliberately vary tempo for follow-or-resist experiments. Keep this exploratory rather than claiming an established teaching benefit.
+
+### Breath planning, variety and factual history
+
+- **Breath budget:** calculate phrase duration from tempo and rhythm, compare with the player's entered comfortable duration, and recalculate after adding a breath mark.
+- **Breath-route comparison:** compare phrase lengths for two alternative breath placements.
+- **Practice dice:** generate constrained combinations of key, range, rhythm, tempo and dynamic, or a passage with a variation. Randomness, not a recommendation engine.
+- **Small optional challenges:** examples include a quiet scale, a passage from memory, or a held note with a chosen drift target. No streaks, pressure or required daily participation.
+- **Practice receipt:** summarize factual recorded activity, such as bars worked on, loop counts, tempos, scale runs, long tones and saved takes. Display only events the app actually records.
+- **Score heatmap:** subtly tint frequently worked measures, distinguishing practice evidence from navigation or tool use.
+- **Personal difficulty map:** surface passages repeatedly looped, slowed, annotated, restarted or saved. Explain these behavioral signals rather than declaring difficulty as fact.
+
+### Cookie as a broader flute world
+
+Cookie could also offer things to learn, explore, make and hear when someone has no intention of practising. Possible organizing areas are **Play** (scores, exercises and tools), **Learn** (theory, listening, acoustics and instrument), **Explore** (stories, history, glossary and games), and **Community** (shared recordings and collaborations). This is an exploratory structure, not an approved navigation redesign.
+
+### Anonymous recordings and community experiments
+
+- **Beginner tune recording wall:** a tune page with direct recording/upload and optional anonymous sharing. A possible small prototype, not a selected next task.
+- **Same piece, many flutists:** hear different interpretations underneath a score, optionally shuffled or grouped by self-described student/teacher status.
+- **Musical postcards:** share a 20–60 second recording on a Cookie card via a link that recipients can open without an account.
+- **Flute radio:** shuffle short recordings explicitly shared by participants.
+- **Tune of the week:** a shared easy public-domain tune with score, context and optional recording wall.
+- **Asynchronous duets:** record one part, then let another player record the second over it.
+- **Chain performance:** divide a piece into phrases and assemble contributions from different players.
+- Keep community small and centered on music: no follower counts, DMs, public-profile pressure, streak competitions or leaderboards. Optional reactions could acknowledge the playing or say “I'm learning this too.” Public sharing requires separate storage, consent and moderation design; local saved takes do not establish this infrastructure.
+
+### Listening, repertoire and discovery
+
+- **Mystery flute:** short listening games about instrument, mode, articulation, dynamic, meter, interval or other audible features.
+- **“What am I hearing?” lessons:** compare audio examples of staccato, crescendo, meter or tonic endings.
+- **Repertoire stories:** short, source-grounded composer/piece pages explaining context and unusual character markings, with score and listening examples.
+- **Interactive score museum:** annotated repertoire with tappable questions about notation, rhythm and harmony.
+- **Flute history timeline:** instruments, repertoire and sound examples from traverso through modern and electronic/extended-technique flute.
+- **Notation detective:** identify an unusual marking in a score fragment, then reveal its explanation.
+- **Score archaeology:** compare public-domain editions and distinguish editorial decisions from composer markings.
+- **Optional daily question / trivia:** short questions drawn from verified glossary, instrument and repertoire content.
+- **Flute traditions map:** explore dizi, shakuhachi, bansuri, quena, ney and other flute traditions through sourced sound/context pages.
+- **“I found this marking” search:** musician-friendly explanations and examples for terms such as cédez, sons filés and bisbigliando, extending the glossary beyond tooltips.
+- **Intentionally unserious repertoire quiz:** playful “Which flute piece are you?” results, clearly separate from educational assessment.
+
+### Instrument, acoustics and creative play
+
+- **Instrument anatomy:** tap flute parts and keys for explanations, with possible fingering/pad animations.
+- **Acoustics sandbox:** explore tube length, tone holes, standing waves and blowing angle through an explicitly simplified model.
+- **Overtone playground:** hear/see a harmonic series and connect it to flute harmonic fingerings.
+- **“Why does this fingering work?”:** explain effective tube length and unusual fingerings alongside the chart.
+- **Tiny composition toy:** write four measures, hear them, and export/share a small tune without expanding into a full notation editor.
+- **Finish the melody:** supply two measures and let the player write the ending, optionally sharing versions.
+- **Musical Mad Libs:** generate a short playable melody from a mood, meter and restricted notes.
+- **Beginner pathway:** assemble the flute, make a first sound, learn B/A/G, try rhythm, play a first tune, and optionally share it. Connect existing theory where useful while keeping the pathway self-contained.
 
 ## Other retained ideas
 

@@ -66,11 +66,11 @@
 .bl-stepper b{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;color:#292a33}
 .bl-stepper small{font-size:11px;font-weight:600;color:#85868e}
 .bl-play-row{display:flex;align-items:center;gap:8px}
-.bl-tempo{width:auto;flex:0 0 140px}
+.bl-tempo{width:auto;flex:1 1 120px;min-width:100px;box-sizing:border-box}
 .bl-sound{width:36px;height:36px;flex:0 0 auto;border:0;border-radius:50%;background:#f1f1f2;color:#45464f;display:grid;place-items:center;cursor:pointer}
 .bl-sound svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .bl-sound[aria-pressed=false]{color:#a3a5ab}
-.bl-start{flex:1;height:40px!important;border:0!important;border-radius:12px!important;background:#292a33!important;color:#fff!important;font-size:15px!important;font-weight:650!important;box-shadow:none!important}
+.bl-start{flex:0 0 auto;min-width:56px;padding:0 12px!important;white-space:nowrap;height:40px!important;border:0!important;border-radius:12px!important;background:#292a33!important;color:#fff!important;font-size:15px!important;font-weight:650!important;box-shadow:none!important}
 .bl-start:hover{background:#3a3b45!important}
 
 /* Phone: one screen, no scrolling. The tab bar says where you are, so no
