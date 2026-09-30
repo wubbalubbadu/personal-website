@@ -1,4 +1,5 @@
 "use client";
+import {ScoreTempoMarks as ScaleTempoMarks} from "../../components/ScoreTempoMarks";
 import {ScoreViewer} from "../../components/ScoreViewer";
 import {DownloadIcon} from "../../components/HeaderIcons";
 import {ReaderPopover} from "../../components/ReaderPopover";
@@ -288,75 +289,6 @@ function AccordionSection({id,title,openSections,onToggle,className,phoneActive,
  * score root in the same frame the reader's own practice overlays use, and
  * re-measured on every `version` bump, since any re-engrave moves them.
  */
-function ScaleTempoMarks({root,version,marks,onChange,onSound,soundingId}:{root:HTMLDivElement|null;version:number;marks:{id:string;label:string;tempo:number}[];onChange:(id:string,tempo:number)=>void;onSound:(id:string,tempo:number)=>void;soundingId:string|null}){
-  // Carries the layout version the positions were measured against. Marks
-  // are drawn only while that matches the CURRENT version: toggling them on
-  // changes the system spacing, so the score re-engraves under them, and
-  // anything still sitting at last layout's coordinates is simply wrong.
-  // Better to show nothing for the frame it takes to re-measure — with the
-  // fade-in below that reads as the marks arriving, not as them twitching.
-  const [spots,setSpots]=useState<{version:number;placed:{id:string;x:number;y:number}[]}>({version:-1,placed:[]});
-  const [draft,setDraft]=useState<{id:string;value:string}|null>(null);
-  // A string, not the array: `marks` is rebuilt on every render of the
-  // page, so depending on it directly would re-measure forever.
-  const signature=marks.map(m=>m.label).join("|");
-  // Measuring the engraving is exactly the "read from an external system"
-  // case an effect is for; the positions it finds have to land in state to
-  // be rendered, so these setStates are the point rather than a cascade.
-  useEffect(()=>{
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if(!root){setSpots({version,placed:[]});return}
-    const rootBox=root.getBoundingClientRect();
-    // OSMD draws each words-direction twice at the same spot; keep one.
-    const labels:{text:string;rect:DOMRect}[]=[];
-    for(const node of root.querySelectorAll<SVGGElement>(".vf-text")){
-      const text=node.textContent?.trim();
-      if(!text)continue;
-      const rect=node.getBoundingClientRect();
-      const previous=labels[labels.length-1];
-      if(previous&&previous.text===text&&Math.abs(previous.rect.left-rect.left)<1&&Math.abs(previous.rect.top-rect.top)<1)continue;
-      labels.push({text,rect});
-    }
-    let cursor=0;
-    const placed:{id:string;x:number;y:number}[]=[];
-    for(const mark of marks){
-      const index=labels.findIndex((label,i)=>i>=cursor&&label.text===mark.label);
-      if(index<0)continue;
-      cursor=index+1;
-      const rect=labels[index].rect;
-      // Sat beside the name to begin with, which put it right where a high
-      // note's ledger lines reach up. Its own lane directly above the name
-      // is the one band in a block that nothing engraved occupies.
-      placed.push({id:mark.id,x:rect.left-rootBox.left,y:rect.top-rootBox.top-3});
-    }
-    setSpots({version,placed});
-    // marks is intentionally excluded — `signature` stands in for it.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[root,version,signature]);
-  const byId=new Map(marks.map(m=>[m.id,m]));
-  const commit=(id:string,value:number)=>onChange(id,Math.max(40,Math.min(220,Math.round(value))));
-  return <>{(spots.version===version?spots.placed:[]).map(spot=>{
-    const mark=byId.get(spot.id);
-    if(!mark)return null;
-    const sounding=soundingId===spot.id;
-    return <span className={sounding?"score-tempo-mark is-sounding":"score-tempo-mark"} style={{left:spot.x,top:spot.y}} key={spot.id}>
-      {/* The same action the metronome button on this exercise's Tempos row
-          performs: take the tempo from here, and click. A number printed on
-          the page that you can also hear is the whole point of putting it
-          there. */}
-      <button type="button" className="score-tempo-mark__sound" aria-pressed={sounding} aria-label={sounding?`${mark.label}: stop metronome`:`${mark.label}: metronome at ${mark.tempo}`} onClick={()=>onSound(spot.id,mark.tempo)}><PracticeIcon name="metronome"/></button>
-      {/* One BPM a click, not five: on the page you are nudging a tempo you
-          already have, not dialling one in from scratch. */}
-      <button type="button" className="score-tempo-mark__step" aria-label={`${mark.label}: 1 BPM slower`} disabled={mark.tempo<=40} onClick={()=>commit(spot.id,mark.tempo-1)}>−</button>
-      <label className="score-tempo-mark__value"><input type="number" min={40} max={220} aria-label={`${mark.label}: practice tempo in BPM`}
-        value={draft?.id===spot.id?draft.value:mark.tempo}
-        onChange={e=>setDraft({id:spot.id,value:e.target.value})}
-        onBlur={()=>{if(draft?.id!==spot.id)return;const next=Number(draft.value);const valid=Number.isFinite(next)&&draft.value.trim()!=="";setDraft(null);if(valid)commit(spot.id,next)}}
-        onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/></label>
-      <button type="button" className="score-tempo-mark__step" aria-label={`${mark.label}: 1 BPM faster`} disabled={mark.tempo>=220} onClick={()=>commit(spot.id,mark.tempo+1)}>+</button>
-    </span>;
-  })}</>;
-}
 
 export default function ScaleStudio(){
   const {lang}=useLanguage(),zh=lang==="zh";
@@ -735,10 +667,10 @@ export default function ScaleStudio(){
       defaultNoteSpacing={0.55} extraSystemSpacing={tempoMarks?3:0} practiceTempo={{value:tempoMarks,onChange:setTempoMarks}}
       save={{saved:!!savedMatch,onToggle:toggleSaved,label:zh?"保存为我的组合":"Save as a set",savedLabel:zh?"已保存为组合，点按移除":"Saved as a set. Tap to remove"}}
       headerActions={reader=><button type="button" className="icon-btn has-tip" disabled={reader.exporting} data-tip={reader.exporting?(zh?"正在生成 PDF…":"Making the PDF\u2026"):(zh?"下载 PDF":"Download PDF")} aria-label={reader.exporting?(zh?"正在生成 PDF…":"Making the PDF\u2026"):(zh?"下载 PDF":"Download PDF")} onClick={()=>reader.download()}>{reader.exporting?"\u22ef":<DownloadIcon/>}</button>}
-      scoreMarks={tempoMarks?context=><ScaleTempoMarks root={context.root} version={context.version} marks={blocks.map(block=>{const id=blockTempoId(block,range);return {id,label:block.label,tempo:tempoForBlock(block,range,tempos)}})} onChange={(id,next)=>{setActiveBlock(id);setTempos(prev=>({...prev,[id]:next}));context.controls.setTempo(next)}} soundingId={context.controls.metronome?activeBlock||null:null} onSound={(id,tempo)=>{const running=context.controls.metronome&&activeBlock===id;setActiveBlock(id);context.controls.setTempo(tempo);if(running||!context.controls.metronome)context.controls.toggleMetronome()}}/>:undefined} printConfig={zh?{title:englishTitle,asset:scaleBookMusicXML(buildBlocks(true),range,newLines,articulationRotation.map(e=>e.articulation),rhythm,ending,scaleStart,customSpan)}:undefined} lineBreak={{value:newLines,onChange:setNewLines}} config={{title:bookTitle,composer:"",asset:scaleBookMusicXML(blocks,range,newLines,articulationRotation.map(e=>e.articulation),rhythm,ending,scaleStart,customSpan),displayPitches,noteKeySignatures,syllables,id:`scale-book-${rangeKey}-${grouping}-${ending}-${scaleStart}-${types.join("+")}-${forms.join("+")}-${selected.map(k=>k.id).join("-")}`,backHref:"/flute-studio/exercises",defaultTempo:(activeBlock?tempos[activeBlock]:undefined)??60}}
+      scoreMarks={tempoMarks?context=><ScaleTempoMarks root={context.root} version={context.version} marks={blocks.map(block=>{const id=blockTempoId(block,range);return {id,label:block.label,tempo:tempoForBlock(block,range,tempos)}})} onChange={(id,next)=>{setActiveBlock(id);setTempos(prev=>({...prev,[id]:next}));context.controls.setTempo(next)}} soundingId={context.controls.metronome?activeBlock||null:null} onSound={(id,tempo)=>{const running=context.controls.metronome&&activeBlock===id;setActiveBlock(id);context.controls.setTempo(tempo);if(running||!context.controls.metronome)context.controls.toggleMetronome()}}/>:undefined} printConfig={zh?{title:englishTitle,asset:scaleBookMusicXML(buildBlocks(true),range,newLines,articulationRotation.map(e=>e.articulation),rhythm,ending,scaleStart,customSpan)}:undefined} lineBreak={{value:newLines,onChange:setNewLines}} config={{title:bookTitle,composer:"",smartDrone:blocks.map((block,index)=>{const tonic=keyForType(block.key,typeById(block.type)).label;return {measure:1,event:blockEventStarts[index],pitch:tonic[0].toUpperCase()+tonic.slice(1)+"3"}}),asset:scaleBookMusicXML(blocks,range,newLines,articulationRotation.map(e=>e.articulation),rhythm,ending,scaleStart,customSpan),displayPitches,noteKeySignatures,syllables,id:`scale-book-${rangeKey}-${grouping}-${ending}-${scaleStart}-${types.join("+")}-${forms.join("+")}-${selected.map(k=>k.id).join("-")}`,backHref:"/flute-studio/exercises",defaultTempo:(activeBlock?tempos[activeBlock]:undefined)??60}}
       toolbar={<div className="scale-book__chapter-inline"><button type="button" className="scale-book__crumb" onClick={()=>openCustomize("type")}>{typeWord}</button><button type="button" className="scale-book__crumb" onClick={()=>openCustomize("form")}>{formWord}</button><span aria-hidden="true">·</span><button type="button" className="scale-book__crumb" onClick={()=>openCustomize("range")}>{zh?chosenRange.zh:chosenRange.label}</button><span aria-hidden="true">·</span><button type="button" className="scale-book__crumb" onClick={()=>openCustomize("keys")}>{selected.length} {zh?"个调性":selected.length===1?"key":"keys"}</button></div>}
       settings={reader=><>
-    {!selected.length&&<p className="scale-book__empty">Choose keys in Customize scales to display your scales.</p>}
+
     <ReaderPopover open={customizeOpen} onOpenChange={setCustomizeOpen} label={zh?"自定义音阶":"Customize scales"} trigger={<><SpectrumDef id="studio-spectrum"/><PracticeIcon name="settings" gradient="studio-spectrum"/><span className="scale-book__scales-label">{zh?"音阶":"Scales"}</span></>} className="tool has-tip scale-book__scales-trigger">
       <div className="scale-book__panel-body">
         <div className="scale-book__phone-tabs" role="tablist" aria-label={zh?"设置分类":"Settings sections"}>

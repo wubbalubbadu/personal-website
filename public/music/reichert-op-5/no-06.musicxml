@@ -818,10 +818,7 @@
           <fermata type="upright" />
           </notations>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="5" id="0-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>0</fifths><mode>minor</mode></key><time>
           <beats>3</beats>
@@ -1607,10 +1604,7 @@
           <fermata type="upright" />
           </notations>
         </note>
-      <barline location="right">
-        <bar-style>light-heavy</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="9" id="-1-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-1</fifths><mode>major</mode></key><time>
           <beats>3</beats>
@@ -2396,10 +2390,7 @@
           <fermata type="upright" />
           </notations>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="13" id="-1-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-1</fifths><mode>minor</mode></key><time>
           <beats>3</beats>
@@ -3185,10 +3176,7 @@
           <fermata type="upright" />
           </notations>
         </note>
-      <barline location="right">
-        <bar-style>light-heavy</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="17" id="-2-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-2</fifths><mode>major</mode></key><time>
           <beats>3</beats>
@@ -3974,10 +3962,7 @@
           <fermata type="upright" />
           </notations>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="21" id="-2-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-2</fifths><mode>minor</mode></key><time>
           <beats>3</beats>
@@ -4763,10 +4748,7 @@
           <fermata type="upright" />
           </notations>
         </note>
-      <barline location="right">
-        <bar-style>light-heavy</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="25" id="-3-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-3</fifths><mode>major</mode></key><time>
           <beats>3</beats>
@@ -5552,10 +5534,7 @@
           <fermata type="upright" />
           </notations>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="29" id="-3-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-3</fifths><mode>minor</mode></key><time>
           <beats>3</beats>
@@ -6341,10 +6320,7 @@
           <fermata type="upright" />
           </notations>
         </note>
-      <barline location="right">
-        <bar-style>light-heavy</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="33" id="-4-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-4</fifths><mode>major</mode></key><time>
           <beats>3</beats>
@@ -7130,10 +7106,7 @@
           <fermata type="upright" />
           </notations>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="37" id="-4-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-4</fifths><mode>minor</mode></key><time>
           <beats>3</beats>
@@ -7919,10 +7892,7 @@
           <fermata type="upright" />
           </notations>
         </note>
-      <barline location="right">
-        <bar-style>light-heavy</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="41" id="-5-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-5</fifths><mode>major</mode></key><time>
           <beats>3</beats>
@@ -8708,10 +8678,7 @@
           <fermata type="upright" />
           </notations>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="45" id="-5-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-5</fifths><mode>minor</mode></key><time>
           <beats>3</beats>
@@ -9497,10 +9464,7 @@
           <fermata type="upright" />
           </notations>
         </note>
-      <barline location="right">
-        <bar-style>light-heavy</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="49" id="-6-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-6</fifths><mode>major</mode></key><time>
           <beats>3</beats>
@@ -10286,10 +10250,7 @@
           <fermata type="upright" />
           </notations>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="53" id="-6-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-6</fifths><mode>minor</mode></key><time>
           <beats>3</beats>
@@ -11075,10 +11036,7 @@
           <fermata type="upright" />
           </notations>
         </note>
-      <barline location="right">
-        <bar-style>light-heavy</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="57" id="5-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>5</fifths><mode>major</mode></key><time>
           <beats>3</beats>
@@ -11864,10 +11822,7 @@
           <fermata type="upright" />
           </notations>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="61" id="5-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>5</fifths><mode>minor</mode></key><time>
           <beats>3</beats>
@@ -12653,10 +12608,7 @@
           <fermata type="upright" />
           </notations>
         </note>
-      <barline location="right">
-        <bar-style>light-heavy</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="65" id="4-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>4</fifths><mode>major</mode></key><time>
           <beats>3</beats>
@@ -13442,10 +13394,7 @@
           <fermata type="upright" />
           </notations>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="69" id="4-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>4</fifths><mode>minor</mode></key><time>
           <beats>3</beats>
@@ -14231,10 +14180,7 @@
           <fermata type="upright" />
           </notations>
         </note>
-      <barline location="right">
-        <bar-style>light-heavy</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="73" id="3-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>3</fifths><mode>major</mode></key><time>
           <beats>3</beats>
@@ -15020,10 +14966,7 @@
           <fermata type="upright" />
           </notations>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="77" id="3-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>3</fifths><mode>minor</mode></key><time>
           <beats>3</beats>
@@ -15809,10 +15752,7 @@
           <fermata type="upright" />
           </notations>
         </note>
-      <barline location="right">
-        <bar-style>light-heavy</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="81" id="2-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>2</fifths><mode>major</mode></key><time>
           <beats>3</beats>
@@ -16598,10 +16538,7 @@
           <fermata type="upright" />
           </notations>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="85" id="2-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>2</fifths><mode>minor</mode></key><time>
           <beats>3</beats>
@@ -17387,10 +17324,7 @@
           <fermata type="upright" />
           </notations>
         </note>
-      <barline location="right">
-        <bar-style>light-heavy</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="89" id="1-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>1</fifths><mode>major</mode></key><time>
           <beats>3</beats>
@@ -18176,10 +18110,7 @@
           <fermata type="upright" />
           </notations>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="93" id="1-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>1</fifths><mode>minor</mode></key><time>
           <beats>3</beats>
@@ -18965,9 +18896,6 @@
           <fermata type="upright" />
           </notations>
         </note>
-      <barline location="right">
-        <bar-style>light-heavy</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 </part>
   <work><work-title>No. 6</work-title></work></score-partwise>

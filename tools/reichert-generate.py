@@ -27,7 +27,8 @@ for p in pieces:
    for j,original in enumerate(source):
     m=copy.deepcopy(original);counter+=1;m.set('number',str(counter));m.set('id',sid)
     for el in list(m):
-     if el.tag=='print' or el.tag=='direction' and el.find('.//words') is not None:m.remove(el)
+     if el.tag=='barline':m.remove(el)
+     elif el.tag=='print' or el.tag=='direction' and el.find('.//words') is not None:m.remove(el)
     for el in m.findall('.//accidental'):
      for note in m.findall('note'):
       if el in list(note):note.remove(el)
@@ -46,6 +47,14 @@ for p in pieces:
      if newalter:E.SubElement(pitch,'alter').text=str(newalter)
      # MusicXML pitch order is step, alter, octave.
      pitch[:]=sorted(list(pitch),key=lambda e:['step','alter','octave'].index(e.tag))
+    if j==len(source)-1:
+     if n==2:
+      rest=m.find('note[rest]')
+      if rest is not None:
+       notation=rest.find('notations')
+       if notation is None:notation=E.SubElement(rest,'notations')
+       E.SubElement(notation,'fermata').text='normal'
+     bar=E.SubElement(m,'barline',{'location':'right'});E.SubElement(bar,'bar-style').text='light-light'
     part.append(m)
  for credit in root.findall('credit'):root.remove(credit)
  work=E.SubElement(root,'work');E.SubElement(work,'work-title').text=f'No. {n}'

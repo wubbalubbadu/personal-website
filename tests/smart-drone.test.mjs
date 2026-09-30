@@ -14,3 +14,8 @@ test('Daphnis changes at the corrected octaves and stops at measure 26',()=>{
 });
 test('A sharp starts on the final note of 18, not its downbeat',()=>{assert.equal(pitches[starts[17]],'D♯5');assert.equal(pitches[starts[18]-2],'D♯5');assert.equal(pitches[starts[18]-1],'A♯4')});
 test('at quarter note 33 every Daphnis bar lasts 3.64 seconds, including tuplets',()=>{for(let m=0;m<starts.length;m++){const bar=events.slice(starts[m],starts[m+1]??events.length);assert.ok(Math.abs(bar.reduce((sum,e)=>sum+e.d,0)*60/33-120/33)<1e-8,`measure ${m+1}`)}});
+
+test('scale tonic changes use event positions inside a measure',()=>{
+ const events=Array.from({length:6},()=>({p:'C4',d:1}));
+ assert.deepEqual(droneEvents([{measure:1,event:0,pitch:'C3'},{measure:1,event:3,pitch:'A3'}],events,[0]),['C3','C3','C3','A3','A3','A3']);
+});

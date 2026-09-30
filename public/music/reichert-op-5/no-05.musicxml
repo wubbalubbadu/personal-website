@@ -1156,10 +1156,7 @@
         <voice>1</voice>
         <type>quarter</type>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="9" id="0-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>0</fifths><mode>minor</mode></key><time>
           <beats>6</beats>
@@ -2289,10 +2286,7 @@
         <voice>1</voice>
         <type>eighth</type>
         </note>
-      <barline location="right">
-        <bar-style>light-heavy</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="17" id="-1-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-1</fifths><mode>major</mode></key><time>
           <beats>6</beats>
@@ -3416,10 +3410,7 @@
         <voice>1</voice>
         <type>quarter</type>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="25" id="-1-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-1</fifths><mode>minor</mode></key><time>
           <beats>6</beats>
@@ -4549,10 +4540,7 @@
         <voice>1</voice>
         <type>eighth</type>
         </note>
-      <barline location="right">
-        <bar-style>light-heavy</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="33" id="-2-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-2</fifths><mode>major</mode></key><time>
           <beats>6</beats>
@@ -5676,10 +5664,7 @@
         <voice>1</voice>
         <type>quarter</type>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="41" id="-2-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-2</fifths><mode>minor</mode></key><time>
           <beats>6</beats>
@@ -6809,10 +6794,7 @@
         <voice>1</voice>
         <type>eighth</type>
         </note>
-      <barline location="right">
-        <bar-style>light-heavy</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="49" id="-3-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-3</fifths><mode>major</mode></key><time>
           <beats>6</beats>
@@ -7936,10 +7918,7 @@
         <voice>1</voice>
         <type>quarter</type>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="57" id="-3-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-3</fifths><mode>minor</mode></key><time>
           <beats>6</beats>
@@ -9069,10 +9048,7 @@
         <voice>1</voice>
         <type>eighth</type>
         </note>
-      <barline location="right">
-        <bar-style>light-heavy</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="65" id="-4-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-4</fifths><mode>major</mode></key><time>
           <beats>6</beats>
@@ -10196,10 +10172,7 @@
         <voice>1</voice>
         <type>quarter</type>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="73" id="-4-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-4</fifths><mode>minor</mode></key><time>
           <beats>6</beats>
@@ -11329,10 +11302,7 @@
         <voice>1</voice>
         <type>eighth</type>
         </note>
-      <barline location="right">
-        <bar-style>light-heavy</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="81" id="-5-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-5</fifths><mode>major</mode></key><time>
           <beats>6</beats>
@@ -12456,10 +12426,7 @@
         <voice>1</voice>
         <type>quarter</type>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="89" id="-5-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-5</fifths><mode>minor</mode></key><time>
           <beats>6</beats>
@@ -13589,10 +13556,7 @@
         <voice>1</voice>
         <type>eighth</type>
         </note>
-      <barline location="right">
-        <bar-style>light-heavy</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="97" id="-6-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-6</fifths><mode>major</mode></key><time>
           <beats>6</beats>
@@ -14716,10 +14680,7 @@
         <voice>1</voice>
         <type>quarter</type>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="105" id="-6-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-6</fifths><mode>minor</mode></key><time>
           <beats>6</beats>
@@ -15849,10 +15810,7 @@
         <voice>1</voice>
         <type>eighth</type>
         </note>
-      <barline location="right">
-        <bar-style>light-heavy</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="113" id="5-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>5</fifths><mode>major</mode></key><time>
           <beats>6</beats>
@@ -16976,10 +16934,7 @@
         <voice>1</voice>
         <type>quarter</type>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="121" id="5-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>5</fifths><mode>minor</mode></key><time>
           <beats>6</beats>
@@ -18109,10 +18064,7 @@
         <voice>1</voice>
         <type>eighth</type>
         </note>
-      <barline location="right">
-        <bar-style>light-heavy</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="129" id="4-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>4</fifths><mode>major</mode></key><time>
           <beats>6</beats>
@@ -19236,10 +19188,7 @@
         <voice>1</voice>
         <type>quarter</type>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="137" id="4-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>4</fifths><mode>minor</mode></key><time>
           <beats>6</beats>
@@ -20369,10 +20318,7 @@
         <voice>1</voice>
         <type>eighth</type>
         </note>
-      <barline location="right">
-        <bar-style>light-heavy</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="145" id="3-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>3</fifths><mode>major</mode></key><time>
           <beats>6</beats>
@@ -21496,10 +21442,7 @@
         <voice>1</voice>
         <type>quarter</type>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="153" id="3-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>3</fifths><mode>minor</mode></key><time>
           <beats>6</beats>
@@ -22629,10 +22572,7 @@
         <voice>1</voice>
         <type>eighth</type>
         </note>
-      <barline location="right">
-        <bar-style>light-heavy</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="161" id="2-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>2</fifths><mode>major</mode></key><time>
           <beats>6</beats>
@@ -23756,10 +23696,7 @@
         <voice>1</voice>
         <type>quarter</type>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="169" id="2-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>2</fifths><mode>minor</mode></key><time>
           <beats>6</beats>
@@ -24889,10 +24826,7 @@
         <voice>1</voice>
         <type>eighth</type>
         </note>
-      <barline location="right">
-        <bar-style>light-heavy</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="177" id="1-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>1</fifths><mode>major</mode></key><time>
           <beats>6</beats>
@@ -26016,10 +25950,7 @@
         <voice>1</voice>
         <type>quarter</type>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="185" id="1-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>1</fifths><mode>minor</mode></key><time>
           <beats>6</beats>
@@ -27149,9 +27080,6 @@
         <voice>1</voice>
         <type>eighth</type>
         </note>
-      <barline location="right">
-        <bar-style>light-heavy</bar-style>
-        </barline>
-      </measure>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 </part>
   <work><work-title>No. 5</work-title></work></score-partwise>

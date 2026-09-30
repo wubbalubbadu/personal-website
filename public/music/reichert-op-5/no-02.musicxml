@@ -807,11 +807,8 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+        <notations><fermata>normal</fermata></notations></note>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="10" id="0-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>0</fifths><mode>minor</mode></key><time>
           <beats>2</beats>
@@ -870,9 +867,6 @@
         <beam number="1">end</beam>
         <beam number="2">end</beam>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
       </measure>
 <measure number="11" id="0-minor">
       <note>
@@ -1579,11 +1573,8 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+        <notations><fermata>normal</fermata></notations></note>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="19" id="-1-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-1</fifths><mode>major</mode></key><time>
           <beats>2</beats>
@@ -2358,11 +2349,8 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+        <notations><fermata>normal</fermata></notations></note>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="28" id="-1-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-1</fifths><mode>minor</mode></key><time>
           <beats>2</beats>
@@ -2421,9 +2409,6 @@
         <beam number="1">end</beam>
         <beam number="2">end</beam>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
       </measure>
 <measure number="29" id="-1-minor">
       <note>
@@ -3130,11 +3115,8 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+        <notations><fermata>normal</fermata></notations></note>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="37" id="-2-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-2</fifths><mode>major</mode></key><time>
           <beats>2</beats>
@@ -3909,11 +3891,8 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+        <notations><fermata>normal</fermata></notations></note>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="46" id="-2-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-2</fifths><mode>minor</mode></key><time>
           <beats>2</beats>
@@ -3972,9 +3951,6 @@
         <beam number="1">end</beam>
         <beam number="2">end</beam>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
       </measure>
 <measure number="47" id="-2-minor">
       <note>
@@ -4681,11 +4657,8 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+        <notations><fermata>normal</fermata></notations></note>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="55" id="-3-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-3</fifths><mode>major</mode></key><time>
           <beats>2</beats>
@@ -5460,11 +5433,8 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+        <notations><fermata>normal</fermata></notations></note>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="64" id="-3-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-3</fifths><mode>minor</mode></key><time>
           <beats>2</beats>
@@ -5523,9 +5493,6 @@
         <beam number="1">end</beam>
         <beam number="2">end</beam>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
       </measure>
 <measure number="65" id="-3-minor">
       <note>
@@ -6232,11 +6199,8 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+        <notations><fermata>normal</fermata></notations></note>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="73" id="-4-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-4</fifths><mode>major</mode></key><time>
           <beats>2</beats>
@@ -7011,11 +6975,8 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+        <notations><fermata>normal</fermata></notations></note>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="82" id="-4-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-4</fifths><mode>minor</mode></key><time>
           <beats>2</beats>
@@ -7074,9 +7035,6 @@
         <beam number="1">end</beam>
         <beam number="2">end</beam>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
       </measure>
 <measure number="83" id="-4-minor">
       <note>
@@ -7783,11 +7741,8 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+        <notations><fermata>normal</fermata></notations></note>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="91" id="-5-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-5</fifths><mode>major</mode></key><time>
           <beats>2</beats>
@@ -8562,11 +8517,8 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+        <notations><fermata>normal</fermata></notations></note>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="100" id="-5-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-5</fifths><mode>minor</mode></key><time>
           <beats>2</beats>
@@ -8625,9 +8577,6 @@
         <beam number="1">end</beam>
         <beam number="2">end</beam>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
       </measure>
 <measure number="101" id="-5-minor">
       <note>
@@ -9334,11 +9283,8 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+        <notations><fermata>normal</fermata></notations></note>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="109" id="-6-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-6</fifths><mode>major</mode></key><time>
           <beats>2</beats>
@@ -10113,11 +10059,8 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+        <notations><fermata>normal</fermata></notations></note>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="118" id="-6-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>-6</fifths><mode>minor</mode></key><time>
           <beats>2</beats>
@@ -10176,9 +10119,6 @@
         <beam number="1">end</beam>
         <beam number="2">end</beam>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
       </measure>
 <measure number="119" id="-6-minor">
       <note>
@@ -10885,11 +10825,8 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+        <notations><fermata>normal</fermata></notations></note>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="127" id="5-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>5</fifths><mode>major</mode></key><time>
           <beats>2</beats>
@@ -11664,11 +11601,8 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+        <notations><fermata>normal</fermata></notations></note>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="136" id="5-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>5</fifths><mode>minor</mode></key><time>
           <beats>2</beats>
@@ -11727,9 +11661,6 @@
         <beam number="1">end</beam>
         <beam number="2">end</beam>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
       </measure>
 <measure number="137" id="5-minor">
       <note>
@@ -12436,11 +12367,8 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+        <notations><fermata>normal</fermata></notations></note>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="145" id="4-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>4</fifths><mode>major</mode></key><time>
           <beats>2</beats>
@@ -13215,11 +13143,8 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+        <notations><fermata>normal</fermata></notations></note>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="154" id="4-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>4</fifths><mode>minor</mode></key><time>
           <beats>2</beats>
@@ -13278,9 +13203,6 @@
         <beam number="1">end</beam>
         <beam number="2">end</beam>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
       </measure>
 <measure number="155" id="4-minor">
       <note>
@@ -13987,11 +13909,8 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+        <notations><fermata>normal</fermata></notations></note>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="163" id="3-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>3</fifths><mode>major</mode></key><time>
           <beats>2</beats>
@@ -14766,11 +14685,8 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+        <notations><fermata>normal</fermata></notations></note>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="172" id="3-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>3</fifths><mode>minor</mode></key><time>
           <beats>2</beats>
@@ -14829,9 +14745,6 @@
         <beam number="1">end</beam>
         <beam number="2">end</beam>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
       </measure>
 <measure number="173" id="3-minor">
       <note>
@@ -15538,11 +15451,8 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+        <notations><fermata>normal</fermata></notations></note>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="181" id="2-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>2</fifths><mode>major</mode></key><time>
           <beats>2</beats>
@@ -16317,11 +16227,8 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+        <notations><fermata>normal</fermata></notations></note>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="190" id="2-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>2</fifths><mode>minor</mode></key><time>
           <beats>2</beats>
@@ -16380,9 +16287,6 @@
         <beam number="1">end</beam>
         <beam number="2">end</beam>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
       </measure>
 <measure number="191" id="2-minor">
       <note>
@@ -17089,11 +16993,8 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+        <notations><fermata>normal</fermata></notations></note>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="199" id="1-major">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>1</fifths><mode>major</mode></key><time>
           <beats>2</beats>
@@ -17868,11 +17769,8 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+        <notations><fermata>normal</fermata></notations></note>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 <measure number="208" id="1-minor">
       <print new-system="yes" /><attributes><divisions>4</divisions><key><fifths>1</fifths><mode>minor</mode></key><time>
           <beats>2</beats>
@@ -17931,9 +17829,6 @@
         <beam number="1">end</beam>
         <beam number="2">end</beam>
         </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
       </measure>
 <measure number="209" id="1-minor">
       <note>
@@ -18640,10 +18535,7 @@
         <duration>2</duration>
         <voice>1</voice>
         <type>eighth</type>
-        </note>
-      <barline location="right">
-        <bar-style>light-light</bar-style>
-        </barline>
-      </measure>
+        <notations><fermata>normal</fermata></notations></note>
+      <barline location="right"><bar-style>light-light</bar-style></barline></measure>
 </part>
   <work><work-title>No. 2</work-title></work></score-partwise>
