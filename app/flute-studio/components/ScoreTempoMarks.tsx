@@ -1,5 +1,5 @@
 "use client";
-import {useEffect,useState} from "react";
+import {useLayoutEffect,useState} from "react";
 import {PracticeIcon} from "./PracticeIcon";
 export function ScoreTempoMarks({root,version,marks,onChange,onSound,soundingId}:{root:HTMLDivElement|null;version:number;marks:{id:string;label:string;tempo:number}[];onChange:(id:string,tempo:number)=>void;onSound:(id:string,tempo:number)=>void;soundingId:string|null}){
   // Carries the layout version the positions were measured against. Marks
@@ -16,7 +16,7 @@ export function ScoreTempoMarks({root,version,marks,onChange,onSound,soundingId}
   // Measuring the engraving is exactly the "read from an external system"
   // case an effect is for; the positions it finds have to land in state to
   // be rendered, so these setStates are the point rather than a cascade.
-  useEffect(()=>{
+  useLayoutEffect(()=>{
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if(!root){setSpots({version,placed:[]});return}
     const rootBox=root.getBoundingClientRect();

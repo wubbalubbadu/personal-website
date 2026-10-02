@@ -34,16 +34,22 @@ export default function UploadedMusicPage(){
     // number; the book's name sits beside the composer under the title.
     title:book?`${book.title} ${item.title}`:item.title,
     composer:item.composer,
+    ...(item.excerpt?.workLabel?{subtitle:zh?item.excerpt.zhWorkLabel??item.excerpt.workLabel:item.excerpt.workLabel}:{}),
+    ...(item.excerpt?.tempoHint?{tempoHint:zh?item.excerpt.zhTempoHint??item.excerpt.tempoHint:item.excerpt.tempoHint}:{}),
     asset:item.scorePath,
+    practiceGuide:true,
     hideRehearsalMarks:!!item.excerpt,
+    sempreStaccatoFromMeasure:item.sempreStaccatoFromMeasure,
+    pulsePerMeasure:item.pulsePerMeasure,
     smartDrone:item.smartDrone,
+    ...(item.accompanimentKind?{accompaniment:{asset:item.fullScorePath??item.scorePath,readingPartId:item.readingPartId??"P1",kind:item.accompanimentKind}}:{}),
     id:item.id,
     backHref:book?bookPath(book.id):"/flute-studio/music",
     // A book goes on your lists as a whole, from any of its numbers.
     ...(book?{backLabel:book.title,listId:book.id}:{}),
     ...(item.pdfPath?{pdfPath:item.pdfPath}:{}),
     ...(item.defaultTempo?{defaultTempo:item.defaultTempo}:{}),
-    ...(composerInfo(item.composer)||item.about?{story:{composer:composerInfo(item.composer),year:item.year,about:item.about}}:{}),
+    ...(composerInfo(item.composer)||item.about?{story:{composer:composerInfo(item.composer),year:item.year,about:item.about,tempoHint:zh?item.excerpt?.zhTempoHint??item.excerpt?.tempoHint:item.excerpt?.tempoHint}}:{}),
   };
   const stepper=book&&item.book?<span className="book-stepper">
     {previous?<Link className="book-stepper__arrow" href={previous.viewerPath!} aria-label={zh?`上一首：第 ${previous.book!.number} 首`:`Previous: No. ${previous.book!.number}`}>‹</Link>:<span className="book-stepper__arrow is-off" aria-hidden="true">‹</span>}

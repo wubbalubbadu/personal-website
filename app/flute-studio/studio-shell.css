@@ -442,7 +442,6 @@ html body .restored-reader .markup-row-surface.annotation-toolbar .markup-icon{b
     min-height:44px;padding:0!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;outline:0;
     font-size:14.5px!important;font-weight:500!important;color:#292a33!important;
   }
-  html body .reader-settings-panel .scale-book__section-summary:hover{color:#000!important}
   html body .reader-settings-panel .scale-book__section-summary:focus-visible{outline:2px solid rgba(41,42,51,.2);outline-offset:2px;border-radius:8px!important}
   html body .reader-settings-panel .scale-book__disclosure{font-size:0!important;width:8px;height:8px;border-right:1.6px solid #9a9ca3;border-bottom:1.6px solid #9a9ca3;transform:rotate(-45deg);margin-right:4px}
   html body .reader-settings-panel .scale-book__section-summary[aria-expanded="true"] .scale-book__disclosure{transform:rotate(45deg)}
@@ -480,7 +479,6 @@ html body .reader-settings-panel .reader-settings-reset{
   display:block!important;width:auto!important;height:auto!important;min-height:0!important;margin:10px 2px 0 auto!important;padding:2px 0!important;
   border:0!important;border-radius:0!important;background:none!important;color:#85868e!important;font-size:12.5px!important;font-weight:500!important;
 }
-html body .reader-settings-panel .reader-settings-reset:hover{color:#292a33!important}
 
 /* Touch screens keep :hover on whatever was last tapped, which left the
    reader's green hover stuck on Scales, View or Drone after closing them. */
@@ -509,8 +507,9 @@ html body .reader-settings-panel .scale-book__phone-tabs button[aria-selected="t
 @media(min-width:761px){
   html body .reader-settings-panel .reader-panel-heading{display:none!important}
 }
-html body .reader-settings-panel .scale-book__section-summary:focus,
-html body .reader-settings-panel .scale-book__section-summary:focus-visible{outline:0!important;box-shadow:none!important;background:none!important}
+html body .reader-settings-panel .scale-book__section-summary:focus{outline:0!important;box-shadow:none!important;background:none!important}
+html body .reader-settings-panel .scale-book__section-summary:focus-visible{text-decoration:underline;text-underline-offset:4px}
+html body .reader-settings-panel .scale-book__others-toggle:hover{background:transparent!important}
 html body .restored-reader .practice-bar .transport>button:not(.reader-tap):is(.on,[aria-pressed="true"]){background:#f1f1f4!important;color:var(--studio-on-ink)!important;border-radius:12px 0 0 12px!important}
 
 /* Phone: Play, Record, the metronome and Tap are one pill

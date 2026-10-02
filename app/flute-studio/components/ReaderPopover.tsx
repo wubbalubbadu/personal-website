@@ -3,7 +3,7 @@ import {useLayoutEffect,useRef,useState,type ReactNode} from "react";
 import {createPortal} from "react-dom";
 
 /** Shared button-anchored settings surface; edits do not dismiss the panel. */
-export function ReaderPopover({label,trigger,children,className="",open:controlledOpen,onOpenChange}:{label:string;trigger:ReactNode;children:ReactNode;className?:string;open?:boolean;onOpenChange?:(open:boolean)=>void}){
+export function ReaderPopover({label,trigger,children,className="",panelClassName="",open:controlledOpen,onOpenChange}:{label:string;trigger:ReactNode;children:ReactNode;className?:string;panelClassName?:string;open?:boolean;onOpenChange?:(open:boolean)=>void}){
   const panel=useRef<HTMLDivElement>(null),button=useRef<HTMLButtonElement>(null);
   const [uncontrolledOpen,setUncontrolledOpen]=useState(false),[placed,setPlaced]=useState(false),[position,setPosition]=useState({left:12,top:60,width:360});
   const open=controlledOpen??uncontrolledOpen;
@@ -64,5 +64,5 @@ export function ReaderPopover({label,trigger,children,className="",open:controll
     if(panel.current&&resize)resize.observe(panel.current);
     return()=>{resize?.disconnect();document.removeEventListener("pointerdown",outside);document.removeEventListener("keydown",key);window.removeEventListener("resize",place)};
   },[open]);
-  return <span className="reader-popover-anchor"><button ref={button} type="button" className={className} aria-label={label} data-tip={label} aria-expanded={open} onClick={()=>open?close():setOpen(true)}>{trigger}</button>{open&&createPortal(<div ref={panel} role="dialog" aria-label={label} className={`reader-settings-panel${closing?" is-closing":""}${dragY&&!closing?" is-dragging":""}`} style={{...position,visibility:placed?"visible":"hidden",...(dragY?{transform:`translateY(${dragY}px)`}:{})}}><div className="reader-sheet-grip" aria-hidden="true" {...grip}><span/></div><div className="reader-panel-heading"><strong>{label}</strong><button type="button" aria-label={`Close ${label}`} onClick={()=>{close();button.current?.focus()}}>×</button></div>{children}</div>,document.fullscreenElement??document.body)}</span>;
+  return <span className="reader-popover-anchor"><button ref={button} type="button" className={className} aria-label={label} data-tip={label} aria-expanded={open} onClick={()=>open?close():setOpen(true)}>{trigger}</button>{open&&createPortal(<div ref={panel} role="dialog" aria-label={label} className={`reader-settings-panel ${panelClassName}${closing?" is-closing":""}${dragY&&!closing?" is-dragging":""}`} style={{...position,visibility:placed?"visible":"hidden",...(dragY?{transform:`translateY(${dragY}px)`}:{})}}><div className="reader-sheet-grip" aria-hidden="true" {...grip}><span/></div><div className="reader-panel-heading"><strong>{label}</strong></div>{children}</div>,document.fullscreenElement??document.body)}</span>;
 }

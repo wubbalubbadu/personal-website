@@ -1,5 +1,7 @@
 /* Printed excerpts keep the existing reader's typography, controls and paper. */
 .fixed-score-reader .practice-bar{gap:4px!important}
+.reader-workspace .score-paper:has(.excerpt-score-subtitle) .custom-score-heading{display:block!important;text-align:center}
+.reader-workspace .custom-score-heading .excerpt-score-subtitle{display:block!important;margin:6px 0 0;color:#777a80;font:400 16px/1.4 Georgia,"Times New Roman",serif!important;letter-spacing:normal!important;text-transform:none!important}
 .fixed-score-reader .excerpt-caption{display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap;padding:9px 18px;font-size:13px;color:#777a80;border-bottom:1px solid var(--line);background:#fff}
 .fixed-score-reader .excerpt-caption strong{font-weight:500;color:#44474d}
 html body .fixed-score-reader .score-paper.fixed-score-paper{padding:0!important;min-height:0!important;border-radius:0!important;background:white;position:relative;--viewer-magnify:1}

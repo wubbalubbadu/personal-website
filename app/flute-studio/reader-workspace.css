@@ -249,7 +249,7 @@ html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document"
 .reader-choice button[aria-pressed="true"]{background:#e4ecdf;color:#40553d}
 .reader-choice button[aria-pressed="true"]:hover{background:#dce8d7}
 .reader-settings-panel .scale-book__section-summary{min-height:40px;padding:8px;border-radius:12px;font-weight:600;background:transparent;cursor:pointer}
-.reader-settings-panel .scale-book__section-summary:hover{background:#f1f1f4}
+.reader-settings-panel .scale-book__section-summary:hover{background:transparent}
 .reader-settings-panel .scale-book__section-summary[aria-expanded="true"]{background:transparent;color:#292a33}
 .reader-settings-panel .scale-book__section{margin-bottom:4px}
 .reader-settings-panel .scale-book__section-body{padding:10px 8px}
@@ -870,21 +870,85 @@ html.score-focus-mode .restored-reader[data-dock] .workspace{grid-template-areas
 .reader-workspace .score-scroll::-webkit-scrollbar{display:none}
 
 html body .restored-reader .reader-rows[data-smart-drone]{display:block!important}
-.smart-drone-panel{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:9px 16px;border-bottom:1px solid var(--line);font-size:13px;background:#f8faf6}
-.smart-drone-panel button{background:transparent;color:inherit;border:0;border-radius:0;min-height:44px;padding:4px 12px;cursor:pointer}
-.smart-drone-panel button:hover{color:#405e49;text-decoration:underline;text-underline-offset:3px}
-.smart-drone-panel button:focus-visible{outline:0!important;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px;color:#405e49}
+.smart-drone-panel{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:9px 16px;border-bottom:1px solid var(--line);font-size:13px;background:#fff}
+.smart-drone-panel button{background:#f1f1f4;color:#494953;border:0;border-radius:12px;min-height:44px;padding:4px 14px;cursor:pointer}
+.smart-drone-panel button:hover{background:#ededf0}
+.smart-drone-panel button:focus-visible,.smart-drone-trigger:focus-visible{outline:2px solid #8c6aa1;outline-offset:2px}
 .reader-workspace .markup-row .markup-close,.reader-workspace .markup-row .annotation-toolbar .markup-close,.reader-workspace .markup-row .markup-close:hover{border:0!important;box-shadow:none!important;background:transparent!important;border-radius:0!important}
-
-.osmd-score .smart-drone-strip{fill:#83af9a;fill-opacity:.3;stroke:none;pointer-events:none}
-
-.smart-drone-cursor{display:none;position:absolute;width:1px;background:#4c765f80;pointer-events:none;z-index:3}
-.smart-drone-cursor::before{content:"";position:absolute;top:-5px;left:-4px;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid #4c765f}
-
+.osmd-score .smart-drone-strip{fill:#2e6fb0;fill-opacity:.32;stroke:none;pointer-events:none}
 .smart-drone-count{display:inline-flex;align-items:center;gap:7px}
-.smart-drone-count b{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;font-weight:500;color:#626a64}
-.smart-drone-count b:nth-of-type(3){margin-left:8px}
-.smart-drone-count b.current{background:#506d58;color:white}
+.smart-drone-count b{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;font-weight:500;color:#73737f}
+.smart-drone-count b.current{background:#79588e;color:white}
+.auto-drone-icon{position:relative;display:inline-flex}
+.auto-drone-icon svg+svg{position:absolute;right:-4px;bottom:-3px;width:10px!important;height:10px!important;background:white;border-radius:50%}
+html body .smart-drone-panel .auto-drone-close{display:grid;place-items:center;margin-left:auto;width:36px;min-height:36px;padding:0;border:0;border-radius:0;background:transparent!important;color:#73737f;box-shadow:none}
+@media(max-width:760px){
+ html body .restored-reader .practice-bar .transport-menu{order:8!important;display:contents}
+ html body .restored-reader .practice-bar .transport-menu>.tool,
+ html body .restored-reader .practice-bar .smart-drone-trigger,
+ html body .restored-reader .practice-bar .reader-view .tool{order:8!important;font-size:0!important;min-width:36px!important;width:36px!important;flex:0 0 36px;padding:0!important;min-height:44px;gap:0;border-radius:12px}
+ html body .restored-reader .practice-bar .reader-view .tool>span:not(.auto-drone-icon),
+ html body .restored-reader .practice-bar .transport-menu small{display:none!important}
+ html body .restored-reader .practice-bar .reader-view .tool svg,
+ html body .restored-reader .practice-bar .smart-drone-trigger svg,
+ html body .restored-reader .practice-bar .transport-menu>.tool svg{width:20px;height:20px}
+}
 
-html body .restored-reader .practice-bar .smart-drone-trigger:is(:hover,:focus){background:transparent!important;box-shadow:none!important;border:0!important}
-html body .restored-reader .practice-bar .smart-drone-trigger:focus-visible{outline:2px solid #678956;outline-offset:2px}
+/* The complete phone header is one navigation row and two control rows.
+   The title already appears on the score; an open drone panel overlays it. */
+@media(max-width:760px){
+ html body .restored-reader .topbar{flex-wrap:nowrap!important;min-height:44px!important;height:44px!important;padding:0 6px!important;gap:2px!important}
+ html body .restored-reader .topbar>div:first-child{flex:0 0 36px!important;margin:0!important}
+ html body .restored-reader .topbar>div:first-child>strong{display:none!important}
+ html body .restored-reader .topbar>div:last-child{display:flex!important;flex:1!important;flex-wrap:nowrap!important;justify-content:flex-end!important;gap:2px!important;min-width:0}
+ html body .restored-reader .topbar-toolbar-slot:empty{display:none!important}
+ html body .restored-reader .topbar-toolbar-slot{flex:0 1 auto!important;order:0!important}
+ html body .restored-reader .topbar .icon-btn,html body .restored-reader .topbar .back{min-width:36px!important;width:36px!important;height:44px!important;padding:0!important}
+ html body .restored-reader .topbar .status-button{flex:0 0 36px!important}
+ html body .restored-reader .topbar .book-stepper{flex:0 0 auto;white-space:nowrap}
+ html body .restored-reader .reader-rows[data-smart-drone]{position:relative;z-index:60}
+ html body .restored-reader .smart-drone-panel{position:absolute;top:6px;left:8px;right:8px;border:1px solid #dedee3;border-radius:14px;box-shadow:0 8px 24px #292a331a;padding:8px 12px;gap:8px}
+ html body .restored-reader .smart-drone-panel>strong{display:none}
+ html body .restored-reader .smart-drone-panel>span{flex:1;min-width:0;font-size:12px}
+}
+
+/* Every transport tool uses the same neutral hover and selected surface. */
+html body .restored-reader .practice-bar .tool{border-radius:12px!important}
+html body .restored-reader .practice-bar .tool.on,
+html body .restored-reader .practice-bar .tool[aria-pressed="true"]{background-color:#eee7f2!important;color:#79588e!important}
+html body .restored-reader .practice-bar .tool:hover:not(:disabled){background-color:#ededf0!important}
+html body .restored-reader .practice-bar .tool:focus-visible{outline:2px solid #8c6aa1!important;outline-offset:2px}
+.custom-score-heading h1,.osmd-score svg text[data-score-title]{font-variant-numeric:lining-nums;font-feature-settings:"lnum" 1}
+html body .restored-reader .practice-bar .transport>button.tool.smart-drone-trigger.on,
+html body .restored-reader .practice-bar .score-recorder>button.tool.record-button.on,
+html body .restored-reader .practice-bar button.tool.on.has-tip{background:var(--studio-on-bg)!important;color:var(--studio-on-ink)!important;border-radius:12px!important;box-shadow:none!important}
+
+.score-title-number{font-family:"Times New Roman",serif}
+html body .workspace .custom-score-heading h1 .score-title-number{display:inline!important}
+
+/* A single engraving heading system is used in every page layout. */
+html body .reader-workspace .custom-score-heading{display:none!important}
+
+@media(max-width:760px){
+ html body .restored-reader .practice-bar .reader-popover-anchor:has(>.reader-accompaniment){order:6!important}
+ html body .restored-reader .practice-bar .reader-view .tool.reader-accompaniment{font-size:0!important;width:36px!important;min-width:36px!important;padding:0!important}
+}
+
+.reader-play-start{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:14px;padding:10px;border:0;border-radius:12px;background:#efeff2;color:#292a34;cursor:pointer;font:inherit}
+.reader-play-start:hover{background:#e5e5e9}
+.reader-play-start svg{width:20px;height:20px}
+.score-count-in{position:absolute;z-index:8;left:50%;top:20px;transform:translateX(-50%);padding:12px 18px;border-radius:20px;background:#fff;box-shadow:0 3px 18px #00000015;pointer-events:none}
+.score-count-in>span{display:flex;gap:10px}
+.score-count-in i{width:12px;height:12px;border-radius:50%;background:#d9dce3}
+.score-count-in i.current{background:#2e6fb0;transform:scale(1.2)}
+.score-count-in i.done{background:#8db4dc}
+html body .restored-reader .practice-bar .reader-popover-anchor>button[aria-expanded="true"]{background:#eee5f2!important;color:#76518c!important}
+html body .restored-reader .practice-bar .reader-popover-anchor>button[aria-expanded="true"]:hover{background:#e5e5e9!important}
+@media(max-width:760px){
+ html body .restored-reader .practice-bar .reader-popover-anchor:has(>.reader-accompaniment){order:1!important}
+ html body .restored-reader .practice-bar .reader-popover-anchor>.tool.reader-accompaniment{font-size:0!important;width:36px!important;min-width:36px!important;padding:0!important}
+}
+html body .reader-settings-panel.reader-play-card .reader-panel-heading{display:flex!important;align-items:center;justify-content:space-between;margin-bottom:10px!important}
+html body .reader-settings-panel.reader-play-card .reader-panel-heading>button{display:block!important}
+.reader-workspace .score-scroll{position:relative}
+html body .restored-reader .topbar .back.has-tip:after{left:0!important;right:auto!important;transform:none!important;max-width:calc(100vw - 60px)}

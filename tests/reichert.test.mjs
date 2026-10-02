@@ -32,7 +32,29 @@ test('key boundaries keep one clef and meter, with optional new lines',()=>{
 test('tonic drones follow filtered keys and fermatas precede new pickups',()=>{
  const xml=fs.readFileSync(new URL('../public'+pieces[1].scorePath,import.meta.url),'utf8');
  const selected=filterKeySections(xml,['0-minor','-1-major']);
- assert.deepEqual(keyDroneChanges(selected).map(c=>c.pitch),['A3','F3']);
+ assert.deepEqual(keyDroneChanges(selected).map(c=>c.pitch),['A4','F5']);
  assert.equal(keyDroneChanges(selected)[0].measure,1);
  assert.equal((selected.match(/<fermata>/g)||[]).length,2);
+});
+
+test('No. 1 drone uses the opening tonic octave in every key',()=>{
+ const xml=fs.readFileSync(new URL('../public'+pieces[0].scorePath,import.meta.url),'utf8');
+ const changes=keyDroneChanges(xml);
+ assert.equal(changes.length,24);assert.equal(changes[0].pitch,'C5');assert.equal(changes[1].pitch,'A5');
+});
+
+test('all generated exercises stay above flute low C',()=>{
+ const semitones={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+ for(const piece of pieces){
+  const xml=fs.readFileSync(new URL('../public'+piece.scorePath,import.meta.url),'utf8');
+  for(const [,pitch] of xml.matchAll(/<pitch>(.*?)<\/pitch>/gs)){
+   const step=pitch.match(/<step>(.*?)<\/step>/)[1],octave=Number(pitch.match(/<octave>(.*?)<\/octave>/)[1]),alter=Number(pitch.match(/<alter>(.*?)<\/alter>/)?.[1]??0);
+   assert.ok((octave+1)*12+semitones[step]+alter>=60,`${piece.id}: ${step}${octave}`);
+  }
+ }
+});
+test('No. 1 preserves the requested major and minor registers',()=>{
+ const xml=fs.readFileSync(new URL('../public'+pieces[0].scorePath,import.meta.url),'utf8');
+ const expected={'-1-minor':'D5','-2-major':'B♭5','-3-minor':'C5','-4-major':'A♭5','-6-minor':'E♭5','5-major':'B5','4-minor':'C♯5','3-major':'A5','1-major':'G5'};
+ for(const [key,pitch] of Object.entries(expected))assert.equal(keyDroneChanges(filterKeySections(xml,[key]))[0].pitch,pitch);
 });

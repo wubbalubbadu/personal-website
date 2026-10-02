@@ -14,7 +14,7 @@
 /** One sounding note on the audio clock (seconds). */
 export type CursorBeat={index:number;at:number;end:number};
 
-type Stop={x:number;top:number;bottom:number;lineEnd:number};
+type Stop={x:number;top:number;bottom:number;lineEnd:number;measureEnd?:number;measure?:Element};
 
 /**
  * Where each note is, in the paper's own unscaled coordinates (the paper is
@@ -37,7 +37,7 @@ export function measureStops(notes:ArrayLike<SVGGElement>,paper:HTMLElement,magn
     const note=notes[i],bar=note.closest(".vf-measure");
     if(!bar){stops.push(null);continue}
     const head=note.querySelector(".vf-notehead")??note,rect=head.getBoundingClientRect(),staff=staffOf(bar);
-    stops.push({x:(rect.left+rect.width/2-box.left)/magnify,top:(staff.top-box.top)/magnify-10,bottom:(staff.bottom-box.top)/magnify+10,lineEnd:(staff.right-box.left)/magnify});
+    stops.push({x:(rect.left+rect.width/2-box.left)/magnify,top:(staff.top-box.top)/magnify-10,bottom:(staff.bottom-box.top)/magnify+10,lineEnd:(staff.right-box.left)/magnify,measureEnd:(staff.right-box.left)/magnify,measure:bar});
   }
   // A line's end is its last bar's right edge: carry it back through the line.
   for(let i=stops.length-2;i>=0;i--){
@@ -51,11 +51,12 @@ export function measureStops(notes:ArrayLike<SVGGElement>,paper:HTMLElement,magn
 export function cursorAt(now:number,beats:CursorBeat[],stops:(Stop|null)[],from:{k:number}){
   while(from.k<beats.length-1&&beats[from.k].end<=now)from.k++;
   const beat=beats[from.k];
-  if(!beat||now<beat.at||now>=beat.end+.25)return null;
+  if(!beat||now>=beat.end+.25)return null;
   const here=stops[beat.index];if(!here)return null;
   const nextBeat=beats[from.k+1],next=nextBeat?stops[nextBeat.index]:null;
   const sameLine=!!next&&Math.abs(next.top-here.top)<4&&next.x>here.x;
-  const target=sameLine?next!.x:here.lineEnd;
+  const sameMeasure=sameLine&&here.measure===next?.measure;
+  const target=sameMeasure?next!.x:(here.measureEnd??here.lineEnd);
   const span=Math.max(.001,(nextBeat&&sameLine?nextBeat.at:beat.end)-beat.at);
   const progress=Math.min(1,Math.max(0,(now-beat.at)/span));
   return {x:here.x+(target-here.x)*progress,top:here.top,height:here.bottom-here.top};

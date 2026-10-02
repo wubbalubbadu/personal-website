@@ -1,6 +1,7 @@
 "use client";
 
-import {useEffect,useRef,useState} from "react";
+import {useEffect,useLayoutEffect,useRef,useState} from "react";
+import {createPortal} from "react-dom";
 import {STATUSES,STATUS_LABELS,STATUS_TONES,setStatus,useStatuses} from "../lib/musicStatus";
 import "./status-button.css";
 
@@ -18,9 +19,25 @@ export function StatusButton({id,zh,compact=false}:{id:string;zh:boolean;compact
   const status=useStatuses()[id];
   const [open,setOpen]=useState(false);
   const wrap=useRef<HTMLSpanElement>(null);
+  const menu=useRef<HTMLSpanElement>(null);
+  const [position,setPosition]=useState({left:0,top:0,placed:false});
+  useLayoutEffect(()=>{
+    if(!open)return;
+    const place=()=>{
+      const anchor=wrap.current?.getBoundingClientRect(),height=menu.current?.offsetHeight;
+      if(!anchor||!height)return;
+      const width=190,gap=8,margin=8;
+      const left=Math.max(margin,Math.min(compact?anchor.right-width:anchor.left,window.innerWidth-width-margin));
+      const roomBelow=window.innerHeight-anchor.bottom-gap,roomAbove=anchor.top-gap;
+      const top=roomBelow>=height||roomBelow>=roomAbove?anchor.bottom+gap:anchor.top-height-gap;
+      setPosition({left,top:Math.max(margin,Math.min(top,window.innerHeight-height-margin)),placed:true});
+    };
+    place();window.addEventListener("resize",place);window.addEventListener("scroll",place,true);
+    return()=>{window.removeEventListener("resize",place);window.removeEventListener("scroll",place,true)};
+  },[open,compact]);
   useEffect(()=>{
     if(!open)return;
-    const away=(event:PointerEvent)=>{if(!wrap.current?.contains(event.target as Node))setOpen(false)};
+    const away=(event:PointerEvent)=>{if(!wrap.current?.contains(event.target as Node)&&!menu.current?.contains(event.target as Node))setOpen(false)};
     const key=(event:KeyboardEvent)=>{if(event.key==="Escape")setOpen(false)};
     window.addEventListener("pointerdown",away);window.addEventListener("keydown",key);
     return()=>{window.removeEventListener("pointerdown",away);window.removeEventListener("keydown",key)};
@@ -35,12 +52,12 @@ export function StatusButton({id,zh,compact=false}:{id:string;zh:boolean;compact
       {status?<i className="status-dot" data-tone={STATUS_TONES[status]} aria-hidden="true"/>:<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11"/></svg>}
       <span>{label}</span>
     </button>
-    {open&&<span className="status-button__menu" role="menu">
+    {open&&createPortal(<span ref={menu} className="status-button__menu" role="menu" style={{left:position.left,top:position.top,visibility:position.placed?"visible":"hidden"}}>
       {STATUSES.map(value=><button key={value} type="button" role="menuitemradio" aria-checked={status===value} className={status===value?"is-on":""}
         onClick={event=>{own(event);setStatus(id,value);setOpen(false)}}>
         <i className="status-dot" data-tone={STATUS_TONES[value]} aria-hidden="true"/><span>{STATUS_LABELS[value][zh?"zh":"en"]}</span>{status===value&&<b aria-hidden="true">✓</b>}
       </button>)}
       {status&&<button type="button" role="menuitem" className="status-button__remove" onClick={event=>{own(event);setStatus(id,null);setOpen(false)}}>{zh?"从列表中移除":"Remove from lists"}</button>}
-    </span>}
+    </span>,document.body)}
   </span>;
 }

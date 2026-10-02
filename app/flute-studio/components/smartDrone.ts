@@ -1,4 +1,4 @@
-export type DroneChange={measure:number;pitch:string|null;at?:'last-note';event?:number};
+export type DroneChange={measure:number;pitch:string|null;displayPitch?:string;at?:'last-note';event?:number};
 /** Resolve change points against written events, including changes inside a bar. */
 export function droneEvents(changes:DroneChange[],events:{p:string|null;d:number}[],measureStarts:number[]){
   const points=changes.map(change=>{
@@ -11,4 +11,11 @@ export function droneEvents(changes:DroneChange[],events:{p:string|null;d:number
   }).sort((a,b)=>a.index-b.index);
   let point=0,pitch:string|null=null;
   return events.map((_,index)=>{while(point<points.length&&points[point].index<=index)pitch=points[point++].pitch;return pitch});
+}
+
+/** Both the count-in clicks and the first tonic share this audio clock. */
+export function droneCountIn(clockStart:number,beatSeconds:number,beatsPerBar:number,enabled:boolean,scaleBeats?:number){
+  const beats=enabled?(scaleBeats??beatsPerBar*2):0;
+  const duration=beats*beatSeconds;
+  return {beats,duration,start:clockStart+duration};
 }

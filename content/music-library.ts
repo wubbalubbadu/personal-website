@@ -1,3 +1,4 @@
+import {orderedBookPieces} from "./book-pieces.js";
 import catalog from "./music-catalog.json";
 import composers from "./composers.json";
 import books from "./music-books.json";
@@ -9,16 +10,20 @@ import {exerciseCatalog,type ExerciseFocus} from "./exercise-catalog";
 // (the uploader only suggests it), shown as the "Good first pieces" shelf.
 export type ScorePage={src:string;width:number;height:number};
 export type ScoreRecording={id:string;title:string;performer:string;youtubeId:string;startSeconds?:number};
-export type ExcerptScore={part:string;passage:string;zhPassage?:string;pages:ScorePage[]};
+export type ExcerptScore={part:string;passage:string;zhPassage?:string;workLabel?:string;zhWorkLabel?:string;tempoHint?:string;zhTempoHint?:string;pages:ScorePage[]};
 
 export type MusicItem={private?:boolean;id:string;title:string;composer:string;
   /** Year written, as a plain number so pieces can be sorted on a timeline. */
   year?:number;
   /** One or two sentences about this piece: where it comes from, what it was written for. */
   about?:string;
-  tags:string[];beginner?:boolean;
+  tags:string[];beginner?:boolean;accompanimentKind?:"piano"|"chords";
   smartDrone?:import("../app/flute-studio/components/smartDrone").DroneChange[];
   excerpt?:ExcerptScore;recordings?:ScoreRecording[];
+  /** First bar governed by an unmarked "sempre staccato" direction in the printed excerpt. Playback only. */
+  sempreStaccatoFromMeasure?:number;
+  /** Treat one whole bar as the metronome pulse. */
+  pulsePerMeasure?:boolean;
   /** Set on exercises shown in the Library; their skill is a separate tag set from a piece's genre tags. */
   exercise?:{focus:ExerciseFocus;detail:string;zhDetail:string;zhTitle:string};
   /** A numbered piece inside a book (Köhler Op. 33 No. 4). The Library lists the book, not each piece. */
@@ -39,7 +44,7 @@ export type MusicBook={id:string;title:string;composer:string;tags:string[];year
 export const musicBooks=books as MusicBook[];
 export const bookPath=(id:string)=>`/flute-studio/music/books/${id}`;
 /** A book's pieces, in order. */
-export const bookPieces=(bookId:string)=>musicLibrary.filter(item=>item.book?.id===bookId).sort((a,b)=>a.book!.number-b.book!.number);
+export const bookPieces=(bookId:string)=>orderedBookPieces(musicLibrary,bookId) as MusicItem[];
 
 /**
  * What the Library lists: every piece (a book counts once, as its own row)

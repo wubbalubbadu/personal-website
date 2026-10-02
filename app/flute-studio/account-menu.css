@@ -49,3 +49,15 @@
 }
 
 .account-menu__private{display:grid;gap:8px;padding:4px 12px 12px}.account-menu__private label{display:grid;gap:5px;font-size:12px}.account-menu__private input{width:100%;box-sizing:border-box;padding:9px;border:1px solid #dadbe0;border-radius:8px;font:inherit}.account-menu__private button{padding:9px;border:0;border-radius:8px;background:#292a33;color:white;font:inherit;cursor:pointer}.account-menu__private p{margin:0;font-size:12px}
+
+html body .account-menu__private button{justify-self:start;padding:8px 18px;min-height:40px;border-radius:12px;background:#f1f1f4!important;color:#494953!important;font-size:14px;font-weight:500}
+html body .account-menu__private button:hover:not(:disabled){background:#ededf0!important}
+.account-menu__private button:focus-visible{outline:2px solid #8c6aa1;outline-offset:2px}
+
+/* Private access is one compact form row: label, field, Unlock. */
+.account-menu__private{grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:6px}
+.account-menu__private label{display:contents}
+.account-menu__private label>span{white-space:nowrap;font-size:12px;color:#73737f}
+.account-menu__private input{min-width:0;height:34px;padding:6px 8px;font-size:13px}
+html body .account-menu__private button{min-height:34px;height:34px;padding:6px 10px;border-radius:10px;font-size:13px;white-space:nowrap}
+.account-menu__private p{grid-column:1/-1}

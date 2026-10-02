@@ -36,7 +36,7 @@ export default function MusicRow({item,tagLabel}:{item:MusicItem;tagLabel:(tag:s
     ...item.tags.map(tag=>({label:tagLabel(tag),tone:tagTone(tag)})),
     ...(exercise?[{label:focusLabels[exercise.focus]}]:[]),
     // A book's row says how many pieces are inside it.
-    ...(item.bookCount?[{label:zh?`${item.bookCount} 首`:`${item.bookCount} ${item.tags.some(tag=>/^etudes?$/i.test(tag))?"etudes":"pieces"}`}]:[]),
+    ...(item.bookCount?[{label:zh?`${item.bookCount} 首`:`${item.bookCount} ${item.tags.some(tag=>/^exercises?$/i.test(tag))?"exercises":item.tags.some(tag=>/^etudes?$/i.test(tag))?"etudes":"pieces"}`}]:[]),
     ...(!item.viewerPath?[{label:t.exercises.comingSoon,tone:"soon" as const}]:[]),
   ];
   const content=<>

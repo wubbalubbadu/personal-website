@@ -175,7 +175,7 @@ function trillUpper(note: { halfTone: number; Pitch: { FundamentalNote: number; 
   return pitchFromHalfTone(note.halfTone - note.Pitch.AccidentalHalfTones + step + alter);
 }
 
-export function deriveScoreEvents(osmd: OSMDType) {
+export function deriveScoreEvents(osmd: OSMDType, sempreStaccatoFromMeasure?: number) {
   const unitsPerWhole = resolveUnitsPerWhole(osmd);
   const pitches: (string | null)[] = [];
   const events: { p: string | null; d: number; tied: boolean; articulation: ArticulationMode; slurContinuation: boolean; level: number; accent?: boolean; trill?: string }[] = [];
@@ -196,7 +196,7 @@ export function deriveScoreEvents(osmd: OSMDType) {
   const EPS = 1e-6;
   const measureStarts: number[] = [];
 
-  for (const measure of osmd.Sheet.SourceMeasures) {
+  for (const [measureIndex, measure] of osmd.Sheet.SourceMeasures.entries()) {
     measureStarts.push(pitches.length);
     for (const entry of measure.FirstInstructionsStaffEntries ?? []) for (const instruction of entry?.Instructions ?? []) {
       const key = (instruction as { Key?: unknown; keyTypeOriginal?: unknown });
@@ -240,7 +240,11 @@ export function deriveScoreEvents(osmd: OSMDType) {
         // both — a slurred note is legato regardless of what's under it.
         const slur = note.NoteSlurs[0];
         const hasMark = (kind: ArticulationEnum) => voiceEntry.Articulations.some(a => a.articulationEnum === kind);
-        const articulation: ArticulationMode = slur ? "slur" : hasMark(ArticulationEnum.staccato) ? "staccato" : hasMark(ArticulationEnum.tenuto) ? "tenuto" : "tongue";
+        // "Sempre staccato" is a continuing instruction: the source only
+        // prints dots on the first notes. Keep the later engraving unmarked,
+        // but shorten their playback until the end of this excerpt.
+        const impliedStaccato = sempreStaccatoFromMeasure !== undefined && measureIndex + 1 >= sempreStaccatoFromMeasure;
+        const articulation: ArticulationMode = slur ? "slur" : hasMark(ArticulationEnum.staccato) ? "staccato" : hasMark(ArticulationEnum.tenuto) ? "tenuto" : impliedStaccato ? "staccato" : "tongue";
         const slurContinuation = !!slur && slur.StartNote !== note;
         // The score-wide grid is the LCM of OSMD's rational duration
         // denominators, so this is exact for tuplets as well as binary note

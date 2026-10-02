@@ -55,6 +55,8 @@
   "con fuoco": {"meaning":"with fire"},
   "legato": {"meaning":"smoothly connected"},
   "staccato": {"meaning":"short and detached"},
+  "stacc": {"meaning":"short and detached; keep a clear gap between notes"},
+  "sempre stacc": {"meaning":"continue playing every note short and detached, even where the dots are no longer printed"},
   "tenuto": {"meaning":"held for its full value"},
   "marcato": {"meaning":"marked, accented"},
   "leggiero": {"meaning":"lightly"},

@@ -28,7 +28,7 @@ export default function KeyExerciseViewer({config,sections,stepper}:{config:Scor
     <div className="scale-book__panel-body"><p className="scale-book__field-label">{zh?"调性":"Keys"}</p><KeySelection options={sections.map(s=>({...s,label:s.label.replace(/ (major|minor)$/,"")}))} selected={selected} onChange={setSelected} zh={zh}/><p className="scale-book__field-label">{zh?"换行":"Line breaks"}</p><div className="scale-book__ranges" role="group" aria-label={zh?"换行":"Line breaks"}>{[false,true].map(value=><button type="button" key={String(value)} className={newLines===value?"scale-book__chip selected":"scale-book__chip"} aria-pressed={newLines===value} onClick={()=>setNewLines(value)}>{value?(zh?"另起一行":"Start on a new line"):(zh?"接续上一个":"Continue from previous")}</button>)}</div>{error&&<p role="alert">{zh?"无法载入乐谱，请刷新。":"Could not load the score. Please reload."}</p>}</div>
   </ReaderPopover>;
   const visible=sections.filter(s=>selected.includes(s.id));
-  const tempoFor=(id:string)=>tempos[id]??config.defaultTempo??76;
+  const tempoFor=(id:string)=>tempos[id]??config.defaultTempo??60;
   const setTempo=(id:string,value:number)=>{setActiveKey(id);setTempos(current=>({...current,[id]:Math.max(40,Math.min(220,Math.round(value)))}))};
   let event=0;
   const starts=new Map<string,number>();

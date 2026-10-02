@@ -22,7 +22,7 @@ import "../music/excerpt-reader.css";
 export default function FixedScoreViewer({item,onInteractive}:{item:MusicItem;onInteractive?:()=>void}){
   const {lang,t}=useLanguage(),zh=lang==="zh",excerpt=item.excerpt!;
   const {record}=useRecents('music');
-  const {bpm,setBpm,metro,toggleMetro,initializeScore}=usePracticeAudio();
+  const {bpm,setBpm,metro,toggleMetro,initializeScore,setBeats}=usePracticeAudio();
   const scroller=useRef<HTMLDivElement>(null),paper=useRef<HTMLDivElement>(null),shell=useRef<HTMLElement>(null);
   const [annotating,setAnnotating]=useState(false),[toolbar,setToolbar]=useState<HTMLDivElement|null>(null);
   const [fit,setFit]=useState<'page'|'width'>('page'),[pageWidth,setPageWidth]=useState(0),[layoutVersion,setLayoutVersion]=useState(0);
@@ -31,7 +31,7 @@ export default function FixedScoreViewer({item,onInteractive}:{item:MusicItem;on
   const metroTaps=useRef<number[]>([]);
   function tapTempo(){const now=performance.now();metroTaps.current=[...metroTaps.current.filter(t=>now-t<3000),now].slice(-5);const taps=metroTaps.current;if(taps.length>1)setBpm(60000/((now-taps[0])/(taps.length-1)))}
   const recordings=item.recordings??[],selected=recordings.find(r=>r.id===video);
-  useEffect(()=>{record(item.id);initializeScore(item.id,item.defaultTempo??76)},[record,item.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(()=>{record(item.id);initializeScore(item.pulsePerMeasure?`${item.id}:bar-pulse`:item.id,item.defaultTempo??60);if(item.pulsePerMeasure)setBeats(1)},[record,item.id]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(()=>{
     document.documentElement.classList.toggle('score-focus-mode',focus);
     return()=>document.documentElement.classList.remove('score-focus-mode');

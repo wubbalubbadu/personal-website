@@ -4,7 +4,8 @@
     "title": "Amazing Grace",
     "composer": "Traditional",
     "tags": [
-      "Folk"
+      "Folk",
+      "Accompaniment"
     ],
     "beginner": true,
     "status": "published",
@@ -13,7 +14,8 @@
     "readingPartId": "P1",
     "partCount": 2,
     "viewerPath": "/flute-studio/music/traditional-amazing-grace",
-    "defaultTempo": 100
+    "defaultTempo": 100,
+    "accompanimentKind": "piano"
   },
   {
     "id": "johann-sebastian-bach-badinerie",
@@ -45,16 +47,19 @@
     "partCount": 2,
     "viewerPath": "/flute-studio/music/christoph-willibald-gluck-dance-of-the-blessed-spirits",
     "tags": [
-      "Classical"
+      "Classical",
+      "Accompaniment"
     ],
-    "defaultTempo": 76
+    "defaultTempo": 76,
+    "accompanimentKind": "piano"
   },
   {
     "id": "english-traditional-danny-boy",
     "title": "Danny Boy",
     "composer": "Traditional",
     "tags": [
-      "Folk"
+      "Folk",
+      "Accompaniment"
     ],
     "beginner": true,
     "status": "published",
@@ -63,7 +68,8 @@
     "readingPartId": "P1",
     "partCount": 2,
     "viewerPath": "/flute-studio/music/english-traditional-danny-boy",
-    "defaultTempo": 72
+    "defaultTempo": 72,
+    "accompanimentKind": "piano"
   },
   {
     "id": "ravel-daphnis-et-chloe-176",
@@ -81,6 +87,8 @@
       "part": "Flute 1",
       "passage": "[176] to 2 measures after [179]",
       "zhPassage": "[176] 至 [179] 后两小节",
+      "workLabel": "Pantomime from the ballet · Flute 1",
+      "zhWorkLabel": "芭蕾舞剧《达芙妮与克罗埃》中的哑剧段落 · 第一长笛",
       "pages": [
         {
           "src": "/music/ravel-daphnis-et-chloe-176/score.jpg",
@@ -143,6 +151,54 @@
       }
     ],
     "defaultTempo": 33
+  },
+  {
+    "id": "felix-mendelssohn-midsummer-scherzo",
+    "title": "Scherzo",
+    "composer": "Felix Mendelssohn",
+    "tags": [
+      "Classical",
+      "Excerpt"
+    ],
+    "status": "published",
+    "scorePath": "/music/felix-mendelssohn-midsummer-scherzo/score.musicxml",
+    "viewerPath": "/flute-studio/music/felix-mendelssohn-midsummer-scherzo",
+    "pdfPath": "/music/felix-mendelssohn-midsummer-scherzo/score.pdf",
+    "excerpt": {
+      "part": "Flute I",
+      "passage": "2 measures before [P] to the end",
+      "workLabel": "From A Midsummer Night’s Dream",
+      "zhWorkLabel": "选自《仲夏夜之梦》",
+      "tempoHint": "Suggested: 84 measures per minute",
+      "zhTempoHint": "建议速度：每分钟 84 小节",
+      "pages": [
+        {
+          "src": "/music/felix-mendelssohn-midsummer-scherzo/score.jpg",
+          "width": 960,
+          "height": 786
+        }
+      ]
+    },
+    "sempreStaccatoFromMeasure": 1,
+    "pulsePerMeasure": true,
+    "defaultTempo": 84,
+    "year": 1842,
+    "about": "From the incidental music for Shakespeare’s A Midsummer Night’s Dream, Op. 61, written years after Mendelssohn’s earlier overture, Op. 21. The flute excerpt begins two measures before rehearsal P and continues to the end.",
+    "recordings": [
+      {
+        "id": "szell-cleveland",
+        "title": "Scherzo · orchestral passage",
+        "performer": "Cleveland Orchestra · George Szell",
+        "youtubeId": "jY1Z-cPEE9Q",
+        "startSeconds": 219
+      },
+      {
+        "id": "mcgill-fujii",
+        "title": "Scherzo · two-flute performance",
+        "performer": "Demarre McGill · Kaori Fujii",
+        "youtubeId": "hxjMKNCvbEE"
+      }
+    ]
   },
   {
     "id": "txt-deja-vu",
@@ -211,7 +267,8 @@
     "title": "Greensleeves",
     "composer": "Traditional",
     "tags": [
-      "Folk"
+      "Folk",
+      "Accompaniment"
     ],
     "beginner": true,
     "status": "published",
@@ -220,7 +277,25 @@
     "readingPartId": "P1",
     "partCount": 1,
     "viewerPath": "/flute-studio/music/traditional-greensleeves",
-    "defaultTempo": 112
+    "defaultTempo": 112,
+    "accompanimentKind": "chords"
+  },
+  {
+    "id": "camille-saint-saens-le-cygne",
+    "title": "Le Cygne",
+    "composer": "Camille Saint-Saëns",
+    "status": "published",
+    "scorePath": "/music/camille-saint-saens-le-cygne/score.musicxml",
+    "fullScorePath": "/music/camille-saint-saens-le-cygne/full-score.musicxml",
+    "readingPartId": "P1",
+    "partCount": 2,
+    "viewerPath": "/flute-studio/music/camille-saint-saens-le-cygne",
+    "tags": [
+      "Classical",
+      "Accompaniment"
+    ],
+    "defaultTempo": 70,
+    "accompanimentKind": "piano"
   },
   {
     "id": "christian-petzold-minuet-in-g-major",
@@ -229,7 +304,8 @@
     "year": 1725,
     "about": "Copied into the 1725 notebook Bach gave his wife Anna Magdalena, and for a long time printed as Bach's. In the 1970s scholars showed it was written by Christian Petzold.",
     "tags": [
-      "Classical"
+      "Classical",
+      "Accompaniment"
     ],
     "status": "published",
     "scorePath": "/music/christian-petzold-minuet-in-g-major/score.musicxml",
@@ -237,7 +313,8 @@
     "readingPartId": "P1",
     "partCount": 1,
     "viewerPath": "/flute-studio/music/christian-petzold-minuet-in-g-major",
-    "defaultTempo": 120
+    "defaultTempo": 120,
+    "accompanimentKind": "chords"
   },
   {
     "id": "mystery-of-love",
@@ -272,6 +349,121 @@
       "Etude"
     ],
     "defaultTempo": 126
+  },
+  {
+    "id": "reichert-op-5-no-01",
+    "title": "No. 1",
+    "composer": "Mathieu-André Reichert",
+    "tags": [
+      "Exercise"
+    ],
+    "status": "published",
+    "scorePath": "/music/reichert-op-5/no-01.musicxml",
+    "viewerPath": "/flute-studio/music/reichert-op-5-no-01",
+    "book": {
+      "id": "reichert-op-5",
+      "number": 1,
+      "opening": "All keys",
+      "time": "6/8"
+    },
+    "keySections": [
+      {
+        "id": "0-major",
+        "label": "C major"
+      },
+      {
+        "id": "0-minor",
+        "label": "a minor"
+      },
+      {
+        "id": "-1-major",
+        "label": "F major"
+      },
+      {
+        "id": "-1-minor",
+        "label": "d minor"
+      },
+      {
+        "id": "-2-major",
+        "label": "B♭ major"
+      },
+      {
+        "id": "-2-minor",
+        "label": "g minor"
+      },
+      {
+        "id": "-3-major",
+        "label": "E♭ major"
+      },
+      {
+        "id": "-3-minor",
+        "label": "c minor"
+      },
+      {
+        "id": "-4-major",
+        "label": "A♭ major"
+      },
+      {
+        "id": "-4-minor",
+        "label": "f minor"
+      },
+      {
+        "id": "-5-major",
+        "label": "D♭ major"
+      },
+      {
+        "id": "-5-minor",
+        "label": "b♭ minor"
+      },
+      {
+        "id": "-6-major",
+        "label": "G♭ major"
+      },
+      {
+        "id": "-6-minor",
+        "label": "e♭ minor"
+      },
+      {
+        "id": "5-major",
+        "label": "B major"
+      },
+      {
+        "id": "5-minor",
+        "label": "g♯ minor"
+      },
+      {
+        "id": "4-major",
+        "label": "E major"
+      },
+      {
+        "id": "4-minor",
+        "label": "c♯ minor"
+      },
+      {
+        "id": "3-major",
+        "label": "A major"
+      },
+      {
+        "id": "3-minor",
+        "label": "f♯ minor"
+      },
+      {
+        "id": "2-major",
+        "label": "D major"
+      },
+      {
+        "id": "2-minor",
+        "label": "b minor"
+      },
+      {
+        "id": "1-major",
+        "label": "G major"
+      },
+      {
+        "id": "1-minor",
+        "label": "e minor"
+      }
+    ]
   },
   {
     "id": "ernesto-kohler-op-33-book-1-no-10",
@@ -407,335 +599,6 @@
     "defaultTempo": 114
   },
   {
-    "id": "ernesto-kohler-op-33-book-1-no-03",
-    "title": "No. 3",
-    "composer": "Ernesto Köhler",
-    "status": "published",
-    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-03.musicxml",
-    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-03",
-    "book": {
-      "id": "ernesto-kohler-op-33-book-1",
-      "number": 3,
-      "opening": "Allegro",
-      "bars": 67,
-      "time": "3/4"
-    },
-    "tags": [
-      "Etude"
-    ],
-    "defaultTempo": 138
-  },
-  {
-    "id": "ernesto-kohler-op-33-book-1-no-04",
-    "title": "No. 4",
-    "composer": "Ernesto Köhler",
-    "status": "published",
-    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-04.musicxml",
-    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-04",
-    "book": {
-      "id": "ernesto-kohler-op-33-book-1",
-      "number": 4,
-      "opening": "Allegretto vivo",
-      "bars": 63,
-      "time": "6/8"
-    },
-    "tags": [
-      "Etude"
-    ],
-    "defaultTempo": 94
-  },
-  {
-    "id": "ernesto-kohler-op-33-book-1-no-05",
-    "title": "No. 5",
-    "composer": "Ernesto Köhler",
-    "status": "published",
-    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-05.musicxml",
-    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-05",
-    "book": {
-      "id": "ernesto-kohler-op-33-book-1",
-      "number": 5,
-      "opening": "Allegretto",
-      "bars": 72,
-      "time": "4/4"
-    },
-    "tags": [
-      "Etude"
-    ],
-    "defaultTempo": 114
-  },
-  {
-    "id": "ernesto-kohler-op-33-book-1-no-06",
-    "title": "No. 6",
-    "composer": "Ernesto Köhler",
-    "status": "published",
-    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-06.musicxml",
-    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-06",
-    "book": {
-      "id": "ernesto-kohler-op-33-book-1",
-      "number": 6,
-      "opening": "Allegro",
-      "bars": 63,
-      "time": "4/4"
-    },
-    "tags": [
-      "Etude"
-    ],
-    "defaultTempo": 138
-  },
-  {
-    "id": "ernesto-kohler-op-33-book-1-no-07",
-    "title": "No. 7",
-    "composer": "Ernesto Köhler",
-    "status": "published",
-    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-07.musicxml",
-    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-07",
-    "book": {
-      "id": "ernesto-kohler-op-33-book-1",
-      "number": 7,
-      "opening": "Allegretto",
-      "bars": 92,
-      "time": "2/4"
-    },
-    "tags": [
-      "Etude"
-    ],
-    "defaultTempo": 114
-  },
-  {
-    "id": "ernesto-kohler-op-33-book-1-no-08",
-    "title": "No. 8",
-    "composer": "Ernesto Köhler",
-    "status": "published",
-    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-08.musicxml",
-    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-08",
-    "book": {
-      "id": "ernesto-kohler-op-33-book-1",
-      "number": 8,
-      "opening": "Allegro moderato",
-      "bars": 48,
-      "time": "3/4"
-    },
-    "tags": [
-      "Etude"
-    ],
-    "defaultTempo": 126
-  },
-  {
-    "id": "ernesto-kohler-op-33-book-1-no-09",
-    "title": "No. 9",
-    "composer": "Ernesto Köhler",
-    "status": "published",
-    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-09.musicxml",
-    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-09",
-    "book": {
-      "id": "ernesto-kohler-op-33-book-1",
-      "number": 9,
-      "opening": "Allegretto",
-      "bars": 72,
-      "time": "3/8"
-    },
-    "tags": [
-      "Etude"
-    ],
-    "defaultTempo": 172
-  },
-  {
-    "id": "beethoven-ode-to-joy",
-    "title": "Ode to Joy",
-    "composer": "Ludwig van Beethoven",
-    "year": 1824,
-    "about": "The main theme of the last movement of Beethoven's Ninth Symphony, first performed in Vienna. The words are Friedrich Schiller's poem An die Freude. Today the melody is the anthem of the European Union.",
-    "tags": [
-      "Classical"
-    ],
-    "beginner": true,
-    "status": "published",
-    "scorePath": "/music/beethoven-ode-to-joy/score.musicxml",
-    "viewerPath": "/flute-studio/music/beethoven-ode-to-joy",
-    "defaultTempo": 72
-  },
-  {
-    "id": "faure-pavane",
-    "title": "Pavane",
-    "composer": "Gabriel Fauré",
-    "year": 1887,
-    "about": "Written for orchestra as the Pavane, Op. 50, with a choir part added later. In the orchestra the flute plays this opening melody over plucked strings.",
-    "status": "published",
-    "scorePath": "/music/faure-pavane/score.musicxml",
-    "fullScorePath": "/music/faure-pavane/full-score.musicxml",
-    "readingPartId": "P1",
-    "partCount": 2,
-    "viewerPath": "/flute-studio/music/faure-pavane",
-    "tags": [
-      "Classical"
-    ],
-    "defaultTempo": 84
-  },
-  {
-    "id": "traditional-scarborough-fair",
-    "title": "Scarborough Fair",
-    "composer": "Traditional",
-    "tags": [
-      "Folk"
-    ],
-    "beginner": true,
-    "status": "published",
-    "scorePath": "/music/traditional-scarborough-fair/score.musicxml",
-    "fullScorePath": "/music/traditional-scarborough-fair/full-score.musicxml",
-    "readingPartId": "P1",
-    "partCount": 1,
-    "viewerPath": "/flute-studio/music/traditional-scarborough-fair",
-    "defaultTempo": 132
-  },
-  {
-    "id": "claude-debussy-syrinx",
-    "title": "Syrinx",
-    "composer": "Claude Debussy",
-    "year": 1913,
-    "about": "Written as music for Gabriel Mourey's play Psyché, where it is the last melody the god Pan plays. Syrinx is the nymph who turned into the reeds of Pan's pipes. It is one of the first major pieces for flute alone of the 20th century.",
-    "status": "published",
-    "scorePath": "/music/claude-debussy-syrinx/score.musicxml",
-    "fullScorePath": "/music/claude-debussy-syrinx/full-score.musicxml",
-    "readingPartId": "P1",
-    "partCount": 1,
-    "viewerPath": "/flute-studio/music/claude-debussy-syrinx",
-    "tags": [
-      "Classical"
-    ],
-    "defaultTempo": 50
-  },
-  {
-    "id": "traditional-twinkle-twinkle-little-star",
-    "title": "Twinkle Twinkle Little Star",
-    "composer": "Traditional",
-    "tags": [
-      "Folk"
-    ],
-    "beginner": true,
-    "status": "published",
-    "scorePath": "/music/traditional-twinkle-twinkle-little-star/score.musicxml",
-    "fullScorePath": "/music/traditional-twinkle-twinkle-little-star/full-score.musicxml",
-    "readingPartId": "P1",
-    "partCount": 2,
-    "viewerPath": "/flute-studio/music/traditional-twinkle-twinkle-little-star",
-    "defaultTempo": 100
-  },
-  {
-    "id": "reichert-op-5-no-01",
-    "title": "No. 1",
-    "composer": "Mathieu-André Reichert",
-    "tags": [
-      "Exercise"
-    ],
-    "status": "published",
-    "scorePath": "/music/reichert-op-5/no-01.musicxml",
-    "viewerPath": "/flute-studio/music/reichert-op-5-no-01",
-    "book": {
-      "id": "reichert-op-5",
-      "number": 1,
-      "opening": "All keys",
-      "time": "6/8"
-    },
-    "keySections": [
-      {
-        "id": "0-major",
-        "label": "C major"
-      },
-      {
-        "id": "0-minor",
-        "label": "a minor"
-      },
-      {
-        "id": "-1-major",
-        "label": "F major"
-      },
-      {
-        "id": "-1-minor",
-        "label": "d minor"
-      },
-      {
-        "id": "-2-major",
-        "label": "B♭ major"
-      },
-      {
-        "id": "-2-minor",
-        "label": "g minor"
-      },
-      {
-        "id": "-3-major",
-        "label": "E♭ major"
-      },
-      {
-        "id": "-3-minor",
-        "label": "c minor"
-      },
-      {
-        "id": "-4-major",
-        "label": "A♭ major"
-      },
-      {
-        "id": "-4-minor",
-        "label": "f minor"
-      },
-      {
-        "id": "-5-major",
-        "label": "D♭ major"
-      },
-      {
-        "id": "-5-minor",
-        "label": "b♭ minor"
-      },
-      {
-        "id": "-6-major",
-        "label": "G♭ major"
-      },
-      {
-        "id": "-6-minor",
-        "label": "e♭ minor"
-      },
-      {
-        "id": "5-major",
-        "label": "B major"
-      },
-      {
-        "id": "5-minor",
-        "label": "g♯ minor"
-      },
-      {
-        "id": "4-major",
-        "label": "E major"
-      },
-      {
-        "id": "4-minor",
-        "label": "c♯ minor"
-      },
-      {
-        "id": "3-major",
-        "label": "A major"
-      },
-      {
-        "id": "3-minor",
-        "label": "f♯ minor"
-      },
-      {
-        "id": "2-major",
-        "label": "D major"
-      },
-      {
-        "id": "2-minor",
-        "label": "b minor"
-      },
-      {
-        "id": "1-major",
-        "label": "G major"
-      },
-      {
-        "id": "1-minor",
-        "label": "e minor"
-      }
-    ]
-  },
-  {
     "id": "reichert-op-5-no-02",
     "title": "No. 2",
     "composer": "Mathieu-André Reichert",
@@ -849,6 +712,25 @@
         "label": "e minor"
       }
     ]
+  },
+  {
+    "id": "ernesto-kohler-op-33-book-1-no-03",
+    "title": "No. 3",
+    "composer": "Ernesto Köhler",
+    "status": "published",
+    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-03.musicxml",
+    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-03",
+    "book": {
+      "id": "ernesto-kohler-op-33-book-1",
+      "number": 3,
+      "opening": "Allegro",
+      "bars": 67,
+      "time": "3/4"
+    },
+    "tags": [
+      "Etude"
+    ],
+    "defaultTempo": 138
   },
   {
     "id": "reichert-op-5-no-03",
@@ -966,6 +848,25 @@
     ]
   },
   {
+    "id": "ernesto-kohler-op-33-book-1-no-04",
+    "title": "No. 4",
+    "composer": "Ernesto Köhler",
+    "status": "published",
+    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-04.musicxml",
+    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-04",
+    "book": {
+      "id": "ernesto-kohler-op-33-book-1",
+      "number": 4,
+      "opening": "Allegretto vivo",
+      "bars": 63,
+      "time": "6/8"
+    },
+    "tags": [
+      "Etude"
+    ],
+    "defaultTempo": 94
+  },
+  {
     "id": "reichert-op-5-no-04",
     "title": "No. 4",
     "composer": "Mathieu-André Reichert",
@@ -1079,6 +980,25 @@
         "label": "e minor"
       }
     ]
+  },
+  {
+    "id": "ernesto-kohler-op-33-book-1-no-05",
+    "title": "No. 5",
+    "composer": "Ernesto Köhler",
+    "status": "published",
+    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-05.musicxml",
+    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-05",
+    "book": {
+      "id": "ernesto-kohler-op-33-book-1",
+      "number": 5,
+      "opening": "Allegretto",
+      "bars": 72,
+      "time": "4/4"
+    },
+    "tags": [
+      "Etude"
+    ],
+    "defaultTempo": 114
   },
   {
     "id": "reichert-op-5-no-05",
@@ -1196,6 +1116,25 @@
     ]
   },
   {
+    "id": "ernesto-kohler-op-33-book-1-no-06",
+    "title": "No. 6",
+    "composer": "Ernesto Köhler",
+    "status": "published",
+    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-06.musicxml",
+    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-06",
+    "book": {
+      "id": "ernesto-kohler-op-33-book-1",
+      "number": 6,
+      "opening": "Allegro",
+      "bars": 63,
+      "time": "4/4"
+    },
+    "tags": [
+      "Etude"
+    ],
+    "defaultTempo": 138
+  },
+  {
     "id": "reichert-op-5-no-06",
     "title": "No. 6",
     "composer": "Mathieu-André Reichert",
@@ -1311,6 +1250,25 @@
     ]
   },
   {
+    "id": "ernesto-kohler-op-33-book-1-no-07",
+    "title": "No. 7",
+    "composer": "Ernesto Köhler",
+    "status": "published",
+    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-07.musicxml",
+    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-07",
+    "book": {
+      "id": "ernesto-kohler-op-33-book-1",
+      "number": 7,
+      "opening": "Allegretto",
+      "bars": 92,
+      "time": "2/4"
+    },
+    "tags": [
+      "Etude"
+    ],
+    "defaultTempo": 114
+  },
+  {
     "id": "reichert-op-5-no-07",
     "title": "No. 7",
     "composer": "Mathieu-André Reichert",
@@ -1424,5 +1382,128 @@
         "label": "e minor"
       }
     ]
+  },
+  {
+    "id": "ernesto-kohler-op-33-book-1-no-08",
+    "title": "No. 8",
+    "composer": "Ernesto Köhler",
+    "status": "published",
+    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-08.musicxml",
+    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-08",
+    "book": {
+      "id": "ernesto-kohler-op-33-book-1",
+      "number": 8,
+      "opening": "Allegro moderato",
+      "bars": 48,
+      "time": "3/4"
+    },
+    "tags": [
+      "Etude"
+    ],
+    "defaultTempo": 126
+  },
+  {
+    "id": "ernesto-kohler-op-33-book-1-no-09",
+    "title": "No. 9",
+    "composer": "Ernesto Köhler",
+    "status": "published",
+    "scorePath": "/music/ernesto-kohler-op-33-book-1/no-09.musicxml",
+    "viewerPath": "/flute-studio/music/ernesto-kohler-op-33-book-1-no-09",
+    "book": {
+      "id": "ernesto-kohler-op-33-book-1",
+      "number": 9,
+      "opening": "Allegretto",
+      "bars": 72,
+      "time": "3/8"
+    },
+    "tags": [
+      "Etude"
+    ],
+    "defaultTempo": 172
+  },
+  {
+    "id": "beethoven-ode-to-joy",
+    "title": "Ode to Joy",
+    "composer": "Ludwig van Beethoven",
+    "year": 1824,
+    "about": "The main theme of the last movement of Beethoven's Ninth Symphony, first performed in Vienna. The words are Friedrich Schiller's poem An die Freude. Today the melody is the anthem of the European Union.",
+    "tags": [
+      "Classical"
+    ],
+    "beginner": true,
+    "status": "published",
+    "scorePath": "/music/beethoven-ode-to-joy/score.musicxml",
+    "viewerPath": "/flute-studio/music/beethoven-ode-to-joy",
+    "defaultTempo": 72
+  },
+  {
+    "id": "faure-pavane",
+    "title": "Pavane",
+    "composer": "Gabriel Fauré",
+    "year": 1887,
+    "about": "Written for orchestra as the Pavane, Op. 50, with a choir part added later. In the orchestra the flute plays this opening melody over plucked strings.",
+    "status": "published",
+    "scorePath": "/music/faure-pavane/score.musicxml",
+    "fullScorePath": "/music/faure-pavane/full-score.musicxml",
+    "readingPartId": "P1",
+    "partCount": 2,
+    "viewerPath": "/flute-studio/music/faure-pavane",
+    "tags": [
+      "Classical",
+      "Accompaniment"
+    ],
+    "defaultTempo": 84,
+    "accompanimentKind": "piano"
+  },
+  {
+    "id": "traditional-scarborough-fair",
+    "title": "Scarborough Fair",
+    "composer": "Traditional",
+    "tags": [
+      "Folk"
+    ],
+    "beginner": true,
+    "status": "published",
+    "scorePath": "/music/traditional-scarborough-fair/score.musicxml",
+    "fullScorePath": "/music/traditional-scarborough-fair/full-score.musicxml",
+    "readingPartId": "P1",
+    "partCount": 1,
+    "viewerPath": "/flute-studio/music/traditional-scarborough-fair",
+    "defaultTempo": 132
+  },
+  {
+    "id": "claude-debussy-syrinx",
+    "title": "Syrinx",
+    "composer": "Claude Debussy",
+    "year": 1913,
+    "about": "Written as music for Gabriel Mourey's play Psyché, where it is the last melody the god Pan plays. Syrinx is the nymph who turned into the reeds of Pan's pipes. It is one of the first major pieces for flute alone of the 20th century.",
+    "status": "published",
+    "scorePath": "/music/claude-debussy-syrinx/score.musicxml",
+    "fullScorePath": "/music/claude-debussy-syrinx/full-score.musicxml",
+    "readingPartId": "P1",
+    "partCount": 1,
+    "viewerPath": "/flute-studio/music/claude-debussy-syrinx",
+    "tags": [
+      "Classical"
+    ],
+    "defaultTempo": 50
+  },
+  {
+    "id": "traditional-twinkle-twinkle-little-star",
+    "title": "Twinkle Twinkle Little Star",
+    "composer": "Traditional",
+    "tags": [
+      "Folk",
+      "Accompaniment"
+    ],
+    "beginner": true,
+    "status": "published",
+    "scorePath": "/music/traditional-twinkle-twinkle-little-star/score.musicxml",
+    "fullScorePath": "/music/traditional-twinkle-twinkle-little-star/full-score.musicxml",
+    "readingPartId": "P1",
+    "partCount": 2,
+    "viewerPath": "/flute-studio/music/traditional-twinkle-twinkle-little-star",
+    "defaultTempo": 100,
+    "accompanimentKind": "piano"
   }
 ]

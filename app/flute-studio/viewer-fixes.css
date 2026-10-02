@@ -131,5 +131,6 @@ html.score-focus-mode .workspace{padding-top:0!important;margin-left:0!important
 .workspace.is-tucked .topbar{max-height:0!important;height:0!important;min-height:0!important;flex-basis:0!important;padding-top:0!important;padding-bottom:0!important;border-bottom-width:0!important;opacity:0;overflow:hidden}
 @media(prefers-reduced-motion:reduce){.workspace .topbar{transition:none}}
 
-/* Shared reader controls use a neutral hover across all scores. */
-html body .reader-workspace button:hover:not(:disabled),html body .reader-settings-panel button:hover:not(:disabled){background-color:#ededf0!important}
+/* Neutral hover is only for idle controls. Selected choices retain their
+   purple state, and the plain reset/disclosure rows stay unboxed. */
+html body :is(.reader-workspace,.reader-settings-panel) button:hover:not(:disabled):not([class*="close"]):not([aria-label^="Close"]):not([aria-label^="Cancel"]):not(.scale-book__section-summary):not(.scale-book__others-toggle):not(.reader-settings-reset):not(.selected):not(.on):not(.active):not(.chosen):not([aria-pressed="true"]):not([aria-selected="true"]):not([aria-expanded="true"]){background-color:#ededf0!important}

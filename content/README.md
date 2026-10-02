@@ -18,9 +18,11 @@ Every piece is served by the one shared page, `app/flute-studio/music/[id]/page.
 
 Musical-term explanations come from `content/music-terms.json`. On convert, the uploader lists any marking in the score that the glossary can't explain, with a box for its meaning; meanings you fill in are added to the file when you save. You can also edit the file by hand (one term per line, lowercase keys).
 
-Tags are free text and a piece can have several. The metronome starts at `defaultTempo` if set, otherwise the score's tempo marking, otherwise 76.
+Tags are free text and a piece can have several. The metronome starts at `defaultTempo` if set, otherwise the score's tempo marking, otherwise 60.
 
 A few older pieces keep their files at other paths (`public/mystery-of-love.mxl`, `public/music/<id>/score.mxl` with a `score.pdf`); the catalog's `scorePath` and `pdfPath` point at them.
+
+The Mendelssohn Scherzo excerpt keeps the original printed image from Orchestra Excerpts as `score.jpg`; `score.pdf` contains that same image, so its system breaks and page layout stay intact. `score.musicxml` was exported from the local MuseScore file for the optional interactive view. The MuseScore file transcribed the printed `sempre stacc.` as `sempre marc.`; the exported MusicXML corrects that text, and the catalog starts implied staccato playback at measure 15 without drawing extra dots. The Desktop source file was not changed.
 
 ## Exercises
 

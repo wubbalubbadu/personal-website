@@ -82,6 +82,7 @@ export default function MusicLibrary(){
               {STATUSES.map(value=>chip(`status:${value}`,STATUS_LABELS[value][zh?"zh":"en"],<i className="status-dot" data-tone={STATUS_TONES[value]} aria-hidden="true"/>))}
               <span className="library-chips__divider" aria-hidden="true"/>
               {lead.map(tag=>chip(tag,tagLabel(tag)))}
+              <span className="library-chips__divider" aria-hidden="true"/>
               {chip("beginner",zh?"适合入门":"Good first pieces")}
               {rest.map(tag=>chip(tag,tagLabel(tag)))}
             </>;

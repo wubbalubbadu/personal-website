@@ -152,7 +152,7 @@
   .studio-rail[data-open] .studio-rail__item{height:42px;padding:0 12px;flex-direction:row;justify-content:flex-start;gap:18px;font-size:14px;font-weight:500;color:#45464f}
   .studio-rail[data-open] .studio-rail__item.is-active{color:#292a33;font-weight:650}
   .studio-rail[data-open] .studio-rail__item.is-current{background:#f0f1ee}
-  .studio-rail__children{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:1px}
+  .studio-rail__children{list-style:none;margin:6px 0 14px;padding:0;display:grid;gap:4px}
   /* Tools sit apart from the places, since they open over the page. */
   .studio-rail__group--tools{margin-top:6px;padding-top:6px;border-top:1px solid #ececef}
   button.studio-rail__item,.studio-rail__children button{border:0;background:transparent;font-family:inherit;cursor:pointer;width:100%;text-align:left}

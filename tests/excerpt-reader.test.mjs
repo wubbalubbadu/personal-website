@@ -34,3 +34,22 @@ test('Daphnis has a reachable original score, PDF, attribution and recording',()
   assert.equal(item.excerpt.sourceUrl,undefined);
   assert.match(item.recordings[0].youtubeId,/^[a-zA-Z0-9_-]{11}$/);
 });
+test('Mendelssohn excerpt keeps the printed scan and the corrected continuing articulation',()=>{
+  const catalog=JSON.parse(fs.readFileSync(new URL('content/music-catalog.json',root),'utf8'));
+  const item=catalog.find(i=>i.id==='felix-mendelssohn-midsummer-scherzo');
+  assert.equal(item.status,'published');
+  assert.ok(item.tags.includes('Excerpt'));
+  assert.equal(item.excerpt.pages.length,1);
+  for(const path of [item.scorePath,item.pdfPath,item.excerpt.pages[0].src])assert.ok(fs.existsSync(new URL('public'+path,root)));
+  assert.equal(item.sempreStaccatoFromMeasure,1);
+  assert.equal(item.pulsePerMeasure,true);
+  assert.equal(item.defaultTempo,84);
+  const terms=JSON.parse(fs.readFileSync(new URL('content/music-terms.json',root),'utf8'));
+  assert.match(terms['sempre stacc'].meaning,/every note short and detached/);
+  const xml=fs.readFileSync(new URL('public'+item.scorePath,root),'utf8');
+  assert.match(xml,/<measure number="15">[\s\S]*?<words>sempre stacc\.<\/words>/);
+  assert.doesNotMatch(xml,/sempre marc\./);
+  const fifteenth=xml.match(/<measure number="15">([\s\S]*?)<\/measure>/)?.[1];
+  assert.ok(fifteenth);
+  assert.doesNotMatch(fifteenth,/<staccato\/>/);
+});

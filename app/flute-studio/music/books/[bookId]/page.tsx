@@ -24,9 +24,6 @@ export default function BookPage(){
   const progress=useBookProgress(bookId);
   if(!book||!pieces.length)return <main style={{padding:"120px 24px",textAlign:"center"}}><h1>{zh?"找不到这本书":"Book not found"}</h1></main>;
 
-  // Continue goes back to the last number you opened; before that, No. 1.
-  const next=pieces.find(piece=>piece.book!.number===progress.last)??pieces[0];
-  const started=progress.last!==undefined;
   const doneCount=pieces.filter(piece=>progress.done.includes(piece.book!.number)).length;
 
   return <main className="exercise-hub">
@@ -37,7 +34,6 @@ export default function BookPage(){
         <p className="book-page__composer">{book.composer}{book.year?` · ${book.year}`:""}</p>
         {book.about&&<p className="book-page__about">{book.about}</p>}
         <div className="book-page__actions">
-          <Link className="book-page__continue" href={next.viewerPath!}>{started?(zh?`继续：第 ${next.book!.number} 首`:`Continue with No. ${next.book!.number}`):(zh?"从第 1 首开始":"Start with No. 1")}</Link>
           <StatusButton id={book.id} zh={zh}/>
           <span className="book-page__count">{zh?`已完成 ${doneCount} / ${pieces.length}`:`${doneCount} of ${pieces.length} done`}</span>
         </div>

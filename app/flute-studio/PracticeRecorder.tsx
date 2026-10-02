@@ -3,6 +3,7 @@ import {useEffect,useRef,useState} from "react";
 import {useLanguage} from "./i18n/LanguageContext";
 import {PracticeIcon} from "./components/PracticeIcon";
 import "./practice-recorder.css";
+import {RecordingPanel} from "./components/RecordingPanel";
 
 /**
  * Record your practice, the way a phone does it: while recording there is
@@ -13,6 +14,7 @@ import "./practice-recorder.css";
 export default function PracticeRecorder(){
   const {t,lang}=useLanguage(),zh=lang==="zh";
   const [recording,setRecording]=useState(false),[elapsed,setElapsed]=useState(0),[take,setTake]=useState<{url:string;type:string}|null>(null),[error,setError]=useState("");
+  const recordButton=useRef<HTMLButtonElement>(null);
   const recorder=useRef<MediaRecorder|null>(null),chunks=useRef<Blob[]>([]),stream=useRef<MediaStream|null>(null),started=useRef(0);
   useEffect(()=>()=>{stream.current?.getTracks().forEach(track=>track.stop())},[]);
   useEffect(()=>()=>{if(take)URL.revokeObjectURL(take.url)},[take]);
@@ -45,10 +47,10 @@ export default function PracticeRecorder(){
   }
   const time=`${Math.floor(elapsed/60)}:${String(elapsed%60).padStart(2,"0")}`;
   return <div className="score-recorder">
-    <button className={recording?"tool on record-button active has-tip":"tool record-button has-tip"} data-tip={recording?t.recorder.stopRecording:t.recorder.recordYourPractice} aria-label={recording?t.recorder.stopRecordingAt(time):t.recorder.recordYourPractice} onClick={recording?stop:start}>
+    <button ref={recordButton} className={recording?"tool on record-button active has-tip":"tool record-button has-tip"} aria-pressed={recording} data-tip={recording?t.recorder.stopRecording:t.recorder.recordYourPractice} aria-label={recording?t.recorder.stopRecordingAt(time):t.recorder.recordYourPractice} onClick={recording?stop:start}>
       {recording?<span className="record-stop" aria-hidden="true"/>:<PracticeIcon name="record"/>}{recording?time:t.recorder.record}
     </button>
-    {take&&<div className="recorder-pop" role="dialog" aria-label={zh?"保留这段录音？":"Keep this recording?"}>
+    {take&&<RecordingPanel anchor={recordButton} role="dialog" label={zh?"保留这段录音？":"Keep this recording?"}>
       <header><span>{zh?"保留这段录音？":"Keep this recording?"}</span><small>{time}</small></header>
       {/* Your own flute take, just recorded: there is no speech to caption. */}
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
@@ -58,9 +60,9 @@ export default function PracticeRecorder(){
         <button type="button" className="recorder-save" onClick={save}>{zh?"存到设备":"Save to device"}</button>
       </div>
       <small className="recorder-note">{zh?"录音不会上传。":"Recordings are never uploaded."}</small>
-    </div>}
-    {error&&!take&&<div className="recorder-pop" role="alert">
+    </RecordingPanel>}
+    {error&&!take&&<RecordingPanel anchor={recordButton} role="alert">
       <header><span className="record-error">{error}</span><button type="button" aria-label={zh?"关闭":"Close"} onClick={()=>setError("")}>×</button></header>
-    </div>}
+    </RecordingPanel>}
   </div>;
 }

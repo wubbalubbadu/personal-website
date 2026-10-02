@@ -23,6 +23,11 @@ for p in pieces:
  for fifths,maj,minr,chrom,dia in keys:
   for mode,source,label in [('major',major,maj),('minor',minor,minr)]:
    label=label.lower() if mode=='minor' else label
+   # Preserve the requested register in No. 1. Other exercises keep the
+   # source register unless transposition would put notes below flute C4.
+   register={(-1,'minor'):-1,(-2,'major'):1,(-3,'minor'):-1,(-4,'major'):1,(-6,'minor'):-1,(5,'major'):1,(4,'minor'):-1,(3,'major'):1,(1,'major'):1}.get((fifths,mode),0) if n==1 else 0
+   lowest=min(int(pitch.findtext('octave'))*12+pcs[steps.index(pitch.findtext('step'))]+int(pitch.findtext('alter','0'))+chrom for measure in source for pitch in measure.findall('note/pitch'))
+   if n!=1 and lowest<48:register=(48-lowest+11)//12
    sid=f'{fifths}-{mode}';sections.append({'id':sid,'label':label+' '+mode})
    for j,original in enumerate(source):
     m=copy.deepcopy(original);counter+=1;m.set('number',str(counter));m.set('id',sid)
@@ -41,7 +46,7 @@ for p in pieces:
      d=E.Element('direction',{'placement':'above'});dt=E.SubElement(d,'direction-type');E.SubElement(dt,'words').text=label+' '+mode;m.insert(2,d)
     for pitch in m.findall('note/pitch'):
      old=steps.index(pitch.findtext('step'));octv=int(pitch.findtext('octave'));alter=int(pitch.findtext('alter','0'));newdi=octv*7+old+dia;newstep=newdi%7;newoct=newdi//7
-     target=octv*12+pcs[old]+alter+chrom;newalter=target-(newoct*12+pcs[newstep]);pitch.find('step').text=steps[newstep];pitch.find('octave').text=str(newoct)
+     target=octv*12+pcs[old]+alter+chrom;newalter=target-(newoct*12+pcs[newstep]);pitch.find('step').text=steps[newstep];pitch.find('octave').text=str(newoct+register)
      a=pitch.find('alter')
      if a is not None:pitch.remove(a)
      if newalter:E.SubElement(pitch,'alter').text=str(newalter)

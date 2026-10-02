@@ -117,6 +117,16 @@ export const scaleTypes=[
   // diminished seventh — four notes, not three.
   {id:"diminished",label:"Diminished",zh:"减音阶",intervals:[0,2,3,5,6,8,9,11],letters:[0,1,2,3,4,5,5,6],descending:null,mode:"major",chord:[0,2,4,6],reach:diatonicReach,openSignature:true},
   {id:"augmented",label:"Augmented",zh:"增音阶",intervals:[0,3,4,7,8,11],letters:[0,2,2,4,5,6],descending:null,mode:"major",chord:[0,2,4],reach:diatonicReach,openSignature:true},
+  // Ionian and Aeolian are already offered as major and natural minor.
+  // The modal signatures are offsets on the circle of fifths from the
+  // tonic's major signature; their tonic stays the selected key.
+  {id:"dorian",label:"Dorian",zh:"多利亚调式",intervals:[0,2,3,5,7,9,10],letters:diatonicLetters,descending:null,mode:"major",chord:[0,2,4],reach:diatonicReach,openSignature:false,modeFifthsOffset:-2},
+  {id:"phrygian",label:"Phrygian",zh:"弗里吉亚调式",intervals:[0,1,3,5,7,8,10],letters:diatonicLetters,descending:null,mode:"major",chord:[0,2,4],reach:diatonicReach,openSignature:false,modeFifthsOffset:-4},
+  {id:"lydian",label:"Lydian",zh:"利底亚调式",intervals:[0,2,4,6,7,9,11],letters:diatonicLetters,descending:null,mode:"major",chord:[0,2,4],reach:diatonicReach,openSignature:false,modeFifthsOffset:1},
+  {id:"mixolydian",label:"Mixolydian",zh:"混合利底亚调式",intervals:[0,2,4,5,7,9,10],letters:diatonicLetters,descending:null,mode:"major",chord:[0,2,4],reach:diatonicReach,openSignature:false,modeFifthsOffset:-1},
+  {id:"locrian",label:"Locrian",zh:"洛克里亚调式",intervals:[0,1,3,5,6,8,10],letters:diatonicLetters,descending:null,mode:"major",chord:[0,2,4],reach:diatonicReach,openSignature:false,modeFifthsOffset:-5},
+  {id:"majorPentatonic",label:"Major pentatonic",zh:"大调五声音阶",intervals:[0,2,4,7,9],letters:[0,1,2,4,5],descending:null,mode:"major",chord:[0,2,3],reach:diatonicReach,openSignature:true},
+  {id:"minorPentatonic",label:"Minor pentatonic",zh:"小调五声音阶",intervals:[0,3,5,7,10],letters:[0,2,3,4,6],descending:null,mode:"minor",chord:[0,1,3],reach:diatonicReach,openSignature:true},
 ] as const;
 export type ScaleType=typeof scaleTypes[number];
 export type ScaleTypeId=ScaleType["id"];
@@ -171,10 +181,19 @@ export function keySignatureNotes(fifths:number):string[]{
   return [];
 }
 export function keyForType(key:MajorKey,type:ScaleType):SpelledKey{
+  if("modeFifthsOffset" in type){
+    const direct=key.fifths+type.modeFifthsOffset;
+    if(direct>=-7&&direct<=7)return {pc:key.pc,label:key.label,fifths:direct,step:key.step};
+    // E-flat Locrian would need eight flats. Spell the same tonic as
+    // D-sharp instead, shifting the signature around the circle by 12.
+    const step=(key.step+6)%7;
+    return {pc:key.pc,label:`${letters[step]}♯`,fifths:direct+12,step};
+  }
+  if(type.openSignature)return {pc:key.pc,label:key.label,fifths:0,step:key.step};
   // Chromatic, whole-tone, diminished and augmented scales are written
   // without a key signature — every accidental spelled out — so they take
   // the tonic's letter but none of its sharps or flats.
-  if(type.mode==="major")return {pc:key.pc,label:key.label,fifths:type.openSignature?0:key.fifths,step:key.step};
+  if(type.mode==="major")return {pc:key.pc,label:key.label,fifths:key.fifths,step:key.step};
   const minor=minorSpelling[key.pc];
   return {pc:key.pc,label:minor.label.toLowerCase(),fifths:minor.fifths,step:minor.step};
 }

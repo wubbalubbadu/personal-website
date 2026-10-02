@@ -19,3 +19,14 @@ test('scale tonic changes use event positions inside a measure',()=>{
  const events=Array.from({length:6},()=>({p:'C4',d:1}));
  assert.deepEqual(droneEvents([{measure:1,event:0,pitch:'C3'},{measure:1,event:3,pitch:'A3'}],events,[0]),['C3','C3','C3','A3','A3','A3']);
 });
+
+test('scale count-in lasts four beats and tonic begins on the next click',async()=>{
+ const {droneCountIn}=await import('../app/flute-studio/components/smartDrone.ts');
+ const plan=droneCountIn(12.08,.75,4,true,4);
+ assert.equal(plan.beats,4);assert.equal(plan.start,12.08+4*.75);
+ assert.equal(droneCountIn(12.08,.75,2,true).beats,4);
+ assert.equal(droneCountIn(12.08,.75,3,true).beats,6);
+ assert.equal(droneCountIn(12.08,.75,4,false,4).start,12.08);
+});
+
+ test("one-beat pickup in 3/4 enters on beat three after five count-in clicks",async()=>{const {droneCountIn}=await import("../app/flute-studio/components/smartDrone.ts");const plan=droneCountIn(0,.6,3,true,5);assert.equal(plan.beats,5);assert.equal(plan.start,3)});

@@ -4,8 +4,6 @@
 .book-page__composer{margin:8px 0 0!important;color:#6f7178!important;font-size:16px!important;font-weight:500!important;letter-spacing:0!important;text-transform:none!important}
 .book-page__about{max-width:640px;margin:12px 0 0;color:#5f6169;font-size:15px;line-height:1.55}
 .book-page__actions{display:flex;align-items:center;gap:16px;margin-top:22px}
-.book-page__continue{display:inline-flex;align-items:center;height:42px;padding:0 18px;border-radius:12px;background:#292a33;color:#fff;font-size:14px;font-weight:650;text-decoration:none}
-.book-page__continue:hover{background:#3a3b45}
 .book-page__count{color:#85868e;font-size:14px}
 
 .book-page__list{margin:8px 0 60px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(41,42,51,.08)}

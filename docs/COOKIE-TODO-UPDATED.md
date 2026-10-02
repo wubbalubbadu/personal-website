@@ -131,10 +131,12 @@ These are distinct features worth retaining visibly. Inclusion is not a commitme
 
 Pull hard passages out of a piece and practise them as small exercises.
 
-- **Find them:** flag runs of fast notes, for example four notes per beat at ♩ = 125 to 130 or faster (after the score's own tempo changes). Suggested, not forced: the player can also select bars by hand.
+- **First interaction (October 1 direction):** the player taps a start and end measure in any MusicXML score, or enters a range. Do not require microphone detection or automatically label a passage difficult. The first generic guide is implemented locally for library MusicXML: it reads the selected events, moves the score to the selection, offers an evidence-limited scale link or pitch-pattern advice, identifies ties and three/six notes per beat, and saves self-reported tempo goals and five-correct tallies by passage. Arnold 41–46 is the pilot: close-note oscillation in 41–43 gives way to six-note-per-beat broken figures in 44–46, so the complete range does not get a false single-scale label. Mendelssohn measure 12 links to G melodic minor. Browser-checked locally on both pieces; no device or deployment verification.
+- **Next, rhythm close-up:** enlarge the selected printed bars without losing ties, rests, or the beat grouping. A beat/subdivision line and a slow tap-along mode can help students read the rhythm before changing notes. If a tie crosses the selection boundary, show the adjoining note rather than making it look like a fresh attack. The current guide navigates to the passage but does not yet engrave a separate close-up or transformed exercise.
+- **Technique transformations:** for a uniform untied run, offer long–short and short–long dotted rhythms, repeated pairs (1–2–1–2, then 3–4–3–4), offset pairs (lead with note 1, then repeat 2–3; exact boundary behavior still to confirm), and groupings of three or four. Keep the original pitches and an immediate return to the written rhythm. Do not apply these automatically to irregular or tied material.
 - **Keep a list:** "Difficult passages I'm working on", global like the three lists, visible outside the piece (My Studio, Home's Today card), each opening the piece at that passage.
-- **Name the key of a run:** look at which accidentals a run uses (B♭ and F♯ suggests G minor) and say so.
-- **Generate drills from it:** a scale or thirds exercise in that key; the passage's own notes regrouped in threes or fives; dotted rhythms; a tenuto every 4 or 5 notes; fermatas on a few notes. Reuse Scale Studio's engine where possible.
+- **Scale connection:** compare the actual pitch sequence with scale shapes and offer a Scale Studio link when the match is clear. The key signature alone does not prove a chromatic run's key. Arnold 16–17 repeats a pitch pattern, so label it as a pattern until a key is supported by more evidence.
+- **Other drill ideas for later:** a tenuto every 4 or 5 notes, fermatas on selected notes, or wider regroupings. Reuse Scale Studio's engine where possible.
 - **Later:** the passage looped with the metronome, stepping the tempo up.
 
 ### Guided practice and an activity library

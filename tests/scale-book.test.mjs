@@ -8,7 +8,29 @@ const patternsSource=fs.readFileSync(new URL('../app/flute-studio/components/not
 const patternsUrl=`data:text/javascript;base64,${Buffer.from(transpile(patternsSource)).toString('base64')}`;
 const source=fs.readFileSync(new URL('../app/flute-studio/exercises/scales/scale-score.ts',import.meta.url),'utf8');
 const compiled=transpile(source).replace('../../components/notePatterns',patternsUrl);
-const {majorKeys,ranges,scaleNotes,scaleMusicXML,scaleBookMusicXML}=await import(`data:text/javascript;base64,${Buffer.from(compiled).toString('base64')}`);
+const {majorKeys,ranges,scaleTypes,keyForType,scaleNotes,scaleMusicXML,scaleBookMusicXML}=await import(`data:text/javascript;base64,${Buffer.from(compiled).toString('base64')}`);
+
+test('other scale types use their own intervals and modal signatures',()=>{
+  const c=majorKeys.find(key=>key.id==='C');
+  const db=majorKeys.find(key=>key.id==='Db');
+  const notes=type=>scaleNotes(c,'one',type).slice(0,scaleTypes.find(entry=>entry.id===type).intervals.length).map(note=>note.midi-60);
+  assert.deepEqual(notes('dorian'),[0,2,3,5,7,9,10]);
+  assert.deepEqual(notes('lydian'),[0,2,4,6,7,9,11]);
+  assert.deepEqual(notes('mixolydian'),[0,2,4,5,7,9,10]);
+  assert.deepEqual(notes('majorPentatonic'),[0,2,4,7,9]);
+  assert.deepEqual(notes('minorPentatonic'),[0,3,5,7,10]);
+  assert.equal(keyForType(c,scaleTypes.find(type=>type.id==='dorian')).fifths,-2);
+  assert.equal(keyForType(c,scaleTypes.find(type=>type.id==='lydian')).fifths,1);
+  assert.equal(keyForType(db,scaleTypes.find(type=>type.id==='dorian')).fifths,-7);
+  for(const type of scaleTypes.slice(8))for(const key of majorKeys){
+    const signature=keyForType(key,type).fifths;
+    assert.ok(signature>=-7&&signature<=7,`${key.id} ${type.id} signature`);
+    const pitches=scaleNotes(key,'one',type.id).map(note=>note.midi);
+    assert.ok(pitches.every(pitch=>pitch>=60+key.pc&&pitch<=72+key.pc),`${key.id} ${type.id} range`);
+  }
+  assert.deepEqual(scaleNotes(c,'one','majorPentatonic','arpeggio').slice(0,3).map(note=>note.midi-60),[0,4,7]);
+  assert.deepEqual(scaleNotes(c,'one','minorPentatonic','arpeggio').slice(0,3).map(note=>note.midi-60),[0,3,7]);
+});
 
 test('line layout changes breaks without changing the notes or repeating clefs',()=>{
   const blocks=majorKeys.map(key=>({key,type:'major',form:'scale',label:key.label}));

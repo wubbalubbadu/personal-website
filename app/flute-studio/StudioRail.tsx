@@ -145,6 +145,7 @@ export default function StudioRail({destinations,open}:{destinations:RailDestina
       </Link>
       {open&&<ul className="studio-rail__children">
         {(["tuner","metronome","drone"] as const).map(tool=><li key={tool}><button type="button" onClick={()=>openPracticeTool(tool)}>{t.quickTools[tool]}</button></li>)}
+        <li><Link href="/flute-studio/tools/tendency" aria-current={pathname==="/flute-studio/tools/tendency"?"page":undefined} className={pathname==="/flute-studio/tools/tendency"?"is-current":undefined}>{zh?"音准倾向测试":"Pitch tendency test"}</Link></li>
       </ul>}
     </div>
   </nav>;
