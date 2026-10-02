@@ -296,7 +296,7 @@ export default function ScaleStudio(){
   const [customSpan,setCustomSpan]=useState<ScaleSpan>(DEFAULT_SCALE_SPAN);
   // One picker open at a time; two note grids stacked was the cramped thing.
   const [editingEdge,setEditingEdge]=useState<"low"|"high"|null>(null);
-  const [order,setOrder]=useState("chromatic");
+  const [order,setOrder]=useState("chromatic"),[bySignature,setBySignature]=useState(false);
   // Types and forms are both multi-select and combine as a cross product;
   // the book groups by type first, then key, then form.
   const [types,setTypes]=useState<ScaleTypeId[]>(["major"]);
@@ -416,11 +416,12 @@ export default function ScaleStudio(){
 
   /** Everything a saved set restores. Mirrors ScaleSetConfig field for field. */
   function currentConfig():ScaleSetConfig{
-    return {range,order,types,forms,grouping,ending,newLines,keys,articulationRotation,rhythm,scaleStart};
+    return {range,order,bySignature,types,forms,grouping,ending,newLines,keys,articulationRotation,rhythm,scaleStart};
   }
   function applyConfig(config:ScaleSetConfig){
     if(ranges.some(r=>r.id===config.range))setRange(config.range);
     if(config.order==="chromatic"||config.order==="fifths")setOrder(config.order);
+    setBySignature(config.bySignature===true||config.order==="signature");
     if(config.grouping==="type"||config.grouping==="key")setGrouping(config.grouping);
     if(config.ending==="none"||config.ending==="hold")setEnding(config.ending);
     if(config.scaleStart==="tonic"||config.scaleStart==="lowest")setScaleStart(config.scaleStart);
@@ -449,7 +450,7 @@ export default function ScaleStudio(){
   const sameList=(a:readonly string[]=[],b:readonly string[]=[])=>a.length===b.length&&a.every(v=>b.includes(v));
   function configMatches(config:ScaleSetConfig){
     const now=currentConfig();
-    return config.range===now.range&&config.order===now.order&&config.grouping===now.grouping&&config.ending===now.ending&&config.newLines===now.newLines&&config.rhythm===now.rhythm
+    return config.range===now.range&&config.order===now.order&&!!config.bySignature===now.bySignature&&config.grouping===now.grouping&&config.ending===now.ending&&config.newLines===now.newLines&&config.rhythm===now.rhythm
       &&sameList(config.types,now.types)&&sameList(config.forms,now.forms)&&sameList(config.keys,now.keys)
       &&JSON.stringify(config.articulationRotation??[])===JSON.stringify(now.articulationRotation??[]);
   }
@@ -486,6 +487,7 @@ export default function ScaleStudio(){
       // eslint-disable-next-line react-hooks/set-state-in-effect
       if(pref&&ranges.some(r=>r.id===pref.range))setRange(pref.range);
       if(pref?.order==="fifths")setOrder("fifths");
+      if(pref?.bySignature===true||pref?.order==="signature")setBySignature(true);
       if(Number.isFinite(pref?.customSpan?.low)&&Number.isFinite(pref?.customSpan?.high))setCustomSpan({low:pref.customSpan.low,high:pref.customSpan.high});
       if(typeof pref?.newLines==="boolean")setNewLines(pref.newLines);
       if(Array.isArray(pref?.keys))setKeys(allKeys.filter(k=>pref.keys.includes(k)));
@@ -531,7 +533,7 @@ export default function ScaleStudio(){
     window.addEventListener("storage",sync);
     return()=>{window.removeEventListener(scaleSetsEvent,sync);window.removeEventListener("storage",sync)};
   },[]);
-  useEffect(()=>{if(loaded)try{localStorage.setItem(preferenceKey,JSON.stringify({range,customSpan,keys,newLines,order,grouping,ending,types,forms,articulationRotation,rhythm,tempoMarks}));}catch{/* Storage may be disabled. */}},[range,keys,newLines,order,grouping,ending,types,forms,articulationRotation,rhythm,tempoMarks,loaded]);
+  useEffect(()=>{if(loaded)try{localStorage.setItem(preferenceKey,JSON.stringify({range,customSpan,keys,newLines,order,bySignature,grouping,ending,types,forms,articulationRotation,rhythm,tempoMarks}));}catch{/* Storage may be disabled. */}},[range,keys,newLines,order,grouping,ending,types,forms,articulationRotation,rhythm,tempoMarks,loaded]);
   useEffect(()=>{if(loaded)try{localStorage.setItem(tempoKey,JSON.stringify(tempos));}catch{/* Storage may be disabled. */}},[tempos,loaded]);
 
   const chosenRange=ranges.find(r=>r.id===range)!;
@@ -549,7 +551,13 @@ export default function ScaleStudio(){
     key,type:type.id,form:form.id,
     label:`${keyLabelFor(key,type.id)} ${zh&&!english?type.zh:type.label.toLowerCase()}${showForm?` ${type.id.endsWith("Pentatonic")&&["seconds","thirds","fourths","fifths","sixths","sevenths"].includes(form.id)?(zh&&!english?"音级组合":{seconds:"neighbor steps",thirds:"skip one",fourths:"skip two",fifths:"skip three",sixths:"skip four",sevenths:"skip five"}[form.id as "seconds"|"thirds"|"fourths"|"fifths"|"sixths"|"sevenths"]):(zh&&!english?form.zh:form.label.toLowerCase())}`:""}`,
   });
-  const buildBlocks=(english=false):ScaleBlock[]=>grouping==="key"
+  // "Key signature" arrangement: one list for every key and type, kept in signature order. Scales sharing a signature (G major, E minor, A dorian) sit side by side, major first, then by how far the tonic is above it.
+  const signatureBlocks=(english:boolean)=>chosenTypes.flatMap(type=>selected.flatMap(key=>chosenForms.map(form=>{
+    const fifths=keyForType(key,type).fifths,majorPc=((fifths*7)%12+12)%12;
+    // Circle of fifths: fewest sharps and flats first. Chromatic: by the signature's major key (C, D♭, D…).
+    return {block:blockFor(key,type,form,english),rank:[...(order==="fifths"?[Math.abs(fifths),fifths<0?1:0]:[majorPc,0]),((key.pc-majorPc)%12+12)%12,scaleTypes.indexOf(type),scaleForms.indexOf(form)]};
+  }))).sort((a,b)=>{for(let i=0;i<a.rank.length;i++)if(a.rank[i]!==b.rank[i])return a.rank[i]-b.rank[i];return 0}).map(item=>item.block);
+  const buildBlocks=(english=false):ScaleBlock[]=>bySignature?signatureBlocks(english):grouping==="key"
     ?selected.flatMap(key=>chosenTypes.flatMap(type=>chosenForms.map(form=>blockFor(key,type,form,english))))
     :chosenTypes.flatMap(type=>selected.flatMap(key=>chosenForms.map(form=>blockFor(key,type,form,english))));
   const blocks:ScaleBlock[]=buildBlocks();
@@ -675,7 +683,7 @@ export default function ScaleStudio(){
       save={{saved:!!savedMatch,onToggle:toggleSaved,label:zh?"保存为我的组合":"Save as a set",savedLabel:zh?"已保存为组合，点按移除":"Saved as a set. Tap to remove"}}
       headerActions={reader=><button type="button" className="icon-btn has-tip" disabled={reader.exporting} data-tip={reader.exporting?(zh?"正在生成 PDF…":"Making the PDF\u2026"):(zh?"下载 PDF":"Download PDF")} aria-label={reader.exporting?(zh?"正在生成 PDF…":"Making the PDF\u2026"):(zh?"下载 PDF":"Download PDF")} onClick={()=>reader.download()}>{reader.exporting?"\u22ef":<DownloadIcon/>}</button>}
       scoreMarks={tempoMarks?context=><ScaleTempoMarks root={context.root} version={context.version} marks={blocks.map(block=>{const id=blockTempoId(block,range);return {id,label:block.label,tempo:tempoForBlock(block,range,tempos)}})} onChange={(id,next)=>{setActiveBlock(id);setTempos(prev=>({...prev,[id]:next}));context.controls.setTempo(next)}} soundingId={context.controls.metronome?activeBlock||null:null} onSound={(id,tempo)=>{const running=context.controls.metronome&&activeBlock===id;setActiveBlock(id);context.controls.setTempo(tempo);if(running||!context.controls.metronome)context.controls.toggleMetronome()}}/>:undefined} printConfig={zh?{title:englishTitle,asset:scaleBookMusicXML(buildBlocks(true),range,newLines,articulationRotation.map(e=>e.articulation),rhythm,ending,scaleStart,customSpan)}:undefined} lineBreak={{value:newLines,onChange:setNewLines}} config={{title:bookTitle,composer:"",smartDroneCountInBeats:4,smartDrone:blocks.map((block,index)=>{const tonic=keyForType(block.key,typeById(block.type));const written=blockNotes(block).find(note=>note.midi%12===tonic.pc);return {measure:1,event:blockEventStarts[index],pitch:tonic.label[0].toUpperCase()+tonic.label.slice(1)+"3",...(written?{displayPitch:`${written.step}${accidentalGlyph(written.alter)}${written.octave}`}:{})}}),asset:scaleBookMusicXML(blocks,range,newLines,articulationRotation.map(e=>e.articulation),rhythm,ending,scaleStart,customSpan),displayPitches,noteKeySignatures,syllables,id:`scale-book-${rangeKey}-${grouping}-${ending}-${scaleStart}-${types.join("+")}-${forms.join("+")}-${selected.map(k=>k.id).join("-")}`,backHref:"/flute-studio/exercises",defaultTempo:(activeBlock?tempos[activeBlock]:undefined)??60}}
-      toolbar={<div className="scale-book__chapter-inline"><button type="button" className="scale-book__crumb" onClick={()=>openCustomize("type")}>{typeWord}</button><button type="button" className="scale-book__crumb" onClick={()=>openCustomize("form")}>{formWord}</button><span aria-hidden="true">·</span><button type="button" className="scale-book__crumb" onClick={()=>openCustomize("range")}>{zh?chosenRange.zh:chosenRange.label}</button><span aria-hidden="true">·</span><button type="button" className="scale-book__crumb" onClick={()=>openCustomize("keys")}>{selected.length} {zh?"个调性":selected.length===1?"key":"keys"}</button></div>}
+      toolbar={<div className="scale-book__chapter-inline"><button type="button" className="scale-book__crumb has-tip" data-tip={zh?"点击自定义":"Click to customize"} onClick={()=>openCustomize("type")}>{typeWord}</button><button type="button" className="scale-book__crumb has-tip" data-tip={zh?"点击自定义":"Click to customize"} onClick={()=>openCustomize("form")}>{formWord}</button><span aria-hidden="true">·</span><button type="button" className="scale-book__crumb has-tip" data-tip={zh?"点击自定义":"Click to customize"} onClick={()=>openCustomize("range")}>{zh?chosenRange.zh:chosenRange.label}</button><span aria-hidden="true">·</span><button type="button" className="scale-book__crumb has-tip" data-tip={zh?"点击自定义":"Click to customize"} onClick={()=>openCustomize("keys")}>{selected.length} {zh?"个调性":selected.length===1?"key":"keys"}</button></div>}
       settings={reader=><>
 
     <ReaderPopover open={customizeOpen} onOpenChange={setCustomizeOpen} label={zh?"自定义音阶":"Customize scales"} trigger={<><SpectrumDef id="studio-spectrum"/><PracticeIcon name="settings" gradient="studio-spectrum"/><span className="scale-book__scales-label">{zh?"音阶":"Scales"}</span></>} className="tool has-tip scale-book__scales-trigger">
@@ -710,7 +718,7 @@ export default function ScaleStudio(){
         <AccordionSection id="type" phoneActive={phoneSection==="type"} title={zh?"音阶类型":"Scale type"} openSections={openSections} onToggle={toggleSection}>
           <div className="scale-book__ranges" role="group" aria-label={zh?"音阶类型":"Scale type"}>{scaleTypes.slice(0,8).map(t=><button type="button" key={t.id} className={types.includes(t.id)?"scale-book__chip selected":"scale-book__chip"} aria-pressed={types.includes(t.id)} onClick={()=>toggleFrom(types,t.id,setTypes)}>{zh?t.zh:t.label}</button>)}</div>
           <button type="button" className="scale-book__others-toggle" aria-expanded={otherTypesOpen} onClick={()=>setOtherTypesOpen(open=>!open)}>{zh?"其他":"Others"}{types.some(id=>scaleTypes.slice(8).some(type=>type.id===id))&&<span>{types.filter(id=>scaleTypes.slice(8).some(type=>type.id===id)).length}</span>}<span aria-hidden="true">{otherTypesOpen?"⌄":"›"}</span></button>
-          {otherTypesOpen&&<><div className="scale-book__ranges scale-book__other-types" role="group" aria-label={zh?"其他音阶类型":"Other scale types"}>{scaleTypes.slice(8).map(t=><button type="button" key={t.id} className={types.includes(t.id)?"scale-book__chip selected":"scale-book__chip"} aria-pressed={types.includes(t.id)} onClick={()=>toggleFrom(types,t.id,setTypes)}>{zh?t.zh:t.label}</button>)}</div><p className="scale-book__other-note">{zh?"五声音阶的音程练习按音级跳进，而非固定音程。":"Pentatonic interval forms follow scale steps, so their exact intervals vary."}</p></>}
+          {otherTypesOpen&&<><div className="scale-book__ranges scale-book__other-types" role="group" aria-label={zh?"其他音阶类型":"Other scale types"}>{scaleTypes.slice(8).map(t=><button type="button" key={t.id} className={types.includes(t.id)?"scale-book__chip selected":"scale-book__chip"} aria-pressed={types.includes(t.id)} onClick={()=>toggleFrom(types,t.id,setTypes)}>{zh?t.zh:t.label}</button>)}</div></>}
         </AccordionSection>
         <AccordionSection id="form" phoneActive={phoneSection==="form"} title={zh?"练习形式":"Form"} openSections={openSections} onToggle={toggleSection}>
           <div className="scale-book__ranges" role="group" aria-label={zh?"练习形式":"Form"}>{scaleForms.map(f=><button type="button" key={f.id} className={forms.includes(f.id)?"scale-book__chip selected":"scale-book__chip"} aria-pressed={forms.includes(f.id)} onClick={()=>toggleFrom(forms,f.id,setForms)}>{zh?f.zh:f.label}</button>)}</div>
@@ -751,12 +759,15 @@ export default function ScaleStudio(){
           </div>}
         </AccordionSection>
         <AccordionSection id="order" phoneActive={phoneSection==="order"} title={zh?"编排":"Layout"} openSections={openSections} onToggle={toggleSection}>
-          <p className="scale-book__field-label">{zh?"调性顺序":"Key order"}</p>
-          <div className="scale-book__ranges" role="group" aria-label={zh?"调性顺序":"Key order"}>{[["chromatic",zh?"半音顺序":"Chromatic"],["fifths",zh?"五度圈":"Circle of fifths"]].map(([value,label])=><button type="button" key={value} className={order===value?"scale-book__chip selected":"scale-book__chip"} aria-pressed={order===value} onClick={()=>setOrder(value)}>{label}</button>)}</div>
+          <p className="scale-book__field-label">{zh?"排列方式":"Arrange by"}</p>
+          <div className="scale-book__ranges scale-book__ranges--three" role="group" aria-label={zh?"排列方式":"Arrange by"}>{([["type",zh?"音阶类型":"Scale type"],["tonic",zh?"同主音":"Same tonic"],["signature",zh?"调号":"Key signature"]] as const).map(([value,label])=>{
+            const current=bySignature?"signature":grouping==="key"?"tonic":"type";
+            return <button type="button" key={value} className={current===value?"scale-book__chip selected":"scale-book__chip"} aria-pressed={current===value} onClick={()=>{setBySignature(value==="signature");if(value!=="signature")setGrouping(value==="tonic"?"key":"type")}}>{label}</button>})}</div>
+          <><p className="scale-book__field-label">{zh?"调性顺序":"Key order"}</p>
+          <div className="scale-book__ranges" role="group" aria-label={zh?"调性顺序":"Key order"}>{[["chromatic",zh?"半音顺序":"Chromatic"],["fifths",zh?"五度圈":"Circle of fifths"]].map(([value,label])=><button type="button" key={value} className={order===value?"scale-book__chip selected":"scale-book__chip"} aria-pressed={order===value} onClick={()=>setOrder(value)}>{label}</button>)}</div></>
           <p className="scale-book__field-label">{zh?"换行":"Line breaks"}</p>
-          <div className="scale-book__ranges" role="group" aria-label={zh?"换行":"Line breaks"}>{([[false,zh?"接续上一个":"Continue from previous"],[true,zh?"另起一行":"Start on a new line"]] as [boolean,string][]).map(([value,label])=><button type="button" key={String(value)} className={newLines===value?"scale-book__chip selected":"scale-book__chip"} aria-pressed={newLines===value} onClick={()=>setNewLines(value)}>{label}</button>)}</div>
-          <p className="scale-book__field-label">{zh?"分组方式":"Group by"}</p>
-          <div className="scale-book__ranges" role="group" aria-label={zh?"分组方式":"Group by"}>{[["type",zh?"音阶类型":"Scale type"],["key",zh?"调性":"Key"]].map(([value,label])=><button type="button" key={value} className={grouping===value?"scale-book__chip selected":"scale-book__chip"} aria-pressed={grouping===value} onClick={()=>setGrouping(value)}>{label}</button>)}</div>
+          <div className="scale-book__ranges" role="group" aria-label={zh?"换行":"Line breaks"}>{([[false,zh?"接续上一个":"Continue"],[true,zh?"另起一行":"New line"]] as [boolean,string][]).map(([value,label])=><button type="button" key={String(value)} className={newLines===value?"scale-book__chip selected":"scale-book__chip"} aria-pressed={newLines===value} onClick={()=>setNewLines(value)}>{label}</button>)}</div>
+
                   <p className="scale-book__field-label">{zh?"起始音":"Starts on"}</p>
           <div className="scale-book__ranges" role="group" aria-label={zh?"起始音":"Starts on"}>{([["tonic",zh?"主音":"The tonic"],["lowest",zh?"最低音":"The lowest note"]] as [ScaleStart,string][]).map(([value,label])=><button type="button" key={value} className={scaleStart===value?"scale-book__chip selected":"scale-book__chip"} aria-pressed={scaleStart===value} onClick={()=>setScaleStart(value)}>{label}</button>)}</div>
           <p className="scale-book__field-label">{zh?"结尾":"Ending"}</p>
@@ -790,7 +801,7 @@ export default function ScaleStudio(){
           <div className="scale-book__preset-grid">{rhythmChoices.map(value=><button key={value} type="button" className={rhythm===value?"scale-book__preset selected":"scale-book__preset"} aria-label={zh?rhythmLabels[value].zh:rhythmLabels[value].en} onClick={()=>setRhythm(value)}><RhythmIcon choice={value}/></button>)}</div>
         </AccordionSection>
       </div>
-      <button className="reader-settings-reset" onClick={()=>{setActiveSet(null);setSetName("");setKeys(allKeys);setRange("two");setOrder("chromatic");setGrouping("type");setEnding("hold");setTypes(["major"]);setForms(["scale"]);setNewLines(false);setArticulationRotation([]);setCustomDraft([{size:4,mode:"tongue"}]);setRhythm("even")}}>{zh?"恢复默认":"Restore defaults"}</button>
+      <button className="reader-settings-reset" onClick={()=>{setActiveSet(null);setSetName("");setKeys(allKeys);setRange("two");setOrder("chromatic");setBySignature(false);setGrouping("type");setEnding("hold");setTypes(["major"]);setForms(["scale"]);setNewLines(false);setArticulationRotation([]);setCustomDraft([{size:4,mode:"tongue"}]);setRhythm("even")}}>{zh?"恢复默认":"Restore defaults"}</button>
     </ReaderPopover>
     {/* Tempos is its own button rather than the last section of Customize
         scales. A tempo is something you reach for mid-practice, between

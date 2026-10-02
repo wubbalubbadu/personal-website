@@ -50,3 +50,9 @@ test('related scale is withheld for repeated notes or unrelated wide leaps',()=>
   assert.equal(relatedScale(Array.from({length:12},()=>({p:'C♯5',d:1}))),null);
   assert.equal(relatedScale(['C4','E5','G4','B5','D4'].map(p=>({p,d:1}))),null);
 });
+
+test('a passage that mixes raised and natural sixth and seventh still reads as that minor (Reichert Op. 5 No. 1, bars 4–6)',()=>{
+  const notes='C4 E4 G4 C5 E5 G5 C6 A5 E5 F♯5 G♯5 A5 B5 C6 G♯5 A5 B5 C6 D6 E6 C6 D6 E6 F♯6 G♯6 A6 G6 F6 E6 D6 C6'.split(' ');
+  const result=relatedScale(notes.map(p=>({p,d:2})));
+  assert.match(result?.label??'',/^A .*minor/);
+});

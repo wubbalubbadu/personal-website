@@ -9,7 +9,7 @@
 }
 /* !important because the reader gives every button a green hover
    (reader-workspace.css); the gear should hover like the tuning fork. */
-.account-menu .account-menu__trigger:hover,.account-menu .account-menu__trigger[aria-expanded="true"]{background:#f1f1f4!important;color:#292a33}
+.account-menu .account-menu__trigger:hover,.account-menu .account-menu__trigger[aria-expanded="true"]{background:#f5f5f7!important;color:#292a33}
 /* The reader bar spaces its items 12px apart; the fork and gear are one
    pair, 8px apart, as in the main nav. */
 .topbar-tools-slot+.account-menu{margin-left:-4px}
@@ -51,7 +51,7 @@
 .account-menu__private{display:grid;gap:8px;padding:4px 12px 12px}.account-menu__private label{display:grid;gap:5px;font-size:12px}.account-menu__private input{width:100%;box-sizing:border-box;padding:9px;border:1px solid #dadbe0;border-radius:8px;font:inherit}.account-menu__private button{padding:9px;border:0;border-radius:8px;background:#292a33;color:white;font:inherit;cursor:pointer}.account-menu__private p{margin:0;font-size:12px}
 
 html body .account-menu__private button{justify-self:start;padding:8px 18px;min-height:40px;border-radius:12px;background:#f1f1f4!important;color:#494953!important;font-size:14px;font-weight:500}
-html body .account-menu__private button:hover:not(:disabled){background:#ededf0!important}
+html body .account-menu__private button:hover:not(:disabled){background:#f5f5f7!important}
 .account-menu__private button:focus-visible{outline:2px solid #8c6aa1;outline-offset:2px}
 
 /* Private access is one compact form row: label, field, Unlock. */

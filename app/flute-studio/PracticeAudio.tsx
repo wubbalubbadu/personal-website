@@ -50,6 +50,7 @@ function useAudioEngine(){
     const saved=ratios();setBpmState(clampTempo(tempo*(saved[id]??1)));
   }
   function toggleMetro(){getAudio();setMetro(value=>!value)}
+  function stopMetro(){setMetro(false)}
   /**
    * The metronome runs on the AudioContext clock, not on setInterval.
    *
@@ -137,7 +138,7 @@ function useAudioEngine(){
   }
   function stopAllDrones(){const audio=context.current;voices.current.forEach(({oscillator,gain})=>{if(audio){gain.gain.setTargetAtTime(.0001,audio.currentTime,.025);oscillator.stop(audio.currentTime+.12)}else oscillator.stop()});voices.current.clear();setDrones([])}
   useEffect(()=>()=>{voices.current.forEach(({oscillator})=>oscillator.stop());void context.current?.close()},[]);
-  return {bpm,setBpm,setPlaybackBpm,metro,toggleMetro,accent,setAccent,beats,setBeats,drones,toggleDrone,stopAllDrones,initializeScore,getAudio,alignMetronome:setGrid,metroHeld:metro&&!!grid?.hold};
+  return {bpm,setBpm,setPlaybackBpm,metro,toggleMetro,stopMetro,accent,setAccent,beats,setBeats,drones,toggleDrone,stopAllDrones,initializeScore,getAudio,alignMetronome:setGrid,metroHeld:metro&&!!grid?.hold};
 }
 const Context=createContext<ReturnType<typeof useAudioEngine>|null>(null);
 export function PracticeAudioProvider({children}:{children:ReactNode}){const value=useAudioEngine();return <Context.Provider value={value}>{children}</Context.Provider>}

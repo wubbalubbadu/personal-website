@@ -151,7 +151,7 @@
   cursor: pointer;
   transition: background-color 0.16s ease;
 }
-.month-calendar .calendar-card-heading nav button:hover:not(:disabled) { background: #f1f5ef !important; }
+.month-calendar .calendar-card-heading nav button:hover:not(:disabled) { background: #f5f5f7 !important; }
 .month-calendar .calendar-card-heading nav button:focus-visible { outline: 3px solid rgba(103, 137, 86, 0.35); outline-offset: 2px; }
 .month-calendar .calendar-card-heading nav button:disabled { opacity: 0.35; cursor: default; }
 

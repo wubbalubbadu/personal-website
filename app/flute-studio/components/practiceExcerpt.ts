@@ -76,13 +76,15 @@ export function labelPracticeNotes(xml:string,names:boolean,accidentals:boolean)
 export function relatedScale(events:PassageEvent[],sourceXml?:string){
   const pitches=events.flatMap(e=>e.p&&!e.tied?[e.p]:[]),pcs=pitches.map(pitchClass).filter((x):x is number=>x!==null),distinct=[...new Set(pcs)];
   if(distinct.length<4)return null;
-  const candidates=majorKeys.flatMap(key=>scaleTypes.filter(t=>['major','natural','harmonic','melodic'].includes(t.id)).map(type=>{
-    const tones=new Set(type.intervals.map(i=>(key.pc+i)%12));
-    const matched=distinct.filter(p=>tones.has(p));
+  // One scale form first. Only when none fits, a minor passage that mixes the raised and natural 6th and 7th is judged against all three forms together.
+  const rank=(union:boolean)=>majorKeys.flatMap(key=>scaleTypes.filter(t=>['major','natural','harmonic','melodic'].includes(t.id)).map(type=>{
+    const own=new Set(type.intervals.map(i=>(key.pc+i)%12));
+    const tones=type.id==='major'||!union?own:new Set(scaleTypes.filter(t=>['natural','harmonic','melodic'].includes(t.id)).flatMap(t=>t.intervals.map(i=>(key.pc+i)%12)));
+    const matched=distinct.filter(p=>tones.has(p)),ownMatched=distinct.filter(p=>own.has(p)).length;
     const steps=pcs.slice(1).filter((p,i)=>tones.has(p)&&tones.has(pcs[i])&&[1,2,10,11].includes((p-pcs[i]+12)%12)).length;
-    return {key,type,matched,steps,score:matched.length*3+steps+(pcs[0]===key.pc?1:0)+(pcs.at(-1)===key.pc?1:0)};
+    return {key,type,matched,steps,score:matched.length*3+ownMatched*.1+(type.id==='melodic'?.05:0)+steps+(pcs[0]===key.pc?1:0)+(pcs.at(-1)===key.pc?1:0)};
   })).filter(c=>c.matched.length/distinct.length>=.8&&c.steps>=3).sort((a,b)=>b.score-a.score);
-  const best=candidates[0];if(!best)return null;
+  const best=rank(false)[0]??rank(true)[0];if(!best)return null;
   const written=sourceXml?Array.from(new DOMParser().parseFromString(sourceXml,'application/xml').querySelectorAll('pitch')).map(p=>{const alter=Number(p.querySelector('alter')?.textContent??0);return `${p.querySelector('step')?.textContent}${alter===1?'♯':alter===-1?'♭':''}${p.querySelector('octave')?.textContent}`}):pitches;
   const evidence=[...new Set(written.filter(p=>best.matched.includes(pitchClass(p)!)).map(p=>p.replace(/\d+$/,'')))];
   const midi=pitches.map(p=>{const m=p.match(/(\d+)$/)!;return (Number(m[1])+1)*12+pitchClass(p)!});

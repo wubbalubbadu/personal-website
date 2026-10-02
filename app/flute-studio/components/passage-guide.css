@@ -2,11 +2,11 @@
 .passage-guide header{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .passage-guide h2,.passage-guide h3{margin:0;font-size:18px;font-weight:600}
 .passage-guide h2{font-size:22px}
-.passage-guide__heading>div{flex:1}.passage-guide__heading>div>span{display:block;margin-top:5px;color:#787984;font-size:14px}
+.passage-guide__heading h2{flex:1}
 .passage-guide button,.closeup-select button{font:inherit;cursor:pointer;border:0;background:transparent;color:inherit;min-height:40px;padding:6px 12px;box-shadow:none}
 .passage-guide__tabs{display:flex;gap:8px;margin:20px 0;border-bottom:1px solid #e6e6e9;padding-bottom:10px}
 .passage-guide__tabs button{font-weight:550}
-html body .passage-guide button[aria-pressed=true]{background:#f1e5f5!important;color:#6d4585!important}
+html body .passage-guide button[aria-pressed=true]{background:#e5ece1!important;color:#46633d!important}
 .passage-guide__options{display:flex;gap:6px;flex-wrap:wrap;font-size:13px}.passage-guide__original>header{justify-content:space-between}
 .passage-guide__cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px;margin-top:28px;border-top:1px solid #e6e6e9;padding-top:26px}
 .passage-guide__cards article{min-width:0}.passage-guide__cards article>header{align-items:baseline;gap:8px}.passage-guide__cards header>span{font-size:12px;color:#878892}
@@ -15,10 +15,50 @@ html body .passage-guide button[aria-pressed=true]{background:#f1e5f5!important;
 .practice-notation{min-width:0}.practice-notation__music{min-width:0;overflow-x:auto;touch-action:pan-x pan-y pinch-zoom;padding:10px 0}.practice-notation__music svg{display:block}.practice-position{stroke:#a38ab6;stroke-width:3;opacity:.55;pointer-events:none}
 .practice-listen{display:inline-flex;align-items:center;gap:7px;font-size:14px!important}.practice-listen svg{width:18px;height:18px}.practice-listen:disabled{opacity:.45;cursor:default}
 .passage-guide__rhythm{border-top:1px solid #e6e6e9;padding-top:24px;margin-top:24px}.passage-guide small{color:#85868e}
-.closeup-select{display:flex;align-items:center;gap:16px;padding:9px 22px;background:#f7f4f9;color:#6d4585;font-size:14px}.closeup-select>span{flex:1}
+.closeup-select{white-space:nowrap;position:fixed;top:128px;left:50%;transform:translateX(-50%);z-index:400;box-shadow:0 6px 20px #2a2a331a;border:1px solid #0000001a;border-radius:10px;display:flex;align-items:center;padding:10px 18px;background:rgba(255,255,255,.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#45464f;font-size:14px;font-weight:400;pointer-events:none}.closeup-select>span{flex:1}
 html body .reader-workspace button.passage-guide__close,html body .reader-workspace button.passage-guide__close:hover,html body .reader-workspace button.passage-guide__close:active{background:transparent!important;border:0!important;box-shadow:none!important;min-width:44px;min-height:44px;font-size:28px;color:#747680}
 .passage-guide button:focus-visible,.closeup-select button:focus-visible{outline:2px solid #9b7aad;outline-offset:2px}
-.closeup-selected-measure{fill:#b29ac4;opacity:.14;pointer-events:none}
+html body .osmd-score .closeup-selected-measure{fill:rgba(70,99,61,.16)!important;pointer-events:none}
 @media(max-width:850px){.passage-guide__cards{grid-template-columns:1fr}.passage-guide{padding:18px 16px}.passage-guide__heading{gap:6px}.passage-guide__heading>button{font-size:13px}}
 
-html body .restored-reader .reader-rows:has(.closeup-select){display:block!important}
+html body .restored-reader .reader-rows{position:relative}
+.passage-guide__pills{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;margin-top:22px;border-top:1px solid #e6e6e9;padding-top:18px}.passage-guide__pills:empty{display:none}
+/* The close-up sits in the reader dock, which is capped at 46% of the height: let it scroll inside that. */
+html body .reader-workspace .reader-dock{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.reader-dock .passage-guide{min-height:0;border-radius:12px}
+
+/* Close-up as a flat list: one exercise per row, label left, notation and Listen right. */
+.passage-guide{padding:10px 18px 16px}
+.passage-guide__heading{gap:10px!important}.passage-guide__heading h2{flex:0 0 auto!important;font-size:17px}
+.passage-guide__heading .passage-guide__options{flex:1;justify-content:flex-end}
+.passage-guide__tabs{margin:0!important;padding:0!important;border:0!important}
+.passage-guide__list{margin-top:6px}
+.passage-guide__row{display:grid;grid-template-columns:132px minmax(0,1fr);gap:14px;align-items:center;border-top:1px solid #ececef;padding:4px 0}
+.passage-guide__row>h3{font-size:14px;font-weight:600;display:flex;flex-direction:column;align-items:flex-start;gap:0;color:#45464f}
+.passage-guide__row>h3 a,.passage-guide__row>h3 .passage-guide__shuffle{font-size:12px;font-weight:550;color:#46633d;padding:0!important;min-height:26px!important}
+.passage-guide__row .practice-notation{display:flex;align-items:center;gap:10px}.passage-guide__row .practice-notation__music{flex:1;padding:2px 0}.passage-guide__row .practice-listen{flex:0 0 auto}
+@media(max-width:850px){.passage-guide__row{grid-template-columns:1fr;gap:0}}
+html body .closeup-select button{color:#46633d!important}
+html body .restored-reader .tool.closeup-tool.on,html body .restored-reader .tool.closeup-tool.on:hover{background:#e5ece1!important;color:#46633d!important}
+html body .restored-reader[data-dock]:has(.passage-guide) .workspace{grid-template-rows:auto auto auto minmax(0,1fr) fit-content(62%)!important}
+.passage-guide__row{padding:0!important}.passage-guide__row .practice-notation__music{padding:0!important}
+html body .passage-guide__row>h3 .passage-guide__shuffle{border:1px solid #46633d!important;border-radius:999px;padding:0 12px!important;min-height:28px!important;margin-top:4px}
+html body .restored-reader .reader-rows:has(.closeup-select){display:block!important;height:0;overflow:visible}
+.practice-notation__music{overflow-y:hidden!important;overscroll-behavior-x:contain}
+
+/* One type scale for the whole panel: 14px controls and row names, a 16px title. */
+html body .passage-guide,html body .passage-guide button,html body .passage-guide a,html body .passage-guide h2,html body .passage-guide h3{font-family:inherit!important}
+html body .passage-guide button,html body .passage-guide .practice-listen,html body .passage-guide__row>h3,html body .passage-guide__row>h3 a{font-size:14px!important;font-weight:500!important}
+html body .passage-guide__heading h2{font-size:16px!important;font-weight:600!important}
+html body .passage-guide__row>h3{font-weight:600!important}
+html body .passage-guide__row>h3 a,html body .passage-guide__shuffle{font-size:13px!important;font-weight:500!important}
+/* Mark up and Close-up share a group: keep them on one row instead of stacking and making the toolbar taller. */
+html body .restored-reader .tool-group:has(.closeup-tool){flex-wrap:nowrap!important;width:auto!important;min-width:0!important}
+html body .closeup-select span{font-weight:400}
+
+/* Close-up is green everywhere; beats the reader toolbar's purple "on" state. */
+html body .restored-reader .practice-bar .tool.closeup-tool:is(.on,[aria-pressed="true"]):not(.record-button),html body .restored-reader .practice-bar .tool.closeup-tool:is(.on,[aria-pressed="true"]):not(.record-button):hover{background:#e5ece1!important;color:#46633d!important}
+/* A range is selected and waiting: blink the button so it's clear that Close-up is the next tap. */
+html body .restored-reader .practice-bar .tool.closeup-ready{color:#46633d!important;animation:closeupReady 1.1s ease-in-out infinite}
+@keyframes closeupReady{0%,100%{background:transparent}50%{background:#cfe0c9}}
+@media(prefers-reduced-motion:reduce){html body .restored-reader .practice-bar .tool.closeup-ready{animation:none;background:#e5ece1}}

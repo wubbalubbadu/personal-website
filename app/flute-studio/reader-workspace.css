@@ -129,7 +129,7 @@ html.score-focus-mode .reader-tools,html.score-focus-mode .reader-document{displ
 .reader-header .reader-mode-tabs button.selected{background:#292a33!important;color:#fff!important}
 .reader-document .reader-save,.reader-document>a{border-radius:12px;color:#5a5c63;min-height:42px;display:flex;align-items:center;justify-content:center}
 .reader-document .reader-save{width:42px;height:42px;padding:10px}
-.reader-document .reader-save:hover,.reader-document>a:hover{background:#f1f5ef}
+.reader-document .reader-save:hover,.reader-document>a:hover{background:#f5f5f7}
 .reader-document>a{padding:0 8px}
 .reader-tools .scale-book__customize{background:#e7eee3;color:#40553d;border:1px solid #d7e1d2;border-radius:13px;font-size:12px;font-weight:680;cursor:pointer}
 .reader-tools .scale-book__customize:hover{background:#dce8d7;box-shadow:none}
@@ -422,7 +422,7 @@ html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document"
 /* Breadcrumb segments are navigation, not decoration: each opens
    Customize scales on the section that owns it. */
 .scale-book__crumb{border:0;border-radius:8px;background:transparent;padding:3px 5px;font:inherit;color:inherit;cursor:pointer;text-decoration:underline;text-decoration-color:#d3d5da;text-underline-offset:3px}
-.scale-book__crumb:hover{background:#f1f1f4;color:#40553d;text-decoration-color:#40553d}
+.scale-book__crumb:hover{background:#f5f5f7;color:#40553d;text-decoration-color:#40553d}
 .restored-reader .scale-book__chapter-inline{gap:2px}
 /* Sub-label inside a section that holds more than one control group. */
 .reader-settings-panel .scale-book__field-label{margin:10px 0 4px;font-size:12px;font-weight:500;color:#71747e}
@@ -872,7 +872,7 @@ html.score-focus-mode .restored-reader[data-dock] .workspace{grid-template-areas
 html body .restored-reader .reader-rows[data-smart-drone]{display:block!important}
 .smart-drone-panel{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:9px 16px;border-bottom:1px solid var(--line);font-size:13px;background:#fff}
 .smart-drone-panel button{background:#f1f1f4;color:#494953;border:0;border-radius:12px;min-height:44px;padding:4px 14px;cursor:pointer}
-.smart-drone-panel button:hover{background:#ededf0}
+.smart-drone-panel button:hover{background:#f5f5f7}
 .smart-drone-panel button:focus-visible,.smart-drone-trigger:focus-visible{outline:2px solid #8c6aa1;outline-offset:2px}
 .reader-workspace .markup-row .markup-close,.reader-workspace .markup-row .annotation-toolbar .markup-close,.reader-workspace .markup-row .markup-close:hover{border:0!important;box-shadow:none!important;background:transparent!important;border-radius:0!important}
 .osmd-score .smart-drone-strip{fill:#2e6fb0;fill-opacity:.32;stroke:none;pointer-events:none}
@@ -916,7 +916,7 @@ html body .smart-drone-panel .auto-drone-close{display:grid;place-items:center;m
 html body .restored-reader .practice-bar .tool{border-radius:12px!important}
 html body .restored-reader .practice-bar .tool.on,
 html body .restored-reader .practice-bar .tool[aria-pressed="true"]{background-color:#eee7f2!important;color:#79588e!important}
-html body .restored-reader .practice-bar .tool:hover:not(:disabled){background-color:#ededf0!important}
+html body .restored-reader .practice-bar .tool:hover:not(:disabled){background-color:#f5f5f7!important}
 html body .restored-reader .practice-bar .tool:focus-visible{outline:2px solid #8c6aa1!important;outline-offset:2px}
 .custom-score-heading h1,.osmd-score svg text[data-score-title]{font-variant-numeric:lining-nums;font-feature-settings:"lnum" 1}
 html body .restored-reader .practice-bar .transport>button.tool.smart-drone-trigger.on,
@@ -952,3 +952,42 @@ html body .reader-settings-panel.reader-play-card .reader-panel-heading{display:
 html body .reader-settings-panel.reader-play-card .reader-panel-heading>button{display:block!important}
 .reader-workspace .score-scroll{position:relative}
 html body .restored-reader .topbar .back.has-tip:after{left:0!important;right:auto!important;transform:none!important;max-width:calc(100vw - 60px)}
+
+/* Page controls: one row. The buttons tighten so the header does not wrap and double the toolbar's height. */
+html body .restored-reader .reader-header{flex-wrap:nowrap!important}
+html body .restored-reader .reader-header .reader-pages{flex-wrap:nowrap}
+html body .restored-reader .reader-header .reader-pages button{min-width:34px!important;padding:6px!important}
+
+/* Slimmer option tiles and chips. */
+html body .reader-settings-panel .reader-display-options .tool{min-height:46px!important;border-radius:10px!important;gap:2px!important}
+html body .reader-settings-panel .reader-display-options .tool>span{font-size:20px!important}
+html body .reader-settings-panel :is(.scale-book__chip,.reader-choice button){min-height:30px!important;padding:5px 10px!important;border-radius:9px!important}
+
+/* The top summary buttons only: no grey box in any state. Hover darkens the text and its underline, with no change in weight, so the button never changes size. */
+html body .restored-reader .scale-book__crumb,html body .restored-reader .scale-book__crumb:hover,html body .restored-reader .scale-book__crumb:focus-visible,html body .restored-reader .scale-book__crumb[aria-expanded="true"],html body .restored-reader .scale-book__crumb.on{background:transparent!important;box-shadow:none!important}
+html body .restored-reader .scale-book__crumb:hover,html body .restored-reader .scale-book__crumb:focus-visible{color:#000!important;text-decoration-color:#292a33!important}
+
+/* Save / Update: the same soft tint as a selected chip, not a black block. */
+html body .reader-settings-panel .scale-book__save-button,html body .reader-settings-panel .scale-book__save-button:hover{background:#f1e5f5!important;color:#6d4585!important;box-shadow:none!important;font-weight:600}
+html body .reader-settings-panel .scale-book__save-button:hover{font-weight:700}
+/* Chips in one row share a height, so "Continue from previous" wrapping to two lines doesn't make its neighbour look different. */
+html body .reader-settings-panel .scale-book__ranges{grid-auto-rows:1fr}
+html body .reader-settings-panel .scale-book__ranges .scale-book__chip{display:flex;align-items:center;justify-content:center;text-align:center;min-height:34px!important}
+html body .reader-settings-panel .scale-book__ranges--three{grid-template-columns:repeat(3,1fr)}
+html body .reader-settings-panel .scale-book__ranges .scale-book__chip{white-space:nowrap;height:34px}
+
+/* All keys / Clear / Restore defaults: text actions, never a grey box. Hover only darkens the text, so nothing changes size. */
+html body :is(.reader-settings-panel,.restored-reader) :is(.scale-book__key-actions button,.reader-settings-reset),
+html body :is(.reader-settings-panel,.restored-reader) :is(.scale-book__key-actions button,.reader-settings-reset):is(:hover,:focus,:focus-visible,:active,[aria-pressed="true"],.selected,.on){background:transparent!important;box-shadow:none!important}
+html body :is(.reader-settings-panel,.restored-reader) :is(.scale-book__key-actions button,.reader-settings-reset):hover{color:#2f4a28!important}
+
+/* Icon-only buttons (tuner, settings, add, download, page arrows, to top, full screen) share one look: a 20px icon with one stroke weight, and on hover a 30px rounded square in a light grey, never the whole hit area. */
+html body :is(.reader-pages button,.topbar .icon-btn,.topbar .dock-launcher,.topbar .account-menu__trigger){position:relative;isolation:isolate}
+html body :is(.reader-pages button,.topbar .icon-btn,.topbar .dock-launcher,.topbar .account-menu__trigger) svg{width:20px!important;height:20px!important;stroke-width:1.7!important}
+html body :is(.reader-pages button,.topbar .icon-btn,.topbar .dock-launcher,.topbar .account-menu__trigger):is(:hover,:focus-visible),
+html body :is(.reader-pages button,.topbar .icon-btn,.topbar .dock-launcher,.topbar .account-menu__trigger):not(:disabled):hover,
+html body .restored-reader .topbar :is(.icon-btn,.dock-launcher,.account-menu__trigger):is(.icon-btn,.dock-launcher,.account-menu__trigger):is(.icon-btn,.dock-launcher,.account-menu__trigger):hover:not(:disabled),
+html body .restored-reader .practice-bar .reader-pages button.tool:hover:not(:disabled){background:transparent!important;background-color:transparent!important;box-shadow:none!important}
+html body :is(.reader-pages button,.topbar .icon-btn,.topbar .dock-launcher,.topbar .account-menu__trigger)::before{content:"";position:absolute;left:50%;top:50%;width:30px;height:30px;transform:translate(-50%,-50%);border-radius:8px;background:#f3f3f5;opacity:0;z-index:-1;pointer-events:none;transition:opacity .12s}
+html body :is(.reader-pages button,.topbar .icon-btn,.topbar .dock-launcher,.topbar .account-menu__trigger):not(:disabled):hover::before{opacity:1}
+html body :is(.reader-pages button,.topbar .icon-btn,.topbar .dock-launcher,.topbar .account-menu__trigger) svg :is(path,circle,line,rect,polyline,polygon){stroke:#686a72!important}

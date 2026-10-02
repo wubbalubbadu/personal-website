@@ -99,7 +99,7 @@
 }
 .studio-navigation__actions .dock-launcher:hover,.topbar-tools-slot .dock-launcher:hover,
 .studio-navigation__actions .dock-launcher[aria-expanded="true"],
-.topbar-tools-slot .dock-launcher[aria-expanded="true"]{background:#f1f1f4!important;color:#292a33!important}
+.topbar-tools-slot .dock-launcher[aria-expanded="true"]{background:#f5f5f7!important;color:#292a33!important}
 .studio-navigation__actions .dock-launcher:focus-visible,
 .topbar-tools-slot .dock-launcher:focus-visible{outline:2px solid rgba(103,137,86,.55);outline-offset:2px}
 .dock-launcher__icon{width:16px;height:16px;fill:#fff;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
@@ -193,7 +193,7 @@ html body .restored-reader .topbar .icon-btn{
   border:0!important;border-radius:11px!important;background-color:transparent!important;background-clip:content-box!important;box-shadow:none!important;
   color:#5a5c63!important;transform:none!important;
 }
-html body .restored-reader .topbar .icon-btn:hover:not(:disabled){background-color:#f1f1f4!important;color:#292a33!important}
+html body .restored-reader .topbar .icon-btn:hover:not(:disabled){background-color:#f5f5f7!important;color:#292a33!important}
 html body .restored-reader .topbar .reader-set-save[aria-pressed="true"]{color:#46633d!important}
 @media(max-width:760px){
   html body .restored-reader .topbar .icon-btn{width:40px!important;height:40px!important;padding:4px!important;border-radius:12px!important}

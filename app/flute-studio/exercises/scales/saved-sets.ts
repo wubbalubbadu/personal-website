@@ -16,6 +16,8 @@ import type {ArticulationSelection,RhythmChoice,SyllableScheme} from "../../comp
 export type ScaleSetConfig={
   range:ScaleRange;
   order:string;
+  /** Arranged by key signature rather than by type or tonic. Absent in sets saved before it existed. */
+  bySignature?:boolean;
   types:ScaleTypeId[];
   forms:ScaleFormId[];
   grouping:string;

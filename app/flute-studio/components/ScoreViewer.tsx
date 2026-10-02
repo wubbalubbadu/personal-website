@@ -481,7 +481,10 @@ function markPlayStart(root:HTMLElement,measure:number|null){
   root.querySelectorAll(".play-start-bar").forEach(node=>node.remove());
   if(measure===null)return;
   const bar=root.querySelector<SVGGElement>(`.vf-stavenote[data-measure="${measure}"]`)?.closest<SVGGElement>(".vf-measure");
-  if(!bar)return;
+  if(bar)tintBar(bar,"play-start-bar");
+}
+/** The tint behind one bar, sized to its staff. Shared by the play-from-here bar and the close-up selection so the two always match. */
+function tintBar(bar:SVGGElement,className:string){
   const box=bar.getBBox(),firstNote=bar.querySelector<SVGGElement>(".vf-stavenote")?.getBBox().x??box.x+box.width;
   // The staff lines give the bar's real extent on all four sides; the bar's
   // own box also takes in a tie or slur reaching back from the previous bar
@@ -501,7 +504,7 @@ function markPlayStart(root:HTMLElement,measure:number|null){
   const left=lines.length?Math.min(...lines.map(line=>line.x)):box.x,right=lines.length?Math.max(...lines.map(line=>line.x+line.width)):box.x+box.width;
   const lead=[...bar.querySelectorAll<SVGGElement>(".vf-clef,.vf-keysignature,.vf-timesignature")].map(sign=>sign.getBBox()).filter(sign=>sign.x<firstNote).reduce((edge,sign)=>Math.max(edge,sign.x+sign.width+4),left);
   const rect=document.createElementNS("http://www.w3.org/2000/svg","rect"),pad=5;
-  rect.setAttribute("class","play-start-bar");
+  rect.setAttribute("class",className);
   rect.setAttribute("x",String(lead));rect.setAttribute("y",String(top-pad));
   rect.setAttribute("width",String(Math.max(0,right-lead)));rect.setAttribute("height",String(bottom-top+pad*2));
   rect.setAttribute("rx","6");
@@ -908,7 +911,7 @@ function StoryCard({composer,title,story,style,onClose}:{composer:string;title:s
 export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceActions,practiceRow,stage,dock,onPracticeNote,practiceEvent,defaultNoteSpacing,onTempoChange,unmetered=false,lineBreak,practiceTempo,scoreMarks,headerActions,save,extraSystemSpacing=0}:{config:ScoreViewerConfig;toolbar?:React.ReactNode;settings?:(controls:ReaderControls)=>React.ReactNode;/** Pinned below the music inside the scroll area — for a live readout that has to stay visible while the page scrolls. */aside?:React.ReactNode;/** Title and music to print instead of what is on screen. The PDF is written with jsPDF's built-in Latin-1 fonts, which cannot encode Chinese at all, so a Chinese book prints from an English copy of itself. */printConfig?:{title:string;asset:string};practiceActions?:React.ReactNode;/** A tool row of the host's own, stacked above mark-up's row so both modes can be open at once. */practiceRow?:React.ReactNode;/** Replaces the music area in place (e.g. a close-up view) while the toolbar stays. The engraving stays mounted underneath so its layout survives the switch. */stage?:React.ReactNode|((view:{fingering:boolean})=>React.ReactNode);/** A panel under the music, on the same canvas, that shrinks the score instead of covering it. */dock?:React.ReactNode;onPracticeNote?:(event:number)=>void;practiceEvent?:number;/** Starting note spacing, for books whose notes are faster than the exercise default assumes. Overridden by a saved preference. */defaultNoteSpacing?:number;onTempoChange?:(tempo:number)=>void;unmetered?:boolean;lineBreak?:{value:boolean;onChange:(value:boolean)=>void};practiceTempo?:{value:boolean;onChange:(value:boolean)=>void};scoreMarks?:(context:ScoreMarksContext)=>React.ReactNode;headerActions?:(controls:ReaderControls)=>React.ReactNode;save?:{saved:boolean;onToggle:()=>void;label:string;savedLabel:string};extraSystemSpacing?:number}) {
   const {t,lang}=useLanguage();
   const zh=lang==="zh";
-  const {bpm,setBpm,setPlaybackBpm,metro,toggleMetro,toggleDrone,stopAllDrones,drones,initializeScore,setAccent,getAudio,alignMetronome,metroHeld,setBeats}=usePracticeAudio();
+  const {bpm,setBpm,setPlaybackBpm,metro,toggleMetro,stopMetro,toggleDrone,stopAllDrones,drones,initializeScore,setAccent,getAudio,alignMetronome,metroHeld,setBeats}=usePracticeAudio();
   const [droneArmed,setDroneArmed]=useState(false);
   const [accompanimentMode,setAccompanimentMode]=useState<'off'|'piano'|'both'>('piano'),[pianoLoading,setPianoLoading]=useState(false),[pianoError,setPianoError]=useState('');
   const playbackAccompaniment=useRef<'off'|'piano'|'both'>('off');
@@ -957,7 +960,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   const overlayVisibilityRef=useRef<OverlayVisibility>({names:false,solfege:false,accidentals:false,tonguing:true,counts:false,sticks:false});
   const [loading,setLoading]=useState(true); const [error,setError]=useState(""); const [selectedMeasure,setSelectedMeasure]=useState<number|null>(null); const startMeasure=selectedMeasure??1; const smartStartMeasure=selectedMeasure??(config.smartDrone?.[0]?.measure??1); const [playing,setPlaying]=useState(false); const [playingFrom,setPlayingFrom]=useState<number|null>(null); const [playingEvent,setPlayingEvent]=useState<number|null>(null); const [annotating,setAnnotating]=useState(false);
   const playingRef=useRef(playing);playingRef.current=playing;
-  const [guideOpen,setGuideOpen]=useState(false),[guideRange,setGuideRange]=useState({from:1,to:1}),[guidePickEnd,setGuidePickEnd]=useState(false),[guideReady,setGuideReady]=useState(false);
+  const [guideOpen,setGuideOpen]=useState(false),[guideRange,setGuideRange]=useState({from:1,to:1}),[guidePickEnd,setGuidePickEnd]=useState(false),[guideReady,setGuideReady]=useState(false),[shiftRange,setShiftRange]=useState<{from:number;to:number}|null>(null);
   const guideXml=useRef("");
   const [annotationToolbar,setAnnotationToolbar]=useState<HTMLDivElement|null>(null);
   const annotatingRef=useRef(false);
@@ -999,26 +1002,19 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   // Bumped after every engrave so a host drawing on the score knows its
   // measurements are stale — note positions change on any re-render.
   const [layoutVersion,setLayoutVersion]=useState(0);
-  useEffect(()=>{
-    if(!guideOpen||!guidePickEnd||guideReady||guideRange.from<=1)return;
-    const root=scoreRef.current,scroller=scoreScrollRef.current;
-    const bar=root?.querySelector<SVGGElement>(`.vf-stavenote[data-measure="${guideRange.from}"]`)?.closest<SVGGElement>(".vf-measure");
-    if(!bar||!scroller)return;
-    scroller.scrollTop+=bar.getBoundingClientRect().top-scroller.getBoundingClientRect().top-36;
-  },[guideOpen,guideRange.from,layoutVersion]);
   const readerAnchor=useRef<{event:string;offset:number}|null>(null);
   useEffect(()=>{
     const root=scoreRef.current;if(!root)return;
     root.querySelectorAll('.closeup-selected-measure').forEach(n=>n.remove());
-    if(!guideOpen||(!guidePickEnd&&!guideReady))return;
-    const low=Math.min(guideRange.from,guideRange.to),high=Math.max(guideRange.from,guideRange.to),seen=new Set<Element>();
+    const shown=guideOpen?((guidePickEnd||guideReady)?guideRange:null):shiftRange;
+    if(!shown)return;
+    const low=Math.min(shown.from,shown.to),high=Math.max(shown.from,shown.to),seen=new Set<Element>();
     root.querySelectorAll<SVGGElement>('.vf-stavenote[data-measure]').forEach(note=>{
       const number=Number(note.dataset.measure),measure=note.closest<SVGGElement>('.vf-measure');
       if(!measure||number<low||number>high||seen.has(measure))return;seen.add(measure);
-      const box=measure.getBBox(),rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
-      rect.setAttribute('class','closeup-selected-measure');rect.setAttribute('x',String(box.x));rect.setAttribute('y',String(box.y-6));rect.setAttribute('width',String(box.width));rect.setAttribute('height',String(box.height+12));rect.setAttribute('rx','6');measure.prepend(rect);
+      tintBar(measure,'closeup-selected-measure');
     });
-  },[guideOpen,guidePickEnd,guideReady,guideRange,layoutVersion]);
+  },[guideOpen,guidePickEnd,guideReady,guideRange,shiftRange,layoutVersion]);
   /** Last tempo actually handed to onTempoChange; null until the first. */
   const reportTempo=useRef<number|null>(null);
   const [pageWidth,setPageWidth]=useState("900");
@@ -1718,7 +1714,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   function stopAutoDrone(){
     clearAutoDroneSchedule();setSmartRunning(false);setSmartEvent(null);setCountBeat(null);
     if(!playingRef.current)alignMetronome(null);
-    if(smartStartedMetronome.current){smartStartedMetronome.current=false;if(!playingRef.current)toggleMetro()}
+    if(smartStartedMetronome.current){smartStartedMetronome.current=false;if(!playingRef.current)stopMetro()}
   }
   /** Auto drone follows score time without starting Listen or scheduling flute notes. */
   function scheduleAutoDrone(fromIndex:number,withCountIn:boolean){
@@ -1747,9 +1743,10 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
       while(end<seq.events.length&&pitches[end]===pitch)duration+=seq.events[end++].d;
       const match=pitch?.match(/^([A-G][♯♭]?)(\d)$/);
       if(match&&duration>0){
-        const osc=c.createOscillator(),gain=c.createGain(),at=start+onsets[i-fromIndex]*unit/1000,until=at+duration*unit/1000;
-        osc.type="sine";osc.frequency.value=pitchFrequency(match[1],Number(match[2]));
-        gain.gain.setValueAtTime(.0001,at);gain.gain.linearRampToValueAtTime(.035,Math.min(at+.04,until));gain.gain.setTargetAtTime(.0001,until,.015);
+        const at=start+onsets[i-fromIndex]*unit/1000,until=at+duration*unit/1000,frequency=pitchFrequency(match[1],Number(match[2]));
+        // The manual drone's voice: one triangle wave, no octave layer. Set louder than the manual one, which is too quiet to hear on a tablet.
+        const osc=c.createOscillator(),gain=c.createGain();osc.type="triangle";osc.frequency.value=frequency;
+        gain.gain.setValueAtTime(.0001,at);gain.gain.linearRampToValueAtTime(.1,Math.min(at+.04,until));gain.gain.setTargetAtTime(.0001,until,.015);
         osc.connect(gain).connect(c.destination);osc.start(at);osc.stop(until+.08);smartNodes.current.push(osc);
       }
       i=end;
@@ -2187,6 +2184,8 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     const match=onPitch?.dataset.pitch!.match(/^([A-G][♯♭]?)(\d)$/);
     if(droneArmed&&onPitch&&match){toggleDrone(match[1],+match[2]);showNoteInfo(onPitch,e.clientX,e.clientY);return}
     const measure=measureAt(e.clientX,e.clientY)??(node?Number(node.dataset.measure)||null:null);
+    if(e.shiftKey&&!guideOpen&&config.practiceGuide&&measure!==null&&selectedMeasure!==null){setShiftRange({from:selectedMeasure,to:measure});setFingerTip(null);return}
+    if(!guideOpen&&shiftRange)setShiftRange(null);
     if(guideOpen&&!guideReady&&measure!==null){
       if(guidePickEnd){setGuideRange(range=>({...range,to:measure}));setGuidePickEnd(false);setGuideReady(true)}
       else {setGuideRange({from:measure,to:measure});setGuidePickEnd(true)}
@@ -2317,50 +2316,32 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   // Built once and handed to both the settings panel and anything drawing
   // on the score, so a tempo mark on the page can drive the transport the
   // same way a row in a panel does.
+  // The notes the current drone sits under turn blue, the same way notes with a manual drone do.
   useEffect(()=>{
     const root=scoreRef.current;if(!root)return;
-    root.querySelectorAll('.smart-drone-strip').forEach(n=>n.remove());
+    root.querySelectorAll('.vf-stavenote.smart-drone-active').forEach(n=>n.classList.remove('smart-drone-active'));
     if(!smartRunning||smartEvent===null)return;
-    const seq=sequenceRef.current,pitches=droneEvents(config.smartDrone??[],seq.events,seq.measureStarts);
-    const audible=pitches[smartEvent],tonic=droneEvents((config.smartDrone??[]).map(change=>({...change,pitch:change.displayPitch??change.pitch})),seq.events,seq.measureStarts)[smartEvent];if(!tonic||!audible)return;
-    const diatonic=(pitch:string)=>{const match=pitch.match(/^([A-G])[♯♭#b]?(-?\d+)$/);return match?Number(match[2])*7+'CDEFGAB'.indexOf(match[1]):null};
-    const target=diatonic(tonic);if(target===null)return;
+    const seq=sequenceRef.current,pitches=droneEvents(config.smartDrone??[],seq.events,seq.measureStarts),audible=pitches[smartEvent];if(!audible)return;
     let first=smartEvent,last=smartEvent;
     while(first>0&&pitches[first-1]===audible)first--;
     while(last+1<pitches.length&&pitches[last+1]===audible)last++;
-    const measures=new Map<SVGGElement,SVGGElement[]>();
+    // Only the notes that are the drone's own pitch, in its own octave as written on the page, not everything it sounds under.
+    const tonic=droneEvents((config.smartDrone??[]).map(change=>({...change,pitch:change.displayPitch??change.pitch})),seq.events,seq.measureStarts)[smartEvent];if(!tonic)return;
+    const spell=(pitch:string)=>pitch.replace(/#/g,'♯').replace(/^([A-G])b/,'$1♭'),target=spell(tonic);
     root.querySelectorAll<SVGGElement>('.vf-stavenote[data-event]').forEach(node=>{
-      const index=Number(node.dataset.event),measure=node.closest<SVGGElement>('.vf-measure');
-      if(measure&&index>=first&&index<=last){const notes=measures.get(measure)??[];notes.push(node);measures.set(measure,notes)}
+      const index=Number(node.dataset.event),written=node.dataset.noteName&&node.dataset.noteOctave?node.dataset.noteName+node.dataset.noteOctave:node.dataset.pitch;
+      if(index>=first&&index<=last&&written&&spell(written)===target)node.classList.add('smart-drone-active');
     });
-    for(const [measure,notes] of measures){
-      const paths=[...measure.children].filter(n=>n.tagName.toLowerCase()==='path'&&!n.getAttribute('class')).map(n=>n.getBoundingClientRect()).filter(r=>r.height<2&&r.width>4).sort((a,b)=>a.top-b.top);
-      const staffIndex=paths.findIndex((_,i)=>{const run=paths.slice(i,i+5),gap=run[1]?.top-run[0]?.top;return run.length===5&&gap>2&&run.every((line,k)=>!k||Math.abs(line.top-run[k-1].top-gap)<1)});
-      const staff=paths.slice(staffIndex,staffIndex+5);if(staffIndex<0)continue;
-      const gap=staff[1].top-staff[0].top;
-      const reference=notes.find(n=>n.dataset.pitch&&diatonic(n.dataset.pitch)!==null&&n.querySelector('.vf-notehead'));if(!reference)continue;
-      const head=reference.querySelector('.vf-notehead')!.getBoundingClientRect();
-      const written=reference.dataset.noteName&&reference.dataset.noteOctave?reference.dataset.noteName+reference.dataset.noteOctave:reference.dataset.pitch!;
-      const referencePitch=diatonic(written);if(referencePitch===null)continue;
-      const y=head.top+head.height/2-(target-referencePitch)*gap/2;
-      const start=Number(notes[0].dataset.event)===first?notes[0].querySelector('.vf-notehead')?.getBoundingClientRect().left??staff[0].left:staff[0].left;
-      const next=root.querySelector<SVGGElement>(`.vf-stavenote[data-event="${last+1}"]`);
-      const end=next?.closest('.vf-measure')===measure?next.querySelector('.vf-notehead')?.getBoundingClientRect().left??staff[0].right:staff[0].right;
-      const matrix=measure.getScreenCTM()?.inverse();if(!matrix)continue;
-      const left=new DOMPoint(start,y-gap*.32).matrixTransform(matrix),right=new DOMPoint(end,y+gap*.32).matrixTransform(matrix);
-      const strip=document.createElementNS('http://www.w3.org/2000/svg','rect');
-      strip.setAttribute('class','smart-drone-strip');strip.setAttribute('x',String(left.x));strip.setAttribute('y',String(left.y));strip.setAttribute('width',String(Math.max(0,right.x-left.x)));strip.setAttribute('height',String(right.y-left.y));strip.setAttribute('rx','2');measure.insertBefore(strip,measure.firstChild);
-    }
   },[smartRunning,smartEvent,layoutVersion,config.smartDrone]);
 
   const readerControls:ReaderControls={bpm,setTempo:setBpm,metronome:metro,toggleMetronome:toggleMetro,playing,playFromEvent,playingFrom,playingEvent,download:downloadPdf,exporting};
   const droneControls=<>          <div className="transport-menu">
             <button aria-label={t.scoreViewer.drone} aria-pressed={droneArmed||drones.length>0} data-tip={t.scoreViewer.droneTip} className={droneArmed||drones.length?"tool on has-tip":"tool has-tip"} onClick={()=>{if(droneArmed)stopAllDrones();setDroneArmed(!droneArmed)}}><PracticeIcon name="drone"/>{t.scoreViewer.drone}<small>{drones.length?drones.join("+"):droneArmed?t.scoreViewer.droneOn:t.scoreViewer.droneOff}</small></button>
-          </div>{config.smartDrone&&<ReaderPopover panelClassName="reader-play-card" label="Auto drone" open={smartOpen} onOpenChange={setSmartOpen} className={`tool smart-drone-trigger${smartRunning||smartOpen?" on":""}`} trigger={<><span className="auto-drone-icon"><PracticeIcon name="drone"/><PracticeIcon name="play"/></span>Auto drone</>}><p>{unmetered?`${config.smartDroneCountInBeats??4} beats count-in`:`Two-bar count-in · Start at measure ${smartStartMeasure}`}</p>{smartRunning&&smartEvent!==null&&<p>{droneEvents(config.smartDrone??[],sequenceRef.current.events,sequenceRef.current.measureStarts)[smartEvent]??'Silent'}</p>}<button className="reader-play-start" onClick={()=>{
+          </div>{config.smartDrone&&<button type="button" data-tip={smartRunning?"Stop":"Tonic drone with count-in"} aria-pressed={smartRunning} aria-label={smartRunning?"Stop auto drone":"Start auto drone"} className={`tool has-tip smart-drone-trigger${smartRunning?" on":""}`} onClick={()=>{
       if(smartRunning){stopAutoDrone();return}
       stopAllDrones();setDroneArmed(false);if(!metro){toggleMetro();smartStartedMetronome.current=true}setSmartEvent(null);setSmartRunning(true);
       const first=sequenceRef.current.measureStarts[smartStartMeasure-1]??0;scheduleAutoDrone(first,true);
-    }}><PracticeIcon name={smartRunning?'pause':'play'}/>{smartRunning?'Stop':'Start'}</button></ReaderPopover>}</>;
+    }}><span className="auto-drone-icon"><PracticeIcon name="drone"/><PracticeIcon name={smartRunning?'pause':'play'}/></span>Auto drone</button>}</>;
   const accompanimentControl=config.accompaniment&&<ReaderPopover panelClassName="reader-play-card" label={zh?'伴奏':'Accompaniment'} trigger={<><PracticeIcon name="piano"/>{zh?'伴奏':'Accompaniment'}</>} className={`tool has-tip reader-accompaniment${playing&&playbackAccompaniment.current!=='off'?' on':''}`}><div className="reader-choice" role="group" aria-label="Accompaniment playback">{([['piano',zh?'仅钢琴':'Piano only'],['both',zh?'钢琴与长笛':'Piano + flute']] as const).map(([mode,label])=><button key={mode} aria-pressed={accompanimentMode===mode} onClick={()=>{if(playing)stopPlayback();setAccompanimentMode(mode)}}>{label}</button>)}</div><button className="reader-play-start" disabled={pianoLoading} onClick={()=>togglePlayback(true)}><PracticeIcon name={playing?'pause':'play'}/>{playing?(zh?'暂停':'Pause'):(zh?'开始播放':'Start playback')}</button>{pianoLoading&&<p role="status">{zh?'正在载入钢琴…':'Loading piano…'}</p>}{pianoError&&<p role="alert">{pianoError}</p>}</ReaderPopover>;
   const viewControls=<div className="reader-view">{settings?.(readerControls)}
 
@@ -2386,12 +2367,12 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
             </div><button className="reader-settings-reset" onClick={()=>{/* A clean page: every "Show on the page" overlay off, not just the layout sliders. */setNoteDisplay("off");setRhythmMode("off");setAccidentals(false);setTonguing(false);setFingering(false);setTheoryEnabled(false);setSizePreference(.8);setSystemSpacing(12);setNoteSpacing(1);setPageWidth(initialReaderLayout(tabletReader(navigator.maxTouchPoints,Math.min(screen.width,screen.height))));try{localStorage.removeItem(`${viewPrefsKey}:tablet-layout`)}catch{/* Defaults still apply for this visit. */}}}>{zh?"恢复默认":"Restore defaults"}</button>
           </ReaderPopover>
         </div>;
-  return <main className="app-shell reader-workspace restored-reader" data-layout={pageWidth} data-annotating={annotating} data-dock={dock?"true":undefined} style={{"--reader-page-width":pageWidth==="900"?"900px":"100%","--viewer-magnify":magnify} as React.CSSProperties}>
+  return <main className="app-shell reader-workspace restored-reader" data-layout={pageWidth} data-annotating={annotating} data-dock={dock||(guideOpen&&guideReady)?"true":undefined} style={{"--reader-page-width":pageWidth==="900"?"900px":"100%","--viewer-magnify":magnify} as React.CSSProperties}>
     <section className="workspace">
       <header className="topbar"><div><Link className="back has-tip" href={backHref} aria-label={backLabel?`${t.scoreViewer.back}: ${backLabel}`:t.scoreViewer.back} data-tip={backLabel||t.scoreViewer.back}><BackChevron/></Link>{!toolbar&&<strong>{title}</strong>}</div><div><span className="topbar-toolbar-slot">{toolbar}</span>{/* No star: a score goes on one of your lists (want to learn, working on, learned). Scale Studio instead saves the panel as a set: a + that turns into a tick. */}{save?<button type="button" className="icon-btn has-tip reader-set-save" aria-pressed={save.saved} data-tip={save.saved?save.savedLabel:save.label} aria-label={save.saved?save.savedLabel:save.label} onClick={save.onToggle}>{save.saved?<CheckIcon/>:<PlusIcon/>}</button>:<StatusButton id={config.listId??config.id} zh={lang==="zh"}/>}{headerActions?.(readerControls)}{pdfPath&&<a className="icon-btn has-tip" href={pdfPath} download data-tip={t.scoreViewer.downloadPdf} aria-label={t.scoreViewer.downloadPdf}><DownloadIcon/></a>}{/* The reader hides the studio nav, so the two controls that live there on every other page — practice tools and the account menu — come here instead, on the same row as the back link. */}<span className="topbar-spacer"/><div id="reader-tools-slot" className="topbar-tools-slot"/><AccountMenu/></div></header>
 
       <div className="practice-bar"><div className="tool-group">        <button data-tip={t.scoreViewer.markUpTip} className={annotating?"tool on coral has-tip":"tool has-tip"} onClick={()=>setAnnotating(!annotating)}><PracticeIcon name="markup"/>{t.scoreViewer.markUp}</button>
-        {config.practiceGuide&&<button type="button" className={guideOpen?"tool on":"tool"} aria-pressed={guideOpen} disabled={loading} onClick={()=>{stopPlayback();if(smartRunning)stopAutoDrone();setGuideOpen(open=>!open);setGuideReady(false);setGuidePickEnd(false);setFingerTip(null);setAnnotating(false);setDroneArmed(false)}}><PracticeIcon name="select"/>{zh?"近看":"Close-up"}</button>}
+        {config.practiceGuide&&<button type="button" className={guideOpen?"tool closeup-tool on":shiftRange?"tool closeup-tool closeup-ready":"tool closeup-tool"} aria-pressed={guideOpen} disabled={loading} onClick={()=>{stopPlayback();if(smartRunning)stopAutoDrone();if(shiftRange&&!guideOpen){setGuideRange(shiftRange);setGuideOpen(true);setGuideReady(true);setGuidePickEnd(false);setShiftRange(null);setFingerTip(null);setAnnotating(false);setDroneArmed(false);return}setGuideOpen(open=>!open);setGuideReady(false);setGuidePickEnd(false);setFingerTip(null);setAnnotating(false);setDroneArmed(false)}}><PracticeIcon name="select"/>{zh?"近看":"Close-up"}</button>}
       </div>
         <div className="transport">{practiceActions}<button data-tip={t.scoreViewer.playTip(selectedMeasure)} className={playing?"tool on has-tip":"tool has-tip"} disabled={pianoLoading||guideReady} aria-label={playing?(lang==="zh"?"暂停":"Pause"):t.scoreViewer.play} onClick={()=>togglePlayback()}><PracticeIcon name={playing?"pause":"play"}/>{playing?(lang==="zh"?"暂停":"Pause"):t.scoreViewer.play}</button>{accompanimentControl}<PracticeRecorder/>{/* Everything about tempo in one group: the metronome that sounds it, the number, and the steppers. The metronome used to sit after Listen, which is what made "Listen" read as "start the metronome"; the steppers reuse the − n + shape the on-page tempo marks already use rather than a spinner. */}<div className="tempo-group"><button data-tip={t.scoreViewer.metronomeTip} className={metro&&!metroHeld?"tool on has-tip":"tool has-tip"} onClick={()=>{if(metroHeld)alignMetronome(null);else toggleMetro()}}><PracticeIcon name="metronome"/>{t.scoreViewer.metronome}</button>{/* A div, not a label: buttons nested in a label get the label's hover applied to them as a set — hovering + lit up − too — and a tap on one activates the label, which focuses the number field and would raise the keyboard on a tablet. Only the field is labelled. */}<div className="tempo"><button type="button" className="tempo-step" aria-label={zh?"减慢":"Slower"} disabled={bpm<=30} onClick={()=>setBpm(bpm-1)}>−</button><label className="tempo-field"><input aria-label={t.scoreViewer.tempoAria} type="number" min="30" max="220" value={tempoDraft??(playing?liveTempo??bpm:bpm)} onFocus={()=>setTempoDraft(String(bpm))} onChange={e=>setTempoDraft(e.target.value)} onBlur={commitTempo} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/></label><button type="button" className="tempo-step" aria-label={zh?"加快":"Faster"} disabled={bpm>=220} onClick={()=>setBpm(bpm+1)}>+</button></div></div><button className="tool has-tip reader-tap" data-tip={t.scoreViewer.tapTempo} aria-label={t.scoreViewer.tapTempo} onClick={tapTempo}><PracticeIcon name="tap"/>{zh?"打拍":"Tap"}</button>
           {droneControls}
@@ -2403,9 +2384,9 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
           <button className="reader-pages__top" aria-label={zh?"回到开头":"Back to top"} data-tip={zh?"回到开头":"Back to top"} disabled={pageIndex<=0&&(scoreScrollRef.current?.scrollTop??0)<8} onClick={backToTop}><PracticeIcon name="top"/></button><button aria-label={t.scoreViewer.previousPage} disabled={pageIndex<=0} onClick={()=>goToPage(pageIndex-1)}><PracticeIcon name="previous"/></button><button aria-label={t.scoreViewer.nextPage} disabled={pageIndex>=pageCount-1} onClick={()=>goToPage(pageIndex+1)}><PracticeIcon name="next"/></button><span aria-live="polite">{spreadPageCount?`${pageIndex*2+1}${pageIndex*2+2<=spreadPageCount?`–${pageIndex*2+2}`:""} / ${spreadPageCount}`:`${pageIndex+1} / ${pageCount}`}</span><button className="tool has-tip" aria-pressed={focusMode} data-tip={focusMode?t.scoreViewer.exitFocusMode:t.scoreViewer.focusModeTip} aria-label={focusMode?t.scoreViewer.exitFocusMode:t.scoreViewer.enterFocusMode} onClick={toggleFocusMode}><PracticeIcon name={focusMode?"exitFullscreen":"fullscreen"}/></button></div>
 </div>
 </div>
-      <div className="reader-rows">{guideOpen&&!guideReady&&<div className="closeup-select" role="status"><span>{guidePickEnd?`Measure ${guideRange.from} selected. Tap the last measure, or the same measure again.`:"Tap the first measure."}</span><button type="button" className="passage-guide__close" aria-label="Cancel measure selection" onClick={()=>setGuideOpen(false)}>×</button></div>} {practiceRow}<div className="markup-row" ref={setAnnotationToolbar}/></div>
-      <div className="score-scroll" ref={scoreScrollRef} inert={guideReady||undefined}>{countBeat!==null&&<div className="score-count-in" role="status" aria-label={`Count in, beat ${countBeat%countBar+1}`}><span>{Array.from({length:countBar},(_,beat)=><i key={beat} className={beat===countBeat%countBar?"current":beat<countBeat%countBar?"done":""}/>)}</span></div>}<div className="score-paper engraved" data-loading={loading}><div className="custom-score-heading"><h1>{title.split(/(\d+)/).map((part,index)=>/^\d+$/.test(part)?<span key={index} className="score-title-number">{part}</span>:part)}</h1>{config.subtitle&&<p className="excerpt-score-subtitle">{config.subtitle}</p>}{config.story?<button type="button" className="score-composer" aria-expanded={!!storyCard} onClick={e=>{e.stopPropagation();setTheoryTip(null);setStoryCard(storyCard?null:{x:e.clientX,y:e.clientY})}}>{composer}</button>:<div className="score-composer">{composer}</div>}</div>{showSpinner&&<div className="score-loading" role="status" aria-label={t.scoreViewer.engraving}/>}{error&&<div className="score-error">{error}</div>}<div ref={scoreRef} className="osmd-score" data-theory-enabled={theoryEnabled} data-note-tap={droneArmed||fingering||noteDisplay!=="off"||activeRhythmMode!=="off"||!!onPracticeNote?"on":undefined} onMouseMove={scoreMove} onMouseLeave={()=>{setFingerTip(null);setTheoryTip(null)}} onClick={scoreClick}/>{scoreMarks&&marksLayer&&createPortal(scoreMarks({root:scoreRef.current,version:layoutVersion,magnify,controls:readerControls}),marksLayer)}<AnnotationLayer key={id} id={id} active={annotating} layoutReady={!loading} layoutVersion={layoutVersion} toolbar={annotationToolbar} zh={zh} onClose={()=>setAnnotating(false)} zoom={magnify} onZoom={zoomAnnotations}/>
-      </div>{aside&&<div className="score-aside">{aside}</div>}</div>{guideOpen&&guideReady&&<div className="reader-stage"><PassageGuide xml={guideXml.current} events={sequenceRef.current.events.slice(sequenceRef.current.measureStarts[Math.min(guideRange.from,guideRange.to)-1]??0,sequenceRef.current.measureStarts[Math.max(guideRange.from,guideRange.to)]??sequenceRef.current.events.length)} from={guideRange.from} to={guideRange.to} quarterBpm={bpm*(config.pulsePerMeasure?((scoreFactsRef.current?.measures[Math.min(guideRange.from,guideRange.to)-1]?.beats??4)*4/(scoreFactsRef.current?.measures[Math.min(guideRange.from,guideRange.to)-1]?.beatType??4)):tempoSectionAt(Math.min(guideRange.from,guideRange.to))?.beat??1)} sempreStaccato={config.sempreStaccatoFromMeasure!==undefined&&Math.min(guideRange.from,guideRange.to)>=config.sempreStaccatoFromMeasure} onSelectAgain={()=>{setGuideReady(false);setGuidePickEnd(false)}} onClose={()=>{setGuideOpen(false);setGuideReady(false)}}/></div>}{stage&&<div className="reader-stage">{typeof stage==="function"?stage({fingering}):stage}</div>}{dock&&<div className="reader-dock">{dock}</div>}
+      <div className="reader-rows">{guideOpen&&!guideReady&&<div className="closeup-select" role="status"><span>{guidePickEnd?`Bar ${guideRange.from} selected. Tap the last bar.`:"Tap the first bar, then the last (or Shift-click)"}</span></div>} {practiceRow}<div className="markup-row" ref={setAnnotationToolbar}/></div>
+      <div className="score-scroll" ref={scoreScrollRef}>{countBeat!==null&&<div className="score-count-in" role="status" aria-label={`Count in, beat ${countBeat%countBar+1}`}><span>{Array.from({length:countBar},(_,beat)=><i key={beat} className={beat===countBeat%countBar?"current":beat<countBeat%countBar?"done":""}/>)}</span></div>}<div className="score-paper engraved" data-loading={loading}><div className="custom-score-heading"><h1>{title.split(/(\d+)/).map((part,index)=>/^\d+$/.test(part)?<span key={index} className="score-title-number">{part}</span>:part)}</h1>{config.subtitle&&<p className="excerpt-score-subtitle">{config.subtitle}</p>}{config.story?<button type="button" className="score-composer" aria-expanded={!!storyCard} onClick={e=>{e.stopPropagation();setTheoryTip(null);setStoryCard(storyCard?null:{x:e.clientX,y:e.clientY})}}>{composer}</button>:<div className="score-composer">{composer}</div>}</div>{showSpinner&&<div className="score-loading" role="status" aria-label={t.scoreViewer.engraving}/>}{error&&<div className="score-error">{error}</div>}<div ref={scoreRef} className="osmd-score" data-theory-enabled={theoryEnabled} data-note-tap={droneArmed||fingering||noteDisplay!=="off"||activeRhythmMode!=="off"||!!onPracticeNote?"on":undefined} onMouseMove={scoreMove} onMouseLeave={()=>{setFingerTip(null);setTheoryTip(null)}} onClick={scoreClick}/>{scoreMarks&&marksLayer&&createPortal(scoreMarks({root:scoreRef.current,version:layoutVersion,magnify,controls:readerControls}),marksLayer)}<AnnotationLayer key={id} id={id} active={annotating} layoutReady={!loading} layoutVersion={layoutVersion} toolbar={annotationToolbar} zh={zh} onClose={()=>setAnnotating(false)} zoom={magnify} onZoom={zoomAnnotations}/>
+      </div>{aside&&<div className="score-aside">{aside}</div>}</div>{stage&&<div className="reader-stage">{typeof stage==="function"?stage({fingering}):stage}</div>}{(dock||(guideOpen&&guideReady))&&<div className="reader-dock">{guideOpen&&guideReady&&<PassageGuide xml={guideXml.current} events={sequenceRef.current.events.slice(sequenceRef.current.measureStarts[Math.min(guideRange.from,guideRange.to)-1]??0,sequenceRef.current.measureStarts[Math.max(guideRange.from,guideRange.to)]??sequenceRef.current.events.length)} from={guideRange.from} to={guideRange.to} quarterBpm={bpm*(config.pulsePerMeasure?((scoreFactsRef.current?.measures[Math.min(guideRange.from,guideRange.to)-1]?.beats??4)*4/(scoreFactsRef.current?.measures[Math.min(guideRange.from,guideRange.to)-1]?.beatType??4)):tempoSectionAt(Math.min(guideRange.from,guideRange.to))?.beat??1)} sempreStaccato={config.sempreStaccatoFromMeasure!==undefined&&Math.min(guideRange.from,guideRange.to)>=config.sempreStaccatoFromMeasure} onSelectAgain={()=>{setGuideReady(false);setGuidePickEnd(false)}} onClose={()=>{setGuideOpen(false);setGuideReady(false)}}/>}{dock}</div>}
 
     </section>{theoryTip&&<div className="theory-tip" style={clampTip(theoryTip.x,theoryTip.y,280,150,"below")}><strong>{theoryTip.title}</strong><p>{theoryTip.text}</p></div>}{storyCard&&config.story&&<StoryCard composer={composer} title={title} story={config.story} style={clampTip(storyCard.x,storyCard.y,340,260,"below")} onClose={()=>setStoryCard(null)}/>}{fingerTip&&<div className={fingering?"flute-tip finger-chart":"flute-tip note-info-tip"} style={clampTip(fingerTip.x,fingerTip.y,340,255,"above")}>{(noteDisplay!=="off"||fingering)&&<strong>{noteDisplay==="solfege"?fingerTip.solfege:fingerTip.name}<sup>{fingerTip.octave}</sup></strong>}{activeRhythmMode!=="off"&&<p className="note-info-beat">{zh?"拍位":"Beat"} {fingerTip.beat}</p>}{fingering&&<><div className="finger-diagram">{(()=>{
         const entry=fingeringsForMidi(midiForPitch(fingerTip.pitch));

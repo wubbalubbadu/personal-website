@@ -559,7 +559,7 @@ html body .recorder-pop small{font-size:12px!important;color:#85868e!important}
    neighbours, and has no hover at all on touch screens (where hover only
    sticks after a tap). */
 @media(hover:hover){
-  html body .restored-reader .practice-bar .reader-popover-anchor>button.scale-book__scales-trigger:not([aria-expanded="true"]):hover{background:#f1f1f4!important;background-image:none!important}
+  html body .restored-reader .practice-bar .reader-popover-anchor>button.scale-book__scales-trigger:not([aria-expanded="true"]):hover{background:#f5f5f7!important;background-image:none!important}
 }
 @media(hover:none){
   html body .restored-reader .practice-bar .reader-popover-anchor>button.scale-book__scales-trigger:not([aria-expanded="true"]):hover{background:transparent!important;background-image:none!important}
@@ -616,7 +616,7 @@ html body .scale-book__crumb{
 }
 html body .scale-book__crumb:hover,
 html body .scale-book__crumb[aria-expanded="true"],
-html body .scale-book__crumb.is-active{background:#f1f1f4!important;color:#292a33!important;text-decoration-color:#8a8c93!important}
+html body .scale-book__crumb.is-active{background:#f5f5f7!important;color:#292a33!important;text-decoration-color:#8a8c93!important}
 /* Opening the panel onto a section flashed an outline hugging its edges;
    scrolling to the section is enough. */
 html body :is([data-tone-group],[data-scale-group])[data-just-focused]::after{display:none!important}
