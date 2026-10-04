@@ -58,5 +58,5 @@ export default function UploadedMusicPage(){
     {next?<Link className="book-stepper__arrow" href={next.viewerPath!} aria-label={zh?`下一首：第 ${next.book!.number} 首`:`Next: No. ${next.book!.number}`}><PracticeIcon name="next"/></Link>:<span className="book-stepper__arrow is-off" aria-hidden="true"><PracticeIcon name="next"/></span>}
   </span>:null;
   if(item.keySections)return <KeyExerciseViewer key={item.id} config={config} sections={item.keySections} stepper={stepper}/>;
-  return <ScoreViewer config={config} headerActions={()=> <>{stepper}{item.excerpt&&<div className="reader-choice" role="group" aria-label={zh?"乐谱格式":"Score format"}><button aria-pressed={false} onClick={()=>setInteractive(false)}>PDF</button><button aria-pressed={true}>XML</button></div>}</>}/>;
+  return <ScoreViewer key={item.id} config={config} headerActions={()=> <>{stepper}{item.excerpt&&<div className="reader-choice" role="group" aria-label={zh?"乐谱格式":"Score format"}><button aria-pressed={false} onClick={()=>setInteractive(false)}>PDF</button><button aria-pressed={true}>XML</button></div>}</>}/>;
 }

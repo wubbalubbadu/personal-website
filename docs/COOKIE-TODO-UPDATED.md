@@ -4,6 +4,16 @@ Historical context: [September 26 retrospective and original notes](history/2026
 
 Updated September 26, 2026 from the pasted notes and current local source, including work in progress, and again on September 28 with the navigation, tools, book and pitch-test work from that session (see "Built September 28" and "Ideas from the September 28 session"). This is a source audit, not confirmation that every feature works on the deployed site or on iPad. The older BACKLOG.md is historical context. September 30 product direction and exploratory ideas were added from the later pasted discussion, without a new source audit. Items below are grouped, not a new priority decision.
 
+
+## October 3 reader and phone follow-up
+
+- Implemented: stop old playback when switching etudes by remounting the reader; collapse markup into evenly spaced columns while preserving expanded layout; plain All keys/Clear actions and filled selected phone choices; consistent phone arrow glyph sizes; preserve Tap’s joined pill shape on hover; suppress the duplicate drone tooltip while armed; Auto drone uses play/pause rather than another speaker; reserve more engraving space before Tone Lab end repeats.
+- Local verification: production build and 32 reader/scale/tone tests pass. Phone-width preview confirms All keys selects every key, Clear deselects every key, and selected choices keep their filled background. Visible opening Tone Lab groups have clearance before repeat signs. Physical iPhone/iPad verification remains open.
+- [ ] Deferred: reproduce Köhler page total changing after a turn, including Safari toolbar height changes.
+- [ ] Deferred design: Settings versus View styling; desktop label removal/metronome pill; decide whether Back to top belongs inside the page-navigation pill.
+- [ ] Phone styling cleanup, review candidates before removal: studio-shell.css blocks around lines 292-313 (earlier phone transport); 595-598 (popover padding); 667-711 (superseded 40px sizes and spacing only, preserve structure/order); 726-728 (earlier second-row sizes); 746-752 (under-400px sizing duplicated by later all-phone rules); 755-777 (intermediate phone dimensions). Verify selectors at phone/tablet widths before deleting. No old rules removed in this pass.
+- [ ] Compare expanded/collapsed markup on physical phone; confirm spacing, color targets and shared pencil sizing.
+
 ## Built September 29: reader fixes from Arnold's Fantasy
 
 - [ ] **Tempo follows the page:** starts at the score's own mark (69, not the catalog's 70); the number counts the printed beat, so B reads 120 (♩.) and the metronome clicks dotted quarters there. Your speed is kept as a share of the printed one across sections.

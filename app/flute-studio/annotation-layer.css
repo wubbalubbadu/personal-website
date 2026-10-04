@@ -58,3 +58,11 @@
 @media(max-width:760px){
   .markup-row-surface.annotation-toolbar.is-expanded>.markup-close{order:4!important}
 }
+
+/* Collapsed phone tools stay in one row, including Close. Expanded keeps two rows. */
+@media(max-width:760px){
+  .reader-workspace .markup-row .annotation-toolbar:not(.is-expanded){width:100%!important;display:grid!important;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);flex-wrap:nowrap!important;padding:4px 6px!important;gap:0!important;overflow-x:auto!important}
+  .reader-workspace .markup-row .annotation-toolbar:not(.is-expanded)>button{width:100%;min-width:0;padding:6px!important}
+  .reader-workspace .markup-row .annotation-toolbar:not(.is-expanded) .annotation-colors{gap:5px;margin:0;justify-content:center;grid-column:span 2}
+  .reader-workspace .markup-row .annotation-toolbar:not(.is-expanded)>.divider{display:none}
+}
