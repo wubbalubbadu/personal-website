@@ -11,6 +11,7 @@ import {useLanguage} from "../../i18n/LanguageContext";
 import {keySignatureNotes,DEFAULT_SCALE_SPAN,SCALE_HIGHEST_MIDI,SCALE_LOWEST_MIDI,SCALE_OCTAVES,SCALE_PITCH_CLASSES,midiForNote,octaveOfMidi,pitchClassOfMidi,scaleNoteName,type ScaleSpan,keyForType,majorKeys,ranges,scaleBookMusicXML,scaleForms,scaleNotes,scaleTypes,typeById,type MajorKey,type ScaleBlock,type ScaleEnding,type ScaleFormId,type ScaleRange,type ScaleStart,type ScaleTypeId} from "./scale-score";
 
 /** A minor scale is titled from its own spelling: C♯ minor, not D♭ minor. */
+const titleCase=(text:string)=>text.replace(/\b[a-z]/g,letter=>letter.toUpperCase());
 const keyLabelFor=(key:MajorKey,typeId:ScaleTypeId)=>keyForType(key,typeById(typeId)).label;
 import {type ArticulationGroup,type ArticulationMode,type ArticulationPresetId,type ArticulationSelection,type RhythmChoice,type SyllableScheme,articulationPresetIds,articulationPresetSelection,defaultArticulationSelection,resolveArticulationPattern,resolveArticulation,resolveRhythm,resolveSyllable,selectionsEqual,isMixedArticulation,marksStaccato} from "../../components/notePatterns";
 import {deleteScaleSet,describeSet,findScaleSet,readScaleSets,saveScaleSet,scaleSetsEvent,type ScaleSet,type ScaleSetConfig} from "./saved-sets";
@@ -521,7 +522,7 @@ export default function ScaleStudio(){
       else{
         const key=params.get("key"),type=params.get("type");
         if(key&&type&&majorKeys.some(k=>k.id===key)&&scaleTypes.some(t=>t.id===type)){
-          setKeys([key]);setTypes([type as ScaleTypeId]);setForms(["scale"]);
+          setKeys([key]);setTypes([type as ScaleTypeId]);setForms([params.get("form")==="arpeggio"?"arpeggio":"scale"]);
         }
       }
     }
@@ -549,7 +550,7 @@ export default function ScaleStudio(){
   // glyphs at all, so a Chinese book is printed from an English copy.
   const blockFor=(key:MajorKey,type:typeof chosenTypes[number],form:typeof chosenForms[number],english=false):ScaleBlock=>({
     key,type:type.id,form:form.id,
-    label:`${keyLabelFor(key,type.id)} ${zh&&!english?type.zh:type.label.toLowerCase()}${showForm?` ${type.id.endsWith("Pentatonic")&&["seconds","thirds","fourths","fifths","sixths","sevenths"].includes(form.id)?(zh&&!english?"音级组合":{seconds:"neighbor steps",thirds:"skip one",fourths:"skip two",fifths:"skip three",sixths:"skip four",sevenths:"skip five"}[form.id as "seconds"|"thirds"|"fourths"|"fifths"|"sixths"|"sevenths"]):(zh&&!english?form.zh:form.label.toLowerCase())}`:""}`,
+    label:`${keyLabelFor(key,type.id)} ${zh&&!english?type.zh:titleCase(type.label)}${showForm?` ${type.id.endsWith("Pentatonic")&&["seconds","thirds","fourths","fifths","sixths","sevenths"].includes(form.id)?(zh&&!english?"音级组合":{seconds:"neighbor steps",thirds:"skip one",fourths:"skip two",fifths:"skip three",sixths:"skip four",sevenths:"skip five"}[form.id as "seconds"|"thirds"|"fourths"|"fifths"|"sixths"|"sevenths"]):(zh&&!english?form.zh:form.label.toLowerCase())}`:""}`,
   });
   // "Key signature" arrangement: one list for every key and type, kept in signature order. Scales sharing a signature (G major, E minor, A dorian) sit side by side, major first, then by how far the tonic is above it.
   const signatureBlocks=(english:boolean)=>chosenTypes.flatMap(type=>selected.flatMap(key=>chosenForms.map(form=>{
@@ -610,13 +611,13 @@ export default function ScaleStudio(){
     :chosenTypes.length===2
       ?(zh?`${chosenTypes[0].zh}与${chosenTypes[1].zh}`:`${chosenTypes[0].label} & ${chosenTypes[1].label.toLowerCase()}`)
       :(zh?`${chosenTypes.length} 种音阶`:`${chosenTypes.length} scale types`);
-  const bookTitle=`${typeWord}${zh?"":" "}${formWord}`;
+  const bookTitle=zh?`${typeWord}${formWord}`:titleCase(`${typeWord} ${formWord}`);
   // The same title built in English, for the PDF.
   const englishFormWord=soleForm?(soleForm.id==="scale"?"scales":soleForm.label.toLowerCase().replace(/([^s])$/,"$1s")):"mixed forms";
   const englishTypeWord=chosenTypes.length===1?chosenTypes[0].label
     :chosenTypes.length===2?`${chosenTypes[0].label} & ${chosenTypes[1].label.toLowerCase()}`
     :`${chosenTypes.length} scale types`;
-  const englishTitle=`${englishTypeWord} ${englishFormWord}`;
+  const englishTitle=titleCase(`${englishTypeWord} ${englishFormWord}`);
   // What the name field offers when you have not typed one: the same
   // phrase the book is titled with, plus how many keys it covers, so an
   // unnamed save still reads as something ("Major scales · 12 keys")

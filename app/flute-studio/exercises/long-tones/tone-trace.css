@@ -165,3 +165,17 @@
 .reader-workspace .pitch-row .pitch-start.is-on::after{content:"";position:absolute;top:5px;right:6px;width:7px;height:7px;border-radius:50%;background:#d23a2c;animation:pitchLive 1.4s ease-in-out infinite}
 .reader-workspace .pitch-row .pitch-start:not(.is-on){color:#8d8f96}
 @media(prefers-reduced-motion:reduce){.reader-workspace .pitch-row .pitch-start.is-on::after{animation:none}.reader-workspace .pitch-row .pitch-start{transition:none}}
+
+/* The pitch row is laid out exactly like the Mark up row: centred, the same padding and 2px gaps, 40px
+   controls with 12px corners, and a close × with no hover fill (as Mark up's). Text in the toolbar's 14px/500. */
+/* Row and surface carry Mark up's own classes (markup-row, markup-row-surface), so layout comes from its rules. */
+html body .reader-workspace .pitch-row button:not(.markup-close){min-height:40px;height:40px;padding:0 12px;border-radius:12px;font:500 14px -apple-system,"system-ui","SF Pro Display","SF Pro Text","Helvetica Neue",Arial,sans-serif;color:#45464f}
+html body .reader-workspace .pitch-row button:not(.markup-close):hover:not(:disabled){background:#f0f3f6}
+html body .reader-workspace .pitch-row button[aria-pressed=true],html body .reader-workspace .pitch-row button[aria-pressed=true]:hover{background:var(--studio-on-bg,#eee7f2);color:var(--studio-on-ink,#79588e)}
+html body .reader-workspace .pitch-row .pitch-start{flex-direction:row;gap:6px;min-width:0;font-size:14px}
+html body .reader-workspace .pitch-row .pitch-start:not(.is-on){color:#45464f}
+html body .reader-workspace .pitch-row .pitch-start svg{width:18px;height:18px}
+html body .reader-workspace .pitch-row .pitch-start.is-on,html body .reader-workspace .pitch-row .pitch-start.is-on:hover{background:#fbe9e7;color:#a8392f}
+html body .reader-workspace .pitch-row .pitch-readout{font-style:normal;font-size:14px;color:#6e707a}
+html body .reader-workspace .pitch-row .pitch-readout.is-error{color:#a83d32}
+html body .reader-workspace .pitch-row .divider{height:24px;background:#dedede;margin:0 6px}

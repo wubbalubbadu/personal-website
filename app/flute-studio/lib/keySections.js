@@ -9,7 +9,7 @@ export function filterKeySections(xml,selected,newLines=false){
     if(!first)measure=measure.replace(/<(clef|time)\b[^>]*>[\s\S]*?<\/\1>/g,"");
 
     if(newLines&&section&&!first)measure=measure.replace(/^(<measure\b[^>]*>)/,'$1<print new-system="yes"/>');
-    return measure;
+    return measure.replace(/<words>([A-Ga-g][♭♯]?) (major|minor)<\/words>/gi,(_,tonic,mode)=>`<words>${tonic[0].toUpperCase()+tonic.slice(1)} ${mode[0].toUpperCase()+mode.slice(1).toLowerCase()}</words>`);
   });
 }
 
@@ -18,12 +18,12 @@ export function keyDroneChanges(xml){
  const measures=[...xml.matchAll(/<measure\b[^>]*>[\s\S]*?<\/measure>/g)].map(match=>match[0]);
  const changes=[];
  for(let index=0;index<measures.length;index++){
-  const tonic=measures[index].match(/<words>([A-Ga-g][♭♯]?) (?:major|minor)<\/words>/)?.[1];
+  const tonic=measures[index].match(/<words>([A-Ga-g][♭♯]?) (?:major|minor)<\/words>/i)?.[1];
   if(!tonic)continue;
   const step=tonic[0].toUpperCase(),alter=tonic.includes('♭')?-1:tonic.includes('♯')?1:0;
   let octave=null;
   for(let next=index;next<measures.length&&octave===null;next++){
-   if(next>index&&/<words>[A-Ga-g][♭♯]? (?:major|minor)<\/words>/.test(measures[next]))break;
+   if(next>index&&/<words>[A-Ga-g][♭♯]? (?:major|minor)<\/words>/i.test(measures[next]))break;
    for(const match of measures[next].matchAll(/<pitch>([\s\S]*?)<\/pitch>/g)){
     const pitch=match[1];
     if(pitch.match(/<step>(.*?)<\/step>/)?.[1]===step&&Number(pitch.match(/<alter>(.*?)<\/alter>/)?.[1]??0)===alter){octave=Number(pitch.match(/<octave>(.*?)<\/octave>/)?.[1]);break}

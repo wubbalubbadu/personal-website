@@ -1,15 +1,18 @@
 "use client";
-import {useEffect,useRef,useState} from 'react';
+import {useCallback,useEffect,useRef,useState,type ReactNode} from 'react';
 import {deriveScoreEvents} from './deriveScoreEvents';
 import {usePracticeAudio,pitchFrequency} from '../PracticeAudio';
 import {installGhostNoteFix} from '../lib/ghostNoteFix';
 import {PracticeIcon} from './PracticeIcon';
 import {fermataAttackIndexes} from './practiceTechniques';
+import {installReminderAccidentalFix,setReminderAccidentals,reminderAccidentalsOn} from '../lib/reminderAccidentalFix';
+import {decorateRow,withReminders,noDisplay,type PracticeDisplay} from './practiceDisplay';
 
-export function PracticeNotation({xml,label,quarterBpm,playing,onPlay,onStop,loop=false,clicks=false,sempreStaccato=false,autoBeam=false,zoom=.8,hideTime=false}:{xml:string;label:string;quarterBpm:number;playing:boolean;onPlay:()=>void;onStop:()=>void;loop?:boolean;clicks?:boolean;sempreStaccato?:boolean;autoBeam?:boolean;zoom?:number;hideTime?:boolean}){
+export function PracticeNotation({xml,label,quarterBpm,playing,onPlay,onStop,loop=false,clicks=false,sempreStaccato=false,autoBeam=false,zoom=.8,hideTime=false,display,marks,onNote}:{xml:string;label:string;quarterBpm:number;playing:boolean;onPlay:()=>void;onStop:()=>void;loop?:boolean;clicks?:boolean;sempreStaccato?:boolean;autoBeam?:boolean;zoom?:number;hideTime?:boolean;/** The reader's display options (note names, accidentals, rhythm). Left out, the row shows only the notes. */display?:PracticeDisplay;/** Marks drawn over the engraving (the Tone Lab's results). `version` changes whenever the notation is redrawn. */marks?:(context:{root:HTMLDivElement;version:number})=>ReactNode;/** A tap on a note, by its event index (set once display is on). */onNote?:(event:number)=>void}){
   const root=useRef<HTMLDivElement>(null),sequence=useRef<ReturnType<typeof deriveScoreEvents>|null>(null);
   const {getAudio}=usePracticeAudio();
-  const [ready,setReady]=useState(false),[error,setError]=useState('');
+  const [ready,setReady]=useState(false),[error,setError]=useState(''),[version,setVersion]=useState(0),[hostEl,setHostEl]=useState<HTMLDivElement|null>(null);
+  const hostRef=useCallback((node:HTMLDivElement|null)=>{root.current=node;setHostEl(node)},[]);
   const cycle=useRef(0),stopRef=useRef(onStop);
   // Keep the latest callback for the playback timers, written after render rather than during it.
   useEffect(()=>{stopRef.current=onStop});
@@ -19,22 +22,34 @@ export function PracticeNotation({xml,label,quarterBpm,playing,onPlay,onStop,loo
     // Draw into a hidden sibling and swap it in when done, so replacing an exercise (Shuffle) never flashes blank.
     const next=document.createElement('div');next.style.cssText='position:absolute;left:0;top:0;width:100%;visibility:hidden';host.style.position='relative';host.append(next);
     (async()=>{try{
-      const {OpenSheetMusicDisplay,VexFlowConverter}=await import('opensheetmusicdisplay');installGhostNoteFix(VexFlowConverter);if(disposed)return;setError('');
+      const {OpenSheetMusicDisplay,VexFlowConverter,AccidentalCalculator,MusicSheetCalculator}=await import('opensheetmusicdisplay');installGhostNoteFix(VexFlowConverter);installReminderAccidentalFix(AccidentalCalculator,MusicSheetCalculator);if(disposed)return;setError('');
+      // Reminder accidentals are the reader's rule, written into the notation before it is engraved.
+      const shown=display??noDisplay,reminded=shown.accidentals?withReminders(xml):null,source=reminded?.xml??xml;
       const score=new OpenSheetMusicDisplay(next,{backend:'svg',autoResize:false,drawingParameters:'compacttight',drawTitle:false,drawComposer:false,drawPartNames:false});
       score.setOptions({pageFormat:'Endless',drawMeasureNumbers:true,newSystemFromXML:false,autoBeam});
       score.EngravingRules.MinNoteDistance=1.4;score.EngravingRules.RenderSingleHorizontalStaffline=true;score.EngravingRules.RenderTimeSignatures=!hideTime;score.EngravingRules.SlurNoteHeadYOffset=.9;
       score.EngravingRules.RenderMultipleRestMeasures=false;score.EngravingRules.AutoGenerateMultipleRestMeasuresFromRestMeasures=false;
-      await score.load(xml);if(disposed)return;score.Zoom=zoom;score.render();
+      await score.load(source);if(disposed)return;score.Zoom=zoom;
+      // The reminder flag is shared with the reader's own engraver: borrow it for this draw only.
+      const draw=()=>{const before=reminderAccidentalsOn();setReminderAccidentals(shown.accidentals);try{score.render()}finally{setReminderAccidentals(before)}};
+      draw();
       const derived=deriveScoreEvents(score,sempreStaccato?1:undefined),held=new Set(fermataAttackIndexes(xml));let attack=-1;
-      // A fermata holds its note: twice as long.
-      sequence.current=held.size?{...derived,events:derived.events.map(e=>{if(!(e.p&&!e.tied&&e.d>0))return e;attack++;return held.has(attack)?{...e,d:e.d*2}:e})}:derived;
+      // A fermata holds its note: twice as long, and never less than two beats (a held sixteenth must still be a hold).
+      sequence.current=held.size?{...derived,events:derived.events.map(e=>{if(!(e.p&&!e.tied&&e.d>0))return e;attack++;return held.has(attack)?{...e,d:Math.max(e.d*2,derived.unitsPerBeat*2)}:e})}:derived;
+      if(display)decorateRow(next,source,derived,shown,reminded?.reminders??[]);
       if(disposed)return;
-      Array.from(host.children).forEach(c=>{if(c!==next)c.remove()});next.style.cssText='';setReady(true);
+      // Replacing a drawing (Shuffle, a display toggle): hold the row at least as tall as before, so nothing below
+      // jumps, and fade the new music in rather than cutting to it.
+      const replacing=host.children.length>1;
+      if(replacing){host.style.minHeight=`${host.offsetHeight}px`;next.style.cssText='opacity:0;transition:opacity .16s ease'}else next.style.cssText='';
+      Array.from(host.children).forEach(c=>{if(c!==next)c.remove()});
+      if(replacing)requestAnimationFrame(()=>{next.style.opacity='1';window.setTimeout(()=>{if(!disposed){host.style.minHeight='';next.style.cssText=''}},220)});
+      setReady(true);setVersion(v=>v+1);
       let width=host.clientWidth;
-      let frame=0;resize=new ResizeObserver(()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>{if(!disposed&&Math.abs(width-host.clientWidth)>2){width=host.clientWidth;score.render()}})});resize.observe(host);
+      let frame=0;resize=new ResizeObserver(()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>{if(!disposed&&host.clientWidth>0&&Math.abs(width-host.clientWidth)>2){width=host.clientWidth;draw();if(display)decorateRow(next,source,derived,shown,reminded?.reminders??[]);setVersion(v=>v+1)}})});resize.observe(host);
     }catch(e){if(!disposed)setError(e instanceof Error?e.message:'Could not draw this exercise.')}})();
     return()=>{disposed=true;resize?.disconnect();next.remove()};
-  },[xml,sempreStaccato,autoBeam,zoom,hideTime]);
+  },[xml,sempreStaccato,autoBeam,zoom,hideTime,display?.names,display?.accidentals,display?.rhythm]);
   useEffect(()=>{
     if(!playing||!ready||!sequence.current){return}
     const context=getAudio(),seq=sequence.current,seconds=60/quarterBpm/seq.unitsPerBeat;
@@ -91,5 +106,11 @@ export function PracticeNotation({xml,label,quarterBpm,playing,onPlay,onStop,loo
     frame=requestAnimationFrame(draw);
     return()=>{cancelAnimationFrame(frame);line.remove()};
   },[playing,ready,quarterBpm,loop,xml]);
-  return <div className="practice-notation"><div className="practice-notation__music" ref={root} aria-label={`${label} notation`}/>{error?<p role="alert">{error}</p>:!ready?<p role="status">Preparing notation…</p>:null}<button type="button" className="practice-listen" aria-label={`${playing?'Stop':'Listen to'} ${label}`} disabled={!ready||!!error} onClick={playing?onStop:onPlay}><PracticeIcon name={playing?'pause':'play'}/>{playing?'Stop':'Listen'}</button></div>;
+  // A tap on a note reports its event index (native listener: the notation is drawn outside React).
+  useEffect(()=>{
+    if(!hostEl||!onNote)return;
+    const tap=(e:MouseEvent)=>{const node=(e.target as Element).closest<SVGGElement>('.vf-stavenote[data-event]');if(node)onNote(Number(node.dataset.event))};
+    hostEl.addEventListener('click',tap);return()=>hostEl.removeEventListener('click',tap);
+  },[hostEl,onNote]);
+  return <div className="practice-notation"><div className="practice-notation__stage"><div className="practice-notation__music" ref={hostRef} data-pills={display&&display.names!=='off'?'on':undefined} data-marks={marks?'on':undefined} aria-label={`${label} notation`}/>{marks&&hostEl&&ready&&<div className="practice-notation__marks">{marks({root:hostEl,version})}</div>}</div>{error?<p role="alert">{error}</p>:!ready?<p role="status">Preparing notation…</p>:null}<button type="button" className="practice-listen" aria-label={`${playing?'Stop':'Listen to'} ${label}`} disabled={!ready||!!error} onClick={playing?onStop:onPlay}><PracticeIcon name={playing?'pause':'play'}/>{playing?'Stop':'Listen'}</button></div>;
 }

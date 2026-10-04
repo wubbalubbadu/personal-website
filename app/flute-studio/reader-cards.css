@@ -1,0 +1,87 @@
+/* View supplies the shared card rhythm. Strong selectors beat legacy reader overrides. */
+html:root body :is(.reader-settings-panel,.account-menu__panel){
+  --card-label-size:14px;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Arial,sans-serif!important;
+  font-size:14px!important;line-height:1.4;color:#292a33;
+  border:1px solid #e6e7e3;border-radius:14px;
+  box-shadow:0 12px 30px #26352e2b;
+}
+@media(min-width:761px){
+  html:root body :is(.reader-settings-panel,.account-menu__panel){padding:18px!important}
+}
+html:root body .reader-settings-panel .scale-book__section-summary{
+  font-size:14px!important;font-weight:600!important;min-height:40px!important;
+  padding:8px 0!important;margin:0!important;
+}
+html:root body .reader-settings-panel .scale-book__section-body{padding:0 0 12px!important}
+html:root body .reader-settings-panel .scale-book__tempo-label b{font-size:var(--card-label-size)!important;font-weight:500!important;line-height:1.35}
+html:root body .reader-settings-panel .scale-reader__tempo{padding:4px 0!important;gap:12px}
+html:root body .reader-settings-panel .scale-book__tempo-list{margin:0!important;padding:0!important}
+html:root body .reader-settings-panel .reader-display-options{gap:6px!important}
+html:root body .reader-settings-panel .reader-display-options .tool{
+  font-size:12.5px!important;font-weight:500!important;line-height:1.25!important;
+  min-height:48px!important;padding:6px 4px!important;gap:2px!important;
+}
+html:root body .reader-settings-panel .reader-display-options .tool>span{font-size:19px!important;line-height:1.1!important}
+html:root body .reader-settings-panel .reader-display-options .tool svg{width:19px!important;height:19px!important}
+html:root body .account-menu__group{padding:0!important;margin:0 0 6px!important;font-size:14px!important;font-weight:600!important;color:#292a33!important}
+html:root body .account-menu__item{padding:9px 0!important;min-height:40px;font-size:14px!important}
+html:root body .account-menu__footnote{margin:4px 0 0!important;font-size:12px;line-height:1.45;color:#85868e}
+html:root body .account-menu__about{padding:0!important}
+html:root body .account-menu__rule{border:0!important;margin:16px 0!important}
+html:root body .account-menu__private{padding:4px 0 0!important}
+@media(max-width:760px){
+  html:root body .reader-settings-panel{padding-left:16px!important;padding-right:16px!important}
+  html:root body .account-menu__panel{padding:26px 16px calc(16px + env(safe-area-inset-bottom))!important}
+}
+/* Align the first text line, not only the card's outer padding. */
+html:root body .reader-settings-panel :is(.scale-book__section-summary,.scale-book__tempo-label b){
+  font-family:inherit!important;font-size:14px!important;font-weight:600!important;line-height:1.3!important;
+}
+/* Every row keeps the same height and centered text, including the first. */
+html:root body .reader-settings-panel .scale-book__section-summary{height:40px!important;min-height:40px!important;padding:0!important}
+html:root body .reader-settings-panel .scale-reader__tempo{min-height:44px!important;padding:4px 0!important;align-items:center!important}
+html:root body .reader-settings-panel .scale-book__tempo-label{align-self:center!important;padding-top:0!important}
+html:root body .reader-settings-panel .scale-book__field-label{font-family:inherit!important;font-size:14px!important;font-weight:600!important;line-height:1.3!important;color:#292a33!important;margin:14px 0 8px!important}
+html:root body .reader-settings-panel .scale-book__field-label:first-child{margin-top:0!important}
+/* Account for the centered line inside a 40px accordion row without changing row spacing. */
+@media(min-width:761px){
+  html:root body .reader-settings-panel:has(.scale-book__section-summary){padding-top:9.6px!important}
+  html:root body .reader-settings-panel:has(.scale-book__tempo-list){padding-top:7.6px!important}
+}
+/* Text stays aligned with headings, with an inset around each interactive row. */
+html:root body .account-menu__choices{margin-inline:-8px}
+html:root body .account-menu__item{padding:9px 8px!important}
+html:root body .account-menu__item svg{width:16px;height:16px;flex-shrink:0}
+html:root body .account-menu__panel .account-menu__item.is-on{
+  background:var(--studio-on-bg,#eee7f2)!important;color:var(--studio-on-ink,#79588e)!important;font-weight:500!important;
+}
+@media(hover:hover){
+  html:root body .account-menu__panel .account-menu__item:not(.is-on):hover{background:#e6e6ea!important}
+  html:root body .account-menu__panel .account-menu__item.is-on:hover{background:#e5d9ee!important}
+  html:root body .reader-settings-panel :is(.scale-book__chip,.scale-book__preset,.reader-choice button,.reader-display-options .tool,.reader-terms):not(.selected):not(.on):not([aria-pressed="true"]):hover{background:#e6e6ea!important}
+  html:root body .reader-settings-panel :is(.scale-book__chip.selected,.scale-book__preset.selected,.reader-choice button[aria-pressed="true"],.reader-display-options .tool.on,.reader-terms.on):hover{background:#e5d9ee!important;color:var(--studio-on-ink,#79588e)!important}
+  html:root body .reader-settings-panel .scale-book__metronome>button:hover:not(:disabled){background:#e6e6ea!important;border-radius:9px!important}
+}
+html:root body :is(.reader-settings-panel,.account-menu__panel) :is(button,a):focus-visible{outline:2px solid #8c6aa1!important;outline-offset:2px}
+/* Labels inside an accordion are subordinate to its section heading. */
+html:root body .reader-settings-panel .scale-book__section-body .scale-book__field-label{
+  font-size:12.5px!important;font-weight:500!important;line-height:1.4!important;
+  color:#6f7178!important;margin:14px 0 6px!important;
+}
+html:root body .reader-settings-panel .scale-book__section-body .scale-book__field-label:first-child{margin-top:0!important}
+html:root body .reader-settings-panel .scale-book__set-open b{font-size:14px!important;font-weight:500!important;line-height:1.35!important}
+html:root body .reader-settings-panel .scale-book__set-open small{font-size:12px!important;font-weight:400!important;line-height:1.4!important;color:#6f7178!important}
+/* Portaled cards use the same tooltip timing as the reader toolbar. */
+html:root body .reader-settings-panel .has-tip::after{
+  opacity:0!important;visibility:hidden!important;animation:none!important;
+  transition:opacity .16s ease,visibility 0s linear .16s!important;
+}
+html:root body .reader-settings-panel .has-tip:focus-visible::after{
+  opacity:1!important;visibility:visible!important;transition-delay:0s!important;
+}
+@media(hover:hover) and (pointer:fine){
+  html:root body .reader-settings-panel .has-tip:hover::after{
+    opacity:1!important;visibility:visible!important;transition-delay:.35s!important;
+  }
+}

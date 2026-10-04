@@ -110,7 +110,7 @@ export default function LongToneStudio(){
           :<button type="button" className="scale-book__crumb" onClick={()=>openPanel("interval")}>{zh?pattern.zhLabel:pattern.label}</button>}
       </div>}
       settings={()=><>
-      <ReaderPopover open={panelOpen} onOpenChange={setPanelOpen} label={zh?"长音设置":"Long tones"} trigger={<><SpectrumDef id="tone-spectrum"/><PracticeIcon name="settings" gradient="tone-spectrum"/><span className="scale-book__scales-label">{zh?"长音":"Tones"}</span></>} className="tool has-tip scale-book__scales-trigger">
+      <ReaderPopover open={panelOpen} onOpenChange={setPanelOpen} label={zh?"自定义长音练习":"Customize your long tone exercise"} trigger={<><SpectrumDef id="tone-spectrum"/><PracticeIcon name="settings" gradient="tone-spectrum"/><span className="scale-book__scales-label">{zh?"长音":"Tones"}</span></>} className="tool has-tip scale-book__scales-trigger">
         <div className="scale-book__panel-body">
           <div data-tone-group="exercise" className="scale-book__section">
           <button type="button" className="scale-book__section-summary" aria-expanded={expanded.includes("exercise")} onClick={()=>toggleSection("exercise")}><span className="scale-book__disclosure" aria-hidden="true">▸</span>{zh?"练习":"Exercise"}</button>

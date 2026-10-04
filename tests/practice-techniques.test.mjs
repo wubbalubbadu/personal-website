@@ -5,7 +5,7 @@ import ts from 'typescript';
 
 const compile=source=>ts.transpile(source,{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022});
 const source=fs.readFileSync(new URL('../app/flute-studio/components/practiceTechniques.ts',import.meta.url),'utf8');
-const {dottedGroups,repeatedPairsGroups,slidingGroupsGroups,fermataPicks,splitPatterns,pitchSequence,notesToMusicXML,dotted}=await import(`data:text/javascript;base64,${Buffer.from(compile(source)).toString('base64')}`);
+const {dottedGroups,repeatedPairsGroups,slidingGroupsGroups,techniquesFor,tupletGroups,randomGroupSizes,fermataPicks,splitPatterns,pitchSequence,notesToMusicXML,dotted}=await import(`data:text/javascript;base64,${Buffer.from(compile(source)).toString('base64')}`);
 
 const PC={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
 const note=(name,i)=>{const m=name.match(/^([A-G])([♯♭]?)(\d)$/),alter=m[2]==='♯'?1:m[2]==='♭'?-1:0;return {step:m[1],alter,octave:+m[3],midi:(+m[3]+1)*12+PC[m[1]]+alter,beatIndex:i}};
@@ -37,8 +37,8 @@ test('no technique crosses a rest: runs stay separate',()=>{
 });
 
 test('fermatas: about one in five, never adjacent, different per seed',()=>{
-  const a=fermataPicks(20,1),b=fermataPicks(20,2);
-  assert.equal(a.length,5);
+  const a=fermataPicks(21,1),b=fermataPicks(21,2);
+  assert.equal(a.length,3);
   assert.ok(a.every((x,i)=>i===0||x-a[i-1]>=2));
   assert.notDeepEqual(a,b);
   assert.deepEqual(fermataPicks(3,5).length,1);
@@ -62,4 +62,25 @@ test('XML writer: one bar per written bar, meter adds up the notes, spelling kep
   const odd=notesToMusicXML([[g(at('A4',0,1),1),g(at('B4',1,1),1),g(at('C5',2,1),1)]]);
   assert.match(odd,/<beats>3<\/beats><beat-type>16<\/beat-type>/);
   assert.match(dotted([run('F♯4','G4')],'longShort'),/<alter>1<\/alter>/);
+});
+
+test('rhythm drills are offered only for a stretch of four or more notes',()=>{
+  assert.deepEqual(techniquesFor([run('C5','D5','E5')]),[]);
+  assert.deepEqual(techniquesFor([run('C5','D5'),run('E5','F5','G5')]),[]);
+  assert.deepEqual(techniquesFor([run('C5','D5','E5','F5')]),['longShort','shortLong','pairs']);
+});
+
+test('tuplet regrouping keeps every note in order and fills the last group with rests',()=>{
+  const r=[run('C5','D5'),run('E5','F5','G5','A5','B5')];
+  const threes=tupletGroups(r,3);
+  assert.deepEqual(threes.map(g=>g.map(n=>n?`${n.step}${n.octave}`:'rest')),[['C5','D5','E5'],['F5','G5','A5'],['B5','rest','rest']]);
+  assert.equal(tupletGroups(r,5).length,2);
+  assert.equal(tupletGroups(r,5)[1].filter(n=>n===null).length,3);
+});
+
+test('random grouping sizes are 2 to 5, cover every note, and change with the seed',()=>{
+  const a=randomGroupSizes(20,1),b=randomGroupSizes(20,2);
+  assert.ok(a.every(n=>n>=2&&n<=5));
+  assert.ok(a.reduce((x,y)=>x+y,0)>=20);
+  assert.notDeepEqual(a,b);
 });

@@ -63,18 +63,10 @@ export function practiceVariation(xml:string,variation:PracticeVariation){
   return serialize(doc);
 }
 
-export function labelPracticeNotes(xml:string,names:boolean,accidentals:boolean){
-  if(!names&&!accidentals)return xml;
-  const doc=new DOMParser().parseFromString(xml,'application/xml');
-  doc.querySelectorAll('note').forEach(note=>{const p=note.querySelector('pitch');if(!p)return;const alter=Number(p.querySelector('alter')?.textContent??0),glyph=alter===1?'♯':alter===-1?'♭':alter===2?'𝄪':alter===-2?'𝄫':'';
-    if(names){const lyric=doc.createElement('lyric'),text=doc.createElement('text');text.textContent=`${p.querySelector('step')?.textContent}${glyph}${p.querySelector('octave')?.textContent}`;lyric.append(text);note.append(lyric)}
-    if(accidentals){note.querySelectorAll('accidental').forEach(n=>n.remove());const a=doc.createElement('accidental');a.textContent=alter===1?'sharp':alter===-1?'flat':alter===2?'double-sharp':alter===-2?'flat-flat':'natural';const before=note.querySelector('time-modification,stem,notehead,staff,beam,notations,lyric');note.insertBefore(a,before)}
-  });return serialize(doc);
-}
-
 /** A preparation exercise, ranked by shared pitches and stepwise motion, not a claim about the passage's key. */
 export function relatedScale(events:PassageEvent[],sourceXml?:string){
   const pitches=events.flatMap(e=>e.p&&!e.tied?[e.p]:[]),pcs=pitches.map(pitchClass).filter((x):x is number=>x!==null),distinct=[...new Set(pcs)];
+  const arpeggio=relatedArpeggio(pitches,pcs);if(arpeggio)return arpeggio;
   if(distinct.length<4)return null;
   // One scale form first. Only when none fits, a minor passage that mixes the raised and natural 6th and 7th is judged against all three forms together.
   const rank=(union:boolean)=>majorKeys.flatMap(key=>scaleTypes.filter(t=>['major','natural','harmonic','melodic'].includes(t.id)).map(type=>{
@@ -91,4 +83,26 @@ export function relatedScale(events:PassageEvent[],sourceXml?:string){
   const span={low:Math.max(59,Math.min(...midi)),high:Math.min(98,Math.max(...midi))};
   const spelling=keyForType(best.key,best.type).label;
   return {label:`${spelling[0].toUpperCase()+spelling.slice(1)} ${best.type.label.toLowerCase()}`,key:best.key.id,type:best.type.id as ScaleTypeId,evidence,xml:scaleMusicXML(best.key,'custom',{kind:'whole',mode:'tongue'},'even',best.type.id,'scale','none','lowest',span)};
+}
+
+/**
+ * A passage built on one triad (a broken chord: Badinerie's opening is B minor) is practised as that key's
+ * arpeggio, not its scale. It counts when nearly every note (85%) is a tone of one major or minor triad,
+ * all three tones are there, and the line mostly leaps (a run of steps through chord tones is a scale).
+ */
+function relatedArpeggio(pitches:string[],pcs:number[]){
+  if(pcs.length<4)return null;
+  const leaps=pcs.slice(1).filter((p,i)=>{const d=(p-pcs[i]+12)%12;return d>=3&&d<=9}).length/Math.max(1,pcs.length-1);
+  if(leaps<.4)return null;
+  const best=majorKeys.flatMap(key=>(['major','natural'] as const).map(typeId=>{
+    const triad=[0,typeId==='major'?4:3,7].map(i=>(key.pc+i)%12);
+    const share=pcs.filter(p=>triad.includes(p)).length/pcs.length;
+    return {key,typeId,share,complete:triad.every(t=>pcs.includes(t)),score:share+(pcs[0]===key.pc?.05:0)+(pcs.at(-1)===key.pc?.05:0)};
+  })).filter(c=>c.complete&&c.share>=.85).sort((a,b)=>b.score-a.score)[0];
+  if(!best)return null;
+  const type=scaleTypes.find(t=>t.id===best.typeId)!;
+  const midi=pitches.map(p=>{const m=p.match(/(\d+)$/)!;return (Number(m[1])+1)*12+pitchClass(p)!});
+  const span={low:Math.max(59,Math.min(...midi)),high:Math.min(98,Math.max(...midi))};
+  const spelling=keyForType(best.key,type).label;
+  return {label:`${spelling[0].toUpperCase()+spelling.slice(1)} ${best.typeId==='major'?'major':'minor'} arpeggio`,key:best.key.id,type:best.typeId as ScaleTypeId,form:'arpeggio' as const,evidence:[] as string[],xml:scaleMusicXML(best.key,'custom',{kind:'whole',mode:'tongue'},'even',best.typeId,'arpeggio','none','lowest',span)};
 }

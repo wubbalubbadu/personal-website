@@ -152,8 +152,8 @@
     background:#f1f1f4;color:#45464f;font:inherit;font-size:13px;font-weight:500;white-space:nowrap;cursor:pointer;
   }
   .scale-book__phone-tabs button[aria-selected="true"]{background:#292a33;color:#fff}
-  body .reader-settings-panel .scale-book__section:not([data-phone-active]){display:none!important}
-  body .reader-settings-panel .scale-book__section-summary{display:none!important}
+  body .reader-settings-panel:has(.scale-book__phone-tabs) .scale-book__section:not([data-phone-active]){display:none!important}
+  body .reader-settings-panel:has(.scale-book__phone-tabs) .scale-book__section-summary{display:none!important}
   body .reader-settings-panel .scale-book__section,
   body .reader-settings-panel .scale-book__section-body{margin:0!important;padding:0!important;border:0!important}
 }
@@ -594,7 +594,7 @@ html body .restored-reader .practice-bar .reader-popover-anchor>button.tool[aria
 /* The Mark up row stays in the page when Mark up is off; empty, its padding
    showed as an extra white strip under the toolbar. */
 html body .restored-reader .markup-row:not(:has(.markup-row-surface)){display:none!important}
-html body .restored-reader .reader-rows:not(:has(.markup-row-surface)){display:none!important}
+html body .restored-reader .reader-rows:not(:has(.markup-row-surface,.pitch-row-surface)){display:none!important}
 
 /* The page is centred again in the reader (the pinch-zoom change set its
    margins to 0, which left a Portrait page hugging the left edge). Zooming

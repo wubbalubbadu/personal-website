@@ -2,39 +2,71 @@
 import Link from 'next/link';
 import {useMemo,useState} from 'react';
 import {PracticeNotation} from './PracticeNotation';
-import {extractMeasures,labelPracticeNotes,relatedScale} from './practiceExcerpt';
-import {runsFromXml,dotted,repeatedPairs,slidingGroups,addFermatas,splitOptions} from './practiceTechniques';
+import {usePitchPractice} from './PitchPractice';
+import {extractMeasures,relatedScale} from './practiceExcerpt';
+import {runsFromXml,tupletsXml,groupedXml,randomGroupSizes,fermataPitchesXml,dotted,repeatedPairs,splitOptions} from './practiceTechniques';
+import {noDisplay,type PracticeDisplay} from './practiceDisplay';
+import {useLanguage} from '../i18n/LanguageContext';
 import type {PassageEvent} from './passageAnalysis';
 import './passage-guide.css';
 
-export function PassageGuide({xml,events,from,to,quarterBpm,numbers,onClose,sempreStaccato=false}:{xml:string;events:PassageEvent[];from:number;to:number;quarterBpm:number;numbers?:{from:string;to:string};onClose:()=>void;sempreStaccato?:boolean}){
-  const [active,setActive]=useState<string|null>(null),[names,setNames]=useState(false),[accidentals,setAccidentals]=useState(false),repeat=false,[seed,setSeed]=useState(1);
+type Mode='technique'|'pitch';
+const MODE_KEY='cookie:closeup-mode';
+
+export function PassageGuide({xml,events,from,to,quarterBpm,numbers,onClose,sempreStaccato=false,initialDisplay=noDisplay,title}:{xml:string;events:PassageEvent[];from:number;to:number;quarterBpm:number;numbers?:{from:string;to:string};onClose:()=>void;sempreStaccato?:boolean;/** The reader's View settings when the close-up opened; the toggles here start from them. */initialDisplay?:PracticeDisplay;/** The piece's name, for the pitch history. */title:string}){
+  const {t}=useLanguage(),s=t.scoreViewer;
+  const [active,setActive]=useState<string|null>(null),[display,setDisplay]=useState(initialDisplay),repeat=false;
+  // Technique is the default; the last choice is remembered so reopening costs no click.
+  const [mode,setMode]=useState<Mode>(()=>{try{return localStorage.getItem(MODE_KEY)==='pitch'?'pitch':'technique'}catch{return 'technique'}});
   const source=useMemo(()=>{try{return {xml:extractMeasures(xml,from,to),error:''}}catch(e){return {xml:'',error:e instanceof Error?e.message:'Could not open these measures.'}}},[xml,from,to]);
+  const pitch=usePitchPractice({xml:source.xml,title,on:mode==='pitch',silence:active!==null,onStart:()=>setActive(null)});
+  const choose=(next:Mode)=>{setActive(null);setMode(next);try{localStorage.setItem(MODE_KEY,next)}catch{/* The choice lasts for this visit. */}};
   const runs=useMemo(()=>{try{return source.xml?runsFromXml(source.xml):[]}catch{return []}},[source.xml]);
   const ctx=useMemo(()=>({key:source.xml.match(/<key[ >][\s\S]*?<\/key>/)?.[0],clef:source.xml.match(/<clef[ >][\s\S]*?<\/clef>/)?.[0]}),[source.xml]);
   const scale=useMemo(()=>relatedScale(events,source.xml),[events,source.xml]);
-  const rows=useMemo(()=>{
-    const pairs=runs.some(r=>r.length>1),list:{id:string;title:string;xml:string;shuffle?:boolean;gen?:boolean}[]=[];
-    if(pairs){list.push({id:'ls',title:'Long–short',gen:true,xml:dotted(runs,'longShort',ctx)},{id:'sl',title:'Short–long',gen:true,xml:dotted(runs,'shortLong',ctx)},{id:'pairs',title:'Pairs ×2',gen:true,xml:repeatedPairs(runs,false,ctx)},{id:'shifted',title:'Shifted pairs',gen:true,xml:repeatedPairs(runs,true,ctx)})}
-    if(runs.some(r=>r.length>=3))list.push({id:'s3',title:'Step through 3',gen:true,xml:slidingGroups(runs,3,ctx)});
-    if(runs.some(r=>r.length>=4))list.push({id:'s4',title:'Step through 4',gen:true,xml:slidingGroups(runs,4,ctx)});
-    if(source.xml){try{splitOptions(source.xml).forEach(o=>list.push({id:'split'+o.title,title:o.title,xml:o.xml}))}catch{/* No tuplets to regroup. */}}
-    if(source.xml&&runs.length)list.push({id:'fermata',title:'Fermatas',xml:addFermatas(source.xml,seed),shuffle:true});
+  // Random groups opens on a different pattern each time (Shuffle steps on from there).
+  const [seed,setSeed]=useState(1),[groupSeed,setGroupSeed]=useState(()=>1+Math.floor(Math.random()*100000));
+  type Row={id:string;title:string;xml:string;gen?:boolean;shuffle?:()=>void};
+  // Exercises in sections; each row is just its name and the music.
+  const sections=useMemo(()=>{
+    const list:{title:string;rows:Row[]}[]=[],count=runs.flat().length;
+    if(runs.some(r=>r.length>1)){
+      list.push({title:'Dotted rhythm',rows:[{id:'ls',title:'Long–short',gen:true,xml:dotted(runs,'longShort',ctx)},{id:'sl',title:'Short–long',gen:true,xml:dotted(runs,'shortLong',ctx)}]});
+      list.push({title:'Pairs',rows:[{id:'pairs',title:'Pairs ×2',gen:true,xml:repeatedPairs(runs,false,ctx)},{id:'shifted',title:'Shifted pairs',gen:true,xml:repeatedPairs(runs,true,ctx)}]});
+    }
+    const groupings:Row[]=count>=3?[{id:'triplets',title:'Triplets',xml:tupletsXml(runs,3,ctx)},{id:'quintuplets',title:'Quintuplets',xml:tupletsXml(runs,5,ctx)},{id:'random',title:'Random groups',xml:groupedXml(runs,randomGroupSizes(count,groupSeed),ctx),shuffle:()=>setGroupSeed(v=>v+1)}]:[];
+    if(source.xml){try{splitOptions(source.xml).forEach(o=>groupings.push({id:'split'+o.title,title:o.title,xml:o.xml}))}catch{/* No tuplets to regroup. */}}
+    if(groupings.length)list.push({title:'Groupings',rows:groupings});
+    if(count)list.push({title:'Fermatas',rows:[{id:'fermata',title:'Hold a few',xml:fermataPitchesXml(runs,seed,ctx),shuffle:()=>setSeed(v=>v+1)}]});
     return list;
-  },[runs,ctx,source.xml,seed]);
+  },[runs,ctx,source.xml,seed,groupSeed]);
   const low=Math.min(from,to),high=Math.max(from,to);
-  const player=(id:string,score:string,name:string,clicks=false,staccato=false,autoBeam=false)=><PracticeNotation autoBeam={autoBeam} hideTime={autoBeam} zoom={id==='original'?.75:.65} xml={score} label={name} quarterBpm={quarterBpm} playing={active===id} onPlay={()=>setActive(id)} onStop={()=>setActive(null)} loop={repeat} clicks={clicks} sempreStaccato={staccato}/>;
-  const toggle=(set:(v:boolean)=>void,v:boolean)=>()=>{setActive(null);set(!v)};
+  const player=(id:string,score:string,name:string,staccato=false,autoBeam=false,shown?:PracticeDisplay,tone?:{marks:Parameters<typeof PracticeNotation>[0]['marks'];onNote:(event:number)=>void},hideTime=autoBeam)=><PracticeNotation marks={tone?.marks} onNote={tone?.onNote} autoBeam={autoBeam} hideTime={hideTime} zoom={id==='original'?.85:.65} xml={score} label={name} quarterBpm={quarterBpm} playing={active===id} onPlay={()=>setActive(id)} onStop={()=>setActive(null)} loop={repeat} sempreStaccato={staccato} display={shown}/>;
+  const flip=(next:PracticeDisplay)=>{setActive(null);setDisplay(next)};
+  const cycleNames=()=>flip({...display,names:display.names==='off'?'names':display.names==='names'?'solfege':'off'});
+  const namesLabel=display.names==='off'?s.noteDisplay:display.names==='names'?s.noteNames:s.solfege;
+  // The View panel's own three toggles (same glyphs and wording), icon only here.
+  const toggles:{glyph:string;label:string;on:boolean;onClick:()=>void}[]=[
+    {glyph:'A♭',label:namesLabel,on:display.names!=='off',onClick:cycleNames},
+    {glyph:'▥',label:s.rhythm,on:display.rhythm,onClick:()=>flip({...display,rhythm:!display.rhythm})},
+    {glyph:'♯',label:s.accidentals,on:display.accidentals,onClick:()=>flip({...display,accidentals:!display.accidentals})}];
+  const original=(marks?:Parameters<typeof PracticeNotation>[0]['marks'],onNote?:(event:number)=>void)=><div className="passage-guide__row passage-guide__row--original"><h3>Original</h3>{player('original',source.xml,'original',sempreStaccato,false,display,marks?{marks,onNote:onNote!}:undefined)}</div>;
   return <section className="passage-guide" aria-label="Music close-up">
     <header className="passage-guide__heading"><h2>{`Bars ${numbers?.from??low}–${numbers?.to??high}`}</h2>
-      <div className="passage-guide__options"><button type="button" aria-pressed={names} onClick={toggle(setNames,names)}>Note names</button><button type="button" aria-pressed={accidentals} onClick={toggle(setAccidentals,accidentals)}>Accidentals</button></div>
-      <button type="button" className="passage-guide__close" aria-label="Close close-up" onClick={onClose}>×</button></header>
+      <div className="passage-guide__modes reader-choice" role="group" aria-label="Practice">{(['technique','pitch'] as Mode[]).map(m=><button type="button" key={m} aria-pressed={mode===m} onClick={()=>choose(m)}>{m==='technique'?'Technique':'Pitch'}</button>)}</div>
+      <div className="passage-guide__options">{toggles.map(x=><button type="button" key={x.glyph} className="passage-guide__icon has-tip" data-tip={x.label} aria-label={x.label} aria-pressed={x.on} onClick={x.onClick}><span aria-hidden="true">{x.glyph}</span></button>)}</div>
+      {/* Mark up's close button: same icon, size and colour, no hover fill. */}<button type="button" className="passage-guide__close markup-close" aria-label="Close close-up" data-tip="Close" onClick={onClose}><svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15"/></svg></button></header>
     {source.error?<p role="alert">{source.error}</p>:<div className="passage-guide__list">
-      <div className="passage-guide__row"><h3>Original</h3>{player('original',labelPracticeNotes(source.xml,names,accidentals),'original',false,sempreStaccato)}</div>
-      <>
-        {rows.map(r=><div className="passage-guide__row" key={r.id}><h3>{r.title}{r.shuffle&&<button type="button" className="passage-guide__shuffle" onClick={()=>{setActive(null);setSeed(seed+1)}}>Shuffle</button>}</h3>{player(r.id,r.xml,r.title.toLowerCase(),false,false,!!r.gen)}</div>)}
-        {scale&&<div className="passage-guide__row"><h3>{scale.label}<Link href={`/flute-studio/exercises/scales?key=${encodeURIComponent(scale.key)}&type=${scale.type}`}>Scale Studio ›</Link></h3>{player('scale',scale.xml,scale.label)}</div>}
-      </>
+      {original(mode==='pitch'?pitch.marks:undefined,mode==='pitch'?pitch.onNote:undefined)}
+      {mode==='pitch'&&pitch.panel}
+      {/* Kept mounted while Pitch is open, so coming back to Technique does not redraw every exercise. */}
+      <div hidden={mode==='pitch'}>
+        {scale&&<div className="passage-guide__row"><h3>{scale.label}<Link href={`/flute-studio/exercises/scales?key=${encodeURIComponent(scale.key)}&type=${scale.type}${'form' in scale&&scale.form==='arpeggio'?'&form=arpeggio':''}`}>Scale Studio ›</Link></h3>{player('scale',scale.xml,scale.label)}</div>}
+        {sections.map(section=><section className="passage-guide__section" key={section.title}><h4>{section.title}</h4>
+          {section.rows.map(r=><div className="passage-guide__row" key={r.id}><h3>{r.title}{r.shuffle&&<button type="button" className="passage-guide__shuffle" onClick={()=>{setActive(null);r.shuffle!()}}>Shuffle</button>}</h3>{player(r.id,r.xml,r.title.toLowerCase(),false,!!r.gen,undefined,undefined,true)}</div>)}
+        </section>)}
+        {!sections.length&&!scale&&<p className="passage-guide__none">Select a few more notes for exercises, or pick Pitch to check these.</p>}
+      </div>
     </div>}
   </section>;
 }

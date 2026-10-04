@@ -5,36 +5,13 @@ Historical context: [September 26 retrospective and original notes](history/2026
 Updated September 26, 2026 from the pasted notes and current local source, including work in progress, and again on September 28 with the navigation, tools, book and pitch-test work from that session (see "Built September 28" and "Ideas from the September 28 session"). This is a source audit, not confirmation that every feature works on the deployed site or on iPad. The older BACKLOG.md is historical context. September 30 product direction and exploratory ideas were added from the later pasted discussion, without a new source audit. Items below are grouped, not a new priority decision.
 
 
-## October 3 reader and phone follow-up
+## Reader bugs and follow-up
 
-- Implemented: stop old playback when switching etudes by remounting the reader; collapse markup into evenly spaced columns while preserving expanded layout; plain All keys/Clear actions and filled selected phone choices; consistent phone arrow glyph sizes; preserve Tap’s joined pill shape on hover; suppress the duplicate drone tooltip while armed; Auto drone uses play/pause rather than another speaker; reserve more engraving space before Tone Lab end repeats.
-- Local verification: production build and 32 reader/scale/tone tests pass. Phone-width preview confirms All keys selects every key, Clear deselects every key, and selected choices keep their filled background. Visible opening Tone Lab groups have clearance before repeat signs. Physical iPhone/iPad verification remains open.
-- [ ] Deferred: reproduce Köhler page total changing after a turn, including Safari toolbar height changes.
-- [ ] Deferred design: Settings versus View styling; desktop label removal/metronome pill; decide whether Back to top belongs inside the page-navigation pill.
-- [ ] Phone styling cleanup, review candidates before removal: studio-shell.css blocks around lines 292-313 (earlier phone transport); 595-598 (popover padding); 667-711 (superseded 40px sizes and spacing only, preserve structure/order); 726-728 (earlier second-row sizes); 746-752 (under-400px sizing duplicated by later all-phone rules); 755-777 (intermediate phone dimensions). Verify selectors at phone/tablet widths before deleting. No old rules removed in this pass.
-- [ ] Compare expanded/collapsed markup on physical phone; confirm spacing, color targets and shared pencil sizing.
-
-## Built September 29: reader fixes from Arnold's Fantasy
-
-- [ ] **Tempo follows the page:** starts at the score's own mark (69, not the catalog's 70); the number counts the printed beat, so B reads 120 (♩.) and the metronome clicks dotted quarters there. Your speed is kept as a share of the printed one across sections.
-- [ ] **accel. and rit. play:** Arnold's accel. poco a poco (bars 16–17) speeds up smoothly into B, and the rit. at 74 slows into Allegro marziale. Where a score is vague, the end is: a dashed line if drawn, else the next tempo mark (within 8 bars for accel., 4 for rit.), else a tempo / a rehearsal mark / a double bar, else 4 or 2 bars at about ±25%; a rit. with no target holds until "a tempo". The metronome clicks on the same bending beats.
-- [ ] **Dynamics are audible:** pp to ff now spans about 29 dB (was 9), hairpins included. **Grace notes play** just before their main note.
-- [ ] **Pausing** quiets the metronome until Listen or Metronome is pressed again (no free-running click in the wrong tempo).
-- [ ] **Playback cursor:** a purple line moves through the music, reaching each note as it sounds; the page follows it. Notes are no longer coloured red.
-- [ ] **Stems reach the middle line** on every score, so high runs keep their beams on the staff.
-- [ ] **Tap a bar while listening** jumps playback there; Pause and Play resume where you stopped.
-- [ ] **Drone on:** tap a note to drone it, anywhere else in the bar to select the bar.
-- [ ] **Smoother scrolling on long pieces;** the header no longer tucks away on desktop and iPad (phone keeps it).
-- [ ] **Markings:** tempo headings bold as one ("Andante con moto"); loco, ritmico, expressivo explained.
-- [x] Tempo mark at F no longer collides (rehearsal boxes and ♩ = n marks are placed clear of the words in every piece).
-- [ ] **Saved sets (September 30):** Restore defaults clears the set name; after opening a set and changing it, **Save new** sits beside Update so a different set never overwrites the old one. Verify on iPad.
-- [ ] **Copy code (Move to another device)** failed on iPhone: Safari needs the clipboard write inside the tap. Now uses a ClipboardItem with the pending code. Verify on iPhone.
-- [ ] **Next low-hanging items:**
-  - **Meter change with the same tempo** (4/4 to 6/8): keep the eighth notes the same length and regroup the metronome clicks.
-  - **A new tempo word with no ♩ = n** (Moderato, Allegro…): move to that word's usual speed from the glossary (textbook ranges only, never a wild jump).
-  - ~~The two failing tests~~ fixed September 30: both were stale expectations (the embouchure model gained a surrounding-air layer; the lesson tone's onset is fuller but still click-free), now checked by intent. 75 of 75 pass.
-  - **A held note swelling under a hairpin** is a bigger job.
-- [ ] **Slurs cut through high runs** (Arnold bars 17, 19, 24): the even-arch reshape lifts a slur at most 4 spaces, so a long slur over a run that climbs to high notes crosses the noteheads. Fix: let the arch follow the highest note under it (an asymmetric curve, or raise the control points over the peak), as engravers do.
+- [ ] **Slurs cut through high runs** (Arnold measures 39 and 51; regression examples include 140 and 163): let the arch follow the highest note under it, using an asymmetric curve or raised control points rather than the current bounded even arch.
+- [ ] **A new tempo word without a printed metronome mark** (Moderato, Allegro…): use the word's usual textbook speed range. Needs a defined rule before implementation.
+- [ ] **Köhler page total changes after a turn:** reproduce on phone, including Safari toolbar height changes. Deferred.
+- [ ] **Phone styling cleanup:** review superseded rules in `studio-shell.css` before deletion. Candidates: earlier phone transport around lines 292–313; popover padding at 595–598; superseded sizes/spacing at 667–711 (preserve structure/order); second-row sizes at 726–728; duplicated under-400px sizing at 746–752; intermediate phone dimensions at 755–777. Line numbers are approximate; verify current selectors at phone/tablet widths. No old rules removed yet.
+- [ ] **Deferred design:** Settings versus View styling; desktop label removal/metronome pill; whether Back to top beloohngs inside the page-navigation pill.
 
 ## Small fixes September 30
 
@@ -104,13 +81,19 @@ Found while testing on iPad. Items marked *fixed, verify* were changed in code b
 
 ## Testing to-dos: existing work, not requests to rebuild
 
+- [ ] **Continuous dynamics and slurred playback:** one phrase timeline now drives gain throughout held notes, tied chains and changing pitches. Slurred continuations retain the same gain and crossfade at the next onset. Listen to crescendos/diminuendos across notes and ties, rapid slurs, the last note of a slur, and rests. Automated envelope checks pass; listening acceptance remains open. Slur drawing changes were reverted and remain unresolved above.
+- [ ] **Meter-only transition with count-in:** verify 4/4 to 6/8 keeps eighth-note duration unchanged and changes click grouping to dotted quarters. Count-in now retains the explicit changing-meter beat schedule. Test with count-in on/off and playback starting mid-bar.
+- [ ] **Reader playback on devices:** verify Arnold's opening/section tempos, accel./rit., dynamics and grace notes; pause/metronome cleanup; cursor/page following; bar-tap jumps and resume. Verify switching etudes stops the old music on phone and desktop.
+- [ ] **Reader notation and interaction:** spot-check high-note stems, tempo/expression headings and glossary taps, armed note drones versus bar selection, and long-score scrolling/header behavior. These are verification tasks, not requests to rebuild the September 29 fixes.
+- [ ] **Phone control regression:** check collapsed markup spacing and expanded layout, color targets and shared pencil sizing; All keys/Clear and selected-choice backgrounds; arrow sizes; Tap's joined shape on hover; manual versus Auto drone; a single drone hint; Tone Lab note clearance before repeats. Local preview passed, physical iPhone/iPad checks remain.
+- [ ] **Transfer clipboard on iPhone:** verify Copy code works inside the Safari tap gesture, then test moving the code to another device.
 - [ ] **iPad regression pass:** write with a resting palm, tap notes with the drone off/on, edit and move annotations, and use settings controls with touch. Record a specific reproduction only if a problem remains.
 - [ ] **Markup after layout changes (implemented; verify only):** change notation size, spacing and orientation; verify new annotations stay attached. Check legacy bitmap ink separately and check whether annotations appear in PDF exports.
 - [ ] **Scale custom range and ending (implemented; verify only):** a custom range now overrides “starts on tonic,” and the held ending returns to the actual starting note without leaving the range. Verify several ranges above and below the tonic in Scale Studio.
 - [ ] **Long-tone repeats with a real flute:** repeat a group, breathe and restart, then move to another group. Check same-pitch boundaries, quiet endings, noise and accidental pitch jumps. Do not use “100 cents off” alone as a jump rule.
 - [ ] **Practice/session history:** test the existing experience before changing it. The earlier source audit found a history reader and session schema, but could not establish a working recording path while the timer was being removed. This is an observation to verify, not authorization to restore the timer or redesign session storage.
 - [ ] **Remember tempos consistently:** score speed now persists as a ratio of the printed tempo (September 30), separately from automatic section changes. Arnold reload verified locally at 46 against the opening 69, including after playback reached B at 80. Check on iPhone/iPad; scale tempos already have separate persistence.
-- [ ] **Saved sets verification:** check the September 30 Restore defaults / Save new changes on iPad (listed above), preset/custom switching, and custom range round-tripping. Whether reader view preferences belong to a set remains a design question.
+- [ ] **Saved sets verification:** check Restore defaults clears the set name and Save new preserves the original set on iPad, preset/custom switching, and custom range round-tripping. Whether reader view preferences belong to a set remains a design question.
 - [ ] **Spacing controls:** retest note spacing with “start on a new line” enabled before treating it as an active bug.
 - [ ] **Mixed-meter metronome:** the audio engine already accepts a beat grid. Verify that score playback supplies meter changes correctly before adding another metronome implementation.
 - [ ] **Reader title and composer consistency:** decide whether the score heading should scale with notation size, then keep the same title sizing and centered composer placement in Portrait, Fit window and Two pages.

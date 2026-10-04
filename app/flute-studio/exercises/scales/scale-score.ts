@@ -102,9 +102,9 @@ const diatonicReach={seconds:1,thirds:2,fourths:3,fifths:4,sixths:5,sevenths:6} 
 const chromaticReach={seconds:2,thirds:3,fourths:5,fifths:7,sixths:9,sevenths:10} as const;
 export const scaleTypes=[
   {id:"major",label:"Major",zh:"大调",intervals:[0,2,4,5,7,9,11],letters:diatonicLetters,descending:null,mode:"major",chord:[0,2,4],reach:diatonicReach,openSignature:false},
-  {id:"natural",label:"Natural minor",zh:"自然小调",intervals:[0,2,3,5,7,8,10],letters:diatonicLetters,descending:null,mode:"minor",chord:[0,2,4],reach:diatonicReach,openSignature:false},
-  {id:"harmonic",label:"Harmonic minor",zh:"和声小调",intervals:[0,2,3,5,7,8,11],letters:diatonicLetters,descending:null,mode:"minor",chord:[0,2,4],reach:diatonicReach,openSignature:false},
-  {id:"melodic",label:"Melodic minor",zh:"旋律小调",intervals:[0,2,3,5,7,9,11],letters:diatonicLetters,descending:{intervals:[0,2,3,5,7,8,10],letters:diatonicLetters},mode:"minor",chord:[0,2,4],reach:diatonicReach,openSignature:false},
+  {id:"natural",label:"Natural Minor",zh:"自然小调",intervals:[0,2,3,5,7,8,10],letters:diatonicLetters,descending:null,mode:"minor",chord:[0,2,4],reach:diatonicReach,openSignature:false},
+  {id:"harmonic",label:"Harmonic Minor",zh:"和声小调",intervals:[0,2,3,5,7,8,11],letters:diatonicLetters,descending:null,mode:"minor",chord:[0,2,4],reach:diatonicReach,openSignature:false},
+  {id:"melodic",label:"Melodic Minor",zh:"旋律小调",intervals:[0,2,3,5,7,9,11],letters:diatonicLetters,descending:{intervals:[0,2,3,5,7,8,10],letters:diatonicLetters},mode:"minor",chord:[0,2,4],reach:diatonicReach,openSignature:false},
   // Chromatic: sharps going up, flats coming down — the standard spelling,
   // and the reason `descending` can override letters without touching
   // pitch. No key signature: every accidental is written out, which is how
@@ -195,7 +195,7 @@ export function keyForType(key:MajorKey,type:ScaleType):SpelledKey{
   // the tonic's letter but none of its sharps or flats.
   if(type.mode==="major")return {pc:key.pc,label:key.label,fifths:key.fifths,step:key.step};
   const minor=minorSpelling[key.pc];
-  return {pc:key.pc,label:minor.label.toLowerCase(),fifths:minor.fifths,step:minor.step};
+  return {pc:key.pc,label:minor.label,fifths:minor.fifths,step:minor.step};
 }
 /** How many degrees make one octave of this type — 7 diatonic, 12 chromatic. */
 export const degreesPerOctave=(type:ScaleType)=>type.intervals.length;

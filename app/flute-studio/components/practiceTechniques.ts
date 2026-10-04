@@ -50,11 +50,12 @@ export function slidingGroupsGroups(runs:Run[],size:3|4):Group[]{
   return runs.flatMap(run=>Array.from({length:Math.max(0,run.length-size+1)},(_,i)=>place(run.slice(i,i+size),1)));
 }
 
-/** Which of `count` attacks get a fermata: about one in four, at least two once there are six notes, never two in a row, different for every seed. */
+/** Which of `count` attacks get a fermata: about one in seven, at least one, never two in a row, different for every seed. */
 export function fermataPicks(count:number,seed:number):number[]{
   if(count<1)return [];
   let t=(seed*2654435761+1)>>>0;const rand=()=>{t=(t+0x6D2B79F5)>>>0;let x=t;x=Math.imul(x^(x>>>15),x|1);x^=x+Math.imul(x^(x>>>7),x|61);return ((x^(x>>>14))>>>0)/4294967296};
-  const order=Array.from({length:count},(_,i)=>i).sort(()=>rand()-.5),want=count>=6?Math.max(2,Math.round(count/4)):Math.max(1,Math.round(count/4)),picked:number[]=[];
+  // About one note in seven: enough to stop on a few, not so many that the line keeps stalling.
+  const order=Array.from({length:count},(_,i)=>i).sort(()=>rand()-.5),want=Math.max(1,Math.round(count/7)),picked:number[]=[];
   for(const i of order){if(picked.length>=want)break;if(!picked.some(j=>Math.abs(j-i)<2))picked.push(i)}
   return picked.sort((x,y)=>x-y);
 }
@@ -161,4 +162,77 @@ export function fermataAttackIndexes(xml:string):number[]{
   const doc=new DOMParser().parseFromString(xml,'application/xml');
   const attacks=Array.from(doc.querySelectorAll('part > measure > note')).filter(n=>n.querySelector('pitch')&&!n.querySelector('grace')&&!n.querySelector('tie[type="stop"]'));
   return attacks.flatMap((n,i)=>n.querySelector('fermata')?[i]:[]);
+}
+
+export type TechniqueId='longShort'|'shortLong'|'pairs';
+/**
+ * The rhythm drills that suit a selection. All three work on a stretch of
+ * four or more notes in a row (a rest ends a stretch), where a finger can lag
+ * unnoticed; a shorter fragment has nothing to drill, so it gets none.
+ * The tuplet regroupings and the scale are chosen where they are drawn: they
+ * only exist when the music has tuplets or a related scale.
+ */
+export function techniquesFor(runs:Run[]):TechniqueId[]{
+  return runs.some(run=>run.length>=4)?['longShort','shortLong','pairs']:[];
+}
+
+/**
+ * Every note of the selection, in order, regrouped into tuplets of `size` (rests and the original rhythm
+ * set aside): triplets of eighths or quintuplets of sixteenths, one group to a beat. A short last group is
+ * filled with rests (null) so every beat is whole.
+ */
+export function tupletGroups(runs:Run[],size:3|5):(PracticeNote|null)[][]{
+  const notes=runs.flat(),groups:(PracticeNote|null)[][]=[];
+  for(let i=0;i<notes.length;i+=size){const group:(PracticeNote|null)[]=notes.slice(i,i+size);while(group.length<size)group.push(null);groups.push(group)}
+  return groups;
+}
+
+/** Seeded group sizes from 2 to 5, enough to cover `count` notes: the random grouping. */
+export function randomGroupSizes(count:number,seed:number){
+  let t=(seed*2654435761+7)>>>0;const rand=()=>{t=(t+0x6D2B79F5)>>>0;let x=t;x=Math.imul(x^(x>>>15),x|1);x^=x+Math.imul(x^(x>>>7),x|61);return ((x^(x>>>14))>>>0)/4294967296};
+  const sizes:number[]=[];let covered=0;
+  while(covered<count){const size=2+Math.floor(rand()*4);sizes.push(size);covered+=size}
+  return sizes;
+}
+
+/** One group to a beat: 2 eighths, a triplet, 4 sixteenths or a quintuplet. */
+const BEAT:Record<number,{type:string;normal:number;beams:number}>={2:{type:'eighth',normal:2,beams:1},3:{type:'eighth',normal:2,beams:1},4:{type:'16th',normal:4,beams:2},5:{type:'16th',normal:4,beams:2}};
+const STEP_XML=(n:PracticeNote)=>`<pitch><step>${n.step}</step>${n.alter?`<alter>${n.alter}</alter>`:''}<octave>${n.octave}</octave></pitch>`;
+const attributesXml=(beats:number,c:Ctx,divisions=60)=>`<attributes><divisions>${divisions}</divisions>${c.key??'<key><fifths>0</fifths></key>'}<time><beats>${beats}</beats><beat-type>4</beat-type></time>${c.clef??'<clef><sign>G</sign><line>2</line></clef>'}</attributes>`;
+
+/** Every note in order, in groups of the given sizes (one group to a beat, four to a bar; the last bar only as long as it needs), as MusicXML. */
+export function groupedXml(runs:Run[],sizes:number[],c:Ctx={}){
+  const notes=runs.flat(),groups:(PracticeNote|null)[][]=[];let at=0;
+  for(let g=0;at<notes.length;g++){const size=sizes[g%sizes.length];const group:(PracticeNote|null)[]=notes.slice(at,at+size);at+=size;while(group.length<size)group.push(null);groups.push(group)}
+  const bars:string[]=[];
+  for(let b=0;b<groups.length;b+=4){
+    const beats=groups.slice(b,b+4);
+    const body=beats.map(group=>{const size=group.length,{type,normal,beams}=BEAT[size],tuplet=size!==normal;
+      // 60 divisions to a quarter divides by 2, 3, 4 and 5.
+      return group.map((n,i)=>{
+        const edge=i===0?'begin':i===size-1?'end':'continue';
+        const beam=n?Array.from({length:beams},(_,k)=>`<beam number="${k+1}">${edge}</beam>`).join(''):'';
+        const mark=!tuplet?'':i===0?'<tuplet type="start" bracket="yes" show-number="actual"/>':i===size-1?'<tuplet type="stop"/>':'';
+        return `<note>${n?STEP_XML(n):'<rest/>'}<duration>${60/size}</duration><type>${type}</type>${tuplet?`<time-modification><actual-notes>${size}</actual-notes><normal-notes>${normal}</normal-notes></time-modification>`:''}${beam}${mark?`<notations>${mark}</notations>`:''}</note>`;
+      }).join('');}).join('');
+    bars.push(`<measure number="${bars.length+1}">${bars.length===0?attributesXml(beats.length,c):beats.length<4?`<attributes><time><beats>${beats.length}</beats><beat-type>4</beat-type></time></attributes>`:''}${body}</measure>`);
+  }
+  return `<?xml version="1.0" encoding="UTF-8"?><score-partwise version="3.1"><part-list><score-part id="P1"><part-name/></score-part></part-list><part id="P1">${bars.join('')}</part></score-partwise>`;
+}
+export const tupletsXml=(runs:Run[],size:3|5,c:Ctx={})=>groupedXml(runs,[size],c);
+
+/** The pitches alone as running sixteenths (four to a beat, beamed, four beats to a bar; the written rhythm set aside), with fermatas on a few at random. */
+export function fermataPitchesXml(runs:Run[],seed:number,c:Ctx={}){
+  const notes=runs.flat(),held=new Set(fermataPicks(notes.length,seed)),bars:string[]=[];
+  for(let b=0;b<notes.length;b+=16){
+    const slice=notes.slice(b,b+16),beats=Math.ceil(slice.length/4);
+    const body=Array.from({length:beats*4},(_,i)=>{
+      const n=slice[i],edge=i%4===0?'begin':i%4===3?'end':'continue';
+      if(!n)return '<note><rest/><duration>15</duration><type>16th</type></note>';
+      const beam=`<beam number="1">${edge}</beam><beam number="2">${edge}</beam>`;
+      return `<note>${STEP_XML(n)}<duration>15</duration><type>16th</type>${beam}${held.has(b+i)?'<notations><fermata type="upright"/></notations>':''}</note>`;
+    }).join('');
+    bars.push(`<measure number="${bars.length+1}">${bars.length===0?attributesXml(beats,c):beats<4?`<attributes><time><beats>${beats}</beats><beat-type>4</beat-type></time></attributes>`:''}${body}</measure>`);
+  }
+  return `<?xml version="1.0" encoding="UTF-8"?><score-partwise version="3.1"><part-list><score-part id="P1"><part-name/></score-part></part-list><part id="P1">${bars.join('')}</part></score-partwise>`;
 }

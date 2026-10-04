@@ -1029,3 +1029,15 @@ html body .reader-settings-panel .reader-text-action:hover,html body .reader-set
 .restored-reader .transport .transport-menu,.restored-reader .transport .smart-drone-trigger{order:3}
 .restored-reader .transport>.reader-popover-anchor{order:0}
 
+
+/* "Show on the page": the labels under the icons use the toolbar's text style (14px, 500), not the old 11px/600. */
+html body .reader-settings-panel .reader-display-options .tool{font-family:-apple-system,"system-ui","SF Pro Display","SF Pro Text","Helvetica Neue",Arial,sans-serif!important;font-size:14px!important;font-weight:500!important;line-height:1.2;padding-inline:4px!important}
+
+/* A button with no tip text (Drone while it is on) must not draw its tooltip box: it showed as an empty black pill under the button. */
+html body .has-tip:not([data-tip])::after,html body .has-tip[data-tip=""]::after{display:none!important}
+
+/* One look for every floating pill (selection bar, pitch tools, notices): the same edge, fill and shadow. */
+:root{--pill-border:1px solid rgba(41,42,51,.12);--pill-bg:#fff;--pill-shadow:0 4px 14px rgba(41,42,51,.12)}
+html:root body .range-bar,html body .drone-hint{border:var(--pill-border)!important;background:var(--pill-bg)!important;box-shadow:var(--pill-shadow)!important}
+/* Right after a press, the button's tooltip stays hidden until the pointer leaves it. */
+html body .has-tip[data-tip-off]::after{display:none!important}

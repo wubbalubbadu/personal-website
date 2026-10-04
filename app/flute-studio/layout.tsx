@@ -4,6 +4,7 @@ import "./studio-shared.css";
 import "./ios-theme.css";
 import "./studio-shell.css";
 import "./viewer-fixes.css";
+import "./reader-cards.css";
 // Preview geometry must be present before the server-rendered SVGs paint.
 import "./home-preview-cards.css";
 import "./components/preview-grid.css";

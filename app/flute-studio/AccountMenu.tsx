@@ -2,6 +2,7 @@
 
 import {usePrivateMusic,unlockPrivateMusic,lockPrivateMusic} from "./lib/privateMusic";
 import Link from "next/link";
+import {PracticeIcon} from "./components/PracticeIcon";
 import {useEffect,useRef,useState} from "react";
 import {createPortal} from "react-dom";
 import {useLanguage} from "./i18n/LanguageContext";
@@ -70,7 +71,7 @@ export default function AccountMenu(){
             onClick={()=>setLang(value)}
           >
             <span>{label}</span>
-            {lang===value&&<b aria-hidden="true">✓</b>}
+
           </button>)}
       </div>
 
@@ -85,7 +86,7 @@ export default function AccountMenu(){
           onClick={()=>setPencilOnly(!pencil)}
         >
           <span>{t.settings.pencilOnly}</span>
-          {pencil&&<b aria-hidden="true">✓</b>}
+
         </button>
       </div>
       <p className="account-menu__footnote">{t.settings.pencilOnlyNote}</p>
@@ -94,7 +95,7 @@ export default function AccountMenu(){
       <p className="account-menu__group">{lang==="zh"?"数据":"Your data"}</p>
       <div className="account-menu__choices">
         <Link className="account-menu__item" role="menuitem" href="/flute-studio/transfer" onClick={()=>setOpen(false)}>
-          <span>{lang==="zh"?"设备同步":"Sync devices"}</span><b aria-hidden="true">›</b>
+          <span>{lang==="zh"?"设备同步":"Sync devices"}</span><PracticeIcon name="next"/>
         </Link>
       </div>
 

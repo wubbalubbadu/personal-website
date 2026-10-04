@@ -14,7 +14,7 @@ test('Every key keeps the pattern note count and filtering renumbers bars',()=>{
   const count=mode=>piece.keySections.filter(s=>s.id.endsWith(mode)).map(s=>(filterKeySections(xml,[s.id]).match(/<note\b/g)||[]).length);
   for(const mode of ['major','minor'])assert.equal(new Set(count(mode)).size,1);
   const selected=filterKeySections(xml,['-1-major','0-minor']);
-  assert.ok(selected.indexOf('a minor')<selected.indexOf('F major'));
+  assert.ok(selected.indexOf('A Minor')<selected.indexOf('F Major'));
   const numbers=[...selected.matchAll(/<measure\b[^>]*number="(\d+)"/g)].map(m=>Number(m[1]));
   assert.deepEqual(numbers,numbers.map((_,i)=>i+1));
   assert.ok(!selected.includes('G major'));

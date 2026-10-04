@@ -9,6 +9,8 @@
  */
 let remindersOn=false;
 export function setReminderAccidentals(on){remindersOn=!!on}
+/** The current setting, so a second engraver (the close-up) can borrow the flag for one render and hand it back. */
+export const reminderAccidentalsOn=()=>remindersOn;
 
 const patched=new WeakSet();
 export function installReminderAccidentalFix(AccidentalCalculator,MusicSheetCalculator){

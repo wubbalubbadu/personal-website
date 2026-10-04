@@ -5,6 +5,8 @@ import { ArticulationEnum, OrnamentEnum } from "opensheetmusicdisplay";
 enum DynamicEnum { pppppp, ppppp, pppp, ppp, pp, p, mp, mf, f, ff, fff, ffff, fffff, ffffff, sf, sff, sfp, sfpp, fp, rf, rfz, sfz, sffz, fz, other }
 enum ContDynamicEnum { crescendo, diminuendo }
 import type { ArticulationMode } from "./notePatterns";
+import {scoreArticulation} from "./playbackArticulation";
+import {dynamicTimeline,dynamicLevel,noteEnvelope,type DynamicPoint} from "./dynamicEnvelope";
 import {durationUnits,exactUnitsPerWhole} from "./rhythmGrid";
 
 // Same canonical 12-tone spelling the rest of the app already uses for
@@ -178,7 +180,7 @@ function trillUpper(note: { halfTone: number; Pitch: { FundamentalNote: number; 
 export function deriveScoreEvents(osmd: OSMDType, sempreStaccatoFromMeasure?: number) {
   const unitsPerWhole = resolveUnitsPerWhole(osmd);
   const pitches: (string | null)[] = [];
-  const events: { p: string | null; d: number; tied: boolean; articulation: ArticulationMode; slurContinuation: boolean; level: number; accent?: boolean; trill?: string }[] = [];
+  const events: { p: string | null; d: number; tied: boolean; articulation: ArticulationMode; slurContinuation: boolean; level: number; dynamics?: DynamicPoint[]; accent?: boolean; trill?: string }[] = [];
   // Every dynamic and hairpin in the first staff, in score time (whole notes
   // from the start), so each note can look up how loud it should play.
   type Mark = { at: number; dynamic?: DynamicEnum; wedge?: { rising: boolean; until: number } };
@@ -192,7 +194,11 @@ export function deriveScoreEvents(osmd: OSMDType, sempreStaccatoFromMeasure?: nu
     }
   }
   marks.sort((a, b) => a.at - b.at);
-  let level = 1, markIndex = 0, fifths = 0, wedge: { from: number; start: number; until: number; to: number } | null = null;
+  const dynamics=dynamicTimeline(marks.filter(mark=>mark.wedge||mark.dynamic!==undefined&&(DYNAMIC_LEVEL[mark.dynamic]!==undefined||AFTER_ACCENT[mark.dynamic]!==undefined)).map(mark=>({at:mark.at,
+    ...(mark.dynamic!==undefined?{level:DYNAMIC_LEVEL[mark.dynamic]??AFTER_ACCENT[mark.dynamic]}:{}),
+    ...(mark.wedge?{wedge:{...mark.wedge,to:DYNAMIC_LEVEL[marks.find(next=>next.dynamic!==undefined&&DYNAMIC_LEVEL[next.dynamic]!==undefined&&next.at>=mark.wedge!.until-1e-6&&next.at<=mark.wedge!.until+.25)?.dynamic!]}}:{})
+  })),LEVEL_FLOOR,LEVEL_CEILING);
+  let fifths = 0;
   const EPS = 1e-6;
   const measureStarts: number[] = [];
 
@@ -207,20 +213,8 @@ export function deriveScoreEvents(osmd: OSMDType, sempreStaccatoFromMeasure?: nu
       // belongs to this note only; a hairpin ramps toward the next dynamic
       // after it ends, or one step louder/softer if none follows.
       const now = measure.AbsoluteTimestamp.RealValue + container.Timestamp.RealValue;
-      let accentHere = false;
-      while (markIndex < marks.length && marks[markIndex].at <= now + EPS) {
-        const mark = marks[markIndex++];
-        if (mark.dynamic !== undefined && ACCENTS.has(mark.dynamic)) { if (Math.abs(mark.at - now) < EPS) accentHere = true; level = AFTER_ACCENT[mark.dynamic] ?? level; wedge = null; }
-        else if (mark.dynamic !== undefined && DYNAMIC_LEVEL[mark.dynamic] !== undefined) { level = DYNAMIC_LEVEL[mark.dynamic]!; wedge = null; }
-        else if (mark.wedge && mark.wedge.until > mark.at) {
-          const next = marks.find(later => later.dynamic !== undefined && DYNAMIC_LEVEL[later.dynamic] !== undefined && later.at >= mark.wedge!.until - EPS && later.at <= mark.wedge!.until + .25);
-          // With no dynamic at its end, a hairpin moves about one step (5 dB).
-          const to = next ? DYNAMIC_LEVEL[next.dynamic!]! : Math.min(LEVEL_CEILING, Math.max(LEVEL_FLOOR, level * (mark.wedge.rising ? dB(5) : dB(-5))));
-          wedge = { from: level, start: mark.at, until: mark.wedge.until, to };
-        }
-      }
-      if (wedge && now >= wedge.until - EPS) { level = wedge.to; wedge = null; }
-      const loudness = wedge ? wedge.from + (wedge.to - wedge.from) * (now - wedge.start) / (wedge.until - wedge.start) : level;
+      const accentHere=marks.some(mark=>mark.dynamic!==undefined&&ACCENTS.has(mark.dynamic)&&Math.abs(mark.at-now)<EPS);
+      const loudness=dynamicLevel(dynamics,now);
       for (const voiceEntry of container.StaffEntries[0]?.VoiceEntries ?? []) {
         const note = voiceEntry.Notes[0];
         if (!note) continue;
@@ -236,15 +230,14 @@ export function deriveScoreEvents(osmd: OSMDType, sempreStaccatoFromMeasure?: nu
         // than starting a new one; togglePlayback uses it to skip the
         // re-attack and extend the previous note's tone across it instead.
         const tied = !!note.NoteTie && note.NoteTie.StartNote !== note;
-        // Slur wins over a printed articulation mark if a note somehow has
-        // both — a slurred note is legato regardless of what's under it.
+        // A phrase slur does not cancel a printed staccato dot.
         const slur = note.NoteSlurs[0];
         const hasMark = (kind: ArticulationEnum) => voiceEntry.Articulations.some(a => a.articulationEnum === kind);
         // "Sempre staccato" is a continuing instruction: the source only
         // prints dots on the first notes. Keep the later engraving unmarked,
         // but shorten their playback until the end of this excerpt.
         const impliedStaccato = sempreStaccatoFromMeasure !== undefined && measureIndex + 1 >= sempreStaccatoFromMeasure;
-        const articulation: ArticulationMode = slur ? "slur" : hasMark(ArticulationEnum.staccato) ? "staccato" : hasMark(ArticulationEnum.tenuto) ? "tenuto" : impliedStaccato ? "staccato" : "tongue";
+        const articulation: ArticulationMode = scoreArticulation(!!slur,hasMark(ArticulationEnum.staccato),hasMark(ArticulationEnum.tenuto),impliedStaccato);
         const slurContinuation = !!slur && slur.StartNote !== note;
         // The score-wide grid is the LCM of OSMD's rational duration
         // denominators, so this is exact for tuplets as well as binary note
@@ -254,7 +247,7 @@ export function deriveScoreEvents(osmd: OSMDType, sempreStaccatoFromMeasure?: nu
         pitches.push(short);
         const ornament = voiceEntry.OrnamentContainer;
         const trill = short && ornament?.GetOrnament === OrnamentEnum.Trill ? trillUpper(note as unknown as Parameters<typeof trillUpper>[0], fifths, ornament.AccidentalAbove as number | undefined) : null;
-        events.push({ p: short, d: duration, tied, articulation, slurContinuation, level: Math.round(loudness * 100) / 100, ...(accentHere ? { accent: true } : {}), ...(trill ? { trill } : {}) });
+        events.push({ p: short, d: duration, tied, articulation, slurContinuation, level: loudness, dynamics:noteEnvelope(dynamics,now,now+duration/unitsPerWhole,unitsPerWhole), ...(accentHere ? { accent: true } : {}), ...(trill ? { trill } : {}) });
       }
     }
   }

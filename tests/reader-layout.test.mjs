@@ -24,3 +24,8 @@ test('iPads start with Fit window and retain an explicit tablet layout choice',(
   assert.equal(initialReaderLayout(false,'900'), '900');
   assert.equal(initialReaderLayout(false,'auto'), 'auto');
 });
+
+test('desktop starts with two pages and preserves a saved choice',()=>{
+  assert.equal(initialReaderLayout(false),'spread');
+  assert.equal(initialReaderLayout(false,'900'),'900');
+});
