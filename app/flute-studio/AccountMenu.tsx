@@ -3,6 +3,7 @@
 import {usePrivateMusic,unlockPrivateMusic,lockPrivateMusic} from "./lib/privateMusic";
 import Link from "next/link";
 import {useEffect,useRef,useState} from "react";
+import {createPortal} from "react-dom";
 import {useLanguage} from "./i18n/LanguageContext";
 import {setPencilOnly,usePencilOnly} from "./lib/pencilMode";
 import {GearIcon} from "./components/HeaderIcons";
@@ -33,7 +34,10 @@ export default function AccountMenu(){
     window.addEventListener("cookie:open-tools-panel",close);
     return()=>window.removeEventListener("cookie:open-tools-panel",close);
   },[]);
-  const wrap=useRef<HTMLDivElement>(null);
+  const wrap=useRef<HTMLDivElement>(null),sheetRef=useRef<HTMLDivElement>(null);
+  // On a phone the panel is a bottom sheet. It is rendered at the top of the page: the nav bar's blur makes
+  // position:fixed measure from the nav bar, which pinned the "bottom" sheet to the bar's bottom edge.
+  const [sheet,setSheet]=useState(false);
 
   useEffect(()=>{
     if(!open)return;
@@ -41,7 +45,8 @@ export default function AccountMenu(){
     // has already handled its own click, which closed the menu every time
     // you picked a language.
     const onPointerDown=(event:PointerEvent)=>{
-      if(!wrap.current?.contains(event.target as Node))setOpen(false);
+      const target=event.target as Node;
+      if(!wrap.current?.contains(target)&&!sheetRef.current?.contains(target))setOpen(false);
     };
     const onKeyDown=(event:KeyboardEvent)=>{if(event.key==="Escape")setOpen(false)};
     window.addEventListener("pointerdown",onPointerDown);
@@ -52,28 +57,7 @@ export default function AccountMenu(){
     };
   },[open]);
 
-  return <div className="account-menu" ref={wrap}>
-    <button
-      type="button"
-      className="account-menu__trigger"
-      aria-haspopup="menu"
-      aria-expanded={open}
-      aria-label={t.nav.avatarLabel}
-      onClick={()=>{
-        if(!open){
-          const rect=wrap.current?.getBoundingClientRect();
-          const header=wrap.current?.closest("header")?.getBoundingClientRect();
-          if(rect)setPosition({top:Math.max(rect.bottom,header?.bottom??0)+10-rect.top,right:0});
-          window.dispatchEvent(new Event("cookie:open-account-panel"));
-        }
-        setOpen(value=>!value);
-      }}
-    >
-      {/* A gear rather than initials: there is no account, only settings. */}
-      <GearIcon/>
-    </button>
-
-    {open&&<div className="account-menu__panel" role="menu" style={{top:position.top,right:position.right}}>
+  const panel=<div className="account-menu__panel" role="menu" style={sheet?undefined:{top:position.top,right:position.right}}>
       <p className="account-menu__group">{t.settings.language}</p>
       <div className="account-menu__choices">
         {([["en",t.settings.english],["zh",t.settings.chinese]] as const).map(([value,label])=>
@@ -127,6 +111,30 @@ export default function AccountMenu(){
         <span>{t.settings.aboutApp}</span>
         <small>{t.settings.aboutVersion}</small>
       </p>
-    </div>}
+    </div>;
+
+  return <div className="account-menu" ref={wrap}>
+    <button
+      type="button"
+      className="account-menu__trigger"
+      aria-haspopup="menu"
+      aria-expanded={open}
+      aria-label={t.nav.avatarLabel}
+      onClick={()=>{
+        if(!open){
+          const rect=wrap.current?.getBoundingClientRect();
+          const header=wrap.current?.closest("header")?.getBoundingClientRect();
+          if(rect)setPosition({top:Math.max(rect.bottom,header?.bottom??0)+10-rect.top,right:0});
+          setSheet(window.matchMedia("(max-width:760px)").matches);
+          window.dispatchEvent(new Event("cookie:open-account-panel"));
+        }
+        setOpen(value=>!value);
+      }}
+    >
+      {/* A gear rather than initials: there is no account, only settings. */}
+      <GearIcon/>
+    </button>
+
+    {open&&(sheet?createPortal(<div className="account-menu account-menu--sheet" ref={sheetRef}>{panel}</div>,document.body):panel)}
   </div>;
 }

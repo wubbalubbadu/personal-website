@@ -208,3 +208,8 @@ html body :is(.studio-navigation__actions,.topbar) :is(.dock-launcher,.account-m
 @media(max-width:760px){
   html body :is(.studio-navigation__actions,.topbar) :is(.dock-launcher,.account-menu__trigger,.icon-btn){padding:4px!important;border-radius:12px!important}
 }
+/* Phone tabs use the desktop weights: regular grey, the current tab dark and only a little heavier. */
+@media(max-width:760px){
+  html body .studio-navigation__tab{font-weight:500!important}
+  html body .studio-navigation__tab.is-active{font-weight:600!important}
+}

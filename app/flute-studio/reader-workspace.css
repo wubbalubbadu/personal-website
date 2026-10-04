@@ -1017,3 +1017,15 @@ html body .reader-settings-panel .reader-text-action:hover,html body .reader-set
 .practice-bar svg[data-icon="metronome"]{transform:scale(1.12)}
 .practice-bar svg[data-icon="gear"]{transform:scale(.89)}
 .practice-bar svg[data-icon="fullscreen"]{transform:scale(1.06)}
+
+.drone-hint{position:fixed;z-index:400;left:50%;top:164px;transform:translateX(-50%);padding:7px 14px;border-radius:999px;border:1px solid #0000001a;background:rgba(255,255,255,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#45464f;font-size:13px;font-weight:400;box-shadow:0 4px 14px #2a2a3314;pointer-events:none;white-space:nowrap;animation:notice-pill 2.5s ease both}
+@keyframes notice-pill{0%{opacity:0;transform:translate(-50%,-4px)}8%,85%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,0)}}
+@media(prefers-reduced-motion:reduce){.drone-hint{animation:none}}
+
+/* Record sits left of one grey pill holding Listen, metronome, tempo and Tap. Desktop keeps the old order (the wrapper vanishes). */
+.restored-reader .transport-pill{display:contents}
+.restored-reader .transport .score-recorder{order:1}
+.restored-reader .transport .tempo-group,.restored-reader .transport .reader-tap{order:2}
+.restored-reader .transport .transport-menu,.restored-reader .transport .smart-drone-trigger{order:3}
+.restored-reader .transport>.reader-popover-anchor{order:0}
+

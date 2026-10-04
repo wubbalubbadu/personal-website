@@ -47,7 +47,7 @@ export default function UploadedMusicPage(){
     id:item.id,
     backHref:book?bookPath(book.id):"/flute-studio/music",
     // A book goes on your lists as a whole, from any of its numbers.
-    ...(book?{backLabel:book.title,listId:book.id}:{}),
+    ...(book?{backLabel:book.title,backName:book.composer.split(" ").pop(),listId:book.id}:{}),
     ...(item.pdfPath?{pdfPath:item.pdfPath}:{}),
     ...(item.defaultTempo?{defaultTempo:item.defaultTempo}:{}),
     ...(composerInfo(item.composer)||item.about?{story:{composer:composerInfo(item.composer),year:item.year,about:item.about,tempoHint:zh?item.excerpt?.zhTempoHint??item.excerpt?.tempoHint:item.excerpt?.tempoHint}}:{}),

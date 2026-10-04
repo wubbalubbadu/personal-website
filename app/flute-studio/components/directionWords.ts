@@ -6,6 +6,10 @@
  * - Words are placed just above the staff, where a slur or a tall stem can
  *   already be. A word that would touch or crowd one is lifted until it clears
  *   it with a little air, never far (a long way up would detach it from the music).
+ * - Words also clear each other: OSMD can stack a tempo word on an expression
+ *   word ("Allegro moderato." over "dolce." in Köhler No. 1). Words are placed
+ *   from the staff upward, and each placed word becomes an obstacle for the
+ *   ones above it.
  *
  * Runs on the SVG after every engraving; words already seen are skipped.
  */
@@ -39,8 +43,15 @@ export function refineDirectionWords(root:Element){
       for(let at=0;at<=length;at+=Math.max(2.5,length/120)){const point=path.getPointAtLength(at);add(point.x-1.5,point.x+1.5,point.y-1.5,point.y+1.5)}
     });
 
+    // Nearest the staff first, so a word above is lifted clear of the one below.
+    measured.sort((a,b)=>b.box.bottom-a.box.bottom);
+    // OSMD can draw the same word twice in the same spot; the copy moves with its twin instead of being pushed off it.
+    const placed=new Map<string,number>();
     for(const {text,box:area} of measured){
       text.dataset.refined="";
+      const key=`${text.textContent}|${Math.round(area.left)}|${Math.round(area.top)}`;
+      const twin=placed.get(key);
+      if(twin!==undefined){if(twin>0)text.setAttribute("y",String((Number(text.getAttribute("y"))||0)-twin));continue}
       let lift=0;
       for(let tries=0;tries<12&&lift<MAX_LIFT;tries++){
         const top=area.top-lift,bottom=area.bottom-lift;
@@ -49,7 +60,10 @@ export function refineDirectionWords(root:Element){
         if(!hit)break;
         lift+=STEP;
       }
-      if(lift>0)text.setAttribute("y",String((Number(text.getAttribute("y"))||0)-Math.min(lift,MAX_LIFT)));
+      lift=Math.min(lift,MAX_LIFT);
+      if(lift>0)text.setAttribute("y",String((Number(text.getAttribute("y"))||0)-lift));
+      placed.set(key,lift);
+      solids.push({left:area.left,right:area.right,top:area.top-lift,bottom:area.bottom-lift});
     }
   });
 }

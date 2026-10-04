@@ -1,6 +1,9 @@
 import type {ReactNode} from "react";
-export type PracticeIconName = "piano" | "metronome" | "tuner" | "mic" | "drone" | "markup" | "fullscreen" | "exitFullscreen" | "close" | "previous" | "next" | "settings" | "gear" | "tap" | "record" | "play" | "pause" | "stop" | "undo" | "redo" | "saved" | "aids" | "tempo" | "print" | "top" | "highlighter" | "arrow" | "eraser" | "text" | "sticky" | "select";
+export type PracticeIconName = "loop" | "zoom" | "plus" | "piano" | "metronome" | "tuner" | "mic" | "drone" | "markup" | "fullscreen" | "exitFullscreen" | "close" | "previous" | "next" | "settings" | "gear" | "view" | "tap" | "record" | "play" | "pause" | "stop" | "undo" | "redo" | "saved" | "aids" | "tempo" | "print" | "top" | "highlighter" | "arrow" | "eraser" | "text" | "sticky" | "select";
 const paths:Record<PracticeIconName,ReactNode>={
+  loop:<path d="M17 3l4 4-4 4M3 11V9a2 2 0 0 1 2-2h16M7 21l-4-4 4-4M21 13v2a2 2 0 0 1-2 2H3"/>,
+  zoom:<><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></>,
+  plus:<path d="M12 5v14M5 12h14"/>,
   piano:<><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M9 5v14M15 5v14M7 5v7M13 5v7M19 5v7"/></>,
   // Trapezoid body, base line, pendulum arm. The weight-dot and the extra
   // crossing stroke the old glyph had collapsed into a smudge at 22px.
@@ -20,13 +23,14 @@ const paths:Record<PracticeIconName,ReactNode>={
   select:<path d="m5 3 15 10-7 1-3 7L5 3Z"/>,
   saved:<path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3l-5.6 2.9 1.1-6.2L3 9.6l6.2-.9Z"/>,
   aids:<><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16M5.5 8h1M5.5 12h1M5.5 16h1"/></>,
-  fullscreen:<path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/>,
+  fullscreen:<path d="M9 5H5v4M15 5h4v4M5 15v4h4M19 15v4h-4"/>,
   // The same four corners turned inward: the usual way back out of fullscreen.
-  exitFullscreen:<path d="M3 8h5V3M21 8h-5V3M3 16h5v5M21 16h-5v5"/>,
+  exitFullscreen:<path d="M5 9h4V5M19 9h-4V5M5 15h4v4M19 15h-4v4"/>,
   close:<path d="m6 6 12 12M18 6 6 18"/>,
   previous:<path d="m15 5-7 7 7 7"/>,next:<path d="m9 5 7 7-7 7"/>,top:<><path d="M5 5h14"/><path d="M12 20V9"/><path d="m7.5 13.5 4.5-4.5 4.5 4.5"/></>,
   settings:<><path d="M4 6h16M4 12h16M4 18h16"/><path d="M8 3v6M16 9v6M10 15v6"/></>,
   play:<path d="m8 4 12 8-12 8Z" fill="currentColor" stroke="none"/>,pause:<path d="M7 5h3.2v14H7ZM13.8 5H17v14h-3.2Z" fill="currentColor" stroke="none"/>,stop:<path d="M6 6h12v12H6Z" fill="currentColor" stroke="none"/>,
+  view:<><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></>,
   gear:<><circle cx="12" cy="12" r="3.2"/><path d="M19.4 14.4a1.5 1.5 0 0 0 .3 1.7l.1.1a1.9 1.9 0 1 1-2.7 2.7l-.1-.1a1.5 1.5 0 0 0-1.7-.3 1.5 1.5 0 0 0-.9 1.4v.2a1.9 1.9 0 0 1-3.8 0v-.1a1.5 1.5 0 0 0-1-1.4 1.5 1.5 0 0 0-1.7.3l-.1.1a1.9 1.9 0 1 1-2.7-2.7l.1-.1a1.5 1.5 0 0 0 .3-1.7 1.5 1.5 0 0 0-1.4-.9h-.2a1.9 1.9 0 0 1 0-3.8h.1a1.5 1.5 0 0 0 1.4-1 1.5 1.5 0 0 0-.3-1.7l-.1-.1a1.9 1.9 0 1 1 2.7-2.7l.1.1a1.5 1.5 0 0 0 1.7.3h.1a1.5 1.5 0 0 0 .9-1.4v-.2a1.9 1.9 0 0 1 3.8 0v.1a1.5 1.5 0 0 0 .9 1.4 1.5 1.5 0 0 0 1.7-.3l.1-.1a1.9 1.9 0 1 1 2.7 2.7l-.1.1a1.5 1.5 0 0 0-.3 1.7v.1a1.5 1.5 0 0 0 1.4.9h.2a1.9 1.9 0 0 1 0 3.8h-.1a1.5 1.5 0 0 0-1.4.9Z"/></>,
   tap:<><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="7.4" opacity=".45"/></>,
   record:<circle cx="12" cy="12" r="6" fill="currentColor" stroke="none"/>,

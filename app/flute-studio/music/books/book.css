@@ -35,3 +35,9 @@ a.book-stepper__arrow:hover{background:#e7e7ea;color:#292a33}
 .exercise-hub__content:has(>.book-page__back)>.book-page__back{grid-column:1;grid-row:1;margin-top:50px;align-self:start}
 .exercise-hub__content:has(>.book-page__back)>.book-page__header{grid-column:2;grid-row:1;margin-top:40px}
 .exercise-hub__content:has(>.book-page__back)>:not(.book-page__back):not(.book-page__header){grid-column:1/-1}
+/* Phone: back arrow on its own row above the title, both on the same left edge (the title is too big to share a row). */
+@media(max-width:760px){
+  .exercise-hub__content:has(>.book-page__back){display:block}
+  .exercise-hub__content:has(>.book-page__back)>.book-page__back{display:inline-flex;margin:16px 0 0 -10px!important}
+  .exercise-hub__content:has(>.book-page__back)>.book-page__header{margin-top:8px}
+}

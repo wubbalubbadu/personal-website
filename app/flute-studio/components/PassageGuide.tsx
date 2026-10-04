@@ -7,7 +7,7 @@ import {runsFromXml,dotted,repeatedPairs,slidingGroups,addFermatas,splitOptions}
 import type {PassageEvent} from './passageAnalysis';
 import './passage-guide.css';
 
-export function PassageGuide({xml,events,from,to,quarterBpm,onSelectAgain,onClose,sempreStaccato=false}:{xml:string;events:PassageEvent[];from:number;to:number;quarterBpm:number;onSelectAgain:()=>void;onClose:()=>void;sempreStaccato?:boolean}){
+export function PassageGuide({xml,events,from,to,quarterBpm,numbers,onClose,sempreStaccato=false}:{xml:string;events:PassageEvent[];from:number;to:number;quarterBpm:number;numbers?:{from:string;to:string};onClose:()=>void;sempreStaccato?:boolean}){
   const [active,setActive]=useState<string|null>(null),[names,setNames]=useState(false),[accidentals,setAccidentals]=useState(false),repeat=false,[seed,setSeed]=useState(1);
   const source=useMemo(()=>{try{return {xml:extractMeasures(xml,from,to),error:''}}catch(e){return {xml:'',error:e instanceof Error?e.message:'Could not open these measures.'}}},[xml,from,to]);
   const runs=useMemo(()=>{try{return source.xml?runsFromXml(source.xml):[]}catch{return []}},[source.xml]);
@@ -26,9 +26,9 @@ export function PassageGuide({xml,events,from,to,quarterBpm,onSelectAgain,onClos
   const player=(id:string,score:string,name:string,clicks=false,staccato=false,autoBeam=false)=><PracticeNotation autoBeam={autoBeam} hideTime={autoBeam} zoom={id==='original'?.75:.65} xml={score} label={name} quarterBpm={quarterBpm} playing={active===id} onPlay={()=>setActive(id)} onStop={()=>setActive(null)} loop={repeat} clicks={clicks} sempreStaccato={staccato}/>;
   const toggle=(set:(v:boolean)=>void,v:boolean)=>()=>{setActive(null);set(!v)};
   return <section className="passage-guide" aria-label="Music close-up">
-    <header className="passage-guide__heading"><h2>{low===high?`Bar ${low}`:`Bars ${low}–${high}`}</h2>
+    <header className="passage-guide__heading"><h2>{`Bars ${numbers?.from??low}–${numbers?.to??high}`}</h2>
       <div className="passage-guide__options"><button type="button" aria-pressed={names} onClick={toggle(setNames,names)}>Note names</button><button type="button" aria-pressed={accidentals} onClick={toggle(setAccidentals,accidentals)}>Accidentals</button></div>
-      <button type="button" onClick={onSelectAgain}>Change</button><button type="button" className="passage-guide__close" aria-label="Close close-up" onClick={onClose}>×</button></header>
+      <button type="button" className="passage-guide__close" aria-label="Close close-up" onClick={onClose}>×</button></header>
     {source.error?<p role="alert">{source.error}</p>:<div className="passage-guide__list">
       <div className="passage-guide__row"><h3>Original</h3>{player('original',labelPracticeNotes(source.xml,names,accidentals),'original',false,sempreStaccato)}</div>
       <>

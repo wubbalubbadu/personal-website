@@ -12,6 +12,8 @@ import musicTerms from "../../../content/music-terms.json";
  */
 
 export type MeasureFacts={fifths:number;mode:string|null;beats:number;beatType:number;symbol:string|null;
+  /** The bar number as printed (the XML's own number: a pickup bar is 0 and the next bar 1), which is not the bar's position. */
+  number:string;
   /** Written pitches in this measure as letter+alter, e.g. "B0", "F1", "E-1". */
   pitches:string[];
   /** This measure writes its own <key>, even an unchanged one: where a scale book's next exercise begins. */
@@ -108,12 +110,12 @@ export function readScoreFacts(xml:string):ScoreFacts{
   const measures:MeasureFacts[]=[];
   const metronomes:MetronomeFacts[]=[];
   const tempos:{measure:number;quarter:number;beat:number}[]=[];
-  let current:MeasureFacts={fifths:0,mode:null,beats:4,beatType:4,symbol:null,pitches:[],keyWritten:false};
+  let current:MeasureFacts={fifths:0,mode:null,beats:4,beatType:4,symbol:null,number:"1",pitches:[],keyWritten:false};
   let lastPitch:string|null=null;
   part?.querySelectorAll(":scope > measure").forEach(measure=>{
     const key=measure.querySelector("attributes key");
     const time=measure.querySelector("attributes time");
-    current={...current,pitches:[],keyWritten:!!key};
+    current={...current,pitches:[],keyWritten:!!key,number:measure.getAttribute("number")||String(measures.length+1)};
     if(key){
       current.fifths=Number(key.querySelector("fifths")?.textContent??0)||0;
       current.mode=key.querySelector("mode")?.textContent?.trim().toLowerCase()||null;

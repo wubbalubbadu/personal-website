@@ -658,3 +658,234 @@ html body .osmd-score .play-start-bar{fill:rgba(109,69,133,.12)!important}
   html body .restored-reader .practice-bar .transport-menu>button.tool{font-size:0!important;width:38px!important;padding:0!important;justify-content:center!important}
 }
 html body .reader-settings-panel .scale-book__save-new{background:#fff!important;color:#292a33!important;box-shadow:inset 0 0 0 1px #d6d7dc!important}
+
+/* ── Phone toolbar (one source of truth; replaces the segmented pills above) ──
+   Row 1: Mark up · Record · [ ▶  metronome  − 60 +  Tap ]   (one grey pill)
+   Row 2: Drone · Accompaniment · page settings (View, Customize scales…) · ‹ › n/n ⛶
+   Every button is the same 40×40 icon-only target with a 22px icon; an active
+   button is a fully rounded purple square, inside the pill or out. */
+@media(max-width:760px){
+  html:root body .restored-reader .practice-bar{display:flex!important;flex-wrap:wrap!important;align-items:center!important;column-gap:4px!important;row-gap:4px!important;padding:6px 8px!important}
+  html:root body .restored-reader .practice-bar>.transport{display:contents!important}
+  html:root body .restored-reader .practice-bar .tool-group{order:1!important}
+  html:root body .restored-reader .practice-bar .transport>button.tool:not(.smart-drone-trigger){order:1!important}
+  html:root body .restored-reader .practice-bar .score-recorder{order:2!important;margin:0!important}
+  html:root body .restored-reader .practice-bar .transport-pill{order:3!important;display:flex!important;align-items:center;gap:0;padding:2px;border-radius:14px;background:#f1f1f4;flex:0 0 auto}
+  /* The pill ends row 1. */
+  html:root body .restored-reader .practice-bar .transport-pill::after{content:none}
+  html:root body .restored-reader .practice-bar>.transport::after{content:"";order:4;flex-basis:100%;height:0}
+  html:root body .restored-reader .practice-bar .transport-menu{display:contents!important}
+  html:root body .restored-reader .practice-bar .transport-menu>.tool{order:3!important}
+  html:root body .restored-reader .practice-bar .smart-drone-trigger{order:5!important}
+  html:root body .restored-reader .practice-bar .transport>.reader-popover-anchor{order:6!important}
+  html:root body .restored-reader .practice-bar .reader-popover-anchor{flex:0 0 auto!important;width:auto!important;min-width:0!important;max-width:none!important;margin:0!important}
+  html:root body .restored-reader .practice-bar .restored-view-controls,html:root body .restored-reader .practice-bar .reader-view,html:root body .restored-reader .practice-bar .reader-pages{display:contents!important}
+  html:root body .restored-reader .practice-bar .reader-view>*{order:7!important;flex:0 0 auto!important;width:auto!important}
+  html:root body .restored-reader .practice-bar .reader-pages>*{order:9!important}
+  html:root body .restored-reader .practice-bar::after{content:none!important;display:none!important}
+
+  /* One button shape everywhere. */
+  html:root body .restored-reader .practice-bar :is(.tool-group>.tool,.transport>button.tool,.score-recorder>.tool,.transport-pill>.tool,.tempo-group>.tool,.transport-menu>.tool,.smart-drone-trigger,.reader-popover-anchor>.tool,.reader-view .tool,.reader-pages>button){
+    width:40px!important;min-width:40px!important;height:40px!important;min-height:0!important;flex:0 0 40px!important;
+    padding:0!important;margin:0!important;font-size:0!important;line-height:0!important;gap:0!important;
+    display:inline-flex!important;flex-direction:row!important;align-items:center!important;justify-content:center!important;
+    border:0!important;border-radius:11px!important;box-shadow:none!important;background:transparent!important;color:#45464f!important;
+  }
+  html:root body .restored-reader .practice-bar :is(.tool-group>.tool,.transport>button.tool,.score-recorder>.tool,.transport-pill>.tool,.tempo-group>.tool,.transport-menu>.tool,.smart-drone-trigger,.reader-popover-anchor>.tool,.reader-view .tool,.reader-pages>button) svg{
+    display:block!important;width:22px!important;height:22px!important;flex:0 0 22px!important;margin:0!important;stroke-width:1.7px;
+  }
+  html:root body .restored-reader .practice-bar :is(.transport-menu>.tool,.reader-popover-anchor>.tool,.reader-view .tool) :is(small,span:not(.auto-drone-icon)){display:none!important}
+  html:root body .restored-reader .practice-bar .reader-pages>button.reader-pages__top{display:inline-flex!important;margin-left:auto!important}
+  html:root body .restored-reader .practice-bar .reader-pages>span{order:9!important;flex:0 0 auto!important;min-width:28px;font-size:12px!important;text-align:center}
+  html:root body .restored-reader .practice-bar :is(.tool-group>.tool,.transport>button.tool,.score-recorder>.tool,.transport-pill>.tool,.tempo-group>.tool,.transport-menu>.tool,.smart-drone-trigger,.reader-popover-anchor>.tool,.reader-view .tool):is(.on,[aria-pressed="true"]){
+    background:var(--studio-on-bg,#eee7f2)!important;color:var(--studio-on-ink,#79588e)!important;border-radius:11px!important;
+  }
+  html:root body .restored-reader .practice-bar .tool-group>.tool.on.coral{background:#fbe9e5!important;color:#c4533f!important}
+
+  /* The metronome group lives inside the pill: no grey of its own, no dividers. */
+  html:root body .restored-reader .practice-bar .tempo-group{display:flex!important;align-items:center;gap:0!important;margin:0!important;padding:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;min-width:0!important;flex:0 0 auto!important;height:40px!important}
+  html:root body .restored-reader .practice-bar .tempo{display:flex!important;align-items:center;height:40px!important;padding:0!important;gap:0!important;background:transparent!important;min-width:0!important}
+  html:root body .restored-reader .practice-bar .tempo .tempo-step{width:30px!important;min-width:0!important;height:40px!important;min-height:0!important;padding:0!important;font-size:20px!important;background:transparent!important;border-radius:10px!important}
+  html:root body .restored-reader .practice-bar .tempo input{width:40px!important;min-width:0!important;height:40px!important;padding:0!important;font-size:17px!important;background:transparent!important;text-align:center}
+}
+
+/* Top row: every icon the same 20px, the list "+" included. */
+@media(max-width:760px){
+  html:root body .restored-reader .topbar :is(.back,.icon-btn,.status-button__trigger,button) svg{width:20px!important;height:20px!important}
+}
+/* Tap is a word, not an icon: the dot-in-circle doesn't say "tap the beat". */
+@media(max-width:760px){
+  html:root body .restored-reader .practice-bar .transport-pill>.tool.reader-tap{width:auto!important;min-width:44px!important;flex:0 0 auto!important;padding:0 10px!important;font-size:14px!important;font-weight:500!important;line-height:1!important}
+  html:root body .restored-reader .practice-bar .transport-pill>.tool.reader-tap svg{display:none!important}
+}
+/* Auto drone: the speaker with a small play/pause badge, not two full icons. */
+@media(max-width:760px){
+  html:root body .restored-reader .practice-bar .smart-drone-trigger .auto-drone-icon{position:relative;display:inline-flex!important;width:22px;height:22px}
+  html:root body .restored-reader .practice-bar .smart-drone-trigger .auto-drone-icon svg+svg{position:absolute!important;right:-5px!important;bottom:-4px!important;width:11px!important;height:11px!important;flex:none!important;background:#fff;border-radius:50%;padding:1px}
+  /* Row 2 can hold Drone, Auto drone, three page settings and the pager: narrower targets there, same icons. */
+  html:root body .restored-reader .practice-bar :is(.transport-menu>.tool,.smart-drone-trigger,.reader-popover-anchor>.tool,.reader-view .tool,.reader-pages>button){width:36px!important;min-width:36px!important;flex-basis:36px!important}
+  html:root body .restored-reader .practice-bar .reader-pages>span{min-width:26px!important;font-size:12px!important}
+}
+/* Choice chips (scale types, keys, ranges…) wrap onto more lines: the sheet has the room, and sideways scrolling hid choices. */
+@media(max-width:760px){
+  html:root body .reader-settings-panel:has(.scale-book__phone-tabs) .scale-book__ranges{flex-wrap:wrap!important;overflow-x:visible!important;margin:0!important;padding:0 0 2px!important}
+  html:root body .reader-settings-panel:has(.scale-book__phone-tabs) .scale-book__section-body>.scale-book__field-label+.scale-book__ranges{margin:0!important;padding:0 0 2px!important}
+}
+/* Every toolbar icon is the same 22px box at every width (Record was 27, View 19, the pager 20). */
+html:root body .restored-reader .practice-bar :is(.tool,.reader-pages>button,.smart-drone-trigger) svg:not(.auto-drone-icon svg+svg){width:22px!important;height:22px!important;flex:0 0 22px!important}
+/* Desktop: Tap is a word that closes the tempo box ([ − 178 + Tap ]), no icon. */
+@media(min-width:761px){
+  html:root body .restored-reader .practice-bar .reader-tap{align-self:center!important;height:40px!important;min-height:0!important;width:auto!important;min-width:0!important;margin-left:-4px!important;padding:0 12px 0 8px!important;
+    display:inline-flex!important;flex-direction:row!important;align-items:center!important;gap:0!important;border-radius:0 9px 9px 0!important;background:rgba(41,42,51,.05)!important;box-shadow:none!important;
+    font-size:14px!important;font-weight:500!important;line-height:1!important;color:#45464f!important}
+  html:root body .restored-reader .practice-bar .reader-tap svg{display:none!important}
+  html:root body .restored-reader .practice-bar .reader-tap:hover{background:rgba(41,42,51,.09)!important}
+}
+/* Phones under ~400px (iPhone mini/SE/13): narrower targets so row 1 still fits with a page's extra button (Tone Lab's Pitch). */
+@media(max-width:400px){
+  html:root body .restored-reader .practice-bar{padding:6px 6px!important;column-gap:2px!important}
+  html:root body .restored-reader .practice-bar :is(.tool-group>.tool,.transport>button.tool,.score-recorder>.tool,.transport-pill>.tool,.tempo-group>.tool,.transport-menu>.tool,.smart-drone-trigger,.reader-popover-anchor>.tool,.reader-view .tool,.reader-pages>button){width:36px!important;min-width:36px!important;flex-basis:36px!important}
+  html:root body .restored-reader .practice-bar .tempo .tempo-step{width:26px!important}
+  html:root body .restored-reader .practice-bar .tempo input{width:36px!important}
+  html:root body .restored-reader .practice-bar .transport-pill>.tool.reader-tap{padding:0 8px!important;min-width:0!important}
+}
+/* Phone, round three:
+   - compact targets on every phone, so row 1 holds Mark up, Record, the pill and Drone (plus Tone Lab's Pitch);
+   - the pager reads ⇡ ‹ › 1 / 3 ⛶ with even spacing, the count no longer squeezed against fullscreen;
+   - top row: back, then the piece stepper (‹ 1/15 ›) on the left, the other icons on the right. */
+@media(max-width:760px){
+  html:root body .restored-reader .practice-bar{padding:6px 6px!important;column-gap:2px!important}
+  html:root body .restored-reader .practice-bar :is(.tool-group>.tool,.transport>button.tool,.score-recorder>.tool,.transport-pill>.tool,.tempo-group>.tool,.transport-menu>.tool,.smart-drone-trigger,.reader-popover-anchor>.tool,.reader-view .tool,.reader-pages>button){width:36px!important;min-width:36px!important;flex-basis:36px!important}
+  html:root body .restored-reader .practice-bar .tempo .tempo-step{width:26px!important}
+  html:root body .restored-reader .practice-bar .tempo input{width:36px!important}
+  html:root body .restored-reader .practice-bar .transport-pill>.tool.reader-tap{padding:0 9px!important;min-width:0!important}
+  html:root body .restored-reader .practice-bar .reader-pages>span{min-width:0!important;padding:0 8px!important;font-size:13px!important;font-variant-numeric:tabular-nums;white-space:nowrap}
+  html:root body .restored-reader .topbar>div:last-child{justify-content:flex-start!important}
+  html:root body .restored-reader .topbar .book-stepper{order:-1!important;margin-left:4px}
+  html:root body .restored-reader .topbar .status-button{margin-left:auto!important}
+  html:root body .restored-reader .topbar>div:last-child>.topbar-toolbar-slot:not(:empty)+*{margin-left:auto}
+}
+@media(max-width:760px){
+  html:root body .restored-reader .practice-bar .reader-pages>span{flex:0 0 auto!important;width:auto!important}
+}
+/* Reader header, one type style and one grey:
+   - all header text (back name, ‹ 1/15 ›, page count 1/3, Tap) is 14px/500 in the toolbar ink;
+   - every grey pill is the metronome pill's #f1f1f4 with the same 12px corners;
+   - phone top row: [‹ Köhler] [‹ 1/15 ›] [●] on the left, Practice tools and Settings (system) on the right. */
+.back__name{display:none}
+@media(max-width:760px){
+  html:root body .restored-reader .topbar>div:first-child{display:flex!important;align-items:center!important}
+  html:root body .restored-reader .topbar .back__name{display:inline;margin-right:2px;font-size:14px;font-weight:500;color:#45464f;white-space:nowrap}
+  html:root body .restored-reader .topbar>div:first-child{flex:0 0 auto!important}
+  html:root body .restored-reader .topbar>div:last-child{gap:4px!important}
+  html:root body .restored-reader .topbar .book-stepper{order:-2!important;margin-left:4px!important}
+  html:root body .restored-reader .topbar .status-button{order:-1!important;margin-left:0!important}
+  html:root body .restored-reader .topbar .topbar-tools-slot{margin-left:auto!important}
+  html:root body .restored-reader .topbar>div:last-child>.topbar-toolbar-slot:not(:empty)+*{margin-left:0}
+}
+html:root body .restored-reader .topbar .book-stepper{height:36px;padding:0 2px;border-radius:12px;background:#f1f1f4;color:#45464f;font-size:14px;font-weight:500}
+html:root body .restored-reader .topbar .book-stepper__label{padding:0 4px;font-variant-numeric:tabular-nums}
+html:root body .restored-reader .topbar .book-stepper__arrow svg{width:18px!important;height:18px!important}
+html:root body .restored-reader .practice-bar .reader-pages>span{font-size:14px!important;font-weight:500!important;color:#45464f!important;font-variant-numeric:tabular-nums}
+/* Page turning reads like the piece stepper: ⇡  ‹ 1 / 3 ›  ⛶ (count between the arrows), at every width. */
+html:root body .restored-reader .reader-pages>.reader-pages__top{order:1!important}
+html:root body .restored-reader .reader-pages>button[aria-label="Previous page"],html:root body .restored-reader .reader-pages>button[aria-label="上一页"]{order:2!important}
+html:root body .restored-reader .reader-pages>span{order:3!important}
+html:root body .restored-reader .reader-pages>button[aria-label="Next page"],html:root body .restored-reader .reader-pages>button[aria-label="下一页"]{order:4!important}
+html:root body .restored-reader .reader-pages>button.tool{order:5!important}
+@media(max-width:760px){
+  html:root body .restored-reader .practice-bar .reader-pages>.reader-pages__top{order:9!important}
+  html:root body .restored-reader .practice-bar .reader-pages>button[aria-label="Previous page"],html:root body .restored-reader .practice-bar .reader-pages>button[aria-label="上一页"]{order:10!important}
+  html:root body .restored-reader .practice-bar .reader-pages>span{order:11!important;padding:0 2px!important}
+  html:root body .restored-reader .practice-bar .reader-pages>button[aria-label="Next page"],html:root body .restored-reader .practice-bar .reader-pages>button[aria-label="下一页"]{order:12!important}
+  html:root body .restored-reader .practice-bar .reader-pages>button.tool{order:13!important;margin-left:6px!important}
+}
+@media(min-width:761px){
+  html:root body .restored-reader .reader-pages>span{min-width:0!important;width:auto!important;padding:0 4px!important;margin:0!important;flex:0 0 auto!important}
+}
+/* Phone, round four:
+   - row 1: the metronome pill sits in the middle, Mark up/Record on its left, Drone on its right;
+   - row 2: ‹ 1 / 3 › is the same grey pill as the top row's ‹ 1 / 15 › (same height, grey, corners, type); ⇡ and ⛶ stay plain icons. */
+@media(max-width:760px){
+  html:root body .restored-reader .practice-bar .transport-pill{margin-left:auto!important;margin-right:auto!important}
+  html:root body .restored-reader .practice-bar .reader-pages>button[aria-label="Previous page"],html:root body .restored-reader .practice-bar .reader-pages>button[aria-label="上一页"],
+  html:root body .restored-reader .practice-bar .reader-pages>button[aria-label="Next page"],html:root body .restored-reader .practice-bar .reader-pages>button[aria-label="下一页"],
+  html:root body .restored-reader .practice-bar .reader-pages>span{height:36px!important;background:#f1f1f4!important;align-self:center}
+  html:root body .restored-reader .practice-bar .reader-pages>button[aria-label="Previous page"],html:root body .restored-reader .practice-bar .reader-pages>button[aria-label="上一页"]{border-radius:12px 0 0 12px!important;width:30px!important;min-width:30px!important;flex-basis:30px!important;margin-left:4px!important}
+  html:root body .restored-reader .practice-bar .reader-pages>button[aria-label="Next page"],html:root body .restored-reader .practice-bar .reader-pages>button[aria-label="下一页"]{border-radius:0 12px 12px 0!important;width:30px!important;min-width:30px!important;flex-basis:30px!important}
+  html:root body .restored-reader .practice-bar .reader-pages>span{display:inline-flex!important;align-items:center;padding:0 4px!important;margin:0 -2px!important;border-radius:0!important}
+  html:root body .restored-reader .practice-bar .reader-pages>button:is([aria-label="Previous page"],[aria-label="Next page"],[aria-label="上一页"],[aria-label="下一页"]) svg{width:18px!important;height:18px!important;flex-basis:18px!important}
+}
+@media(max-width:760px){
+  /* A disabled page arrow fades its icon only, so the pill stays one even grey. */
+  html:root body .restored-reader .practice-bar .reader-pages>button:is([aria-label="Previous page"],[aria-label="Next page"],[aria-label="上一页"],[aria-label="下一页"]):disabled{opacity:1!important}
+  html:root body .restored-reader .practice-bar .reader-pages>button:is([aria-label="Previous page"],[aria-label="Next page"],[aria-label="上一页"],[aria-label="下一页"]):disabled svg{opacity:.35}
+}
+/* Phone row 2: page tools (Auto drone, Accompaniment, Customize scales, Tempos…) on the left;
+   View sits with page navigation on the right: 👁 ⇡ ‹ 1/3 › ⛶. */
+@media(max-width:760px){
+  html:root body .restored-reader .practice-bar .reader-view>.reader-popover-anchor:has(>button:is([aria-label="View settings"],[aria-label="显示设置"])){order:8!important;margin-left:auto!important}
+  html:root body .restored-reader .practice-bar .reader-pages>button.reader-pages__top{margin-left:0!important}
+}
+/* Phone: everything that makes sound is on row 1 (Accompaniment, Drone, Auto drone after the pill);
+   row 2 is only how the page looks and moves (Customize scales, Tempos, View, page turning). */
+@media(max-width:760px){
+  html:root body .restored-reader .practice-bar .transport>.reader-popover-anchor{order:3!important}
+  html:root body .restored-reader .practice-bar :is(.transport-menu>.tool,.smart-drone-trigger){order:3!important}
+}
+/* One hover for every reader toolbar button, at every width: a rounded #f5f5f7 square.
+   Inside a grey pill (metronome pill, ‹ 1/3 ›, desktop tempo box) the hover is one step darker.
+   Active (purple) buttons keep their colour. Replaces the 10% grey, the circle behind page buttons, and the "no hover" rules. */
+html:root body .restored-reader .practice-bar :is(.tool,.reader-pages>button,.reader-popover-anchor>button,.smart-drone-trigger):not(:disabled):not(.on):not([aria-pressed="true"]):not([aria-expanded="true"]):hover{background:#f5f5f7!important;background-color:#f5f5f7!important;background-image:none!important;border-radius:11px!important;box-shadow:none!important}
+html:root body .restored-reader .practice-bar .reader-pages>button::before{opacity:0!important;display:none!important}
+html:root body .restored-reader .practice-bar :is(.transport-pill>.tool,.tempo-step,.reader-tap):not(:disabled):not(.on):not([aria-pressed="true"]):hover{background:#e6e6ea!important;background-color:#e6e6ea!important}
+html:root body .restored-reader .practice-bar .reader-popover-anchor>button[aria-expanded="true"]{border-radius:11px!important}
+@media(max-width:760px){
+  html:root body .restored-reader .practice-bar .reader-pages>button:is([aria-label="Previous page"],[aria-label="Next page"],[aria-label="上一页"],[aria-label="下一页"]):not(:disabled):hover{background:#e6e6ea!important;background-color:#e6e6ea!important}
+  html:root body .restored-reader .practice-bar .reader-pages>button:is([aria-label="Previous page"],[aria-label="上一页"]):hover{border-radius:12px 0 0 12px!important}
+  html:root body .restored-reader .practice-bar .reader-pages>button:is([aria-label="Next page"],[aria-label="下一页"]):hover{border-radius:0 12px 12px 0!important}
+}
+@media(max-width:760px){
+  /* A long piece title is cut with an ellipsis rather than pushing the icons off the row. */
+  html:root body .restored-reader .topbar .back__name{max-width:150px;overflow:hidden;text-overflow:ellipsis}
+  /* Not on a list yet: the same small grey circle as the coloured-dot button, the + in Want to learn's blue (what one tap adds). */
+  html:root body .restored-reader .topbar .status-button .status-button__trigger:not([data-status]){width:36px!important;height:36px!important;background:#f1f1f4!important;color:#6f8aa3!important;border-radius:999px!important}
+  html:root body .restored-reader .topbar .status-button .status-button__trigger:not([data-status]) svg{width:14px!important;height:14px!important;stroke-width:2.2}
+  html:root body .restored-reader .topbar .status-button .status-button__trigger[data-status]{width:36px!important;height:36px!important}
+}
+/* Accompaniment card: no title (the piano button already says what it is); one row of
+   [ Piano only | Piano + flute ] and a small round play button. */
+html:root body .reader-play-card .reader-panel-heading{display:none!important}
+html:root body .reader-play-card .reader-play-row{display:flex;align-items:center;gap:8px}
+html:root body .reader-play-card .reader-choice{flex:1;display:flex!important;gap:0!important;padding:2px;border-radius:12px;background:#f1f1f4}
+html:root body .reader-play-card .reader-choice>button{flex:1;height:36px!important;min-height:0!important;margin:0!important;padding:0 10px!important;border:0!important;border-radius:10px!important;background:transparent!important;color:#45464f!important;font-size:14px!important;font-weight:500!important;white-space:nowrap}
+html:root body .reader-play-card .reader-choice>button[aria-pressed="true"]{background:var(--studio-on-bg,#eee7f2)!important;color:var(--studio-on-ink,#79588e)!important}
+html:root body .reader-play-card .reader-play-start{flex:0 0 40px;width:40px!important;height:40px!important;min-height:0!important;padding:0!important;margin:0!important;border:0!important;border-radius:12px!important;display:grid!important;place-items:center;background:#f1f1f4!important;color:#292a33!important;font-size:0!important}
+html:root body .reader-play-card .reader-play-start:hover:not(:disabled){background:#e6e6ea!important}
+html:root body .reader-play-card .reader-play-start.on{background:var(--studio-on-bg,#eee7f2)!important;color:var(--studio-on-ink,#79588e)!important}
+html:root body .reader-play-card .reader-play-start svg{width:20px!important;height:20px!important}
+html:root body .reader-play-card p{margin:8px 2px 0;font-size:13px;color:#6f7178}
+
+/* Phone bottom sheets (View, Customize scales, Keys, Tempos, Accompaniment): one type scale instead of the desktop popover's.
+   Section title 15/600 dark · text actions 14/600 studio green, no box · chips 15/500, 40px, 12px corners · no empty band at the top. */
+@media(max-width:760px){
+  html:root body .reader-settings-panel{padding-top:22px!important}
+  html:root body .reader-settings-panel :is(.scale-book__panel-body,.reader-settings-body)>:first-child{margin-top:0!important}
+  html:root body .reader-settings-panel :is(.scale-book__field-label,.reader-display-heading,.scale-book__section-summary,.reader-settings-label){font-size:15px!important;font-weight:600!important;color:#292a33!important;letter-spacing:0!important;text-transform:none!important;margin:16px 0 8px!important}
+  html:root body .reader-settings-panel .scale-book__field-label:first-child{margin-top:0!important}
+  html:root body .reader-settings-panel :is(.scale-book__key-actions button,.reader-settings-reset){height:32px!important;min-height:0!important;padding:0 12px!important;margin:0 6px 0 0!important;border:0!important;border-radius:10px!important;background:#f1f1f4!important;color:#45464f!important;font-size:14px!important;font-weight:500!important}
+  html:root body .reader-settings-panel .scale-book__key-actions{display:flex;gap:0;margin:-4px 0 6px!important}
+  html:root body .reader-settings-panel :is(.scale-book__ranges>button,.scale-book__keys button,.scale-book__chip){height:40px!important;min-height:0!important;border-radius:12px!important;font-size:15px!important;font-weight:500!important}
+}
+@media(max-width:760px){
+  /* A little air between the title and the list button; the + drawn a touch heavier. */
+  html:root body .restored-reader .topbar .status-button{margin-left:6px!important}
+  html:root body .restored-reader .topbar .status-button .status-button__trigger:not([data-status]) svg{width:15px!important;height:15px!important;stroke-width:2.6!important}
+}
+@media(max-width:760px){
+  /* The grab handle already gives the sheet its top space; no padding above it as well. */
+  html:root body .reader-settings-panel:has(>.reader-sheet-grip){padding-top:0!important}
+  html:root body .reader-settings-panel>.reader-sheet-grip{height:22px!important;margin:0!important}
+  html:root body .reader-settings-panel>.reader-sheet-grip~*:not(.reader-panel-heading){margin-top:0}
+  html:root body .reader-settings-panel :is(.scale-book__panel-body,.reader-settings-body,.scale-book__tempo-list){margin-top:0!important;padding-top:0!important}
+}
