@@ -991,3 +991,29 @@ html body .restored-reader .practice-bar .reader-pages button.tool:hover:not(:di
 html body :is(.reader-pages button,.topbar .icon-btn,.topbar .dock-launcher,.topbar .account-menu__trigger)::before{content:"";position:absolute;left:50%;top:50%;width:30px;height:30px;transform:translate(-50%,-50%);border-radius:8px;background:#f3f3f5;opacity:0;z-index:-1;pointer-events:none;transition:opacity .12s}
 html body :is(.reader-pages button,.topbar .icon-btn,.topbar .dock-launcher,.topbar .account-menu__trigger):not(:disabled):hover::before{opacity:1}
 html body :is(.reader-pages button,.topbar .icon-btn,.topbar .dock-launcher,.topbar .account-menu__trigger) svg :is(path,circle,line,rect,polyline,polygon){stroke:#686a72!important}
+
+/* The Fit page note under its button ("Too long to fit on one page"). */
+.reader-settings-panel .reader-fit-note{font-size:12.5px;color:#71747e}
+
+/* Page layout heading with a small quiet action at the right: Fit page. It looks and behaves exactly like Restore defaults: grey text, a pointer, no box, and the text turns green on hover. */
+.reader-settings-panel .reader-row-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+html body .reader-settings-panel .reader-text-action{min-height:0;padding:2px 0;border:0;background:transparent!important;box-shadow:none!important;color:#85868e;font:inherit;font-size:12.5px;font-weight:500;cursor:pointer}
+html body .reader-settings-panel .reader-text-action:hover,html body .reader-settings-panel .reader-text-action:focus-visible{background:transparent!important;color:#2f4a28!important}
+
+/* Tap tips are plain white, the same as the other cards, not the cream paper tint. */
+.restored-reader .flute-tip.finger-chart,.restored-reader .flute-tip.note-info-tip{background:#fff!important}
+.restored-reader .flute-tip.finger-chart strong{font-size:14px}
+.restored-reader .flute-tip .finger-diagram__alts{margin-top:4px}
+
+/* Fingering card: every fingering, stacked, each with its name. */
+.restored-reader .flute-tip .finger-all{display:grid;gap:8px;margin-top:6px}
+.restored-reader .flute-tip .finger-all .finger-diagram{margin:0}
+.restored-reader .flute-tip .finger-diagram__label{display:block;margin:0 0 2px;font:600 11px -apple-system,BlinkMacSystemFont,"SF Pro Text",Arial,sans-serif;color:#6d7069}
+
+/* Toolbar icons: the drawn artwork was anywhere from 11px (Record) to 18px (the View gear) inside the same box, so the row read as uneven. Each glyph is scaled to about the same visual size, and the gear matches the one in the top bar. */
+.practice-bar svg[data-icon="markup"]{transform:scale(1.06)}
+.practice-bar svg[data-icon="play"]{transform:scale(1.1)}
+.practice-bar svg[data-icon="record"]{transform:scale(1.3)}
+.practice-bar svg[data-icon="metronome"]{transform:scale(1.12)}
+.practice-bar svg[data-icon="gear"]{transform:scale(.89)}
+.practice-bar svg[data-icon="fullscreen"]{transform:scale(1.06)}

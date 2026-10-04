@@ -18,7 +18,7 @@ export function PassageGuide({xml,events,from,to,quarterBpm,onSelectAgain,onClos
     if(pairs){list.push({id:'ls',title:'Long–short',gen:true,xml:dotted(runs,'longShort',ctx)},{id:'sl',title:'Short–long',gen:true,xml:dotted(runs,'shortLong',ctx)},{id:'pairs',title:'Pairs ×2',gen:true,xml:repeatedPairs(runs,false,ctx)},{id:'shifted',title:'Shifted pairs',gen:true,xml:repeatedPairs(runs,true,ctx)})}
     if(runs.some(r=>r.length>=3))list.push({id:'s3',title:'Step through 3',gen:true,xml:slidingGroups(runs,3,ctx)});
     if(runs.some(r=>r.length>=4))list.push({id:'s4',title:'Step through 4',gen:true,xml:slidingGroups(runs,4,ctx)});
-    if(source.xml){try{splitOptions(source.xml).forEach(o=>list.push({id:'split'+o.title,title:o.title,xml:o.xml}))}catch{}}
+    if(source.xml){try{splitOptions(source.xml).forEach(o=>list.push({id:'split'+o.title,title:o.title,xml:o.xml}))}catch{/* No tuplets to regroup. */}}
     if(source.xml&&runs.length)list.push({id:'fermata',title:'Fermatas',xml:addFermatas(source.xml,seed),shuffle:true});
     return list;
   },[runs,ctx,source.xml,seed]);

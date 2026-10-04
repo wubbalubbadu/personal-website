@@ -42,7 +42,7 @@ const paths:Record<PracticeIconName,ReactNode>={
  * <linearGradient> elsewhere in the document (see SpectrumDef). Every
  * glyph here is stroke-only, so this is enough to recolour any of them.
  */
-export function PracticeIcon({name,gradient}:{name:PracticeIconName;gradient?:string}){return <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={gradient?`url(#${gradient})`:"currentColor"} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>}
+export function PracticeIcon({name,gradient}:{name:PracticeIconName;gradient?:string}){return <svg data-icon={name} aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={gradient?`url(#${gradient})`:"currentColor"} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>}
 
 /**
  * The gradient the studio's one rainbow control paints its icon with.

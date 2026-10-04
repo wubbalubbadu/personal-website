@@ -10,7 +10,7 @@ const noSubscribe=()=>()=>{};
 const kb=(chars:number)=>`${Math.max(1,Math.round(chars/1024))} KB`;
 
 /**
- * Move to another device: the whole studio as a code you copy, or a file you
+ * Sync devices: the whole studio as a code you copy, or a file you
  * send, and paste or open on the other device. No account and no server; see
  * lib/transfer.ts for the format.
  */
@@ -79,7 +79,7 @@ export default function TransferPage(){
   return <main className="practice-page transfer-page">
     <div className="practice-page__content">
       <header className="practice-page__header">
-        <h1>{zh?"换设备":"Move to another device"}</h1>
+        <h1>{zh?"设备同步":"Sync devices"}</h1>
         <p className="transfer-page__intro">{zh
           ?"你的收藏、练习记录、音准测试和设置都保存在这台设备的浏览器里。在这里生成一段代码，粘贴到手机、iPad 或电脑上，就能带过去。"
           :"Your saved music, practice history, pitch tests and settings are kept in this browser. Make a code here and paste it on your phone, iPad or computer to bring them along."}</p>

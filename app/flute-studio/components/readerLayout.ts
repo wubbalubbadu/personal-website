@@ -3,13 +3,15 @@
  * names. Ramps up to a true 1.0 (standard notation size) by a comfortable
  * ~1070px reading width and stays there — extra width beyond that should
  * fit more music per line/page (see the wide-page CSS), not inflate notes
- * past normal size. Only genuinely narrow (phone) widths scale down, and
- * only as far as still-readable (.55 floor).
+ * past normal size by default. Only genuinely narrow (phone) widths scale
+ * down, and only as far as still-readable (.55 floor). A size preference above
+ * about 1.3 really does enlarge the notes (it used to stop at 1.2, so the top
+ * of the slider did nothing on a big screen).
  */
 export function notationScale(width:number,height:number,preference=1){
   const widthFactor=Math.max(.55,Math.min(1,.55+(width-320)*.0006));
   const heightFactor=Math.max(.88,Math.min(1,height/650));
-  return Math.max(.4,Math.min(1.2,widthFactor*heightFactor*preference));
+  return Math.max(.4,Math.min(2,widthFactor*heightFactor*preference));
 }
 export function pageOffsets(systems:{top:number;bottom:number}[],height:number,maxScroll:number){
   const offsets=[0];let start=0;

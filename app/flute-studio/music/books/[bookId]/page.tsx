@@ -45,7 +45,6 @@ export default function BookPage(){
           const detail=[piece.book!.opening,piece.book!.time,piece.book!.bars?(zh?`${piece.book!.bars} 小节`:`${piece.book!.bars} bars`):""].filter(Boolean).join(" · ");
           return <article key={piece.id} className={`book-row${done?" is-done":""}`}>
             <Link className="book-row__main" href={piece.viewerPath!}>
-              <span className="book-row__number">{n}</span>
               <span className="book-row__copy"><strong>{zh?`第 ${n} 首`:`No. ${n}`}</strong><small>{detail}</small></span>
               {last&&<span className="tag-pill" data-tone="sage">{zh?"上次练到这里":"Last opened"}</span>}
             </Link>

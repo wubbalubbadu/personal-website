@@ -11,7 +11,6 @@
 .book-row:last-child{border-bottom:0}
 .book-row:has(.book-row__main:hover){background:#f7f7f9}
 .book-row__main{min-width:0;display:flex;align-items:center;gap:16px;padding:12px 8px 12px 20px;color:#292a33;text-decoration:none}
-.book-row__number{width:34px;height:34px;flex:0 0 auto;border-radius:10px;display:grid;place-items:center;background:#f1f1f2;color:#45464f;font-size:14px;font-weight:650;font-variant-numeric:tabular-nums}
 .book-row__copy{flex:1;min-width:0}
 .book-row__copy strong{display:block;font-size:15px;font-weight:620}
 .book-row__copy small{display:block;margin-top:3px;color:#85868e;font-size:13px}
@@ -20,12 +19,19 @@
 .book-row__done svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .book-row__done[aria-pressed="true"]{color:#46633d}
 .book-row__done[aria-pressed="true"] circle{fill:#e4ecdf}
-.book-row.is-done .book-row__number{background:#e4ecdf;color:#46633d}
 @media(max-width:760px){.book-page__back{margin-top:24px}}
 
 /* In the reader's header: "‹ No. 4 of 15 ›", to step through a book. */
-.book-stepper{display:inline-flex;align-items:center;gap:2px;margin-left:6px;padding:0 4px;height:34px;border-radius:10px;background:#f4f4f5;color:#45464f;font-size:13px;font-weight:600;white-space:nowrap}
+.book-stepper{display:inline-flex;align-items:center;gap:2px;margin-left:6px;padding:0 4px;height:34px;border-radius:10px;background:#f4f4f5;color:#45464f;font-size:15px;font-weight:600;white-space:nowrap}
 .book-stepper__label{padding:0 4px;font-variant-numeric:tabular-nums}
-.book-stepper__arrow{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;color:#45464f;text-decoration:none;font-size:18px;line-height:1}
+.book-stepper__arrow{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:#686a72;text-decoration:none;line-height:1}
+/* The same drawn chevrons as the page turner, not typed characters. */
+.book-stepper__arrow svg{width:20px;height:20px;stroke-width:1.7}
 a.book-stepper__arrow:hover{background:#e7e7ea;color:#292a33}
-.book-stepper__arrow.is-off{color:#c7c8cd}
+.book-stepper__arrow.is-off{opacity:.35}
+
+/* Back arrow and title share one row, with the title at the same height as the Library page's title. */
+.exercise-hub__content:has(>.book-page__back){display:grid;grid-template-columns:44px minmax(0,1fr);column-gap:4px;align-items:start}
+.exercise-hub__content:has(>.book-page__back)>.book-page__back{grid-column:1;grid-row:1;margin-top:50px;align-self:start}
+.exercise-hub__content:has(>.book-page__back)>.book-page__header{grid-column:2;grid-row:1;margin-top:40px}
+.exercise-hub__content:has(>.book-page__back)>:not(.book-page__back):not(.book-page__header){grid-column:1/-1}

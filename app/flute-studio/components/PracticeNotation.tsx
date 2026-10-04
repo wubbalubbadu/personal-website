@@ -10,14 +10,16 @@ export function PracticeNotation({xml,label,quarterBpm,playing,onPlay,onStop,loo
   const root=useRef<HTMLDivElement>(null),sequence=useRef<ReturnType<typeof deriveScoreEvents>|null>(null);
   const {getAudio}=usePracticeAudio();
   const [ready,setReady]=useState(false),[error,setError]=useState('');
-  const cycle=useRef(0),stopRef=useRef(onStop);stopRef.current=onStop;
+  const cycle=useRef(0),stopRef=useRef(onStop);
+  // Keep the latest callback for the playback timers, written after render rather than during it.
+  useEffect(()=>{stopRef.current=onStop});
   useEffect(()=>{
-    let disposed=false,resize:ResizeObserver|undefined;setError('');
+    let disposed=false,resize:ResizeObserver|undefined;
     const host=root.current!;
     // Draw into a hidden sibling and swap it in when done, so replacing an exercise (Shuffle) never flashes blank.
     const next=document.createElement('div');next.style.cssText='position:absolute;left:0;top:0;width:100%;visibility:hidden';host.style.position='relative';host.append(next);
     (async()=>{try{
-      const {OpenSheetMusicDisplay,VexFlowConverter}=await import('opensheetmusicdisplay');installGhostNoteFix(VexFlowConverter);if(disposed)return;
+      const {OpenSheetMusicDisplay,VexFlowConverter}=await import('opensheetmusicdisplay');installGhostNoteFix(VexFlowConverter);if(disposed)return;setError('');
       const score=new OpenSheetMusicDisplay(next,{backend:'svg',autoResize:false,drawingParameters:'compacttight',drawTitle:false,drawComposer:false,drawPartNames:false});
       score.setOptions({pageFormat:'Endless',drawMeasureNumbers:true,newSystemFromXML:false,autoBeam});
       score.EngravingRules.MinNoteDistance=1.4;score.EngravingRules.RenderSingleHorizontalStaffline=true;score.EngravingRules.RenderTimeSignatures=!hideTime;score.EngravingRules.SlurNoteHeadYOffset=.9;
@@ -60,7 +62,7 @@ export function PracticeNotation({xml,label,quarterBpm,playing,onPlay,onStop,loo
       if(clicks)for(let beat=0;beat*60/quarterBpm<duration-.001;beat++){const at=start+beat*60/quarterBpm,osc=context.createOscillator(),gain=context.createGain();osc.frequency.value=1000;gain.gain.setValueAtTime(.05,at);gain.gain.exponentialRampToValueAtTime(.0001,at+.035);osc.connect(gain).connect(context.destination);osc.start(at);osc.stop(at+.04);nodes.push(osc);osc.onended=()=>{const i=nodes.indexOf(osc);if(i>=0)nodes.splice(i,1);gain.disconnect()}}
       if(duration>0)later(()=>{if(loop)schedule(start+duration);else stopRef.current()},Math.max(0,(start+duration-context.currentTime-(loop?.05:0))*1000));
     };
-    schedule();return()=>{cancelled=true;timers.forEach(clearTimeout);nodes.forEach(n=>{try{n.stop()}catch{}})};
+    schedule();return()=>{cancelled=true;timers.forEach(clearTimeout);nodes.forEach(n=>{try{n.stop()}catch{/* Already ended. */}})};
   },[playing,ready,quarterBpm,loop,clicks,xml]);
   // The position line glides between notes on the audio clock, like the main reader's cursor, instead of jumping on timers.
   useEffect(()=>{
@@ -75,7 +77,7 @@ export function PracticeNotation({xml,label,quarterBpm,playing,onPlay,onStop,loo
       let t=context.currentTime-cycle.current;
       if(t>=0&&length>0){
         if(loop)t%=length;
-        const u=t/seconds;let k=offsets.findIndex((o,i)=>u>=o&&(i===offsets.length-1||u<offsets[i+1]));
+        const u=t/seconds;const k=offsets.findIndex((o,i)=>u>=o&&(i===offsets.length-1||u<offsets[i+1]));
         if(k>=0&&marks[k]){
           const end=offsets[k]+seq.events[k].d,span=Math.max(1e-6,end-offsets[k]),f=Math.min(1,(u-offsets[k])/span);
           const nextX=marks[k+1]?marks[k+1].x.x:marks[k].right,x=marks[k].x.x+(nextX-marks[k].x.x)*f;

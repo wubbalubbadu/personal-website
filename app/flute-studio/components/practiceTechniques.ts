@@ -78,12 +78,9 @@ export function addFermatas(xml:string,seed:number){
 export const pitchSequence=(groups:Group[])=>groups.flatMap(g=>g.map(p=>`${noteName(p.n)}`));
 
 const TYPES:Record<number,[string,boolean]>={1:['16th',false],2:['eighth',false],3:['eighth',true],4:['quarter',false],6:['quarter',true],8:['half',false],12:['half',true],16:['whole',false]};
-const REST_PIECES=[16,12,8,6,4,3,2,1];
 const noteXml=(p:Placed)=>{const [type,dot]=TYPES[p.units]??TYPES[4];
   return `<note><pitch><step>${p.n.step}</step>${p.n.alter?`<alter>${p.n.alter}</alter>`:''}<octave>${p.n.octave}</octave></pitch><duration>${p.units}</duration><type>${type}</type>${dot?'<dot/>':''}</note>`};
-const restXml=(units:number)=>{const out:string[]=[];let left=units;
-  while(left>0){const piece=REST_PIECES.find(u=>u<=left)!;const [type,dot]=TYPES[piece];out.push(`<note><rest/><duration>${piece}</duration><type>${type}</type>${dot?'<dot/>':''}</note>`);left-=piece}
-  return out.join('')};
+
 
 /** Write groups as MusicXML, one bar per written bar of the source (a group belongs to the bar its first note came from). Each bar's meter just
  *  adds up its notes and is meant to be hidden when drawn, so a practice grid never claims to be the piece's time signature. */

@@ -629,9 +629,6 @@ export default function ScaleStudio(){
     const next=list.includes(value)?list.filter(v=>v!==value):[...list,value];
     if(next.length)setList(next);
   };
-  const toggleKey=(key:string)=>{
-    setKeys(prev=>prev.includes(key)?prev.filter(k=>k!==key):[...prev,key]);
-  };
   // Toggling a preset adds/removes it from the rotation, in click order.
   // Removing the only (or last) selected one is allowed — it just leaves
   // the rotation empty, i.e. no marking, which is a real, selectable state

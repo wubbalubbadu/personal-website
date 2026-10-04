@@ -56,13 +56,14 @@
 /* The selected note says which one it is, so the × has a visible owner. */
 .score-note.is-selected.text{outline:1px dashed #c9cad1;outline-offset:6px;border-radius:6px}
 .score-note.is-selected.sticky{box-shadow:2px 6px 14px rgba(41,42,51,.18),0 0 0 2px #b9bbc4}
-.flute-tip.finger-chart{min-width:320px;padding:14px 16px}
+.flute-tip.finger-chart{min-width:0;width:max-content;padding:9px 12px 10px}
 /* The fingering drawing sits on its own light plate rather than inverting
    to suit the tip. The tip is dark by default and light inside .workspace,
    so an adapting diagram had two different looks depending on the page —
    one plate means the fingering reads identically here and on the chart. */
-.flute-tip .finger-diagram{display:block;margin:10px 0 2px;padding:9px 11px;border-radius:10px;background:#fff;color:#2f3a2c;--flute-key-ground:#fff}
-.flute-tip .flute-diagram{max-width:100%}
+/* The card is plain white, so the drawing sits straight on it: no second plate. */
+.flute-tip .finger-diagram{display:block;margin:4px 0 0;padding:0;border-radius:0;background:transparent;color:#2f3a2c;--flute-key-ground:#fff}
+.flute-tip .flute-diagram{display:block;width:232px;max-width:100%;height:auto}
 .flute-tip .finger-diagram__none{font-size:12px;color:#71747e;font-style:normal}.finger-diagram{display:flex;align-items:flex-end;gap:9px;margin:12px 0 2px;flex-wrap:wrap}.finger-diagram__group{display:flex;align-items:flex-end;gap:7px}.finger-diagram__dot-wrap{display:flex;flex-direction:column;align-items:center;gap:4px}.finger-diagram__divider{width:1px;height:26px;background:rgba(255,255,255,.22);align-self:center}.finger-dot{width:20px;height:20px;border:2px solid #dce9e0;border-radius:50%;display:block;box-sizing:border-box}.finger-dot.small{width:14px;height:14px}.finger-dot.pressed{background:#dce9e0}.finger-diagram__dot-wrap small{font:600 10px -apple-system,BlinkMacSystemFont,"SF Pro Text",Arial,sans-serif;color:#b9c9bf}.finger-diagram__legend{display:block;margin-top:9px;font-size:11px;line-height:1.4;color:#b9c9bf}
 .tool.disabled{opacity:.35;cursor:not-allowed}.score-play{height:36px;border:1px solid var(--sage);border-radius:18px;background:var(--sage);color:white;padding:0 14px;font-size:9px;font-weight:750}.score-play.active{background:var(--coral);border-color:var(--coral)}.osmd-score .vf-stavenote.playback-active{filter:drop-shadow(0 0 4px #e45d46)}.osmd-score .vf-stavenote.playback-active path{fill:var(--coral)!important;stroke:var(--coral)!important}
 /* Distinct from the coral playback highlight above, so "currently playing"
@@ -71,7 +72,13 @@
 .osmd-score .vf-stavenote.smart-drone-active .vf-notehead path{fill:#2e6fb0!important;stroke:#2e6fb0!important}
 .osmd-score .vf-stavenote.drone-active.playback-active path{fill:var(--coral)!important;stroke:var(--coral)!important}.active-drone-list{display:flex!important;flex-wrap:wrap;gap:5px!important;margin:10px 0!important}.active-drone-list button{width:auto!important;padding:0 8px;background:#edf4ef!important;border-color:#9fb5a6!important}
 .measure-start{display:grid;gap:2px;font-size:7px;color:var(--muted)}.measure-start select{border:1px solid var(--line);border-radius:5px;background:white;padding:4px;font-size:8px}
-.practice-overlay{position:absolute;z-index:5;pointer-events:none;opacity:0;display:block}.osmd-score[data-note-display="names"] .note-name-marker{opacity:1}.osmd-score[data-note-display="solfege"] .solfege-marker{opacity:1}.note-name-marker,.solfege-marker{color:#316b53;font:700 16px Arial;transform:translateX(-50%)}.osmd-score[data-rhythm="counts"] .count-marker{opacity:1}.count-marker{color:#b65a3c;font:700 15px Arial;transform:translateX(-50%)}.osmd-score.show-accidentals .accidental-marker{opacity:1}.accidental-marker{color:#d65b43;font:700 17px Georgia,serif;transform:translateX(-50%);text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 3px #fff}.osmd-score[data-rhythm="bars"] .beat-stick{opacity:1}.beat-stick{height:46px;border-left:2px solid #d65b43;transform:translateX(-1px)}
+.practice-overlay{position:absolute;z-index:5;pointer-events:none;opacity:0;display:block}.osmd-score[data-note-display="names"] .note-name-marker{opacity:1}.osmd-score[data-note-display="solfege"] .solfege-marker{opacity:1}.note-name-marker,.solfege-marker{color:#316b53;font:400 12px/1.3 Arial,sans-serif;white-space:nowrap;background:#fff;border:1px solid #c9dccf;border-radius:3px;padding:0 4px;transform:translate(-50%,-100%)}
+/* Where pills overlap, the covered one fades and shows fully on hover. Never on touch: a tap there has to reach the note. */
+.osmd-score .note-pill.is-covered{opacity:.35;z-index:4}
+@media(hover:hover){.osmd-score .note-pill.is-covered{pointer-events:auto}.osmd-score .note-pill.is-covered:hover{opacity:1;z-index:7}}.osmd-score[data-rhythm="bars"] .beat-stick{opacity:1}
+/* Beat lines run through the staff, faint, behind the notes. */
+.beat-stick{height:calc(var(--staff-h,40px) + 12px);margin-top:40px;border-left:1.5px solid rgba(214,91,67,.32);transform:translateX(-.75px);z-index:0}
+.osmd-score[data-rhythm="bars"] svg{position:relative;z-index:1}
 .osmd-score[data-tonguing="on"] .tonguing-marker{opacity:1}.tonguing-marker{color:#3d6f96;font:700 14px Arial;transform:translateX(-50%)}
 .rhythm-button{height:53px;min-width:72px;border-radius:7px;display:grid;grid-template-columns:1fr 19px;align-items:stretch}.rhythm-button.on{background:var(--sage-pale);color:#325f4a}.rhythm-button>button{border:0;background:transparent;display:grid;place-items:center;font-size:8px;padding:4px}.rhythm-button>button span{font:600 17px Georgia,serif}.rhythm-button select{width:19px;border:0;border-left:1px solid #d6ddd6;background:transparent;font-size:0;color:transparent;padding:0}.accent-switch{height:34px;display:flex;align-items:center;gap:8px;border:0;background:transparent;padding:0;font-size:8px;cursor:pointer}.accent-switch input{display:none}.accent-switch>i{flex:0 0 auto;width:24px;height:13px;border-radius:8px;background:#c9ccc5;position:relative;font-style:normal}.accent-switch>i:after{content:"";position:absolute;width:9px;height:9px;border-radius:50%;background:white;left:2px;top:2px;transition:left .15s}.accent-switch input:checked+i{background:var(--sage)}.accent-switch input:checked+i:after{left:13px}
 /* Covers iPad in both orientations (portrait ~768-834px, landscape up to
@@ -107,4 +114,4 @@
    same bar — the one thing on the page a player has to remember rather
    than read. Key-signature accidentals never get this: they apply to
    every bar, so there is nothing to carry. */
-.accidental-marker.is-carried{color:#2f8a55}
+.osmd-score .reminder-accidental{fill:#2f8a55!important;stroke:#2f8a55!important}

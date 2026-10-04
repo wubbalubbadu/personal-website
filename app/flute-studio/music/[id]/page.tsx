@@ -6,6 +6,7 @@ import {useEffect,useState} from "react";
 import {useParams} from "next/navigation";
 import {musicLibrary as publicMusic,musicBooks,bookPieces,bookPath,composerInfo} from "../../../../content/music-library";
 import {ScoreViewer,type ScoreViewerConfig} from "../../components/ScoreViewer";
+import {PracticeIcon} from "../../components/PracticeIcon";
 import KeyExerciseViewer from "../../components/KeyExerciseViewer";
 import FixedScoreViewer from "../../components/FixedScoreViewer";
 import {recordOpened} from "../../lib/bookProgress";
@@ -52,9 +53,9 @@ export default function UploadedMusicPage(){
     ...(composerInfo(item.composer)||item.about?{story:{composer:composerInfo(item.composer),year:item.year,about:item.about,tempoHint:zh?item.excerpt?.zhTempoHint??item.excerpt?.tempoHint:item.excerpt?.tempoHint}}:{}),
   };
   const stepper=book&&item.book?<span className="book-stepper">
-    {previous?<Link className="book-stepper__arrow" href={previous.viewerPath!} aria-label={zh?`上一首：第 ${previous.book!.number} 首`:`Previous: No. ${previous.book!.number}`}>‹</Link>:<span className="book-stepper__arrow is-off" aria-hidden="true">‹</span>}
+    {previous?<Link className="book-stepper__arrow" href={previous.viewerPath!} aria-label={zh?`上一首：第 ${previous.book!.number} 首`:`Previous: No. ${previous.book!.number}`}><PracticeIcon name="previous"/></Link>:<span className="book-stepper__arrow is-off" aria-hidden="true"><PracticeIcon name="previous"/></span>}
     <span className="book-stepper__label" aria-label={zh?`第 ${item.book.number} 首，共 ${siblings.length} 首`:`No. ${item.book.number} of ${siblings.length}`}>{item.book.number} / {siblings.length}</span>
-    {next?<Link className="book-stepper__arrow" href={next.viewerPath!} aria-label={zh?`下一首：第 ${next.book!.number} 首`:`Next: No. ${next.book!.number}`}>›</Link>:<span className="book-stepper__arrow is-off" aria-hidden="true">›</span>}
+    {next?<Link className="book-stepper__arrow" href={next.viewerPath!} aria-label={zh?`下一首：第 ${next.book!.number} 首`:`Next: No. ${next.book!.number}`}><PracticeIcon name="next"/></Link>:<span className="book-stepper__arrow is-off" aria-hidden="true"><PracticeIcon name="next"/></span>}
   </span>:null;
   if(item.keySections)return <KeyExerciseViewer key={item.id} config={config} sections={item.keySections} stepper={stepper}/>;
   return <ScoreViewer config={config} headerActions={()=> <>{stepper}{item.excerpt&&<div className="reader-choice" role="group" aria-label={zh?"乐谱格式":"Score format"}><button aria-pressed={false} onClick={()=>setInteractive(false)}>PDF</button><button aria-pressed={true}>XML</button></div>}</>}/>;

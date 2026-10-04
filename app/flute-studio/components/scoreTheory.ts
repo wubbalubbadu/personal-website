@@ -284,8 +284,8 @@ type Term={meaning:string;/** [low, high] beats per minute. */bpm?:number[]};
  */
 const TERMS=musicTerms as Record<string,Term>;
 const PHRASES=Object.keys(TERMS).sort((a,b)=>b.split(" ").length-a.split(" ").length);
-/** Words that only modify another term; a line made of nothing but these is not worth a tooltip. */
-const CONNECTIVES=new Set(["con","ma","e","poco","molto","assai","più","meno","sempre","un peu","très","peu","sans","avec","mais"]);
+/** Words that only modify another term; a line made of nothing but these is not worth a tooltip. Scores often leave the accent off ("piu", "tres"), so both spellings are here. */
+const CONNECTIVES=new Set(["con","ma","e","poco","molto","assai","più","piu","meno","sempre","un peu","très","tres","peu","sans","avec","mais"]);
 /** Dynamics keep their lowercase ("pp", not "Pp"): that is how they are printed. */
 const DYNAMICS=new Set(["ppp","pp","p","mp","mf","f","ff","fff","sf","sfz","fp"]);
 

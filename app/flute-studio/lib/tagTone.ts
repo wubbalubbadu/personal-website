@@ -11,6 +11,8 @@ const TONES:TagTone[]=["sage","sand","blue","pink","lavender","coral"];
 const KNOWN:Record<string,TagTone>={
   classical:"lavender",exercise:"blue",etude:"sage",folk:"sage",pop:"pink",
   "k-pop":"coral","j-pop":"pink",film:"blue",excerpt:"coral",
+  // Shown with Good first pieces (sand), Folk (sage) and Classical (lavender), so none of those.
+  accompaniment:"blue",
 };
 /** Good first piece: warm, and never the same as the tag beside it most often (Folk). */
 export const BEGINNER_TONE:TagTone="sand";

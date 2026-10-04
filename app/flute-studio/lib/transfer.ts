@@ -81,29 +81,53 @@ export async function decode(input:string):Promise<Snapshot|DecodeError>{
 }
 
 export function apply(snapshot:Snapshot){
-  for(const [key,value] of Object.entries(snapshot.data))localStorage.setItem(key,merge(localStorage.getItem(key),value));
+  for(const [key,value] of Object.entries(snapshot.data))localStorage.setItem(key,merge(localStorage.getItem(key),value,key));
 }
 
 /**
  * One stored value, from this device (`here`) and from the code (`arriving`).
  *
- * - Lists of records or ids (practice sessions, pitch history, saved music)
- *   are combined, so practice done on either device is kept. The flip side:
+ * - Lists of records or ids (practice sessions, pitch history, saved music,
+ *   saved scale sets) are combined, so practice done on either device is
+ *   kept. The same record on both sides keeps the newer copy. The flip side:
  *   unsaving a piece on one device doesn't unsave it on the other.
  * - Objects (book progress, tempos, marks on a score) merge field by field.
+ * - A music list status (Want to learn, Working on, Learned) keeps whichever
+ *   was set last, on either device.
+ * - Preferences (Scale Studio and Long tones setups) take the code's value
+ *   whole: they hold lists of choices, and combining two setups would make
+ *   one nobody picked.
  * - Anything else, a setting, takes the code's value.
  */
-export function merge(here:string|null,arriving:string){
+export function merge(here:string|null,arriving:string,key=""){
   if(here===null||here===arriving)return arriving;
-  try{return JSON.stringify(combine(JSON.parse(here),JSON.parse(arriving)))}
-  catch{return arriving}
+  if(WHOLE.some(rule=>rule.test(key)))return arriving;
+  try{
+    const old=JSON.parse(here),next=JSON.parse(arriving);
+    return JSON.stringify(STATUS.test(key)?newest(old,next):combine(old,next));
+  }catch{return arriving}
+}
+
+/** Stored whole: the code's copy replaces this device's. */
+const WHOLE=[/:preferences:/];
+/** `{id:{status,at}}`: per piece, the later change wins. */
+const STATUS=/^cookie:music-status:v1$/;
+function newest(here:unknown,arriving:unknown){
+  if(!isObject(here)||!isObject(arriving))return arriving;
+  const out:Record<string,unknown>={...here};
+  for(const [id,entry] of Object.entries(arriving)){
+    const mine=out[id];
+    const mineAt=isObject(mine)&&typeof mine.at==="number"?mine.at:-Infinity,theirsAt=isObject(entry)&&typeof entry.at==="number"?entry.at:-Infinity;
+    if(!(id in out)||theirsAt>=mineAt)out[id]=entry;
+  }
+  return out;
 }
 
 const isObject=(value:unknown):value is Record<string,unknown>=>typeof value==="object"&&value!==null&&!Array.isArray(value);
 /** Lists worth combining hold records or ids (names, or numbers like a book's pieces); a list of true/false is positional (ticks on a checklist). */
 const isCollection=(list:unknown[])=>list.every(item=>typeof item==="string"||typeof item==="number"||isObject(item));
 const identity=(item:unknown)=>isObject(item)&&typeof item.id==="string"?`id:${item.id}`:JSON.stringify(item);
-const TIME_FIELDS=["at","startedAt","date"];
+const TIME_FIELDS=["at","startedAt","date","savedAt"];
 const timeOf=(item:unknown)=>{
   if(!isObject(item))return null;
   const field=TIME_FIELDS.find(name=>name in item);
@@ -113,9 +137,14 @@ const timeOf=(item:unknown)=>{
 
 function combine(here:unknown,arriving:unknown):unknown{
   if(Array.isArray(here)&&Array.isArray(arriving)&&isCollection(here)&&isCollection(arriving)){
-    // The code's copy of a record wins over this device's copy of the same one.
+    // The code's copy of a record wins over this device's copy of the same
+    // one, unless this device's copy is the newer.
     const byIdentity=new Map<string,unknown>();
-    for(const item of [...here,...arriving])byIdentity.set(identity(item),item);
+    for(const item of [...here,...arriving]){
+      const key=identity(item),existing=byIdentity.get(key),existingAt=timeOf(existing),at=timeOf(item);
+      if(existing!==undefined&&existingAt!==null&&at!==null&&existingAt>at)continue;
+      byIdentity.set(key,item);
+    }
     const merged=[...byIdentity.values()];
     // Records with a time keep time order, in whichever direction the list
     // ran on this device (the order the studio writes it in).
@@ -140,6 +169,7 @@ function combine(here:unknown,arriving:unknown):unknown{
  */
 const GROUPS:{id:string;en:string;zh:string;match:RegExp}[]=[
   {id:"saved",en:"Your lists and saved sets",zh:"你的列表和保存的组合",match:/-favorites$|^cookie:music-status|^cookie:scale-book:sets/},
+  {id:"scales",en:"Scale Studio setup and tempos",zh:"音阶练习设置和速度",match:/^cookie:scale-book:(preferences|tempos)|^cookie:long-tones|^cookie:reichert:tempos|^cookie:score-tempo/},
   {id:"practice",en:"Practice history, routine and timer",zh:"练习记录、日程和计时",match:/^cookie:practice-|^cookie:pomodoro/},
   {id:"pitch",en:"Pitch history and pitch tests",zh:"音准记录和音准测试",match:/^cookie:pitch-history|^cookie:tendency-tests/},
   {id:"progress",en:"Lessons, books and roadmap",zh:"课程、练习曲集和路线图进度",match:/theory|^cookie:book-progress|^cookie:roadmap/},

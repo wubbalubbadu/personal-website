@@ -110,7 +110,7 @@ export default function AccountMenu(){
       <p className="account-menu__group">{lang==="zh"?"数据":"Your data"}</p>
       <div className="account-menu__choices">
         <Link className="account-menu__item" role="menuitem" href="/flute-studio/transfer" onClick={()=>setOpen(false)}>
-          <span>{lang==="zh"?"换设备":"Move to another device"}</span><b aria-hidden="true">›</b>
+          <span>{lang==="zh"?"设备同步":"Sync devices"}</span><b aria-hidden="true">›</b>
         </Link>
       </div>
 

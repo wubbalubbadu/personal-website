@@ -2,5 +2,5 @@
 
 html body .recorder-pop.recorder-pop--floating{position:fixed!important;left:var(--record-panel-left)!important;top:var(--record-panel-top)!important;right:auto!important;bottom:auto!important;z-index:320!important;box-sizing:border-box;width:320px!important;max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);overflow:auto}
 .recorder-pop--floating header{cursor:move;touch-action:none;user-select:none}
-html body .restored-reader .practice-bar .score-recorder>button.tool.record-button{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:3px!important;text-align:center!important}
+html body .restored-reader .practice-bar .score-recorder>button.tool.record-button{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:2px!important;text-align:center!important}
 html body .restored-reader .practice-bar .record-button .record-stop{width:14px!important;height:14px!important;margin:0!important;flex:0 0 14px!important;align-self:center}
