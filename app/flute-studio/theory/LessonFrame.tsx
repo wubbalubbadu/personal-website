@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import {useEffect,type ReactNode} from 'react';
+import ProgressDots from './ProgressDots';
 import './lesson-shell.css';
 
 // The one "go on" control. It lives in Cookie's bubble: a quiet Skip until the step is done,
@@ -13,12 +14,14 @@ type Props={
   heading:string;
   narration?:ReactNode;message:ReactNode;tone?:'correct'|'wrong'|null;
   next?:LessonNext|null;extra?:ReactNode;status?:string;
+  /** Dots that fill as an exercise goes on, in their own row between the music and Cookie. */
+  progress?:{done:number;total:number};
   children:ReactNode;
 };
 
 // Every lesson shares this frame: step dots, a line of narration that explains the idea, the scene,
 // and Cookie's bubble (what to try, then how it went). `heading` names the scene for screen readers.
-export default function LessonFrame({title,zh,className='',steps,current,onJump,heading,narration,message,tone=null,next,extra,status,children}:Props){
+export default function LessonFrame({title,zh,className='',steps,current,onJump,heading,narration,message,tone=null,next,extra,status,progress,children}:Props){
   // An empty lesson message docks the site's Cookie pet into #lesson-companion without its own bubble.
   useEffect(()=>{const frame=requestAnimationFrame(()=>window.dispatchEvent(new CustomEvent('cookie:lesson',{detail:''})));return()=>cancelAnimationFrame(frame)},[]);
   let action:ReactNode=null;
@@ -34,6 +37,8 @@ export default function LessonFrame({title,zh,className='',steps,current,onJump,
     </nav>
     {narration&&<p className="lesson-narration" aria-live="polite">{narration}</p>}
     <section className="lesson-scene" aria-label={heading}>{children}</section>
+    {/* Progress has its own row, always there, so the layout does not move when an exercise starts. */}
+    <div className="lesson-progress">{progress&&<ProgressDots {...progress} zh={zh}/>}</div>
     <div className="lesson-talk">
       <div id="lesson-companion"/>
       <div className={`lesson-bubble ${tone?`is-${tone}`:''}`}>

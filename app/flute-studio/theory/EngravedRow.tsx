@@ -7,6 +7,7 @@ import RhythmNote,{STEM_X} from './rhythm/RhythmNote';
 import {MUSIC_GLYPHS} from './rhythm/musicGlyphs';
 import type {NoteValue} from './rhythm/rhythmModel';
 import {TIME_SIG_GLYPHS} from './timeSignatureGlyphs';
+import {ACCIDENTALS} from './accidentalGlyphs';
 import './engraved-row.css';
 
 /**
@@ -24,7 +25,7 @@ import './engraved-row.css';
  * its measures are known. Changing `bars` or `even` slides the notes to their new places.
  */
 /** A note's length in quarter notes; dotted lengths (.75, 1.5, 3) get an augmentation dot. */
-export type RowNote={v:number;p?:number};
+export type RowNote={v:number;p?:number;/** The sign written in front of the note. */acc?:'sharp'|'flat'|'natural'};
 export type Meter={top:number;bottom:number;symbol?:'common'|'cut'};
 
 const RHYTHM_P=1;                      // rhythm-only rows sit in the bottom space, like printed rhythm staffs
@@ -34,18 +35,22 @@ const DOTTED=new Set([.75,1.5,3]);
 /** The undotted shape a length is drawn with (a dotted quarter is a quarter plus a dot). */
 const shapeOf=(v:number):NoteValue=>(DOTTED.has(v)?v/1.5:v) as NoteValue;
 const BAR_BEFORE=10,BAR_AFTER=20,NOTE_LEAD=16;
+/** Room in front of a note for its sign. */
+const ACC_ROOM=22;
 
 export type RowLayout={xs:number[];barXs:number[];gapXs:number[];startX:number;endX:number;meterX:number;starts:number[];beatX:(beat:number)=>number};
 
 /** Where everything goes. Pages use this for their own overlays (beat sticks, tap targets). */
-export function layoutRow(notes:RowNote[],{bars=[],even=false,clef=true,meter=null,left=40,right=860}:{bars?:number[];even?:boolean;clef?:boolean;meter?:Meter|null;left?:number;right?:number}={}):RowLayout{
+export function layoutRow(notes:RowNote[],{bars=[],even=false,clef=true,meter=null,left=40,right=860,reserveAcc=false}:{bars?:number[];even?:boolean;clef?:boolean;meter?:Meter|null;left?:number;right?:number;reserveAcc?:boolean}={}):RowLayout{
   let head=left+(clef?122:14);
   const meterX=head;
   if(meter)head+=meterWidth(meter)+(clef?14:20);
   const startX=head+8,endX=right;
   const slots=notes.map(n=>even?1:SLOT[n.v]??1);
   const barCount=bars.filter(b=>b>0&&b<notes.length).length;
-  const fixed=barCount*(BAR_BEFORE+BAR_AFTER)+NOTE_LEAD;
+  // A note that carries a sign (or any note, when signs may be added) gets room for it, so the row still fits.
+  const roomFor=(n:RowNote)=>reserveAcc||n.acc?ACC_ROOM:0;
+  const fixed=barCount*(BAR_BEFORE+BAR_AFTER)+NOTE_LEAD+notes.reduce((sum,n)=>sum+roomFor(n),0);
   const unit=(endX-startX-fixed)/slots.reduce((a,b)=>a+b,0);
   const xs:number[]=[],barXs:number[]=[],gapXs:number[]=[];
   let cursor=startX;
@@ -54,6 +59,7 @@ export function layoutRow(notes:RowNote[],{bars=[],even=false,clef=true,meter=nu
       if(bars.includes(i)){gapXs.push(cursor+BAR_BEFORE-4);cursor+=BAR_BEFORE;barXs.push(cursor);cursor+=BAR_AFTER}
       else gapXs.push(cursor-unit*.12);
     }
+    cursor+=roomFor(notes[i]);
     xs.push(cursor+NOTE_LEAD);cursor+=slots[i]*unit;
   });
   const starts:number[]=[];let t=0;notes.forEach(n=>{starts.push(t);t+=n.v});
@@ -93,27 +99,30 @@ type Props={
   notes:RowNote[];bars?:number[];even?:boolean;clef?:boolean;meter?:Meter|null;
   /** Beamed groups, as note indices (eighths and sixteenths). */
   beams?:number[][];
-  /** Index of the note sounding now (red). */
-  active?:number;
+  /** Index of the note sounding now (red), or several notes lit together. */
+  active?:number|number[];
   /** Something under each note, e.g. its counts, drawn with x = 0 at the note (it moves with the note). */
   below?:(index:number,x:number,layout:RowLayout)=>ReactNode;
   /** Anything drawn over the staff with the layout in hand: tap targets, beat sticks, highlights. */
   children?:(layout:RowLayout)=>ReactNode;
+  /** Leave room in front of every note for a sign that may be added. */
+  reserveAcc?:boolean;
   className?:string;label?:string;
   /** SVG viewBox; the default frames the staff with room for stems and one row of counts underneath. */
   viewBox?:string;
 };
 
-export function phoneRowRight(notes:RowNote[],clef:boolean,meter:Meter|null){
-  return Math.min(860,Math.max(480,40+(clef?122:14)+(meter?70:0)+notes.length*44));
+export function phoneRowRight(notes:RowNote[],clef:boolean,meter:Meter|null,reserveAcc=false){
+  const signs=notes.filter(n=>reserveAcc||n.acc).length;
+  return Math.min(860,Math.max(480,40+(clef?122:14)+(meter?70:0)+notes.length*44+signs*ACC_ROOM));
 }
 
-export default function EngravedRow({notes,bars=[],even=false,clef=true,meter=null,beams=[],active=-1,below,children,className='',label,viewBox='20 62 870 222'}:Props){
+export default function EngravedRow({notes,bars=[],even=false,clef=true,meter=null,beams=[],active=-1,below,children,reserveAcc=false,className='',label,viewBox='20 62 870 222'}:Props){
   const phone=usePhoneNotation();
-  const right=phone?phoneRowRight(notes,clef,meter):860;
+  const right=phone?phoneRowRight(notes,clef,meter,reserveAcc):860;
   const frame=viewBox.split(" ");
   if(phone)frame[2]=String(right+10);
-  const layout=layoutRow(notes,{bars,even,clef,meter,right});
+  const layout=layoutRow(notes,{bars,even,clef,meter,right,reserveAcc});
   const {xs,barXs,endX,meterX}=layout;
   const pos=notes.map(n=>clef?n.p??4:RHYTHM_P);
   const beamed=new Map<number,number[]>();beams.forEach(g=>g.forEach(i=>beamed.set(i,g)));
@@ -128,8 +137,10 @@ export default function EngravedRow({notes,bars=[],even=false,clef=true,meter=nu
     <line x1={endX-2.5} x2={endX-2.5} y1={noteY(8)} y2={noteY(0)} className="engraved-row__final"/>
     {notes.map((n,i)=>{
       const p=pos[i],g=beamed.get(i),isDown=down(i);
-      return <g key={i} className={`engraved-row__note ${active===i?'is-active':''}`} style={{transform:`translate(${xs[i]}px,${noteY(p)}px)`}}>
+      return <g key={i} className={`engraved-row__note ${(Array.isArray(active)?active.includes(i):active===i)?'is-active':''}`} style={{transform:`translate(${xs[i]}px,${noteY(p)}px)`}}>
         {ledgerLines(p).map(l=><line key={l} x1="-22" x2="22" y1={noteY(l)-noteY(p)} y2={noteY(l)-noteY(p)} className="engraved-row__ledger"/>)}
+        {/* The sign sits just left of the head, centred on the note's line or space, and turns red with the note. */}
+        {n.acc&&<path className="engraved-row__acc" d={ACCIDENTALS[n.acc]} transform="translate(-35 0) scale(.064 -.064)"/>}
         {g?<path d={MUSIC_GLYPHS.filled.path} transform={`translate(${-MUSIC_GLYPHS.filled.width*.032} 0) scale(.064 -.064)`}/>:<RhythmNote value={shapeOf(n.v)} down={isDown}/>}
         {/* Augmentation dot: to the right of the head, in a space (moved up a space when the note sits on a line). */}
         {DOTTED.has(n.v)&&<circle cx="24" cy={p%2===0?-12:0} r="4"/>}

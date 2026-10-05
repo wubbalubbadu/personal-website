@@ -54,18 +54,52 @@ export function markPath(mark:InkMark){
   return `M${a.x},${a.y} `+(points.length===1?`l.01,0`:points.slice(1).map(p=>`L${p.x},${p.y}`).join(' '));
 }
 
-/** Pressure affects the nib, while the saved sample locations remain untouched. */
+/**
+ * The samples a pen stroke is drawn from. The saved points are never touched: this only affects how the
+ * stroke looks. Samples closer than a fraction of a unit (an iPad reports far more than the eye needs)
+ * are dropped, then one light pass averages each point with its neighbours so hand and sensor jitter
+ * does not show as jagged corners. The ends stay where the pen touched down and lifted.
+ */
+function inkSamples(points:MarkPoint[]):MarkPoint[]{
+  const kept:MarkPoint[]=[];
+  points.forEach((p,i)=>{const last=kept.at(-1);if(!last||i===points.length-1||Math.hypot(p.x-last.x,p.y-last.y)>=.7)kept.push(p)});
+  if(kept.length<3)return kept;
+  return kept.map((p,i)=>{
+    if(i===0||i===kept.length-1)return p;
+    const a=kept[i-1],b=kept[i+1];
+    return {...p,x:(a.x+2*p.x+b.x)/4,y:(a.y+2*p.y+b.y)/4,p:(a.p+2*p.p+b.p)/4};
+  });
+}
+
+/**
+ * Pressure affects the nib, while the saved sample locations remain untouched. The outline is drawn with
+ * curves through the smoothed samples (each edge passes through the midpoints of the polygon's sides)
+ * and round caps, so the stroke has smooth edges at any zoom instead of a polygon's corners.
+ */
 export function penOutline(mark:InkMark){
-  const points=mark.points;if(!points.length)return '';
-  if(points.length===1){const a=points[0],r=(1+2.4*a.p)/2*mark.width/2.4;return `M${a.x-r},${a.y} a${r},${r} 0 1,0 ${r*2},0 a${r},${r} 0 1,0 ${-r*2},0`}
+  const raw=mark.points;if(!raw.length)return '';
+  const radius=(p:MarkPoint)=>(1+2.4*p.p)/2*mark.width/2.4;
+  if(raw.length===1){const a=raw[0],r=radius(a);return `M${a.x-r},${a.y} a${r},${r} 0 1,0 ${r*2},0 a${r},${r} 0 1,0 ${-r*2},0`}
+  const points=inkSamples(raw);
+  if(points.length<2){const a=points[0],r=radius(a);return `M${a.x-r},${a.y} a${r},${r} 0 1,0 ${r*2},0 a${r},${r} 0 1,0 ${-r*2},0`}
   const left:MarkPoint[]=[],right:MarkPoint[]=[];
   for(let i=0;i<points.length;i++){
-    const p=points[i],a=points[Math.max(0,i-1)],b=points[Math.min(points.length-1,i+1)];
-    const angle=Math.atan2(b.y-a.y,b.x-a.x),r=(1+2.4*p.p)/2*mark.width/2.4;
+    // The direction comes from points a step either side, so a single wobble does not swing the nib.
+    const p=points[i],a=points[Math.max(0,i-2)],b=points[Math.min(points.length-1,i+2)];
+    const angle=Math.atan2(b.y-a.y,b.x-a.x),r=radius(p);
     left.push({...p,x:p.x-Math.sin(angle)*r,y:p.y+Math.cos(angle)*r});
     right.push({...p,x:p.x+Math.sin(angle)*r,y:p.y-Math.cos(angle)*r});
   }
-  const outline=[...left,...right.reverse()];return `M${outline.map(p=>`${p.x},${p.y}`).join(' L')} Z`;
+  const mid=(a:MarkPoint,b:MarkPoint)=>`${(a.x+b.x)/2},${(a.y+b.y)/2}`;
+  /** An edge through the polygon's side midpoints, with each sample as the curve's control point. */
+  const edge=(side:MarkPoint[])=>side.slice(1,-1).map((p,i)=>`Q${p.x},${p.y} ${mid(p,side[i+2])}`).join(' ');
+  const rev=[...right].reverse();
+  const first=points[0],last=points.at(-1)!,startR=radius(first),endR=radius(last);
+  const l0=left[0],ln=left.at(-1)!,r0=right[0],rn=right.at(-1)!;
+  const lHalf=left.length>2?` L${mid(left[0],left[1])}`:'';
+  const rHalf=rev.length>2?` L${mid(rev[0],rev[1])}`:'';
+  // Left edge forward, a round cap at the end, the right edge back, a round cap at the start.
+  return `M${l0.x},${l0.y}${lHalf} ${edge(left)} L${ln.x},${ln.y} A${endR},${endR} 0 0 0 ${rn.x},${rn.y}${rHalf} ${edge(rev)} L${r0.x},${r0.y} A${startR},${startR} 0 0 0 ${l0.x},${l0.y} Z`;
 }
 
 /** Contacts rejected during writing stay rejected until their own pointerup. */

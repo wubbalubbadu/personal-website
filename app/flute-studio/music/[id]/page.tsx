@@ -20,6 +20,13 @@ export default function UploadedMusicPage(){
   const {lang}=useLanguage(),zh=lang==="zh";
   const [interactive,setInteractive]=useState(false);
   const item=musicLibrary.find(entry=>entry.id===params.id);
+  // Arriving from Tricky bits: bars to select, which saved bit it was, and whether the bars are being changed.
+  const [deepLink,setDeepLink]=useState<{bars?:{from:number;to:number};open?:string;change?:string}|null>(null);
+  useEffect(()=>{
+    const query=new URLSearchParams(window.location.search),match=query.get("bars")?.match(/^(\d+)-(\d+)$/);
+    const next=query.get("from")==="tricky-bits"?{bars:match?{from:+match[1],to:+match[2]}:undefined,open:query.get("open")??undefined,change:query.get("change")??undefined}:null;
+    requestAnimationFrame(()=>setDeepLink(next));
+  },[params.id]);
   // A numbered piece in a book: back goes to the book, and the header steps
   // to the neighbouring numbers so you can work through it in order.
   const book=item?.book?musicBooks.find(entry=>entry.id===item.book!.id):undefined;
@@ -45,9 +52,11 @@ export default function UploadedMusicPage(){
     smartDrone:item.smartDrone,
     ...(item.accompanimentKind?{accompaniment:{asset:item.fullScorePath??item.scorePath,readingPartId:item.readingPartId??"P1",kind:item.accompanimentKind}}:{}),
     id:item.id,
-    backHref:book?bookPath(book.id):"/flute-studio/music",
+    backHref:deepLink?`/flute-studio/tricky-bits${deepLink.open?`?open=${encodeURIComponent(deepLink.open)}`:""}`:book?bookPath(book.id):"/flute-studio/music",
+    ...(deepLink?.bars?{initialBars:deepLink.bars}:{}),
+    ...(deepLink?.change?{changeBit:deepLink.change}:{}),
     // A book goes on your lists as a whole, from any of its numbers.
-    ...(book?{backLabel:book.title,backName:book.composer.split(" ").pop(),listId:book.id}:{}),
+    ...(deepLink?{backLabel:zh?"精练小节":"Tricky bits",backName:zh?"精练小节":"Tricky bits"}:book?{backLabel:book.title,backName:book.composer.split(" ").pop(),listId:book.id}:{}),
     ...(item.pdfPath?{pdfPath:item.pdfPath}:{}),
     ...(item.defaultTempo?{defaultTempo:item.defaultTempo}:{}),
     ...(composerInfo(item.composer)||item.about?{story:{composer:composerInfo(item.composer),year:item.year,about:item.about,tempoHint:zh?item.excerpt?.zhTempoHint??item.excerpt?.tempoHint:item.excerpt?.tempoHint}}:{}),

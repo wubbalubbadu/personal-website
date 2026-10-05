@@ -59,10 +59,10 @@ export function ReaderPopover({label,trigger,children,className="",panelClassNam
     }
     function outside(event:PointerEvent){const node=event.target as Node;if(!panel.current?.contains(node)&&!button.current?.contains(node))close()}
     function key(event:KeyboardEvent){if(event.key==="Escape"){close();button.current?.focus()}}
-    place();document.addEventListener("pointerdown",outside);document.addEventListener("keydown",key);window.addEventListener("resize",place);
+    place();document.addEventListener("pointerdown",outside,true);document.addEventListener("keydown",key);window.addEventListener("resize",place);
     const resize=panel.current&&new ResizeObserver(place);
     if(panel.current&&resize)resize.observe(panel.current);
-    return()=>{resize?.disconnect();document.removeEventListener("pointerdown",outside);document.removeEventListener("keydown",key);window.removeEventListener("resize",place)};
+    return()=>{resize?.disconnect();document.removeEventListener("pointerdown",outside,true);document.removeEventListener("keydown",key);window.removeEventListener("resize",place)};
   },[open]);
   return <span className="reader-popover-anchor"><button ref={button} type="button" className={className} aria-label={label} data-tip={label} aria-expanded={open} onClick={()=>open?close():setOpen(true)}>{trigger}</button>{open&&createPortal(<div ref={panel} role="dialog" aria-label={label} className={`reader-settings-panel ${panelClassName}${closing?" is-closing":""}${dragY&&!closing?" is-dragging":""}`} style={{...position,visibility:placed?"visible":"hidden",...(dragY?{transform:`translateY(${dragY}px)`}:{})}}><div className="reader-sheet-grip" aria-hidden="true" {...grip}><span/></div><div className="reader-panel-heading"><strong>{label}</strong></div>{children}</div>,document.fullscreenElement??document.body)}</span>;
 }

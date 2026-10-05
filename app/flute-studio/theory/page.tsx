@@ -35,6 +35,10 @@ export default function TheoryHome(){
       <div className="theory-course__art" aria-hidden="true"><EngravedRow clef={false} meter={{top:4,bottom:4}} notes={[{v:1},{v:1},{v:2},{v:2},{v:1},{v:1}]} bars={[3]} viewBox="30 0 860 310"/></div>
       <div><div><h2>3. {zh?'小节与拍号':'Measures and time signatures'}{completed.measures&&<span className="course-check" aria-label={zh?'已完成':'Completed'}>✓</span>}</h2><p>{zh?'把拍子组成小节，数拍，并读懂简单的拍号。':'Group and count beats, then read simple time signatures.'}</p></div></div>
     </Link>
+    <Link className={`theory-course ${completed.accidentals?"is-complete":""}`} href="/flute-studio/theory/accidentals">
+      <div className="theory-course__art" aria-hidden="true"><EngravedRow clef notes={[{v:1,p:1,acc:'sharp'},{v:1,p:4,acc:'flat'},{v:1,p:1,acc:'natural'},{v:1,p:3}]} viewBox="30 0 860 310"/></div>
+      <div><div><h2>4. {zh?'升号、降号与还原号':'Sharps, flats and naturals'}{completed.accidentals&&<span className="course-check" aria-label={zh?'已完成':'Completed'}>✓</span>}</h2><p>{zh?'升号、降号，以及一个记号管多久。':'Sharps, flats and how long a sign lasts.'}</p></div></div>
+    </Link>
     </section>
   </main>;
 }

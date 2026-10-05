@@ -1,0 +1,82 @@
+/* Tricky bits: saved passages. Soft, light, icon-first; greys and greens are the studio's. */
+.tricky-page .exercise-hub__header{padding-bottom:6px}
+.tricky-empty{margin:36px 4px;max-width:34ch;font-size:15px;line-height:1.55;color:#85868e}
+.tricky-group{margin:26px 0 8px}
+.tricky-group h2{margin:0 4px 12px;font-size:18px;font-weight:600;letter-spacing:-.01em;color:#292a33;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tricky-group h2 small{font-size:14px;font-weight:400;color:#85868e}
+.tricky-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.tricky-card{position:relative;border:1px solid #e6e7e3;border-radius:16px;background:#fff;transition:box-shadow .16s ease}
+.tricky-card:hover{box-shadow:0 6px 20px rgba(41,42,51,.08)}
+.tricky-card__open{display:block;width:100%;padding:14px 16px 12px;border:0;border-radius:16px;background:transparent;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.tricky-card__bars{font-size:14px;font-weight:600;color:#45464f;padding-right:36px}
+.tricky-card__note{margin:14px 0;font-size:13px;color:#85868e;min-height:60px}
+.tricky-card__meta{display:flex;justify-content:space-between;gap:8px;min-height:20px;margin-top:6px;font-size:13px;font-weight:500;color:#6f7178;font-variant-numeric:tabular-nums}
+.tricky-card__more{position:absolute;top:8px;right:8px;width:34px;height:34px;display:grid;place-items:center;border:0;border-radius:999px;background:transparent;color:#6f7178;cursor:pointer}
+.tricky-card__more svg{width:20px;height:20px}
+.tricky-card__more:hover,.tricky-card__more[aria-expanded="true"]{background:#f1f1f4;color:#292a33}
+.tricky-card__menu{position:absolute;z-index:20;top:44px;right:8px;width:190px;padding:6px;display:grid;gap:2px;border:1px solid #e6e7e3;border-radius:16px;background:#fff;box-shadow:0 16px 44px rgba(41,42,51,.16)}
+.tricky-card__menu a,.tricky-card__menu button{display:block;width:100%;padding:9px 10px;border:0;border-radius:10px;background:none;font:inherit;font-size:14px;font-weight:400;color:#292a33;text-align:left;text-decoration:none;cursor:pointer}
+.tricky-card__menu a:hover,.tricky-card__menu button:hover{background:#f5f5f7}
+.tricky-card__menu button{color:#6f7178}
+.tricky-preview{min-height:84px;position:relative;margin-top:6px;overflow:hidden;pointer-events:none}
+.tricky-preview__music{width:100%}
+.tricky-preview[data-state="waiting"] .tricky-preview__music{opacity:0}
+.tricky-preview__note{position:absolute;left:0;top:30px;font-size:13px;color:#a2a3aa}
+
+/* The pop-up. */
+.tricky-dialog{position:fixed;inset:0;z-index:500;display:grid;place-items:center;padding:20px}
+.tricky-dialog__scrim{position:absolute;inset:0;border:0;padding:0;background:rgba(41,42,51,.32);cursor:default}
+.tricky-dialog__panel{position:relative;width:min(860px,100%);max-height:calc(100dvh - 40px);overflow-y:auto;border-radius:22px;background:#fff;box-shadow:0 24px 70px rgba(41,42,51,.28);padding:14px 22px 18px;display:grid;gap:14px}
+.tricky-dialog header{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px}
+.tricky-dialog__pager{display:inline-flex;align-items:center;gap:0;padding:0 2px;height:36px;border-radius:12px;background:#f1f1f4;font-size:14px;font-weight:500;color:#45464f;font-variant-numeric:tabular-nums}
+.tricky-dialog__pager button{width:30px;height:36px;border:0;border-radius:12px;background:transparent;color:#45464f;display:grid;place-items:center;cursor:pointer}
+.tricky-dialog__pager button:hover:not(:disabled){background:#e6e6ea}.tricky-dialog__pager button:disabled{opacity:.35;cursor:default}
+.tricky-dialog__pager svg{width:18px;height:18px}.tricky-dialog__pager span{padding:0 6px}
+.tricky-dialog__title{display:grid;gap:1px;min-width:0}
+.tricky-dialog__title strong{font-size:16px;font-weight:600;color:#292a33;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tricky-dialog__title span{font-size:13px;color:#85868e}
+.tricky-dialog__close{width:40px;height:40px;border:0;border-radius:999px;background:transparent;color:#6f7178;display:grid;place-items:center;cursor:pointer}
+.tricky-dialog__close:hover{background:#f1f1f4;color:#292a33}.tricky-dialog__close svg{width:22px;height:22px}
+.tricky-dialog__music{min-height:120px}
+.tricky-dialog__note{margin:30px 0;font-size:14px;color:#85868e}
+.tricky-dialog .practice-listen{border:0;background:#f1f1f4;border-radius:12px;padding:0 14px;min-height:40px;font:inherit;font-size:14px;font-weight:500;color:#292a33;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.tricky-dialog .practice-listen:hover:not(:disabled){background:#e6e6ea}
+.tricky-dialog .practice-notation__stage{display:flex;align-items:center;gap:12px}.tricky-dialog .practice-notation__music{flex:1;min-width:0;overflow-x:auto}
+
+.tricky-dialog__tempos{display:grid;gap:12px}
+.tricky-chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tricky-chip{min-width:52px;height:38px;padding:0 14px;border:1px solid #e0e1e5;border-radius:999px;background:#fff;color:#45464f;font:inherit;font-size:15px;font-weight:500;font-variant-numeric:tabular-nums;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.tricky-chip:hover{background:#f5f5f7}
+.tricky-chip.on{background:var(--studio-on-bg,#eee7f2);border-color:transparent;color:var(--studio-on-ink,#79588e)}
+.tricky-chip--add{display:grid;place-items:center;padding:0;min-width:38px;width:38px;color:#6f7178}.tricky-chip--add svg{width:18px;height:18px}
+.tricky-goal{display:flex;align-items:center;gap:12px}
+.tricky-goal__bar{flex:1;height:8px;border-radius:999px;background:#f1f1f4;overflow:hidden}
+.tricky-goal__bar i{display:block;height:100%;border-radius:999px;background:#6c8f5f;transition:width .3s ease}
+.tricky-goal__label{border:0;background:transparent;padding:6px 4px;font:inherit;font-size:14px;font-weight:500;color:#45464f;cursor:pointer;min-width:7ch;text-align:right}
+.tricky-goal__label:hover{color:#292a33}
+.tricky-goal__input{width:76px;height:34px;border:1px solid #d4d5da;border-radius:10px;padding:0 10px;font:inherit;font-size:15px;text-align:center}
+
+.tricky-dialog__tally{display:flex;align-items:center;gap:14px;padding-top:6px;border-top:1px solid #efeff1}
+.tricky-step{width:40px;height:40px;border:0;border-radius:999px;background:#f1f1f4;color:#292a33;font:inherit;font-size:22px;line-height:1;cursor:pointer}
+.tricky-step:hover:not(:disabled){background:#e6e6ea}.tricky-step:disabled{opacity:.35;cursor:default}
+.tally-sticks{flex:1;display:flex;flex-wrap:wrap;gap:8px;min-height:30px;align-items:center}
+.tally-sticks svg{display:block;flex:0 0 auto}
+.tally-sticks line{stroke:#45464f;stroke-width:2.2;stroke-linecap:round}
+.tricky-dialog__total{font-size:18px;font-weight:600;color:#292a33;min-width:5.5ch;text-align:right;font-variant-numeric:tabular-nums}
+.tricky-dialog__total small{font-size:13px;font-weight:400;color:#85868e}
+.tricky-dialog footer{padding-top:2px}
+.tricky-dialog footer a{font-size:14px;font-weight:600;color:#46633d;text-decoration:none}
+
+@media(max-width:760px){
+  .tricky-grid{grid-template-columns:1fr}
+  .tricky-dialog{padding:0;place-items:end stretch}
+  .tricky-dialog__panel{width:100%;max-height:92dvh;border-radius:22px 22px 0 0;padding:14px 16px calc(18px + env(safe-area-inset-bottom))}
+}
+/* engraved.css stretches any .osmd-score svg to its container; here the engraving keeps the size OSMD drew. */
+html body .tricky-dialog .practice-notation__music svg,html body .tricky-preview svg{width:auto!important;max-width:none!important;height:auto!important}
+/* OSMD leaves an inline min-height on its container from a larger draw; let the engraving decide the height. */
+html body .tricky-dialog .practice-notation__music,html body .tricky-dialog .practice-notation__music>div,html body .tricky-preview__music,html body .tricky-preview__music>div{min-height:0!important;height:auto!important}
+.tricky-step-label{height:38px;padding:0 6px;border:0;background:transparent;font:inherit;font-size:14px;font-weight:500;color:#85868e;cursor:pointer;font-variant-numeric:tabular-nums}
+.tricky-step-label:hover{color:#292a33}
+.tricky-step-input{width:60px}
+.tricky-dialog__music{overflow:hidden}

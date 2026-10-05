@@ -5,6 +5,7 @@ import TrebleClef from './TrebleClef';
 import QuarterNote from './QuarterNote';
 import {noteY,ledgerLines,SOLFEGE} from './model';
 import {sceneNotes,notationPitch} from './sequence';
+import PianoKeys from './PianoKeys';
 
 type Props={draggable?:boolean;focusPitch?:number|null;memory?:number;keyboard?:boolean;step:number;edits:Record<string,number>;active:number;keyboardPitch:number|null;zh:boolean;onMove:(id:string,position:number)=>void;onHear:(position:number,index:number)=>void;onKey:(midi:number)=>void};
 export default function LessonDiagram({draggable=true,focusPitch=null,memory=-1,keyboard=false,step,edits,active,keyboardPitch,zh,onMove,onHear,onKey}:Props){
@@ -58,12 +59,9 @@ export default function LessonDiagram({draggable=true,focusPitch=null,memory=-1,
       {step===15&&<text x="828" y="45" className="sequence-question">?</text>}
     </svg>
     <div className={`sequence-keyboard ${showKeyboard?'is-visible':''}`} aria-hidden={!showKeyboard}>
-      <svg viewBox="0 0 350 105" role="group" aria-label={zh?'钢琴键盘':'Piano keyboard'}>
-        {Array.from({length:8},(_,i)=>{const p=i,pitch=notationPitch(p),playing=keyboardPitch===pitch.midi||litPitch===p;return <g key={p} role="button" tabIndex={showKeyboard?0:-1} aria-label={`${pitch.name}${pitch.octave}`} onClick={()=>{setExploring(true);setArrival(null);onKey(pitch.midi)}} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setExploring(true);setArrival(null);onKey(pitch.midi)}}}>
-          <rect x={i*42+7} y="2" width="41" height="98" rx="3" className={playing?'is-key-active':'white-key'}/><text x={i*42+27} y="84">{step>=5?pitch.name:''}</text>
-        </g>})}
-        {[1,2,3,5,6].map(i=><rect key={i} aria-hidden="true" x={i*42+36} y="2" width="23" height="57" rx="2" className="black-key"/>)}
-      </svg>
+      <PianoKeys low={64} high={76} labels={step>=5} blackPlayable={false} zh={zh}
+        lit={Array.from({length:8},(_,p)=>({p,pitch:notationPitch(p)})).filter(({p,pitch})=>keyboardPitch===pitch.midi||litPitch===p).map(({pitch})=>({midi:pitch.midi,tone:'red' as const}))}
+        onKey={midi=>{setExploring(true);setArrival(null);onKey(midi)}}/>
     </div>
   </div>;
 }

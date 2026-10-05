@@ -37,6 +37,8 @@ import BackChevron from "./BackChevron";
 import {DownloadIcon,PlusIcon,CheckIcon} from "./HeaderIcons";
 import AccountMenu from "../AccountMenu";
 import {notationScale,pageOffsets,pageAt,tabletReader,initialReaderLayout} from "./readerLayout";
+import {addBit,removeBit,moveBit,bitId,useTrickyBits} from "../lib/trickyBits";
+import {useRouter} from "next/navigation";
 import "../reader-workspace.css";
 import type { ArticulationMode } from "./notePatterns";
 
@@ -53,7 +55,7 @@ import type { ArticulationMode } from "./notePatterns";
 export type ScoreViewerConfig={title:string;composer:string;
   /** What tapping the composer's name shows: a short bio and a line about this piece. */
   story?:{composer?:ComposerInfo;year?:number;about?:string;tempoHint?:string};
-  asset:string;id:string;backHref:string;backLabel?:string;/** Short visible name beside the back arrow on a phone (a book piece's composer, "Köhler"). */backName?:string;practiceGuide?:boolean;
+  asset:string;id:string;backHref:string;backLabel?:string;/** Bars (measure positions) to have selected when the piece opens, e.g. from a saved Tricky bit. */initialBars?:{from:number;to:number};/** The Tricky bit being edited: the next bar selection saved with the bookmark moves it instead of adding a new one. */changeBit?:string;/** Short visible name beside the back arrow on a phone (a book piece's composer, "Köhler"). */backName?:string;practiceGuide?:boolean;
   /** Which list entry the list button changes, when not this score's own id (a book's numbers share the book's). */
   accompaniment?:{asset:string;readingPartId:string;kind:"piano"|"chords"};smartDrone?:DroneChange[];smartDroneCountInBeats?:number;hideRehearsalMarks?:boolean;sempreStaccatoFromMeasure?:number;pulsePerMeasure?:boolean;listId?:string;pdfPath?:string;defaultTempo?:number;pitches?:(string|null)[];events?:{p:string|null;d:number;tied?:boolean;articulation?:ArticulationMode;slurContinuation?:boolean;level?:number;dynamics?:DynamicPoint[];accent?:boolean;trill?:string}[];measureStarts?:number[];subtitle?:string;tempoHint?:string;displayPitches?:(string|null)[];noteKeySignatures?:string[][];syllables?:(string|null)[]};
 /**
@@ -872,6 +874,8 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   const [droneArmed,setDroneArmed]=useState(false);
   // Notification pills say their piece and go: about 2.5 seconds on screen.
   const [droneHint,setDroneHint]=useState(false),droneHintTimer=useRef(0);
+  const [notice,setNotice]=useState(""),noticeTimer=useRef(0);
+  const {bits:trickyBits}=useTrickyBits(),router=useRouter(),initialBarsApplied=useRef(false);
   function flashDroneHint(){/* Where there is hover, the button's own tooltip says this; the pill is for touch. */if(window.matchMedia("(hover:hover)").matches)return;setDroneHint(true);window.clearTimeout(droneHintTimer.current);droneHintTimer.current=window.setTimeout(()=>setDroneHint(false),2500)}
   const [accompanimentMode,setAccompanimentMode]=useState<'off'|'piano'|'both'>('piano'),[pianoLoading,setPianoLoading]=useState(false),[pianoError,setPianoError]=useState('');
   const playbackAccompaniment=useRef<'off'|'piano'|'both'>('off');
@@ -2171,9 +2175,34 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   function openCloseup(){
     const current=selectionRef.current;if(!current||current.to<=current.from)return;
     const printed=(position:number)=>scoreFactsRef.current?.measures[position-1]?.number??String(position);
-    stopPlayback();if(smartRunning)stopAutoDrone();setFingerTip(null);setAnnotating(false);setDroneArmed(false);
+    stopPlayback();if(smartRunning)stopAutoDrone();setFingerTip(null);setDroneArmed(false);
     setCloseup({from:current.from,to:current.to,numbers:{from:printed(current.from),to:printed(current.to)}});
   }
+  /** Saves the selected bars to Tricky bits (the first tempo is the one on the metronome now), or takes them off again. */
+  function toggleTrickyBit(){
+    const current=selectionRef.current;if(!current||current.to<=current.from)return;
+    const id=bitId(config.id,current.from,current.to);
+    const say=(text:string)=>{setNotice(text);window.clearTimeout(noticeTimer.current);noticeTimer.current=window.setTimeout(()=>setNotice(""),2500)};
+    const printed=(position:number)=>scoreFactsRef.current?.measures[position-1]?.number??String(position);
+    if(config.changeBit){
+      moveBit(config.changeBit,{from:current.from,to:current.to,label:`${printed(current.from)}–${printed(current.to)}`});
+      router.push(`/flute-studio/tricky-bits?open=${encodeURIComponent(id)}`);return;
+    }
+    if(trickyBits.some(bit=>bit.id===id)){removeBit(id);say(zh?"已从精练小节移除":"Removed from Tricky bits");return}
+    addBit({pieceId:config.id,from:current.from,to:current.to,label:`${printed(current.from)}–${printed(current.to)}`,tempo:bpm});
+    say(zh?"已存入精练小节":"Saved to Tricky bits");
+  }
+  // Opening a piece from a saved Tricky bit: select those bars and bring them into view, once the engraving is up.
+  useEffect(()=>{
+    if(!config.initialBars||initialBarsApplied.current||loading||!layoutVersion)return;
+    initialBarsApplied.current=true;
+    const {from,to}=config.initialBars;
+    requestAnimationFrame(()=>{
+      setRange(from,to);
+      requestAnimationFrame(()=>scoreRef.current?.querySelector(".play-start-bar")?.scrollIntoView({block:"center",behavior:"smooth"}));
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[loading,layoutVersion,config.initialBars]);
   function playRange(loop:boolean){
     const current=selectionRef.current;if(!current||current.to<=current.from)return;
     if(playing&&rangeMode===(loop?"loop":"once")){stopPlayback();return}
@@ -2304,7 +2333,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     const root=scoreRef.current,scroller=scoreScrollRef.current;if(!root||!scroller)return;
     const tints=[...root.querySelectorAll<SVGElement>(".play-start-bar")];
     if(!isRange||tints.length<2){setRangeBarAt(null);return}
-    const first=tints[0].getBoundingClientRect(),last=tints[tints.length-1].getBoundingClientRect(),view=scroller.getBoundingClientRect();
+    const last=tints[tints.length-1].getBoundingClientRect(),view=scroller.getBoundingClientRect();
     // Above the selection's last line.
     // Below the selection only when there is no room above. Always inside the window.
     const bar=document.querySelector<HTMLElement>(".range-bar"),width=bar?.offsetWidth??176,height=bar?.offsetHeight??50;
@@ -2586,7 +2615,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
       <div className="reader-rows">{practiceRow}<div className="markup-row" ref={setAnnotationToolbar}/></div>
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- The score is a pointer and touch surface (tap a bar, a note, a mark). Keyboard use goes through the page-level arrow keys and the toolbar buttons, so a tab stop on the engraving itself would add nothing. */}
       <div className="score-scroll" ref={scoreScrollRef}>{countBeat!==null&&<div className="score-count-in" role="status" aria-label={`Count in, beat ${countBeat%countBar+1}`}><span>{Array.from({length:countBar},(_,beat)=><i key={beat} className={beat===countBeat%countBar?"current":beat<countBeat%countBar?"done":""}/>)}</span></div>}<div className="score-paper engraved" data-loading={loading}><div className="custom-score-heading"><h1>{title.split(/(\d+)/).map((part,index)=>/^\d+$/.test(part)?<span key={index} className="score-title-number">{part}</span>:part)}</h1>{config.subtitle&&<p className="excerpt-score-subtitle">{config.subtitle}</p>}{config.story?<button type="button" className="score-composer" aria-expanded={!!storyCard} onClick={e=>{e.stopPropagation();setTheoryTip(null);setStoryCard(storyCard?null:{x:e.clientX,y:e.clientY})}}>{composer}</button>:<div className="score-composer">{composer}</div>}</div>{showSpinner&&<div className="score-loading" role="status" aria-label={t.scoreViewer.engraving}/>}{error&&<div className="score-error">{error}</div>}<div ref={scoreRef} className="osmd-score" data-theory-enabled={theoryEnabled} data-note-tap={droneArmed||fingering||noteDisplay!=="off"||activeRhythmMode!=="off"||!!onPracticeNote?"on":undefined} onMouseMove={scoreMove} onMouseLeave={()=>{setFingerTip(null);setTheoryTip(null)}} onPointerDown={scorePointerDown} onPointerMove={scorePointerMove} onPointerUp={scorePointerEnd} onPointerCancel={scorePointerEnd} onClick={scoreClick}/>{scoreMarks&&marksLayer&&createPortal(scoreMarks({root:scoreRef.current,version:layoutVersion,magnify,controls:readerControls}),marksLayer)}<AnnotationLayer key={id} id={id} active={annotating} layoutReady={!loading} layoutVersion={layoutVersion} toolbar={annotationToolbar} zh={zh} onClose={()=>setAnnotating(false)} zoom={magnify} onZoom={zoomAnnotations}/>
-      </div>{droneArmed&&droneHint&&<div className="drone-hint" role="status">{t.scoreViewer.droneTip}</div>}{rangeBarAt&&isRange&&!(closeup&&selection&&closeup.from===selection.from&&closeup.to===selection.to)&&<div className="range-bar" role="toolbar" aria-label={zh?"所选小节":"Selected bars"} style={{left:rangeBarAt.x,top:rangeBarAt.y}}>{/* Icons only, each named by its tooltip. ▶ plays just these bars once; Listen in the toolbar plays on from them. */}<button type="button" className={rangeMode==="once"?"has-tip on":"has-tip"} data-tip={rangeMode==="once"?(zh?"停止":"Stop"):(zh?"播放所选小节":"Play selection")} aria-label={rangeMode==="once"?(zh?"停止":"Stop"):(zh?"播放所选小节":"Play selection")} onClick={()=>playRange(false)}><PracticeIcon name={rangeMode==="once"?"pause":"play"}/></button><button type="button" className={rangeMode==="loop"?"has-tip on":"has-tip"} data-tip={zh?"循环所选小节":"Loop selection"} aria-label={zh?"循环所选小节":"Loop selection"} aria-pressed={rangeMode==="loop"} onClick={()=>playRange(true)}><PracticeIcon name="loop"/></button>{config.practiceGuide&&<button type="button" className="has-tip" data-tip={zh?"近看":"Close-up"} aria-label={zh?"近看所选小节":"Close-up of selected bars"} onClick={openCloseup}><PracticeIcon name="zoom"/></button>}<button type="button" className="has-tip" disabled data-tip={zh?"存入精练小节（即将推出）":"Save to Tricky bits (coming soon)"} aria-label={zh?"存入精练小节（即将推出）":"Save to Tricky bits (coming soon)"}><PracticeIcon name="bookmark"/></button></div>}{aside&&<div className="score-aside">{aside}</div>}</div>{stage&&<div className="reader-stage">{typeof stage==="function"?stage({fingering}):stage}</div>}{(dock||closeupOpen)&&<div className="reader-dock">{closeup&&<PassageGuide key={`${closeup.from}-${closeup.to}`} xml={guideXml.current} events={sequenceRef.current.events.slice(sequenceRef.current.measureStarts[closeup.from-1]??0,sequenceRef.current.measureStarts[closeup.to]??sequenceRef.current.events.length)} from={closeup.from} to={closeup.to} numbers={closeup.numbers} quarterBpm={bpm*(config.pulsePerMeasure?((scoreFactsRef.current?.measures[closeup.from-1]?.beats??4)*4/(scoreFactsRef.current?.measures[closeup.from-1]?.beatType??4)):tempoSectionAt(closeup.from)?.beat??1)} sempreStaccato={config.sempreStaccatoFromMeasure!==undefined&&closeup.from>=config.sempreStaccatoFromMeasure} title={title} initialDisplay={{names:noteDisplay,accidentals,rhythm:activeRhythmMode==="bars"}} onClose={()=>setCloseup(null)}/>}{dock}</div>}
+      </div>{droneArmed&&droneHint&&<div className="drone-hint" role="status">{t.scoreViewer.droneTip}</div>}{notice&&<div className="drone-hint" role="status">{notice}</div>}{rangeBarAt&&isRange&&!(closeup&&selection&&closeup.from===selection.from&&closeup.to===selection.to)&&<div className="range-bar" role="toolbar" aria-label={zh?"所选小节":"Selected bars"} style={{left:rangeBarAt.x,top:rangeBarAt.y}}>{/* Icons only, each named by its tooltip. ▶ plays just these bars once; Listen in the toolbar plays on from them. */}<button type="button" className={rangeMode==="once"?"has-tip on":"has-tip"} data-tip={rangeMode==="once"?(zh?"停止":"Stop"):(zh?"播放所选小节":"Play selection")} aria-label={rangeMode==="once"?(zh?"停止":"Stop"):(zh?"播放所选小节":"Play selection")} onClick={()=>playRange(false)}><PracticeIcon name={rangeMode==="once"?"pause":"play"}/></button><button type="button" className={rangeMode==="loop"?"has-tip on":"has-tip"} data-tip={zh?"循环所选小节":"Loop selection"} aria-label={zh?"循环所选小节":"Loop selection"} aria-pressed={rangeMode==="loop"} onClick={()=>playRange(true)}><PracticeIcon name="loop"/></button>{config.practiceGuide&&<button type="button" className="has-tip" data-tip={zh?"近看":"Close-up"} aria-label={zh?"近看所选小节":"Close-up of selected bars"} onClick={openCloseup}><PracticeIcon name="zoom"/></button>}{config.practiceGuide&&(()=>{const saved=!!selection&&trickyBits.some(bit=>bit.id===bitId(config.id,selection.from,selection.to)),label=saved?(zh?"已存入精练小节，点按移除":"Saved to Tricky bits. Tap to remove"):(zh?"存入精练小节":"Save to Tricky bits");return <button type="button" className={saved?"has-tip on":"has-tip"} data-tip={label} aria-label={label} aria-pressed={saved} onClick={toggleTrickyBit}><PracticeIcon name={saved?"bookmarkFilled":"bookmark"}/></button>})()}</div>}{aside&&<div className="score-aside">{aside}</div>}</div>{stage&&<div className="reader-stage">{typeof stage==="function"?stage({fingering}):stage}</div>}{(dock||closeupOpen)&&<div className="reader-dock">{closeup&&<PassageGuide key={`${closeup.from}-${closeup.to}`} xml={guideXml.current} events={sequenceRef.current.events.slice(sequenceRef.current.measureStarts[closeup.from-1]??0,sequenceRef.current.measureStarts[closeup.to]??sequenceRef.current.events.length)} from={closeup.from} to={closeup.to} numbers={closeup.numbers} quarterBpm={bpm*(config.pulsePerMeasure?((scoreFactsRef.current?.measures[closeup.from-1]?.beats??4)*4/(scoreFactsRef.current?.measures[closeup.from-1]?.beatType??4)):tempoSectionAt(closeup.from)?.beat??1)} sempreStaccato={config.sempreStaccatoFromMeasure!==undefined&&closeup.from>=config.sempreStaccatoFromMeasure} title={title} initialDisplay={{names:noteDisplay,accidentals,rhythm:activeRhythmMode==="bars"}} onClose={()=>setCloseup(null)}/>}{dock}</div>}
 
     </section>{theoryTip&&<div className="theory-tip" style={clampTip(theoryTip.x,theoryTip.y,280,150,"below")}><strong>{theoryTip.title}</strong><p>{theoryTip.text}</p></div>}{storyCard&&config.story&&<StoryCard composer={composer} title={title} story={config.story} style={clampTip(storyCard.x,storyCard.y,340,260,"below")} onClose={()=>setStoryCard(null)}/>}{fingerTip&&<div className={fingering?"flute-tip finger-chart":"flute-tip note-info-tip"} style={clampTip(fingerTip.x,fingerTip.y,fingering?238:200,fingering?(fingeringsForMidi(midiForPitch(fingerTip.pitch))?.fingerings.length??1)*88+34:(noteDisplay!=="off"&&activeRhythmMode!=="off"&&fingerTip.beat?96:56),"above")}>{(noteDisplay!=="off"||fingering)&&<strong>{noteDisplay==="solfege"?fingerTip.solfege:fingerTip.name}<sup>{fingerTip.octave}</sup></strong>}{activeRhythmMode!=="off"&&fingerTip.beat&&<p className="note-info-beat">{zh?"拍位":"Beat"} {fingerTip.beat}</p>}{fingering&&(()=>{
         // Every way to play the note, each with its name, drawn on the card itself: nothing to click, so the card can close the moment the pointer moves on.

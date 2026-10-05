@@ -143,7 +143,7 @@ export default function RhythmLesson() {
       break;
     case 'tap':
       narration=tr('Now read a rhythm and clap it. Clap once for each note. A long note leaves a longer gap before the next clap.','现在读一个节奏，把它拍出来。每个音拍一下手。长音符后面，要等久一点再拍下一下。');
-      message=feedback||(taps.length?tr(`${taps.length} of ${tapPattern.length}…`,`${taps.length} / ${tapPattern.length}……`):tr('Listen, then press Count me in. After four clicks, clap the rhythm along with the beat.','先听一听，再点“数拍开始”。四声点击之后，跟着拍子拍出这个节奏。'));
+      message=feedback||(taps.length?tr('Keep going…','继续……'):tr('Listen, then press Count me in. After four clicks, clap the rhythm along with the beat.','先听一听，再点“数拍开始”。四声点击之后，跟着拍子拍出这个节奏。'));
       break;
     case 'melody':
       narration=tr('Put it together: choose pitches and lengths to make your own phrase.','把学到的放在一起：选择音高和时值，写出你自己的旋律。');
@@ -162,6 +162,7 @@ export default function RhythmLesson() {
   else next={...onward,ready:id==='build'?drawn&&built===3:id==='beams'?joined:id==='hold'||id==='tap'?correct:true};
   if(id==='melody'&&done)message=tr('You’ve explored note lengths! Next comes grouping beats into measures.','你已经认识了音符时值！接下来，我们学习怎样把拍子组成小节。');
 
+  const progress=id==='tap'?{done:taps.length,total:tapPattern.length}:id==='hold'?{done:round+(correct?1:0),total:HOLD_VALUES.length}:undefined;
   const tone=correct||done||(id==='build'&&drawn)?'correct':(id==='hold'||id==='tap')&&feedback&&!correct?'wrong':null;
   const visual=id==='values'?<DurationTree depth={depth} selected={treeRow} active={audio.active} onSelect={row=>{setTreeRow(row);void audio.play(Array(2**row).fill(VALUES[row]))}} zh={zh}/>
     :id==='build'?<NoteBuilder stage={built} drawn={drawn} labels={buildLabels} zh={zh} onDrawn={()=>setDrawn(true)}/>
@@ -187,7 +188,7 @@ export default function RhythmLesson() {
     </svg>;
 
   return <LessonFrame className="rhythm-lesson" title={tr('Rhythm: note lengths','节奏：音符的时值')} zh={zh} steps={names} current={step} onJump={navigate}
-    heading={names[step]} narration={narration} message={message} tone={tone} next={next}
+    heading={names[step]} narration={narration} message={message} tone={tone} next={next} progress={progress}
     status={audio.error?tr('Sound could not start. Tap Listen to retry.','声音未能启动，请点“听一听”重试。'):''}>
     <div className="rhythm-visual">{visual}</div>
     {clicks&&id!=='build'&&id!=='hold'&&<div className="rhythm-pulse" aria-label={tr('Beats','拍子')}>{dots.map((on,i)=><i key={i} className={on?'is-on':''}/>)}</div>}

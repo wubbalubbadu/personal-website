@@ -4,6 +4,7 @@ import {usePrivateMusic} from "../lib/privateMusic";
 import Link from "next/link";
 import {useEffect,useState} from "react";
 import {useLanguage} from "../i18n/LanguageContext";
+import {useTrickyBits} from "../lib/trickyBits";
 import {usePomodoro,formatClock} from "../usePomodoro";
 import {readSessions,type PracticeSession} from "../practice-data";
 import {useRecents} from "../lib/storage";
@@ -50,7 +51,7 @@ export default function PracticePage(){
   const privateMusic=usePrivateMusic();
   const libraryShelf=[...publicShelf,...privateMusic.items];
   const musicLibrary=[...publicMusic,...privateMusic.items];
-  const {t,lang}=useLanguage(),zh=lang==="zh";
+  const {t,lang}=useLanguage(),zh=lang==="zh",{bits:trickyBits}=useTrickyBits();
   const pomodoro=usePomodoro();
   const [routine,setRoutine]=useState<RoutineItem[]>([]);
   const [routineInput,setRoutineInput]=useState("");
@@ -210,6 +211,17 @@ export default function PracticePage(){
               </Link>:<span className="is-disabled"><strong>{item.title}</strong><small>{item.composer}</small></span>}
             </li>)}</ul>
             :<p className="practice-card__empty">{zh?"还没有打开过谱子。":"Nothing opened yet."}</p>}
+        </section>
+
+        <section className="practice-card" aria-labelledby="tricky-title">
+          <h2 id="tricky-title"><Link href="/flute-studio/tricky-bits">{t.trickyBits.title}</Link></h2>
+          {trickyBits.length
+            ?<ul className="studio-mini-list">{[...trickyBits].sort((a,b)=>b.addedAt-a.addedAt).slice(0,5).map(bit=><li key={bit.id}>
+              <Link href={`/flute-studio/tricky-bits?open=${encodeURIComponent(bit.id)}`}>
+                <strong>{musicLibrary.find(entry=>entry.id===bit.pieceId)?.title??bit.pieceId}</strong><small>{t.trickyBits.bars} {bit.label}{bit.tempos.length?` · ${Math.max(...bit.tempos)}`:""}{bit.goal?` → ${bit.goal}`:""}</small>
+              </Link>
+            </li>)}</ul>
+            :<p className="practice-card__empty">{t.trickyBits.empty}</p>}
         </section>
 
         <section className="practice-card" aria-labelledby="saved-title">

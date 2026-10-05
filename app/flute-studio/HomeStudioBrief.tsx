@@ -5,6 +5,7 @@ import Link from "next/link";
 import {readSessions,type PracticeSession} from "./practice-data";
 import {readPitchHistory,noteTendencies,focusNotes,correctedNotes,habits,PITCH_UPDATED,LONG_NOTE_MS,type PitchRecord} from "./lib/pitchHistory";
 import {useLanguage} from "./i18n/LanguageContext";
+import {useTrickyBits} from "./lib/trickyBits";
 
 const WEEK_MS=7*24*60*60*1000;
 
@@ -15,7 +16,7 @@ const WEEK_MS=7*24*60*60*1000;
  * Everything comes from what was actually recorded; empty states say how to fill it.
  */
 export default function HomeStudioBrief(){
-  const {lang}=useLanguage(),zh=lang==="zh";
+  const {lang,t}=useLanguage(),zh=lang==="zh",{bits,tallies}=useTrickyBits();
   const [sessions,setSessions]=useState<PracticeSession[]|null>(null),[pitch,setPitch]=useState<PitchRecord[]>([]),[now,setNow]=useState(0);
   useEffect(()=>{
     const load=()=>{setSessions(readSessions());setPitch(readPitchHistory());setNow(Date.now())};
@@ -56,6 +57,12 @@ export default function HomeStudioBrief(){
         {habit.longNotes>=5
           ?<><b>{zh?`${Math.round(habit.endingDropShare*100)}% 的长音结尾会往下掉`:`Endings drop in ${Math.round(habit.endingDropShare*100)}% of long notes`}</b><small>{zh?`一般保持 ${(habit.medianHoldMs/1000).toFixed(1)} 秒`:`You usually hold ${(habit.medianHoldMs/1000).toFixed(1)} s`}</small></>
           :<><b>{zh?"还需要多几个长音":"A few more long tones needed"}</b><small>{zh?`超过 ${LONG_NOTE_MS/1000} 秒的音，才会计入这里。`:`Notes held over ${LONG_NOTE_MS/1000} s count here.`}</small></>}
+      </Link>
+      <Link className="continue-section" href="/flute-studio/tricky-bits">
+        <p><i className="continue-dot tone-green"/>{t.trickyBits.title}</p>
+        {bits.length
+          ?<><b>{zh?`${bits.length} 个段落`:`${bits.length} ${bits.length===1?"passage":"passages"}`}</b><small>{zh?`共重复 ${Object.values(tallies).reduce((sum,n)=>sum+n,0)} 次`:`${Object.values(tallies).reduce((sum,n)=>sum+n,0)} repetitions so far`}</small></>
+          :<><b>{zh?"还没有保存":"Nothing saved yet"}</b><small>{zh?"在乐谱里选几个小节，点书签。":"Select bars in a piece and tap the bookmark."}</small></>}
       </Link>
     </div>
   </section>;

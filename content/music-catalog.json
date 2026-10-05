@@ -153,54 +153,6 @@
     "defaultTempo": 33
   },
   {
-    "id": "felix-mendelssohn-midsummer-scherzo",
-    "title": "Scherzo",
-    "composer": "Felix Mendelssohn",
-    "tags": [
-      "Classical",
-      "Excerpt"
-    ],
-    "status": "published",
-    "scorePath": "/music/felix-mendelssohn-midsummer-scherzo/score.musicxml",
-    "viewerPath": "/flute-studio/music/felix-mendelssohn-midsummer-scherzo",
-    "pdfPath": "/music/felix-mendelssohn-midsummer-scherzo/score.pdf",
-    "excerpt": {
-      "part": "Flute I",
-      "passage": "2 measures before [P] to the end",
-      "workLabel": "From A Midsummer Night’s Dream",
-      "zhWorkLabel": "选自《仲夏夜之梦》",
-      "tempoHint": "Suggested: 84 measures per minute",
-      "zhTempoHint": "建议速度：每分钟 84 小节",
-      "pages": [
-        {
-          "src": "/music/felix-mendelssohn-midsummer-scherzo/score.jpg",
-          "width": 960,
-          "height": 786
-        }
-      ]
-    },
-    "sempreStaccatoFromMeasure": 1,
-    "pulsePerMeasure": true,
-    "defaultTempo": 84,
-    "year": 1842,
-    "about": "From the incidental music for Shakespeare’s A Midsummer Night’s Dream, Op. 61, written years after Mendelssohn’s earlier overture, Op. 21. The flute excerpt begins two measures before rehearsal P and continues to the end.",
-    "recordings": [
-      {
-        "id": "szell-cleveland",
-        "title": "Scherzo · orchestral passage",
-        "performer": "Cleveland Orchestra · George Szell",
-        "youtubeId": "jY1Z-cPEE9Q",
-        "startSeconds": 219
-      },
-      {
-        "id": "mcgill-fujii",
-        "title": "Scherzo · two-flute performance",
-        "performer": "Demarre McGill · Kaori Fujii",
-        "youtubeId": "hxjMKNCvbEE"
-      }
-    ]
-  },
-  {
     "id": "txt-deja-vu",
     "title": "Deja Vu",
     "composer": "TOMORROW X TOGETHER",
@@ -1472,6 +1424,54 @@
     "defaultTempo": 132
   },
   {
+    "id": "felix-mendelssohn-midsummer-scherzo",
+    "title": "Scherzo",
+    "composer": "Felix Mendelssohn",
+    "tags": [
+      "Classical",
+      "Excerpt"
+    ],
+    "status": "published",
+    "scorePath": "/music/felix-mendelssohn-midsummer-scherzo/score.musicxml",
+    "viewerPath": "/flute-studio/music/felix-mendelssohn-midsummer-scherzo",
+    "pdfPath": "/music/felix-mendelssohn-midsummer-scherzo/score.pdf",
+    "excerpt": {
+      "part": "Flute I",
+      "passage": "2 measures before [P] to the end",
+      "workLabel": "From A Midsummer Night’s Dream",
+      "zhWorkLabel": "选自《仲夏夜之梦》",
+      "tempoHint": "Suggested: 84 measures per minute",
+      "zhTempoHint": "建议速度：每分钟 84 小节",
+      "pages": [
+        {
+          "src": "/music/felix-mendelssohn-midsummer-scherzo/score.jpg",
+          "width": 960,
+          "height": 786
+        }
+      ]
+    },
+    "sempreStaccatoFromMeasure": 1,
+    "pulsePerMeasure": true,
+    "defaultTempo": 84,
+    "year": 1842,
+    "about": "From the incidental music for Shakespeare’s A Midsummer Night’s Dream, Op. 61, written years after Mendelssohn’s earlier overture, Op. 21. The flute excerpt begins two measures before rehearsal P and continues to the end.",
+    "recordings": [
+      {
+        "id": "szell-cleveland",
+        "title": "Scherzo · orchestral passage",
+        "performer": "Cleveland Orchestra · George Szell",
+        "youtubeId": "jY1Z-cPEE9Q",
+        "startSeconds": 219
+      },
+      {
+        "id": "mcgill-fujii",
+        "title": "Scherzo · two-flute performance",
+        "performer": "Demarre McGill · Kaori Fujii",
+        "youtubeId": "hxjMKNCvbEE"
+      }
+    ]
+  },
+  {
     "id": "claude-debussy-syrinx",
     "title": "Syrinx",
     "composer": "Claude Debussy",
@@ -1505,5 +1505,20 @@
     "viewerPath": "/flute-studio/music/traditional-twinkle-twinkle-little-star",
     "defaultTempo": 100,
     "accompanimentKind": "piano"
+  },
+  {
+    "id": "karen-mok-yin-tian",
+    "title": "Yin Tian",
+    "composer": "Karen Mok",
+    "status": "published",
+    "scorePath": "/music/karen-mok-yin-tian/score.musicxml",
+    "fullScorePath": "/music/karen-mok-yin-tian/full-score.musicxml",
+    "readingPartId": "P1",
+    "partCount": 1,
+    "viewerPath": "/flute-studio/music/karen-mok-yin-tian",
+    "tags": [
+      "Pop"
+    ],
+    "defaultTempo": 68
   }
 ]

@@ -66,3 +66,9 @@
   .reader-workspace .markup-row .annotation-toolbar:not(.is-expanded) .annotation-colors{gap:5px;margin:0;justify-content:center;grid-column:span 2}
   .reader-workspace .markup-row .annotation-toolbar:not(.is-expanded)>.divider{display:none}
 }
+
+/* Ink is vector: ask for smooth edges rather than the fastest rasterising. */
+.annotation-ink path{shape-rendering:geometricPrecision}
+
+/* Pencil-only ink leaves finger scrolling and pinch zoom to the browser. */
+.annotation-layer.is-active.is-pencil-only{touch-action:pan-x pan-y pinch-zoom}

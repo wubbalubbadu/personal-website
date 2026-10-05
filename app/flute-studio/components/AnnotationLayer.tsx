@@ -150,8 +150,8 @@ export function AnnotationLayer({id,active,layoutReady,layoutVersion,toolbar,zh,
     }
     drag.current=null;eraseBase.current=null;
   }
-  // One controller owns page touches in markup. Native scroll/pinch cannot
-  // take a contact away mid-stroke, and rejected palms stay rejected until up.
+  // Finger drawing uses controlled gestures; Pencil-only mode leaves fingers
+  // to native scrolling. Rejected palms stay rejected until up.
   useEffect(()=>{
     const el=layer.current,scroller=el?.closest<HTMLElement>('.score-scroll');if(!el||!scroller)return;
     const state=contacts.current;
@@ -161,14 +161,20 @@ export function AnnotationLayer({id,active,layoutReady,layoutVersion,toolbar,zh,
         if(pointer.current!==null&&state.touches.has(pointer.current)){draft.current=null;resetPreview();publish(history.current.current);pointer.current=null;eraseBase.current=null}
         state.penDown(e.pointerId,e.timeStamp);gesture.current=null;return;
       }
-      if(e.pointerType!=='touch'||(e.target as Element).closest('textarea,button'))return;
+      if(e.pointerType!=='touch'||liveConfig.current.only||(e.target as Element).closest('textarea,button'))return;
       e.preventDefault();
       const accepted=state.touchDown(e.pointerId,e.clientX,e.clientY,e.width,e.height,e.timeStamp);
       if(!accepted){e.stopPropagation();return}
       const config=liveConfig.current;
-      if(!config.only&&config.tool!=='select'&&config.tool!=='text'&&config.tool!=='sticky')return;
+      if(!config.only&&config.tool!=='select'&&config.tool!=='text'&&config.tool!=='sticky'){
+        if(state.touches.size<2)return;
+        // A second finger switches from ink to navigation without saving a stray stroke.
+        draft.current=null;resetPreview();publish(history.current.current);pointer.current=null;eraseBase.current=null;
+        delete el!.dataset.drawing;
+      }
       e.stopPropagation();
       touchStart.current.set(e.pointerId,{x:e.clientX,y:e.clientY,moved:false});
+      if(state.touches.size>1)for(const start of touchStart.current.values())start.moved=true;
       try{el!.setPointerCapture(e.pointerId)}catch{/* Pointer may already be cancelled. */}
       if(state.pinchAllowed){const [a,b]=[...state.touches.values()];gesture.current={distance:Math.hypot(a.x-b.x,a.y-b.y),zoom:liveConfig.current.zoom}}
     }
@@ -181,9 +187,13 @@ export function AnnotationLayer({id,active,layoutReady,layoutVersion,toolbar,zh,
       const dx=e.clientX-old.x,dy=e.clientY-old.y;
       state.touches.set(e.pointerId,{...old,x:e.clientX,y:e.clientY});
       if(state.touches.size===1){scroller!.scrollLeft-=dx;scroller!.scrollTop-=dy}
-      else if(state.pinchAllowed&&gesture.current){
+      else {
+        // Each contact contributes its share of the centroid movement.
+        scroller!.scrollLeft-=dx/state.touches.size;scroller!.scrollTop-=dy/state.touches.size;
+        if(state.pinchAllowed&&gesture.current){
         const [a,b]=[...state.touches.values()];
         liveConfig.current.onZoom(gesture.current.zoom*Math.hypot(a.x-b.x,a.y-b.y)/Math.max(1,gesture.current.distance),(a.x+b.x)/2,(a.y+b.y)/2);
+        }
       }
     }
     function touchUp(e:globalThis.PointerEvent){
@@ -201,7 +211,7 @@ export function AnnotationLayer({id,active,layoutReady,layoutVersion,toolbar,zh,
       }
       state.up(e.pointerId,e.timeStamp);touchStart.current.delete(e.pointerId);gesture.current=null;
     }
-    function prevent(e:Event){if(liveConfig.current.active&&!(e.target as Element).closest('textarea,button'))e.preventDefault()}
+    function prevent(e:Event){if(liveConfig.current.active&&!liveConfig.current.only&&!(e.target as Element).closest('textarea,button'))e.preventDefault()}
     el.addEventListener('pointerdown',touchDown,{capture:true,passive:false});el.addEventListener('pointermove',touchMove,{capture:true,passive:false});el.addEventListener('pointerup',touchUp,true);el.addEventListener('pointercancel',touchUp,true);
     el.addEventListener('touchstart',prevent,{passive:false});el.addEventListener('touchmove',prevent,{passive:false});el.addEventListener('contextmenu',prevent);el.addEventListener('selectstart',prevent);
     return()=>{el.removeEventListener('pointerdown',touchDown,true);el.removeEventListener('pointermove',touchMove,true);el.removeEventListener('pointerup',touchUp,true);el.removeEventListener('pointercancel',touchUp,true);el.removeEventListener('touchstart',prevent);el.removeEventListener('touchmove',prevent);el.removeEventListener('contextmenu',prevent);el.removeEventListener('selectstart',prevent)};
@@ -238,7 +248,7 @@ export function AnnotationLayer({id,active,layoutReady,layoutVersion,toolbar,zh,
     </div>,toolbar)}
     {/* A keyboard-enabled drawing application contains its own text editor. */}
     {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex */}
-    <div ref={layer} role="application" aria-label={zh?'乐谱批注':'Score annotations'} tabIndex={active?0:-1} className={`annotation-layer ${active?'is-active':''} tool-${tool}`} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onDoubleClick={e=>{if(active&&tool==='select'){const mark=markAt(point(e),e.target);if(mark&&!isInk(mark))setEditing(mark.id)}}} onKeyDown={keys}>
+    <div ref={layer} role="application" aria-label={zh?'乐谱批注':'Score annotations'} tabIndex={active?0:-1} className={`annotation-layer ${active?'is-active':''} ${only?'is-pencil-only':''} tool-${tool}`} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onDoubleClick={e=>{if(active&&tool==='select'){const mark=markAt(point(e),e.target);if(mark&&!isInk(mark))setEditing(mark.id)}}} onKeyDown={keys}>
       {/* Legacy ink is a local data URL, not a network image. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       {doc.legacy&&<img draggable={false} className="annotation-legacy" src={doc.legacy.src} alt="" style={{width:doc.legacy.width,height:doc.legacy.height}}/>}

@@ -1,0 +1,39 @@
+/* Lesson 4. Notation comes from EngravedRow and the keyboard from PianoKeys; this is the page around them. */
+.accidentals-lesson{--scene-h:clamp(200px,28vh,300px)}
+/* One fixed layout for every step (LESSONS.md, principle 10): the music on top, the keyboard under it.
+   The staff, the drawing close-up and the matching columns all share one height. */
+.acc-scene{width:100%;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:calc(var(--scene-h) + 70px)}
+.acc-scene .engraved-row,.acc-scene .acc-closeup{height:calc(var(--scene-h) - 40px);max-height:none}
+.lesson-scene .acc-keys.sequence-keyboard.is-visible{max-width:360px;width:100%;margin:0 auto}
+
+/* Tap target over a notehead (step 1). Notes take no colour of their own on hover: colour has fixed jobs. */
+.acc-hit{fill:transparent;cursor:pointer}
+.acc-note-hit{outline:none}
+.acc-note-hit:focus-visible{fill:#b9362e;fill-opacity:.12}
+
+/* Drawing a sign: the faint engraved sign is the guide; strokes appear as you draw. */
+.acc-closeup{touch-action:none;cursor:crosshair}
+.acc-preview{fill:#292a33;opacity:.18}
+.acc-closeup .acc-preview{opacity:.3}
+.acc-stroke,.acc-stroke-done{fill:none;stroke:#292a33;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.acc-stroke-done{opacity:.85}
+
+/* Choosing a sign: the engraved sign is the button face. */
+.acc-glyph{display:block;height:30px;width:auto;fill:currentColor}
+.lesson-shell .measures-choices button:has(.acc-glyph){min-width:64px;min-height:52px;display:grid;place-items:center}
+
+/* Matching: lines between two columns of small staffs. A wrong line fades away. */
+.acc-match{cursor:pointer}
+.acc-match-line{stroke:#9a9ca3;stroke-width:3;stroke-linecap:round;pointer-events:none}
+.acc-match-line.is-right{stroke:#678956}
+.acc-match-line.is-fading{animation:acc-fade .5s ease forwards}
+@keyframes acc-fade{to{opacity:0}}
+.acc-hint{fill:none;stroke:#b9362e;stroke-width:4;stroke-dasharray:10 8;pointer-events:none}
+
+/* How far a sign reaches, drawn after a right answer. */
+.acc-reach{fill:#b9362e;opacity:.08;pointer-events:none}
+
+/* "Through the measure" names itself on two lines; every step reserves both, so the music never moves. */
+.lesson-shell.accidentals-lesson .theory-timeline button{min-height:72px}
+
+@media(prefers-reduced-motion:reduce){.acc-match-line.is-fading{animation:none;opacity:0}}

@@ -79,7 +79,7 @@ export default function FirstNotes(){
   const toNext=():LessonNext=>({label:tr(`Next: ${dots[step+1]}`,`下一步：${dots[step+1]}`)+' →',ready:false,onClick:()=>go(step+1)});
   const q=quiz.questions[quiz.round],last=quiz.round===quiz.questions.length-1;
   // narration explains the idea above the music; message is Cookie: what to try, then how it went.
-  let narration:ReactNode='',message:ReactNode='',tone:'correct'|'wrong'|null=null,next:LessonNext|null=toNext(),scene:ReactNode=null;
+  let narration:ReactNode='',message:ReactNode='',tone:'correct'|'wrong'|null=null,next:LessonNext|null=toNext(),scene:ReactNode=null,progress:{done:number;total:number}|undefined;
   const markDone=()=>{next={...next!,ready:true}};
 
   switch(id){
@@ -166,10 +166,8 @@ export default function FirstNotes(){
       tone=quiz.correct?'correct':quiz.correct===false?'wrong':null;
       if(quiz.correct&&!last)next={label:tr('Next question →','下一题 →'),ready:true,onClick:nextRound,onSkip:()=>go(step+1)};
       else if(quiz.correct)markDone();
-      scene=<>
-        <NotePractice key={`${quiz.questions.length}-${quiz.round}-${q.position}`} question={q} locked={quiz.correct===true} zh={zh} onAnswer={answer} onHear={p=>hear(p)}/>
-        <p className="lesson-count">{tr(`${isCheck?'Note':'Question'} ${quiz.round+1} of ${quiz.questions.length}`,`第 ${quiz.round+1} ${isCheck?'个':'题'}，共 ${quiz.questions.length} ${isCheck?'个':'题'}`)}</p>
-      </>;
+      progress={done:quiz.round+(quiz.correct?1:0),total:quiz.questions.length};
+      scene=<NotePractice key={`${quiz.questions.length}-${quiz.round}-${q.position}`} question={q} locked={quiz.correct===true} zh={zh} onAnswer={answer} onHear={p=>hear(p)}/>;
       break;
     }
     case 'ledger':
@@ -206,7 +204,7 @@ export default function FirstNotes(){
 
   if(!ready)return <main className="theory-shell"><p>{tr('Loading…','加载中…')}</p></main>;
   return <LessonFrame title={tr('The staff and notes','五线谱与音符')} zh={zh} steps={dots} current={step} onJump={go}
-    heading={dots[step]} narration={narration} message={message} tone={tone} next={next}
+    heading={dots[step]} narration={narration} message={message} tone={tone} next={next} progress={progress}
     status={audio.error?tr('Sound could not start. Tap a note to try again.','声音未能启动，请点一个音再试。'):!saving?tr('Progress cannot be saved in this browser.','此浏览器无法保存进度。'):''}>
     {scene}
   </LessonFrame>;

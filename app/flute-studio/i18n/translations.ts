@@ -5,6 +5,31 @@ function skill(id: string, title: string, description: string) {
 }
 
 const en = {
+  trickyBits: {
+    title: "Tricky bits",
+    empty: "Nothing saved yet. Select a few bars in a piece and tap the bookmark.",
+    openPiece: "Open full piece",
+    changeBars: "Change bars",
+    remove: "Remove",
+    locked: "Unlock private music in Settings to see this one.",
+    missing: "This piece is no longer in the library.",
+    bars: "Bars",
+    tempo: "Tempo",
+    goal: "Goal",
+    setGoal: "Set a goal tempo",
+    add: "Add tempo",
+    increment: "Tempo step",
+    tallyTitle: "Repetitions",
+    reps: "reps",
+    previous: "Previous bit",
+    next: "Next bit",
+    close: "Close",
+    more: "More",
+    saved: "Saved to Tricky bits",
+    removed: "Removed from Tricky bits",
+    updated: "Bars updated",
+    homeBlurb: "Passages you are drilling, with tempos and repetitions.",
+  },
   nav: {
     brand: "Cookie Flute Studio",
     brandHome: "Cookie Flute Studio home",
@@ -434,6 +459,31 @@ const en = {
 };
 
 const zh: typeof en = {
+  trickyBits: {
+    title: "精练小节",
+    empty: "还没有保存。在乐谱里选几个小节，点书签即可。",
+    openPiece: "打开整首曲子",
+    changeBars: "更改小节",
+    remove: "移除",
+    locked: "请在设置中解锁私人乐谱后查看。",
+    missing: "这首曲子已不在曲库中。",
+    bars: "小节",
+    tempo: "速度",
+    goal: "目标",
+    setGoal: "设定目标速度",
+    add: "添加速度",
+    increment: "速度步长",
+    tallyTitle: "重复次数",
+    reps: "次",
+    previous: "上一个",
+    next: "下一个",
+    close: "关闭",
+    more: "更多",
+    saved: "已存入精练小节",
+    removed: "已从精练小节移除",
+    updated: "小节已更新",
+    homeBlurb: "正在反复练习的段落，记录速度和次数。",
+  },
   nav: {
     brand: "Cookie 长笛工作室",
     brandHome: "Cookie 长笛工作室首页",

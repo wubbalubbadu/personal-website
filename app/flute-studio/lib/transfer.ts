@@ -170,7 +170,7 @@ function combine(here:unknown,arriving:unknown):unknown{
 const GROUPS:{id:string;en:string;zh:string;match:RegExp}[]=[
   {id:"saved",en:"Your lists and saved sets",zh:"你的列表和保存的组合",match:/-favorites$|^cookie:music-status|^cookie:scale-book:sets/},
   {id:"scales",en:"Scale Studio setup and tempos",zh:"音阶练习设置和速度",match:/^cookie:scale-book:(preferences|tempos)|^cookie:long-tones|^cookie:reichert:tempos|^cookie:score-tempo/},
-  {id:"practice",en:"Practice history, routine and timer",zh:"练习记录、日程和计时",match:/^cookie:practice-|^cookie:pomodoro/},
+  {id:"practice",en:"Practice history, routine and timer",zh:"练习记录、日程和计时",match:/^cookie:practice-|^cookie:pomodoro|^cookie:tricky-bits/},
   {id:"pitch",en:"Pitch history and pitch tests",zh:"音准记录和音准测试",match:/^cookie:pitch-history|^cookie:tendency-tests/},
   {id:"progress",en:"Lessons, books and roadmap",zh:"课程、练习曲集和路线图进度",match:/theory|^cookie:book-progress|^cookie:roadmap/},
   {id:"drawings",en:"Pencil drawings",zh:"铅笔标注",match:/:ink$/},

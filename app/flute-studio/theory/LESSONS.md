@@ -38,15 +38,18 @@ to what the learner actually did. No headings, captions or labels repeating eith
 
 **6. The learner controls the pace.** No timers that move the lesson on, no auto transitions, no
 text that disappears before it's read. A new part of an idea is its own step. Next lives in one
-place (Cookie's bubble): a quiet Skip until the step is done, then a filled button. Every step
-stays explorable after it's done.
+place (Cookie's bubble): a quiet Skip until the step is done, then a filled button. Next only moves
+the lesson on: it may step through a demonstration ("Mark beat 2 →"), but it never does something
+the learner is meant to do themselves (adding a sign, answering). Every step stays explorable after
+it's done.
 
 **7. Obvious, forgiving interaction.** Say the verb: tap, drag, draw, hold, clap. Act on the music
 itself rather than on extra controls. Generous hit areas (the whole line, not its middle), mouse
 previews where a slip is easy, and it all works on iPad with no hover.
 
 **8. Demonstrate, explore, check.** Practice uses fresh random material, gets harder in order, and
-shows progress ("Question 2 of 6"). A miss gets a hint that teaches ("count up from G: G, A, B")
+shows how much is left with progress dots (`ProgressDots`: a short row of dots that fill as you go,
+in their own row under the music, between the scene and Cookie). Never as words: Cookie says "Next one" and "Last one", not "Question 2 of 6". A miss gets a hint that teaches ("count up from G: G, A, B")
 and keeps the question in view, and a drawing or placing task has a Hint and, after a hint or two
 misses, Show answer. There is no separate review page at the end: it only repeats exercises the
 lesson already had. Checks sit right after the idea they test (a 7/4 question after the top number,
@@ -81,8 +84,12 @@ Three tiers, so the list never looks like a hundred lessons:
 - **Later:** the "go deeper" theory track, built when there's time.
 
 Each lesson: about 10 minutes, 7 to 12 steps, checks inside the steps rather than a review page at the end.
-Rhythm and pitch alternate in the order they turn up in beginner parts: accidentals and key
-signatures (B♭, F♯) arrive early, 6/8 and triplets late. Any lesson can be opened from the list.
+Pitch and rhythm come in blocks, in the order they turn up in beginner parts: the staff, then
+lengths and measures, then sharps, flats and key signatures together (B♭ and F♯ are in almost every
+first band part), then the rest of rhythm (rests, dots and ties, 6/8 in two). Triplets come later.
+(Revised October 2026: the original map had rests before accidentals and a separate "smaller beats"
+lesson; lessons 2 and 3 now cover eighths and sixteenths, and "1 and 2 and" moved into Dots and ties,
+where a dotted quarter first needs it.) Any lesson can be opened from the list.
 
 **Lessons connect.** Each one opens from what you can already do and names the question it
 answers, and ends by pointing at the next one. The "bridge" column is that opening.
@@ -94,11 +101,11 @@ answers, and ends by pointing at the next one. The "bridge" column is that openi
 | 1 | **The staff and notes** (built) | How is pitch written down? | staff, spaces, notes, treble clef, other clefs *(brief)*, note names, finding notes, practice, ledger lines, Twinkle, read new notes | The Staff, Clefs, Ledger Lines |
 | 2 | **Note lengths** (built) | You can write *which* note. How do we write *how long*? | long and short, shapes, build a note, values, beams, hold, clap | Note Duration (part) |
 | 3 | **Measures and time signatures** (built) | You can read lengths against a beat. How are beats organised, and how do you keep your place? | why measures help, 4/4 and bar lines, counting note lengths, finding and placing beats, 2/4 and 3/4, the bottom number with 4/4 and 2/2, add bar lines, count, clap and build | Measures and Time Signatures, Simple Meter |
-| 4 | **Rests** | Measures have to add up. What fills a beat where you don't play? | silence has length, each note's rest, whole-measure rest, counting through rests, clap with rests | Rest Duration |
-| 5 | **Sharps, flats and naturals** | You can find a note on the staff. What about the notes between the letters? | half and whole steps (keyboard), the three signs, how long an accidental lasts, enharmonic spellings *(brief)* | Steps and Accidentals |
-| 6 | **Key signatures** | Writing the same sharp every time is tiring. How does music say "always"? | why they exist, reading one, it applies in every octave, signature vs accidental, naming the major key *(brief trick)* | Key Signatures, Key Signature Calculation *(brief)* |
-| 7 | **Dots and ties** | Some notes last longer than any one shape, or across a bar line. How? | why, the dot, the tie across a bar line, dotted-quarter-eighth | Dots and Ties |
-| 8 | **Counting smaller beats, and putting it together** | Rhythms get busier. How do you count between the beats? Then: read a whole melody. | "1 and 2 and", sixteenth counting *(brief)*, eighth-note patterns, syncopation *(brief)*; wrap-up: a real 8-bar melody, name, count, clap, play along | (counting is only implied there) |
+| 4 | **Sharps, flats and naturals** (built) | You can find any letter on the staff. What about the sounds between the letters? | half steps (adjacent keys, including E to F), the sharp, the flat (two names for one key, E♯ = F, as a brief discovery), the natural, through the measure (same note, same octave, until a natural or the bar line), read a phrase (Ode to Joy in D); six steps, no whole steps or double sharps and flats | Steps and Accidentals |
+| 5 | **Key signatures** | Writing the same sharp every time is tiring. How does music say "always"? | why they exist, reading one, it applies in every octave, signature vs accidental, naming the major key *(brief trick: last sharp up a half step; the second-last flat, and one flat is F)*, each signature also names a minor key (G major and E minor share one) *(brief: the signature alone can't tell you which; the piece's last note usually does)* | Key Signatures, Key Signature Calculation *(brief)* |
+| 6 | **Rests** | Measures have to add up. What fills a beat where you don't play? | a gap in a full measure, the quarter rest, half and whole rests (hat and hole), the whole-measure rest, the eighth rest (sixteenth *brief*), which rest fills the gap, counting through rests, read and clap | Rest Duration |
+| 7 | **Dots and ties** | Some notes last longer than any one shape, or across a bar line. How? | why, the dot, the tie across a bar line, counting "1 and 2 and" (a dotted quarter's eighth lands on "and"), dotted-quarter-eighth | Dots and Ties |
+| 8 | **6/8 in two, and putting it together** | Lesson 3 counted 6/8 as six eighths. How does it feel as two big beats? Then: read a whole melody. | 6/8 felt in two (each beat a dotted quarter), syncopation *(brief)*; wrap-up: a real 8-bar melody, name, count, clap, play along | Compound Meter *(part)* |
 
 ### Extras
 
@@ -107,7 +114,7 @@ answers, and ends by pointing at the next one. The "bridge" column is that openi
 | **Major and minor scales** | the step pattern, a scale in any key (links to Scale Studio), minor *(brief: natural, harmonic, melodic named)*, scale degrees and the tonic *(brief)* | Major Scale, Minor Scales, Scale Degrees *(brief)* |
 | **Dynamics and articulation** | p to f, hairpins, slurs, staccato, accent, tenuto, breath marks; hear each | (not covered there) |
 | **Tempo and road maps** | tempo words, fermata, repeats, first and second endings, D.C., D.S., Coda | (not covered there) |
-| **6/8 and triplets** | beats in groups of three, 6/8 feel, triplets, odd meters like 5/4 *(brief, one step)* | Compound Meter, Odd Meter *(brief)* |
+| **Triplets and odd meters** | triplets, 9/8 and 12/8, odd meters like 5/4 and 7/8 *(brief, one step)* | Compound Meter *(rest)*, Odd Meter *(brief)* |
 
 ### Later
 
