@@ -102,3 +102,53 @@ test('a pasted code with line breaks still reads, and a wrong one says so',async
   assert.equal(await decode('hello'),'not-a-code');
   assert.equal(await decode(code.slice(0,code.length-30)),'damaged');
 });
+
+test('current markup follows drawing inclusion and survives a code round trip',async()=>{
+  const drawing='cookie:piece:annotations:v2';
+  withStore(makeStore({[drawing]:'{"version":2,"marks":[]}','cookie:music-status:v1':'{"p":{"status":"working","at":10}}'}),()=>{
+    assert.ok(drawing in collect(true).data);
+    assert.ok(!(drawing in collect(false).data));
+    assert.ok(describe(collect(true),false).includes('Pencil drawings'));
+  });
+  const snapshot=await decode(await encode(collect(true)));
+  const receiver=makeStore();withStore(receiver,()=>apply(snapshot));
+  assert.equal(JSON.parse(receiver.getItem('cookie:music-status:v1')).p.status,'working');
+  assert.equal(receiver.getItem(drawing),'{"version":2,"marks":[]}');
+});
+
+test('same tricky bit keeps both tempo histories and repeated imports do not inflate tallies',()=>{
+  const key='cookie:tricky-bits:v1';
+  const here='[{"id":"p:1-2","tempos":[60,72],"goal":100}]';
+  const next='[{"id":"p:1-2","tempos":[72,80],"goal":120}]';
+  const merged=merge(here,next,key);
+  assert.deepEqual(JSON.parse(merged)[0].tempos,[60,72,80]);
+  assert.equal(JSON.parse(merged)[0].goal,120);
+  assert.equal(merge(merged,next,key),merged);
+  const tallyKey='cookie:tricky-bits:tallies:v1';
+  const tallies=merge('{"p":8,"q":3}','{"p":5,"r":2}',tallyKey);
+  assert.deepEqual(JSON.parse(tallies),{p:8,q:3,r:2});
+  assert.equal(merge(tallies,'{"p":5,"r":2}',tallyKey),tallies);
+});
+
+test('newer status removal defeats older exported status',()=>{
+  const merged=JSON.parse(merge('{"p":{"status":null,"at":900}}','{"p":{"status":"working","at":100}}','cookie:music-status:v1'));
+  assert.equal(merged.p.status,null);
+});
+
+test('markup merges independent marks and honors newer edits and erasures',()=>{
+  const key='cookie:p:annotations:v2';
+  const old=JSON.stringify({version:2,marks:[{id:'a',text:'local'},{id:'b',text:'erase me'}],sync:{a:{at:30},b:{at:10}}});
+  const next=JSON.stringify({version:2,marks:[{id:'a',text:'older'},{id:'c',text:'new'}],sync:{a:{at:20},b:{at:40,deleted:true},c:{at:40}}});
+  const merged=merge(old,next,key),doc=JSON.parse(merged);
+  assert.deepEqual(doc.marks,[{id:'a',text:'local'},{id:'c',text:'new'}]);
+  assert.equal(doc.sync.b.deleted,true);
+  assert.deepEqual(JSON.parse(merge(merged,next,key)),JSON.parse(merged));
+});
+
+ test('private unlock code stays on the device and is excluded on import',async()=>{
+   const store=makeStore({'cookie:private-music-code':'test-secret','cookie:music-status:v1':'{}'});
+   const snapshot=withStore(store,()=>collect(true));
+   assert.equal(snapshot.data['cookie:private-music-code'],undefined);
+   const incoming=await decode(await encode({at:new Date().toISOString(),data:{'cookie:private-music-code':'test-secret'}}));
+   assert.equal(incoming.data['cookie:private-music-code'],undefined);
+ });

@@ -3,7 +3,7 @@ import {memo,useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {createPortal} from 'react-dom';
 import {PracticeIcon} from './PracticeIcon';
 import {usePencilOnly} from '../lib/pencilMode';
-import {AnnotationContacts,AnnotationHistory,emptyAnnotations,hitsInk,isInk,markPath,moveMark,paperPoint,penOutline,type AnnotationDocument,type InkMark,type Mark,type MarkPoint,type TextMark} from '../lib/annotationDocument';
+import {AnnotationContacts,AnnotationHistory,emptyAnnotations,hitsInk,isInk,markPath,moveMark,paperPoint,penOutline,stampAnnotations,type AnnotationDocument,type InkMark,type Mark,type MarkPoint,type TextMark} from '../lib/annotationDocument';
 import '../annotation-layer.css';
 import {annotationLayout,attachMark,placeMark,type AnnotationLayout} from '../lib/annotationAnchors';
 
@@ -34,7 +34,12 @@ export function AnnotationLayer({id,active,layoutReady,layoutVersion,toolbar,zh,
   useEffect(()=>{liveConfig.current={active,only,tool,zoom,onZoom,color}},[active,only,tool,zoom,onZoom,color]);
   function persist(){
     if(pointer.current!==null){saveTimer.current=window.setTimeout(persist,350);return}
-    try{localStorage.setItem(`cookie:${id}:annotations:v2`,JSON.stringify(docRef.current));setStorageError(false)}catch{setStorageError(true)}
+    try{
+      const key=`cookie:${id}:annotations:v2`,stored=JSON.parse(localStorage.getItem(key)||'null');
+      const previous=stored?.version===2&&Array.isArray(stored.marks)?stored:emptyAnnotations();
+      const stamped=stampAnnotations(docRef.current,previous);
+      localStorage.setItem(key,JSON.stringify(stamped));setStorageError(false);
+    }catch{setStorageError(true)}
   }
   function publish(next:AnnotationDocument){docRef.current=next;setDoc(next);setHistoryState({canUndo:history.current.canUndo,canRedo:history.current.canRedo})}
   function commit(next:AnnotationDocument,key:string|null=null){history.current.commit(next,key);dirty.current=true;publish(next);window.clearTimeout(saveTimer.current);saveTimer.current=window.setTimeout(persist,350)}
@@ -255,7 +260,7 @@ export function AnnotationLayer({id,active,layoutReady,layoutVersion,toolbar,zh,
       <svg className="annotation-ink" aria-hidden="true">{placedMarks.filter(isInk).map(mark=><Shape key={mark.id} mark={mark}/>)}<path ref={livePath} fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
       {selectedMark&&isInk(selectedMark)&&active&&<svg className="annotation-selection" aria-hidden="true"><path d={markPath(selectedMark)} fill="none" stroke="#57799d" strokeWidth={selectedMark.width+6} strokeOpacity=".25"/></svg>}
       {placedMarks.filter((m):m is TextMark=>!isInk(m)).map(mark=><div key={mark.id} data-mark-id={mark.id} className={`annotation-text ${mark.kind} ${active&&selected===mark.id?'is-selected':''}`} style={{left:mark.x,top:mark.y,color:mark.color}}>
-        {editing===mark.id&&active?<textarea aria-label={mark.kind==='sticky'?'Sticky note':'Annotation text'} value={mark.text} rows={Math.max(1,mark.text.split('\n').length)} style={{width:`${Math.min(28,Math.max(2,...mark.text.split('\n').map(s=>s.length+1)))}ch`}} onBlur={endEditing} onChange={e=>{const text=e.target.value;commit({...docRef.current,marks:docRef.current.marks.map(m=>m.id===mark.id?{...m,text}:m)},`typing:${mark.id}`);e.target.style.height='auto';e.target.style.height=`${e.target.scrollHeight}px`}}/>:<span>{mark.text||' '}</span>}
+        {editing===mark.id&&active?<textarea aria-label={mark.kind==='sticky'?(zh?'便签':'Sticky note'):(zh?'批注文字':'Annotation text')} value={mark.text} rows={Math.max(1,mark.text.split('\n').length)} style={{width:`${Math.min(28,Math.max(2,...mark.text.split('\n').map(s=>s.length+1)))}ch`}} onBlur={endEditing} onChange={e=>{const text=e.target.value;commit({...docRef.current,marks:docRef.current.marks.map(m=>m.id===mark.id?{...m,text}:m)},`typing:${mark.id}`);e.target.style.height='auto';e.target.style.height=`${e.target.scrollHeight}px`}}/>:<span>{mark.text||' '}</span>}
       </div>)}
     </div>
   </>;

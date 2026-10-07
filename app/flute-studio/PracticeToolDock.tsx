@@ -367,11 +367,12 @@ export default function PracticeToolDock() {
   const launcher = (
     <button
       ref={launcherRef}
-      className="dock-launcher"
+      className={open ? "dock-launcher" : "dock-launcher has-tip"}
       aria-expanded={open}
       aria-controls="practice-console"
       aria-label={open ? t.toolDock.hideTools : t.toolDock.practiceTools}
-      title={open ? t.toolDock.hideTools : t.toolDock.practiceTools}
+      // The studio's own tooltip, like the clock and account buttons beside it (not the browser's slow native one); none while the panel is open.
+      data-tip={open ? undefined : t.toolDock.practiceTools}
       onClick={() => { if (!open) { window.dispatchEvent(new Event("cookie:open-tools-panel")); moved.current = false; setFocusedTool("tuner"); } setOpen((current) => !current); }}
     >
       {/* A tuning fork: the tools are what you tune and keep time with. */}

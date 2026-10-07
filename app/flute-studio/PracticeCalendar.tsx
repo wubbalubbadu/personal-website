@@ -1,9 +1,10 @@
 "use client";
 
-import {useMemo,useState,useSyncExternalStore} from "react";
+import {useMemo,useState,useSyncExternalStore,type KeyboardEvent,type ReactNode} from "react";
 import {useLanguage} from "./i18n/LanguageContext";
 import type {PracticeSession} from "./practice-data";
 import "./practice-calendar.css";
+import {PracticeIcon} from "./components/PracticeIcon";
 
 /**
  * A month of practice, drawn from the sessions already being recorded.
@@ -30,7 +31,11 @@ const dayKey = (value: number | string | Date) => new Date(value).toDateString()
 const noSubscription=()=>()=>{};
 const useToday=()=>useSyncExternalStore(noSubscription,()=>new Date().toDateString(),()=>null);
 
-export function PracticeCalendar({sessions}:{sessions:PracticeSession[]}){
+/**
+ * `onSelect`: My Studio picks a day to show its sessions beside the calendar (the home page leaves it off, and keeps the
+ * hover read-out). `legend` adds a small key under the grid saying the colour is minutes practised.
+ */
+export function PracticeCalendar({sessions,selected=null,onSelect,legend=false,children}:{sessions:PracticeSession[];selected?:string|null;onSelect?:(day:string)=>void;legend?:boolean;/** Anything shown under the month, e.g. My Studio's totals. */children?:ReactNode}){
   const {t,lang}=useLanguage();
   // Offset in months from the current one; 0 is this month.
   const [offset,setOffset]=useState(0);
@@ -78,8 +83,8 @@ export function PracticeCalendar({sessions}:{sessions:PracticeSession[]}){
     <div className="practice-card__heading">
       <h2 id="calendar-title">{monthLabel}</h2>
       <div className="calendar-card__nav">
-        <button type="button" aria-label={t.practicePage.calendarPrev} onClick={()=>setOffset(value=>value-1)}>‹</button>
-        <button type="button" aria-label={t.practicePage.calendarNext} disabled={offset>=0} onClick={()=>setOffset(value=>value+1)}>›</button>
+        <button type="button" aria-label={t.practicePage.calendarPrev} onClick={()=>setOffset(value=>value-1)}><PracticeIcon name="previous"/></button>
+        <button type="button" aria-label={t.practicePage.calendarNext} disabled={offset>=0} onClick={()=>setOffset(value=>value+1)}><PracticeIcon name="next"/></button>
       </div>
     </div>
     <div className="calendar-grid" role="grid" aria-label={monthLabel}>
@@ -88,11 +93,16 @@ export function PracticeCalendar({sessions}:{sessions:PracticeSession[]}){
         ?<span className="calendar-grid__cell is-empty" key={cell.key} aria-hidden="true"/>
         :<span
           key={cell.key}
-          className={`calendar-grid__cell${cell.isToday?" is-today":""}`}
+          className={`calendar-grid__cell${cell.isToday?" is-today":""}${selected===cell.key?" is-selected":""}${onSelect?" is-pickable":""}`}
           data-level={level(cell.minutes)}
-          role="gridcell"
+          role={onSelect?"button":"gridcell"}
           aria-label={cell.minutes?`${cell.day}: ${t.practicePage.calendarMinutes(cell.minutes)}`:`${cell.day}`}
-          {...(cell.minutes?{
+          {...(onSelect?{
+            // Any day can be picked, practised or not: an empty day answers "nothing that day".
+            tabIndex:0,"aria-pressed":selected===cell.key,
+            onClick:()=>onSelect(cell.key),
+            onKeyDown:(e:KeyboardEvent)=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();onSelect(cell.key)}},
+          }:cell.minutes?{
             // Only days you actually practised are worth landing on — an
             // empty square has nothing to read out, and making all thirty
             // focusable would bury the rest of the page in tab stops.
@@ -106,10 +116,14 @@ export function PracticeCalendar({sessions}:{sessions:PracticeSession[]}){
     </div>
     {/* Reads out under the grid rather than as a native tooltip — those
         arrive late, sit wherever the OS puts them, and cannot be styled. */}
-    <p className="calendar-card__summary">
+    {legend&&<div className="calendar-card__legend" aria-hidden="true">
+      <span>{lang==="zh"?"少":"Less"}</span>{[0,1,2,3].map(n=><i key={n} data-level={n}/>)}<span>{lang==="zh"?"多":"More"}</span>
+    </div>}
+    {!onSelect&&<p className="calendar-card__summary">
       {peek??(practisedDays
         ?`${t.practicePage.calendarDaysPractised(practisedDays)} · ${t.practicePage.calendarMinutes(totalMinutes)}`
         :t.practicePage.calendarEmpty)}
-    </p>
+    </p>}
+    {children}
   </section>;
 }

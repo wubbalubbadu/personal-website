@@ -59,3 +59,16 @@ test('stroke erasing hits between samples and moving keeps pressure and source i
   const moved=moveMark(stroke,20,30);assert.equal(moved.points[0].p,.2);assert.equal(stroke.points[0].x,10);
   assert.notEqual(penOutline(stroke),penOutline({...stroke,points:stroke.points.map(p=>({...p,p:1}))}));
 });
+
+test('annotation transfer revisions track changed marks, deletion and undo restoration',async()=>{
+  const source=fs.readFileSync(new URL('../app/flute-studio/lib/annotationDocument.ts',import.meta.url),'utf8');
+  const compiled=ts.transpile(source,{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022});
+  const {stampAnnotations}=await import('data:text/javascript;base64,'+Buffer.from(compiled).toString('base64'));
+  const mark={id:'a',kind:'text',x:1,y:2,text:'note',color:'black'};
+  const first=stampAnnotations({version:2,marks:[mark]},{version:2,marks:[]},10);
+  assert.equal(first.sync.a.at,10);
+  const erased=stampAnnotations({version:2,marks:[]},first,20);
+  assert.equal(erased.sync.a.deleted,true);
+  const restored=stampAnnotations(first,erased,30);
+  assert.deepEqual(restored.sync.a,{at:30});
+});

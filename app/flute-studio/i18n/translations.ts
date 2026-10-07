@@ -393,7 +393,7 @@ const en = {
     markStepDone: (step: string) => `Mark "${step}" as done`,
     removeStep: (step: string) => `Remove "${step}"`,
     historyTitle: "Practice history",
-    historyEmpty: "Nothing logged yet — finish a practice session or a focus round to see it here.",
+    historyEmpty: "Nothing logged yet. Finish a practice session or a focus round to see it here.",
     sessionsOn: (n: number) => `${n} session${n === 1 ? "" : "s"}`,
     minutesTotal: (n: number) => `${n} min total`,
     notesLabel: "Notes",
@@ -849,15 +849,69 @@ const zh: typeof en = {
     markStepDone: (step) => `将「${step}」标记为已完成`,
     removeStep: (step) => `移除「${step}」`,
     historyTitle: "练习历史",
-    historyEmpty: "还没有记录——完成一次练习或一个专注回合后会显示在这里。",
+    historyEmpty: "还没有记录。完成一次练习或一个专注回合后，这里会显示。",
     sessionsOn: (n) => `${n} 次练习`,
     minutesTotal: (n) => `共 ${n} 分钟`,
     notesLabel: "练习笔记",
   },
-  // Not translated — reuses the English content as-is rather than a
-  // separate hand-translated copy (explicit call: this page isn't worth
-  // the token spend right now). Swap for real zh strings later if needed.
-  roadmap: en.roadmap,
+  roadmap: {
+    eyebrow: "长笛技巧地图",
+    title: "技巧地图",
+    learnedCount: (n: number, total: number) => `已标记 ${n} / ${total}`,
+    markLearned: "标记为已掌握",
+    markUnlearned: "已标记为掌握",
+    close: "关闭",
+    regions: [
+      { id: "foundation", title: "气息与基础", description: "通过呼吸、平衡与口型建立稳定的长笛声音。", tone: "sage", skills: [
+        skill("balance-posture", "平衡与姿势", "保持舒适的身体协调，尽量减少多余紧张。"),
+        skill("breath-support", "呼吸与气息支持", "充分而安静地吸气，让气息贯穿乐句。"),
+        skill("centered-tone", "集中的音色", "在低音和中音区获得清晰稳定的声音。"),
+        skill("long-tones", "长音", "持续吹奏，聆听声音的稳定性、共鸣与音准。"),
+        skill("decrescendo-release", "渐弱与收音", "逐渐收音，同时避免音高上扬或声音塌陷。"),
+        skill("register-connection", "音区连接", "自然连接低、中、高音区，避免用力挤压。"),
+      ]},
+      { id: "expression", title: "音色与表达", description: "控制音准、力度、音色、颤音和乐句走向。", tone: "pink", skills: [
+        skill("dynamic-control", "力度控制", "改变音量，同时保持音色与音准稳定。"),
+        skill("vibrato", "颤音", "控制气息脉动，并根据乐句调整速度与幅度。"),
+        skill("intonation-awareness", "音准意识", "听辨音准倾向，运用气息、支持与口型调整。"),
+        skill("tone-color", "音色变化", "有意识地改变声音的温暖度、清晰度与集中度。"),
+        skill("phrasing-breath", "乐句与换气规划", "演奏前确定乐句走向和换气位置。"),
+      ]},
+      { id: "articulation", title: "吐音", description: "协调气息、舌头和手指，清晰地演奏不同音型。", tone: "sand", skills: [
+        skill("single-tonguing", "单吐", "以轻巧的舌头动作起音，同时保持气息流动。"),
+        skill("slurs-legato", "连线与连奏", "平滑连接音符，避免断音、间隙和意外重音。"),
+        skill("staccato-detache", "断奏与分奏", "改变音符长度，避免生硬地截断气息。"),
+        skill("mixed-articulation", "混合吐音音型", "以稳定速度切换连奏和吐音音型。"),
+        skill("double-triple-tonguing", "双吐与三吐", "在快速演奏中平衡前后吐音音节。"),
+      ]},
+      { id: "fingers", title: "手指与音型", description: "通过音阶、颤音和常见音型训练高效的手指动作。", tone: "blue", skills: [
+        skill("finger-coordination", "手指协调", "手指贴近按键，协调相关手指的动作。"),
+        skill("finger-trills", "手指颤音", "熟悉常用颤音指法，避免握紧长笛。"),
+        skill("major-scales", "大调音阶", "从一个八度、两个八度逐渐扩展到常用音域。"),
+        skill("minor-scales", "小调音阶", "自然、和声与旋律小调音阶。"),
+        skill("chromatic-scale", "半音阶", "在舒适音域内平滑运用半音指法。"),
+        skill("arpeggios", "琶音", "通过听觉和手指熟悉大调、小调和属七和弦音型。"),
+        skill("scales-thirds", "三度音阶", "练习级进以外的音程音型。"),
+      ]},
+      { id: "reading", title: "读谱与音乐素养", description: "联系记谱、节奏、和声、听觉和音乐风格。", tone: "lavender", skills: [
+        skill("pulse-subdivisions", "节拍与细分", "在八分、十六分、三连音和附点节奏中保持稳定节拍。"),
+        skill("meter", "拍子", "掌握单拍子、复拍子以及混合与变拍子。"),
+        skill("keys-accidentals", "调号与临时记号", "识别调号，准确响应临时升降记号。"),
+        skill("sight-reading", "视奏", "开始前浏览调号、拍号、节奏、音域与换气位置。"),
+        skill("trills-ornaments", "颤音与装饰音", "在音乐语境中演奏倚音、颤音、波音与回音。"),
+      ]},
+      { id: "extended", title: "扩展技巧", description: "探索长笛的当代演奏技巧。", tone: "coral", skills: [
+        skill("harmonics", "泛音", "从低音指法吹出泛音，比较音色与音准。"),
+        skill("flutter-tonguing", "花舌", "运用舌部或喉部振动产生花舌效果。"),
+        skill("air-sounds", "气声", "控制气流，产生有音高或无音高的气声。"),
+        skill("singing-playing", "边唱边吹", "持续唱一个音，同时吹奏另一个音。"),
+        skill("pitch-bends-quarter-tones", "滑音与四分音", "通过嘴唇和替代指法改变音高。"),
+        skill("key-clicks-tongue-effects", "按键声与舌部效果", "探索按键敲击、舌击和舌部冲击效果。"),
+        skill("multiphonics", "复音", "运用经过验证的指法和口腔调整，同时产生多个音高。"),
+        skill("whistle-tones-jet-whistle", "哨音与喷气哨音", "探索极轻的哨音和覆盖吹口的喷气效果。"),
+      ]},
+    ],
+  },
 };
 
 export const translations = { en, zh };

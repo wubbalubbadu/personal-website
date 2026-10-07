@@ -14,11 +14,13 @@ type Mode='technique'|'pitch';
 const MODE_KEY='cookie:closeup-mode';
 
 export function PassageGuide({xml,events,from,to,quarterBpm,numbers,onClose,sempreStaccato=false,initialDisplay=noDisplay,title}:{xml:string;events:PassageEvent[];from:number;to:number;quarterBpm:number;numbers?:{from:string;to:string};onClose:()=>void;sempreStaccato?:boolean;/** The reader's View settings when the close-up opened; the toggles here start from them. */initialDisplay?:PracticeDisplay;/** The piece's name, for the pitch history. */title:string}){
-  const {t}=useLanguage(),s=t.scoreViewer;
+  const {t,lang}=useLanguage(),s=t.scoreViewer,zh=lang==="zh";
+  const labels:Record<string,string>={"Original":"原谱","Dotted rhythm":"附点节奏","Long–short":"长短","Short–long":"短长","Pairs":"成对练习","Pairs ×2":"成对重复两次","Shifted pairs":"错位成对","Triplets":"三连音","Quintuplets":"五连音","Random groups":"随机分组","Groupings":"分组","Fermatas":"延长音","Hold a few":"延长部分音符"};
+  const label=(text:string)=>zh?(labels[text]??text.replace(/^(\d+) as /,"$1 分为 ")):text;
   const [active,setActive]=useState<string|null>(null),[display,setDisplay]=useState(initialDisplay),repeat=false;
   // Technique is the default; the last choice is remembered so reopening costs no click.
   const [mode,setMode]=useState<Mode>(()=>{try{return localStorage.getItem(MODE_KEY)==='pitch'?'pitch':'technique'}catch{return 'technique'}});
-  const source=useMemo(()=>{try{return {xml:extractMeasures(xml,from,to),error:''}}catch(e){return {xml:'',error:e instanceof Error?e.message:'Could not open these measures.'}}},[xml,from,to]);
+  const source=useMemo(()=>{try{return {xml:extractMeasures(xml,from,to),error:''}}catch(e){return {xml:'',error:zh?'无法打开这些小节。':e instanceof Error?e.message:'Could not open these measures.'}}},[xml,from,to,zh]);
   const pitch=usePitchPractice({xml:source.xml,title,on:mode==='pitch',silence:active!==null,onStart:()=>setActive(null)});
   const choose=(next:Mode)=>{setActive(null);setMode(next);try{localStorage.setItem(MODE_KEY,next)}catch{/* The choice lasts for this visit. */}};
   const runs=useMemo(()=>{try{return source.xml?runsFromXml(source.xml):[]}catch{return []}},[source.xml]);
@@ -50,22 +52,22 @@ export function PassageGuide({xml,events,from,to,quarterBpm,numbers,onClose,semp
     {glyph:'A♭',label:namesLabel,on:display.names!=='off',onClick:cycleNames},
     {glyph:'▥',label:s.rhythm,on:display.rhythm,onClick:()=>flip({...display,rhythm:!display.rhythm})},
     {glyph:'♯',label:s.accidentals,on:display.accidentals,onClick:()=>flip({...display,accidentals:!display.accidentals})}];
-  const original=(marks?:Parameters<typeof PracticeNotation>[0]['marks'],onNote?:(event:number)=>void)=><div className="passage-guide__row passage-guide__row--original"><h3>Original</h3>{player('original',source.xml,'original',sempreStaccato,false,display,marks?{marks,onNote:onNote!}:undefined)}</div>;
-  return <section className="passage-guide" aria-label="Music close-up">
-    <header className="passage-guide__heading"><h2>{`Bars ${numbers?.from??low}–${numbers?.to??high}`}</h2>
-      <div className="passage-guide__modes reader-choice" role="group" aria-label="Practice">{(['technique','pitch'] as Mode[]).map(m=><button type="button" key={m} aria-pressed={mode===m} onClick={()=>choose(m)}>{m==='technique'?'Technique':'Pitch'}</button>)}</div>
+  const original=(marks?:Parameters<typeof PracticeNotation>[0]['marks'],onNote?:(event:number)=>void)=><div className="passage-guide__row passage-guide__row--original"><h3>{label("Original")}</h3>{player('original',source.xml,'original',sempreStaccato,false,display,marks?{marks,onNote:onNote!}:undefined)}</div>;
+  return <section className="passage-guide" aria-label={zh?"乐谱近看":"Music close-up"}>
+    <header className="passage-guide__heading"><h2>{`${zh?"小节":"Bars"} ${numbers?.from??low}–${numbers?.to??high}`}</h2>
+      <div className="passage-guide__modes reader-choice" role="group" aria-label={zh?"练习":"Practice"}>{(['technique','pitch'] as Mode[]).map(m=><button type="button" key={m} aria-pressed={mode===m} onClick={()=>choose(m)}>{m==='technique'?(zh?'技巧':'Technique'):(zh?'音准':'Pitch')}</button>)}</div>
       <div className="passage-guide__options">{toggles.map(x=><button type="button" key={x.glyph} className="passage-guide__icon has-tip" data-tip={x.label} aria-label={x.label} aria-pressed={x.on} onClick={x.onClick}><span aria-hidden="true">{x.glyph}</span></button>)}</div>
-      {/* Mark up's close button: same icon, size and colour, no hover fill. */}<button type="button" className="passage-guide__close markup-close" aria-label="Close close-up" data-tip="Close" onClick={onClose}><svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15"/></svg></button></header>
+      {/* Mark up's close button: same icon, size and colour, no hover fill. */}<button type="button" className="passage-guide__close markup-close" aria-label={zh?"关闭近看":"Close close-up"} data-tip={zh?"关闭":"Close"} onClick={onClose}><svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15"/></svg></button></header>
     {source.error?<p role="alert">{source.error}</p>:<div className="passage-guide__list">
       {original(mode==='pitch'?pitch.marks:undefined,mode==='pitch'?pitch.onNote:undefined)}
       {mode==='pitch'&&pitch.panel}
       {/* Kept mounted while Pitch is open, so coming back to Technique does not redraw every exercise. */}
       <div hidden={mode==='pitch'}>
-        {scale&&<div className="passage-guide__row"><h3>{scale.label}<Link href={`/flute-studio/exercises/scales?key=${encodeURIComponent(scale.key)}&type=${scale.type}${'form' in scale&&scale.form==='arpeggio'?'&form=arpeggio':''}`}>Scale Studio ›</Link></h3>{player('scale',scale.xml,scale.label)}</div>}
-        {sections.map(section=><section className="passage-guide__section" key={section.title}><h4>{section.title}</h4>
-          {section.rows.map(r=><div className="passage-guide__row" key={r.id}><h3>{r.title}{r.shuffle&&<button type="button" className="passage-guide__shuffle" onClick={()=>{setActive(null);r.shuffle!()}}>Shuffle</button>}</h3>{player(r.id,r.xml,r.title.toLowerCase(),false,!!r.gen,undefined,undefined,true)}</div>)}
+        {scale&&<div className="passage-guide__row"><h3>{scale.label}<Link href={`/flute-studio/exercises/scales?key=${encodeURIComponent(scale.key)}&type=${scale.type}${'form' in scale&&scale.form==='arpeggio'?'&form=arpeggio':''}`}>{zh?"音阶练习":"Scale Studio"} ›</Link></h3>{player('scale',scale.xml,scale.label)}</div>}
+        {sections.map(section=><section className="passage-guide__section" key={section.title}><h4>{label(section.title)}</h4>
+          {section.rows.map(r=><div className="passage-guide__row" key={r.id}><h3>{label(r.title)}{r.shuffle&&<button type="button" className="passage-guide__shuffle" onClick={()=>{setActive(null);r.shuffle!()}}>{zh?"重新排列":"Shuffle"}</button>}</h3>{player(r.id,r.xml,r.title.toLowerCase(),false,!!r.gen,undefined,undefined,true)}</div>)}
         </section>)}
-        {!sections.length&&!scale&&<p className="passage-guide__none">Select a few more notes for exercises, or pick Pitch to check these.</p>}
+        {!sections.length&&!scale&&<p className="passage-guide__none">{zh?"选择更多音符生成练习，或选择音准检查这些音符。":"Select a few more notes for exercises, or pick Pitch to check these."}</p>}
       </div>
     </div>}
   </section>;

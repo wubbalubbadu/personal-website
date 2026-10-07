@@ -1,5 +1,6 @@
 "use client";
 
+import {useLanguage} from "./i18n/LanguageContext";
 import HomePreviewCards from "./HomePreviewCards";
 import ToolCards from "./tools/ToolCards";
 import ContinuePracticingRow from "./ContinuePracticingCard";
@@ -7,6 +8,7 @@ import HomeStudioBrief from "./HomeStudioBrief";
 import "./studio-home.css";
 
 export default function StudioHome(){
+  const {lang}=useLanguage(),zh=lang==="zh";
   return <main className="studio-shell">
     <section className="studio-main">
       <div className="home-content">
@@ -17,13 +19,13 @@ export default function StudioHome(){
             else's empty state. */}
         <HomePreviewCards/>
 
-        <h2 className="home-preview__group">Tools</h2>
+        <h2 className="home-preview__group">{zh?"工具":"Tools"}</h2>
         <ToolCards/>
 
         {/* The way back in, plus a few lines from My Studio (this week,
             notes still off pitch, a long-tone habit). The month calendar
             lives on My Studio; here it only showed dates. */}
-        <h2 className="home-preview__group">Practice tracker</h2>
+        <h2 className="home-preview__group">{zh?"我的曲目":"Your shelf"}</h2>
         <ContinuePracticingRow/>
         <HomeStudioBrief/>
       </div>

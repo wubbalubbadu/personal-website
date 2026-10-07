@@ -16,12 +16,14 @@ type Props={
   next?:LessonNext|null;extra?:ReactNode;status?:string;
   /** Dots that fill as an exercise goes on, in their own row between the music and Cookie. */
   progress?:{done:number;total:number};
+  /** The narration changes with each stage of a step: the new sentence fades in. */
+  fadeNarration?:boolean;
   children:ReactNode;
 };
 
 // Every lesson shares this frame: step dots, a line of narration that explains the idea, the scene,
 // and Cookie's bubble (what to try, then how it went). `heading` names the scene for screen readers.
-export default function LessonFrame({title,zh,className='',steps,current,onJump,heading,narration,message,tone=null,next,extra,status,progress,children}:Props){
+export default function LessonFrame({title,zh,className='',steps,current,onJump,heading,narration,message,tone=null,next,extra,status,progress,fadeNarration=false,children}:Props){
   // An empty lesson message docks the site's Cookie pet into #lesson-companion without its own bubble.
   useEffect(()=>{const frame=requestAnimationFrame(()=>window.dispatchEvent(new CustomEvent('cookie:lesson',{detail:''})));return()=>cancelAnimationFrame(frame)},[]);
   let action:ReactNode=null;
@@ -35,7 +37,7 @@ export default function LessonFrame({title,zh,className='',steps,current,onJump,
     <nav className="theory-timeline" aria-label={zh?'课程步骤':'Lesson steps'}>
       {steps.map((name,i)=><button key={name} aria-current={i===current?'step':undefined} onClick={()=>onJump(i)}>{name}</button>)}
     </nav>
-    {narration&&<p className="lesson-narration" aria-live="polite">{narration}</p>}
+    {narration&&<p key={fadeNarration?String(narration):undefined} className={`lesson-narration${fadeNarration?' fade-in':''}`} aria-live="polite">{narration}</p>}
     <section className="lesson-scene" aria-label={heading}>{children}</section>
     {/* Progress has its own row, always there, so the layout does not move when an exercise starts. */}
     <div className="lesson-progress">{progress&&<ProgressDots {...progress} zh={zh}/>}</div>

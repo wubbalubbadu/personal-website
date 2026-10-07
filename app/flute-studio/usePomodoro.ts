@@ -5,6 +5,8 @@ import {useLanguage} from "./i18n/LanguageContext";
 import {sessionsKey,readSessions,type PracticeSession} from "./practice-data";
 
 export type PomodoroMode="focus"|"break";
+/** What a focus round is for: a name you typed, or a piece or exercise you picked (its library id). Logged with the session. */
+export type FocusLabel={title:string;itemId?:string;itemType?:PracticeSession["itemType"]};
 
 const BREAK_SECONDS=5*60;
 const MIN_FOCUS_MINUTES=5;
@@ -29,6 +31,7 @@ export function usePomodoro(){
   const endsAt=useRef<number|null>(null);
   const tickTimer=useRef<number|null>(null);
   const segmentStartedAt=useRef<string|null>(null);
+  const label=useRef<FocusLabel|null>(null);
 
   useEffect(()=>{
     setRounds(readRounds());
@@ -43,9 +46,9 @@ export function usePomodoro(){
   function logFocusSession(durationSeconds:number){
     const session:PracticeSession={
       id:crypto.randomUUID(),
-      itemId:"pomodoro-focus",
-      itemType:"focus",
-      title:t.pomodoro.title,
+      itemId:label.current?.itemId??"pomodoro-focus",
+      itemType:label.current?.itemType??"focus",
+      title:label.current?.title.trim()||t.pomodoro.title,
       startedAt:segmentStartedAt.current??new Date(Date.now()-durationSeconds*1000).toISOString(),
       endedAt:new Date().toISOString(),
       durationSeconds,
@@ -113,5 +116,7 @@ export function usePomodoro(){
     canEditDuration:mode==="focus"&&!running,
     minFocusMinutes:MIN_FOCUS_MINUTES,maxFocusMinutes:MAX_FOCUS_MINUTES,
     start,pause,reset,adjustFocusMinutes,
+    /** Name this session (or clear it); the next finished focus round is logged under it. */
+    setLabel:(next:FocusLabel|null)=>{label.current=next},
   };
 }

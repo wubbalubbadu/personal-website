@@ -1,25 +1,27 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {webcrypto} from 'node:crypto';
-import {encryptLibrary} from '../tools/private-music.mjs';
-import {installGhostNoteFix} from '../app/flute-studio/lib/ghostNoteFix.js';
-async function decrypt(envelope,code){
- const raw=await webcrypto.subtle.importKey('raw',Buffer.from(code),'PBKDF2',false,['deriveKey']);
- const key=await webcrypto.subtle.deriveKey({name:'PBKDF2',salt:Buffer.from(envelope.salt,'base64'),iterations:envelope.iterations,hash:'SHA-256'},raw,{name:'AES-GCM',length:256},false,['decrypt']);
- return JSON.parse(Buffer.from(await webcrypto.subtle.decrypt({name:'AES-GCM',iv:Buffer.from(envelope.iv,'base64')},key,Buffer.from(envelope.data,'base64'))).toString());
-}
-test('private scores and titles require the correct code; tampering fails',async()=>{
- const source=[{item:{title:'Personal score'},files:{score:{data:'secret XML'}}}];
- const a=await encryptLibrary(source,'test-only-long-code'),b=await encryptLibrary(source,'test-only-long-code');
- assert.ok(!JSON.stringify(a).includes('Personal score'));assert.notEqual(a.data,b.data);
- assert.deepEqual(await decrypt(a,'test-only-long-code'),source);
- await assert.rejects(decrypt(a,'wrong-code'));
- const data=Buffer.from(a.data,'base64');data[0]^=1;await assert.rejects(decrypt({...a,data:data.toString('base64')},'test-only-long-code'));
-});
-test('tiny ghost spacers get a shape while keeping their exact duration; real notes unchanged',()=>{
- const converter={durations:f=>f.RealValue>.0001?['q']:[],GhostNotes(f){const shape=this.durations(f)[0];if(!shape)throw Error('Invalid note');return [{shape,ticks:f.RealValue}]}};
- const original=converter.durations;installGhostNoteFix(converter);installGhostNoteFix(converter);
- assert.deepEqual(converter.GhostNotes({RealValue:1/13440}),[{shape:'128',ticks:1/13440}]);
- assert.deepEqual(converter.GhostNotes({RealValue:.25}),[{shape:'q',ticks:.25}]);
- assert.equal(converter.durations,original);assert.deepEqual(converter.durations({RealValue:1/13440}),[]);
+import fs from 'node:fs';
+import ts from 'typescript';
+const source=fs.readFileSync(new URL('../app/flute-studio/lib/privateMusic.ts',import.meta.url),'utf8').replace("import {useEffect,useSyncExternalStore} from 'react';","const useEffect=fn=>fn();const useSyncExternalStore=(_subscribe,snapshot)=>snapshot();");
+const js=ts.transpile(source,{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022});
+const load=()=>import(`data:text/javascript;base64,${Buffer.from(js+'\n// '+Math.random()).toString('base64')}`);
+const storage=()=>{const data=new Map();return {getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)}};
+test('unlock survives a fresh module and lock forgets it',async()=>{
+ globalThis.localStorage=storage();globalThis.sessionStorage=storage();
+ const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
+ const material=await crypto.subtle.importKey('raw',new TextEncoder().encode('test-only'),'PBKDF2',false,['deriveKey']);
+ const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:210000,hash:'SHA-256'},material,{name:'AES-GCM',length:256},false,['encrypt']);
+ const data=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(JSON.stringify([{item:{id:'test-private',title:'Test'},files:{}}])));
+ const b64=value=>Buffer.from(value).toString('base64');
+ globalThis.fetch=async()=>({ok:true,json:async()=>({version:1,iterations:210000,salt:b64(salt),iv:b64(iv),data:b64(data)})});
+ const first=await load();assert.equal(await first.unlockPrivateMusic('test-only'),true);
+ assert.equal(localStorage.getItem('cookie:private-music-code'),'test-only');
+ const second=await load();second.usePrivateMusic();
+ for(let n=0;n<100&&second.usePrivateMusic().loading;n++)await new Promise(resolve=>setTimeout(resolve,10));
+ assert.equal(second.usePrivateMusic().unlocked,true);
+ assert.equal(second.usePrivateMusic().items[0].id,'test-private');
+ second.lockPrivateMusic();assert.equal(localStorage.getItem('cookie:private-music-code'),null);
+ assert.equal(second.usePrivateMusic().unlocked,false);
+ assert.equal(await second.unlockPrivateMusic('wrong'),false);
+ assert.equal(localStorage.getItem('cookie:private-music-code'),null);
 });

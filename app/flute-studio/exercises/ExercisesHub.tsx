@@ -8,6 +8,9 @@ import {useLanguage} from "../i18n/LanguageContext";
 import ScaleStudioPreview from "../ScaleStudioPreview";
 import LongTonePreview from "../LongTonePreview";
 import BreathingPreview from "../BreathingPreview";
+import TallySticks from "../tricky-bits/TallySticks";
+import {useTrickyBits} from "../lib/trickyBits";
+import "../tricky-bits/tricky-bits.css";
 import "../home-preview-cards.css";
 import "../components/preview-grid.css";
 import "./exercises.css";
@@ -36,7 +39,7 @@ function Preview({id,zh}:{id:string;zh:boolean}){
 }
 
 export default function ExercisesHub(){
-  const {t,lang}=useLanguage(),zh=lang==="zh";
+  const {t,lang}=useLanguage(),zh=lang==="zh",{bits}=useTrickyBits();
   // Sets saved in Scale Studio. Read after hydration — they live in
   // localStorage, which the server render has no view of.
   const [sets,setSets]=useState<ScaleSet[]>([]);
@@ -79,6 +82,18 @@ export default function ExercisesHub(){
             <div className="preview-card__copy"><b>{titleOf(entry)}</b><small>{detailOf(entry)}</small></div>
           </Link>
         ))}
+        {/* Tricky bits: the passages you saved from your pieces, to practise with a tally of repetitions. Not part of the
+            exercise catalog (which also fills the Library), since it is your own bars rather than an exercise. */}
+        <Link href="/flute-studio/tricky-bits" className="preview-card preview-card--tricky">
+          <div className="preview-card__stage" aria-hidden="true">
+            <div className="tricky-preview-card">
+              <span className="tricky-preview-card__bars">{zh?"第 12–16 小节":"Bars 12–16"}</span>
+              <TallySticks count={7}/>
+            </div>
+          </div>
+          <div className="preview-card__copy"><b>{t.trickyBits.title}</b>
+            <small>{bits.length?(zh?`${bits.length} 个保存的段落`:`${bits.length} saved ${bits.length===1?"passage":"passages"}`):(zh?"在乐谱里选几个小节保存，在这里反复练。":"Save a few bars from a piece, then practise them here.")}</small></div>
+        </Link>
       </section>
 
     </div>

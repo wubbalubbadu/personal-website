@@ -31,6 +31,12 @@ export function appendPitchHistory(records: PitchRecord[]) {
   try { localStorage.setItem(KEY, JSON.stringify([...readPitchHistory(), ...records].slice(-LIMIT))); } catch { /* quota or private mode: the report still shows */ }
   window.dispatchEvent(new Event(PITCH_UPDATED));
 }
+/** Clear only measured pitch history; practice time and saved tests stay intact. */
+export function clearPitchHistory(): boolean {
+  try { localStorage.removeItem(KEY); } catch { return false; }
+  window.dispatchEvent(new Event(PITCH_UPDATED));
+  return true;
+}
 /** Unreliable notes (too short, too patchy) are left out: they would teach the map noise. */
 export function recordsFromAttempts(attempts: ToneAttempt[], exercise: string, at = Date.now(), firstTry?: (targetId: number) => ToneAttempt | undefined): PitchRecord[] {
   return attempts.flatMap(a => {

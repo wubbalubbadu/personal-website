@@ -1,5 +1,6 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
+import {useLanguage} from '../i18n/LanguageContext';
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {createModel} from './model';
@@ -12,15 +13,16 @@ import Breathing from './Breathing';
 
 
 function Embouchure(){
+ const {lang}=useLanguage(),zh=lang==='zh';
  const host=useRef<HTMLDivElement>(null), target=useRef(76), animate=useRef(false), direction=useRef(1), reset=useRef(()=>{});
  const [note,setNote]=useState(76),[playing,setPlaying]=useState(false);
  useEffect(()=>{target.current=note;},[note]);
  useEffect(()=>{animate.current=playing;},[playing]);
  useEffect(()=>{
    const container=host.current!;let renderer:THREE.WebGLRenderer;
-   try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});}catch{const message=document.createElement('p');message.setAttribute('role','alert');message.textContent='This browser could not start the 3D viewer. Try a browser with WebGL enabled.';container.appendChild(message);return()=>message.remove();}
+   try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});}catch{const message=document.createElement('p');message.setAttribute('role','alert');message.textContent=(zh?"无法启动三维视图，请使用支持 WebGL 的浏览器。":"This browser could not start the 3D viewer. Try a browser with WebGL enabled.");container.appendChild(message);return()=>message.remove();}
    renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));renderer.setClearColor('#f1f5f6');container.appendChild(renderer.domElement);
-   renderer.domElement.setAttribute('aria-label','Interactive side cutaway of mouth, tongue, lips, and flute headjoint');
+   renderer.domElement.setAttribute('aria-label',(zh?"嘴部、舌头、嘴唇与长笛笛头的交互式剖面图":"Interactive side cutaway of mouth, tongue, lips, and flute headjoint"));
    const scene=new THREE.Scene();scene.add(new THREE.HemisphereLight('#ffffff','#8d7477',2.5));const light=new THREE.DirectionalLight('#fff8ec',3);light.position.set(-2,4,7);scene.add(light);
    const camera=new THREE.PerspectiveCamera(34,1,.1,100);camera.position.set(-.5,.0,8.8);
    const controls=new OrbitControls(camera,renderer.domElement);controls.target.set(-.55,-.1,0);controls.enablePan=false;controls.minDistance=5;controls.maxDistance=12;controls.minAzimuthAngle=-.4;controls.maxAzimuthAngle=.4;controls.minPolarAngle=1.2;controls.maxPolarAngle=1.9;controls.enableDamping=true;
@@ -43,27 +45,27 @@ function Embouchure(){
      current=reduced?target.current:THREE.MathUtils.damp(current,target.current,8,dt);model.update(current,reduced?0:now/1000,true);controls.update();renderer.render(scene,camera);frame=requestAnimationFrame(tick);
    }frame=requestAnimationFrame(tick);
    return()=>{document.removeEventListener('pointerdown',pointer,true);document.removeEventListener('focusin',focus);document.removeEventListener('keydown',escape);cancelAnimationFrame(frame);resize.disconnect();controls.dispose();scene.traverse(o=>{if(o instanceof THREE.Mesh){o.geometry.dispose();const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach(m=>m.dispose());}});renderer.dispose();renderer.domElement.remove();};
- },[]);
+ },[zh]);
  const choose=(n:number)=>{setPlaying(false);setNote(n);};
  const pointerPct=(note-MIN_NOTE)/(MAX_NOTE-MIN_NOTE)*100;
  return <div>
    <Workbench
     viewport={<>
      <div ref={host} className="emb-canvas"/>
-     <div className="emb-viewport-top"><button type="button" onClick={()=>reset.current()}>Reset view</button></div>
+     <div className="emb-viewport-top"><button type="button" onClick={()=>reset.current()}>{(zh?"重置视角":"Reset view")}</button></div>
     </>}
     panel={<>
      <strong className="emb-note">{noteName(note)}</strong>
      <div className="emb-staff"><StaffNote midi={note}/></div>
-     <section className="emb-range" aria-label="Flute note selection">
+     <section className="emb-range" aria-label={(zh?"长笛音高选择":"Flute note selection")}>
       <div className="emb-range-track">
        <input id="emb-note-range" type="range" min={MIN_NOTE} max={MAX_NOTE} value={note} aria-valuetext={noteName(note)} onChange={e=>choose(Number(e.target.value))}/>
        <span className="emb-range-pointer" style={{left:`${pointerPct}%`}} aria-hidden="true">{noteName(note)}</span>
       </div>
       <div className="emb-range-ends"><span>B3</span><span>D7</span></div>
      </section>
-     <p className="emb-cue">{guidance(note)}</p>
-     <button type="button" className="emb-play" onClick={()=>{if(playing){setPlaying(false);}else{direction.current=1;setNote(MIN_NOTE);setPlaying(true);}}}><span aria-hidden="true">{playing?'❚❚':'▶'}</span>{playing?'Pause':'Play scale'}</button>
+     <p className="emb-cue">{guidance(note,zh)}</p>
+     <button type="button" className="emb-play" onClick={()=>{if(playing){setPlaying(false);}else{direction.current=1;setNote(MIN_NOTE);setPlaying(true);}}}><span aria-hidden="true">{playing?'❚❚':'▶'}</span>{playing?(zh?"暂停":"Pause"):(zh?"播放音阶":"Play scale")}</button>
     </>}
    />
   </div>
@@ -71,12 +73,13 @@ function Embouchure(){
 }
 
 export default function EmbouchurePage(){
+ const {lang}=useLanguage(),zh=lang==='zh';
  const [view,setView]=useState<'embouchure'|'breathing'>('embouchure');
- return <StudioPage title="Body & embouchure" backHref="/flute-studio" width="wide">
+ return <StudioPage title={(zh?"身体与口型":"Body & embouchure")} backHref="/flute-studio" width="wide">
   <div className="emb">
-   <nav className="body-model-nav" aria-label="Body models">
-    <button type="button" aria-pressed={view==='embouchure'} onClick={()=>setView('embouchure')}>Embouchure</button>
-    <button type="button" aria-pressed={view==='breathing'} onClick={()=>setView('breathing')}>Breathing</button>
+   <nav className="body-model-nav" aria-label={(zh?"身体模型":"Body models")}>
+    <button type="button" aria-pressed={view==='embouchure'} onClick={()=>setView('embouchure')}>{(zh?"口型":"Embouchure")}</button>
+    <button type="button" aria-pressed={view==='breathing'} onClick={()=>setView('breathing')}>{(zh?"呼吸":"Breathing")}</button>
    </nav>
    {view==='embouchure'?<Embouchure/>:<Breathing/>}
   </div>

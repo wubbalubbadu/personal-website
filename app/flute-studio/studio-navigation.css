@@ -152,15 +152,15 @@
   .studio-rail[data-open] .studio-rail__item{height:42px;padding:0 12px;flex-direction:row;justify-content:flex-start;gap:18px;font-size:14px;font-weight:500;color:#45464f}
   .studio-rail[data-open] .studio-rail__item.is-active{color:#292a33;font-weight:650}
   .studio-rail[data-open] .studio-rail__item.is-current{background:#f0f1ee}
-  .studio-rail__children{list-style:none;margin:6px 0 14px;padding:0;display:grid;gap:4px}
+  .studio-rail__children{list-style:none;margin:0 0 8px;padding:0;display:grid;gap:0}
   /* Tools sit apart from the places, since they open over the page. */
   .studio-rail__group--tools{margin-top:6px;padding-top:6px;border-top:1px solid #ececef}
   button.studio-rail__item,.studio-rail__children button{border:0;background:transparent;font-family:inherit;cursor:pointer;width:100%;text-align:left}
-  .studio-rail__children button{display:flex;align-items:center;min-height:36px;padding:0 12px 0 53px;border-radius:10px;color:#5f6169;font-size:14px;font-weight:500}
+  .studio-rail__children button{display:flex;align-items:center;min-height:40px;padding:0 12px 0 53px;border-radius:10px;color:#5f6169;font-size:14px;font-weight:500}
   .studio-rail__children button:hover{background:#f3f4f1;color:#292a33}
   /* Long names (a saved set like "Major & natural minor thirds") wrap to
      a second line rather than being cut off at the rail's edge. */
-  .studio-rail__children a{display:flex;align-items:center;min-height:36px;padding:7px 12px 7px 53px;border-radius:10px;color:#5f6169;text-decoration:none;font-size:14px;font-weight:500;line-height:1.3;overflow-wrap:anywhere;transition:background-color .16s ease,color .16s ease}
+  .studio-rail__children a{display:flex;align-items:center;min-height:40px;padding:7px 12px 7px 53px;border-radius:10px;color:#5f6169;text-decoration:none;font-size:14px;font-weight:500;line-height:1.3;overflow-wrap:anywhere;transition:background-color .16s ease,color .16s ease}
   .studio-rail__children a:hover{background:#f3f4f1;color:#292a33}
   .studio-rail__children a.is-current{background:#f0f1ee;color:#292a33;font-weight:650}
   .studio-rail__caption{padding:12px 12px 4px 53px;color:#9a9ba2;font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase}

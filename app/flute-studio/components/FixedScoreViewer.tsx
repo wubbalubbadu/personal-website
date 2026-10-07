@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import PracticeClockButton from "../PracticeClockButton";
 import {useEffect,useLayoutEffect,useRef,useState} from "react";
 import type {MusicItem} from "../../../content/music-library";
 import {useLanguage} from "../i18n/LanguageContext";
@@ -73,7 +74,7 @@ export default function FixedScoreViewer({item,onInteractive}:{item:MusicItem;on
         <StatusButton id={item.id} zh={zh}/>
         {onInteractive&&<div className="reader-choice" role="group" aria-label={zh?'乐谱格式':'Score format'}><button aria-pressed={true}>PDF</button><button aria-pressed={false} onClick={onInteractive}>XML</button></div>}
         {item.pdfPath&&<a className="icon-btn has-tip" href={item.pdfPath} download aria-label={t.scoreViewer.downloadPdf} data-tip={t.scoreViewer.downloadPdf}><DownloadIcon/></a>}
-        <span className="topbar-spacer"/><div id="reader-tools-slot" className="topbar-tools-slot"/><AccountMenu/>
+        <span className="topbar-spacer"/><PracticeClockButton/><div id="reader-tools-slot" className="topbar-tools-slot"/><AccountMenu/>
       </div></header>
       <div className="practice-bar">
         <div className="tool-group"><button data-tip={t.scoreViewer.markUp} className={`tool has-tip${annotating?' on':''}`} aria-pressed={annotating} onClick={()=>setAnnotating(v=>!v)}><PracticeIcon name="markup"/>{t.scoreViewer.markUp}</button>

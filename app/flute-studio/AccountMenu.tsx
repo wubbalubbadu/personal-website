@@ -117,10 +117,11 @@ export default function AccountMenu(){
   return <div className="account-menu" ref={wrap}>
     <button
       type="button"
-      className="account-menu__trigger"
+      className={open?"account-menu__trigger":"account-menu__trigger has-tip"}
       aria-haspopup="menu"
       aria-expanded={open}
       aria-label={t.nav.avatarLabel}
+      data-tip={open?undefined:t.nav.avatarLabel}
       onClick={()=>{
         if(!open){
           const rect=wrap.current?.getBoundingClientRect();

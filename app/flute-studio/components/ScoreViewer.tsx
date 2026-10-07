@@ -1,5 +1,6 @@
 "use client";
 import {connectsSlur} from "./playbackArticulation";
+import PracticeClockButton from "../PracticeClockButton";
 
 import Link from "next/link";
 import {voiceEnvelope} from "./voiceEnvelope";
@@ -1868,7 +1869,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   const cursorBeats=useRef<CursorBeat[]>([]);
   useEffect(()=>{
     const root=scoreRef.current,paper=root?.closest<HTMLElement>(".score-paper"),scroller=scoreScrollRef.current;
-    if((!playing&&!smartRunning)||!root||!paper||!scroller)return;
+    if((!playing&&!smartRunning)||loading||!root||!paper||!scroller)return;
     if(getComputedStyle(paper).position==="static")paper.style.position="relative";
     const line=document.createElement("div");line.className="playback-cursor";paper.appendChild(line);
     const stops=measureStops(root.querySelectorAll<SVGGElement>(".vf-stavenote"),paper,magnifyRef.current);
@@ -1893,8 +1894,9 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     };
     frame=requestAnimationFrame(draw);
     return()=>{cancelAnimationFrame(frame);line.remove()};
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- reads refs; restarts per play
-  },[playing,smartRunning]);
+  // Re-measure after engraving or zoom changes; the audio timeline stays intact.
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- scheduled audio and zoom read refs
+  },[playing,smartRunning,loading,layoutVersion,magnify]);
   /** Set when playback itself moves the number, so the [bpm] effect does not reschedule twice. */
   const skipTempoReschedule=useRef(false);
   /** The note a section change resumes from (the new section's first), for the [bpm] effect. */
@@ -2598,7 +2600,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
         </div>;
   return <main className="app-shell reader-workspace restored-reader" data-layout={pageWidth} data-annotating={annotating} data-dock={dock||closeupOpen?"true":undefined} style={{"--reader-page-width":pageWidth==="900"?"900px":"100%","--viewer-magnify":magnify} as React.CSSProperties}>
     <section className="workspace">
-      <header className="topbar"><div><Link className="back has-tip" href={backHref} aria-label={backLabel?`${t.scoreViewer.back}: ${backLabel}`:t.scoreViewer.back} data-tip={backLabel||t.scoreViewer.back}><BackChevron/></Link>{(config.backName??(toolbar?undefined:title))&&<span className="back__name">{config.backName??title}</span>}{!toolbar&&<strong>{title}</strong>}</div><div><span className="topbar-toolbar-slot">{toolbar}</span>{/* No star: a score goes on one of your lists (want to learn, working on, learned). Scale Studio instead saves the panel as a set: a + that turns into a tick. */}{save?<button type="button" className="icon-btn has-tip reader-set-save" aria-pressed={save.saved} data-tip={save.saved?save.savedLabel:save.label} aria-label={save.saved?save.savedLabel:save.label} onClick={save.onToggle}>{save.saved?<CheckIcon/>:<PlusIcon/>}</button>:<StatusButton id={config.listId??config.id} zh={lang==="zh"}/>}{headerActions?.(readerControls)}{pdfPath&&<a className="icon-btn has-tip" href={pdfPath} download data-tip={t.scoreViewer.downloadPdf} aria-label={t.scoreViewer.downloadPdf}><DownloadIcon/></a>}{/* The reader hides the studio nav, so the two controls that live there on every other page — practice tools and the account menu — come here instead, on the same row as the back link. */}<span className="topbar-spacer"/><div id="reader-tools-slot" className="topbar-tools-slot"/><AccountMenu/></div></header>
+      <header className="topbar"><div><Link className="back has-tip" href={backHref} aria-label={backLabel?`${t.scoreViewer.back}: ${backLabel}`:t.scoreViewer.back} data-tip={backLabel||t.scoreViewer.back}><BackChevron/></Link>{(config.backName??(toolbar?undefined:title))&&<span className="back__name">{config.backName??title}</span>}{!toolbar&&<strong>{title}</strong>}</div><div><span className="topbar-toolbar-slot">{toolbar}</span>{/* No star: a score goes on one of your lists (want to learn, working on, learned). Scale Studio instead saves the panel as a set: a + that turns into a tick. */}{save?<button type="button" className="icon-btn has-tip reader-set-save" aria-pressed={save.saved} data-tip={save.saved?save.savedLabel:save.label} aria-label={save.saved?save.savedLabel:save.label} onClick={save.onToggle}>{save.saved?<CheckIcon/>:<PlusIcon/>}</button>:<StatusButton id={config.listId??config.id} zh={lang==="zh"}/>}{headerActions?.(readerControls)}{pdfPath&&<a className="icon-btn has-tip" href={pdfPath} download data-tip={t.scoreViewer.downloadPdf} aria-label={t.scoreViewer.downloadPdf}><DownloadIcon/></a>}{/* The reader hides the studio nav, so the two controls that live there on every other page — practice tools and the account menu — come here instead, on the same row as the back link. */}<span className="topbar-spacer"/><PracticeClockButton/><div id="reader-tools-slot" className="topbar-tools-slot"/><AccountMenu/></div></header>
 
       <div className="practice-bar"><div className="tool-group">        <button data-tip={t.scoreViewer.markUpTip} className={annotating?"tool on coral has-tip":"tool has-tip"} onClick={()=>setAnnotating(!annotating)}><PracticeIcon name="markup"/>{t.scoreViewer.markUp}</button>
       </div>

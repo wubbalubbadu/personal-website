@@ -18,7 +18,8 @@ instrument-specific range assumptions. Ledger lines go both above and below the 
 
 **1. One idea per step, told three ways at once.** The narration says it, the notation shows it,
 the sound proves it, and the learner's action confirms it. If one of these doesn't serve the idea,
-remove it.
+remove it. Every interaction is the moment the learner takes in the idea: they make the new thing
+happen, or notice it. Never an interaction only to have one.
 
 **2. Meaning before name before test.** First the problem ("how do we show a long note?"), then
 the thing that solves it, then its name, then a check. Keep useful context from the step before.
@@ -35,6 +36,10 @@ notes sit on one line, like a printed rhythm staff). All notation is drawn with 
 **5. Two voices, nothing else talks.** The narration line above the music teaches, in plain,
 friendly sentences. Cookie below the music invites ("Can you tap the second line?") and reacts
 to what the learner actually did. No headings, captions or labels repeating either of them.
+Explanations live where the eye is: in the narration and next to the thing they describe in the
+scene (a label beside the lit keys), never only in Cookie. Cookie invites the action and reacts.
+One idea per stage, and the narration changes with each stage (lesson 4 fades each new sentence
+in; lessons 1 to 3 do not yet).
 
 **6. The learner controls the pace.** No timers that move the lesson on, no auto transitions, no
 text that disappears before it's read. A new part of an idea is its own step. Next lives in one

@@ -1,3 +1,4 @@
+@import "./studio-card-tokens.css";
 /* Four soft tints drawn from the studio tone set (green, pink, sand, slate), flat, no gradients.
    Each card gets one on purpose so neighbours differ and the page repeats a small palette:
      Practice  scales slate · tones pink / music green · breathing sand
@@ -19,10 +20,10 @@
 .preview-card {
   display: flex;
   flex-direction: column;
-  border-radius: 22px;
+  border-radius: var(--studio-card-radius);
   overflow: hidden;
   background: #fff;
-  box-shadow: 0 10px 30px rgba(41, 42, 51, 0.08);
+  box-shadow: var(--studio-card-shadow);
   text-decoration: none;
   color: #292a33;
   transition: transform 0.18s ease, box-shadow 0.18s ease;
@@ -30,7 +31,7 @@
 .preview-card:hover,
 .preview-card:focus-visible {
   transform: translateY(-3px);
-  box-shadow: 0 16px 38px rgba(41, 42, 51, 0.13);
+  box-shadow: var(--studio-card-hover-shadow);
 }
 .preview-card:focus-visible {
   outline: 3px solid rgba(103, 137, 86, 0.4);
@@ -157,7 +158,7 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   background: #fff;
   border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(41, 42, 51, 0.08);
+  box-shadow: var(--studio-card-shadow);
   overflow: hidden;
 }
 .continue-section {
@@ -428,3 +429,13 @@
 .studio-brief .continue-panel{grid-template-columns:repeat(4,minmax(0,1fr))}
 @media(max-width:1000px){.studio-brief .continue-panel{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.studio-brief .continue-panel{grid-template-columns:1fr}}
+
+/* Keep the shared shelf surface; each title is its own destination. */
+.home-shelf__column{justify-content:flex-start}
+.home-shelf__column:hover{background:#fff}
+.home-shelf__column ul{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.home-shelf__column li a{display:block;border-radius:8px;margin:0 -8px;padding:6px 8px;color:inherit;text-decoration:none}
+.home-shelf__column li a:hover{background:#f8faf7}
+.home-shelf__column a:focus-visible{outline:2px solid #79588e;outline-offset:2px}
+.home-shelf__browse{font-size:13px;color:#79588e;text-decoration:none;margin-top:8px}
+.home-shelf__browse:hover{text-decoration:underline}

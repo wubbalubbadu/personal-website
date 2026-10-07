@@ -1,5 +1,6 @@
 "use client";
 import Link from 'next/link';
+import {useLanguage} from '../i18n/LanguageContext';
 import {useEffect,useMemo,useRef,useState,type ReactNode} from 'react';
 import {useToneSession} from '../lib/useToneSession';
 import {appendPitchHistory,recordsFromAttempts} from '../lib/pitchHistory';
@@ -20,6 +21,7 @@ export type PitchMarks=(context:Pick<ScoreMarksContext,'root'|'version'>)=>React
  * (the host keys it per selection); `on` starts and pauses the microphone, and leaving Pitch keeps the take.
  */
 export function usePitchPractice({xml,title,on,silence,onStart}:{xml:string;title:string;on:boolean;/** Something else is making sound: stop listening so it is not heard as the player. */silence:boolean;onStart:()=>void}){
+  const {lang}=useLanguage(),zh=lang==='zh';
   const targets=useMemo(()=>attackTargets(xml),[xml]);
   const session=useToneSession(targets),{pause,start}=session;
   const running=session.status==='listening'||session.status==='starting';
@@ -41,18 +43,18 @@ export function usePitchPractice({xml,title,on,silence,onStart}:{xml:string;titl
   useEffect(()=>{const keep=()=>save.current();window.addEventListener('pagehide',keep);return()=>{window.removeEventListener('pagehide',keep);keep()}},[]);
   const all=session.live?[...session.attempts,session.live]:session.attempts;
   const take=[...all].sort((a,b)=>a.target.id-b.target.id);
-  const marks:PitchMarks=({root,version})=><ToneMarks root={root} version={version} magnify={1} active={targets[session.cursor]?.id??-1} cursorAfter={session.cursorAfter} live={session.live} attempts={session.attempts} running={running} onSelect={select} zh={false}/>;
+  const marks:PitchMarks=({root,version})=><ToneMarks root={root} version={version} magnify={1} active={targets[session.cursor]?.id??-1} cursorAfter={session.cursorAfter} live={session.live} attempts={session.attempts} running={running} onSelect={select} zh={zh}/>;
   const panel=<div className="tone-workspace pitch-practice">
-    <div className="pitch-row"><div className="pitch-row-surface" role="toolbar" aria-label="Pitch tools">
-      <PitchMic session={session} disabled={!targets.length} onToggle={()=>{if(running)pause();else startRef.current()}} zh={false}/>
+    <div className="pitch-row"><div className="pitch-row-surface" role="toolbar" aria-label={zh?"音准工具":"Pitch tools"}>
+      <PitchMic session={session} disabled={!targets.length} onToggle={()=>{if(running)pause();else startRef.current()}} zh={zh}/>
       <span className="divider"/>
-      <button type="button" className="has-tip" aria-pressed={graph} data-tip="Show how the pitch moved over time" onClick={()=>setGraph(!graph)}>Graph</button>
-      <button type="button" disabled={!all.length} onClick={()=>{session.clear();saved.current.clear();session.select(0)}}>Clear</button>
+      <button type="button" className="has-tip" aria-pressed={graph} data-tip={zh?"查看音高随时间的变化":"Show how the pitch moved over time"} onClick={()=>setGraph(!graph)}>{zh?"曲线":"Graph"}</button>
+      <button type="button" disabled={!all.length} onClick={()=>{session.clear();saved.current.clear();session.select(0)}}>{zh?"清除":"Clear"}</button>
       <span className="divider"/>
-      <Link className="pitch-history" href="/flute-studio/practice#pitch">Pitch history ›</Link>
+      <Link className="pitch-history" href="/flute-studio/practice#pitch">{zh?"音准记录":"Pitch history"} ›</Link>
     </div></div>
     {graph&&<div className="tone-graph">
-      <ToneTrace attempts={take} selectedId={null} onSelect={id=>{const a=take.find(x=>x.id===id);if(a)select(a.target.id)}} zh={false}/>
+      <ToneTrace attempts={take} selectedId={null} onSelect={id=>{const a=take.find(x=>x.id===id);if(a)select(a.target.id)}} zh={zh}/>
     </div>}
   </div>;
   return {marks,onNote:select,panel};

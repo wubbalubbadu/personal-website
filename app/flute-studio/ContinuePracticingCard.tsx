@@ -1,46 +1,35 @@
 'use client';
 import {usePrivateMusic} from './lib/privateMusic';
 import Link from 'next/link';
-import {musicLibrary as publicMusic, libraryShelf as publicShelf} from '../../content/music-library';
+import {musicLibrary as publicMusic,libraryShelf as publicShelf} from '../../content/music-library';
+import {exerciseCatalog} from '../../content/exercise-catalog';
 import {useStatusEntries} from './lib/musicStatus';
-import {readSessions} from './practice-data';
+import {useRecents} from './lib/storage';
 import {useLanguage} from './i18n/LanguageContext';
 
-// One shared card, three sections — not three differently-tinted tiles.
-// "Working on" is a portal into that list in the Library (there can be
-// several pieces on it, so it doesn't jump into just one of them).
-// "Continue practicing" still goes straight to the specific piece.
+type ShelfItem={id:string;title:string;composer:string;viewerPath:string|null};
+
+/** The existing shared shelf surface, with direct links to each saved score. */
 export default function ContinuePracticingRow(){
   const privateMusic=usePrivateMusic();
-  const libraryShelf=[...publicShelf,...privateMusic.items];
-  const musicLibrary=[...publicMusic,...privateMusic.items];
-  const {t, lang} = useLanguage(), zh = lang === 'zh';
-  const entries = useStatusEntries();
-  // What you are working on; before anything is, what you want to learn.
-  const list = entries.some(entry => entry.status === 'working') ? 'working' : 'want';
-  const listIds = entries.filter(entry => entry.status === list).map(entry => entry.id);
-
-  const sessions = readSessions().slice().sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
-  const recentId = sessions.map(session => session.itemId).find(id => musicLibrary.some(item => item.id === id));
-  const recent = (recentId ? musicLibrary.find(item => item.id === recentId) : undefined)
-    ?? musicLibrary.find(item => item.status === 'published');
-
-  const savedItems = listIds.map(id => libraryShelf.find(item => item.id === id)).filter(item => !!item);
-
-  return <div className="continue-panel">
-    <Link className="continue-section" href={`/flute-studio/music?list=${list}`}>
-      <p><i className="continue-dot tone-pink"/>{list === 'working' ? (zh ? '正在练' : 'Working on') : (zh ? '想学' : 'Want to learn')}</p>
-      {savedItems.length
-        ? <><b>{savedItems[0].title}</b><small>{zh ? `共 ${savedItems.length} 首` : `${savedItems.length} on this list`}</small></>
-        : <><b>{zh ? '还没有内容' : 'Nothing on your lists yet'}</b><small>{zh ? '在曲库里点 +，加入想学。' : 'Tap + in the Library to add a piece.'}</small></>}
-    </Link>
-    <Link className="continue-section" href={recent?.viewerPath ?? '/flute-studio/music'}>
-      <p><i className="continue-dot tone-green"/>{t.home.continuePracticing}</p>
-      {recent && <><b>{recent.title}</b><small>{recent.composer}</small></>}
-    </Link>
-    <Link className="continue-section" href="/flute-studio/exercises/scales">
-      <p><i className="continue-dot tone-sage"/>{t.home.suggestedExercise}</p>
-      <b>{t.quickTools.scaleStudio}</b><small>{t.quickTools.exercisesDetail}</small>
-    </Link>
+  const {lang}=useLanguage(),zh=lang==='zh';
+  const entries=useStatusEntries();
+  const {ids}=useRecents('music',8);
+  const catalog=new Map<string,ShelfItem>([...publicMusic,...publicShelf,...privateMusic.items,
+    ...exerciseCatalog.map(item=>({id:item.id,title:zh?item.zhTitle:item.title,composer:zh?'练习':'Exercise',viewerPath:item.href})),
+  ].map(item=>[item.id,item]));
+  const resolve=(ids:string[])=>ids.map(id=>catalog.get(id)).filter((item):item is ShelfItem=>Boolean(item?.viewerPath));
+  const columns=[
+    {label:zh?'最近打开':'Last opened',tone:'sage',items:resolve(ids).slice(0,1),empty:zh?'还没有打开过曲目。':'No pieces opened yet.'},
+    {label:zh?'正在练':'Working On',tone:'pink',items:resolve(entries.filter(e=>e.status==='working').map(e=>e.id)),empty:zh?'还没有正在练的曲目。':'No pieces marked Working On yet.'},
+    {label:zh?'想学':'Want to Learn',tone:'green',items:resolve(entries.filter(e=>e.status==='want').map(e=>e.id)),empty:zh?'还没有想学的曲目。':'No pieces marked Want to Learn yet.'},
+  ];
+  return <div className="continue-panel home-shelf">
+    {columns.map(column=><section className="continue-section home-shelf__column" key={column.label} aria-label={column.label}>
+      <p><i className={`continue-dot tone-${column.tone}`} aria-hidden="true"/>{column.label}</p>
+      {column.items.length?<ul>{column.items.map(item=><li key={item.id}>
+        <Link href={item.viewerPath!}><b>{item.title}</b><small>{item.composer}</small></Link>
+      </li>)}</ul>:<><small>{privateMusic.loading?(zh?'正在恢复曲目…':'Restoring your music…'):column.empty}</small><Link className="home-shelf__browse" href="/flute-studio/music">{zh?'浏览曲库':'Browse Library'}</Link></>}
+    </section>)}
   </div>;
 }

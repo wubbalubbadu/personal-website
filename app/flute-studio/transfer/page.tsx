@@ -121,7 +121,7 @@ export default function TransferPage(){
             {!confirming
               ?<button type="button" className="transfer-card__primary" onClick={()=>setConfirming(true)}>{zh?"用到这台设备":"Use on this device"}</button>
               :<div className="transfer-card__confirm">
-                <p>{zh?"会和这台设备上的内容合并：两边的练习记录、音准记录和收藏都会保留，设置以代码为准。":"This combines with what's on this device. Practice history, pitch records and saved music from both are kept. Settings take the code's values."}</p>
+                <p>{zh?"会和这台设备上的内容合并：两边的练习记录、音准记录和收藏都会保留。精练小节的速度记录会合并，重复次数保留较高值；目标、步长和设置以代码为准。":"This combines with what's on this device. Practice history, pitch records and saved music from both are kept. Tricky-bit tempos combine; repetition counts keep the higher count. Goals, steps and settings take the code’s values."}</p>
                 <div className="transfer-card__actions">
                   <button type="button" className="transfer-card__primary" onClick={replace}>{zh?"合并":"Combine"}</button>
                   <button type="button" className="transfer-card__secondary" onClick={()=>setConfirming(false)}>{zh?"取消":"Cancel"}</button>

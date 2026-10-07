@@ -20,7 +20,7 @@ export const STATUS_LABELS:Record<MusicStatus,{en:string;zh:string}>={
 /** Tints from components/tag-pill.css. */
 export const STATUS_TONES:Record<MusicStatus,string>={want:"blue",working:"sand",learned:"sage"};
 
-type Entry={status:MusicStatus;at:number};
+type Entry={status:MusicStatus|null;at:number};
 const KEY="cookie:music-status:v1",UPDATED="cookie:music-status";
 
 function read():Record<string,Entry>{
@@ -29,7 +29,8 @@ function read():Record<string,Entry>{
 
 export function setStatus(id:string,status:MusicStatus|null){
   const all=read();
-  if(status)all[id]={status,at:Date.now()};else delete all[id];
+  // Keep removal timestamps so older transfer codes cannot resurrect a status.
+  all[id]={status,at:Date.now()};
   try{localStorage.setItem(KEY,JSON.stringify(all))}catch{/* storage may be disabled */}
   window.dispatchEvent(new Event(UPDATED));
 }
@@ -68,8 +69,8 @@ export function useStatusEntries():StatusEntry[]{
   try{
     const parsed=JSON.parse(raw) as Record<string,Entry>;
     return Object.entries(parsed)
-      .filter(([,entry])=>STATUSES.includes(entry?.status))
-      .map(([id,entry])=>({id,status:entry.status,at:Number(entry.at)||0}))
+      .filter(([,entry])=>entry?.status!==null&&STATUSES.includes(entry?.status))
+      .map(([id,entry])=>({id,status:entry.status as MusicStatus,at:Number(entry.at)||0}))
       .sort((a,b)=>b.at-a.at);
   }catch{return []}
 }

@@ -9,18 +9,18 @@
  *
  * The same text can travel as a copied code (Notes, Messages, email, WeChat)
  * or as a small .txt file. Reading it back merges into what the receiving
- * device already has (see `merge`): nothing recorded on either device is
- * lost, and a code made without the pencil drawings never touches the
+ * device already has (see `merge`). Conflict rules preserve separate records,
+ * and a code made without the pencil drawings never touches the
  * drawings already there.
  */
 
 const TAG="CFS1.";
 
 /** Keys that describe this screen rather than you: they stay on each device. */
-const DEVICE_ONLY=[/^cookie:rail-open$/,/^cookie:pet-position$/,/^cookie:reader-view:/];
+const DEVICE_ONLY=[/^cookie:private-music-code$/,/^cookie:rail-open$/,/^cookie:pet-position$/,/^cookie:reader-view:/];
 const isStudioKey=(key:string)=>key.startsWith("cookie")&&!DEVICE_ONLY.some(rule=>rule.test(key));
 /** Pencil ink is stored as drawn strokes and is by far the biggest thing kept. */
-export const isDrawing=(key:string)=>key.endsWith(":ink");
+export const isDrawing=(key:string)=>key.endsWith(":ink")||/:annotations:v2$/.test(key);
 
 export type Snapshot={at:string;data:Record<string,string>};
 
@@ -89,11 +89,14 @@ export function apply(snapshot:Snapshot){
  *
  * - Lists of records or ids (practice sessions, pitch history, saved music,
  *   saved scale sets) are combined, so practice done on either device is
- *   kept. The same record on both sides keeps the newer copy. The flip side:
- *   unsaving a piece on one device doesn't unsave it on the other.
- * - Objects (book progress, tempos, marks on a score) merge field by field.
+ *   kept. The same record on both sides keeps the newer copy. Legacy lists
+ *   do not carry deletion history.
+ * - Objects (book progress and tempos) merge field by field.
+ * - Tricky-bit tempos combine; goals and steps take the code value. Tallies
+ *   keep the higher count, avoiding inflation on repeated imports.
+ * - Current annotations merge by mark ID and edit/deletion timestamp.
  * - A music list status (Want to learn, Working on, Learned) keeps whichever
- *   was set last, on either device.
+ *   was set last, on either device, including a timestamped removal.
  * - Preferences (Scale Studio and Long tones setups) take the code's value
  *   whole: they hold lists of choices, and combining two setups would make
  *   one nobody picked.
@@ -104,6 +107,36 @@ export function merge(here:string|null,arriving:string,key=""){
   if(WHOLE.some(rule=>rule.test(key)))return arriving;
   try{
     const old=JSON.parse(here),next=JSON.parse(arriving);
+    if(/:annotations:v2$/.test(key)&&isObject(old)&&isObject(next)&&Array.isArray(old.marks)&&Array.isArray(next.marks)){
+      const marks=new Map<string,unknown>(),sync:Record<string,unknown>={};
+      for(const doc of [old,next]){
+        const revisions=isObject(doc.sync)?doc.sync:{};
+        const candidates=new Map<string,Record<string,unknown>>();
+        for(const mark of doc.marks as unknown[])if(isObject(mark)&&typeof mark.id==="string")candidates.set(mark.id,mark);
+        for(const id of new Set([...candidates.keys(),...Object.keys(revisions)])){
+          const revision=isObject(revisions[id])?revisions[id]:{at:0};
+          const existing=isObject(sync[id])?sync[id]:null;
+          if(existing&&Number(existing.at)>Number(revision.at))continue;
+          sync[id]=revision;
+          if(revision.deleted)marks.delete(id);
+          else if(candidates.has(id))marks.set(id,candidates.get(id));
+        }
+      }
+      return JSON.stringify({...old,...next,marks:[...marks.values()],sync});
+    }
+    if(key==="cookie:tricky-bits:v1"&&Array.isArray(old)&&Array.isArray(next)){
+      const bits=new Map<string,Record<string,unknown>>();
+      for(const bit of [...old,...next])if(isObject(bit)&&typeof bit.id==="string"){
+        const previous=bits.get(bit.id);
+        bits.set(bit.id,{...previous,...bit,tempos:[...new Set([...(Array.isArray(previous?.tempos)?previous.tempos:[]),...(Array.isArray(bit.tempos)?bit.tempos:[])])].sort((a,b)=>Number(a)-Number(b))});
+      }
+      return JSON.stringify([...bits.values()]);
+    }
+    if(key==="cookie:tricky-bits:tallies:v1"&&isObject(old)&&isObject(next)){
+      const tallies={...old};
+      for(const [id,count] of Object.entries(next))tallies[id]=Math.max(Number(old[id])||0,Number(count)||0);
+      return JSON.stringify(tallies);
+    }
     return JSON.stringify(STATUS.test(key)?newest(old,next):combine(old,next));
   }catch{return arriving}
 }
@@ -173,7 +206,7 @@ const GROUPS:{id:string;en:string;zh:string;match:RegExp}[]=[
   {id:"practice",en:"Practice history, routine and timer",zh:"练习记录、日程和计时",match:/^cookie:practice-|^cookie:pomodoro|^cookie:tricky-bits/},
   {id:"pitch",en:"Pitch history and pitch tests",zh:"音准记录和音准测试",match:/^cookie:pitch-history|^cookie:tendency-tests/},
   {id:"progress",en:"Lessons, books and roadmap",zh:"课程、练习曲集和路线图进度",match:/theory|^cookie:book-progress|^cookie:roadmap/},
-  {id:"drawings",en:"Pencil drawings",zh:"铅笔标注",match:/:ink$/},
+  {id:"drawings",en:"Pencil drawings",zh:"铅笔标注",match:/:ink$|:annotations:v2$/},
   {id:"marks",en:"Notes and marks on scores",zh:"谱子上的笔记和记号",match:/:annotations|:notes$/},
   {id:"recent",en:"Recently opened",zh:"最近打开",match:/-recents$/},
 ];

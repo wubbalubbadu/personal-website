@@ -1,4 +1,4 @@
-# Lesson 4: Sharps, flats and naturals (storyboard, draft 5: after the first build)
+# Lesson 4: Sharps, flats and naturals (storyboard, draft 6: after the second review)
 
 Bridge: *Every note you've read so far is a white key. How do we write the keys between them?*
 Six steps, about 5 to 7 minutes. Plan only, not an implementation spec. Built against LESSONS.md;
@@ -29,8 +29,8 @@ and the musical payoff is a real tune at the end (step 6).
 - **Same help.** Misses get a hint that teaches; Show answer after two misses.
 - **Progress is visible** in exercises as progress dots in Cookie's bubble (LESSONS.md principle 8),
   never as words.
-- **The keyboard from lesson 1,** shared rather than redrawn, now with its black keys drawn. It is a
-  picture of where a written note lives: it lights up and is never tapped.
+- **The keyboard from lesson 1,** shared rather than redrawn, now with its black keys drawn. It sounds
+  when tapped and lights the key, but no step ever tests a key: it shows where a written note lives.
   **White keys show their letters; black keys don't.** The lesson is about reading the signs, not
   memorising a piano, so letters remove keyboard unfamiliarity as a source of wrong answers. Black
   keys stay unlabelled so the lesson stays about the written signs.
@@ -38,70 +38,48 @@ and the musical payoff is a real tune at the end (step 6).
 The scene is the same throughout: a staff on top, the keyboard below, both visible together, so
 the eye learns "this mark on the staff is that key".
 
-## What went wrong in the first build, so it doesn't happen again
+## What went wrong in the earlier builds, so it doesn't happen again
 
-1. **The keyboard became the activity.** Steps asked the learner to find keys: a piano lesson, not a notation lesson. The learner acts on the notation (draws a sign, reads a note, matches written notes). The keyboard only shows where a written note lives: it lights up and is never tapped.
-2. **Three steps in a row had the same action** (tap in front of a note). Each step now has a different kind of action: watch, draw, draw, choose, answer, match.
-3. **Things appeared without being explained** (A sharp beside B flat, then E sharp and F sliding in). A pair or comparison is introduced before the learner is asked to do anything with it, and nothing on the staff moves sideways when something new appears.
+1. **The keyboard became the activity.** Steps asked the learner to find keys: a piano lesson, not a notation lesson. The keyboard sounds when tapped (everyone tries it first), but no step ever tests a key.
+2. **Interactions existed for their own sake.** An interaction is the moment the learner takes in the new idea (they make the new thing happen, or notice it), never a tap to fill the step. Tapping a note to light its key taught nothing.
+3. **Sharp and flat were two puzzles instead of one idea.** Two notes with a black key between them: draw a sharp on the lower one and a flat on the upper one, and the learner discovers they are the same key.
+4. **Nobody reads the narration line.** The eye goes to Cookie's bubble. So: one idea per stage, the narration changes with each stage and fades in, the teaching lives in the narration and in labels beside the thing on screen (never only in Cookie), and Cookie only invites and reacts.
+5. **A natural needs a reason.** Picking it from three signs was not an exercise. Plain notes need no sign; a natural exists to bring back a note a sharp has changed.
+6. **Everything on screen is asked about, and readable.** No dead measures; staffs at full size with complete clefs; every tap target at least 48 by 48 CSS pixels.
 
 ## The steps
 
-The scene is the same layout in every step (staff or close-up on top, keyboard below, a row for progress dots, then Cookie), at one fixed height. Answers sit under the music; progress dots have their own row between the music and Cookie.
+Five steps. The scene is the same layout in every step (staff or close-up on top, keyboard below, a row for progress dots, then Cookie), at one fixed height; the keyboard is always playable. Answers sit under the music; progress dots have their own row between the music and Cookie. The narration is per stage and fades in (0.25 s; none with reduced motion).
 
-### 1. Half steps (watch, then read)
+### 1. Between the notes (a demonstration, stepped by Next)
 
-**Teaching point:** keys next to each other are a half step apart, and a black key has no line or space of its own.
+Staff: C and D (never anything between them: no dashed or ghost notehead). Stage 1: "C and D sit right next to each other on the staff." Stage 2 (*What's between them?*): the black key lights, C, the black key and D play in turn, with "half step" above each of the two arcs; "On the keyboard there's one more key between them. Each neighbour is a half step away." Stage 3 (*Not always*): E and F, one arc, "E and F have no key between them. They're already a half step apart." Cookie ends on the question the next step answers: how do we write that middle sound?
 
-**Scene:** C D E F G A B C on the staff, the keyboard below as a picture (not tappable).
+### 2. Sharp and flat (draw both, discover they're the same)
 
-**Interaction:** Listen plays the eight notes, each note and its key lighting red together. Tapping a note on the staff plays it and lights its key; notes take no colour on hover. Then a demonstration stepped by Next (Next may step a demonstration):
-1. *Show me:* E and F light with an arc between the keys. "E and F have no key between them. They're a half step apart."
-2. *And F to G?* F and G light and the black key between them pulses once. "F to G skips a black key, so that's two half steps. The black key has no line or space of its own. This lesson is about how to write it."
+The same C and D, with room in front of each; the black key between them outlined. Trace a sharp in front of C (the engraved sign appears, C sharp plays, the black key lights), then a flat in front of D (D flat plays, the same key lights). Press Listen: C sharp then D flat, identical. Then *One more*: E sharp and F, both engraved, on the same white key. "A sharp doesn't always land on a black key. E sharp is the key just above E: F."
 
-### 2. Draw a sharp (draw)
+### 3. Bringing it back (why a natural exists)
 
-**Teaching point:** a sharp raises a note by a half step, written in front of the note on the same line or space.
+One measure of 3/4: F sharp, A, F. The sharp still holds for the last F: Listen plays it sharp (lit on the black key, circled). "A natural cancels the sharp. This F returns to the white key." Trace the natural in front of the last F; Listen now plays the last F on the white key. This replaces picking a sign from three.
 
-**Scene:** a close-up staff with one F, the engraved sharp faint in front of it as a guide, F lit on the keyboard.
+### 4. Through the measure (answer)
 
-**Interaction:** trace the sharp with finger, pencil or mouse: four straight strokes (two uprights, two bars), in any order, each counted by `traceSegment` and `traceComplete` as in the clef tracing. Done: the engraved sharp appears, the light moves one key right, F then F sharp play. Clear starts over.
+An accidental applies to that same note, in the same octave, until a natural or the bar line. Three questions, each about a circled note in a 4/4 measure that adds up: F sharp G F A (the second F: sharp), F sharp G A G | F A G A (the F after the bar line: plain), B flat B natural A B (the last B: plain). Answer buttons sit under the music and go once right (the row keeps its height). After a right answer only the measure holding the circled note plays, with a light band from the sign to where it ends.
 
-### 3. Draw a flat (draw)
+### 5. Same key, two names (match)
 
-Same as step 2 with B and a flat (the stem, then the curve of the bowl). The light moves one key left; B then B flat play. No A sharp or E sharp here.
-
-### 4. Naturals (choose)
-
-**Scene:** F sharp on the staff, F sharp lit. Cookie: "Listen: this should be a plain F. Which sign makes it one?" Listen plays plain F.
-
-**Interaction:** three buttons under the music showing the engraved sharp, flat and natural. The natural replaces the sharp, the light moves to F, F plays, the buttons disappear. Then again with B flat (should be plain B). Progress dots: 2. A wrong choice: "That one moves the note. The natural is the sign that takes it back to plain."
-
-### 5. Through the measure (answer)
-
-**Teaching point:** an accidental applies to that same note, in the same octave, for the rest of the measure, until a natural cancels it or the bar line ends it. (In lesson 5 the rule becomes "return to the key signature".)
-
-Three questions with Yes/No or Flat/Plain buttons under the music, which disappear once the answer is right: F sharp G F A | F G A G (the second F circled), then B flat B B natural B twice (the second B, then the last B). After a right answer, a light band shows the sign's reach (ending at the bar line or the natural) and only the measure in question plays; for question 1, a Listen button plays measure 2 on its own to hear the bar line start over.
-
-### 6. Same key, two names (match)
-
-**Teaching point:** one key can have two names; a sharp can even land on a white key.
-
-**Scene:** two columns of small staffs, four on the left and four on the right, one note each; the keyboard below as a picture. The first pair, A sharp and B flat, is shown already joined, both lighting the same key. The rest are drawn fresh each time: E sharp and F always, plus two from C sharp/D flat, D sharp/E flat, F sharp/G flat, G sharp/A flat. The right column is shuffled so no line is level; the left is not.
-
-**Interaction:** drag from a left note to the right note that is the same key (pointer capture, like drawing bar lines). While dragging, the left note's key lights. A match stays as a green line and both notes play; a miss fades away, the wrong note's key lights red briefly, and Cookie says the two are different keys. Show answer after two misses on the same note outlines its partner. Progress dots: 3.
-
-**End:** "Writing a sharp in front of every F gets tiring. Next lesson: how music says 'always'." Finish lesson.
+Two full-size staffs, one above the other, each with its whole clef. Top: C sharp, F sharp, A sharp, E sharp. Bottom: their partners, shuffled. C sharp to D flat is already joined (found in step 2); E sharp to F was shown at the end of step 2. Connect each top note to its partner: drag, or tap one and then the other. A match stays green and both notes play; a miss fades away. The keyboard is hidden until Hint shows it with the current top note's key lit (it hides again when that pair is matched). Progress dots: 3. The lesson ends with the bridge to key signatures: "Writing a sharp in front of every F gets tiring. Next lesson: how music says always."
 
 ## Summary
 
 | Step | Action | Teaching point |
 |---|---|---|
-| 1. Half steps | Watch (Listen, tap a note, two demonstration steps) | Adjacent keys are a half step apart; a black key has no line or space. |
-| 2. Draw a sharp | Draw | Raise a note by a half step; written in front, same line or space. |
-| 3. Draw a flat | Draw | Lower a note by a half step. |
-| 4. Naturals | Choose | A natural cancels a sharp or flat. |
-| 5. Through the measure | Answer | Same note until a natural or the bar line. |
-| 6. Same key, two names | Match | One key, two names; E sharp is just F. |
+| 1. Between the notes | Watch and listen (Next steps the demonstration) | Adjacent keys are a half step apart, with or without a black key between. |
+| 2. Sharp and flat | Draw a sharp, draw a flat, listen | Raise or lower a note by a half step; the two signs can name the same key. |
+| 3. Bringing it back | Listen, draw a natural | A natural cancels a sharp; that is why it exists. |
+| 4. Through the measure | Answer | Same note until a natural or the bar line. |
+| 5. Same key, two names | Match | One key, two names; E sharp is just F. |
 
 ## Not in this lesson
 
@@ -113,7 +91,6 @@ courtesy accidentals (one line in lesson 5), key signatures (lesson 5).
 - Progress: progress dots in their own row under the music, never words.
 - Answers sit under the music (as in lesson 1), and disappear once answered right.
 - Next: may step through a demonstration, never performs the learner's action.
-- The keyboard shows, it is never the activity.
-- The ending is the matching step, not a reading step: no phrases, no naturals in real tunes.
-
-The build plan was `04-sharps-flats-naturals-build.md`; the revision plan followed it.
+- The keyboard sounds when tapped but is never the thing being tested.
+- The narration is per stage and fades in (lesson 4 only for now; lessons 1 to 3 later if it works).
+- The ending is the matching step, not a reading step.

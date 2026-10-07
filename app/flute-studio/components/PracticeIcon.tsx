@@ -1,6 +1,7 @@
 import type {ReactNode} from "react";
-export type PracticeIconName = "loop" | "zoom" | "plus" | "piano" | "metronome" | "tuner" | "mic" | "drone" | "markup" | "fullscreen" | "exitFullscreen" | "close" | "previous" | "next" | "settings" | "gear" | "view" | "bookmark" | "bookmarkFilled" | "more" | "tap" | "record" | "play" | "pause" | "stop" | "undo" | "redo" | "saved" | "aids" | "tempo" | "print" | "top" | "highlighter" | "arrow" | "eraser" | "text" | "sticky" | "select";
+export type PracticeIconName = "delete" | "loop" | "zoom" | "plus" | "piano" | "metronome" | "tuner" | "mic" | "drone" | "markup" | "fullscreen" | "exitFullscreen" | "close" | "previous" | "next" | "settings" | "gear" | "view" | "bookmark" | "bookmarkFilled" | "more" | "tap" | "record" | "play" | "pause" | "stop" | "undo" | "redo" | "saved" | "aids" | "tempo" | "print" | "top" | "highlighter" | "arrow" | "eraser" | "text" | "sticky" | "select";
 const paths:Record<PracticeIconName,ReactNode>={
+  delete:<><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6M14 11v6"/></>,
   loop:<path d="M17 3l4 4-4 4M3 11V9a2 2 0 0 1 2-2h16M7 21l-4-4 4-4M21 13v2a2 2 0 0 1-2 2H3"/>,
   zoom:<><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></>,
   plus:<path d="M12 5v14M5 12h14"/>,

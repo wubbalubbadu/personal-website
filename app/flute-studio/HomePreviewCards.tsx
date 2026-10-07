@@ -30,7 +30,7 @@ export default function HomePreviewCards(){
 
     <h2 className="home-preview__group">{lang==="zh"?"练习":"Practice"}</h2>
     {/* Two across, so each card has room to act out what the tool does. */}
-    <section className="home-preview-grid home-preview-grid--duo" aria-label="Practice">
+    <section className="home-preview-grid home-preview-grid--duo" aria-label={lang==="zh"?"练习":"Practice"}>
     <Link className="preview-card preview-card--scales" href="/flute-studio/exercises/scales" onPointerEnter={warmScoreReader} onFocus={warmScoreReader}>
       <div className="preview-card__stage">
         <ScaleStudioPreview zh={lang==="zh"}/>
@@ -57,7 +57,7 @@ export default function HomePreviewCards(){
 
     <h2 className="home-preview__group">{lang==="zh"?"学习":"Learn"}</h2>
     {/* Theory first: it is where a new player starts. */}
-    <section className="preview-grid" aria-label="Learn">
+    <section className="preview-grid" aria-label={lang==="zh"?"学习":"Learn"}>
     <Link className="preview-card preview-card--theory" href="/flute-studio/theory">
       <div className="preview-card__stage"><TheoryPreview zh={lang==="zh"}/></div>
       <div className="preview-card__copy"><b>{lang==="zh"?"乐理课":"Theory lessons"}</b><small>{lang==="zh"?"像小游戏一样的互动乐理课。":"Hands-on theory lessons that play like little games."}</small></div>

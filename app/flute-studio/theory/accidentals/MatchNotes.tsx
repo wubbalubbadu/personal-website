@@ -1,82 +1,100 @@
 'use client';
 import {useEffect,useRef,useState,type PointerEvent} from 'react';
-import {ACCIDENTALS} from '../accidentalGlyphs';
+import {RowGraphics,layoutRow,type RowNote} from '../EngravedRow';
 import {noteY} from '../model';
-import RhythmNote from '../rhythm/RhythmNote';
-import TrebleClef from '../TrebleClef';
 import type {PairNote,Round} from './pairs';
 
 /**
- * Two columns of small staffs, one note each. Drag from a note on the left to the note on the right
- * that is the same key. Everything is drawn in one SVG so the lines, the staffs and the pointer share
- * one coordinate system (pointer events with capture, as in BarLineDrawing). A line that is not a
- * match never stays: it fades away.
+ * Two full-size staffs, one above the other, drawn by the same code as every other staff (RowGraphics).
+ * Connect each note on the top staff to the note below it that is the same key: tap one and then the
+ * other (the main way), or drag from one to the other. Everything is in one SVG (staff units) so the
+ * lines, the staffs and the pointer share one coordinate system. The staffs never move: the keyboard
+ * a hint brings back has its room reserved from the start. A line that is not a match fades away.
  */
-const W=360,ROW=60,K=.5,CELL=96,LEFT=2,RIGHT=W-CELL-2;
-// In a small staff's own units: the clef, the note and the sign in front of it.
-const CLEF_X=42,NOTE_X=146;
+const OFFSET=196,RIGHT=620,CLEARANCE=26;
+const rowNotes=(notes:PairNote[]):RowNote[]=>notes.map(note=>({v:1,p:note.p,acc:note.acc}));
 
-const rowY=(row:number)=>row*ROW+30;
-const anchor=(side:'left'|'right',row:number)=>({x:side==='left'?LEFT+CELL:RIGHT,y:rowY(row)});
-
-function MiniStaff({note,x,row,hint}:{note:PairNote;x:number;row:number;hint?:boolean}){
-  const p=note.p;
-  return <g transform={`translate(${x} ${rowY(row)-152*K}) scale(${K})`}>
-    {/* The staff is drawn at half size, so its lines are thickened to stay visible. */}
-    {[0,2,4,6,8].map(l=><line key={l} x1="0" x2={CELL/K} y1={noteY(l)} y2={noteY(l)} className="engraved-row__line" style={{strokeWidth:2.6}}/>)}
-    {/* The clef is shrunk about the middle of the staff so it does not run into the rows above and below. */}
-    <g transform={`translate(${CLEF_X} 152) scale(.62) translate(${-CLEF_X} -152)`}><TrebleClef x={CLEF_X}/></g>
-    <g transform={`translate(${NOTE_X} ${noteY(p)})`}>
-      <RhythmNote value={1} down={p>=4}/>
-      {note.acc&&<path className="engraved-row__acc" d={ACCIDENTALS[note.acc]} transform="translate(-35 0) scale(.064 -.064)"/>}
-    </g>
-    {hint&&<rect x="-6" y="92" width={CELL/K+12} height="116" rx="10" className="acc-hint"/>}
-  </g>;
-}
-
-type Props={round:Round;/** Left notes already matched. */matched:number[];/** A right note to outline (Show answer). */hint:number|null;label:string;
-  onDrag:(left:number|null)=>void;
+type Props={
+  round:Round;
+  /** Top notes already matched. */
+  matched:number[];
+  /** A top note tapped and waiting for its partner. */
+  selected:number|null;
+  /** A bottom note to outline (Show answer). */
+  hint:number|null;
+  /** Top notes that count as matched but get no line (pairs too plain to need one, like C and C). */
+  quiet?:number[];
+  label:string;
+  /** The top note picked (tapped or dragged), or null when none. */
+  onSelect:(top:number|null)=>void;
   /** Returns whether the line is a match; a line that is not fades away. */
-  onDrop:(left:number,right:number)=>boolean};
-export default function MatchNotes({round,matched,hint,label,onDrag,onDrop}:Props){
+  onDrop:(top:number,bottom:number)=>boolean;
+};
+export default function MatchNotes({round,matched,selected,hint,quiet=[],label,onSelect,onDrop}:Props){
   const svg=useRef<SVGSVGElement|null>(null),timer=useRef<ReturnType<typeof setTimeout>|null>(null);
-  const [drag,setDrag]=useState<{left:number;x:number;y:number}|null>(null),[ghost,setGhost]=useState<{left:number;x:number;y:number}|null>(null);
+  const press=useRef<{side:'top'|'bottom';index:number;x:number;y:number}|null>(null);
+  const [drag,setDrag]=useState<{top:number;x:number;y:number}|null>(null),[ghost,setGhost]=useState<{top:number;x:number;y:number}|null>(null);
   useEffect(()=>()=>{if(timer.current)clearTimeout(timer.current)},[]);
+  const top=rowNotes(round.left),bottom=rowNotes(round.right);
+  // Both staffs have the same number of notes and room for a sign before each, so they share one layout.
+  const layout=layoutRow(top,{clef:true,right:RIGHT,reserveAcc:true});
+  const xs=layout.xs,split=noteY(0)+OFFSET/2+12;
   const at=(e:PointerEvent<SVGSVGElement>)=>{
     const matrix=svg.current?.getScreenCTM();
     return matrix?new DOMPoint(e.clientX,e.clientY).matrixTransform(matrix.inverse()):null;
   };
-  const rowAt=(y:number)=>Math.floor(y/ROW);
+  /** The note slot a point falls in: the whole column under a note counts, so a finger can't miss. */
+  const slotAt=(p:{x:number;y:number})=>{
+    let index=0;xs.forEach((x,i)=>{if(Math.abs(x-p.x)<Math.abs(xs[index]-p.x))index=i});
+    const half=(xs[1]-xs[0])/2;
+    if(Math.abs(xs[index]-p.x)>half)return null;
+    return {side:(p.y<split?'top':'bottom') as 'top'|'bottom',index};
+  };
+  const from=(i:number)=>({x:xs[i],y:noteY(round.left[i].p)+CLEARANCE});
+  const to=(i:number)=>({x:xs[i],y:noteY(round.right[i].p)+OFFSET-CLEARANCE});
   function down(e:PointerEvent<SVGSVGElement>){
-    const p=at(e);if(!p||p.x>LEFT+CELL+10)return;
-    const left=rowAt(p.y);
-    if(left<0||left>=round.left.length||matched.includes(left))return;
+    const p=at(e);if(!p)return;
+    const slot=slotAt(p);if(!slot)return;
     e.currentTarget.setPointerCapture(e.pointerId);
-    setGhost(null);setDrag({left,x:p.x,y:p.y});onDrag(left);
+    press.current={...slot,x:p.x,y:p.y};setGhost(null);
   }
   function move(e:PointerEvent<SVGSVGElement>){
-    const p=at(e);if(!p||!drag)return;
-    setDrag({left:drag.left,x:p.x,y:p.y});
+    const p=at(e),start=press.current;if(!p||!start)return;
+    if(drag){setDrag({top:drag.top,x:p.x,y:p.y});return}
+    // Dragging starts from a top note that has no partner yet, after a few units of movement.
+    if(start.side==='top'&&!matched.includes(start.index)&&Math.hypot(p.x-start.x,p.y-start.y)>8){onSelect(start.index);setDrag({top:start.index,x:p.x,y:p.y})}
+  }
+  function fail(topIndex:number,bottomIndex:number){
+    setGhost({top:topIndex,...to(bottomIndex)});
+    if(timer.current)clearTimeout(timer.current);
+    timer.current=setTimeout(()=>setGhost(null),500);
   }
   function up(e:PointerEvent<SVGSVGElement>){
-    const p=at(e);if(!drag){return}
-    const {left}=drag;setDrag(null);onDrag(null);
-    if(!p||p.x<RIGHT-14)return;
-    const right=rowAt(p.y);
-    if(right<0||right>=round.right.length)return;
-    if(!onDrop(left,right)){
-      setGhost({left,x:p.x,y:anchor('right',right).y});
-      if(timer.current)clearTimeout(timer.current);
-      timer.current=setTimeout(()=>setGhost(null),500);
+    const p=at(e),start=press.current;press.current=null;
+    if(!start)return;
+    if(drag){
+      const {top:picked}=drag;setDrag(null);
+      const slot=p&&slotAt(p);
+      if(slot&&slot.side==='bottom'&&!onDrop(picked,slot.index))fail(picked,slot.index);
+      onSelect(null);return;
+    }
+    // A tap: a top note is picked (tap it again to put it down); a bottom note then joins it.
+    if(start.side==='top'){if(!matched.includes(start.index))onSelect(selected===start.index?null:start.index);return}
+    if(selected!==null){
+      // Right or wrong, the pick is put down: after a wrong line, tapping the same top note again picks it again (not un-picks it).
+      if(!onDrop(selected,start.index))fail(selected,start.index);
+      onSelect(null);
     }
   }
   const line=(a:{x:number;y:number},b:{x:number;y:number},cls:string,key:string)=><line key={key} className={cls} x1={a.x} y1={a.y} x2={b.x} y2={b.y}/>;
-  return <svg ref={svg} className="engraved-row acc-closeup acc-match" viewBox={`0 0 ${W} ${ROW*round.left.length}`} role="group" aria-label={label}
-    onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={()=>{setDrag(null);onDrag(null)}}>
-    {round.left.map((note,i)=><MiniStaff key={`l${i}`} note={note} x={LEFT} row={i}/>)}
-    {round.right.map((note,i)=><MiniStaff key={`r${i}`} note={note} x={RIGHT} row={i} hint={hint===i}/>)}
-    {matched.map(l=>line(anchor('left',l),anchor('right',round.partner[l]),'acc-match-line is-right',`m${l}`))}
-    {drag&&line(anchor('left',drag.left),{x:drag.x,y:drag.y},'acc-match-line',`drag`)}
-    {ghost&&line(anchor('left',ghost.left),{x:ghost.x,y:ghost.y},'acc-match-line is-fading',`ghost`)}
+  return <svg ref={svg} className="engraved-row acc-closeup acc-match" viewBox={`20 50 ${RIGHT-10} ${OFFSET+252-50}`} role="group" aria-label={label}
+    onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={()=>{press.current=null;setDrag(null);onSelect(null)}}>
+    {/* The top note picked turns red, like a touched note anywhere else; no extra circle. */}
+    <RowGraphics notes={top} layout={layout} active={drag?drag.top:selected??-1}/>
+    <g transform={`translate(0 ${OFFSET})`}><RowGraphics notes={bottom} layout={layout}/></g>
+    {hint!==null&&<rect className="acc-hint" x={xs[hint]-46} y={OFFSET+96} width="92" height="120" rx="12"/>}
+    {matched.filter(l=>!quiet.includes(l)).map(l=>line(from(l),to(round.partner[l]),'acc-match-line is-right',`m${l}`))}
+    {drag&&line(from(drag.top),{x:drag.x,y:drag.y},'acc-match-line','drag')}
+    {ghost&&line(from(ghost.top),{x:ghost.x,y:ghost.y},'acc-match-line is-fading','ghost')}
   </svg>;
 }

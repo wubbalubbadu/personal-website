@@ -2,7 +2,7 @@ import {PITCHES} from '../model';
 
 export type Acc='sharp'|'flat'|'natural';
 /** A written note: `p` is its staff position (C4 = -2), `acc` the sign written in front of it. */
-export type ReadNote={v:number;p:number;acc?:Acc};
+export type ReadNote={v:number;p:number;acc?:Acc;/** Room kept on the staff for a sign (drawing only; it never changes the pitch). */room?:Acc};
 
 /** MIDI of the plain letter at staff position p. */
 export const letterMidi=(p:number)=>PITCHES[p+2].midi;

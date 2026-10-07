@@ -27,12 +27,19 @@
 /* Keyboard lights: red is sounding or pointed at (theory.css), green is right, an outline marks a neighbour. */
 .sequence-keyboard .is-key-right{fill:#dfeedd;stroke:#678956;stroke-width:1.5}
 .sequence-keyboard .is-key-near{fill:#fff;stroke:#b9362e;stroke-width:1.5;stroke-dasharray:4 3}
+/* Touched last: a solid outline (it wins over a dashed one), and it can sit under the red fill of a key that is also sounding. */
+.sequence-keyboard .is-key-selected{stroke:#b9362e;stroke-width:3;stroke-dasharray:none}
+.sequence-keyboard .is-key-selected:not(.is-key-active){fill:#fff}
+.sequence-keyboard .black-key.is-key-selected:not(.is-key-active){fill:#222}
 .sequence-keyboard .black-key.is-key-active{fill:#b9362e;stroke:#7d241f}
 .sequence-keyboard .black-key.is-key-right{fill:#4d7a40;stroke:#2f4a28}
 .sequence-keyboard .black-key.is-key-near{fill:#222;stroke:#b9362e;stroke-width:2}
 .sequence-keyboard .is-key-pulse{animation:key-pulse .7s ease-out 1;transform-box:fill-box;transform-origin:50% 0}
 @keyframes key-pulse{0%{transform:scaleY(1)}35%{transform:scaleY(1.06)}100%{transform:scaleY(1)}}
-.sequence-keyboard .piano-arc{fill:none;stroke:#b9362e;stroke-width:2;stroke-linecap:round}
+.sequence-keyboard .piano-arrow{fill:none;stroke:#b9362e;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.sequence-keyboard .piano-arrow-dot{fill:#b9362e;stroke:#fff;stroke-width:1.2;pointer-events:none}
+.sequence-keyboard .piano-caption{fill:#6e707a;font:500 12px var(--font,sans-serif);text-anchor:middle}
+
 
 /* Progress: a row of dots that fill, in their own row under the music. */
 .lesson-progress{height:12px;display:flex;justify-content:center;align-items:center;margin:2px 0}
@@ -43,6 +50,11 @@
 
 /* Narration: the idea in plain words, right above the music. */
 .lesson-shell .lesson-narration{margin:0 auto;padding-top:14px;min-height:calc(2 * 1.5em + 14px);max-width:700px;text-align:center;font-size:19px;line-height:1.5;color:#45464f;text-wrap:pretty}
+
+/* A narration that changes with each stage fades in (lesson 4). */
+.lesson-shell .lesson-narration.fade-in{animation:narration-in .25s ease both}
+@keyframes narration-in{from{opacity:0}}
+@media(prefers-reduced-motion:reduce){.lesson-shell .lesson-narration.fade-in{animation:none}}
 
 /* Name-the-note choices and the placing staff. */
 .lesson-choices{display:flex;justify-content:center;gap:12px}
@@ -125,3 +137,5 @@
 @media(max-width:760px){
   body:has(.lesson-shell){padding-bottom:0!important}
 }
+/* A black key that was touched last keeps the solid outline even when it is also pointed at. */
+.sequence-keyboard .black-key.is-key-selected{stroke-width:3;stroke-dasharray:none}

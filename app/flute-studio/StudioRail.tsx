@@ -1,23 +1,19 @@
 "use client";
-import {usePrivateMusic} from "./lib/privateMusic";
 
 import Link from "next/link";
 import {useSyncExternalStore} from "react";
-import {usePathname} from "next/navigation";
-import {libraryShelf as publicShelf} from "../../content/music-library";
-import {exerciseCatalog} from "../../content/exercise-catalog";
-import {scaleSetsEvent,scaleSetsKey,type ScaleSet} from "./exercises/scales/saved-sets";
+import {usePathname,useSearchParams} from "next/navigation";
 import {useLanguage} from "./i18n/LanguageContext";
 import {LEARN_PAGES} from "./learn-pages";
-import {useStatusEntries,type MusicStatus} from "./lib/musicStatus";
+import {STATUS_LABELS} from "./lib/musicStatus";
 import {openPracticeTool} from "./PracticeAudio";
 
 /**
  * The desktop rail (wide screens only; iPad and phone keep the top bar).
  *
  * Folded, like YouTube's: an icon with a word under each tab. Open, each tab
- * lists what is inside it, so a saved piece or a Scale Studio set is one
- * click away without going through its page first.
+ * exposes Library's three status filters and the Learn and Tools shortcuts.
+ * Exercises stays a single destination, keeping the rail compact.
  */
 
 export type RailIcon = "home"|"library"|"exercises"|"learn"|"studio"|"tools";
@@ -53,14 +49,9 @@ function useStoredString(key:string,subscribe:(onChange:()=>void)=>()=>void){
   return useSyncExternalStore(subscribe,()=>{try{return localStorage.getItem(key)}catch{return null}},()=>null);
 }
 
-function parseList<T>(raw:string|null):T[]{
-  try{const value=JSON.parse(raw||"[]");return Array.isArray(value)?value:[]}catch{return []}
-}
-
 const RAIL_KEY="cookie:rail-open";
 const RAIL_EVENT="cookie:rail-open";
 const subscribeRail=listenTo([RAIL_EVENT]);
-const subscribeSets=listenTo([scaleSetsEvent]);
 
 /** Whether the rail is open. Folded by default; the choice sticks between visits. */
 export function useRailOpen(){
@@ -72,42 +63,15 @@ export function setRailOpen(open:boolean){
   window.dispatchEvent(new Event(RAIL_EVENT));
 }
 
-/** How many pieces from your lists the open rail shows before leaving the rest to the Library. */
-const SAVED_LIMIT=6;
-/** The exercises that are always listed: the fundamentals the Exercises tab features. */
-const FEATURED_EXERCISES=exerciseCatalog.filter(entry=>entry.featured&&entry.href);
-
 export default function StudioRail({destinations,open}:{destinations:RailDestination[];open:boolean}){
-  const privateMusic=usePrivateMusic();
-  const libraryShelf=[...publicShelf,...privateMusic.items];
-  const pathname=usePathname();
+  const pathname=usePathname(),search=useSearchParams();
   const {t,lang}=useLanguage(),zh=lang==="zh";
-  // Your lists, most recent first: what you are working on, then what you want to learn.
-  const entries=useStatusEntries();
-  const onList=(status:MusicStatus)=>entries.filter(entry=>entry.status===status).map(entry=>entry.id);
-  const activeIds=[...onList("working"),...onList("want")];
-  const sets=parseList<ScaleSet>(useStoredString(scaleSetsKey,subscribeSets)).filter(set=>typeof set?.id==="string"&&typeof set?.name==="string");
 
   const childrenOf=(key:string):RailChild[]=>{
-    if(key==="music"){
-      const saved=activeIds.map(id=>libraryShelf.find(item=>item.id===id)).filter(item=>item?.viewerPath&&!item.exercise).slice(0,SAVED_LIMIT);
-      return [
-        {key:"saved",label:zh?"我的列表":"My lists",href:`/flute-studio/music?list=${onList("working").length?"working":"want"}`},
-        ...saved.map(item=>({key:item!.id,label:item!.title,href:item!.viewerPath!,active:pathname===item!.viewerPath})),
-      ];
-    }
-    if(key==="exercises"){
-      const savedExercises=exerciseCatalog.filter(entry=>entry.href&&!entry.featured&&activeIds.includes(entry.id));
-      const hasSaved=sets.length>0||savedExercises.length>0;
-      // Your saved ones first, then the tools everyone has.
-      return [
-        ...(hasSaved?[{key:"saved-caption",caption:zh?"我的练习":"My exercises"}]:[]),
-        ...sets.map(set=>({key:`set-${set.id}`,label:set.name,href:`/flute-studio/exercises/scales?set=${encodeURIComponent(set.id)}`})),
-        ...savedExercises.map(entry=>({key:entry.id,label:zh?entry.zhTitle:entry.title,href:entry.href!,active:pathname.startsWith(entry.href!)})),
-        ...(hasSaved?[{key:"all-caption",caption:zh?"全部":"All exercises"}]:[]),
-        ...FEATURED_EXERCISES.map(entry=>({key:entry.id,label:zh?entry.zhTitle:entry.title,href:entry.href!,active:pathname.startsWith(entry.href!)})),
-      ];
-    }
+    if(key==="music")return (["working","want","learned"] as const).map(status=>({
+      key:status,label:zh?STATUS_LABELS[status].zh:({working:"Working On",want:"Want to Learn",learned:"Learned"})[status],
+      href:`/flute-studio/music?list=${status}`,active:pathname==="/flute-studio/music"&&search.get("list")===status,
+    }));
     if(key==="resources")return LEARN_PAGES.map(page=>({key:page.key,label:zh?page.zh:page.en,href:page.href,active:pathname.startsWith(page.href)}));
     return [];
   };

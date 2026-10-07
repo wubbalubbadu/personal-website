@@ -4,7 +4,30 @@
    The staff, the drawing close-up and the matching columns all share one height. */
 .acc-scene{width:100%;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:calc(var(--scene-h) + 70px)}
 .acc-scene .engraved-row,.acc-scene .acc-closeup{height:calc(var(--scene-h) - 40px);max-height:none}
-.lesson-scene .acc-keys.sequence-keyboard.is-visible{max-width:360px;width:100%;margin:0 auto}
+/* A full-width row (several measures) fills the width like lesson 3's rows, instead of shrinking to the close-up height. */
+.acc-scene .engraved-row.acc-wide{height:auto}
+/* The two staffs of the matching step use the keyboard's room too, until Hint brings the keyboard back. */
+/* With the hint keyboard (smaller, so every note stays at least 48px wide to tap) the staffs take what is left. */
+.acc-scene .acc-closeup.acc-match{height:252px}
+/* The matching step's hint keyboard is small (it only shows which key, it is not played), so the two staffs get the room. */
+.lesson-scene .acc-scene .acc-keys.is-hint.sequence-keyboard.is-visible{height:66px}
+/* The keyboard always sits under the staff, at one fixed height in every step (the zoomed C to E keyboard is just narrower),
+   so the staff and everything below it stay put. */
+.lesson-scene .acc-scene .acc-keys.sequence-keyboard.is-visible{max-width:none;width:auto;height:118px;margin:0 auto}
+/* A little less air around the scene than lessons 1 to 3, which have no keyboard under the staff, so Cookie stays on screen at 820px. */
+.lesson-shell.accidentals-lesson .lesson-scene{gap:8px;padding-top:4px}
+/* "Through the measure" is a full-width row: no taller than the other steps' staffs. */
+.acc-scene .engraved-row.acc-wide{max-height:200px}
+.acc-scene .acc-keys svg{height:100%;width:auto}
+/* The half step arrow over the staff: the keyboard arrow's look (lesson-shell.css .piano-arrow), with its name under the curve. */
+.acc-staff-arrow{pointer-events:none}
+.acc-staff-arrow path{fill:none;stroke:#b9362e;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.acc-staff-arrow text{fill:#b9362e;font:600 15px var(--font,sans-serif)}
+/* Two names, one key: an equals sign between the two notes, and "same key" over it. */
+.acc-equals text{fill:#b9362e;font:700 46px var(--font,sans-serif);animation:engraved-appear .4s ease both}
+.acc-equals .acc-equals__label{font:600 18px var(--font,sans-serif)}
+/* Step 3: the grey sharp in brackets that says the last F is still sharp. */
+.acc-reminder{fill:#9a9ca3;font:400 34px var(--font,sans-serif)}
 
 /* Tap target over a notehead (step 1). Notes take no colour of their own on hover: colour has fixed jobs. */
 .acc-hit{fill:transparent;cursor:pointer}
@@ -12,15 +35,31 @@
 .acc-note-hit:focus-visible{fill:#b9362e;fill-opacity:.12}
 
 /* Drawing a sign: the faint engraved sign is the guide; strokes appear as you draw. */
-.acc-closeup{touch-action:none;cursor:crosshair}
+.acc-closeup{touch-action:none}
 .acc-preview{fill:#292a33;opacity:.18}
-.acc-closeup .acc-preview{opacity:.3}
-.acc-stroke,.acc-stroke-done{fill:none;stroke:#292a33;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
-.acc-stroke-done{opacity:.85}
-
-/* Choosing a sign: the engraved sign is the button face. */
-.acc-glyph{display:block;height:30px;width:auto;fill:currentColor}
-.lesson-shell .measures-choices button:has(.acc-glyph){min-width:64px;min-height:52px;display:grid;place-items:center}
+.acc-closeup .acc-preview{opacity:.3;pointer-events:none}
+.acc-stroke{fill:none;stroke:#292a33;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.acc-pointer{cursor:pointer;touch-action:none}
+/* The pen cursor only while there is a sign to draw. */
+.acc-closeup.is-drawing .acc-pointer{cursor:crosshair}
+/* Matching: the top note picked, waiting for its partner. */
+.acc-ring{fill:none;stroke:#b9362e;stroke-width:2.4;pointer-events:none}
+/* The question mark between C and D: the sound with no note of its own yet. Red while it sounds, like a note. */
+.acc-question{cursor:pointer;outline:none}
+.acc-question text{font:700 80px var(--font,sans-serif);fill:#9a9ca3}
+.acc-question.is-hot text{fill:#b9362e}
+.acc-question:focus-visible text{fill:#6b6d74}
+/* A question mark giving way to the note written in its place (step 2): it fades as the note and the sign's guide fade in. */
+.acc-question.is-leaving{animation:acc-fade .6s ease forwards;pointer-events:none}
+.acc-closeup .acc-preview{animation:acc-guide-in .7s ease .25s both}
+/* A sign the learner just drew replaces the ink at once: no fade, so it never seems to vanish and come back. */
+.acc-closeup .engraved-row__acc{animation:none}
+@keyframes acc-guide-in{from{opacity:0}to{opacity:.3}}
+/* Naturals: the second sharp is tapped away and fades where it stood. */
+.acc-sign-hit,.acc-gap-hit{fill:transparent;cursor:pointer;outline:none}
+.acc-gap-hit:focus-visible{fill:#b9362e;fill-opacity:.08}
+.acc-sign-hit:focus-visible{fill:#b9362e;fill-opacity:.1}
+.acc-erasing{fill:#1b1b1f;animation:acc-fade .5s ease forwards;pointer-events:none}
 
 /* Matching: lines between two columns of small staffs. A wrong line fades away. */
 .acc-match{cursor:pointer}
@@ -36,4 +75,4 @@
 /* "Through the measure" names itself on two lines; every step reserves both, so the music never moves. */
 .lesson-shell.accidentals-lesson .theory-timeline button{min-height:72px}
 
-@media(prefers-reduced-motion:reduce){.acc-match-line.is-fading{animation:none;opacity:0}}
+@media(prefers-reduced-motion:reduce){.acc-match-line.is-fading,.acc-question.is-leaving,.acc-erasing{animation:none;opacity:0}.acc-closeup .acc-preview{animation:none}}

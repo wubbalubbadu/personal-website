@@ -4,7 +4,18 @@ export type MarkAttachment={anchor?:MarkAnchor;endAnchor?:MarkAnchor};
 export type InkMark = MarkAttachment & {id:string;kind:'pen'|'highlighter'|'arrow';color:string;width:number;points:MarkPoint[]};
 export type TextMark = MarkAttachment & {id:string;kind:'text'|'sticky';x:number;y:number;text:string;color:string};
 export type Mark = InkMark | TextMark;
-export type AnnotationDocument = {version:2;marks:Mark[];legacy?:{src:string;width:number;height:number}};
+export type AnnotationDocument = {version:2;marks:Mark[];legacy?:{src:string;width:number;height:number};sync?:Record<string,{at:number;deleted?:boolean}>};
+/** Stamp only changed marks; deletion records let manual transfers respect erasure. */
+export function stampAnnotations(next:AnnotationDocument,previous:AnnotationDocument,at=Date.now()):AnnotationDocument{
+  const sync={...previous.sync};
+  const old=new Map(previous.marks.map(mark=>[mark.id,mark]));
+  for(const mark of next.marks){
+    if(sync[mark.id]?.deleted||JSON.stringify(old.get(mark.id))!==JSON.stringify(mark))sync[mark.id]={at};
+    old.delete(mark.id);
+  }
+  for(const id of old.keys())sync[id]={at,deleted:true};
+  return {...next,sync};
+}
 export const emptyAnnotations = ():AnnotationDocument => ({version:2,marks:[]});
 export const isInk = (mark:Mark):mark is InkMark => 'points' in mark;
 

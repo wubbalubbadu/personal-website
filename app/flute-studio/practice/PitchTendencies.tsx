@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import {useEffect,useState} from "react";
-import {readPitchHistory,noteTendencies,focusNotes,correctedNotes,habits,PITCH_UPDATED,OFF_CENTS,HOLD_GOAL_MS,type PitchRecord,type NoteTendency} from "../lib/pitchHistory";
+import {readPitchHistory,clearPitchHistory,noteTendencies,focusNotes,correctedNotes,habits,PITCH_UPDATED,OFF_CENTS,HOLD_GOAL_MS,type PitchRecord,type NoteTendency} from "../lib/pitchHistory";
 
 const PITCH_CLASSES=["C","C♯","D","E♭","E","F","F♯","G","A♭","A","B♭","B"];
 /** The flute's range, low C to high D. Notes outside it still count if they were played. */
@@ -13,6 +13,8 @@ const LOW=60,HIGH=98;
  * here guesses: a note only earns a colour from notes actually measured.
  */
 export function PitchTendencies({zh}:{zh:boolean}){
+  const [confirmClear,setConfirmClear]=useState(false);
+  const [clearError,setClearError]=useState(false);
   const [records,setRecords]=useState<PitchRecord[]|null>(null);
   useEffect(()=>{
     const load=()=>setRecords(readPitchHistory());
@@ -42,29 +44,31 @@ export function PitchTendencies({zh}:{zh:boolean}){
       {records.length>0&&<span className="pitch-card__meta">{zh?`${records.length} 个音 · ${habit.sessions} 次练习`:`${records.length} notes · ${habit.sessions} ${habit.sessions===1?"session":"sessions"}`}</span>}
       <Link className="pitch-card__test" href="/flute-studio/tools/tendency">{zh?"做音准测试 ›":"Take the pitch test ›"}</Link>
     </div>
+    {/* The map is always there: empty cells are notes not measured yet, so you can see what will fill in. The insights sit beside it. */}
+    <div className="pitch-card__body">
+    <div className="pitch-map" role="table" aria-label={zh?"每个音的平均音准":"Typical pitch of each note"}>
+      <div className="pitch-map__row pitch-map__head" role="row"><span role="columnheader"/>{PITCH_CLASSES.map(name=><span key={name} role="columnheader">{name}</span>)}</div>
+      {octaves.map(octave=><div className="pitch-map__row" role="row" key={octave}>
+        <span className="pitch-map__octave" role="rowheader">{octave-1}</span>
+        {PITCH_CLASSES.map((name,i)=>{
+          const midi=octave*12+i,t=tendencies.get(midi);
+          if(midi<low||midi>high)return <span key={name} role="cell" className="pitch-map__cell is-outside"/>;
+          if(!t)return <span key={name} role="cell" className="pitch-map__cell is-empty" title={`${name}${octave-1}`}/>;
+          // Coloured by your first try (your instinct); a ✓ means you usually end in tune anyway.
+          const side=Math.abs(t.instinct)<=OFF_CENTS?"tune":t.instinct<0?"flat":"sharp";
+          const strength=Math.min(1,Math.abs(t.instinct)/25);
+          const corrected=side!=="tune"&&Math.abs(t.final)<=OFF_CENTS;
+          return <span key={name} role="cell" className={`pitch-map__cell is-${side}`} style={{"--lean":strength} as React.CSSProperties} title={cellText(t)} aria-label={cellText(t)}>
+            <b>{t.instinct>0?"+":t.instinct<0?"−":""}{Math.abs(t.instinct)}{corrected&&<i aria-hidden="true"> ✓</i>}</b><small>{t.count}</small>
+          </span>;
+        })}
+      </div>)}
+      <div className="pitch-map__legend" aria-hidden="true"><span className="is-flat">{zh?"偏低":"flat"}</span><span className="is-tune">{zh?"准":"in tune"}</span><span className="is-sharp">{zh?"偏高":"sharp"}</span></div>
+    </div>
     {!records.length
-      ?<p className="practice-card__empty">{zh?"在长音练习中打开“音准”，这里会画出你每个音的倾向。":"Turn on Pitch in Long tones, and this map fills in note by note."} <Link href="/flute-studio/exercises/long-tones">{zh?"去练长音 ›":"Go to Long tones ›"}</Link></p>
+      ?<p className="practice-card__empty pitch-card__side">{zh?"打开“音准”演奏时，这张表会一个音一个音地填上。":"Fills in note by note as you play with Pitch on."}</p>
       :<>
-      <div className="pitch-map" role="table" aria-label={zh?"每个音的平均音准":"Typical pitch of each note"}>
-        <div className="pitch-map__row pitch-map__head" role="row"><span role="columnheader"/>{PITCH_CLASSES.map(name=><span key={name} role="columnheader">{name}</span>)}</div>
-        {octaves.map(octave=><div className="pitch-map__row" role="row" key={octave}>
-          <span className="pitch-map__octave" role="rowheader">{octave-1}</span>
-          {PITCH_CLASSES.map((name,i)=>{
-            const midi=octave*12+i,t=tendencies.get(midi);
-            if(midi<low||midi>high)return <span key={name} role="cell" className="pitch-map__cell is-outside"/>;
-            if(!t)return <span key={name} role="cell" className="pitch-map__cell is-empty" title={`${name}${octave-1}`}/>;
-            // Coloured by your first try (your instinct); a ✓ means you usually end in tune anyway.
-            const side=Math.abs(t.instinct)<=OFF_CENTS?"tune":t.instinct<0?"flat":"sharp";
-            const strength=Math.min(1,Math.abs(t.instinct)/25);
-            const corrected=side!=="tune"&&Math.abs(t.final)<=OFF_CENTS;
-            return <span key={name} role="cell" className={`pitch-map__cell is-${side}`} style={{"--lean":strength} as React.CSSProperties} title={cellText(t)} aria-label={cellText(t)}>
-              <b>{t.instinct>0?"+":t.instinct<0?"−":""}{Math.abs(t.instinct)}{corrected&&<i aria-hidden="true"> ✓</i>}</b><small>{t.count}</small>
-            </span>;
-          })}
-        </div>)}
-        <div className="pitch-map__legend" aria-hidden="true"><span className="is-flat">{zh?"偏低":"flat"}</span><span className="is-tune">{zh?"准":"in tune"}</span><span className="is-sharp">{zh?"偏高":"sharp"}</span><small>{zh?"颜色和数字：第一次的偏差（音分）· ✓ 之后调准了 · 次数":"colour and number: your first try (cents) · ✓ you then fixed it · count"}</small></div>
-      </div>
-      <div className="pitch-card__insights">
+      <div className="pitch-card__insights pitch-card__side">
         <div>
           <h3>{zh?"接下来练这些":"Work on these"}</h3>
           <p className="pitch-card__hint">{zh?"再吹一遍之后仍然偏的音。":"Still off after you tried again."}</p>
@@ -84,6 +88,16 @@ export function PitchTendencies({zh}:{zh:boolean}){
           </ul>
         </div>
       </div>
+      {/* Clearing is rare and can't be undone: a quiet text action at the end, with a confirm step. */}
+      <div className="pitch-card__clear">
+        {confirmClear?<>
+          <span>{zh?"清除这个设备上的音准记录？练习时长和已保存的测试会保留。":"Clear pitch history on this device? Practice time and saved tests stay."}</span>
+          <button type="button" className="is-danger" onClick={()=>{if(clearPitchHistory()){setConfirmClear(false);setClearError(false)}else setClearError(true)}}>{zh?"清除":"Clear"}</button>
+          <button type="button" onClick={()=>{setConfirmClear(false);setClearError(false)}}>{zh?"取消":"Cancel"}</button>
+          {clearError&&<span role="alert">{zh?"无法清除，请重试。":"Could not clear it. Please try again."}</span>}
+        </>:<button type="button" onClick={()=>setConfirmClear(true)}>{zh?"清除音准记录":"Clear pitch history"}</button>}
+      </div>
       </>}
+    </div>
   </section>;
 }

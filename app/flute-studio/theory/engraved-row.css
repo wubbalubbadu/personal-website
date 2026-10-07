@@ -7,10 +7,13 @@
 .engraved-row__stem{stroke:#1b1b1f;stroke-width:2.2}
 .engraved-row__note{transition:transform .4s cubic-bezier(.2,.8,.2,1)}
 .engraved-row__note.is-active{color:#b9362e;fill:#b9362e}
+/* A note taking over from a question mark: it fades in as the question mark fades out. */
+.engraved-row__note.is-appearing>*{animation:engraved-appear .7s ease .25s both}
+@keyframes engraved-appear{from{opacity:0}to{opacity:1}}
 /* A sign fades in when it is added. */
 .engraved-row__acc{animation:engraved-in .2s ease both}
 .engraved-row__below{transition:transform .4s cubic-bezier(.2,.8,.2,1)}
 .time-sig{fill:#1b1b1f}
 @media(prefers-reduced-motion:reduce){.engraved-row__bar,.engraved-row__note,.engraved-row__below{transition:none}}
 @keyframes engraved-in{from{opacity:0}}
-@media(prefers-reduced-motion:reduce){.engraved-row,.engraved-row__acc{animation:none}}
+@media(prefers-reduced-motion:reduce){.engraved-row,.engraved-row__acc,.engraved-row__note.is-appearing>*{animation:none}}

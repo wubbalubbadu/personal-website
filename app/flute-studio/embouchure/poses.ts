@@ -9,8 +9,8 @@ export function poseAt(note: number) {
 }
 
 // Short, register-specific embouchure cues. Thresholds match poses.ts (E5=76, E6=88).
-export function guidance(note: number) {
-  if (note < 76) return 'Air aims down into the tube, jaw drops: ahh, ohh';
-  if (note < 88) return 'Air blows a little more forward: eeh';
-  return 'Tongue and lower lip move forward, air very fast across: eee';
+export function guidance(note: number, zh=false) {
+  if (note < 76) return zh?'气流向下进入笛管，下颌放松：啊、哦':'Air aims down into the tube, jaw drops: ahh, ohh';
+  if (note < 88) return zh?'气流稍向前吹：咿':'Air blows a little more forward: eeh';
+  return zh?'舌头和下唇向前，气流快速掠过：衣':'Tongue and lower lip move forward, air very fast across: eee';
 }

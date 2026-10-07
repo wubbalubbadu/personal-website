@@ -27,15 +27,15 @@ export async function unlockPrivateMusic(code:string){
    for(const [path,file] of Object.entries(files)){const url=URL.createObjectURL(new Blob([bytes(file.data)],{type:file.type}));urls.push(url);paths[path]=url}
    return {...item,scorePath:item.scorePath?paths[item.scorePath]??null:null,fullScorePath:item.fullScorePath?paths[item.fullScorePath]:undefined,pdfPath:item.pdfPath?paths[item.pdfPath]:undefined};
   });
-  try{sessionStorage.setItem(KEY,code.trim())}catch{/* Unlock still works for this visit. */}
+  try{localStorage.setItem(KEY,code.trim());sessionStorage.removeItem(KEY)}catch{/* Unlock still works for this visit. */}
   publish({items,unlocked:true,loading:false,error:''});return true;
  }catch{
   if(token===generation)publish({...state,loading:false,error:'unlock'});return false;
  }
 }
-export function lockPrivateMusic(){generation++;try{sessionStorage.removeItem(KEY)}catch{/* Optional storage. */}urls.splice(0).forEach(url=>URL.revokeObjectURL(url));publish(empty)}
+export function lockPrivateMusic(){generation++;try{localStorage.removeItem(KEY);sessionStorage.removeItem(KEY)}catch{/* Optional storage. */}urls.splice(0).forEach(url=>URL.revokeObjectURL(url));publish(empty)}
 export function usePrivateMusic(){
  const snapshot=useSyncExternalStore(subscribe,()=>state,()=>empty);
- useEffect(()=>{if(state.unlocked||state.loading)return;try{const code=sessionStorage.getItem(KEY);if(code)void unlockPrivateMusic(code)}catch{/* No automatic restore. */}},[]);
+ useEffect(()=>{if(state.unlocked||state.loading)return;try{const code=localStorage.getItem(KEY)??sessionStorage.getItem(KEY);if(code)void unlockPrivateMusic(code)}catch{/* No automatic restore. */}},[]);
  return snapshot;
 }

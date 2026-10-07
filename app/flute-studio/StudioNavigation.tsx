@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import PracticeClockButton from "./PracticeClockButton";
 import {useEffect,useState} from "react";
 import {usePathname,useRouter} from "next/navigation";
 import AccountMenu from "./AccountMenu";
@@ -36,7 +37,7 @@ function destinationIsActive(destination:Destination,pathname:string){
 export default function StudioNavigation(){
   const pathname=usePathname();
   const router=useRouter();
-  const {t}=useLanguage();
+  const {t,lang}=useLanguage();
   const destinations=useDestinations();
   // Folded by default, like YouTube's: icons with a word under each. The
   // menu button opens it to show what is inside each tab, and the choice
@@ -92,7 +93,7 @@ export default function StudioNavigation(){
         </span>
         <span>{t.nav.brand}</span>
       </Link>
-      <nav className="studio-navigation__tabs" aria-label="Studio navigation">
+      <nav className="studio-navigation__tabs" aria-label={lang==="zh"?"工作室导航":"Studio navigation"}>
         {destinations.map(destination=>{
           const active=destinationIsActive(destination,pathname);
           return <Link
@@ -118,6 +119,8 @@ export default function StudioNavigation(){
             in the bottom-right corner, where it competed with the cookie
             for the same spot; it belongs with the account control, since
             like that one it is available on every page. */}
+        {/* The practice clock: shows its time right here while it runs. */}
+        <PracticeClockButton/>
         <div id="practice-tools-slot" className="studio-navigation__tools-slot"/>
         <AccountMenu/>
       </div>

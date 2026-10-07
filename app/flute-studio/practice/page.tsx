@@ -5,7 +5,6 @@ import Link from "next/link";
 import {useEffect,useState} from "react";
 import {useLanguage} from "../i18n/LanguageContext";
 import {useTrickyBits} from "../lib/trickyBits";
-import {usePomodoro,formatClock} from "../usePomodoro";
 import {readSessions,type PracticeSession} from "../practice-data";
 import {useRecents} from "../lib/storage";
 import {useStatusEntries,STATUS_LABELS,STATUS_TONES} from "../lib/musicStatus";
@@ -14,6 +13,11 @@ import {musicLibrary as publicMusic,libraryShelf as publicShelf} from "../../../
 import {exerciseCatalog} from "../../../content/exercise-catalog";
 import {PracticeCalendar} from "../PracticeCalendar";
 import {PitchTendencies} from "./PitchTendencies";
+import {type SuggestItem} from "./SuggestField";
+import {PracticeCard,type RoutineItem} from "./PracticeCard";
+import {PracticeIcon} from "../components/PracticeIcon";
+import {deleteSession,restoreSession} from "../lib/practiceClock";
+import "../home-preview-cards.css";
 import "./practice-page.css";
 
 const routineKey="cookie:practice-routine";
@@ -33,28 +37,19 @@ function streaks(active:Set<string>,now:number){
 }
 /** `ref` is a library id when the step was picked rather than typed, so a
  *  routine step can link back to the thing it is asking you to play. */
-type RoutineItem={id:string;text:string;done?:boolean;ref?:string};
 type StudioListItem={id:string;title:string;composer:string;viewerPath:string|null};
 
 function readRoutine():RoutineItem[]{try{const saved=JSON.parse(localStorage.getItem(routineKey)??"[]");return Array.isArray(saved)?saved:[]}catch{return []}}
 
-function groupByDay(sessions:PracticeSession[]){
-  const groups=new Map<string,PracticeSession[]>();
-  sessions.forEach(session=>{
-    const key=new Date(session.startedAt).toDateString();
-    groups.set(key,[...(groups.get(key)??[]),session]);
-  });
-  return [...groups.entries()].sort((a,b)=>new Date(b[0]).getTime()-new Date(a[0]).getTime());
-}
 
 export default function PracticePage(){
   const privateMusic=usePrivateMusic();
   const libraryShelf=[...publicShelf,...privateMusic.items];
   const musicLibrary=[...publicMusic,...privateMusic.items];
   const {t,lang}=useLanguage(),zh=lang==="zh",{bits:trickyBits}=useTrickyBits();
-  const pomodoro=usePomodoro();
   const [routine,setRoutine]=useState<RoutineItem[]>([]);
-  const [routineInput,setRoutineInput]=useState("");
+  // The calendar day whose sessions show.
+  const [day,setDay]=useState<string|null>(null),[removed,setRemoved]=useState<PracticeSession|null>(null);
   const [sessions,setSessions]=useState<PracticeSession[]>([]);
   // Captured once on mount rather than read during render: "today" is a
   // clock read, and rendering has to be pure for the same input.
@@ -80,18 +75,9 @@ export default function PracticePage(){
   },[]);
 
   function saveRoutine(next:RoutineItem[]){setRoutine(next);localStorage.setItem(routineKey,JSON.stringify(next))}
-  function addRoutineStep(){const text=routineInput.trim();if(!text)return;saveRoutine([...routine,{id:crypto.randomUUID(),text,done:false}]);setRoutineInput("")}
-  /** Adds a real exercise or piece, keeping its id so the step can link. */
-  function addRoutineItem(libraryId:string){
-    const item=byId.get(libraryId);
-    if(!item)return;
-    saveRoutine([...routine,{id:crypto.randomUUID(),text:item.title,ref:item.id,done:false}]);
-  }
-  function removeRoutineStep(id:string){saveRoutine(routine.filter(item=>item.id!==id))}
-  function toggleRoutineStep(id:string){saveRoutine(routine.map(item=>item.id===id?{...item,done:!item.done}:item))}
+
 
   const itemTypeLabels:Record<PracticeSession["itemType"],string>={repertoire:t.library.repertoire,exercise:t.library.exercise,etude:t.library.etude,method:t.library.method,"warm-up":t.library.warmup,focus:t.pomodoro.focus};
-  const dayGroups=groupByDay(sessions);
   // The same numbers the landing page used to show. They belong here —
   // this is the page about your practice — and they are rendered as a
   // quiet row rather than four oversized figures.
@@ -117,147 +103,94 @@ export default function PracticePage(){
     .flatMap(status=>listEntries.filter(entry=>entry.status===status).map(entry=>({entry,item:byId.get(entry.id)})))
     .filter((row):row is {entry:typeof listEntries[number];item:StudioListItem}=>!!row.item);
 
+  const findable:SuggestItem[]=[...exerciseItems,...musicLibrary];
+  // Private pieces on a list resolve once the access code has unlocked them; until then say so rather than look empty.
+  const restoring=privateMusic.loading&&listEntries.some(entry=>!byId.has(entry.id));
+  const shelfLink=(item:StudioListItem)=>item.viewerPath
+    ?<Link href={item.viewerPath}><b>{item.title}</b><small>{item.composer}</small></Link>
+    :<span className="is-disabled"><b>{item.title}</b><small>{item.composer}</small></span>;
+  /** One status list on the shelf (Working On, Want to Learn, Learned). */
+  const statusColumn=(status:"working"|"want"|"learned")=>{
+    const rows=listItems.filter(row=>row.entry.status===status);
+    const label=zh?STATUS_LABELS[status].zh:({working:"Working On",want:"Want to Learn",learned:"Learned"})[status];
+    return <section className="continue-section home-shelf__column" key={status} aria-label={label}>
+      <p><i className="status-dot" data-tone={STATUS_TONES[status]} aria-hidden="true"/><Link href={`/flute-studio/music?list=${status}`}>{label}</Link></p>
+      {rows.length?<ul>{rows.map(({item})=><li key={item.id}>{shelfLink(item)}</li>)}</ul>
+        :<><small>{restoring?(zh?"正在恢复曲目…":"Restoring your music…"):(zh?"还没有曲目。":"No pieces yet.")}</small><Link className="home-shelf__browse" href={`/flute-studio/music?list=${status}`}>{zh?"浏览曲库":"Browse Library"}</Link></>}
+    </section>;
+  };
+  // The day picked on the calendar (today until you pick another) and what was practised then.
+  const shownDay=day??(now?today:null);
+  const daySessions=shownDay?sessions.filter(session=>dateKey(new Date(session.startedAt))===shownDay):[];
+  const dayMinutes=Math.round(daySessions.reduce((sum,session)=>sum+session.durationSeconds,0)/60);
+
   return <main className="practice-page">
     <div className="practice-page__content">
       <header className="practice-page__header" data-tab-title>
         <h1>{t.practicePage.title}</h1>
       </header>
 
-      <section className="practice-card stats-card" aria-label={zh?"练习统计":"Practice at a glance"}>
-        <ul className="stats-row">
-          {stats.map(stat=><li key={stat.label}>
-            <b>{stat.value}<span>{stat.unit}</span></b>
-            <small>{stat.label}</small>
-          </li>)}
-        </ul>
-      </section>
-
-      <PitchTendencies zh={zh}/>
-
-      <div className="practice-page__grid">
-        <div className="practice-page__column">
-        <section className="practice-card focus-card" aria-labelledby="focus-timer-title">
-          <h2 id="focus-timer-title">{t.practicePage.focusTimer}</h2>
-          {/* Only worth saying when it is NOT the focus clock. */}
-          {pomodoro.mode!=="focus"&&<div className="focus-card__mode break">{t.pomodoro.breakLabel}</div>}
-          <div className="focus-card__clock">{formatClock(pomodoro.remaining)}</div>
-          {pomodoro.canEditDuration&&<div className="focus-card__duration">
-            <button type="button" aria-label={t.pomodoro.decreaseFocus} onClick={()=>pomodoro.adjustFocusMinutes(-5)} disabled={pomodoro.focusMinutes<=pomodoro.minFocusMinutes}>−</button>
-            <span>{pomodoro.focusMinutes} min</span>
-            <button type="button" aria-label={t.pomodoro.increaseFocus} onClick={()=>pomodoro.adjustFocusMinutes(5)} disabled={pomodoro.focusMinutes>=pomodoro.maxFocusMinutes}>+</button>
-          </div>}
-          <div className="focus-card__actions">
-            <button type="button" className="focus-card__reset has-tip" data-tip={t.pomodoro.reset} aria-label={t.pomodoro.reset} onClick={pomodoro.reset}>
-              <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M15.5 6.5A6 6 0 1 0 16.9 12"/><path d="M15.5 2.5v4.5H11"/></svg>
-            </button>
-            <button type="button" className="focus-card__primary" onClick={pomodoro.running?pomodoro.pause:pomodoro.start}>
-              {pomodoro.running?t.pomodoro.pause:t.pomodoro.start}
-            </button>
-          </div>
-          <small>{t.pomodoro.roundsDone(pomodoro.rounds)}</small>
-        </section>
-
-        {/* The calendar answers "did I show up"; the history below answers
-            "what did I play". It sits in this column because a month of
-            30px days is 234px wide — spanning the page left it stranded in
-            empty card. */}
-        <PracticeCalendar sessions={sessions}/>
-        </div>
-
-        <div className="practice-page__column">
-        <section className="practice-card" aria-labelledby="routine-title">
-          <div className="practice-card__heading">
-            <h2 id="routine-title">{t.practicePage.routineTitle}</h2>
-            {routine.length>0&&<b className="routine-count">{t.activity.planCount(routine.filter(item=>item.done).length,routine.length)}</b>}
-          </div>
-          {routine.length?
-            <ol className="routine-list">{routine.map(item=><li key={item.id} className={item.done?"done":""}>
-              <label className="routine-list__check">
-                <input type="checkbox" checked={Boolean(item.done)} onChange={()=>toggleRoutineStep(item.id)} aria-label={t.practicePage.markStepDone(item.text)}/>
-                <span aria-hidden="true">✓</span>
-              </label>
-              {item.ref&&byId.get(item.ref)?.viewerPath
-                ?<Link className="routine-list__text routine-list__text--link" href={byId.get(item.ref)!.viewerPath!}>{item.text}</Link>
-                :<span className="routine-list__text">{item.text}</span>}
-              <button type="button" aria-label={t.practicePage.removeStep(item.text)} onClick={()=>removeRoutineStep(item.id)}>×</button>
-            </li>)}</ol>:
-            <p className="practice-card__empty">{zh?"还没有步骤。":"No steps yet."}</p>}
-          <label className="routine-add">
-            <span aria-hidden="true">＋</span>
-            <input value={routineInput} onChange={e=>setRoutineInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();addRoutineStep()}}} placeholder={t.practicePage.routineAddPlaceholder} aria-label={t.practicePage.routineAddAria}/>
-          </label>
-          {/* A routine is mostly real exercises and pieces, so they can be
-              picked rather than retyped — and a picked step links to the
-              thing it names. Free text still works for everything else. */}
-          <label className="routine-pick">
-            <span>{zh?"或选择":"or pick"}</span>
-            <select value="" onChange={e=>{addRoutineItem(e.target.value);e.currentTarget.value=""}} aria-label={zh?"添加练习或曲目":"Add an exercise or piece"}>
-              <option value="">{zh?"练习或曲目…":"Exercise or piece\u2026"}</option>
-              <optgroup label={zh?"练习":"Exercises"}>
-                {exerciseItems.filter(item=>item.viewerPath).map(item=><option key={item.id} value={item.id}>{item.title}</option>)}
-              </optgroup>
-              <optgroup label={zh?"曲目":"Music"}>
-                {musicLibrary.map(item=><option key={item.id} value={item.id}>{item.title}</option>)}
-              </optgroup>
-            </select>
-          </label>
-        </section>
-        <section className="practice-card" aria-labelledby="recent-title">
-          <h2 id="recent-title">{zh?"最近打开":"Recently opened"}</h2>
-          {recentItems.length
-            ?<ul className="studio-mini-list">{recentItems.map(item=><li key={item.id}>
-              {item.viewerPath?<Link href={item.viewerPath}>
-                <strong>{item.title}</strong><small>{item.composer}</small>
-              </Link>:<span className="is-disabled"><strong>{item.title}</strong><small>{item.composer}</small></span>}
-            </li>)}</ul>
-            :<p className="practice-card__empty">{zh?"还没有打开过谱子。":"Nothing opened yet."}</p>}
-        </section>
-
-        <section className="practice-card" aria-labelledby="tricky-title">
-          <h2 id="tricky-title"><Link href="/flute-studio/tricky-bits">{t.trickyBits.title}</Link></h2>
+      {/* Two labelled bands: getting a practice going (timer, routine, your music), then what the practice shows. */}
+      <h2 className="home-preview__group">{zh?"开始练习":"Start practicing"}</h2>
+      <PracticeCard routine={routine} zh={zh} findable={findable} onRoutine={saveRoutine}
+        lookup={id=>{const item=byId.get(id);return item?{viewerPath:item.viewerPath,isExercise:exerciseItems.some(entry=>entry.id===id)}:undefined}}
+        labels={{title:zh?"今天的练习":"Today’s practice",start:t.pomodoro.start,pause:t.pomodoro.pause,resume:t.pomodoro.resume,markDone:t.practicePage.markStepDone,remove:t.practicePage.removeStep,addAria:t.practicePage.routineAddAria}}/>
+      {/* Your music, in what you are playing now: Working On, Want to Learn, and the passages you saved to drill;
+          then what you have learned beside what you opened lately. */}
+      <section className="continue-panel home-shelf studio-shelf" aria-label={zh?"我的曲目":"Your shelf"}>
+        {(["working","want"] as const).map(status=>statusColumn(status))}
+        <section className="continue-section home-shelf__column" aria-labelledby="tricky-title">
+          <p id="tricky-title"><Link href="/flute-studio/tricky-bits">{t.trickyBits.title}</Link></p>
           {trickyBits.length
-            ?<ul className="studio-mini-list">{[...trickyBits].sort((a,b)=>b.addedAt-a.addedAt).slice(0,5).map(bit=><li key={bit.id}>
+            ?<ul>{[...trickyBits].sort((a,b)=>b.addedAt-a.addedAt).slice(0,5).map(bit=><li key={bit.id}>
               <Link href={`/flute-studio/tricky-bits?open=${encodeURIComponent(bit.id)}`}>
-                <strong>{musicLibrary.find(entry=>entry.id===bit.pieceId)?.title??bit.pieceId}</strong><small>{t.trickyBits.bars} {bit.label}{bit.tempos.length?` · ${Math.max(...bit.tempos)}`:""}{bit.goal?` → ${bit.goal}`:""}</small>
+                <b>{musicLibrary.find(entry=>entry.id===bit.pieceId)?.title??(privateMusic.unlocked||privateMusic.loading?bit.pieceId:(zh?"私人乐谱（未解锁）":"Private piece (locked)"))}</b><small>{t.trickyBits.bars} {bit.label}{bit.tempos.length?` · ${Math.max(...bit.tempos)}`:""}{bit.goal?` → ${bit.goal}`:""}</small>
               </Link>
             </li>)}</ul>
-            :<p className="practice-card__empty">{t.trickyBits.empty}</p>}
+            :<small>{t.trickyBits.empty}</small>}
         </section>
-
-        <section className="practice-card" aria-labelledby="saved-title">
-          <h2 id="saved-title">{zh?"我的列表":"My lists"}</h2>
-          {listItems.length
-            ?<ul className="studio-mini-list">{listItems.map(({entry,item})=><li key={item.id}>
-              {item.viewerPath?<Link href={item.viewerPath}>
-                <strong>{item.title}</strong><small><i className="status-dot" data-tone={STATUS_TONES[entry.status]} aria-hidden="true"/> {STATUS_LABELS[entry.status][zh?"zh":"en"]}{item.composer?` · ${item.composer}`:""}</small>
-              </Link>:<span className="is-disabled"><strong>{item.title}</strong><small>{item.composer}</small></span>}
-            </li>)}</ul>
-            :<p className="practice-card__empty">{zh?"还没有内容。在曲目或谱子页面点 +，加入想学。":"Nothing yet. Tap + on a piece or score to add it to Want to learn."}</p>}
-        </section>
-        </div>
-      </div>
-
-      <section className="practice-card history-card" aria-labelledby="history-title">
-        <h2 id="history-title">{t.practicePage.historyTitle}</h2>
-        {dayGroups.length?
-          <div className="history-list">{dayGroups.map(([day,daySessions])=>{
-            const totalMinutes=Math.round(daySessions.reduce((sum,s)=>sum+s.durationSeconds,0)/60);
-            return <article className="history-day" key={day}>
-              <header>
-                <strong>{new Date(day).toLocaleDateString(lang==="zh"?"zh-CN":undefined,{weekday:"long",month:"long",day:"numeric"})}</strong>
-                <span>{t.practicePage.sessionsOn(daySessions.length)} · {t.practicePage.minutesTotal(totalMinutes)}</span>
-              </header>
-              <ul>{daySessions.map(session=><li key={session.id}>
-                <div className="history-day__row">
-                  <span className="history-day__title">{session.title}</span>
-                  <span className="history-day__meta">{itemTypeLabels[session.itemType]} · {Math.max(1,Math.round(session.durationSeconds/60))} min</span>
-                </div>
-                {session.reflection?.trim()&&<p className="history-day__note"><span>{t.practicePage.notesLabel}:</span> {session.reflection.trim()}</p>}
-              </li>)}</ul>
-            </article>;
-          })}</div>:
-          <p className="practice-card__empty">{t.practicePage.historyEmpty}</p>}
       </section>
+      <section className="continue-panel home-shelf studio-shelf studio-shelf--two" aria-label={zh?"已学会与最近":"Learned and recent"}>
+        {statusColumn("learned")}
+        <section className="continue-section home-shelf__column" aria-labelledby="recent-title">
+          <p id="recent-title">{zh?"最近打开":"Recently opened"}</p>
+          {recentItems.length
+            ?<ul>{recentItems.slice(0,5).map(item=><li key={item.id}>{shelfLink(item)}</li>)}</ul>
+            :<small>{zh?"还没有打开过谱子。":"Nothing opened yet."}</small>}
+        </section>
+      </section>
+
+      <h2 className="home-preview__group">{zh?"练习洞察":"Practice insights"}</h2>
+      {/* The month, coloured by minutes practised; pick a day to see what you played. This replaces the long history list. */}
+      <section className="studio-month" aria-label={zh?"练习日历":"Practice calendar"}>
+        <PracticeCalendar sessions={sessions} selected={shownDay} onSelect={setDay} legend>
+          {/* The running totals belong with the month they summarise. */}
+          <ul className="stats-row">
+            {stats.map(stat=><li key={stat.label}>
+              <b>{stat.value}<span>{stat.unit}</span></b>
+              <small>{stat.label}</small>
+            </li>)}
+          </ul>
+        </PracticeCalendar>
+        <section className="practice-card studio-day" aria-labelledby="day-title">
+          <div className="practice-card__heading">
+            <h2 id="day-title">{shownDay?new Date(shownDay).toLocaleDateString(zh?"zh-CN":undefined,{weekday:"long",month:"long",day:"numeric"}):""}</h2>
+            {daySessions.length>0&&<span className="studio-day__total">{t.practicePage.minutesTotal(dayMinutes)}</span>}
+          </div>
+          {removed&&<p className="studio-day__undo">{zh?`已删除“${removed.title}”。`:`Deleted “${removed.title}”.`} <button type="button" onClick={()=>{restoreSession(removed);setRemoved(null)}}>{zh?"撤销":"Undo"}</button></p>}
+          {daySessions.length
+            ?<ul className="studio-day__list">{daySessions.map(session=><li key={session.id}>
+              <span className="history-day__title">{session.title}</span>
+              <span className="history-day__meta">{itemTypeLabels[session.itemType]} · {Math.max(1,Math.round(session.durationSeconds/60))} {zh?"分钟":"min"}</span>
+              {/* Logged by mistake? Take it out; Undo brings it back. */}
+              <button type="button" className="studio-day__delete has-tip" data-tip={zh?"删除":"Delete"} aria-label={zh?`删除 ${session.title}`:`Delete ${session.title}`}
+                onClick={()=>{setRemoved(session);deleteSession(session.id)}}><PracticeIcon name="delete"/></button>
+              {session.reflection?.trim()&&<p className="history-day__note">{session.reflection.trim()}</p>}
+            </li>)}</ul>
+            :<p className="practice-card__empty">{zh?"这天没有练习记录。":"No practice logged this day."}</p>}
+        </section>
+      </section>
+      <PitchTendencies zh={zh}/>
     </div>
   </main>;
 }

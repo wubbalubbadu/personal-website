@@ -119,3 +119,9 @@ button.exercise-hub__row-main{
 .exercise-hub__subtitle{margin:30px 0 10px 4px;font-size:15px;font-weight:650;color:#45464f}
 .exercise-hub__section--saved{margin-bottom:22px}
 .exercise-hub__section--saved .exercise-hub__subtitle{margin-top:0}
+
+/* Tricky bits card: a saved passage's bar range and a tally of repetitions, on the green tint (its neighbour, Breathing, is sand). */
+.preview-card--tricky .preview-card__stage{background:var(--tint-green)}
+.tricky-preview-card{display:grid;justify-items:center;gap:14px}
+.tricky-preview-card__bars{padding:4px 12px;border-radius:999px;background:#fff;color:#3f5d39;font-size:13px;font-weight:650;box-shadow:0 1px 2px rgba(41,42,51,.06)}
+.tricky-preview-card .tally-sticks{flex:none;justify-content:center}
