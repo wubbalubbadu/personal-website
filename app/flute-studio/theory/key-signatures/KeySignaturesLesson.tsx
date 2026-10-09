@@ -38,7 +38,9 @@ const BACK=[n(8,undefined,'natural'),n(3),n(8),n(1),n(2),n(8),n(7),n(6)],BACK_BA
 const BACK_Q=[{at:2,sharp:false},{at:3,sharp:true},{at:5,sharp:true}];
 
 /** One sign as a small picture, for the sign buttons. */
-const SignIcon=({acc}:{acc:Acc})=><svg className="ks-sign-icon" viewBox="-40 -700 420 1400" aria-hidden="true"><path d={ACCIDENTALS[acc]} transform="scale(1 -1)"/></svg>;
+// Shared scale, but center each outline rather than its staff-alignment origin.
+const SIGN_CENTERS={sharp:[161.5,.5],flat:[115,-201.5],natural:[119.5,0]} as const;
+const SignIcon=({acc}:{acc:Acc})=><svg className="ks-sign-icon" viewBox={`${SIGN_CENTERS[acc][0]-385} ${SIGN_CENTERS[acc][1]-700} 770 1400`} aria-hidden="true"><path d={ACCIDENTALS[acc]} transform="scale(1 -1)"/></svg>;
 
 export default function KeySignaturesLesson(){
   const {lang}=useLanguage(),zh=lang==='zh',tr=(en:string,cn:string)=>zh?cn:en;
@@ -123,7 +125,7 @@ export default function KeySignaturesLesson(){
       {placed&&ONCE.map((x,i)=>x.acc&&<g key={`fly-${i}`} className="ks-fly" style={{'--dx':`${layout.keyX-(layout.xs[i]-35)}px`,'--dy':`${noteY(8)-noteY(x.p)}px`,animationDelay:`${i*.02}s`} as CSSProperties}>
         <path d={ACCIDENTALS.sharp} transform={`translate(${layout.xs[i]-35} ${noteY(x.p)}) scale(.064 -.064)`}/>
       </g>)}
-      {placed&&ringsAt(notes,layout,1.05)}
+      
       {noteHits(notes,layout)}
     </>}</EngravedRow>;
     tools=!placed?button(tr('Listen','听一听'),()=>{setSel(null);void playMelody(ONCE,ONCE_BARS,0)})
@@ -142,27 +144,30 @@ export default function KeySignaturesLesson(){
       :tr('Sharps always come in the same order, and each new one keeps the ones before it. Two sharps are always F and C.','升号总是按同样的顺序出现，新加的会保留前面的。两个升号一定是 F 和 C。'))
       :count<3?tr('Flats have their own order: B, then E, then A.','降号也有自己的顺序：先 B，再 E，再 A。')
       :tr('That’s the sharp order backwards: F C G D A E B, read from the end.','正好是升号顺序倒过来：F C G D A E B，从后往前读。');
-    const allSharps=!flats&&count===3,allFlats=flats&&count===3;
+    const allSharps=!flats&&count>=3,allFlats=flats&&count>=3;
     message=latest&&demoFrom!==Infinity
       ?tr(`${nameOf(latest)} joins. Every ${latest} in the row changes; ${count>1?'the signs before it stay.':'tap one to hear it.'}`,`${nameOf(latest)}加进来了。这一行里每个 ${latest} 都变了${count>1?'，前面的记号还在。':'。点一个听听。'}`)
       :flats?tr('A signature can be flats instead. Add a flat: which letter will it be?','调号也可以是降号。加一个降号：会是哪个音名？')
       :tr('This is step 1’s signature: F sharp. Add a sharp: which letter comes next?','这是第 1 步的调号：升 F。再加一个升号：下一个是哪个音名？');
-    if(allFlats)message=tr('B, E, A: every B, E and A in the row is flat now. Tap any note to hear it.','B、E、A：这一行里每个 B、E、A 现在都是降音。点任意一个音听听。');
+    
     const add=()=>{
       audio.stop();setPlayMidis([]);setSel(null);
+      if(count>=7)return;
       const next=count+1,letter=order[next-1];
       setDemoFrom(count);setDemo(flats?-next:next);
       ring(notes.flatMap((x,i)=>letterOf(x.p)===letter?[i]:[]));
     };
     const toFlats=()=>{audio.stop();setPlayMidis([]);setSel(null);setFlats(true);setDemo(0);setDemoFrom(Infinity);setRings([])};
-    scene=<EngravedRow key={`letters-${flats}`} className="acc-wide" notes={notes} keySignature={demo} keyRoom={3} keyNew={demoFrom} active={playing?audio.active:touched} label={names[1]}>{layout=><>
+    scene=<EngravedRow key={`letters-${flats}`} className="acc-wide" notes={notes} keySignature={demo} keyRoom={7} keyNew={demoFrom} active={playing?audio.active:touched} label={names[1]}>{layout=><>
       {ringsAt(notes,layout,.35)}
       {noteHits(notes,layout)}
     </>}</EngravedRow>;
     // The order, as a reference beside the control: letters already in the signature are solid, the newest pops.
     const strip=<span className="ks-order" aria-label={tr(`Order: ${order.join(' ')}`,`顺序：${order.join(' ')}`)}>{order.map((l,i)=><b key={`${flats}-${l}`} className={`${i<count?'is-in':''}${i===count-1&&demoFrom!==Infinity?' is-new':''}`}>{l}</b>)}</span>;
     tools=<>
-      {allSharps?button(tr('Try flats','试试降号'),toFlats):allFlats?null:button(flats?tr('Add a flat','加一个降号'):tr('Add a sharp','加一个升号'),add)}
+      <button className="measures-secondary" disabled={count>=7} onClick={add}>{flats?tr('Add a flat','加一个降号'):tr('Add a sharp','加一个升号')}</button>
+      {button(tr('Play these notes','播放这些音'),()=>{setSel(null);void playMelody(notes,[],demo)})}
+      {allSharps&&button(tr('Try flats','试试降号'),toFlats)}
       {strip}
     </>;
     pageNext={label:tr('Try one →','试一试 →'),ready:allFlats,onClick:()=>goStage(2)};
@@ -187,9 +192,9 @@ export default function KeySignaturesLesson(){
     tools=<>
       <div className="measures-choices ks-letters" role="group" aria-label={tr('Letters','音名')}>
         {['C','D','E','F','G','A','B'].map(l=><button key={l} aria-pressed={letters.includes(l)}
-          className={letters.includes(l)?(right?'is-correct':checked==='wrong'&&!answer.includes(l)?'is-wrong':'is-picked'):''} onClick={()=>toggle(l)}>{l}</button>)}
+          className={letters.includes(l)?(right?'is-correct':checked==='wrong'&&!answer.includes(l)?'is-wrong':'is-picked'):''} disabled={right} onClick={()=>toggle(l)}>{l}{key<0?'♭':'♯'}</button>)}
       </div>
-      {!right&&<button className="measures-secondary" disabled={letters.length===0} onClick={check}>{tr('Check','检查')}</button>}
+      {<button className="measures-secondary" disabled={right||letters.length===0} onClick={check}>{tr('Check','检查')}</button>}
     </>;
     if(right&&!lastQ)pageNext={label:tr('Next one →','下一个 →'),ready:true,onClick:()=>{setQ(x=>x+1);setLetters([]);setChecked(null)}};
   }

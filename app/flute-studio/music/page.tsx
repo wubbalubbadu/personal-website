@@ -2,7 +2,7 @@
 import {usePrivateMusic} from "../lib/privateMusic";
 
 import {useMemo,useState,useSyncExternalStore} from "react";
-import {libraryShelf as publicShelf,libraryTags,hasTag,tagKey} from "../../../content/music-library";
+import {libraryShelf as publicShelf,libraryTags,hasTag,tagKey,tagName} from "../../../content/music-library";
 import MusicRow from "../MusicRow";
 import {tagTone,BEGINNER_TONE} from "../lib/tagTone";
 import {STATUSES,STATUS_LABELS,STATUS_TONES,useStatuses} from "../lib/musicStatus";
@@ -12,7 +12,6 @@ import "./library.css";
 import "./library-fixes.css";
 
 /** Chinese labels for the known tags; others show as typed. */
-const ZH_TAGS:Record<string,string>={pop:"流行",folk:"民谣",classical:"古典","k-pop":"韩流","j-pop":"日本流行",film:"电影",excerpt:"管弦乐片段",etude:"练习曲",exercise:"练习"};
 
 /** The chips that come first, after All; other tags follow Saved music and Good first pieces. */
 const LEAD_TAGS=["classical","exercise","etude","excerpt"];
@@ -27,7 +26,7 @@ export default function MusicLibrary(){
   // Chips are built from the tags in use, so a new tag typed in the uploader
   // shows up here on its own. Known tags get a Chinese label; others show as typed.
   const tags=useMemo(()=>libraryTags(libraryShelf),[libraryShelf]);
-  const tagLabel=(tag:string)=>zh?ZH_TAGS[tagKey(tag)]??tag:tagKey(tag)==="excerpt"?"Orchestral excerpts":tag;
+  const tagLabel=(tag:string)=>tagName(tag,zh);
   const [query,setQuery]=useState("");
   // A link can open the Library on a shelf (?shelf=beginner, ?tag=etude) or
   // one of your lists (?list=working). ?favorites=1, from before the lists
@@ -54,7 +53,7 @@ export default function MusicLibrary(){
     // languages), Good first piece, and an exercise's description. Every word
     // typed has to match somewhere, so "classical bach" narrows rather than widens.
     const matchesQuery=(item:typeof libraryShelf[number])=>{
-      const haystack=[item.title,item.composer,item.excerpt?.part??"",item.excerpt?.passage??"",item.excerpt?.zhPassage??"",...item.tags,...item.tags.map(tag=>ZH_TAGS[tagKey(tag)]??""),item.beginner?"good first piece beginner 适合入门":"",statuses[item.id]?`${STATUS_LABELS[statuses[item.id]].en} ${STATUS_LABELS[statuses[item.id]].zh}`:"",item.exercise?.detail??"",item.exercise?.zhTitle??"",item.exercise?.zhDetail??""].join(" ").toLowerCase();
+      const haystack=[item.title,item.zhTitle??"",item.composer,item.excerpt?.part??"",item.excerpt?.passage??"",item.excerpt?.zhPassage??"",...item.tags,...item.tags.map(tag=>tagName(tag,true)),item.beginner?"good first piece beginner 适合入门":"",statuses[item.id]?`${STATUS_LABELS[statuses[item.id]].en} ${STATUS_LABELS[statuses[item.id]].zh}`:"",item.exercise?.detail??"",item.exercise?.zhTitle??"",item.exercise?.zhDetail??""].join(" ").toLowerCase();
       return query.toLowerCase().split(/\s+/).filter(Boolean).every(word=>haystack.includes(word));
     };
     return libraryShelf.filter(item=>(shelf==="all"||(shelf==="beginner"?item.beginner:shelf.startsWith("status:")?statuses[item.id]===shelf.slice(7):hasTag(item,shelf)))&&matchesQuery(item)).sort((a,b)=>a.title.localeCompare(b.title))},[query,shelf,statuses,libraryShelf]);

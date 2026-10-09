@@ -9,3 +9,6 @@
 .dialog__close{flex:none;margin-right:-8px}
 /* Phones: a sheet from the bottom edge. */
 @media(max-width:760px){.dialog{padding:0;place-items:end stretch}.dialog__panel,.dialog__panel--wide{width:100%;max-height:92dvh;border-radius:22px 22px 0 0;padding:14px 16px calc(18px + env(safe-area-inset-bottom))}}
+/* A dialog whose contents are still drawing (callers add .is-waiting): only the dimmed page shows, so the panel opens
+   at its real size instead of growing. */
+.dialog__panel.is-waiting{visibility:hidden}

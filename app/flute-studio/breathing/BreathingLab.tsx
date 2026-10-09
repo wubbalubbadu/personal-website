@@ -1,4 +1,5 @@
 'use client';
+import {TempoPill} from "../components/TempoPill";
 import {lazy,Suspense,useEffect,useRef,useState} from 'react';
 import Sequence from './Sequence';
 import {breathAt,counts,cueBank,cueBankZh,patterns,type Settings} from './timing';
@@ -65,10 +66,9 @@ export default function BreathingLab(){
      <div className="bl-stepper"><button type="button" aria-label={zh?`${{inhale:"吸气",hold:"停留",exhale:"呼气"}[key]}减少拍数`:`${key} fewer beats`} onClick={()=>update(key,settings[key]-1)}>−</button><b>{settings[key]}</b><button type="button" aria-label={zh?`${{inhale:"吸气",hold:"停留",exhale:"呼气"}[key]}增加拍数`:`${key} more beats`} onClick={()=>update(key,settings[key]+1)}>+</button></div>
     </div>)}</div>
     <div className="bl-play-row">
-     <div className="bl-stepper bl-tempo"><button type="button" aria-label={zh?"减慢":"Slower"} onClick={()=>{stop();setBpm(b=>Math.max(40,b-2))}}>−</button><b>{bpm}<small> bpm</small></b><button type="button" aria-label={zh?"加快":"Faster"} onClick={()=>{stop();setBpm(b=>Math.min(120,b+2))}}>+</button></div>
-     <button type="button" className="bl-sound" aria-pressed={sound} aria-label={zh?(sound?'关闭节拍声':'开启节拍声'):(sound?'Mute the beat':'Play the beat')} onClick={()=>setSound(!sound)}>
-      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 8h3l4-3.5v11L6 12H3z"/>{sound?<path d="M13 7.5a3.5 3.5 0 0 1 0 5M15 5.5a6 6 0 0 1 0 9"/>:<path d="M13 8l4 4M17 8l-4 4"/>}</svg>
-     </button>
+     {/* The studio's tempo pill: its metronome tap is the beat sound (on or off), the number is breaths' bpm. */}
+     <TempoPill size="large" label={zh?"呼吸速度":"Breathing tempo"} tempo={bpm} sounding={sound} onSound={()=>setSound(!sound)}
+       onChange={value=>{stop();setBpm(Math.max(40,Math.min(120,value)))}}/>
      <button type="button" className="bl-start" onClick={()=>void start()}>{playing?(zh?'停止':'Stop'):(zh?'开始':'Start')}</button>
     </div>
     {audioError&&<small role="status">{zh?"声音不可用，呼吸动画仍可使用。":"Sound unavailable. The visual timer still works."}</small>}

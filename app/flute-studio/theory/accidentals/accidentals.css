@@ -10,7 +10,7 @@
 /* With the hint keyboard (smaller, so every note stays at least 48px wide to tap) the staffs take what is left. */
 .acc-scene .acc-closeup.acc-match{height:252px}
 /* The matching step's hint keyboard is small (it only shows which key, it is not played), so the two staffs get the room. */
-.lesson-scene .acc-scene .acc-keys.is-hint.sequence-keyboard.is-visible{height:66px}
+.lesson-scene .acc-scene .acc-keys.is-hint.sequence-keyboard.is-visible{height:118px}
 /* The keyboard always sits under the staff, at one fixed height in every step (the zoomed C to E keyboard is just narrower),
    so the staff and everything below it stay put. */
 .lesson-scene .acc-scene .acc-keys.sequence-keyboard.is-visible{max-width:none;width:auto;height:118px;margin:0 auto}
@@ -76,3 +76,5 @@
 .lesson-shell.accidentals-lesson .theory-timeline button{min-height:72px}
 
 @media(prefers-reduced-motion:reduce){.acc-match-line.is-fading,.acc-question.is-leaving,.acc-erasing{animation:none;opacity:0}.acc-closeup .acc-preview{animation:none}}
+
+.acc-scene .acc-keys{position:relative;z-index:1}

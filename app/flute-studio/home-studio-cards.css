@@ -1,0 +1,23 @@
+/* Home's "Your studio" cards (HomeStudioCards.tsx): home preview cards with a neutral top, so the only colour is
+   colour that means something (the list's dot, green for practice time, sand for a deadline). */
+.studio-cards{margin-bottom:28px}
+.studio-card .studio-card__stage{display:flex;flex-direction:column;justify-content:center;gap:10px;padding:14px 16px;box-sizing:border-box;background:#f6f6f7}
+.studio-card__deadline{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.studio-card__deadline b{font-size:14px;font-weight:600;color:#292a33;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.studio-card__deadline .tag-pill{flex:none;height:22px;font-size:11.5px}
+.studio-card__routine small{display:block;margin-top:5px;font-size:12px;color:#85868e}
+.studio-card__bar{height:6px;border-radius:3px;background:#e6e6ea;overflow:hidden}
+.studio-card__bar i{display:block;height:100%;border-radius:3px;background:#7f9f6f}
+.studio-card__list{display:grid;gap:5px;margin:0;padding:0;list-style:none}
+.studio-card__list li{display:flex;align-items:center;gap:8px;min-width:0;font-size:13px;font-weight:500;color:#292a33;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.studio-card__list .status-dot{width:7px;height:7px}
+.studio-card__more{font-size:12px;color:#85868e}
+.studio-card__stage--music{padding:6px 10px;overflow:hidden}
+.studio-card__stage--music .tricky-preview{width:100%}
+.studio-card__week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;height:100%;align-items:end}
+.studio-card__week span{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%}
+.studio-card__week i{display:block;width:100%;max-width:18px;border-radius:4px;background:#9cbb8c}
+.studio-card__week i[data-empty]{height:3px!important;background:#e6e6ea}
+.studio-card__week small{font-size:10.5px;color:#9a9ba2}
+.studio-card .studio-card__stage{align-items:stretch;justify-items:stretch;place-items:initial;text-align:left}
+.preview-card.studio-card .studio-card__stage{padding:18px 20px}

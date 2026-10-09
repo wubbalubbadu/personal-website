@@ -1,5 +1,6 @@
 "use client";
 import {ScoreTempoMarks as ScaleTempoMarks} from "../../components/ScoreTempoMarks";
+import {musicLibrary} from "../../../../content/music-library";
 import {ScoreViewer} from "../../components/ScoreViewer";
 import {ChevronIcon,DownloadIcon} from "../../components/HeaderIcons";
 import {ReaderPopover} from "../../components/ReaderPopover";
@@ -374,6 +375,8 @@ export default function ScaleStudio(){
   // exercise, rather than only living in the Tempos list.
   const [tempoMarks,setTempoMarks]=useState(false);
   const [loaded,setLoaded]=useState(false);
+  // Opened with ?back= (Home, My Studio, or a piece's close-up): Back returns there, by name.
+  const [backTo,setBackTo]=useState<{href:string;label:string}|null>(null);
   // Saved sets: named snapshots of this whole panel, listed on the
   // Exercises hub. Kept in state (not read on every render) so the hub and
   // this panel stay in step after a save or delete in either place.
@@ -521,6 +524,11 @@ export default function ScaleStudio(){
       ) as Record<string,number>);
     }catch{/* Invalid browser preferences fall back to the complete chapter. */}
     const params=new URLSearchParams(location.search);
+    const back=params.get("back");
+    // Back returns to wherever Scale Studio was opened from: Home, My Studio, or a piece.
+    if(back==="/flute-studio")setBackTo({href:back,label:zh?"首页":"Home"});
+    else if(back==="/flute-studio/practice")setBackTo({href:back,label:zh?"我的工作室":"My Studio"});
+    else if(back&&/^\/flute-studio\/music\/[\w-]+$/.test(back)){const piece=musicLibrary.find(item=>`/flute-studio/music/${item.id}`===back);setBackTo({href:back,label:piece?.title??(zh?"乐曲":"Piece")})}
     setSets(readScaleSets());
     // A ?set= link is the most specific intent there is, so it outranks both
     // the saved preferences above and any ?preset= alongside it.
@@ -686,7 +694,7 @@ export default function ScaleStudio(){
       defaultNoteSpacing={0.55} extraSystemSpacing={tempoMarks?3:0} practiceTempo={{value:tempoMarks,onChange:setTempoMarks}}
       save={{saved:!!savedMatch,onToggle:toggleSaved,label:zh?"保存为我的组合":"Save as a set",savedLabel:zh?"已保存为组合，点按移除":"Saved as a set. Tap to remove"}}
       headerActions={reader=><button type="button" className="icon-btn has-tip" disabled={reader.exporting} data-tip={reader.exporting?(zh?"正在生成 PDF…":"Making the PDF\u2026"):(zh?"下载 PDF":"Download PDF")} aria-label={reader.exporting?(zh?"正在生成 PDF…":"Making the PDF\u2026"):(zh?"下载 PDF":"Download PDF")} onClick={()=>reader.download()}>{reader.exporting?"\u22ef":<DownloadIcon/>}</button>}
-      scoreMarks={tempoMarks?context=><ScaleTempoMarks root={context.root} version={context.version} zh={zh} marks={blocks.map(block=>{const id=blockTempoId(block,range);return {id,label:block.label,tempo:tempoForBlock(block,range,tempos),rep:{key:id,title:block.label,kind:"scale" as const}}})} onChange={(id,next)=>{setActiveBlock(id);setTempos(prev=>({...prev,[id]:next}));context.controls.setTempo(next)}} soundingId={context.controls.metronome?activeBlock||null:null} onSound={(id,tempo)=>{const running=context.controls.metronome&&activeBlock===id;setActiveBlock(id);context.controls.setTempo(tempo);if(running||!context.controls.metronome)context.controls.toggleMetronome()}}/>:undefined} printConfig={zh?{title:englishTitle,asset:scaleBookMusicXML(buildBlocks(true),range,newLines,articulationRotation.map(e=>e.articulation),rhythm,ending,scaleStart,customSpan,groupSize)}:undefined} lineBreak={{value:newLines,onChange:setNewLines}} config={{title:bookTitle,composer:"",smartDroneCountInBeats:4,smartDrone:blocks.map((block,index)=>{const tonic=keyForType(block.key,typeById(block.type));const written=blockNotes(block).find(note=>note.midi%12===tonic.pc);return {measure:1,event:blockEventStarts[index],pitch:tonic.label[0].toUpperCase()+tonic.label.slice(1)+String(written?.octave??4),...(written?{displayPitch:`${written.step}${accidentalGlyph(written.alter)}${written.octave}`}:{})}}),asset:scaleBookMusicXML(blocks,range,newLines,articulationRotation.map(e=>e.articulation),rhythm,ending,scaleStart,customSpan,groupSize),displayPitches,noteKeySignatures,syllables,id:`scale-book-${rangeKey}-${grouping}-${ending}-${scaleStart}-${groupSize>1?`in${groupSize}-`:""}${types.join("+")}-${forms.join("+")}-${selected.map(k=>k.id).join("-")}`,backHref:"/flute-studio/exercises",defaultTempo:(activeBlock?tempos[activeBlock]:undefined)??60}}
+      scoreMarks={tempoMarks?context=><ScaleTempoMarks root={context.root} version={context.version} zh={zh} marks={blocks.map(block=>{const id=blockTempoId(block,range);return {id,label:block.label,tempo:tempoForBlock(block,range,tempos),rep:{key:id,title:block.label,kind:"scale" as const}}})} onChange={(id,next)=>{setActiveBlock(id);setTempos(prev=>({...prev,[id]:next}));context.controls.setTempo(next)}} soundingId={context.controls.metronome?activeBlock||null:null} onSound={(id,tempo)=>{const running=context.controls.metronome&&activeBlock===id;setActiveBlock(id);context.controls.setTempo(tempo);if(running||!context.controls.metronome)context.controls.toggleMetronome()}}/>:undefined} printConfig={zh?{title:englishTitle,asset:scaleBookMusicXML(buildBlocks(true),range,newLines,articulationRotation.map(e=>e.articulation),rhythm,ending,scaleStart,customSpan,groupSize)}:undefined} lineBreak={{value:newLines,onChange:setNewLines}} config={{title:bookTitle,composer:"",smartDroneCountInBeats:4,smartDrone:blocks.map((block,index)=>{const tonic=keyForType(block.key,typeById(block.type));const written=blockNotes(block).find(note=>note.midi%12===tonic.pc);return {measure:1,event:blockEventStarts[index],pitch:tonic.label[0].toUpperCase()+tonic.label.slice(1)+String(written?.octave??4),...(written?{displayPitch:`${written.step}${accidentalGlyph(written.alter)}${written.octave}`}:{})}}),asset:scaleBookMusicXML(blocks,range,newLines,articulationRotation.map(e=>e.articulation),rhythm,ending,scaleStart,customSpan,groupSize),displayPitches,noteKeySignatures,syllables,id:`scale-book-${rangeKey}-${grouping}-${ending}-${scaleStart}-${groupSize>1?`in${groupSize}-`:""}${types.join("+")}-${forms.join("+")}-${selected.map(k=>k.id).join("-")}`,backHref:backTo?.href??"/flute-studio/exercises",...(backTo?{backLabel:backTo.label}:{}),defaultTempo:(activeBlock?tempos[activeBlock]:undefined)??60}}
       toolbar={<div className="scale-book__chapter-inline"><button type="button" className="scale-book__crumb has-tip" data-tip={zh?"点击自定义":"Click to customize"} onClick={()=>openCustomize("type")}>{typeWord}</button><button type="button" className="scale-book__crumb has-tip" data-tip={zh?"点击自定义":"Click to customize"} onClick={()=>openCustomize("form")}>{formWord}</button><span aria-hidden="true">·</span><button type="button" className="scale-book__crumb has-tip" data-tip={zh?"点击自定义":"Click to customize"} onClick={()=>openCustomize("range")}>{zh?chosenRange.zh:chosenRange.label}</button><span aria-hidden="true">·</span><button type="button" className="scale-book__crumb has-tip" data-tip={zh?"点击自定义":"Click to customize"} onClick={()=>openCustomize("keys")}>{selected.length} {zh?"个调性":selected.length===1?"key":"keys"}</button></div>}
       settings={reader=><>
 

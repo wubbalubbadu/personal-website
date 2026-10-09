@@ -81,7 +81,8 @@ export default function SignTracing({notes,bars=[],meter,target,sign,active=-1,f
         {drawing&&!done&&<path className="acc-preview" d={ACCIDENTALS[sign]} transform={`translate(${origin.x} ${origin.y}) scale(${GLYPH_SCALE} ${-GLYPH_SCALE})`}/>}
         {circle!==undefined&&<circle className="measure-circle" cx={noteAt(circle).x} cy={noteAt(circle).y} r="22"/>}
         {strokes.map((stroke,i)=><polyline key={i} points={stroke.map(q=>`${q.x},${q.y}`).join(' ')} className="acc-stroke"/>)}
-        <rect className="acc-pointer" x="0" y="40" width="1200" height="260" fill="transparent" onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={()=>{current.current=null;setStrokes(old=>drawing&&!done?old.slice(0,-1):old)}}/>
+        {drawing&&<rect className="acc-pointer" x="0" y="40" width="1200" height="260" fill="transparent" onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={()=>{current.current=null;setStrokes(old=>drawing&&!done?old.slice(0,-1):old)}}/>}
+        {!drawing&&notes.map((_,i)=>!hidden.includes(i)&&<rect key={`note-${i}`} className="acc-hit" x={noteAt(i).x-24} y={noteAt(i).y-26} width="48" height="52" role="button" tabIndex={0} aria-label={`Play note ${i+1}`} onClick={()=>onTapNote?.(i)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onTapNote?.(i)}}}/>)}
         {/* Over the pointer layer, so anything here (the question mark) can be touched itself. */}
         {extra?.(layout)}
       </>;

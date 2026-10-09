@@ -28,6 +28,7 @@ export default function RestMatch({practice,hint,matched,onMatch,zh}:{practice:b
     {!practice&&TOP.map((v,i)=><text className="rests-caption" key={v} x={xs[i]} y="417">{v} {zh?'拍':v===1?'beat':'beats'}</text>)}
     {practice&&matched.map(i=><line className="rests-connection" key={i} x1={xs[i]} y1="212" x2={xs[BOTTOM.indexOf(TOP[i])]} y2="271"/>)}
     {pen&&selected!==null&&<line className="rests-connection is-drawing" x1={xs[selected]} y1="212" x2={pen.x} y2={pen.y}/>}
+    {selected!==null&&<circle className="rests-selection" cx={xs[selected]} cy={noteY(4)} r="24"/>}
     {practice&&xs.map((x,i)=><g key={i}>
       <rect className={`rests-hit${selected===i?' is-selected':''}${matched.includes(i)?' is-right':''}`} x={x-40} y={noteY(8)-22} width="80" height="144" rx="12" role="button" tabIndex={0} aria-label={names[i]} aria-pressed={selected===i}
         onPointerDown={e=>{if(matched.includes(i))return;e.preventDefault();pick(i);press.current=i;svg.current?.setPointerCapture(e.pointerId)}}

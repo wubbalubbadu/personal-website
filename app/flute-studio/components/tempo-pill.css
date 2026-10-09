@@ -20,3 +20,7 @@
 .tempo-pill--large .tempo-pill__sound svg{width:18px;height:18px}
 .tempo-pill--large .tempo-pill__step{font-size:18px}
 .tempo-pill--large .tempo-pill__value input{width:40px;font-size:16px;font-variant-numeric:tabular-nums}
+/* While the metronome is ticking, its button is clearly selected (purple = selected), since off the score there may be
+   no other sign that it is on. */
+.tempo-pill.is-sounding .tempo-pill__sound{background:#79588e;color:#fff}
+.tempo-pill.is-sounding .tempo-pill__sound:hover{background:#6a4c7d;color:#fff}

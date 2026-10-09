@@ -1,0 +1,8 @@
+/* A saved bit's bars, drawn small (TrickyPreview.tsx): Tricky bits cards and the Home studio card. */
+.tricky-preview{min-height:84px;position:relative;margin-top:6px;overflow:hidden;pointer-events:none}
+.tricky-preview__music{width:100%}
+.tricky-preview[data-state="waiting"] .tricky-preview__music{opacity:0}
+.tricky-preview__note{position:absolute;left:0;top:30px;font-size:13px;color:#a2a3aa}
+/* engraved.css stretches any .osmd-score svg; a preview keeps the size OSMD drew, with no leftover min-height. */
+html body .tricky-preview svg{width:auto!important;max-width:none!important;height:auto!important}
+html body .tricky-preview__music,html body .tricky-preview__music>div{min-height:0!important;height:auto!important}

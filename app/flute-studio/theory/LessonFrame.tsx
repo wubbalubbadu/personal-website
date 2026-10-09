@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
-import {useEffect,type ReactNode} from 'react';
+import {useState,type ReactNode} from 'react';
+import CookieButton from './CookieButton';
 import ProgressDots from './ProgressDots';
 import './lesson-shell.css';
 
@@ -24,8 +25,7 @@ type Props={
 // Every lesson shares this frame: step dots, a line of narration that explains the idea, the scene,
 // and Cookie's bubble (what to try, then how it went). `heading` names the scene for screen readers.
 export default function LessonFrame({title,zh,className='',steps,current,onJump,heading,narration,message,tone=null,next,extra,status,progress,fadeNarration=false,children}:Props){
-  // An empty lesson message docks the site's Cookie pet into #lesson-companion without its own bubble.
-  useEffect(()=>{const frame=requestAnimationFrame(()=>window.dispatchEvent(new CustomEvent('cookie:lesson',{detail:''})));return()=>cancelAnimationFrame(frame)},[]);
+  const [cookieHappy,setCookieHappy]=useState(false);
   let action:ReactNode=null;
   if(next?.href)action=<Link className="lesson-next" href={next.href}>{next.label}</Link>;
   else if(next?.ready)action=<button className="lesson-next" onClick={next.onClick}>{next.label}</button>;
@@ -42,7 +42,7 @@ export default function LessonFrame({title,zh,className='',steps,current,onJump,
     {/* Progress has its own row, always there, so the layout does not move when an exercise starts. */}
     <div className="lesson-progress">{progress&&<ProgressDots {...progress} zh={zh}/>}</div>
     <div className="lesson-talk">
-      <div id="lesson-companion"/>
+      <div id="lesson-companion"><CookieButton className="lesson-cookie" pressed={tone==='correct'||cookieHappy} aria-label={zh?'和 Cookie 打招呼':'Say hello to Cookie'} onClick={()=>setCookieHappy(x=>!x)}/></div>
       <div className={`lesson-bubble ${tone?`is-${tone}`:''}`}>
         <p role="status" aria-live="polite">{message}</p>
         {(action||extra)&&<div className="lesson-actions">{extra}{action}</div>}

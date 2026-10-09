@@ -2,6 +2,7 @@
   {
     "id": "traditional-amazing-grace",
     "title": "Amazing Grace",
+    "zhTitle": "奇异恩典",
     "composer": "Traditional",
     "tags": [
       "Folk",
@@ -56,6 +57,7 @@
   {
     "id": "english-traditional-danny-boy",
     "title": "Danny Boy",
+    "zhTitle": "丹尼男孩",
     "composer": "Traditional",
     "tags": [
       "Folk",
@@ -72,6 +74,63 @@
     "accompanimentKind": "piano"
   },
   {
+    "id": "beethoven-leonore-3",
+    "title": "Leonore Overture No. 3",
+    "composer": "Ludwig van Beethoven",
+    "tags": [
+      "Classical",
+      "Excerpt"
+    ],
+    "status": "published",
+    "scorePath": "/music/beethoven-leonore-3/m328.musicxml",
+    "viewerPath": "/flute-studio/music/beethoven-leonore-3",
+    "excerpt": {
+      "part": "Flute 1",
+      "passage": "Tempo I to m. 360 · Opening",
+      "zhPassage": "Tempo I 至第 360 小节 · 开头",
+      "workLabel": "Overture, Op. 72b · Flute 1",
+      "zhWorkLabel": "序曲，作品 72b · 第一长笛",
+      "source": "https://imslp.org/wiki/Leonora_Overture_No.3%2C_Op.72b_(Beethoven%2C_Ludwig_van)",
+      "pages": [
+        {
+          "src": "/music/beethoven-leonore-3/m328.jpg",
+          "width": 1900,
+          "height": 990
+        }
+      ],
+      "passages": [
+        {
+          "id": "m328",
+          "label": "Tempo I to m. 360",
+          "zhLabel": "Tempo I 至第 360 小节",
+          "pages": [
+            {
+              "src": "/music/beethoven-leonore-3/m328.jpg",
+              "width": 1900,
+              "height": 990
+            }
+          ],
+          "scorePath": "/music/beethoven-leonore-3/m328.musicxml"
+        },
+        {
+          "id": "opening",
+          "label": "Opening (Adagio)",
+          "zhLabel": "开头（柔板）",
+          "pages": [
+            {
+              "src": "/music/beethoven-leonore-3/opening.jpg",
+              "width": 1900,
+              "height": 1050
+            }
+          ],
+          "scorePath": "/music/beethoven-leonore-3/opening.musicxml"
+        }
+      ]
+    },
+    "year": 1806,
+    "about": "Beethoven's third try at an overture for his only opera, then called Leonore and later Fidelio. Leonore disguises herself as a guard to free her husband Florestan from a political prison. The offstage trumpet call is the moment the minister arrives and Florestan is saved, so the flute's run after Tempo I sounds like pure relief. Beethoven found the overture too big for the opera and replaced it, and it now lives on as a concert piece."
+  },
+  {
     "id": "ravel-daphnis-et-chloe-176",
     "title": "Daphnis et Chloé",
     "composer": "Maurice Ravel",
@@ -82,20 +141,64 @@
     "status": "published",
     "scorePath": "/music/ravel-daphnis-et-chloe-176/score.musicxml",
     "viewerPath": "/flute-studio/music/ravel-daphnis-et-chloe-176",
-    "pdfPath": "/music/ravel-daphnis-et-chloe-176/score.pdf",
     "excerpt": {
-      "part": "Flute 1",
-      "passage": "[176] to 2 measures after [179]",
-      "zhPassage": "[176] 至 [179] 后两小节",
-      "workLabel": "Pantomime from the ballet · Flute 1",
-      "zhWorkLabel": "芭蕾舞剧《达芙妮与克罗埃》中的哑剧段落 · 第一长笛",
+      "part": "Flutes 1 and 2",
+      "passage": "Pantomime [176] · Daybreak [155] · [179] to [188]",
+      "zhPassage": "哑剧 [176] · 日出 [155] · [179] 至 [188]",
+      "workLabel": "Ballet, Suite No. 2",
+      "zhWorkLabel": "芭蕾舞剧，第二组曲",
       "pages": [
         {
-          "src": "/music/ravel-daphnis-et-chloe-176/score.jpg",
-          "width": 950,
-          "height": 979
+          "src": "/music/ravel-daphnis-et-chloe-176/d176.jpg",
+          "width": 1900,
+          "height": 1659
         }
-      ]
+      ],
+      "passages": [
+        {
+          "id": "176",
+          "label": "[176] to 2 after [179]",
+          "zhLabel": "[176] 至 [179] 后两小节",
+          "pages": [
+            {
+              "src": "/music/ravel-daphnis-et-chloe-176/d176.jpg",
+              "width": 1900,
+              "height": 1659
+            }
+          ],
+          "scorePath": "/music/ravel-daphnis-et-chloe-176/score.musicxml"
+        },
+        {
+          "id": "155",
+          "label": "Daybreak: [155] to [156]",
+          "zhLabel": "日出：[155] 至 [156]",
+          "pages": [
+            {
+              "src": "/music/ravel-daphnis-et-chloe-176/d155.jpg",
+              "width": 1900,
+              "height": 1582
+            }
+          ]
+        },
+        {
+          "id": "179",
+          "label": "[179] to [188]",
+          "zhLabel": "[179] 至 [188]",
+          "pages": [
+            {
+              "src": "/music/ravel-daphnis-et-chloe-176/d179-1.png",
+              "width": 1900,
+              "height": 2839
+            },
+            {
+              "src": "/music/ravel-daphnis-et-chloe-176/d179-2.png",
+              "width": 1900,
+              "height": 2045
+            }
+          ]
+        }
+      ],
+      "source": "https://imslp.org/wiki/Daphnis_et_Chlo%C3%A9_(Ravel%2C_Maurice)"
     },
     "recordings": [
       {
@@ -106,7 +209,7 @@
       }
     ],
     "year": 1912,
-    "about": "From the Pantomime in Ravel’s ballet Daphnis et Chloé, written for the Ballets Russes. Daphnis and Chloé enact the story of Pan and Syrinx; the flute solo evokes Pan’s reed flute.",
+    "about": "A ballet Ravel wrote for the Ballets Russes, set in ancient Greece. Pirates carry off the shepherdess Chloé and the god Pan rescues her. Daybreak opens the second suite: Daphnis wakes by a stream at dawn and the two are reunited, and the flutes' rippling figures are the water and birdsong. In the Pantomime that follows, the lovers act out the story of Pan and the nymph Syrinx, who turns into reeds as Pan chases her; Pan makes a flute from those reeds, and the long flute solo from [176] is Daphnis playing it as Pan while Chloé dances.",
     "smartDrone": [
       {
         "measure": 4,
@@ -217,6 +320,7 @@
   {
     "id": "traditional-greensleeves",
     "title": "Greensleeves",
+    "zhTitle": "绿袖子",
     "composer": "Traditional",
     "tags": [
       "Folk",
@@ -1410,6 +1514,7 @@
   {
     "id": "traditional-scarborough-fair",
     "title": "Scarborough Fair",
+    "zhTitle": "斯卡布罗集市",
     "composer": "Traditional",
     "tags": [
       "Folk"
@@ -1434,10 +1539,9 @@
     "status": "published",
     "scorePath": "/music/felix-mendelssohn-midsummer-scherzo/score.musicxml",
     "viewerPath": "/flute-studio/music/felix-mendelssohn-midsummer-scherzo",
-    "pdfPath": "/music/felix-mendelssohn-midsummer-scherzo/score.pdf",
     "excerpt": {
       "part": "Flute I",
-      "passage": "2 measures before [P] to the end",
+      "passage": "Before [P] to the end",
       "workLabel": "From A Midsummer Night’s Dream",
       "zhWorkLabel": "选自《仲夏夜之梦》",
       "tempoHint": "Suggested: 84 measures per minute",
@@ -1445,8 +1549,8 @@
       "pages": [
         {
           "src": "/music/felix-mendelssohn-midsummer-scherzo/score.jpg",
-          "width": 960,
-          "height": 786
+          "width": 1900,
+          "height": 1388
         }
       ]
     },
@@ -1491,6 +1595,7 @@
   {
     "id": "traditional-twinkle-twinkle-little-star",
     "title": "Twinkle Twinkle Little Star",
+    "zhTitle": "小星星",
     "composer": "Traditional",
     "tags": [
       "Folk",
@@ -1509,6 +1614,7 @@
   {
     "id": "karen-mok-yin-tian",
     "title": "Yin Tian",
+    "zhTitle": "阴天",
     "composer": "Karen Mok",
     "status": "published",
     "scorePath": "/music/karen-mok-yin-tian/score.musicxml",

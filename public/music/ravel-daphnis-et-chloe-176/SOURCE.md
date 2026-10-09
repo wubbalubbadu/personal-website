@@ -1,23 +1,14 @@
-# Daphnis et Chloé, first flute
+# Daphnis et Chloé, flutes 1 and 2
 
-Passage: rehearsal 176 to two measures after rehearsal 179.
+Images are cropped from the flute part on IMSLP
+(https://imslp.org/wiki/Daphnis_et_Chlo%C3%A9_(Ravel%2C_Maurice)), rendered at 300 dpi.
+Bars outside each passage are faded, never removed; fades start and end on barlines.
 
-The source scan also includes the printed lead-in beginning at rehearsal 173.
-No notes, systems, margins or page breaks have been rearranged.
+- d176.jpg: rehearsal 176 to two measures after 179 (part page 6)
+- d155.jpg: Daybreak, 155 to 156 (part page 1)
+- d179-1.png, d179-2.png: 179 to the bar before 188, split at the printed page turn (part pages 6 and 7, then 8)
 
-Source page: https://orchestraexcerpts.com/flute-ravel-daphnis-et-chloe-176-until-2m-after-179/
-Source scan: https://orchestraexcerpts.com/wp-content/uploads/2016/05/Ravel-Daphnis-Flute-excerpt-176.jpg
-Retrieved: 2026-09-28
+score.jpg, score.pdf: the earlier low-resolution scan from orchestraexcerpts.com, no longer used.
+score.musicxml covers 176 to two after 179 only.
 
-score.jpg is the original 950 x 979 scan. score.pdf is that scan on a single
-page with the same aspect ratio, without resampling or added notation.
-This is not a MusicXML transcription. The source scan limits zoom resolution.
-
-YouTube reference: https://www.youtube.com/watch?v=OCplcQ9gtKM
-The video's description identifies Adam Walker, flute; Gareth Davies,
-alto flute; Simon Rattle, conductor; and the London Symphony Orchestra.
-The clip is a reference performance, not synchronized score playback.
-
-Optional XML mode uses score.musicxml exported from the user-provided
-Desktop/Daphnis.mscz with MuseScore Studio 4.7.5. The original project
-was not modified. The PDF and displayed scan are independent of this XML.
+YouTube reference: https://www.youtube.com/watch?v=OCplcQ9gtKM (Adam Walker, LSO, Simon Rattle).

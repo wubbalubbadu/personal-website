@@ -68,13 +68,13 @@ export default function AccidentalsLesson(){
   // The last thing touched, a note or a key: it and its partner stay red until something else is touched (lesson 1's behaviour).
   const [sel,setSel]=useState<{midi:number;index:number|null}|null>(null),[playMidis,setPlayMidis]=useState<number[]>([]);
   // The stage within a step; whether its action is done (a sign drawn, a key found); the tracing key.
-  const [stage,setStage]=useState(1),[drawn,setDrawn]=useState(false),[trace,setTrace]=useState(0);
+  const [stage,setStage]=useState(1),[drawn,setDrawn]=useState(false),[trace,setTrace]=useState(0),[expanded,setExpanded]=useState(false);
   // Staff arrows that appear one at a time as their keys sound.
   const [walk,setWalk]=useState<(Arrow|null)[]|null>(null);
   // Step 1: the gaps found so far (slot 1 between C and D, slot 3 between D and E), and the one found last (its arrows show).
   const [gaps,setGaps]=useState<number[]>([]),[lastGap,setLastGap]=useState<number|null>(null);
   // Step 2: the sharp row and flat row matched so far (white notes start joined); a wrong key tried for E sharp.
-  const [rowLines,setRowLines]=useState<number[]>([0,2,4]),[miss,setMiss]=useState<number|null>(null);
+  const [rowLines,setRowLines]=useState<number[]>([]),[miss,setMiss]=useState<number|null>(null);
   // Step 4: question number and the answer picked.
   const [q,setQ]=useState(0),[pick,setPick]=useState<number|null>(null);
   // Step 5: the round, the top notes matched so far (the first pair is joined already), the top note picked, and feedback.
@@ -99,11 +99,11 @@ export default function AccidentalsLesson(){
   const playKeys=(midis:number[],value=1)=>{setPlayMidis(midis);setWalk(null);return audio.play(midis.map(()=>value),midis,0,false)};
   /** Play a melody with one half-step arrow at a time: from the key just heard to the key sounding now (`steps[i]` is the arrow for note i). */
   const playWalk=(play:()=>Promise<void>,steps:(Arrow|null)[])=>{const started=play();setWalk(steps);return started};
-  const goStage=(next:number)=>{audio.stop();setPlayMidis([]);setDrawn(false);setSel(null);setWalk(null);setSelected(null);setMiss(null);setStage(next)};
+  const goStage=(next:number)=>{audio.stop();setPlayMidis([]);setDrawn(false);setExpanded(false);setSel(null);setWalk(null);setSelected(null);setMiss(null);setStage(next)};
 
   function navigate(next:number){
     audio.stop();
-    setStep(next);setSel(null);setPlayMidis([]);setStage(1);setDrawn(false);setWalk(null);setTrace(t=>t+1);setGaps([]);setLastGap(null);setRowLines([0,2,4]);setSelected(null);setMiss(null);
+    setStep(next);setSel(null);setPlayMidis([]);setStage(1);setDrawn(false);setExpanded(false);setWalk(null);setTrace(t=>t+1);setGaps([]);setLastGap(null);setRowLines([]);setSelected(null);setMiss(null);
     // Each step starts fresh when you arrive.
     const target=FLOW[next];
     if(target==='measure'){setQ(0);setPick(null)}
@@ -122,7 +122,7 @@ export default function AccidentalsLesson(){
   /** The key of the note playing now in a melody, if one is. */
   const sounding=():KeyLight[]=>playing&&playMidis[audio.active]!==undefined?[{midi:playMidis[audio.active],tone:'red'}]:[];
   const button=(label:string,onClick:()=>void)=><button className="measures-secondary" onClick={onClick}>{label}</button>;
-  const clear=button(tr('Clear','清除'),()=>{audio.stop();setDrawn(false);setTrace(t=>t+1)});
+  const clear=button(tr('Clear','清除'),()=>{audio.stop();setDrawn(false);setExpanded(false);setTrace(t=>t+1)});
   const listen=(onClick:()=>void)=>button(tr('Listen','听一听'),onClick);
 
   if(id==='between'||(id==='sharpflat'&&stage<=2)){
@@ -133,9 +133,9 @@ export default function AccidentalsLesson(){
     const between=id==='between',down=!between&&stage===2;
     const sign:Acc=down?'flat':'sharp';
     // Which slots are notes. Step 2: the learner writes the first new note; the second follows by itself.
-    const written=between?[]:drawn?[1,3]:[1];
-    notes=down?[E,slot(0,drawn?'flat':undefined),D,slot(-1,drawn?'flat':undefined),C]
-      :[C,slot(-2,!between&&drawn?'sharp':undefined),D,slot(-1,!between&&drawn?'sharp':undefined),E];
+    const written=between?[]:expanded?[1,3]:[1];
+    notes=down?[E,slot(0,drawn?'flat':undefined),D,slot(-1,expanded?'flat':undefined),C]
+      :[C,slot(-2,!between&&drawn?'sharp':undefined),D,slot(-1,!between&&expanded?'sharp':undefined),E];
     const hidden=[1,3].filter(k=>!written.includes(k));
     // The keys under each slot, left to right.
     const slotKeys=down?[64,63,62,61,60]:[60,61,62,63,64];
@@ -147,7 +147,7 @@ export default function AccidentalsLesson(){
     if(between){
       const both=gaps.length===2;
       narration=tr('On the keyboard, black keys sit between some of the white keys.','在键盘上，有些白键之间还夹着黑键。');
-      message=gaps.length===0?tr('We can write the white keys C, D and E. Is there a sound between C and D? Tap the space between them.','白键 C、D、E 我们会写了。C 和 D 之间还有音吗？点一下它们中间的空位。')
+      message=gaps.length===0?tr('We can write the white keys C, D and E. Is there a sound between C and D? Tap the black key between them, or the gap on the staff.','白键 C、D、E 我们会写了。C 和 D 之间还有音吗？点它们之间的黑键，或谱上的空位。')
         :!both?tr('That’s the black key between them: a half step from each side. Is there one between the other two notes too?','这就是它们之间的黑键：离两边各一个半音。另外两个音之间也有吗？')
         :tr('Each black key is a half step from its neighbours, so C to D is two half steps. But a black key has no line or space of its own. How do we write it?','每个黑键离两边都是一个半音，所以从 C 到 D 是两个半音。可是黑键在五线谱上没有自己的线或间。那要怎么写呢？');
       ready=both;
@@ -174,20 +174,21 @@ export default function AccidentalsLesson(){
       message=down?(drawn?tr('E flat: one half step down from E. And the other one is D flat, one half step down from D.','降 E：比 E 低一个半音。另一个就是降 D，比 D 低一个半音。'):tr('Going down this time. The question mark is just below E: draw a flat in front of it to make it E flat.','这次往下走。这个问号就在 E 的下面：在它前面画一个降号，把它写成降 E。'))
         :drawn?tr('C sharp: one half step up from C. And the other one is D sharp, one half step up from D.','升 C：比 C 高一个半音。另一个就是升 D，比 D 高一个半音。')
         :tr('The question mark is just above C. Draw a sharp in front of it to make it C sharp.','这个问号就在 C 的上面。在它前面画一个升号，把它写成升 C。');
+      if(drawn&&!expanded)message=down?tr('That is E flat, one half step below E. Its black key is lit below.','这是降 E，比 E 低半音。下面亮起的是它的黑键。'):tr('That is C sharp, one half step above C. Its black key is lit below.','这是升 C，比 C 高半音。下面亮起的是它的黑键。');
       tone=drawn?'correct':null;
       staffMidis=soundingMidi(notes,bars);
       active=playing?audio.active:touched;
       // Once written: the whole row plays, a half step arrow over each step as it sounds.
       const steps:(Arrow|null)[]=[null,...slotKeys.slice(1).map((to,i)=>({from:slotKeys[i],to}))];
-      const playRow=(row:ReadNote[])=>playWalk(()=>playMelody(row,bars),steps);
+      const playRow=(row:ReadNote[])=>playWalk(()=>playMelody(row.map(x=>({...x,v:1.5})),bars),steps);
       const staffArrow=(layout:RowLayout)=>walk&&playing&&audio.active>=1&&<StaffArrow from={mid(layout,audio.active-1)} to={mid(layout,audio.active)} label={tr('half step','半音')}/>;
       const target=drawn?null:1;
       scene=<SignTracing key={down?'down':'chromatic'} attempt={trace} right={620} notes={notes} hidden={hidden} appear={drawn?[3]:[1]} target={target} sign={target===null?null:sign} active={active}
         extra={layout=><>{questions(layout)}{staffArrow(layout)}</>} onTapNote={tapNote}
         label={down?tr('E, E flat, D, D flat, C','E、降 E、D、降 D、C'):tr('C, C sharp, D, D sharp, E','C、升 C、D、升 D、E')}
-        onComplete={()=>{setDrawn(true);setSel(null);void playRow(notes.map((x,i)=>i===1||i===3?{...x,acc:sign}:x))}}/>;
+        onComplete={()=>{setDrawn(true);hear([slotKeys[1]]);setSel({midi:slotKeys[1],index:1})}}/>;
       tools=!drawn?clear:listen(()=>{setSel(null);void playRow(notes)});
-      pageNext=!drawn?undefined:down?{label:tr('Match them up →','把它们配起来 →'),ready:true,onClick:()=>goStage(3)}
+      pageNext=!drawn?undefined:!expanded?{label:down?tr('Show D flat →','显示降 D →'):tr('Show D sharp →','显示升 D →'),ready:true,onClick:()=>{setExpanded(true);void playRow(notes.map((x,i)=>i===1||i===3?{...x,acc:sign}:x))}}:down?{label:tr('Match them up →','把它们配起来 →'),ready:true,onClick:()=>goStage(3)}
         :{label:tr('Now going down →','现在往下走 →'),ready:true,onClick:()=>goStage(2)};
     }
     // The question marks: one in each empty slot (red while its black key sounds or was touched), and any fading into a written note.
@@ -203,16 +204,16 @@ export default function AccidentalsLesson(){
   else if(id==='sharpflat'&&stage===3){
     // The sharp row over the flat row: join each written black key to the one with the same key. The white notes start joined.
     zoom=true;
-    const top=[C,n(-2,'sharp'),D,n(-1,'sharp'),E],bottom=[E,n(0,'flat'),D,n(-1,'flat'),C];
-    const pairRound:Round={left:top,right:bottom,partner:[4,3,2,1,0]};
-    const both=rowLines.length===5;
+    const top=[n(-2,'sharp'),n(-1,'sharp')],bottom=[n(0,'flat'),n(-1,'flat')];
+    const pairRound:Round={left:top,right:bottom,partner:[1,0]};
+    const both=rowLines.length===2;
     narration=tr('Every black key has two names: a sharp and a flat.','每个黑键都有两个名字：一个带升号，一个带降号。');
     message=both?tr('C sharp is D flat, and D sharp is E flat: one sound, two names.','升 C 就是降 D，升 D 就是降 E：一个音，两个名字。')
       :miss!==null?tr('Those are different keys. Look at which key each one is.','这两个不是同一个键。看看它们各是哪个键。')
       :tr('Connect each sharp on top to the flat below that is the same key. Tap one, then the other.','把上面每个升号音，连到下面和它是同一个键的降号音。先点一个，再点另一个。');
     tone=both?'correct':miss!==null?'wrong':null;
     if(selected!==null)lit=[{midi:midiOf(top[selected].p,top[selected].acc),tone:'red'}];
-    scene=<MatchNotes round={pairRound} matched={rowLines} quiet={[0,2,4]} selected={selected} hint={null} label={tr('Match the sharps to the flats','把升号音和降号音配对')}
+    scene=<MatchNotes round={pairRound} matched={rowLines} selected={selected} hint={null} label={tr('Match the sharps to the flats','把升号音和降号音配对')}
       onSelect={i=>{setSelected(i);setMiss(null);if(i!==null)hear([midiOf(top[i].p,top[i].acc)])}}
       onDrop={(l,r)=>{
         const m=midiOf(top[l].p,top[l].acc);
@@ -333,7 +334,7 @@ export default function AccidentalsLesson(){
   const next:LessonNext=pageNext??(last?{label:tr('Back to theory lessons','回到乐理课'),ready:false,onClick:()=>window.location.assign('/flute-studio/theory')}
     :{label:tr(`Next: ${names[step+1]} →`,`下一步：${names[step+1]} →`),ready,onClick:()=>navigate(step+1)});
   // What was touched last stays red on its key (and its note), as in lesson 1, until a melody plays or something else is touched.
-  if(!playing&&sel&&id!=='same')lit=[...lit.filter(l=>l.midi!==sel.midi),{midi:sel.midi,tone:'red'}];
+  if(!playing&&sel&&id!=='same')lit=[...lit.filter(l=>l.midi!==sel.midi),{midi:sel.midi,tone:'red',pulse:drawn}];
   // Whatever sounds is red on the keyboard.
   if(playing)lit=sounding();
 

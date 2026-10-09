@@ -1,5 +1,6 @@
 "use client";
 import {useEffect,useRef,useState} from "react";
+import {PracticeIcon} from "./components/PracticeIcon";
 import {usePathname} from "next/navigation";
 import {useLanguage} from "./i18n/LanguageContext";
 import {usePrivateMusic} from "./lib/privateMusic";
@@ -59,7 +60,7 @@ export default function PracticeClockButton({target}:{target?:ClockTarget}={}){
     <button ref={anchor} type="button" className="practice-clock-running__time has-tip" data-tip={clock.running?(zh?`暂停 · ${title}`:`Pause · ${title}`):(zh?`继续 · ${title}`:`Resume · ${title}`)}
       aria-label={clock.running?(zh?`暂停计时，${title}，${time}`:`Pause the clock, ${title}, ${time}`):(zh?`继续计时，${title}，${time}`:`Resume the clock, ${title}, ${time}`)}
       onClick={clock.running?pauseClock:resumeClock}>
-      <i aria-hidden="true"/>{time}
+      {/* Says what a tap does: pause while it runs, play while it is paused (the same pair as the My Studio clock). */}<PracticeIcon name={clock.running?"pause":"play"}/>{time}
     </button>
     <button type="button" className="practice-clock-running__stop has-tip" data-tip={zh?"结束":"Stop"} aria-label={zh?`结束 ${title}`:`Stop ${title}`} onClick={()=>stopClock(fallback)}>
       <span aria-hidden="true"/>

@@ -2,8 +2,12 @@
 import {createContext,useContext,useEffect,useRef,useState,type ReactNode} from "react";
 
 import {SCORE_TEMPO_KEY,readTempoRatios,clampTempo} from "./lib/scoreTempo";
+import {droneSamplesIfReady,droneVoice,loadDroneSamples} from "./components/sampledDrone";
 
-type Voice={oscillator:OscillatorNode;gain:GainNode};
+type Voice={oscillator:OscillatorNode|AudioBufferSourceNode;gain:GainNode};
+const asVoice=({source,gain}:{source:AudioBufferSourceNode;gain:GainNode}):Voice=>({oscillator:source,gain});
+/** A drone still waiting for its samples was never started, so stopping it throws; ignore that. */
+const stopVoice=(voice:Voice,at?:number)=>{try{voice.oscillator.stop(at)}catch{/* Not started yet. */}};
 /**
  * Score playback's beat grid, in AudioContext time. While one is set the
  * metronome clicks on it (so the clicks land on the notes' beats, pickup and
@@ -22,7 +26,7 @@ export function pitchFrequency(note:string,octave:number){return 440*2**(((octav
 function useAudioEngine(){
   const [bpm,setBpmState]=useState(60),[metro,setMetro]=useState(false),[accent,setAccent]=useState(true),[beats,setBeats]=useState(4),[drones,setDrones]=useState<string[]>([]),[grid,setGrid]=useState<MetronomeGrid|null>(null);
   const context=useRef<AudioContext|null>(null),voices=useRef(new Map<string,Voice>()),tempoRatios=useRef<Record<string,number>|null>(null),printedTempo=useRef(60),score=useRef<string|null>(null);
-  const getAudio=()=>{const audio=context.current??(context.current=new AudioContext());void audio.resume();return audio};
+  const getAudio=()=>{let audio=context.current;if(!audio||audio.state==='closed'){audio=context.current=new AudioContext();droneSamplesIfReady(audio)/* fetch the drone samples early */}void audio.resume();return audio};
   function ratios(){
     if(tempoRatios.current===null){try{tempoRatios.current=readTempoRatios(localStorage.getItem(SCORE_TEMPO_KEY))}catch{tempoRatios.current={}}}
     return tempoRatios.current;
@@ -132,12 +136,24 @@ function useAudioEngine(){
   },[metro,bpm,accent,beats,grid]);
   function toggleDrone(note:string,octave:number){
     const key=`${note}${octave}`,audio=getAudio(),existing=voices.current.get(key);
-    if(existing){existing.gain.gain.setTargetAtTime(.0001,audio.currentTime,.025);existing.oscillator.stop(audio.currentTime+.12);voices.current.delete(key)}
-    else{const oscillator=audio.createOscillator(),gain=audio.createGain();oscillator.type="triangle";oscillator.frequency.value=pitchFrequency(note,octave);gain.gain.setValueAtTime(.0001,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.1,audio.currentTime+.12);oscillator.connect(gain).connect(audio.destination);oscillator.start();voices.current.set(key,{oscillator,gain})}
+    if(existing){existing.gain.gain.setTargetAtTime(.0001,audio.currentTime,.025);stopVoice(existing,audio.currentTime+.12);voices.current.delete(key)}
+    else{
+      // A sampled oboe, a real instrument rather than a synth tone. The first
+      // press loads the samples; if they aren't in yet, start as soon as they are.
+      const frequency=pitchFrequency(note,octave),samples=droneSamplesIfReady(audio);
+      if(samples)voices.current.set(key,asVoice(droneVoice(audio,samples,frequency,audio.currentTime,.32)));
+      else{
+        const placeholder=audio.createGain(),dummy=audio.createBufferSource();voices.current.set(key,{oscillator:dummy,gain:placeholder});
+        void loadDroneSamples(audio).then(map=>{if(voices.current.get(key)?.gain!==placeholder)return;voices.current.set(key,asVoice(droneVoice(audio,map,frequency,audio.currentTime,.32)))}).catch(()=>{
+          if(voices.current.get(key)?.gain!==placeholder)return;
+          const oscillator=audio.createOscillator(),gain=audio.createGain();oscillator.type="triangle";oscillator.frequency.value=frequency;gain.gain.setValueAtTime(.0001,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.1,audio.currentTime+.12);oscillator.connect(gain).connect(audio.destination);oscillator.start();voices.current.set(key,{oscillator,gain});
+        });
+      }
+    }
     setDrones([...voices.current.keys()]);
   }
-  function stopAllDrones(){const audio=context.current;voices.current.forEach(({oscillator,gain})=>{if(audio){gain.gain.setTargetAtTime(.0001,audio.currentTime,.025);oscillator.stop(audio.currentTime+.12)}else oscillator.stop()});voices.current.clear();setDrones([])}
-  useEffect(()=>()=>{voices.current.forEach(({oscillator})=>oscillator.stop());void context.current?.close()},[]);
+  function stopAllDrones(){const audio=context.current;voices.current.forEach(voice=>{if(audio){voice.gain.gain.setTargetAtTime(.0001,audio.currentTime,.025);stopVoice(voice,audio.currentTime+.12)}else stopVoice(voice)});voices.current.clear();setDrones([])}
+  useEffect(()=>()=>{voices.current.forEach(voice=>stopVoice(voice));void context.current?.close();context.current=null;voices.current.clear()},[]);
   return {bpm,setBpm,setPlaybackBpm,metro,toggleMetro,stopMetro,accent,setAccent,beats,setBeats,drones,toggleDrone,stopAllDrones,initializeScore,getAudio,alignMetronome:setGrid,metroHeld:metro&&!!grid?.hold};
 }
 const Context=createContext<ReturnType<typeof useAudioEngine>|null>(null);

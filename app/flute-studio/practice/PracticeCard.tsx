@@ -82,7 +82,7 @@ export function PracticeCard({routine:storedRoutine,zh,findable,lookup,onRoutine
   const add=(step:RoutineItem)=>{onRoutine([...routine,step]);setInput("")};
   const allDone=routine.length>0&&current<0;
 
-  return <section className="practice-card practice-today" aria-labelledby="today-title">
+  return <section id="today" className="practice-card practice-today" aria-labelledby="today-title">
     {/* The clock as one strip (what you are on, the time, the buttons); the routine underneath, full width. */}
     <div className="practice-today__clock">
       <div className="practice-today__what">
@@ -97,13 +97,15 @@ export function PracticeCard({routine:storedRoutine,zh,findable,lookup,onRoutine
       <div className="practice-today__time" aria-live="off">{formatClock(times.target)}
         {live&&times.total>times.target+999&&<small className="practice-today__total">{zh?`本次共 ${formatClock(times.total)}`:`Session ${formatClock(times.total)}`}</small>}
       </div>
-      {/* Soft pill controls (round, white, icon only, named by tooltips), beside the time they act on. */}
+      {/* Soft pill controls, the same two as the top bar clock: play or pause, and stop. Play alone until you start;
+          then stop joins on the left. Steps are ticked
+          by you (or by a logged session), never by the clock: you can pause, do something else, and come back. */}
       <div className="practice-today__actions">
+        {/* Stop only once there is something to stop, and on the left, so play/pause never moves under your finger. */}
+        {live&&<button type="button" className="has-tip" data-tip={zh?"结束":"Stop"} aria-label={zh?"结束":"Stop"} onClick={finish}><PracticeIcon name="stop"/></button>}
         {live?.running
           ?<button type="button" className="has-tip" data-tip={labels.pause} aria-label={labels.pause} onClick={pauseClock}><PracticeIcon name="pause"/></button>
           :<button type="button" className="has-tip" data-tip={live?labels.resume:labels.start} aria-label={live?labels.resume:labels.start} onClick={start}><PracticeIcon name="play"/></button>}
-        {live&&(timingStep??currentStep)&&<button type="button" className="has-tip" data-tip={zh?"下一步":"Next step"} aria-label={zh?"下一步":"Next step"} onClick={next}><PracticeIcon name="next"/></button>}
-        {live&&<button type="button" className="has-tip" data-tip={zh?"结束":"Finish"} aria-label={zh?"结束":"Finish"} onClick={finish}><PracticeIcon name="stop"/></button>}
       </div>
       {/* A finished stretch asks here whether to save it (with a note) before it goes in your log. */}
       <SessionReview zh={zh}/>
@@ -115,7 +117,7 @@ export function PracticeCard({routine:storedRoutine,zh,findable,lookup,onRoutine
       </div>
       {/* A checklist like a notes app: a circle, the words, a hairline under each; two columns when there is room. */}
       <ol className="routine-list">{routine.map((item,i)=>{
-        const path=item.ref?.startsWith("scale-set:")?`/flute-studio/exercises/scales?set=${encodeURIComponent(item.ref.slice(10))}`:item.ref?lookup(item.ref)?.viewerPath:null;
+        const path=item.ref?.startsWith("scale-set:")?`/flute-studio/exercises/scales?set=${encodeURIComponent(item.ref.slice(10))}&back=/flute-studio/practice`:item.ref?lookup(item.ref)?.viewerPath:null;
         return <li key={item.id} className={`${item.doneOn===today?"done":""}${(timingStep?item.id===timingStep.id:!live&&i===current)?" is-current":""}`}>
           <label className="routine-list__check">
             <input type="checkbox" checked={Boolean(item.doneOn===today)} onChange={()=>toggle(item)} aria-label={labels.markDone(item.text)}/>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type {MusicItem} from "../../content/music-library";
+import {pieceTitle,type MusicItem} from "../../content/music-library";
 import type {ExerciseFocus} from "../../content/exercise-catalog";
 import {StatusButton} from "./components/StatusButton";
 import {useLanguage} from "./i18n/LanguageContext";
@@ -27,7 +27,7 @@ export default function MusicRow({item,tagLabel}:{item:MusicItem;tagLabel:(tag:s
     articulation:t.exercises.categoryArticulation,
   };
   const exercise=item.exercise;
-  const title=exercise&&zh?exercise.zhTitle:item.title;
+  const title=exercise&&zh?exercise.zhTitle:pieceTitle(item,zh);
   const detail=exercise?(zh?exercise.zhDetail:exercise.detail):item.excerpt?`${item.composer} · ${zh?item.excerpt.zhPassage??item.excerpt.passage:item.excerpt.passage}`:item.composer;
   // Tags wear a tint each (lib/tagTone); focus and count pills stay grey.
   // Your list is not a tag: it is the button at the row's end.

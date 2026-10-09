@@ -8,6 +8,7 @@ import type {DynamicPoint} from "./dynamicEnvelope";
 import {normalizeMeasureRests} from "./measureRests";
 import {readAccompaniment,type AccompanimentNote} from "./accompaniment";
 import {loadPiano,sampledPianoNote} from "./sampledPiano";
+import {droneSamplesIfReady,droneVoice} from "./sampledDrone";
 import {droneEvents,droneCountIn,type DroneChange} from "./smartDrone";
 import {solfege,placeNoteLabels,addReminderAccidentals} from "./scoreLabels";
 import {refineDirectionWords} from "./directionWords";
@@ -897,7 +898,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   const accompanimentNotes=useRef<AccompanimentNote[]>([]),pianoSamples=useRef<Map<number,AudioBuffer>|null>(null);
   useEffect(()=>{let current=true;accompanimentNotes.current=[];if(config.accompaniment)fetch(config.accompaniment.asset).then(r=>{if(!r.ok)throw new Error('Could not load accompaniment');return r.text()}).then(xml=>{if(current)accompanimentNotes.current=readAccompaniment(xml,config.accompaniment!.readingPartId).notes}).catch(error=>{if(current)setPianoError(error.message)});return()=>{current=false}},[config.accompaniment?.asset]);
   const [smartRunning,setSmartRunning]=useState(false),[smartEvent,setSmartEvent]=useState<number|null>(null);
-  const smartEventRef=useRef<number|null>(null),smartTimers=useRef<number[]>([]),smartNodes=useRef<OscillatorNode[]>([]),smartCursorBeats=useRef<CursorBeat[]>([]);
+  const smartEventRef=useRef<number|null>(null),smartTimers=useRef<number[]>([]),smartNodes=useRef<(OscillatorNode|AudioBufferSourceNode)[]>([]),smartCursorBeats=useRef<CursorBeat[]>([]);
   const smartLastBpm=useRef<number|null>(null);
   smartEventRef.current=smartEvent;
   const smartMode=useRef(false),countInPending=useRef(false);
@@ -1846,9 +1847,12 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
       if(match&&duration>0){
         const at=start+onsets[i-fromIndex]*unit/1000,until=at+duration*unit/1000,frequency=pitchFrequency(match[1],Number(match[2]));
         // The manual drone's voice: one triangle wave, no octave layer. Set louder than the manual one, which is too quiet to hear on a tablet.
-        const osc=c.createOscillator(),gain=c.createGain();osc.type="triangle";osc.frequency.value=frequency;
+        // Same oboe as the manual drone; a triangle wave only while the samples are still loading.
+        const samples=droneSamplesIfReady(c);
+        if(samples){const {source,gain}=droneVoice(c,samples,frequency,at,.32,Math.min(.04,until-at));gain.gain.setTargetAtTime(.0001,until,.015);source.stop(until+.08);smartNodes.current.push(source)}
+        else{const osc=c.createOscillator(),gain=c.createGain();osc.type="triangle";osc.frequency.value=frequency;
         gain.gain.setValueAtTime(.0001,at);gain.gain.linearRampToValueAtTime(.1,Math.min(at+.04,until));gain.gain.setTargetAtTime(.0001,until,.015);
-        osc.connect(gain).connect(c.destination);osc.start(at);osc.stop(until+.08);smartNodes.current.push(osc);
+        osc.connect(gain).connect(c.destination);osc.start(at);osc.stop(until+.08);smartNodes.current.push(osc)}
       }
       i=end;
     }

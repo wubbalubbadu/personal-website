@@ -580,3 +580,64 @@ a.piece-chip:hover{box-shadow:0 0 0 1px #c9cbd1}
 .practice-page .tricky-group-card a{display:block;padding:3px 0;font-size:13px;color:#45464f;text-decoration:none}
 .practice-page .tricky-group-card a:hover{color:#46633d}
 .practice-page .tricky-group-card a small{font-size:13px;color:#9a9ba2}
+.practice-page :is(#today,#coming-up,#working-on,#insights,[id^="shelf-"]){scroll-margin-top:76px}
+.practice-page .section-head__actions{display:inline-flex;gap:16px;align-items:baseline}
+
+/* Routine marks: done is a soft sage disc with a dark check (green = done, without the heavy pine fill); the step
+   you're on has a purple ring (purple = selected). */
+/* Sections always show their first row; the heading is a plain title, its count beside it, actions on the right. */
+.practice-page .shelf,.practice-page .working,.practice-page .deadlines{margin:0 0 22px}
+.practice-page .section-head{margin-bottom:2px}
+.practice-page .section-head .home-preview__group{margin-bottom:10px}
+.practice-page .section-head__actions .text-action{font-size:14px}
+.practice-page .practice-today__actions button:disabled{opacity:.35;cursor:default;background:transparent}
+
+/* Practice insights: where your time goes (by kind of practice) beside the all-time tally of repetitions. */
+.practice-page .insight-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start;margin:0 0 20px}
+.practice-page .insight-cards .most-practised{margin:0}
+.practice-page .most-practised .section-head{align-items:center}
+.practice-page .most-practised .section-head h2{margin:0 0 10px}
+.time-split h2{margin:0 0 14px;font-size:16px;font-weight:600}
+.time-split__bar{display:flex;gap:3px;height:14px;border-radius:7px;overflow:hidden}
+.time-split__bar i{flex-basis:0;min-width:4px}
+.time-split__legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin:12px 0 0;padding:0;list-style:none;font-size:13px;color:#45464f}
+.time-split__legend li{display:flex;align-items:center;gap:6px}
+.time-split__legend i{width:9px;height:9px;border-radius:3px}
+.time-split__legend b{font-weight:600;color:#292a33;font-variant-numeric:tabular-nums}
+.time-split__stats{margin:14px 0 0;font-size:13px;color:#6f7078}
+.time-split [data-tone="blue"]{background:#9db4c8}.time-split [data-tone="sage"]{background:#a9c49b}.time-split [data-tone="lavender"]{background:#b8abd0}.time-split [data-tone="sand"]{background:#d9c08f}.time-split [data-tone="grey"]{background:#c9cbd1}
+@media(max-width:900px){.practice-page .insight-cards{grid-template-columns:1fr}}
+
+/* Routine marks, neutral (no colour meaning to decode): a thin grey ring; the step you're on is the same ring, darker;
+   a ticked step is a light grey disc with a dark check. */
+.practice-page .practice-today .routine-list__check span{border:1.5px solid #c7c8cc}
+.practice-page .practice-today .routine-list li.is-current .routine-list__check span{border:1.5px solid #45464f}
+.practice-page .practice-today .routine-list li.done .routine-list__check span{background:#ebebee;border-color:#ebebee;color:#45464f}
+
+/* List stacks (Want to learn, Learned, Recently opened): a row of piles. The top card shows with two edges peeking out
+   behind it when there is more; the title links to the full list; the pile opens a grid below (animated by the
+   browser's view transitions: the cards fan out from the pile). */
+.practice-page .list-stacks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:4px 0 14px}
+.list-stack__title{display:flex;align-items:baseline;gap:8px;margin:0 0 12px;font-size:16px;font-weight:600;color:#292a33}
+.list-stack__title a{color:#292a33;text-decoration:none}
+.list-stack__title a:hover{color:#46633d}
+.list-stack__title small{font-size:13px;font-weight:500;color:#9a9ba2}
+.list-stack__pile{position:relative;display:block;width:100%;padding:0 0 10px;border:0;background:none;text-align:left;cursor:pointer;font:inherit}
+.list-stack__pile.has-more::before,.list-stack__pile.has-more::after{content:"";position:absolute;left:10px;right:10px;bottom:5px;height:40px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px #e6e6ea;transition:transform .2s ease}
+.list-stack__pile.has-more::before{left:20px;right:20px;bottom:0}
+.list-stack__card{position:relative;z-index:1;display:flex;flex-direction:column;gap:2px;padding:12px 14px 13px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px #e6e6ea;transition:box-shadow .15s}
+.list-stack__card b{font-size:15px;font-weight:600;color:#292a33;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list-stack__card small{font-size:13px;color:#85868e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list-stack__pile:hover .list-stack__card{box-shadow:0 0 0 1px #c9cbd1}
+.list-stack__pile:hover.has-more::after{transform:translateY(2px)}
+.list-stack__pile:hover.has-more::before{transform:translateY(4px)}
+.list-stack__pile:focus-visible{outline:2px solid #b8bac2;outline-offset:4px;border-radius:14px}
+.list-stack.is-open .list-stack__card{box-shadow:0 0 0 1.5px #79588e}
+.practice-page .list-stack__open{margin:0 0 22px}
+/* The fan-out: cards arriving in the grid grow in from the pile; the same card (the top one) glides between places. */
+::view-transition-group(*){animation-duration:.28s;animation-timing-function:cubic-bezier(.2,.8,.2,1)}
+::view-transition-new(*):only-child{animation:list-stack-in .28s cubic-bezier(.2,.8,.2,1) both}
+::view-transition-old(*):only-child{animation:list-stack-out .2s ease both}
+@keyframes list-stack-in{from{opacity:0;transform:translateY(-12px) scale(.94)}}
+@keyframes list-stack-out{to{opacity:0;transform:translateY(-8px) scale(.96)}}
+@media(max-width:760px){.practice-page .list-stacks{grid-template-columns:1fr}}

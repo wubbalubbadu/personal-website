@@ -9,7 +9,8 @@
 .custom-score-heading h1{font:400 34px Georgia,serif;margin:0 0 12px}
 .custom-score-heading span{font:italic 12px Georgia,serif;color:var(--muted)}
 .osmd-score{position:relative;z-index:1;width:100%;min-height:780px}
-.osmd-score svg{display:block;width:100%!important;height:auto!important;overflow:visible}
+/* The engraving only: controls pinned over the score (.score-marks: tempo and rep pills) keep their own icon sizes. */
+.osmd-score svg:not(.score-marks *){display:block;width:100%!important;height:auto!important;overflow:visible}
 .score-loading,.score-error{padding:80px 20px;text-align:center;font:italic 14px Georgia,serif;color:var(--muted)}
 .score-error{color:#a33d30}
 .score-paper.engraved .ink{z-index:8}

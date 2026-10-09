@@ -31,7 +31,7 @@ export default function HomePreviewCards(){
     <h2 className="home-preview__group">{lang==="zh"?"练习":"Practice"}</h2>
     {/* Two across, so each card has room to act out what the tool does. */}
     <section className="home-preview-grid home-preview-grid--duo" aria-label={lang==="zh"?"练习":"Practice"}>
-    <Link className="preview-card preview-card--scales" href="/flute-studio/exercises/scales" onPointerEnter={warmScoreReader} onFocus={warmScoreReader}>
+    <Link className="preview-card preview-card--scales" href="/flute-studio/exercises/scales?back=/flute-studio" onPointerEnter={warmScoreReader} onFocus={warmScoreReader}>
       <div className="preview-card__stage">
         <ScaleStudioPreview zh={lang==="zh"}/>
       </div>

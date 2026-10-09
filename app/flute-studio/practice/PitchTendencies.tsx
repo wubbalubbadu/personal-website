@@ -66,7 +66,7 @@ export function PitchTendencies({zh}:{zh:boolean}){
       <div className="pitch-map__legend" aria-hidden="true"><span className="is-flat">{zh?"偏低":"flat"}</span><span className="is-tune">{zh?"准":"in tune"}</span><span className="is-sharp">{zh?"偏高":"sharp"}</span></div>
     </div>
     {!records.length
-      ?<p className="practice-card__empty pitch-card__side">{zh?"打开“音准”演奏时，这张表会一个音一个音地填上。":"Fills in note by note as you play with Pitch on."}</p>
+      ?null
       :<>
       <div className="pitch-card__insights pitch-card__side">
         <div>

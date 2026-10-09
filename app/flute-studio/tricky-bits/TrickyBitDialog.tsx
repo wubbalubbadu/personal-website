@@ -13,6 +13,9 @@ export default function TrickyBitDialog({bit,reps,piece,position,total,onClose,o
   const {t,lang}=useLanguage(),text=t.trickyBits;
   const audio=usePracticeAudio();
   const [metronomeOn,setMetronomeOn]=useState(false);
+  // The panel stays hidden (only the dimmed page shows) until the music is drawn, so it opens at its real size
+  // instead of opening small and growing. Stepping keeps the old bars until the new ones are ready.
+  const [ready,setReady]=useState(false);
   // Arrow keys step through bits (not while typing a tempo). Escape is the Dialog's.
   useEffect(()=>{
     const key=(event:KeyboardEvent)=>{
@@ -25,7 +28,7 @@ export default function TrickyBitDialog({bit,reps,piece,position,total,onClose,o
   // Closing the dialog stops the metronome it started.
   const close=()=>{if(metronomeOn&&audio.metro)audio.toggleMetro();onClose()};
 
-  return <Dialog width="wide" panelClassName="tricky-dialog__panel" label={`${piece.title}, ${text.bars} ${bit.label}`} closeLabel={text.close} onClose={close}
+  return <Dialog width="wide" panelClassName={ready?"tricky-dialog__panel":"tricky-dialog__panel is-waiting"} label={`${piece.title}, ${text.bars} ${bit.label}`} closeLabel={text.close} onClose={close}
     title={<div className="tricky-dialog__heading">
       <div className="tricky-dialog__pager">
         <button type="button" className="has-tip" data-tip={text.previous} aria-label={text.previous} disabled={total<2} onClick={()=>onStep(-1)}><PracticeIcon name="previous"/></button>
@@ -34,8 +37,8 @@ export default function TrickyBitDialog({bit,reps,piece,position,total,onClose,o
       </div>
       <div className="tricky-dialog__title"><strong>{piece.title}</strong><span>{text.bars} {bit.label}</span></div>
     </div>}>
-    <BitPractice key={bit.id} bit={bit} reps={reps} scorePath={piece.scorePath} label={`${piece.title} ${bit.label}`} zh={lang==="zh"}
-      metronomeOn={metronomeOn} onMetronome={setMetronomeOn}/>
+    <BitPractice bit={bit} reps={reps} scorePath={piece.scorePath} label={`${piece.title} ${bit.label}`} zh={lang==="zh"}
+      metronomeOn={metronomeOn} onMetronome={setMetronomeOn} onReady={()=>setReady(true)}/>
     <footer><Link href={piece.href}>{text.openPiece}</Link></footer>
   </Dialog>;
 }

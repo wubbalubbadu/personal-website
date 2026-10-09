@@ -23,9 +23,15 @@ function Page(){
   // Cards (open one bit at a time) or one continuous page you play straight down. Remembered on this device.
   const [view,setViewState]=useState<"cards"|"continuous">("cards");
   useEffect(()=>{try{if(localStorage.getItem("cookie:tricky-bits:view")==="continuous")setViewState("continuous")}catch{/* cards */}},[]);// eslint-disable-line react-hooks/set-state-in-effect
-  const setView=(next:"cards"|"continuous")=>{setViewState(next);try{localStorage.setItem("cookie:tricky-bits:view",next)}catch{/* this visit only */}};
+  const setView=(next:"cards"|"continuous")=>{setViewState(next);setSettled(new Set());setWaitedEnough(false);try{localStorage.setItem("cookie:tricky-bits:view",next)}catch{/* this visit only */}};
   // On the continuous page the bits share one metronome; this is the bit it is following.
   const [metronomeFor,setMetronomeFor]=useState<string|null>(null);
+  // Cards and the continuous page appear once every bit's music is drawn (or after 4s at most), rather than
+  // showing empty boxes that grow one by one.
+  const [settled,setSettled]=useState<Set<string>>(()=>new Set());
+  const markSettled=(id:string)=>setSettled(prev=>prev.has(id)?prev:new Set(prev).add(id));
+  const [waitedEnough,setWaitedEnough]=useState(false);
+  useEffect(()=>{const timer=window.setTimeout(()=>setWaitedEnough(true),4000);return()=>window.clearTimeout(timer)},[view]);
   const privateMusic=usePrivateMusic();
   const router=useRouter(),params=useSearchParams();
   const [menu,setMenu]=useState<string|null>(null);
@@ -64,6 +70,8 @@ function Page(){
   const step=(direction:-1|1)=>{if(!open||ordered.length<2)return;const index=ordered.indexOf(open);setOpenId(ordered[(index+direction+ordered.length)%ordered.length].id)};
   const locked=(piece:ReturnType<typeof describe>,bit:TrickyBit)=>piece.state==="missing"&&!privateMusic.unlocked&&!publicMusic.some(entry=>entry.id===bit.pieceId);
 
+  const expected=bits.filter(bit=>describe(bit).scorePath).map(bit=>`${view==="cards"?"card":"sheet"}:${bit.id}`);
+  const allSettled=waitedEnough||expected.every(key=>settled.has(key));
   return <main className="exercise-hub tricky-page">
     <div className="exercise-hub__content">
       <header className="exercise-hub__header tricky-page__header"><div><h1>{text.title}</h1></div>
@@ -74,7 +82,7 @@ function Page(){
       </header>
       {!ready?null:bits.length===0
         ?<p className="tricky-empty">{text.empty}</p>
-        :groups.map(([pieceId,list])=>{
+        :<div className={allSettled?"tricky-body":"tricky-body is-waiting"} aria-busy={!allSettled}>{groups.map(([pieceId,list])=>{
           const first=describe(list[0]);
           return <section key={pieceId} className="tricky-group">
             <h2>{first.title}{first.composer&&<small>{first.composer}</small>}</h2>
@@ -82,7 +90,7 @@ function Page(){
               <header><b>{text.bars} {bit.label}</b><Link href={pieceLink(bit)}>{text.openPiece}</Link></header>
               {piece.scorePath
                 ?<BitPractice bit={bit} reps={reps[bit.id]} scorePath={piece.scorePath} label={`${first.title} ${bit.label}`} zh={zh}
-                  metronomeOn={metronomeFor===bit.id} onMetronome={on=>setMetronomeFor(on?bit.id:null)}/>
+                  metronomeOn={metronomeFor===bit.id} onMetronome={on=>setMetronomeFor(on?bit.id:null)} onReady={()=>markSettled(`sheet:${bit.id}`)}/>
                 :<p className="tricky-card__note">{locked(piece,bit)?text.locked:text.missing}</p>}
             </article>})}</div>:
             <div className="tricky-grid">
@@ -92,7 +100,7 @@ function Page(){
                   <button type="button" className="tricky-card__open" onClick={()=>setOpenId(bit.id)} aria-label={`${first.title}, ${text.bars} ${bit.label}`}>
                     <div className="tricky-card__bars">{text.bars} {bit.label}</div>
                     {piece.scorePath
-                      ?<TrickyPreview scorePath={piece.scorePath} from={bit.from} to={bit.to} label={`${first.title} ${text.bars} ${bit.label}`}/>
+                      ?<TrickyPreview scorePath={piece.scorePath} from={bit.from} to={bit.to} label={`${first.title} ${text.bars} ${bit.label}`} onSettled={()=>markSettled(`card:${bit.id}`)}/>
                       :<p className="tricky-card__note">{locked(piece,bit)?text.locked:text.missing}</p>}
                     <div className="tricky-card__meta">
                       <span>{tempos.length?`${tempos.at(-1)}${bit.goal?` → ${bit.goal}`:""}`:bit.goal?`${text.goal} ${bit.goal}`:""}</span>
@@ -109,9 +117,9 @@ function Page(){
               })}
             </div>}
           </section>;
-        })}
+        })}</div>}
     </div>
-    {open&&(()=>{const piece=describe(open);return <TrickyBitDialog key={open.id} bit={open} reps={reps[open.id]} piece={{title:piece.title,scorePath:piece.scorePath,href:pieceLink(open)}} position={ordered.indexOf(open)+1} total={ordered.length} onClose={()=>{setOpenId(null);if(wanted)router.replace("/flute-studio/tricky-bits")}} onStep={step}/>})()}
+    {open&&(()=>{const piece=describe(open);return <TrickyBitDialog bit={open} reps={reps[open.id]} piece={{title:piece.title,scorePath:piece.scorePath,href:pieceLink(open)}} position={ordered.indexOf(open)+1} total={ordered.length} onClose={()=>{setOpenId(null);if(wanted)router.replace("/flute-studio/tricky-bits")}} onStep={step}/>})()}
   </main>;
 }
 

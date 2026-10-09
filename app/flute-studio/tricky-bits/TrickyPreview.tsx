@@ -1,5 +1,6 @@
 "use client";
 import {useEffect,useRef,useState} from "react";
+import "./tricky-preview.css";
 import {loadExcerptXml} from "../lib/excerptXml";
 import {installGhostNoteFix} from "../lib/ghostNoteFix";
 
@@ -8,9 +9,12 @@ let queue:Promise<unknown>=Promise.resolve();
 const inLine=<T,>(job:()=>Promise<T>):Promise<T>=>{const run=queue.then(job,job);queue=run.catch(()=>undefined);return run};
 
 /** A small, quiet engraving of a saved passage: no playback, no controls. */
-export default function TrickyPreview({scorePath,from,to,label}:{scorePath:string;from:number;to:number;label:string}){
+export default function TrickyPreview({scorePath,from,to,label,onSettled}:{scorePath:string;from:number;to:number;label:string;/** Drawn or failed: the caller can stop waiting. */onSettled?:()=>void}){
   const host=useRef<HTMLDivElement>(null);
   const [state,setState]=useState<"waiting"|"ready"|"error">("waiting");
+  const settledRef=useRef(onSettled);
+  useEffect(()=>{settledRef.current=onSettled});
+  useEffect(()=>{if(state!=="waiting")settledRef.current?.()},[state]);
   useEffect(()=>{
     let gone=false;const el=host.current;if(!el)return;
     inLine(async()=>{

@@ -9,14 +9,16 @@ import {fermataAttackIndexes} from './practiceTechniques';
 import {installReminderAccidentalFix,setReminderAccidentals,reminderAccidentalsOn} from '../lib/reminderAccidentalFix';
 import {decorateRow,withReminders,noDisplay,type PracticeDisplay} from './practiceDisplay';
 
-export function PracticeNotation({xml,label,quarterBpm,playing,onPlay,onStop,loop=false,clicks=false,sempreStaccato=false,autoBeam=false,zoom=.8,hideTime=false,display,marks,onNote,wrap=false,controls}:{xml:string;label:string;quarterBpm:number;playing:boolean;onPlay:()=>void;onStop:()=>void;loop?:boolean;clicks?:boolean;sempreStaccato?:boolean;autoBeam?:boolean;zoom?:number;hideTime?:boolean;/** The reader's display options (note names, accidentals, rhythm). Left out, the row shows only the notes. */display?:PracticeDisplay;/** Marks drawn over the engraving (the Tone Lab's results). `version` changes whenever the notation is redrawn. */marks?:(context:{root:HTMLDivElement;version:number})=>ReactNode;/** A tap on a note, by its event index (set once display is on). */onNote?:(event:number)=>void;
+export function PracticeNotation({xml,label,quarterBpm,playing,onPlay,onStop,loop=false,clicks=false,sempreStaccato=false,autoBeam=false,zoom=.8,hideTime=false,display,marks,onNote,wrap=false,controls,onDrawn}:{xml:string;label:string;quarterBpm:number;playing:boolean;onPlay:()=>void;onStop:()=>void;loop?:boolean;clicks?:boolean;sempreStaccato?:boolean;autoBeam?:boolean;zoom?:number;hideTime?:boolean;/** The reader's display options (note names, accidentals, rhythm). Left out, the row shows only the notes. */display?:PracticeDisplay;/** Marks drawn over the engraving (the Tone Lab's results). `version` changes whenever the notation is redrawn. */marks?:(context:{root:HTMLDivElement;version:number})=>ReactNode;/** A tap on a note, by its event index (set once display is on). */onNote?:(event:number)=>void;
   /** Flow onto as many lines as the width needs instead of one line you scroll sideways. */wrap?:boolean;
-  /** More controls in the row with Listen (a tempo, a counter). */controls?:ReactNode}){
+  /** More controls in the row with Listen (a tempo, a counter). */controls?:ReactNode;
+  /** Called each time the music has finished drawing (the caller can wait to show itself). */onDrawn?:()=>void}){
   const root=useRef<HTMLDivElement>(null),sequence=useRef<ReturnType<typeof deriveScoreEvents>|null>(null);
   const {getAudio}=usePracticeAudio();
   const [ready,setReady]=useState(false),[error,setError]=useState(''),[version,setVersion]=useState(0),[hostEl,setHostEl]=useState<HTMLDivElement|null>(null);
   const hostRef=useCallback((node:HTMLDivElement|null)=>{root.current=node;setHostEl(node)},[]);
-  const cycle=useRef(0),stopRef=useRef(onStop);
+  const cycle=useRef(0),stopRef=useRef(onStop),drawnRef=useRef(onDrawn);
+  useEffect(()=>{drawnRef.current=onDrawn});
   // Keep the latest callback for the playback timers, written after render rather than during it.
   useEffect(()=>{stopRef.current=onStop});
   useEffect(()=>{
@@ -47,7 +49,7 @@ export function PracticeNotation({xml,label,quarterBpm,playing,onPlay,onStop,loo
       if(replacing){host.style.minHeight=`${host.offsetHeight}px`;next.style.cssText='opacity:0;transition:opacity .16s ease'}else next.style.cssText='';
       Array.from(host.children).forEach(c=>{if(c!==next)c.remove()});
       if(replacing)requestAnimationFrame(()=>{next.style.opacity='1';window.setTimeout(()=>{if(!disposed){host.style.minHeight='';next.style.cssText=''}},220)});
-      setReady(true);setVersion(v=>v+1);
+      setReady(true);setVersion(v=>v+1);drawnRef.current?.();
       let width=host.clientWidth;
       let frame=0;resize=new ResizeObserver(()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>{if(!disposed&&host.clientWidth>0&&Math.abs(width-host.clientWidth)>2){width=host.clientWidth;draw();if(display)decorateRow(next,source,derived,shown,reminded?.reminders??[]);setVersion(v=>v+1)}})});resize.observe(host);
     }catch(e){if(!disposed)setError(e instanceof Error?e.message:'Could not draw this exercise.')}})();

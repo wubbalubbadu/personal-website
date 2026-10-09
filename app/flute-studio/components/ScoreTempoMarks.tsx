@@ -41,7 +41,9 @@ export function ScoreTempoMarks({root,version,marks,onChange,onSound,soundingId,
       // Sat beside the name to begin with, which put it right where a high
       // note's ledger lines reach up. Its own lane directly above the name
       // is the one band in a block that nothing engraved occupies.
-      placed.push({id:mark.id,x:rect.left-rootBox.left,y:rect.top-rootBox.top-3});
+      // With a rep pill beside it the pair is ~170px wide: near the right edge, slide it back so it stays on the page.
+      const room=mark.rep?172:84;
+      placed.push({id:mark.id,x:Math.max(0,Math.min(rect.left-rootBox.left,rootBox.width-room)),y:rect.top-rootBox.top-3});
     }
     setSpots({version,placed});
     // marks is intentionally excluded — `signature` stands in for it.

@@ -10,9 +10,12 @@ import {exerciseCatalog,type ExerciseFocus} from "./exercise-catalog";
 // (the uploader only suggests it), shown as the "Good first pieces" shelf.
 export type ScorePage={src:string;width:number;height:number};
 export type ScoreRecording={id:string;title:string;performer:string;youtubeId:string;startSeconds?:number};
-export type ExcerptScore={part:string;passage:string;zhPassage?:string;workLabel?:string;zhWorkLabel?:string;tempoHint?:string;zhTempoHint?:string;pages:ScorePage[]};
+/** One passage of a piece with several excerpts (Leonore 3: the opening, Tempo I to m. 360). Each is a tab in the reader. */
+export type ExcerptPassage={id:string;label:string;zhLabel?:string;pages:ScorePage[];/** MusicXML of this passage, for the XML reader (playback, smart drone). */scorePath?:string};
+/** `passages` lists the tabs most-asked first; `pages` is then the first passage's pages. `passage` is the row summary. */
+export type ExcerptScore={part:string;passage:string;zhPassage?:string;workLabel?:string;zhWorkLabel?:string;tempoHint?:string;zhTempoHint?:string;pages:ScorePage[];passages?:ExcerptPassage[];source?:string};
 
-export type MusicItem={private?:boolean;id:string;title:string;composer:string;
+export type MusicItem={private?:boolean;id:string;title:string;/** The title Chinese readers know it by, when there is one (tunes and pop). */zhTitle?:string;composer:string;
   /** Year written, as a plain number so pieces can be sorted on a timeline. */
   year?:number;
   /** One or two sentences about this piece: where it comes from, what it was written for. */
@@ -68,6 +71,11 @@ export const libraryShelf:MusicItem[]=[
 ];
 
 export const tagKey=(tag:string)=>tag.trim().toLowerCase();
+/** The title to show: always the English name; reading in Chinese, the Chinese one follows in brackets when it has one. */
+export const pieceTitle=(item:Pick<MusicItem,"title"|"zhTitle">,zh:boolean)=>zh&&item.zhTitle?`${item.title} (${item.zhTitle})`:item.title;
+/** Tag names in Chinese, one list for every page (a tag not listed shows as typed). */
+const ZH_TAGS:Record<string,string>={pop:"流行",folk:"民谣",classical:"古典","k-pop":"韩流","j-pop":"日本流行",film:"电影",excerpt:"管弦乐片段",etude:"练习曲",exercise:"练习",accompaniment:"伴奏"};
+export const tagName=(tag:string,zh:boolean)=>zh?ZH_TAGS[tagKey(tag)]??tag:tagKey(tag)==="excerpt"?"Orchestral excerpts":tag;
 export const hasTag=(item:Pick<MusicItem,"tags">,tag:string)=>item.tags.some(value=>tagKey(value)===tagKey(tag));
 
 /** Every tag in use, most-used first, spelled the way it was first typed. */

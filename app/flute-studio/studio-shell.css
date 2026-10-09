@@ -899,3 +899,42 @@ html:root body .reader-play-card p{margin:8px 2px 0;font-size:13px;color:#6f7178
   html:root body .restored-reader .topbar .book-stepper__arrow svg{width:22px!important;height:22px!important}
 }
 html body .osmd-score .tricky-bar{fill:rgba(236,183,40,.2)}
+/* Desktop and iPad, October 2026: the metronome joins the grey tempo box as its first part, an icon (the tooltip
+   names it), so the box reads [ metronome  − 90 +  Tap ] like the phone's and the toolbar is less crowded.
+   One box, one behaviour: every part shares the grey, hover only darkens the icon or text (no squares of
+   different sizes), "on" tints the metronome's part without changing the box's shape, and the number is ink.
+   The drone's note list is capped so a long chord can't widen the toolbar and squeeze View.
+   !important only because the older layers above set all of these with it. */
+@media(min-width:761px){
+  html:root body .restored-reader .practice-bar .tempo-group{gap:0!important}
+  html:root body .restored-reader .practice-bar .tempo-group>.tool{flex:0 0 36px!important;width:36px!important;min-width:36px!important;height:38px!important;min-height:0!important;margin:0!important;padding:0!important;
+    flex-direction:row!important;justify-content:center!important;gap:0!important;border-radius:9px 0 0 9px!important;background:rgba(41,42,51,.05)!important;background-clip:border-box!important;font-size:0!important;align-self:center!important;color:#6f7078!important;box-shadow:none!important}
+  html:root body .restored-reader .practice-bar .tempo-group>.tool svg{width:20px!important;height:20px!important;flex-basis:20px!important}
+  html:root body .restored-reader .practice-bar .tempo-group>.tool.on{background:var(--studio-on-bg,#eee7f2)!important;color:#79588e!important;border-radius:9px 0 0 9px!important}
+  html:root body .restored-reader .practice-bar .tempo-group .tempo{height:38px!important;border-radius:0!important;padding:0 2px!important;gap:0!important}
+  html:root body .restored-reader .practice-bar .tempo .tempo-step{width:24px!important;height:38px!important;border-radius:0!important;background:transparent!important;color:#85868e!important}
+  html:root body .restored-reader .practice-bar .tempo input{width:34px!important;color:#292a33!important;font-size:16px!important}
+  html:root body .restored-reader .practice-bar .reader-tap{height:38px!important;padding:0 10px 0 6px!important;font-size:13px!important}
+  html:root body .restored-reader .practice-bar :is(.tempo-group>.tool,.tempo .tempo-step,.reader-tap):hover:not(:disabled){color:#292a33!important}
+  html:root body .restored-reader .practice-bar .tempo-group>.tool:not(.on):hover{background:rgba(41,42,51,.05)!important}
+  /* Matches the shape of the general toolbar hover rule above so it can win: no grey square inside the box. */
+  html:root body .restored-reader .practice-bar .transport-pill :is(.tempo-step,.reader-tap):not(:disabled):not(.on):not([aria-pressed="true"]):hover{background:transparent!important}
+  html:root body .restored-reader .practice-bar .transport-pill .reader-tap:not(:disabled):not(.on):not([aria-pressed="true"]):hover{background:rgba(41,42,51,.05)!important}
+  html:root body .restored-reader .practice-bar .drone-tool{max-width:96px!important}
+  html:root body .restored-reader .practice-bar .drone-tool small{display:block!important;max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+}
+/* Tempo pill hover: the pill's grey is painted per segment (metronome, number,
+   Tap), so hovering keeps that same grey and only darkens the icon or text.
+   Clearing it punched a white hole in the pill. The metronome's on state keeps its fill. */
+html:root body .restored-reader .practice-bar .transport-pill :is(.tempo-group>.tool,.reader-tap):not(:disabled):not(.on):not([aria-pressed="true"]):not([aria-expanded="true"]):not(#_):hover{background:rgba(41,42,51,.05)!important;background-color:rgba(41,42,51,.05)!important;color:#55575f!important}
+html:root body .restored-reader .practice-bar .transport-pill .tempo-step:not(:disabled):not(#_):hover{background:transparent!important;background-color:transparent!important;color:#292a33!important}
+/* Keep the segment corners on hover; the generic toolbar hover rounds all four (11px), which split the metronome off the pill. */
+html:root body .restored-reader .practice-bar .transport-pill .tempo-group>.tool:not(#_):hover{border-radius:9px 0 0 9px!important}
+html:root body .restored-reader .practice-bar .transport-pill .reader-tap:not(#_):hover{border-radius:0 9px 9px 0!important}
+/* Metronome icon and Tap use the same grey as the other toolbar tools (Drone,
+   Mark up), so the pill doesn't read heavier than its neighbours. Hover still darkens. */
+html:root body .restored-reader .practice-bar .transport-pill :is(.tempo-group>.tool:not(.on):not([aria-pressed="true"]),.reader-tap):not(#_):not(:hover){color:#777a70!important}
+/* Drone shows only its label; the small note line underneath was clipped by the bar. */
+html:root body .restored-reader .practice-bar .drone-tool small{display:none!important}
+/* Scale Studio's header line (Major scales · Two octaves · 12 keys) is its title; it had room to be larger. */
+@media(min-width:761px){html:root body .restored-reader .topbar .scale-book__chapter-inline{font-size:15px!important}}

@@ -140,3 +140,8 @@
 }
 /* A black key that was touched last keeps the solid outline even when it is also pointed at. */
 .sequence-keyboard .black-key.is-key-selected{stroke-width:3;stroke-dasharray:none}
+
+/* Lesson Cookie is local and timer-free; it stays beside the shared prompt. */
+.lesson-talk #lesson-companion{display:flex;flex:0 0 64px}
+.lesson-cookie.cookie-button.cookie-button{transform:scale(.8);transform-origin:center}
+@media(max-width:700px){.lesson-talk{gap:6px}.lesson-talk #lesson-companion{flex-basis:48px}.lesson-cookie.cookie-button.cookie-button{transform:scale(.65)}}

@@ -7,6 +7,8 @@ import CookieButton from '../CookieButton';
 import RestGlyph,{restY} from '../rhythm/RestGlyph';
 import {useRhythmAudio} from '../rhythm/useRhythmAudio';
 import {useCourseProgress} from '../useCourseProgress';
+import MeterSwap from './MeterSwap';
+import SplitSpan from './SplitSpan';
 import RestMatch,{matchingValue} from './RestMatch';
 import {assessRestTaps,GAPS,restPitches,SILENCE,type TapResult} from './restsModel';
 import type {NoteValue} from '../rhythm/rhythmModel';
@@ -15,7 +17,7 @@ import '../measures/measures.css';
 import './rests.css';
 
 const FRAME='20 30 680 430',RIGHT=660,UNIT=.65;
-const CHOICES:NoteValue[]=[1,2,.5];
+const CHOICES:NoteValue[]=[1,.5,.25];
 const keyAction=(e:React.KeyboardEvent,act:()=>void)=>{if((e.key==='Enter'||e.key===' ')&&!e.repeat){e.preventDefault();act()}};
 
 export default function RestsLesson(){
@@ -57,13 +59,14 @@ export default function RestsLesson(){
   const answerNumbers=(answer:number,success:string,failure:string)=><div className="measures-choices" role="group" aria-label={tr('Choose a number','选一个数字')}>{[2,3,4].map(n=><button key={n} disabled={passed} className={passed&&n===answer?'is-correct':''} onClick={()=>{respond(n===answer,success,failure);if(n!==answer)setHint(true)}}>{n}</button>)}</div>;
 
   let narration:ReactNode='',message:ReactNode=feedback,scene:ReactNode=null,extra:ReactNode=null,tools:ReactNode=null;
-  let progress:{done:number;total:number}|undefined,next:LessonNext|undefined;
+  let progress:{done:number;total:number}|undefined;
+  let next:LessonNext=step===4?{label:tr('Back to theory lessons','回到乐理课'),ready:false,onClick:()=>{audio.stop();window.location.assign('/flute-studio/theory')}}:{label:tr(`Next: ${names[step+1]}`,`下一步：${names[step+1]}`),ready:passed,onClick:()=>navigate(step+1)};
   if(step===0){
     const notes=stage===0?SILENCE.map(n=>({...n,rest:false})):SILENCE;
     const beat=tapping?Math.floor(audio.elapsed/UNIT)-4:Math.floor(audio.elapsed/UNIT);
     narration=stage===0?tr('A beat can pass without a note.','一拍里也可以没有声音。'):tr('A rest marks silence. Keep counting while you are not playing.','休止符表示这里不出声，但拍子还要继续数。');
     const resultText=tapResult==='correct'?tr('You kept the beat through the silence.','休止的时候，你也保持住了拍子。'):tapResult==='rest'?tr('Beat 2 is silent. Keep counting, then tap again on 3.','第 2 拍不点。继续数，到第 3 拍再点。'):tapResult==='missing'?tr('A note missed its tap. Try beats 1, 3 and 4.','有一个音没点到。试试第 1、3、4 拍。'):tapResult==='timing'?tr('Follow the steady counts. Tap once on 1, 3 and 4.','跟着稳定的拍子，在 1、3、4 各点一下。'):'';
-    message=stage===0?tr('Tap the second note to make beat 2 silent.','点第二个音符，让第 2 拍安静下来。'):resultText|| (tapping?(beat<0?tr('Four counts to get ready…','先数四拍，准备……'):tr('Tap on the notes. Let beat 2 pass quietly.','有音符就点，第 2 拍安静地数过去。')):tr('Tap Cookie on beats 1, 3 and 4. Keep counting silently on beat 2.','在第 1、3、4 拍点饼干。第 2 拍不点，心里继续数。'));
+    message=stage===0?tr('Tap the second note to make beat 2 silent.','点第二个音符，让第 2 拍安静下来。'):resultText|| (tapping?(beat<0?tr('Four counts to get ready…','先数四拍，准备……'):tr('Tap on the notes. Let beat 2 pass quietly.','有音符就点，第 2 拍安静地数过去。')):tr('Tap “Count me in” to start. Then tap Cookie on beats 1, 3 and 4, staying silent on 2.','点“数拍开始”，然后在第 1、3、4 拍点饼干，第 2 拍不点。'));
     const replace=()=>{setStage(1);replay(SILENCE)};
     scene=row(notes,l=><>
       {[0,1,2,3].map((b)=><g key={b}>
@@ -88,19 +91,15 @@ export default function RestsLesson(){
   }else if(step===2){
     const question=stage===3,showTree=!question||hint;
     narration=stage===0?tr('A shorter silence needs a shorter rest.','更短的停顿，要用更短的休止符。'):stage===1?tr('Two eighth rests last as long as one quarter rest.','两个八分休止符的时值等于一个四分休止符。'):tr('Two sixteenth rests last as long as one eighth rest.','两个十六分休止符的时值等于一个八分休止符。');
-    message=feedback||(question?tr('How many sixteenth rests last as long as one quarter rest?','几个十六分休止符的时值等于一个四分休止符？'):stage===0?tr('Tap the span to split this quarter rest in half.','点时值条，把这个四分休止符分成两半。'):stage===1?tr('Tap either eighth-rest span to split each half again.','点任意一个八分休止符的时值条，再把每一半分开。'):tr('Each smaller rest takes half as much time.','每分一次，休止符的时值就减半。'));
+    message=feedback||(question?tr('How many sixteenth rests last as long as one quarter rest?','几个十六分休止符的时值等于一个四分休止符？'):stage===0?tr('Draw a short cut through the dashed midpoint, or tap it, to split the rest in half.','沿中间的虚线划一下，或点一下，把休止符分成两半。'):stage===1?tr('Cut either midpoint again to divide both halves.','在任意一条时值线的中点再划一下，把两半各自分开。'):tr('Each smaller rest takes half as much time.','每分一次，休止符的时值就减半。'));
     scene=<svg className="engraved-row rests-canvas" viewBox={FRAME} role="group" aria-label={names[step]}>
       <g transform="translate(355 90)"><RestGlyph value={1}/></g>
       <text className="rests-caption" x="355" y="139">{labelFor(1)}</text>
       {showTree&&<>
-        <g className="rests-split-target" role={stage===0?'button':undefined} tabIndex={stage===0?0:undefined} aria-label={tr('Split the quarter rest','分开四分休止符')} onClick={()=>{if(stage===0)setStage(1)}} onKeyDown={e=>keyAction(e,()=>{if(stage===0)setStage(1)})}>
-          <rect className="rests-span-hit" x="155" y="147" width="400" height="46"/><path className="rests-span" d="M155 165 v12 h400 v-12"/>
-        </g>
+        <SplitSpan x={155} y={177} width={400} enabled={stage===0} label={tr('Split the quarter rest','分开四分休止符')} onSplit={()=>setStage(1)}/>
         {stage>=1&&[0,1].map(i=><g key={i} className="rests-split-in">
           <g transform={`translate(${255+i*200} 228)`}><RestGlyph value={.5}/></g>
-          <g className="rests-split-target" role={stage===1?'button':undefined} tabIndex={stage===1?0:undefined} aria-label={tr('Split the eighth rests','分开八分休止符')} onClick={()=>{if(stage===1)setStage(2)}} onKeyDown={e=>keyAction(e,()=>{if(stage===1)setStage(2)})}>
-            <rect className="rests-span-hit" x={155+i*200} y="250" width="200" height="46"/><path className="rests-span" d={`M${155+i*200} 265 v12 h200 v-12`}/>
-          </g>
+          <SplitSpan x={155+i*200} y={277} width={200} enabled={stage===1} label={tr('Split the eighth rests','分开八分休止符')} onSplit={()=>setStage(2)}/>
         </g>)}
         {stage>=2&&[0,1,2,3].map(i=><g key={i} className="rests-split-in"><g transform={`translate(${205+i*100} 328)`}><RestGlyph value={.25}/></g><path className="rests-span" d={`M${155+i*100} 377 v12 h100 v-12`}/></g>)}
       </>}
@@ -112,9 +111,9 @@ export default function RestsLesson(){
   }else if(step===3){
     const top=stage===0?4:stage===1?3:2,notes:RowNote[]=[{v:top,rest:true,measureRest:true}];
     narration=tr('This symbol also means a whole measure of silence. Count the beats in the time signature.','这个记号也表示整小节休止。要数几拍，看拍号。');
-    message=feedback||(stage<2?(stage===0?tr('Four beats of silence in 4/4. Change the time signature to see what happens.','4/4 拍里休止四拍。换一个拍号看看。'):tr('The same symbol now fills three beats.','同一个记号，现在表示休止三拍。')):tr('How many beats of silence fill this 2/4 measure?','这个 2/4 小节要休止几拍？'));
-    scene=row(notes,l=><>{(stage<2||hint||passed)&&Array.from({length:top},(_,i)=><g key={i} className="rests-count-in"><text className="rests-count" x={l.startX+(i+.5)*(l.endX-l.startX)/top} y="272">{i+1}</text>{running&&Math.floor(audio.elapsed/UNIT)===i&&<circle className="rests-pulse" cx={l.startX+(i+.5)*(l.endX-l.startX)/top} cy="300" r="7"/>}</g>)}<path className="rests-span" d={`M${l.startX} 232 v10 h${l.endX-l.startX} v-10`}/></>,top);
-    if(stage===0)next={label:tr('Change to 3/4','换成 3/4'),ready:true,onClick:()=>stageTo(1)};
+    message=feedback||(stage<2?(stage===0?tr('Drag the 3 onto the top 4, or tap the 3 then the top number. Does the rest need to change?','把 3 拖到上面的 4，也可以先点 3 再点上面的数字。休止符需要变吗？'):tr('The same symbol now fills three beats.','同一个记号，现在表示休止三拍。')):tr('How many beats of silence fill this 2/4 measure?','这个 2/4 小节要休止几拍？'));
+    scene=row(notes,l=><>{stage===0&&<MeterSwap x={l.meterX} zh={zh} onChange={()=>stageTo(1)}/>} {(stage<2||hint||passed)&&Array.from({length:top},(_,i)=><g key={i} className="rests-count-in"><text className="rests-count" x={l.startX+(i+.5)*(l.endX-l.startX)/top} y="272">{i+1}</text>{running&&Math.floor(audio.elapsed/UNIT)===i&&<circle className="rests-pulse" cx={l.startX+(i+.5)*(l.endX-l.startX)/top} cy="300" r="7"/>}</g>)}<path className="rests-span" d={`M${l.startX} 232 v10 h${l.endX-l.startX} v-10`}/></>,top);
+    if(stage===0)next={label:tr('Change to 3/4','换成 3/4'),ready:false,onClick:()=>stageTo(1)};
     else if(stage===1)next={label:tr('Try another measure','再试一个小节'),ready:true,onClick:()=>stageTo(2)};
     else {extra=answerNumbers(2,tr('Two beats. The rest fills this whole measure.','两拍。这个休止符填满整个小节。'),tr('The top 2 means two quarter-note beats in this measure.','上面的 2 表示这个小节有两个四分音符拍。'));progress={done:passed?1:0,total:1}}
     tools=playButton(notes);
@@ -137,7 +136,7 @@ export default function RestsLesson(){
             <g transform={`translate(${x} ${restY(wrong)})`}><g className="rests-return" style={{'--return-x':`${235+CHOICES.indexOf(wrong)*115-x}px`,'--return-y':`${343-restY(wrong)}px`} as CSSProperties}><RestGlyph value={wrong}/></g></g>
             <text className="rests-caption" x={x-58} y="260">{tr('Gap','空缺')}</text><text className="rests-caption" x={x-58} y="282">{tr('Rest','休止')}</text><path className="rests-span" d={`M${x-30} 257 h60`}/><path className="rests-span is-wrong" d={`M${x-30} 274 h${60*wrong/r.answer}`}/></g>}
           {CHOICES.map((v,i)=><g key={v} transform={`translate(${235+i*115} 343)`}>
-            <RestGlyph value={v} staffLine/>
+            <RestGlyph value={v} staffLine/>{choice===v&&<circle className="rests-selection" r="29"/>}
             <rect className={`rests-hit${choice===v?' is-selected':''}`} x="-40" y="-48" width="80" height="96" rx="12" role="button" tabIndex={passed?-1:0} aria-label={labelFor(v)} aria-pressed={choice===v}
               onPointerDown={e=>{if(passed)return;e.preventDefault();setChoice(v);setWrong(null);const p=localPoint(e);if(p){drag.current={value:v,x:p.x,y:p.y,moved:false};e.currentTarget.setPointerCapture(e.pointerId)}}} onKeyDown={e=>keyAction(e,()=>{setChoice(v);setWrong(null)})}/>
           </g>)}
@@ -146,11 +145,11 @@ export default function RestsLesson(){
         </>;
       }}</EngravedRow>
     </div>;
-    progress={done:round+(passed?1:0),total:2};extra=!passed?hintButton:null;tools=passed?playButton(notes):null;
-    if(passed&&round===0)next={label:tr('Next gap','下一个空缺'),ready:true,onClick:()=>{audio.stop();setPlaying(false);setRound(1);resetFeedback();setChoice(null);setWrong(null)}};
+    progress={done:round+(passed?1:0),total:GAPS.length};extra=!passed?hintButton:null;tools=passed?playButton(notes):null;
+    if(passed&&round<GAPS.length-1)next={label:tr('Next gap','下一个空缺'),ready:true,onClick:()=>{audio.stop();setPlaying(false);setRound(r=>r+1);resetFeedback();setChoice(null);setWrong(null)}};
     else if(passed)next=done?{label:tr('Back to theory lessons','回到乐理课'),ready:true,href:'/flute-studio/theory'}:{label:tr('Finish lesson','完成课程'),ready:true,onClick:()=>{audio.stop();course.finish('rests');setDone(true);setFeedback(tr('Next, dots and ties let us write more note lengths.','下一课，用附点和连音线写出更多时值。'))}};
   }
-  if(!next)next=step===4?{label:tr('Back to theory lessons','回到乐理课'),ready:false,onClick:()=>{audio.stop();window.location.assign('/flute-studio/theory')}}:{label:tr(`Next: ${names[step+1]}`,`下一步：${names[step+1]}`),ready:passed,onClick:()=>navigate(step+1)};
+
   return <LessonFrame className="rests-lesson" title={tr('Rests','休止符')} zh={zh} steps={names} current={step} onJump={navigate} heading={names[step]} narration={narration} fadeNarration message={message} tone={tone} next={next} extra={extra} progress={progress} status={audio.error?tr('Sound could not start. Tap Replay or Start to try again.','声音没能启动。点重播或开始再试一次。'):undefined}>
     <div className="rests-scene">{scene}<div className="measures-tools">{tools}</div></div>
   </LessonFrame>;

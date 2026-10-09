@@ -36,3 +36,14 @@
 .rests-return{animation:rests-return .8s ease both;pointer-events:none}
 @keyframes rests-return{0%,45%{opacity:.6;transform:none}100%{opacity:0;transform:translate(var(--return-x),var(--return-y))}}
 @media(prefers-reduced-motion:reduce){.rests-return{animation:none;opacity:0}}
+
+/* Selection follows the accidental matching exercise: a small ring, never a tinted card. */
+.rests-hit:hover,.rests-hit.is-selected,.rests-hit.is-right{stroke:transparent;fill:transparent}
+.rests-hit:focus-visible{stroke:#678956;fill:transparent}
+.rests-match .rests-hit:hover{fill:#678956;fill-opacity:.05}
+.rests-selection{fill:none;stroke:#678956;stroke-width:2;pointer-events:none}
+.rests-connection.is-drawing{stroke:#678956}
+.rests-cut{stroke:#b9362e;stroke-width:2;stroke-dasharray:4 4;pointer-events:none}
+.rests-cut-hit{fill:transparent;touch-action:none}
+.rests-split-target:hover .rests-cut,.rests-split-target:focus-visible .rests-cut{stroke-width:3;stroke-dasharray:none}
+.rests-split-target{touch-action:none}

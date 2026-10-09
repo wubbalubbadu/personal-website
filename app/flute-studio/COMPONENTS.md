@@ -12,6 +12,7 @@ October 8, 2026 from a scan of the studio; the "Not reused yet" section lists wh
 | Job | Use | Where it lives | Notes |
 |---|---|---|---|
 | A big card for an exercise, lesson, tool or feature (home, Exercises, Learn) | **Preview card** | `.preview-card` in `home-preview-cards.css`, grid in `components/preview-grid.css`, built in `HomePreviewCards.tsx` / `LearnPreviews.tsx` | Tinted stage with an animated demo on top, words below. Lifts on hover. The only card that lifts. |
+| A summary of your practice on Home (Today, Working on, Tricky bits, This week) | **Studio cards** | `HomeStudioCards.tsx` + `home-studio-cards.css` | Preview cards with a neutral grey top; only cards with real data appear. Colour only where it means something (list dot, green practice time, sand deadline). |
 | A white card for a piece or item in a list (Working on, tricky bits, lists) | **Item card** | `.working-card` in `practice/practice-page.css` | White, 1px border `#e6e6ea`, radius 18, no lift. Title 600, meta grey. Should move to `components/` (see below). |
 | A panel that groups controls or data (Today's practice, calendar, pitch map) | **Practice card** | `.practice-card` (`practice/practice-page.css`, studio card tokens in `studio-card-tokens.css`) | White, card shadow, no border. |
 | A row in a long list (Library, saved music) | **Music row** | `MusicRow.tsx` + `music-row.css`, art from `StudioRowArt.tsx` | DESIGN.md "List row". |
@@ -23,9 +24,10 @@ October 8, 2026 from a scan of the studio; the "Not reused yet" section lists wh
 | Floating controls next to what they act on (bar selection, clock controls) | **Soft pill** | `.range-bar` in `components/passage-guide.css`; clock version `.practice-today__actions` | White, hairline border `#d4d5da`, small shadow, round 34 to 38px icon buttons, tooltips name them. See memory "soft pill style". |
 | A button with a label that starts or saves something | **Soft tint button** (for now) | DESIGN.md "Buttons" | The user dislikes big tinted blocks; the soft pill is being tried instead. Don't add new big buttons until this is settled. |
 | A selected tab or filter chip | **Filter chip** | DESIGN.md "Filter/category tabs" | The only place dark `#292a33` fills are allowed. |
+| Switch between passages of one excerpt piece | **Filter chip** (passage tabs) | `.excerpt-passages` in `music/excerpt-reader.css` | Same recipe as the Library chips, restated there because the reader doesn't load `library.css`. |
 | Close a panel, dialog, sheet or toolbar | **CloseButton** | `components/CloseButton.tsx` + `close-button.css` | Plain dark × (the Mark Up icon), no fill, no hover change, no tooltip. Pass `className` only for placement. Used by every close in the studio. |
 | Remove something (a step, a session, a saved set, a piece from a list) | **Trash** | `PracticeIcon name="delete"` | Grey, red on hover, visible on touch. Never ×. |
-| Fold and unfold a section | **Chevron** | `ChevronIcon` in `components/HeaderIcons.tsx` | Rotates 180° when open. Never a typed ⌄ or ›. |
+| Fold and unfold a section | **Chevron** | `ChevronIcon` in `components/HeaderIcons.tsx` | Rotates 180° when open. Never a typed ⌄ or ›. Prefer not folding at all: a long section shows its first row and a "Show all N" text action (My Studio); folded headings alone looked dead. |
 | Header and toolbar icons | **HeaderIcons / PracticeIcon** | `components/HeaderIcons.tsx`, `components/PracticeIcon.tsx` | 20px box, 1.7 stroke, round caps. Don't draw new inline SVGs for an icon that exists. |
 | Back to the previous page | **BackChevron** | `components/BackChevron.tsx`, `back-button.css` | |
 | Previous and next through a set (book pieces, pages, tricky bits) | **Book stepper** | `.book-stepper` (`music/books/book.css`) | ‹ 1 / 15 ›. These arrows are controls and stay. |
@@ -37,12 +39,14 @@ October 8, 2026 from a scan of the studio; the "Not reused yet" section lists wh
 | Progress through a short set (lesson steps, exercise rounds) | **Progress dots** | `theory/ProgressDots.tsx` | Dots, never "2 of 6" in words. |
 | A tooltip | **has-tip** | `class="has-tip" data-tip="…"` | Icon-only buttons only. Not on close buttons, not where it can overflow the window edge. |
 | A quiet housekeeping action (restore defaults, reset a view) | **Text action** | `.text-action` in `studio-shared.css` | Grey words, no border, no fill, darker on hover. The reader's and Scale Studio's "Reset" (`.reader-settings-reset`, a grey pill) should move to it. |
-| Counting today's repetitions of a skill (a scale, an exercise) | **RepPill** | `components/RepPill.tsx` + `rep-pill.css`, data in `lib/repLog.ts` | Sits beside its TempoPill: tally sticks, count, − and +. Counts per day; the My Studio day panel and "Most practised" add them up. Used by Scale Studio's tempo marks. |
+| Counting today's repetitions of a skill (a scale, an exercise) | **RepPill** | `components/RepPill.tsx` + `rep-pill.css`, data in `lib/repLog.ts` | Sits beside its TempoPill and is built the same way, in pink: tally mark, −, the number (type to set it), +. Fixed width. Counts per day; the My Studio day panel and "Most practised" add them up. Used by Scale Studio's tempo marks. |
 | Counting a passage's repetitions over weeks | **Rep ladder** (inside `tricky-bits/BitPractice.tsx`) | `tricky-bits/` | One row per tempo, running total kept forever; also logs to `lib/repLog.ts` for the day report. |
 | Tally marks | **TallySticks** | `components/TallySticks.tsx` + `tally-sticks.css` | Four upright, the fifth across. |
+| Reference lists you dip into (Want to learn, Learned, Recently opened) | **List stacks** | `.list-stacks` in `practice/practice-page.css` (My Studio) | A row of piles: the top card shows, two edges peek out when there is more; the title links to the full list; tapping the pile opens its cards in a grid below, animated with view transitions (no animation where unsupported or with reduced motion). Not for what you practise from (Working on, Tricky bits stay open). |
 | Two or three ways to show one page (Cards / Continuous) | **View switch** | `.view-switch` in `studio-shared.css` | Grey track, chosen one white with a hairline, `aria-pressed`. |
 | A link in running text or under a card | **Text link** | DESIGN.md / memory "no underlined links" | Green `#46633d`, 600, no underline, **no trailing ›**. |
 | A page's section heading | **Section heading** | `.home-preview__group` | One heading style per page level. |
+| The small label inside a card or panel ("WORKING ON", "THIS WEEK", "TRICKY BITS") | **Card label** | to be added as `.card-label` in `studio-shared.css` | 11px, 600, capitals, letter-spacing .06em, grey `#85868e`, optional status dot in front. Gives a card three levels: label, title, meta. Only inside cards and panels, never as a page or section heading (those stay sentence case). Any other capitals in the studio are one-offs to convert or remove. |
 
 ## Text sizes by component (measured October 8, 2026)
 
@@ -53,6 +57,7 @@ Size / weight as the browser actually renders them (computed style, not the CSS,
 |---|---|---|---|
 | Page title | every tab (`h1`) | 42 / 780 | 42 / 780 |
 | Section heading | `.home-preview__group`, every page | 20 / 650 | 20 / 650 (chosen October 8) |
+| Card label | Home shelf labels, rail captions, dock titles (all slightly different today) | | 11 / 600 capitals, grey (decided October 9) |
 | Big card title | preview cards: Home 16 / 600, tab-page grids 15 / 600 | | 16 / 600; 15 / 600 in the smaller tab-page grid |
 | Item card title | My Studio `.working-card` | 16 / 600 | 16 / 600 |
 | List row title | Library rows | 16 / 600 | 16 / 600 |
@@ -112,7 +117,7 @@ October 8. Two deliberate underlines stay: the reader's tappable music terms and
 
 Fix these by pointing them at the component above, not by restyling them in place. Highest value first.
 
-1. **Tempo is still drawn three other ways.** Scale Studio and tricky bits use `TempoPill` now. Left: the practice dock metronome (`.tp-chip` / `.tp-stepper`, `PracticeToolDock.tsx`), Breathing Lab (`.bl-stepper.bl-tempo`), and the reader settings tempo (`.tempo-step` / `.tempo-field` / `.scale-book__tempo-field`).
+1. **Tempo is still drawn two other ways.** Scale Studio, tricky bits and Breathing Lab use `TempoPill` now. Left: the practice dock metronome (`.tp-chip` / `.tp-stepper`, `PracticeToolDock.tsx`) and the reader toolbar's tempo box (`.tempo-step` / `.tempo-field` / `.scale-book__tempo-field`).
 2. **Roadmap detail is its own dialog.** `roadmap/page.tsx` (`.roadmap-detail`, tinted by region) still has its own backdrop and panel. Move it onto `Dialog` (the tint can stay on its contents). Tricky bit and Deadline dialogs already use `Dialog`.
 3. **Two kinds of list dot.** `.status-dot` (lists) and `.continue-dot` (`ContinuePracticingCard.tsx`,
    `HomeStudioBrief.tsx`). If they mean the same lists, use `.status-dot`.
@@ -129,3 +134,5 @@ Fix these by pointing them at the component above, not by restyling them in plac
 - Adding a component: add a row above, in the same session.
 - Finding a one-off: add it to "Not reused yet" with the file and line, even if you don't fix it now.
 - Fixing one: delete its entry.
+
+Theory interaction rules and component usage: [theory/COMPONENTS.md](theory/COMPONENTS.md). `rests/SplitSpan.tsx` provides accessible duration splitting by cut gesture, tap, or keyboard.

@@ -47,3 +47,5 @@ html body .studio-navigation__actions :is(.dock-launcher,.account-menu__trigger)
 /* In the floating panel (outside My Studio): white, roomy, above the page. */
 .recorder-pop .session-review{padding:2px}
 .recorder-pop .session-review header{cursor:move}
+/* The running clock shows pause or play before the time, so tapping it is no longer a guess. */
+.practice-clock-running__time svg{flex:none;width:13px;height:13px;margin-right:5px}

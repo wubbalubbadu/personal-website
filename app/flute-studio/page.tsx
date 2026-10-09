@@ -3,8 +3,7 @@
 import {useLanguage} from "./i18n/LanguageContext";
 import HomePreviewCards from "./HomePreviewCards";
 import ToolCards from "./tools/ToolCards";
-import ContinuePracticingRow from "./ContinuePracticingCard";
-import HomeStudioBrief from "./HomeStudioBrief";
+import HomeStudioCards from "./HomeStudioCards";
 import "./studio-home.css";
 
 export default function StudioHome(){
@@ -22,12 +21,9 @@ export default function StudioHome(){
         <h2 className="home-preview__group">{zh?"工具":"Tools"}</h2>
         <ToolCards/>
 
-        {/* The way back in, plus a few lines from My Studio (this week,
-            notes still off pitch, a long-tone habit). The month calendar
-            lives on My Studio; here it only showed dates. */}
-        <h2 className="home-preview__group">{zh?"我的曲目":"Your shelf"}</h2>
-        <ContinuePracticingRow/>
-        <HomeStudioBrief/>
+        {/* Your studio at a glance (HomeStudioCards): today, what you're working on, your latest tricky bit, this
+            week. Only cards with something in them; My Studio has the detail. */}
+        <HomeStudioCards/>
       </div>
     </section>
   </main>

@@ -1,4 +1,11 @@
 /* Printed excerpts keep the existing reader's typography, controls and paper. */
+/* Passage tabs: Library filter chips in sentence case, on the grey around the page.
+   A row above the page; a column in the left margin when the screen has room. */
+.fixed-score-reader .excerpt-passages{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 auto 12px;max-width:950px}
+.fixed-score-reader .excerpt-passages button{flex:0 0 auto;height:34px;display:inline-flex;align-items:center;border:0;border-radius:17px;padding:0 14px;background:#fff;color:#5a5c63;font-family:inherit;font-size:13px;font-weight:600;line-height:1;cursor:pointer}
+.fixed-score-reader .excerpt-passages button:hover{color:#292a33}
+.fixed-score-reader .excerpt-passages button.active{background:#292a33!important;color:#fff!important}
+@media(min-width:1500px){.fixed-score-reader .excerpt-passages{position:absolute;left:16px;top:12px;flex-direction:column;align-items:flex-start;margin:0;max-width:200px}}
 .fixed-score-reader .practice-bar{gap:4px!important}
 .reader-workspace .score-paper:has(.excerpt-score-subtitle) .custom-score-heading{display:block!important;text-align:center}
 .reader-workspace .custom-score-heading .excerpt-score-subtitle{display:block!important;margin:6px 0 0;color:#777a80;font:400 16px/1.4 Georgia,"Times New Roman",serif!important;letter-spacing:normal!important;text-transform:none!important}
@@ -6,6 +13,9 @@
 .fixed-score-reader .excerpt-caption strong{font-weight:500;color:#44474d}
 html body .fixed-score-reader .score-paper.fixed-score-paper{padding:0!important;min-height:0!important;border-radius:0!important;background:white;position:relative;--viewer-magnify:1}
 html body .fixed-score-reader .osmd-score.fixed-score-page{padding:0!important;line-height:0}
+.fixed-score-paper[data-spread]{background:transparent!important}
+.fixed-score-paper[data-spread] .fixed-score-page{display:flex;align-items:flex-start;gap:16px}
+.fixed-score-paper[data-spread] .fixed-score-page>img{width:var(--sheet-width)!important;flex:0 0 var(--sheet-width);background:#fff}
 .fixed-score-page>img{display:block;width:100%;height:auto;max-width:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .fixed-score-reader[data-listen] .workspace{grid-template-columns:minmax(0,1fr) 310px!important;grid-template-rows:auto auto auto minmax(0,1fr)!important;grid-template-areas:"document document" "header header" "markup markup" "score recordings"!important}
 .excerpt-recordings{grid-area:recordings;min-width:0;min-height:0;overflow:auto;background:#fafbf9;border-left:1px solid var(--line);padding:14px 16px;color:#41464b;font-size:14px}

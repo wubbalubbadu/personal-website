@@ -15,9 +15,9 @@
 @keyframes ks-ring{0%{opacity:.9;transform:scale(.6)}100%{opacity:0;transform:scale(1.7)}}
 
 /* Step 2: the order of the signs, as a reference beside the control. Letters already in the signature are solid; the newest pops. */
-.ks-order{display:inline-flex;gap:4px;font:600 18px var(--font,sans-serif)}
+.ks-order{display:inline-flex;gap:10px;font:600 22px var(--font,sans-serif)}
 .ks-order b{display:inline-grid;place-items:center;width:28px;height:32px;border-radius:8px;color:#c4bfb5;font-weight:600}
-.ks-order b.is-in{color:#292a33;background:#f3f0e9}
+.ks-order b.is-in{color:#292a33;background:transparent}
 .ks-order b.is-new{animation:ks-pop .5s cubic-bezier(.3,1.6,.5,1) .3s both}
 @keyframes ks-pop{0%{transform:scale(.4);color:#c4bfb5}100%{transform:none}}
 

@@ -59,7 +59,7 @@ and keeps the question in view, and a drawing or placing task has a Hint and, af
 misses, Show answer. There is no separate review page at the end: it only repeats exercises the
 lesson already had. Checks sit right after the idea they test (a 7/4 question after the top number,
 a 9/16 question after the bottom number), and the lesson is complete when its last exercise passes.
-Lesson 8's wrap-up is the one place the course puts everything together.
+A short beginner wrap-up is the place to put the reading skills together; its final position follows the practical reading lessons below.
 
 **9. Say why we're moving on.** Each step's narration connects to the last one: from learning to
 remembering, to practising, to making music.
@@ -84,17 +84,15 @@ sizes. Desktop and iPad, portrait and landscape.
 
 ## Course map
 
-Three tiers, so the list never looks like a hundred lessons:
-
-- **Essentials (8 lessons):** everything needed to read a beginner part. Lesson 8 ends with a
-  short wrap-up: read, count, clap and play a real 8-bar melody.
-- **Extras:** things every part uses but you can pick up as you meet them.
-- **Later:** the "go deeper" theory track, built when there's time.
+The first track is **Beginner music reading**, not a claim to cover every symbol a player will meet.
+Lessons 1–7 establish pitches and durations. The following short lessons cover markings that
+actually appear in flute parts. Deeper theory comes afterward, without making it a prerequisite
+for reading a simple tune. These are future directions, not approved implementation storyboards.
 
 Keep lessons short and focused; use only the steps the topic needs, with checks inside the steps rather than a review page at the end.
 Pitch and rhythm come in blocks, in the order they turn up in beginner parts: the staff, then
 lengths and measures, then sharps, flats and key signatures together (B♭ and F♯ are in almost every
-first band part), then the rest of rhythm (rests, dots and ties, 6/8 in two). Triplets come later.
+first band part), then rests and dots and ties. Practical flute markings follow. Compound meter and triplets can be separate follow-ups.
 (Revised October 2026: the original map had rests before accidentals and a separate "smaller beats"
 lesson; lessons 2 and 3 now cover eighths and sixteenths, and "1 and 2 and" moved into Dots and ties,
 where a dotted quarter first needs it.) Any lesson can be opened from the list.
@@ -102,7 +100,7 @@ where a dotted quarter first needs it.) Any lesson can be opened from the list.
 **Lessons connect.** Each one opens from what you can already do and names the question it
 answers, and ends by pointing at the next one. The "bridge" column is that opening.
 
-### Essentials
+### Beginner music reading
 
 | # | Lesson | Bridge (the question it answers) | Steps cover | musictheory.net topics it absorbs |
 |---|---|---|---|---|
@@ -113,16 +111,25 @@ answers, and ends by pointing at the next one. The "bridge" column is that openi
 | 5 | **Key signatures** | Writing the same sharp every time is tiring. How does music say "always"? | three short steps: say it once (a signature replaces the written sharps; it applies in every octave), which letters change (sharps and flats each keep a fixed order, shown, not drilled), change one back (a natural overrides it only on that line or space, until the bar line). Naming the key moved to Major and minor scales | Key Signatures |
 | 6 | **Rests** | Measures have to add up. What fills a beat where you don't play? | a gap in a full measure, the quarter rest, half and whole rests (hat and hole), the whole-measure rest, the eighth rest (sixteenth *brief*), which rest fills the gap, counting through rests, read and clap | Rest Duration |
 | 7 | **Dots and ties** | Some notes last longer than any one shape, or across a bar line. How? | why, the dot, the tie across a bar line, counting "1 and 2 and" (a dotted quarter's eighth lands on "and"), dotted-quarter-eighth | Dots and Ties |
-| 8 | **6/8 in two, and putting it together** | Lesson 3 counted 6/8 as six eighths. How does it feel as two big beats? Then: read a whole melody. | 6/8 felt in two (each beat a dotted quarter), syncopation *(brief)*; wrap-up: a real 8-bar melody, name, count, clap, play along | Compound Meter *(part)* |
+| 8 | **Slurs and articulation** | A curved line can mean something different from a tie. How do we start and connect flute notes? | tie versus slur; a slur joins notes without re-tonguing, while a tie prolongs the same pitch; staccato, accent, tenuto and breath marks; contrast a few short phrases, not a long drill | practical flute notation |
+| 9 | **Trills** | What does “tr” above a note ask us to do? | recognize the sign, alternate the written note and its upper neighbor, use the key signature and any specified accidental; show a slow example before normal speed; link to the existing trill chart for fingerings; avoid presenting stylistic starting-note conventions as universal | practical flute notation |
+| 10 | **Repeats and directions** | Where do we go when the music sends us back? | repeat signs, first and second endings; a short guided route through a score; introduce D.C., D.S. and Coda only as far as a compact example can explain clearly | score navigation |
+| 11 | **Dynamics, tempo and expression** | How loudly, how fast, and with what character should we play? | common p, mp, mf, f and hairpins; common tempo words, ritardando and a tempo; fermata and a few common expression words; distinguish loudness, speed and character without making a vocabulary catalogue | practical performance markings |
 
-### Extras
+**October 9 direction:** Keep these practical lessons short. Not every symbol needs a game,
+drawing activity or forced listening task. A clear engraved example, a useful sound comparison
+with a named listening focus, and one recognition or score-reading check may be enough. Dots
+and ties can briefly contrast a slur, then the articulation lesson develops that distinction.
+A dot beside a note adds duration; a staccato dot above or below it changes articulation.
 
-| Lesson | Steps cover | musictheory.net topics it absorbs |
-|---|---|---|
-| **Major and minor scales** | the step pattern, a scale in any key (links to Scale Studio), minor *(brief: natural, harmonic, melodic named)*, scale degrees and the tonic *(brief)*, naming the key from its signature *(trick: last sharp up a half step; the second-last flat, and one flat is F; it names the major key)*, each signature also belongs to a minor key (G major and E minor share one) | Major Scale, Minor Scales, Scale Degrees *(brief)*, Key Signature Calculation |
-| **Dynamics and articulation** | p to f, hairpins, slurs, staccato, accent, tenuto, breath marks; hear each | (not covered there) |
-| **Tempo and road maps** | tempo words, fermata, repeats, first and second endings, D.C., D.S., Coda | (not covered there) |
-| **Triplets and odd meters** | triplets, 9/8 and 12/8, odd meters like 5/4 and 7/8 *(brief, one step)* | Compound Meter *(rest)*, Odd Meter *(brief)* |
+A brief real-melody wrap-up can follow the practical reading sequence. Decide its exact position
+and content when these short lesson drafts exist, rather than forcing every topic into eight lessons.
+
+### After beginner reading
+
+- **6/8 in two:** build on dotted quarters and show two groups of three eighths; a focused rhythm follow-up.
+- **Major and minor scales:** step patterns, tonic, scale degrees, major/minor key names and their signatures. Connect to Scale Studio. Key-name shortcuts belong here, after the musical meaning of a key.
+- **Triplets and other meters:** triplets, 9/8, 12/8 and introductory irregular grouping when needed.
 
 ### Later
 
@@ -132,4 +139,4 @@ harmony. These can link from the brief mentions above when built.
 **What we deliberately don't copy from musictheory.net:** its order (it finishes rhythm before
 steps and accidentals because it's teaching theory; we interleave by what shows up in beginner
 parts), its drill-heavy checks (we use short, varied checks inside each lesson), and its depth on
-meter classification (brief here) and key-signature calculation (an Extras topic here).
+meter classification (brief here) and key-signature calculation (a later scales topic here).

@@ -1,6 +1,7 @@
 "use client";
 import {CloseButton} from "./CloseButton";
 import Link from 'next/link';
+import {usePathname} from 'next/navigation';
 import {useMemo,useState} from 'react';
 import {PracticeNotation} from './PracticeNotation';
 import {usePitchPractice} from './PitchPractice';
@@ -15,6 +16,8 @@ type Mode='technique'|'pitch';
 const MODE_KEY='cookie:closeup-mode';
 
 export function PassageGuide({xml,events,from,to,quarterBpm,numbers,onClose,sempreStaccato=false,initialDisplay=noDisplay,title}:{xml:string;events:PassageEvent[];from:number;to:number;quarterBpm:number;numbers?:{from:string;to:string};onClose:()=>void;sempreStaccato?:boolean;/** The reader's View settings when the close-up opened; the toggles here start from them. */initialDisplay?:PracticeDisplay;/** The piece's name, for the pitch history. */title:string}){
+  // Scale Studio's Back returns here (the piece), not to Exercises.
+  const pathname=usePathname();
   const {t,lang}=useLanguage(),s=t.scoreViewer,zh=lang==="zh";
   const labels:Record<string,string>={"Original":"原谱","Dotted rhythm":"附点节奏","Long–short":"长短","Short–long":"短长","Pairs":"成对练习","Pairs ×2":"成对重复两次","Shifted pairs":"错位成对","Triplets":"三连音","Quintuplets":"五连音","Random groups":"随机分组","Groupings":"分组","Fermatas":"延长音","Hold a few":"延长部分音符"};
   const label=(text:string)=>zh?(labels[text]??text.replace(/^(\d+) as /,"$1 分为 ")):text;
@@ -64,7 +67,7 @@ export function PassageGuide({xml,events,from,to,quarterBpm,numbers,onClose,semp
       {mode==='pitch'&&pitch.panel}
       {/* Kept mounted while Pitch is open, so coming back to Technique does not redraw every exercise. */}
       <div hidden={mode==='pitch'}>
-        {scale&&<div className="passage-guide__row"><h3>{scale.label}<Link href={`/flute-studio/exercises/scales?key=${encodeURIComponent(scale.key)}&type=${scale.type}${'form' in scale&&scale.form==='arpeggio'?'&form=arpeggio':''}`}>{zh?"音阶练习":"Scale Studio"}</Link></h3>{player('scale',scale.xml,scale.label)}</div>}
+        {scale&&<div className="passage-guide__row"><h3>{scale.label}<Link href={`/flute-studio/exercises/scales?key=${encodeURIComponent(scale.key)}&type=${scale.type}${'form' in scale&&scale.form==='arpeggio'?'&form=arpeggio':''}&back=${encodeURIComponent(pathname)}`}>{zh?"音阶练习":"Scale Studio"}</Link></h3>{player('scale',scale.xml,scale.label)}</div>}
         {sections.map(section=><section className="passage-guide__section" key={section.title}><h4>{label(section.title)}</h4>
           {section.rows.map(r=><div className="passage-guide__row" key={r.id}><h3>{label(r.title)}{r.shuffle&&<button type="button" className="passage-guide__shuffle" onClick={()=>{setActive(null);r.shuffle!()}}>{zh?"重新排列":"Shuffle"}</button>}</h3>{player(r.id,r.xml,r.title.toLowerCase(),false,!!r.gen,undefined,undefined,true)}</div>)}
         </section>)}

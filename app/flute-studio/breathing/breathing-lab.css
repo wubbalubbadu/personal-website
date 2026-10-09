@@ -91,3 +91,13 @@
   .bl-controls{padding:12px!important;gap:10px}
 }
 .bl-controls{align-self:start}
+
+/* October 2026: on desktop and iPad the three columns share one height instead of the middle one running to the
+   bottom of the window; the ring keeps a comfortable size. The tempo is the studio TempoPill (beat sound in it). */
+@media(min-width:761px){
+  .bl-workspace{flex:none;align-items:stretch}
+  .bl-scene{flex:1 0 auto;min-height:320px}
+  .bl-play-row{display:flex;align-items:center;gap:8px}
+  .bl-play-row .tempo-pill{flex:1 1 auto;justify-content:space-between}
+}
+.bl-play-row .tempo-pill{flex:1 1 auto;justify-content:space-between}

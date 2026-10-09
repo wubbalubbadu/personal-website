@@ -3,6 +3,7 @@ import {usePrivateMusic} from "../lib/privateMusic";
 
 import Link from "next/link";
 import {useEffect,useState,type ReactNode} from "react";
+import {flushSync} from "react-dom";
 import {useLanguage} from "../i18n/LanguageContext";
 import {useTrickyBits} from "../lib/trickyBits";
 import {readSessions,type PracticeSession} from "../practice-data";
@@ -10,7 +11,7 @@ import {useRecents} from "../lib/storage";
 import {useStatusEntries,setStatus,STATUS_LABELS,STATUS_TONES} from "../lib/musicStatus";
 import {readScaleSets,scaleSetsEvent,type ScaleSet} from "../exercises/scales/saved-sets";
 import {daysUntil,useDeadlines,type Deadline} from "../lib/deadlines";
-import {hasTag} from "../../../content/music-library";
+import {hasTag,pieceTitle} from "../../../content/music-library";
 import {tagTone} from "../lib/tagTone";
 import {DeadlineDialog} from "./DeadlineDialog";
 import {repDay,repTotals,repsOnDay,useRepLog} from "../lib/repLog";
@@ -23,7 +24,6 @@ import {PitchTendencies} from "./PitchTendencies";
 import {type SuggestItem} from "./SuggestField";
 import {PracticeCard,type RoutineItem} from "./PracticeCard";
 import {PracticeIcon} from "../components/PracticeIcon";
-import {ChevronIcon} from "../components/HeaderIcons";
 import {deleteSession,restoreSession} from "../lib/practiceClock";
 import "../home-preview-cards.css";
 import "./practice-page.css";
@@ -71,13 +71,11 @@ export default function PracticePage(){
   // The deadline being edited: null is closed, "new" is a new one.
   const [editing,setEditing]=useState<Deadline|"new"|null>(null);
   // Which of the lower shelves (Want to learn, Learned, Recently opened) are open.
-  // Which shelves are open: your choice per shelf, remembered; a shelf you never touched uses its default
-  // (Coming up, Working on and Tricky bits open; the lists folded).
-  const SHELVES_KEY="cookie:studio-shelves:v2",OPEN_BY_DEFAULT=["coming","working","tricky"];
-  const [shelfChoices,setShelfChoices]=useState<Record<string,boolean>>({});
-  useEffect(()=>{try{const saved=JSON.parse(localStorage.getItem(SHELVES_KEY)||"null");if(saved&&typeof saved==="object")setShelfChoices(saved)}catch{/* defaults */}},[]);// eslint-disable-line react-hooks/set-state-in-effect
-  const isOpen=(key:string)=>shelfChoices[key]??OPEN_BY_DEFAULT.includes(key);
-  const toggleShelf=(key:string)=>setShelfChoices(choices=>{const next={...choices,[key]:!(choices[key]??OPEN_BY_DEFAULT.includes(key))};try{localStorage.setItem(SHELVES_KEY,JSON.stringify(next))}catch{/* this visit only */}return next});
+  // Each section shows one row (up to ROW cards); "Show all" opens the rest. Nothing folds to a bare heading.
+  const ROW=5;
+  const [showAll,setShowAll]=useState<Record<string,boolean>>({});
+  const moreToggle=(key:string,count:number)=>count>ROW&&<button type="button" className="text-action" aria-expanded={!!showAll[key]} onClick={()=>setShowAll(all=>({...all,[key]:!all[key]}))}>{showAll[key]?(zh?"收起":"Show fewer"):(zh?`全部 ${count} 个`:`Show all ${count}`)}</button>;
+  const firstRow=<T,>(key:string,list:T[])=>showAll[key]?list:list.slice(0,ROW);
   // Saved Scale Studio sets can be Fundamentals items ("Thirds in D", not just "Scale Studio").
   const [scaleSets,setScaleSets]=useState<ScaleSet[]>([]);
   useEffect(()=>{
@@ -123,7 +121,7 @@ export default function PracticePage(){
   // Ids are all the stores keep, so titles come from the library — which
   // already contains the exercises as well as the pieces.
   const exerciseItems:StudioListItem[]=exerciseCatalog.map(item=>({id:item.id,title:zh?item.zhTitle:item.title,composer:zh?"练习":"Exercise",viewerPath:item.href}));
-  const byId=new Map<string,StudioListItem>([...musicLibrary,...libraryShelf.filter(item=>item.bookCount),...exerciseItems].map(item=>[item.id,item]));
+  const byId=new Map<string,StudioListItem>([...musicLibrary,...libraryShelf.filter(item=>item.bookCount)].map(item=>[item.id,{...item,title:pieceTitle(item,zh)}] as [string,StudioListItem]).concat(exerciseItems.map(item=>[item.id,item])));
   const recentItems=recentIds.map(id=>byId.get(id)).filter((item):item is StudioListItem=>!!item);
   // Your lists in the order you would pick up from: working on, want to learn, learned.
   const listItems=(["working","want","learned"] as const)
@@ -150,23 +148,33 @@ export default function PracticePage(){
   const trickyGroups=[...trickyBits.reduce((map,bit)=>map.set(bit.pieceId,[...(map.get(bit.pieceId)??[]),bit]),new Map<string,typeof trickyBits>())]
     .map(([pieceId,bits])=>[pieceId,[...bits].sort((a,b)=>a.from-b.from)] as const)
     .sort((a,b)=>Math.min(...a[1].map(bit=>bit.addedAt))-Math.min(...b[1].map(bit=>bit.addedAt)));
-  /** A card: a title, a line under it, a link into the music. Working on, tricky bits and the lists all use it. */
-  const shelfCard=(key:string,title:string,sub:string,href:string|null,extra?:ReactNode)=>{
-    const body=<><b>{title}</b>{sub&&<small>{sub}</small>}{extra}</>;
-    return <li key={key} className="working-card">{href?<Link href={href}>{body}</Link>:<span className="is-disabled">{body}</span>}</li>;
-  };
   /** A shelf under Working on, with its own heading. Only there when it has something in it; the quieter ones fold. */
   /** The fold button that is a shelf's heading: its name, its count, a chevron. */
-  const shelfHeading=(key:string,label:string,count:number,id?:string)=>{
-    const open=isOpen(key);
-    return <h2 className="home-preview__group shelf__title" id={id}><button type="button" aria-expanded={open} onClick={()=>toggleShelf(key)}>{label}<small>{count}</small><ChevronIcon/></button></h2>;
-  };
-  const shelf=(key:string,label:string,count:number,cards:ReactNode)=>{
+  /** A section's heading: its name and how many are in it. */
+  const shelfHeading=(label:string,count:number,id?:string)=><h2 className="home-preview__group shelf__title" id={id}>{label}<small>{count}</small></h2>;
+  /** A section's way out to its full page, beside the heading (the heading itself folds, so it can't be the link). */
+  const sectionLink=(href:string,label:string)=><Link className="section-head__action" href={href}>{label}</Link>;
+  const shelf=(key:string,label:string,count:number,cards:ReactNode[],link?:ReactNode)=>{
     if(!count)return null;
-    return <section className="shelf" key={key} aria-label={label}>
-      {shelfHeading(key,label,count)}
-      {isOpen(key)&&<ul className="working__grid">{cards}</ul>}
+    return <section id={`shelf-${key}`} className="shelf" key={key} aria-label={label}>
+      <div className="section-head">{shelfHeading(label,count)}<span className="section-head__actions">{moreToggle(key,count)}{link}</span></div>
+      <ul className="working__grid">{firstRow(key,cards as ReactNode[])}</ul>
     </section>;
+  };
+  // The three reference lists as stacks; one opens at a time. The browser animates the change (view transitions) where
+  // it can: the top card glides into the grid and the rest fan out; elsewhere it simply switches.
+  const stackLists=[
+    {key:"want",label:statusLabel("want"),href:"/flute-studio/music?list=want",items:listItems.filter(row=>row.entry.status==="want").map(row=>row.item)},
+    {key:"learned",label:statusLabel("learned"),href:"/flute-studio/music?list=learned",items:listItems.filter(row=>row.entry.status==="learned").map(row=>row.item)},
+    {key:"recent",label:zh?"最近打开":"Recently opened",href:null as string|null,items:recentItems.slice(0,10)},
+  ];
+  const [openStack,setOpenStack]=useState<string|null>(null);
+  const openStackList=stackLists.find(list=>list.key===openStack&&list.items.length)??null;
+  const cardName=(list:string,id:string)=>`stack-${list}-${id}`.replace(/[^a-zA-Z0-9-]/g,"-");
+  const toggleStack=(key:string)=>{
+    const change=()=>flushSync(()=>setOpenStack(current=>current===key?null:key));
+    const start=(document as Document&{startViewTransition?:(update:()=>void)=>unknown}).startViewTransition;
+    if(start&&!matchMedia("(prefers-reduced-motion: reduce)").matches)start.call(document,change);else change();
   };
   // Deadlines still ahead (today counts), soonest first; the rest fold away under Past.
   const upcoming=now?deadlines.filter(item=>daysUntil(item.date,now)>=0):[];
@@ -222,7 +230,19 @@ export default function PracticePage(){
   // Repetitions you counted (Scale Studio, tricky bits): that day's, and every day added up.
   const repLog=useRepLog();
   const dayReps=shownDay?repsOnDay(repLog,repDay(new Date(shownDay).getTime())):[];
-  const mostPractised=repTotals(repLog).slice(0,6);
+  const allTallies=repTotals(repLog),mostPractised=showAll.tallies?allTallies:allTallies.slice(0,ROW);
+  // Where your time goes, from every logged session: by kind of practice. Free practice on the clock, and anything
+  // not tied to a piece or exercise, is "Other".
+  const TIME_KINDS=[
+    {key:"scales",en:"Scales",zh:"音阶",tone:"blue"},{key:"exercise",en:"Exercises",zh:"练习",tone:"sage"},
+    {key:"repertoire",en:"Repertoire",zh:"曲目",tone:"lavender"},{key:"etude",en:"Etudes",zh:"练习曲",tone:"sand"},
+    {key:"other",en:"Other",zh:"其他",tone:"grey"},
+  ] as const;
+  const kindOfSession=(session:PracticeSession)=>/^scale/.test(session.itemId)?"scales":session.itemType==="exercise"||session.itemType==="warm-up"?"exercise":session.itemType==="repertoire"?"repertoire":session.itemType==="etude"||session.itemType==="method"?"etude":"other";
+  const totalSeconds=sessions.reduce((sum,session)=>sum+session.durationSeconds,0);
+  const timeByKind=TIME_KINDS.map(kind=>({...kind,seconds:sessions.filter(session=>kindOfSession(session)===kind.key).reduce((sum,session)=>sum+session.durationSeconds,0)})).filter(kind=>kind.seconds>0);
+  const averageMinutes=sessions.length?Math.round(totalSeconds/sessions.length/60):0,longestMinutes=Math.round(Math.max(0,...sessions.map(session=>session.durationSeconds))/60);
+  const hoursText=totalSeconds>=3600?(zh?`${(totalSeconds/3600).toFixed(1)} 小时`:`${(totalSeconds/3600).toFixed(1)} h`):(zh?`${Math.round(totalSeconds/60)} 分钟`:`${Math.round(totalSeconds/60)} min`);
   const atTempos=(reps:Record<string,number>)=>Object.entries(reps).filter(([,count])=>count>0).sort((a,b)=>Number(a[0])-Number(b[0])).map(([tempo,count])=>zh?`${tempo} 速度 ${count} 次`:`${count} at ${tempo}`).join(" · ");
 
   // Adding a deadline sits with the music it is for: beside Coming up, or beside Working on before there is one.
@@ -238,9 +258,9 @@ export default function PracticePage(){
         lookup={id=>{const item=byId.get(id);return item?{viewerPath:item.viewerPath,isExercise:exerciseItems.some(entry=>entry.id===id)}:undefined}}
         labels={{title:zh?"今天的练习":"Today’s practice",start:t.pomodoro.start,pause:t.pomodoro.pause,resume:t.pomodoro.resume,markDone:t.practicePage.markStepDone,remove:t.practicePage.removeStep,addAria:t.practicePage.routineAddAria}}/>
       {/* Coming up: only there when a deadline is. Each piece is a pill straight into its score. */}
-      {upcoming.length>0&&<section className="deadlines" aria-label={zh?"即将到来":"Coming up"}>
-        <div className="section-head">{shelfHeading("coming",zh?"即将到来":"Coming up",upcoming.length)}{addDeadline}</div>
-        {isOpen("coming")&&upcoming.map(deadlineCard)}
+      {upcoming.length>0&&<section id="coming-up" className="deadlines" aria-label={zh?"即将到来":"Coming up"}>
+        <div className="section-head">{shelfHeading(zh?"即将到来":"Coming up",upcoming.length)}{addDeadline}</div>
+        {upcoming.map(deadlineCard)}
       </section>}
       {past.length>0&&<details className="deadlines deadlines--past">
         <summary>{zh?`已过去 (${past.length})`:`Past (${past.length})`}</summary>
@@ -249,9 +269,9 @@ export default function PracticePage(){
       {editing&&<DeadlineDialog deadline={editing==="new"?null:editing} pieces={deadlinePieces} zh={zh}
         statuses={Object.fromEntries(listEntries.map(entry=>[entry.id,entry.status]))} onClose={()=>setEditing(null)}/>}
       {/* Working on: what is on your plate, as cards. Only there when something is; Edit takes things off. */}
-      {workingRows.length>0&&<section className="working" aria-labelledby="working-title">
-        <div className="section-head">{shelfHeading("working",statusLabel("working"),workingRows.length,"working-title")}{!upcoming.length&&addDeadline}</div>
-        {isOpen("working")&&<ul className="working__grid">{workingRows.map(({item})=>workingCard(item))}</ul>}
+      {workingRows.length>0&&<section id="working-on" className="working" aria-labelledby="working-title">
+        <div className="section-head">{shelfHeading(statusLabel("working"),workingRows.length,"working-title")}<span className="section-head__actions">{moreToggle("working",workingRows.length)}{!upcoming.length&&addDeadline}{sectionLink("/flute-studio/music?list=working",zh?"在曲库中查看":"See in Library")}</span></div>
+        <ul className="working__grid">{firstRow("working",workingRows).map(({item})=>workingCard(item))}</ul>
       </section>}
       {restoring&&<p className="practice-card__empty">{zh?"正在恢复曲目…":"Restoring your music…"}</p>}
       {/* Tricky bits stay open (they are practice); the lists fold, each only there when it has something in it. */}
@@ -259,14 +279,26 @@ export default function PracticePage(){
         <div><b>{musicLibrary.find(entry=>entry.id===pieceId)?.title??(privateMusic.unlocked||privateMusic.loading?pieceId:(zh?"私人乐谱（未解锁）":"Private piece (locked)"))}</b>
           <ul>{bits.map(bit=><li key={bit.id}><Link href={`/flute-studio/tricky-bits?open=${encodeURIComponent(bit.id)}`}>{t.trickyBits.bars} {bit.label}{bit.tempos.length?<small> · {Math.max(...bit.tempos)}</small>:null}</Link></li>)}</ul>
         </div>
-      </li>))}
-      {(["want","learned"] as const).map(status=>{
-        const rows=listItems.filter(row=>row.entry.status===status);
-        return shelf(status,statusLabel(status),rows.length,rows.map(({item})=>shelfCard(item.id,item.title,item.composer,item.viewerPath)));
-      })}
-      {shelf("recent",zh?"最近打开":"Recently opened",recentItems.length,recentItems.slice(0,9).map(item=>shelfCard(item.id,item.title,item.composer,item.viewerPath)))}
+      </li>),sectionLink("/flute-studio/tricky-bits",zh?"打开难点练习":"Open Tricky bits"))}
+      {/* The lists you look things up in, as three stacks in one row (like Dock stacks): the top card shows, the
+          title opens the full list, and tapping the stack fans its cards out below. */}
+      {stackLists.some(list=>list.items.length)&&<>
+        <div className="list-stacks">{stackLists.filter(list=>list.items.length).map(list=>{
+          const open=openStack===list.key,top=list.items[0];
+          return <section className={open?"list-stack is-open":"list-stack"} key={list.key} aria-label={list.label}>
+            <h2 className="list-stack__title">{list.href?<Link href={list.href}>{list.label}</Link>:list.label}<small>{list.items.length}</small></h2>
+            <button type="button" className={list.items.length>1?"list-stack__pile has-more":"list-stack__pile"} aria-expanded={open} aria-controls="list-stack-open"
+              aria-label={open?(zh?`收起${list.label}`:`Close ${list.label}`):(zh?`展开${list.label}`:`Open ${list.label}`)} onClick={()=>toggleStack(list.key)}>
+              <span className="list-stack__card" style={open?undefined:{viewTransitionName:cardName(list.key,top.id)}}><b>{top.title}</b><small>{top.composer}</small></span>
+            </button>
+          </section>;
+        })}</div>
+        {openStackList&&<ul className="working__grid list-stack__open" id="list-stack-open">{openStackList.items.map(item=><li key={item.id} className="working-card" style={{viewTransitionName:cardName(openStackList.key,item.id)}}>
+          {item.viewerPath?<Link href={item.viewerPath}><b>{item.title}</b><small>{item.composer}</small></Link>:<span className="is-disabled"><b>{item.title}</b><small>{item.composer}</small></span>}
+        </li>)}</ul>}
+      </>}
 
-      <h2 className="home-preview__group">{zh?"练习洞察":"Practice insights"}</h2>
+      <h2 className="home-preview__group" id="insights">{zh?"练习洞察":"Practice insights"}</h2>
       {/* The month, coloured by minutes practised; pick a day to see what you played. This replaces the long history list. */}
       <section className="studio-month" aria-label={zh?"练习日历":"Practice calendar"}>
         <PracticeCalendar sessions={sessions} selected={shownDay} onSelect={setDay} legend>
@@ -301,10 +333,20 @@ export default function PracticePage(){
         </section>
       </section>
       {/* Like a year-in-music list: what you have repeated most, all days added up. Only once there is something to show. */}
+      {(timeByKind.length>0||allTallies.length>0)&&<div className="insight-cards">
+      {timeByKind.length>0&&<section className="practice-card time-split" aria-labelledby="time-split-title">
+        <h2 id="time-split-title">{zh?"时间都花在哪":"Where your time goes"}</h2>
+        <div className="time-split__bar" role="img" aria-label={timeByKind.map(kind=>`${zh?kind.zh:kind.en} ${Math.round(kind.seconds/totalSeconds*100)}%`).join(", ")}>
+          {timeByKind.map(kind=><i key={kind.key} data-tone={kind.tone} style={{flexGrow:kind.seconds}}/>)}
+        </div>
+        <ul className="time-split__legend">{timeByKind.map(kind=><li key={kind.key}><i data-tone={kind.tone} aria-hidden="true"/>{zh?kind.zh:kind.en}<b>{Math.round(kind.seconds/totalSeconds*100)}%</b></li>)}</ul>
+        <p className="time-split__stats">{[zh?`平均每次 ${averageMinutes} 分钟`:`Average session ${averageMinutes} min`,zh?`最长 ${longestMinutes} 分钟`:`Longest ${longestMinutes} min`,zh?`共 ${hoursText}`:`${hoursText} in all`].join(" · ")}</p>
+      </section>}
       {mostPractised.length>0&&<section className="practice-card most-practised" aria-labelledby="most-practised-title">
-        <h2 id="most-practised-title">{zh?"练得最多":"Most practised"}</h2>
+        <div className="section-head"><h2 id="most-practised-title">{zh?"练得最多":"Most practised"}</h2>{moreToggle("tallies",allTallies.length)}</div>
         <ol>{mostPractised.map((row,i)=><li key={row.key}><span className="most-practised__rank">{i+1}</span><span className="most-practised__title">{row.title}</span><b>{row.total}<small>{zh?" 次":row.total===1?" time":" times"}</small></b></li>)}</ol>
       </section>}
+      </div>}
       <PitchTendencies zh={zh}/>
     </div>
   </main>;

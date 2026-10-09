@@ -4,6 +4,7 @@ export const SILENCE:RowNote[]=[{v:1},{v:1,rest:true},{v:1},{v:1}];
 export const GAPS:{notes:RowNote[];gap:number;answer:number}[]=[
   {notes:[{v:1},{v:1,rest:true},{v:2}],gap:1,answer:1},
   {notes:[{v:.5},{v:.5,rest:true},{v:1},{v:2}],gap:1,answer:.5},
+  {notes:[{v:.25},{v:.25,rest:true},{v:.5},{v:1},{v:2}],gap:1,answer:.25},
 ];
 export const restPitches=(notes:readonly RowNote[])=>notes.map(n=>n.rest?null:67);
 export type TapResult='correct'|'rest'|'missing'|'timing';
