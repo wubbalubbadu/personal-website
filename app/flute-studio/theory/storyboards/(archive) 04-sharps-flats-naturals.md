@@ -1,3 +1,5 @@
+> **Archived October 7, 2026:** lesson 4 was rebuilt differently after review (one five-slot row from step 1 into step 2, sharps then flats, matching, E sharp; Naturals with a sign you tap away). The code is the reference now.
+
 # Lesson 4: Sharps, flats and naturals (storyboard, draft 6: after the second review)
 
 Bridge: *Every note you've read so far is a white key. How do we write the keys between them?*

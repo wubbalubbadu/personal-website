@@ -22,6 +22,8 @@ export function LanguageProvider({children}:{children:React.ReactNode}){
   // opening the wrong popover.
   useLayoutEffect(()=>{
     const saved=localStorage.getItem(storageKey);
+    // Restore language before paint so controls do not move under a click.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if(saved==="en"||saved==="zh"){setLangState(saved);return}
     if(navigator.language?.toLowerCase().startsWith("zh"))setLangState("zh");
   },[]);

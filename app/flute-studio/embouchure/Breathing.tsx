@@ -12,6 +12,8 @@ export default function Breathing(){
  const [phase,setPhase]=useState(1),[playing,setPlaying]=useState(true),[error,setError]=useState(false),[inhale,setInhale]=useState(false),[cyclePosition,setCyclePosition]=useState(0);
  useEffect(()=>{
   const container=host.current!;let renderer:THREE.WebGLRenderer;
+  // WebGL availability is only known when the browser renderer is created.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   try{renderer=new THREE.WebGLRenderer({antialias:true});}catch{setError(true);return;}
   renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));renderer.setClearColor('#f1f5f6');container.appendChild(renderer.domElement);
   renderer.domElement.setAttribute('aria-label',(zh?"有控制地呼吸时的肋骨、肺、横膈膜与腹壁":"Ribs, lungs, diaphragm and abdominal wall during a controlled breath"));
@@ -20,6 +22,7 @@ export default function Breathing(){
   const light=new THREE.DirectionalLight('#fff8ec',3);light.position.set(-3,5,7);scene.add(light);
   const camera=new THREE.PerspectiveCamera(35,1,.1,50);camera.position.set(3.0,1.8,11.4);
   const controls=new OrbitControls(camera,renderer.domElement);controls.target.set(0,.08,0);controls.enablePan=false;controls.enableDamping=true;controls.minDistance=7;controls.maxDistance=14;controls.minAzimuthAngle=-Math.PI/2;controls.maxAzimuthAngle=Math.PI/2;controls.minPolarAngle=1.05;controls.maxPolarAngle=1.75;controls.enabled=false;renderer.domElement.style.touchAction='pan-y';
+  controls.listenToKeyEvents(container);
   const activate=(on:boolean)=>{controls.enabled=on;renderer.domElement.style.touchAction=on?'none':'pan-y';container.dataset.active=String(on);};
   const pointer=(e:PointerEvent)=>activate(container.contains(e.target as Node));
   const focus=(e:FocusEvent)=>activate(container.contains(e.target as Node));
@@ -47,7 +50,9 @@ export default function Breathing(){
  const seek=(c:number)=>{c=((c%1)+1)%1;cycleRef.current=c;setCyclePosition(c);const p=(1+Math.cos(c*Math.PI*2))/2;phaseRef.current=p;setPhase(p);inhaling.current=c>=.5;setInhale(c>=.5);running.current=false;setPlaying(false);};
  const angle=cyclePosition*Math.PI*2;
  return <Workbench viewport={<>
-  <div ref={host} tabIndex={0} className="emb-canvas breath-canvas"/>
+  {/* OrbitControls handles Shift+arrow rotation on this focusable 3D application. */}
+  {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+  <div ref={host} tabIndex={0} role="application" aria-label={zh?"三维呼吸模型。按住 Shift 并按方向键旋转，按 Escape 退出。":"3D breathing model. Hold Shift and press arrow keys to rotate; press Escape to exit."} className="emb-canvas breath-canvas"/>
   {error&&<p role="alert">{(zh?"三维视图需要 WebGL，请尝试其他浏览器。":"The 3D viewer needs WebGL. Please try another browser.")}</p>}
  </>} panel={<>
   <h2 className="breath-title">{pose.inhale?(zh?"吸气":"Inhale"):(zh?"呼气":"Exhale")}</h2>

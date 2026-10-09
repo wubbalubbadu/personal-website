@@ -1,5 +1,14 @@
 # Cookie Flute Studio — Design Reference
 
+> **Components first.** [COMPONENTS.md](COMPONENTS.md) says which component to use for each job (cards, pills,
+> tempo, close, delete, text sizes).
+> - **Using something:** look it up in COMPONENTS.md and use the component listed, not a page-local copy.
+> - **Building something new:** add it to COMPONENTS.md in the same change (its job, where it lives, its text size).
+> - **Spotting a one-off:** add it to COMPONENTS.md's "Not reused yet" list with the file and line.
+> - **No new `!important`.** Win with a more specific selector (two classes), not `!important`. Older layers
+>   (`ios-theme.css`, `studio-shell.css`, `viewer-fixes.css`) are full of it, which is why every later fix needed it too;
+>   only match it where you must override one of those, and note it.
+
 Every value below is pulled directly from the CSS actually running on the site
 today (`ios-theme.css`, `practice-tool-dock.css`,
 `studio-home.css`, `saved-music.css`, `library.css`, `exercises.css`,
@@ -147,6 +156,17 @@ transparent, borderless shape, but *no* hover background change at all
 get the same hover affordance as a persistent toolbar icon; don't add
 `:hover{background:...}` to a close button even though it looks like an
 icon button otherwise.
+
+### Close vs delete (the user has asked for this many times: follow it every time)
+
+- **× means close, and only close**: it dismisses a panel, dialog, sheet or toolbar. It looks exactly like the
+  Mark Up toolbar's close (`.markup-close` in reader-workspace.css): a plain × (1.7 stroke, round caps), no fill,
+  no border, no circle behind it, dark (`#111`), and **no hover background or colour change**.
+- **Taking something away uses the trash icon** (`PracticeIcon name="delete"`), never ×: removing a step, a session,
+  a piece from a list, a piece from a deadline. Grey (`#9a9ca3`), no fill; on hover only the colour changes, to red
+  (`#a5372f`). On rows and cards it can be hidden until hover, but it must always be visible on touch
+  (`@media(hover:none)`).
+- Never a filled grey or tinted circle behind either icon, and never an × that removes data.
 
 ## Cards & Rows
 

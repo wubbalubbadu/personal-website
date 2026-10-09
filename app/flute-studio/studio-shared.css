@@ -10,3 +10,20 @@
 .studio-route-loading p{margin:0;font-size:13px}
 @keyframes studio-route-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.studio-route-loading>span{animation:none;border-color:#678956}}
+
+/* Text action (COMPONENTS.md): a quiet word for housekeeping, like restoring defaults. No border, no fill, grey,
+   darker on hover. Not for primary actions, not for links that go somewhere (those are green text links).
+   Two classes, so it beats a page's generic "section button" rule without !important. */
+.studio-route .text-action{display:inline-flex;align-items:center;min-height:32px;padding:0 4px;border:0;border-radius:8px;background:transparent;box-shadow:none;font:inherit;font-size:14px;font-weight:500;color:#6f7178;cursor:pointer}
+.studio-route .text-action:hover{background:transparent;color:#292a33}
+.studio-route .text-action:focus-visible{outline:2px solid #b8bac2;outline-offset:2px}
+
+/* View switch (COMPONENTS.md): two or three ways to show the same page (Cards / Continuous). A quiet grey track;
+   the chosen one is white with a hairline, so "selected" reads without a dark fill. */
+.studio-route .view-switch{display:inline-flex;gap:2px;padding:3px;border-radius:999px;background:#f1f1f4}
+.studio-route .view-switch button{height:30px;padding:0 14px;border:0;border-radius:999px;background:transparent;font:inherit;font-size:13px;font-weight:500;color:#6f7178;cursor:pointer}
+.studio-route .view-switch button:hover{color:#292a33}
+.studio-route .view-switch button[aria-pressed="true"]{background:#fff;color:#292a33;box-shadow:0 0 0 1px #e1e1e5,0 1px 3px rgba(41,42,51,.06)}
+
+/* Words for screen readers only (a label whose visible form is an icon). */
+.sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}

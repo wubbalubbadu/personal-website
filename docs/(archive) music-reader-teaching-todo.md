@@ -1,3 +1,5 @@
+> **Archived October 7, 2026:** all items done; the one open item (theory tooltips are English only) moved to docs/TODO.md.
+
 # Music reader teaching TODO
 
 Applies to both Scale Studio and the music sheet viewer. Both render through

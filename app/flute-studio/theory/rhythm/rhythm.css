@@ -28,8 +28,8 @@
 .rhythm-hold-meter{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
 .rhythm-lesson .rhythm-hold-track{width:170px;height:8px;border-radius:4px}
 .rhythm-hold-count{font-size:14px;color:#45464f;white-space:nowrap}
-.rhythm-lesson .rhythm-controls>.rhythm-pad{width:132px;height:64px;padding:0;border-radius:32px;background:#292a33;color:#fff;font-size:18px;font-weight:650;touch-action:manipulation;user-select:none;-webkit-user-select:none;transition:transform .06s}
-.rhythm-lesson .rhythm-controls>.rhythm-pad:hover:not(:disabled){background:#3a3b45}
+.rhythm-lesson .rhythm-controls>.rhythm-pad{width:132px;height:64px;padding:0;border-radius:32px;background:#e7eee3;color:#40553d;font-size:18px;font-weight:650;touch-action:manipulation;user-select:none;-webkit-user-select:none;transition:transform .06s}
+.rhythm-lesson .rhythm-controls>.rhythm-pad:hover:not(:disabled){background:#dce8d7}
 .rhythm-lesson .rhythm-pad:active{transform:scale(.95)}
 .note-builder{touch-action:none;cursor:crosshair}
 .note-builder-note{animation:rhythm-appear .3s ease}

@@ -1,0 +1,22 @@
+/* The one tempo control (TempoPill.tsx). Its own blue, so it never reads as something the composer printed.
+   Moved here from scale-book.css (where it was .score-tempo-mark) so every tempo in the studio is this pill. */
+.tempo-pill{display:inline-flex;align-items:center;gap:1px;padding:1px;border-radius:999px;background:#e8f0fb;color:#2f5d99;font-size:12px;line-height:1;white-space:nowrap;transition:background-color .14s ease,box-shadow .14s ease}
+.tempo-pill:hover{background:#dbe8f9}
+.tempo-pill:focus-within{box-shadow:inset 0 0 0 2px #2f5d99}
+.tempo-pill.is-sounding{background:#cfe0f6;box-shadow:inset 0 0 0 1px #7ba4d8}
+.tempo-pill__sound,.tempo-pill__step{width:18px;height:18px;display:grid;place-items:center;border:0;border-radius:50%;background:transparent;color:#6a8ec0;cursor:pointer;padding:0}
+.tempo-pill__sound svg{width:13px;height:13px}
+.tempo-pill__step{font:600 13px/1 inherit}
+.tempo-pill__sound:hover,.tempo-pill__step:hover:not(:disabled){background:#c9dcf4;color:#2f5d99}
+.tempo-pill.is-sounding .tempo-pill__sound{color:#2f5d99}
+.tempo-pill__step:disabled{opacity:.35;cursor:default}
+.tempo-pill__value{display:inline-flex;align-items:center;padding:0 1px}
+.tempo-pill__value input{width:27px;border:0;background:transparent;padding:0;font:700 13px/1 inherit;color:inherit;text-align:center;-moz-appearance:textfield;cursor:pointer}
+.tempo-pill__value input::-webkit-outer-spin-button,.tempo-pill__value input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.tempo-pill__value input:focus{outline:none;cursor:text}
+/* Large: the same pill where tempo is the main control (tricky bits). */
+.tempo-pill--large{gap:2px;padding:3px}
+.tempo-pill--large .tempo-pill__sound,.tempo-pill--large .tempo-pill__step{width:32px;height:32px}
+.tempo-pill--large .tempo-pill__sound svg{width:18px;height:18px}
+.tempo-pill--large .tempo-pill__step{font-size:18px}
+.tempo-pill--large .tempo-pill__value input{width:40px;font-size:16px;font-variant-numeric:tabular-nums}

@@ -51,7 +51,7 @@ export function usePitchPractice({xml,title,on,silence,onStart}:{xml:string;titl
       <button type="button" className="has-tip" aria-pressed={graph} data-tip={zh?"查看音高随时间的变化":"Show how the pitch moved over time"} onClick={()=>setGraph(!graph)}>{zh?"曲线":"Graph"}</button>
       <button type="button" disabled={!all.length} onClick={()=>{session.clear();saved.current.clear();session.select(0)}}>{zh?"清除":"Clear"}</button>
       <span className="divider"/>
-      <Link className="pitch-history" href="/flute-studio/practice#pitch">{zh?"音准记录":"Pitch history"} ›</Link>
+      <Link className="pitch-history" href="/flute-studio/practice#pitch">{zh?"音准记录":"Pitch history"}</Link>
     </div></div>
     {graph&&<div className="tone-graph">
       <ToneTrace attempts={take} selectedId={null} onSelect={id=>{const a=take.find(x=>x.id===id);if(a)select(a.target.id)}} zh={zh}/>

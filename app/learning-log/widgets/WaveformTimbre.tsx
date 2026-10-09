@@ -55,7 +55,6 @@ export default function WaveformTimbre() {
   const [live, setLive] = useState(false);
   const nodesRef = useRef<{ osc: OscillatorNode; g: GainNode } | null>(null);
 
-  useEffect(() => () => stop(), []);
 
   async function toggle() {
     await resume();
@@ -94,6 +93,8 @@ export default function WaveformTimbre() {
     nodesRef.current = null;
     setLive(false);
   }
+  useEffect(() => () => stop(), []);
+
   useEffect(() => {
     if (nodesRef.current) nodesRef.current.osc.type = shape;
   }, [shape]);
@@ -128,7 +129,7 @@ export default function WaveformTimbre() {
       <p className="ll-widget__readout">
         {shape.toUpperCase()} — {SHAPES.find((s) => s.id === shape)!.series}
       </p>
-      <p className="ll-widget__note">{SHAPES.find((s) => s.id === shape)!.blurb}. White noise isn't shown — it has no harmonic structure, just every frequency at once.</p>
+      <p className="ll-widget__note">{SHAPES.find((s) => s.id === shape)!.blurb}. White noise isn&apos;t shown — it has no harmonic structure, just every frequency at once.</p>
     </div>
   );
 }

@@ -38,6 +38,8 @@ export default function PracticeActivityHero(){
       const saved=localStorage.getItem("cookie:practice-plan");
       if(saved){
         const parsed=JSON.parse(saved);
+        // Hydrate the saved checklist after the server render.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         if(Array.isArray(parsed))setDone(parsed.map(Boolean));
       }
     }catch{/* Keep the default plan when stored data is invalid. */}

@@ -29,9 +29,6 @@
   font-weight: 600;
   text-decoration: none;
 }
-.studio-page__back:hover {
-  text-decoration: underline;
-}
 
 .studio-page__titlerow {
   display: flex;

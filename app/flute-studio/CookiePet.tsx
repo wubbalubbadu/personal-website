@@ -1,5 +1,6 @@
 "use client";
 
+import {CloseButton} from "./components/CloseButton";
 import {createPortal} from "react-dom";
 import {usePathname} from "next/navigation";
 import {PointerEvent,useEffect,useLayoutEffect,useRef,useState} from "react";
@@ -80,7 +81,7 @@ export default function CookiePet(){
     {open&&!lessonPage&&<section ref={cardRef} className={`cookie-pomodoro ${cardPlace.below?"is-below":""} ${cardPlace.left?"is-left":""}`} role="dialog" aria-label={t.pomodoro.title}>
       <header>
         <strong>{t.pomodoro.title}</strong>
-        <button type="button" aria-label={t.pomodoro.close} onClick={()=>setOpen(false)}>×</button>
+        <CloseButton label={t.pomodoro.close} onClick={()=>setOpen(false)}/>
       </header>
       <div className="cookie-pomodoro-clock">{formatClock(remaining)}</div>
       {canEditDuration&&<div className="cookie-pomodoro-duration">

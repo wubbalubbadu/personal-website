@@ -1,3 +1,5 @@
+> **Archived October 7, 2026:** a completed report (translations and transfer merge rules); nothing in it is open. Device checks moved to docs/TODO.md.
+
 # Translation and personal data maintenance
 
 Updated October 7, 2026. Local implementation and verification only.

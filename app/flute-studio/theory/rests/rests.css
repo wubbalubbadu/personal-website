@@ -1,0 +1,38 @@
+/* LessonFrame owns typography, timeline, narration, Cookie and Next. Only the musical scene is new. */
+.rests-lesson .rests-scene{width:100%;display:flex;flex-direction:column;align-items:center}
+.rests-lesson .rests-canvas,.rests-lesson .rests-scene>.engraved-row,.rests-lesson .rests-gap-wrap>.engraved-row{height:clamp(260px,42dvh,400px);width:100%;max-height:none}
+.rests-lesson .rests-gap-wrap{width:100%;touch-action:none}
+.rests-lesson .measures-tools{height:52px;min-height:52px;margin:0}
+.rests-hit{fill:transparent;stroke:transparent;stroke-width:2;cursor:pointer;outline:none;touch-action:none}
+.rests-hit:hover,.rests-hit:focus-visible{stroke:#79588e;fill:#eee7f2;fill-opacity:.15}
+.rests-hit.is-selected{stroke:#79588e;fill:#eee7f2;fill-opacity:.2}
+.rests-hit.is-right{stroke:#678956;pointer-events:none}
+.rests-hit.is-inviting,.rests-hit.rests-gap{stroke:#aaa6a0;stroke-dasharray:5 5}
+.rests-hit.is-inviting{animation:rests-invite 1.6s ease-in-out 2}
+.rests-count,.rests-caption{font-family:inherit;text-anchor:middle;fill:#71747e;font-size:18px;font-weight:400}
+.rests-count{font-size:22px;font-weight:500}
+.rests-pulse{fill:#85868e;transform-box:fill-box;transform-origin:center;animation:rests-pulse .3s ease-out}
+.rests-tap{fill:#b65a3c}.rests-tap.is-right{fill:#678956}
+.rests-connection{stroke:#678956;stroke-width:3;fill:none;pointer-events:none;stroke-linecap:round}
+.rests-connection.is-drawing{stroke:#79588e}
+.rests-match{touch-action:none}
+.rests-span{fill:none;stroke:#85868e;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.rests-span.is-wrong{stroke:#b65a3c;stroke-width:4}
+.rests-span-hit{fill:transparent;stroke:transparent;rx:12px}
+.rests-split-target[role=button]{cursor:pointer;outline:none}
+.rests-split-target[role=button] .rests-span-hit{fill:#f3f0e9;fill-opacity:.65}
+.rests-split-target:focus-visible .rests-span-hit{stroke:#79588e}
+.rests-split-in{animation:rests-split .3s ease both}
+.rests-count-in{animation:rests-reveal .25s ease both}
+.rests-drag-ghost{fill:#79588e;opacity:.7;pointer-events:none}
+@keyframes rests-pulse{from{transform:scale(.7)}50%{transform:scale(1.2)}to{transform:scale(1)}}
+@keyframes rests-invite{50%{stroke:#79588e;fill:#eee7f2;fill-opacity:.2}}
+@keyframes rests-split{from{opacity:0;translate:0 -18px}to{opacity:1;translate:0 0}}
+@keyframes rests-reveal{from{opacity:0}to{opacity:1}}
+@media(max-width:700px){.rests-lesson .rests-canvas,.rests-lesson .rests-scene>.engraved-row,.rests-lesson .rests-gap-wrap>.engraved-row{height:clamp(250px,40dvh,360px)}}
+@media(max-height:600px){.rests-lesson .rests-canvas,.rests-lesson .rests-scene>.engraved-row,.rests-lesson .rests-gap-wrap>.engraved-row{height:240px}}
+@media(prefers-reduced-motion:reduce){.rests-hit.is-inviting,.rests-pulse,.rests-split-in,.rests-count-in{animation:none}}
+
+.rests-return{animation:rests-return .8s ease both;pointer-events:none}
+@keyframes rests-return{0%,45%{opacity:.6;transform:none}100%{opacity:0;transform:translate(var(--return-x),var(--return-y))}}
+@media(prefers-reduced-motion:reduce){.rests-return{animation:none;opacity:0}}

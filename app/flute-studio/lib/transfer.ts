@@ -17,10 +17,39 @@
 const TAG="CFS1.";
 
 /** Keys that describe this screen rather than you: they stay on each device. */
-const DEVICE_ONLY=[/^cookie:private-music-code$/,/^cookie:rail-open$/,/^cookie:pet-position$/,/^cookie:reader-view:/];
+const DEVICE_ONLY=[/^cookie:private-music-code$/,/^cookie:rail-open$/,/^cookie:pet-position$/,/^cookie:reader-view:/,/^cookie:pencil-only:/,/^cookie:backup:/];
 const isStudioKey=(key:string)=>key.startsWith("cookie")&&!DEVICE_ONLY.some(rule=>rule.test(key));
 /** Pencil ink is stored as drawn strokes and is by far the biggest thing kept. */
 export const isDrawing=(key:string)=>key.endsWith(":ink")||/:annotations:v2$/.test(key);
+
+/*
+ * Backup reminder. Each device keeps its own dates (both are device-only
+ * keys above): when it was first used and when a code or file was last
+ * made on it. A device is "due" once it has been used for two weeks with
+ * no backup, or 30 days have passed since the last one. New visitors are
+ * never nagged on day one.
+ */
+const FIRST_USE_KEY="cookie:backup:first-use",LAST_BACKUP_KEY="cookie:backup:last";
+const DAY=86_400_000;
+export function markBackedUp(){try{localStorage.setItem(LAST_BACKUP_KEY,new Date().toISOString())}catch{/* Storage may be disabled. */}}
+/** Days since the last backup, null if never; and whether a reminder is due. */
+export function backupStatus(now=Date.now()):{days:number|null;due:boolean}{
+  try{
+    let first=localStorage.getItem(FIRST_USE_KEY);
+    if(!first){first=new Date(now).toISOString();localStorage.setItem(FIRST_USE_KEY,first)}
+    const last=localStorage.getItem(LAST_BACKUP_KEY);
+    if(last){const days=Math.floor((now-Date.parse(last))/DAY);return {days,due:days>=30}}
+    return {days:null,due:now-Date.parse(first)>=14*DAY};
+  }catch{return {days:null,due:false}}
+}
+/**
+ * Asks the browser not to clear this site's storage on its own. It is not
+ * a permission prompt in Safari or Chrome (they decide quietly); Firefox
+ * may ask. It cannot stop someone clearing their data by hand.
+ */
+export function requestPersistentStorage(){
+  void navigator.storage?.persisted?.().then(already=>{if(!already)return navigator.storage.persist?.()}).catch(()=>{});
+}
 
 export type Snapshot={at:string;data:Record<string,string>};
 

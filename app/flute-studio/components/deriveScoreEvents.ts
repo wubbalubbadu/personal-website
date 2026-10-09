@@ -194,10 +194,13 @@ export function deriveScoreEvents(osmd: OSMDType, sempreStaccatoFromMeasure?: nu
     }
   }
   marks.sort((a, b) => a.at - b.at);
-  const dynamics=dynamicTimeline(marks.filter(mark=>mark.wedge||mark.dynamic!==undefined&&(DYNAMIC_LEVEL[mark.dynamic]!==undefined||AFTER_ACCENT[mark.dynamic]!==undefined)).map(mark=>({at:mark.at,
-    ...(mark.dynamic!==undefined?{level:DYNAMIC_LEVEL[mark.dynamic]??AFTER_ACCENT[mark.dynamic]}:{}),
-    ...(mark.wedge?{wedge:{...mark.wedge,to:DYNAMIC_LEVEL[marks.find(next=>next.dynamic!==undefined&&DYNAMIC_LEVEL[next.dynamic]!==undefined&&next.at>=mark.wedge!.until-1e-6&&next.at<=mark.wedge!.until+.25)?.dynamic!]}}:{})
-  })),LEVEL_FLOOR,LEVEL_CEILING);
+  const dynamics=dynamicTimeline(marks.filter(mark=>mark.wedge||mark.dynamic!==undefined&&(DYNAMIC_LEVEL[mark.dynamic]!==undefined||AFTER_ACCENT[mark.dynamic]!==undefined)).map(mark=>{
+    const wedge=mark.wedge;
+    const destination=wedge?marks.find(next=>next.dynamic!==undefined&&DYNAMIC_LEVEL[next.dynamic]!==undefined&&next.at>=wedge.until-1e-6&&next.at<=wedge.until+.25)?.dynamic:undefined;
+    return {at:mark.at,
+      ...(mark.dynamic!==undefined?{level:DYNAMIC_LEVEL[mark.dynamic]??AFTER_ACCENT[mark.dynamic]}:{}),
+      ...(wedge?{wedge:{...wedge,to:destination===undefined?undefined:DYNAMIC_LEVEL[destination]}}:{})};
+  }),LEVEL_FLOOR,LEVEL_CEILING);
   let fifths = 0;
   const EPS = 1e-6;
   const measureStarts: number[] = [];

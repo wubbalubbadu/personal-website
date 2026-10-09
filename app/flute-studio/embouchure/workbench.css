@@ -201,6 +201,5 @@
 .emb .body-model-nav{gap:6px}
 .emb .body-model-nav button{height:34px;padding:0 14px;border-radius:999px;background:#f1f1f2;color:#45464f;font-size:13px}
 .emb .body-model-nav button[aria-pressed="true"]{background:#292a33;color:#fff}
-.emb .emb-viewport-top button{background:rgba(255,255,255,.85);color:#6f7178;font-weight:560}
-.emb .emb-play{background:#292a33;color:#fff}
-.emb .emb-play:hover{background:#3a3b45}
+.emb .emb-play{background:#e7eee3;color:#40553d}
+.emb .emb-play:hover{background:#dce8d7}

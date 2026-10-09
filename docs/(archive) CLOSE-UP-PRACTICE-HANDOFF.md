@@ -1,3 +1,5 @@
+> **Archived October 7, 2026:** an October 2 prototype handoff; Close-up was redesigned afterwards (technique list, Pitch mode with the Tone Lab, selection). Kept for the reasoning only.
+
 # Close-up practice: proposal and implementation handoff
 
 Updated: October 2, 2026

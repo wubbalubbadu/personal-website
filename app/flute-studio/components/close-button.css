@@ -1,0 +1,5 @@
+/* The one close button (CloseButton.tsx). Placement belongs to the caller; the look is only here. */
+.close-button{display:inline-grid;place-items:center;min-width:36px;height:36px;padding:0;border:0;border-radius:0;background:transparent;color:#111;cursor:pointer;box-shadow:none}
+.close-button:hover,.close-button:active{background:transparent;color:#111;transform:none}
+.close-button:focus-visible{outline:2px solid #b8bac2;outline-offset:2px;border-radius:8px}
+.close-button svg{width:18px;height:18px}

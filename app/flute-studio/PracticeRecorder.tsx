@@ -1,4 +1,5 @@
 "use client";
+import {CloseButton} from "./components/CloseButton";
 import {useEffect,useRef,useState} from "react";
 import {useLanguage} from "./i18n/LanguageContext";
 import {PracticeIcon} from "./components/PracticeIcon";
@@ -62,7 +63,7 @@ export default function PracticeRecorder(){
       <small className="recorder-note">{zh?"录音不会上传。":"Recordings are never uploaded."}</small>
     </RecordingPanel>}
     {error&&!take&&<RecordingPanel anchor={recordButton} role="alert">
-      <header><span className="record-error">{error}</span><button type="button" aria-label={zh?"关闭":"Close"} onClick={()=>setError("")}>×</button></header>
+      <header><span className="record-error">{error}</span><CloseButton label={zh?"关闭":"Close"} onClick={()=>setError("")}/></header>
     </RecordingPanel>}
   </div>;
 }

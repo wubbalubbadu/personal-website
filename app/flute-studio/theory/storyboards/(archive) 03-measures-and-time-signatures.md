@@ -1,3 +1,5 @@
+> **Archived October 7, 2026:** the plan for lesson 3's rebuild, which is done; the code is the reference now.
+
 # Lesson 3: Measures and time signatures
 
 Built against `../LESSONS.md`. A first build exists in `../measures/MeasuresLesson.tsx` (seven pages:

@@ -18,8 +18,10 @@ export default function KeyExerciseViewer({config,sections:sourceSections,steppe
   const [activeKey,setActiveKey]=useState<string|null>(null);
   const [prefsLoaded,setPrefsLoaded]=useState(false);
   const tempoKey=`cookie:reichert:tempos:${config.id}`;
-  useEffect(()=>{try{setTempos(JSON.parse(localStorage.getItem(tempoKey)||"{}"))}catch{}setPrefsLoaded(true)},[tempoKey]);
-  useEffect(()=>{if(prefsLoaded)try{localStorage.setItem(tempoKey,JSON.stringify(tempos))}catch{}},[tempos,prefsLoaded,tempoKey]);
+  // Restore browser-only tempos before enabling persistence.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(()=>{try{setTempos(JSON.parse(localStorage.getItem(tempoKey)||"{}"))}catch{/* Storage can be unavailable or invalid. */}setPrefsLoaded(true)},[tempoKey]);
+  useEffect(()=>{if(prefsLoaded)try{localStorage.setItem(tempoKey,JSON.stringify(tempos))}catch{/* Storage can be unavailable or invalid. */}},[tempos,prefsLoaded,tempoKey]);
   const [newLines,setNewLines]=useState(false);
   const [xml,setXml]=useState("");
   const [error,setError]=useState(false);

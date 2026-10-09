@@ -1,5 +1,6 @@
 "use client";
 
+import {PracticeIcon} from "../components/PracticeIcon";
 import Link from "next/link";
 import {useEffect,useState} from "react";
 import {exerciseCatalog,type ExerciseEntry} from "../../../content/exercise-catalog";
@@ -8,7 +9,7 @@ import {useLanguage} from "../i18n/LanguageContext";
 import ScaleStudioPreview from "../ScaleStudioPreview";
 import LongTonePreview from "../LongTonePreview";
 import BreathingPreview from "../BreathingPreview";
-import TallySticks from "../tricky-bits/TallySticks";
+import TallySticks from "../components/TallySticks";
 import {useTrickyBits} from "../lib/trickyBits";
 import "../tricky-bits/tricky-bits.css";
 import "../home-preview-cards.css";
@@ -70,7 +71,7 @@ export default function ExercisesHub(){
             <Link className="exercise-hub__row-main" href={`/flute-studio/exercises/scales?set=${encodeURIComponent(set.id)}`}>
               <span className="exercise-hub__copy"><strong>{set.name}</strong><small>{describeSet(set.config,zh)}</small></span>
             </Link>
-            <button type="button" className="exercise-hub__remove" aria-label={t.exercises.removeSet(set.name)} onClick={()=>deleteScaleSet(set.id)}>×</button>
+            <button type="button" className="exercise-hub__remove" aria-label={t.exercises.removeSet(set.name)} onClick={()=>deleteScaleSet(set.id)}><PracticeIcon name="delete"/></button>
           </article>)}
         </div>
       </section>}

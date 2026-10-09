@@ -134,7 +134,7 @@ export default function TendencyTest(){
         <button type="button" className="tendency__primary" onClick={()=>void startListening()}>{zh?"开始":"Start"}</button>
         {/* One way back to the usual range, and only once it has been changed. */}
         {(low!==DEFAULT_RANGE[0]||high!==DEFAULT_RANGE[1])&&<button type="button" className="tendency__link" onClick={()=>setRange(DEFAULT_RANGE)}>{zh?"恢复为低音 C 到高音 C":"Back to low C to high C"}</button>}
-        {last&&<p className="tendency__note">{zh?"上次测试：":"Last test: "}{new Date(last.date).toLocaleDateString(zh?"zh-CN":undefined)} · <button type="button" className="tendency__link" onClick={()=>{setResult(last);setStep("results")}}>{zh?"查看结果 ›":"See the results ›"}</button></p>}
+        {last&&<p className="tendency__note">{zh?"上次测试：":"Last test: "}{new Date(last.date).toLocaleDateString(zh?"zh-CN":undefined)} · <button type="button" className="tendency__link" onClick={()=>{setResult(last);setStep("results")}}>{zh?"查看结果":"See the results"}</button></p>}
       </section>}
 
       {step==="tune"&&<section className="tendency__stage">

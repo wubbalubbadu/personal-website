@@ -53,7 +53,7 @@ test('tuplet split patterns',()=>{
 
 test('XML writer: one bar per written bar, meter adds up the notes, spelling kept',()=>{
   const at=(name,i,measure)=>({...note(name,i),measure});
-  const g=(n,units,m)=>({n,units});
+  const g=(n,units)=>({n,units});
   const groups=[[g(at('A4',0,5),3),g(at('B4',1,5),1)],[g(at('C5',2,5),3),g(at('D5',3,5),1)],[g(at('F♯5',4,6),3),g(at('G5',5,6),1)]];
   const xml=notesToMusicXML(groups);
   assert.equal((xml.match(/<measure /g)||[]).length,2);

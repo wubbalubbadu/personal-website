@@ -1,5 +1,6 @@
 "use client";
 
+import {CloseButton} from "./components/CloseButton";
 import Link from "next/link";
 import { createPortal } from "react-dom";
 import BackChevron from "./components/BackChevron";
@@ -421,9 +422,7 @@ export default function PracticeToolDock() {
                 if(delta){event.preventDefault();movePanel(anchor.top+delta[0],anchor.right+delta[1])}
               }}
             ><span aria-hidden="true"/></button>
-            <button type="button" className="tools-panel__close" aria-label={t.toolDock.close} onClick={()=>{setOpen(false);launcherRef.current?.focus()}}>
-              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>
-            </button>
+            <CloseButton className="tools-panel__close" label={t.toolDock.close} onClick={()=>{setOpen(false);launcherRef.current?.focus()}}/>
           </div>
 
           {view==="main"?<div className="tools-panel__body">

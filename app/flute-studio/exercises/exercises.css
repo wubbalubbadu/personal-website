@@ -47,7 +47,7 @@
 
 /* A saved set's remove button: a quiet 40px square at the row's right edge. */
 .exercise-hub__remove{flex:0 0 40px;width:40px;height:40px;display:grid;place-items:center;border:0;border-radius:12px;background:transparent;color:#a8aab1;font-size:20px;line-height:1;cursor:pointer;transition:background-color .16s ease,color .16s ease}
-.exercise-hub__remove:hover{background:#f5f5f7;color:#5a5c63}
+.exercise-hub__remove:hover{background:transparent;color:#a5372f}.exercise-hub__remove svg{width:17px;height:17px}
 .exercise-hub__remove:focus-visible{outline:2px solid rgba(103,137,86,.5);outline-offset:1px}
 
 /* ── The featured row ──────────────────────────────────────────────────────

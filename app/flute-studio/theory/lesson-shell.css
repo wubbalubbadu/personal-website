@@ -72,6 +72,7 @@
 /* Cookie's bubble: the task, then feedback, then the only Next button. */
 .lesson-talk{display:flex;align-items:center;gap:16px;width:100%;max-width:760px;margin:0 auto;padding-bottom:24px}
 .lesson-talk #lesson-companion{flex:0 0 64px;display:flex;justify-content:center;min-height:64px}
+.lesson-talk #lesson-companion:empty{display:none}
 .lesson-talk .cookie-pet-wrap.is-docked{width:auto}
 .lesson-bubble{flex:1;display:flex;align-items:center;gap:16px;min-height:106px;padding:14px 14px 14px 22px;border:1px solid transparent;border-radius:22px;background:#faf5ec;color:#453526;transition:background .25s,border-color .25s,color .25s}
 .lesson-bubble.is-correct{background:#edf7ef;border-color:#b7d8be;color:#245437}

@@ -163,6 +163,7 @@ const SHARP_ORDER=["F♯","C♯","G♯","D♯","A♯","E♯","B♯"];
 const FLAT_ORDER=["B♭","E♭","A♭","D♭","G♭","C♭","F♭"];
 const LETTERS=["C","D","E","F","G","A","B"];
 
+const localized=(text:{en:string;zh:string},zh:boolean)=>zh?text.zh:text.en;
 const listNotes=(notes:string[])=>notes.length===1?notes[0]:`${notes.slice(0,-1).join(", ")} and ${notes[notes.length-1]}`;
 
 /**
@@ -189,22 +190,24 @@ function raisedSeventh(tonic:string,signature:string[]){
  * score itself offers as evidence: the note it ends on, which is usually
  * home. That is phrased as a pointer, not a verdict.
  */
-export function keySignatureFromFifths(fifths:number,mode:string|null,lastPitch:string|null,upcoming:MeasureFacts[]=[]){
+export function keySignatureFromFifths(fifths:number,mode:string|null,lastPitch:string|null,upcoming:MeasureFacts[]=[],zh=false){
   const count=Math.min(7,Math.abs(fifths));
   const flats=fifths<0;
   const altered=(flats?FLAT_ORDER:SHARP_ORDER).slice(0,count);
   const [major,minor]=(flats?FLAT_KEYS:SHARP_KEYS)[count];
   const every=count?`Every ${listNotes(altered)} is ${flats?"flattened":"sharpened"} for the rest of the line, unless an accidental changes one.`
     :"No note is sharped or flatted unless an accidental says so.";
-  if(mode==="major")return {title:`Key signature: ${major} major`,text:every};
+  const everyZh=count?`调号中的 ${altered.join("、")} 在后续各小节及各八度均有效，遇到临时记号时按临时记号演奏。`:"调号没有升降记号；遇到临时记号时按临时记号演奏。";
+  if(mode==="major")return {title:localized({en:`Key signature: ${major} major`,zh:`调号：${major} 大调`},zh),text:localized({en:every,zh:everyZh},zh)};
   if(mode==="minor"){
     const seventh=raisedSeventh(minor,altered);
     const written=upcoming.some(measure=>measure.pitches.includes(seventh.written));
-    return {title:`Key signature: ${minor} minor`,text:written?`${every} Watch for ${seventh.spelled}: minor keys raise the 7th note with an accidental, and the signature does not show it.`:every};
+    return {title:localized({en:`Key signature: ${minor} minor`,zh:`调号：${minor} 小调`},zh),text:localized({en:written?`${every} Watch for ${seventh.spelled}: minor keys raise the 7th note with an accidental, and the signature does not show it.`:every,zh:everyZh+(written?` 留意 ${seventh.spelled}：这里用临时记号升高小调的第七级音，调号本身不包含这一变化。`:"")},zh)};
   }
   const hint=lastPitch===major?` The music ends on ${major}, which points to ${major} major.`
     :lastPitch===minor?` The music ends on ${minor}, which points to ${minor} minor.`:"";
-  return {title:"Key signature",text:`${major} major or ${minor} minor: the signature is the same for both.${hint} ${every}`};
+  const hintZh=lastPitch===major?` 乐曲结束在 ${major}，提示可能是 ${major} 大调。`:lastPitch===minor?` 乐曲结束在 ${minor}，提示可能是 ${minor} 小调。`:"";
+  return {title:localized({en:"Key signature",zh:"调号"},zh),text:localized({en:`${major} major or ${minor} minor: the signature is the same for both.${hint} ${every}`,zh:`${major} 大调或 ${minor} 小调，两者的调号相同。${hintZh} ${everyZh}`},zh)};
 }
 
 /**
@@ -213,21 +216,24 @@ export function keySignatureFromFifths(fifths:number,mode:string|null,lastPitch:
  * really is the first n of the standard order: naming a key off a list
  * that is not a key signature would state a confident wrong fact.
  */
-export function keySignatureFromNotes(raw:string[]){
+export function keySignatureFromNotes(raw:string[],zh=false){
   const altered=[...new Set(raw)];
-  if(!altered.length)return "None, so C major or A minor. No note is sharped or flatted unless an accidental says so.";
+  if(!altered.length)return localized({en:"None, so C major or A minor. No note is sharped or flatted unless an accidental says so.",zh:"没有升降记号，可能是 C 大调或 A 小调；遇到临时记号时按临时记号演奏。"},zh);
   const flats=altered.some(note=>note.includes("♭"));
   const order=flats?FLAT_ORDER:SHARP_ORDER;
   const sorted=[...altered].sort((a,b)=>order.indexOf(a)-order.indexOf(b));
   const canonical=sorted.every((note,index)=>note===order[index]);
-  if(!canonical)return `Every ${listNotes(sorted)} is ${flats?"flattened":"sharpened"} here, unless an accidental changes one.`;
+  if(!canonical)return localized({en:`Every ${listNotes(sorted)} is ${flats?"flattened":"sharpened"} here, unless an accidental changes one.`,zh:`这里的 ${sorted.join("、")} 按所列升降记号演奏，临时记号可改变这些音。`},zh);
   const pair=(flats?FLAT_KEYS:SHARP_KEYS)[sorted.length];
-  return `${pair[0]} major or ${pair[1]} minor. Every ${listNotes(sorted)} is ${flats?"flattened":"sharpened"} for the rest of the line, unless an accidental changes one.`;
+  return localized({en:`${pair[0]} major or ${pair[1]} minor. Every ${listNotes(sorted)} is ${flats?"flattened":"sharpened"} for the rest of the line, unless an accidental changes one.`,zh:`${pair[0]} 大调或 ${pair[1]} 小调。调号中的 ${sorted.join("、")} 在后续各小节及各八度均有效，临时记号可改变这些音。`},zh);
 }
 
 /* ------------------------------------------------------------ meter */
 
 const NOTE_VALUE:Record<number,string>={1:"whole",2:"half",4:"quarter",8:"eighth",16:"sixteenth",32:"32nd"};
+const NOTE_VALUE_ZH:Record<number,string>={1:"全音符",2:"二分音符",4:"四分音符",8:"八分音符",16:"十六分音符",32:"三十二分音符"};
+const valueNameZh=(value:number)=>NOTE_VALUE_ZH[value]??`1/${value} 音符`;
+const unitZh=(unit:string)=>valueNameZh(({whole:1,half:2,quarter:4,eighth:8,"16th":16,"32nd":32} as Record<string,number>)[unit]??4);
 const valueName=(beatType:number)=>NOTE_VALUE[beatType]??`1/${beatType}`;
 
 /**
@@ -235,18 +241,18 @@ const valueName=(beatType:number)=>NOTE_VALUE[beatType]??`1/${beatType}`;
  * notes per bar and differ only in where the beat is, which is the thing
  * a generic "top number, bottom number" sentence never gets to.
  */
-export function timeSignatureText({beats,beatType,symbol}:MeasureFacts){
+export function timeSignatureText({beats,beatType,symbol}:MeasureFacts,zh=false){
   const fraction=`${beats}/${beatType}`;
-  if(symbol==="cut"||(beats===2&&beatType===2))return {title:symbol==="cut"?"Cut time (2/2)":"Time signature: 2/2",
-    text:"Two beats in each measure, and the half note gets the beat. The bar holds the same notes as 4/4, but you count and feel it in 2: one beat per half note."};
-  if(symbol==="common"||(beats===4&&beatType===4))return {title:symbol==="common"?"Common time (4/4)":"Time signature: 4/4",
-    text:"Four beats in each measure, and the quarter note gets the beat."};
-  // 6/8, 9/8, 12/8: the beat is three of the bottom value grouped together.
+  const title=localized({en:`Time signature: ${fraction}`,zh:`拍号：${fraction}`},zh);
+  if(symbol==="cut"||(beats===2&&beatType===2))return {title:symbol==="cut"?localized({en:"Cut time (2/2)",zh:"二二拍（2/2）"},zh):title,
+    text:localized({en:"Two beats in each measure, and the half note gets the beat. The bar holds the same notes as 4/4, but you count and feel it in 2: one beat per half note.",zh:"每小节两拍，以二分音符为一拍。每小节的总时值与 4/4 相同，但按两拍来数和感受。"},zh)};
+  if(symbol==="common"||(beats===4&&beatType===4))return {title:symbol==="common"?localized({en:"Common time (4/4)",zh:"四四拍（4/4）"},zh):title,
+    text:localized({en:"Four beats in each measure, and the quarter note gets the beat.",zh:"每小节四拍，以四分音符为一拍。"},zh)};
   if(beats%3===0&&beats>3&&beatType>=8){
     const felt=beats/3,dotted=valueName(beatType/2);
-    return {title:`Time signature: ${fraction}`,text:`${beats} ${valueName(beatType)} notes in each measure, grouped in threes, so you feel ${felt} beats of a dotted ${dotted} each.`};
+    return {title,text:localized({en:`${beats} ${valueName(beatType)} notes in each measure, grouped in threes, so you feel ${felt} beats of a dotted ${dotted} each.`,zh:`每小节有 ${beats} 个${valueNameZh(beatType)}的时值，三个一组，按 ${felt} 拍来感受，每拍为一个附点${valueNameZh(beatType/2)}。`},zh)};
   }
-  return {title:`Time signature: ${fraction}`,text:`${beats===1?"One beat":`${beats} beats`} in each measure, and the ${valueName(beatType)} note gets the beat.`};
+  return {title,text:localized({en:`${beats===1?"One beat":`${beats} beats`} in each measure, and the ${valueName(beatType)} note gets the beat.`,zh:`每小节 ${beats} 拍，以${valueNameZh(beatType)}为一拍。`},zh)};
 }
 
 /* ------------------------------------------------------------ tempo */
@@ -259,23 +265,24 @@ function unitsPerFeltBeat(unit:string,dotted:boolean,{beats,beatType,symbol}:Mea
   return beatLength/unitLength;
 }
 
-export function metronomeText(mark:MetronomeFacts|undefined,meter:MeasureFacts|undefined,fallback:string){
-  if(!mark)return {title:"Metronome mark",text:`${fallback.trim().replace(/^=\s*/,"")} beats per minute. Set the metronome to this number to hear the intended speed.`};
+export function metronomeText(mark:MetronomeFacts|undefined,meter:MeasureFacts|undefined,fallback:string,zh=false){
+  const title=localized({en:"Metronome mark",zh:"节拍器速度标记"},zh);
+  if(!mark)return {title,text:localized({en:`${fallback.trim().replace(/^=\s*/,"")} beats per minute. Set the metronome to this number to hear the intended speed.`,zh:`每分钟 ${fallback.trim().replace(/^=\s*/,"")} 拍。将节拍器设为这个数值，即可听到所标示的速度。`},zh)};
   const unit=`${mark.dotted?"dotted ":""}${mark.unit==="16th"?"sixteenth":mark.unit}`;
-  let text=`${mark.perMinute} ${unit} notes per minute.`;
+  let text=localized({en:`${mark.perMinute} ${unit} notes per minute.`,zh:`每分钟 ${mark.perMinute} 个${mark.dotted?"附点":""}${unitZh(mark.unit)}。`},zh);
   if(meter){
     const ratio=unitsPerFeltBeat(mark.unit,mark.dotted,meter);
     // Only when it comes out whole: "72 beats" is useful, "48.67" is not.
     if(ratio>1&&Number.isInteger(mark.perMinute/ratio)){
       const feltBeat=meter.symbol==="cut"||(meter.beats===2&&meter.beatType===2)?"half note":`dotted ${valueName(meter.beatType/2)}`;
-      text+=` In ${meter.symbol==="cut"?"cut time":`${meter.beats}/${meter.beatType}`} the ${feltBeat} is the beat, so you feel ${mark.perMinute/ratio} beats per minute.`;
+      text+=localized({en:` In ${meter.symbol==="cut"?"cut time":`${meter.beats}/${meter.beatType}`} the ${feltBeat} is the beat, so you feel ${mark.perMinute/ratio} beats per minute.`,zh:` 在 ${meter.beats}/${meter.beatType} 中，以${meter.symbol==="cut"||(meter.beats===2&&meter.beatType===2)?"二分音符":`附点${valueNameZh(meter.beatType/2)}`}为一拍，因此按每分钟 ${mark.perMinute/ratio} 拍来感受。`},zh);
     }
   }
-  if(mark.parentheses)text+=" The parentheses mean it is a suggested speed, often added by an editor.";
-  return {title:"Metronome mark",text};
+  if(mark.parentheses)text+=localized({en:" The parentheses mean it is a suggested speed, often added by an editor.",zh:" 括号表示建议速度，通常由编者添加。"},zh);
+  return {title,text};
 }
 
-type Term={meaning:string;/** [low, high] beats per minute. */bpm?:number[]};
+type Term={meaning:string;zh?:string;/** [low, high] beats per minute. */bpm?:number[]};
 /**
  * Performance words (Italian, French, German, abbreviations, dynamics) live in
  * content/music-terms.json, so the music uploader can add the ones a new
@@ -364,10 +371,10 @@ export function directionRuns(raw:string):{text:string;style:"tempo"|"expression
   return runs;
 }
 
-export function performanceTermText(raw:string,written?:MetronomeFacts){
+export function performanceTermText(raw:string,written?:MetronomeFacts,zh=false){
   const {words,found}=findTerms(raw);
   if(!found.length||found.every(({phrase})=>CONNECTIVES.has(phrase)))return null;
-  const lines=found.map(({phrase,term})=>`${DYNAMICS.has(phrase)?phrase:capitalize(phrase)}: ${term.meaning}.`);
+  const lines=found.map(({phrase,term})=>`${DYNAMICS.has(phrase)?phrase:capitalize(phrase)}: ${localized({en:term.meaning,zh:term.zh??term.meaning},zh)}${zh?"。":"."}`);
   const tempo=found.find(({term})=>term.bpm);
   if(tempo){
     const [low,high]=tempo.term.bpm!;
@@ -378,10 +385,11 @@ export function performanceTermText(raw:string,written?:MetronomeFacts){
     const own=tempo.phrase.split(" "),very=words.some(word=>["assai","molto","très","sehr"].includes(word)&&!own.includes(word)),gentler=words.includes("poco")||words.includes("troppo");
     const pace=low>=120?"fast":high<=80?"slow":"moderate";
     const lean=very?(pace==="fast"?" Toward the faster end, since it says very.":pace==="slow"?" Toward the slower end, since it says very.":" Very moderate means calmer, so toward the slower end."):gentler?" Toward the middle, since it asks for restraint.":"";
-    lines.push(`${capitalize(tempo.phrase)} is usually about ${low} to ${high} beats per minute.${lean}`);
+    const leanZh=very?(pace==="fast"?" 因为标有“很”，可偏向较快的一端。":pace==="slow"?" 因为标有“很”，可偏向较慢的一端。":" “很从容”意味着更平静，可偏向较慢的一端。"):gentler?" 因为要求节制，可偏向范围中间。":"";
+    lines.push(localized({en:`${capitalize(tempo.phrase)} is usually about ${low} to ${high} beats per minute.${lean}`,zh:`${capitalize(tempo.phrase)} 通常约为每分钟 ${low} 至 ${high} 拍。${leanZh}`},zh));
     if(written){
       const where=written.perMinute<low?", slower than usual":written.perMinute>high?", faster than usual":", inside that range";
-      lines.push(`This score asks for ${written.perMinute} ${written.dotted?"dotted ":""}${written.unit==="16th"?"sixteenth":written.unit} notes per minute${where}.`);
+      lines.push(localized({en:`This score asks for ${written.perMinute} ${written.dotted?"dotted ":""}${written.unit==="16th"?"sixteenth":written.unit} notes per minute${where}.`,zh:`本谱要求每分钟 ${written.perMinute} 个${written.dotted?"附点":""}${unitZh(written.unit)}，${written.perMinute<low?"比通常更慢":written.perMinute>high?"比通常更快":"在通常范围内"}。`},zh));
     }
   }
   return {title:raw.trim(),text:lines.join(" ")};

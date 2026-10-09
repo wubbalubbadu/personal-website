@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import ts from 'typescript';
 const source=fs.readFileSync(new URL('../app/flute-studio/lib/annotationDocument.ts',import.meta.url),'utf8');
-const module=ts.transpile(source,{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022});
-const {AnnotationHistory,AnnotationContacts,emptyAnnotations,paperPoint,moveMark,hitsInk,penOutline}=await import(`data:text/javascript;base64,${Buffer.from(module).toString('base64')}`);
+const compiled=ts.transpile(source,{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022});
+const {AnnotationHistory,AnnotationContacts,emptyAnnotations,paperPoint,moveMark,hitsInk,penOutline}=await import(`data:text/javascript;base64,${Buffer.from(compiled).toString('base64')}`);
 const stroke={id:'pen',kind:'pen',width:2.4,color:'red',points:[{x:10,y:20,p:.2},{x:110,y:20,p:.8}]};
 const sticky={id:'sticky',kind:'sticky',x:50,y:60,text:'',color:'black'};
 

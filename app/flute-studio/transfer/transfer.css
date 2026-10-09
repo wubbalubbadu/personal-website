@@ -9,8 +9,8 @@
 .transfer-card__option small{font-size:12px;color:#9a9ca3}
 .transfer-card__actions{display:flex;gap:8px;flex-wrap:wrap}
 .transfer-card__primary,.transfer-card__secondary{height:44px;padding:0 18px;border:0;border-radius:14px;font:inherit;font-size:14px;font-weight:650;cursor:pointer}
-.transfer-card__primary{background:#292a33;color:#fff}
-.transfer-card__primary:hover{background:#3a3b45}
+.transfer-card__primary{background:#e7eee3;color:#40553d}
+.transfer-card__primary:hover{background:#dce8d7}
 .transfer-card__secondary{background:#f1f1f4;color:#3d3e46}
 .transfer-card__secondary:hover{background:#e6e6ea}
 .transfer-card__code{width:100%;min-height:96px;box-sizing:border-box;padding:12px;border:1px solid #e3e3e8;border-radius:14px;background:#fafafb;resize:vertical;

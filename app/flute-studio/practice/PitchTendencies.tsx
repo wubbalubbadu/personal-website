@@ -42,7 +42,7 @@ export function PitchTendencies({zh}:{zh:boolean}){
     <div className="practice-card__heading">
       <h2 id="pitch-title">{zh?"音准倾向":"Pitch tendencies"}</h2>
       {records.length>0&&<span className="pitch-card__meta">{zh?`${records.length} 个音 · ${habit.sessions} 次练习`:`${records.length} notes · ${habit.sessions} ${habit.sessions===1?"session":"sessions"}`}</span>}
-      <Link className="pitch-card__test" href="/flute-studio/tools/tendency">{zh?"做音准测试 ›":"Take the pitch test ›"}</Link>
+      <Link className="pitch-card__test" href="/flute-studio/tools/tendency">{zh?"做音准测试":"Take the pitch test"}</Link>
     </div>
     {/* The map is always there: empty cells are notes not measured yet, so you can see what will fill in. The insights sit beside it. */}
     <div className="pitch-card__body">

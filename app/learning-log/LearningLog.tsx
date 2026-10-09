@@ -96,6 +96,8 @@ export default function LearningLog() {
   return (
     <div className="ll">
       <header className="ll-top">
+        {/* A full page navigation intentionally leaves the learning log and its hash routing. */}
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a className="ll-back" href="/">← Haylie Wu</a>
         <span className="ll-top__crumb">
           <button type="button" className="ll-crumb-btn" onClick={goIndex}>

@@ -1,3 +1,5 @@
+> **Archived October 7, 2026:** superseded by later lesson 4 rebuilds; the code is the reference now.
+
 # Lesson 4 revision plan (after the first build)
 
 Fixes for the built lesson (`theory/accidentals/AccidentalsLesson.tsx`), from the user's review.

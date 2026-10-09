@@ -463,7 +463,7 @@ html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document"
 .reader-settings-panel .scale-book__set-open small{font-size:11.5px;color:#71747e;line-height:1.35}
 .reader-settings-panel .scale-book__set.is-active .scale-book__set-open small{color:#4d6448}
 .reader-settings-panel .scale-book__set-delete{flex:0 0 32px;width:32px;height:32px;margin-right:4px;border:0;border-radius:50%;background:transparent;color:#a5a7ad;font-size:17px;line-height:1;cursor:pointer}
-.reader-settings-panel .scale-book__set-delete:hover{background:rgba(41,42,51,.08);color:#5a5c63}
+.reader-settings-panel .scale-book__set-delete:hover{background:transparent;color:#a5372f}.reader-settings-panel .scale-book__set-delete svg{width:16px;height:16px}
 .reader-settings-panel .scale-book__sets-empty{margin:6px 0 0;font-size:12.5px;line-height:1.5;color:#71747e}
 
 .reader-settings-panel .scale-book__save{display:flex;align-items:flex-end;gap:8px;margin-top:18px;padding-top:16px;border-top:1px solid rgba(41,42,51,.08)}
@@ -623,7 +623,7 @@ html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document"
   /* Annotations print; their controls do not. */
   .score-note__remove { display: none !important; }
   .score-tempo-mark { background: none !important; box-shadow: none !important; }
-  .score-tempo-mark__step, .score-tempo-mark__sound { display: none !important; }
+  .score-tempo-mark .tempo-pill__step, .score-tempo-mark .tempo-pill__sound { display: none !important; }
 }
 
 /* Back to the start. Quieter than the page arrows either side of it —
@@ -805,7 +805,6 @@ html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document"
   pointer-events:auto;
   color:#4b6a55;font-size:11px;font-weight:600;text-decoration:none;
 }
-.restored-reader .flute-tip .finger-diagram__alts:hover{text-decoration:underline}
 
 /* A host's own tool row stacks above mark-up's, in the same grid row, so the
    two modes can be open together. A stage covers the music area in place;

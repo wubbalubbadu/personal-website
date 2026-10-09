@@ -1,3 +1,5 @@
+> **Archived October 7, 2026:** the first build plan for lesson 4, superseded by several rebuilds; the code is the reference now.
+
 # Lesson 4 build plan: Sharps, flats and naturals
 
 Step-by-step instructions for building lesson 4. The *why* is in `04-sharps-flats-naturals.md`

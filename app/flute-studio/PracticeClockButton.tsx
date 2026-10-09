@@ -17,7 +17,7 @@ import "./practice-clock-button.css";
  * resume, and the square beside it stops the clock; then it asks whether to save that practice (with a note). It is the same clock as My Studio's Today's
  * practice card, so a session started here shows there, and a routine step that is this piece counts this time.
  */
-export default function PracticeClockButton(){
+export default function PracticeClockButton({target}:{target?:ClockTarget}={}){
   const {lang}=useLanguage(),zh=lang==="zh",pathname=usePathname();
   const clock=usePracticeClock(),pending=usePendingSessions(),privateMusic=usePrivateMusic();
   const [now,setNow]=useState(0),[shown,setShown]=useState(false);
@@ -38,7 +38,9 @@ export default function PracticeClockButton(){
   // What this page is: an exercise (by its address) or a piece (by its score page's address).
   const exercise=exerciseCatalog.find(entry=>entry.href&&pathname===entry.href);
   const piece=[...musicLibrary,...privateMusic.items].find(entry=>entry.viewerPath&&pathname===entry.viewerPath);
-  const here:ClockTarget|null=exercise?{title:zh?exercise.zhTitle:exercise.title,ref:exercise.id,itemType:"exercise"}:piece?{title:piece.title,ref:piece.id,itemType:"repertoire"}:null;
+  // Tricky bits time as one session for the whole sitting, never one per bit: you move between them too quickly.
+  const tricky=pathname.startsWith("/flute-studio/tricky-bits")?{title:zh?"难点练习":"Tricky bits",ref:"tricky-bits",itemType:"exercise" as const}:null;
+  const here:ClockTarget|null=target??tricky??(exercise?{title:zh?exercise.zhTitle:exercise.title,ref:exercise.id,itemType:"exercise"}:piece?{title:piece.title,ref:piece.id,itemType:"repertoire"}:null);
   const fallback=zh?"练习":"Practice";
 
   // A finished stretch waits for Save or Discard. My Studio asks inside its practice card; everywhere else the clock asks,

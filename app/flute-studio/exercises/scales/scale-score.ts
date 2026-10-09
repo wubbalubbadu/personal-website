@@ -148,6 +148,29 @@ export type ScaleFormId=typeof scaleForms[number]["id"];
 const intervalForms=["seconds","thirds","fourths","fifths","sixths","sevenths"] as const;
 type IntervalFormId=typeof intervalForms[number];
 const isIntervalForm=(form:ScaleFormId):form is IntervalFormId=>(intervalForms as readonly string[]).includes(form);
+/**
+ * How the walk is played. 1 is straight through. 3 and 4 are "broken"
+ * (sequenced): overlapping groups, each starting one note later than the
+ * last, so C D E F, D E F G … on a scale and do mi sol do, mi sol do mi …
+ * on an arpeggio. It applies to whatever the form walks, which is why one
+ * setting covers every type, chromatic included. The interval forms are
+ * already pairs, so grouping them would only blur the interval.
+ */
+export const scaleGroupings=[
+  {size:1,label:"Straight",zh:"直接"},
+  {size:3,label:"Groups of 3",zh:"三音一组"},
+  {size:4,label:"Groups of 4",zh:"四音一组"},
+] as const;
+export type ScaleGroupSize=typeof scaleGroupings[number]["size"];
+export const groupsApply=(form:ScaleFormId)=>form==="scale"||form==="arpeggio";
+/** Overlapping runs of `size` along one direction of the walk. */
+function windows(seg:number[],size:number):number[]{
+  if(seg.length<=size)return seg;
+  const out:number[]=[];
+  for(let i=0;i+size<=seg.length;i++)out.push(...seg.slice(i,i+size));
+  return out;
+}
+
 /** "hold" parks a whole note with a fermata on the tonic at the end. */
 export type ScaleEnding="none"|"hold";
 
@@ -286,7 +309,7 @@ function ascendingDegrees(form:ScaleFormId,low:number,high:number,ceiling:number
 }
 
 /** Repeat supplies the final tonic, avoiding a doubled note at the join. */
-export function scaleNotes(key:MajorKey,range:ScaleRange,typeId:ScaleTypeId="major",form:ScaleFormId="scale",ending:ScaleEnding="none",start:ScaleStart="tonic",span:ScaleSpan=DEFAULT_SCALE_SPAN):ScaleNote[]{
+export function scaleNotes(key:MajorKey,range:ScaleRange,typeId:ScaleTypeId="major",form:ScaleFormId="scale",ending:ScaleEnding="none",start:ScaleStart="tonic",span:ScaleSpan=DEFAULT_SCALE_SPAN,groups:ScaleGroupSize=1):ScaleNote[]{
   const type=typeById(typeId),spelled=keyForType(key,type);
   const card=degreesPerOctave(type);
   let low=0,high=range==="one"?card:card*2;
@@ -317,7 +340,33 @@ export function scaleNotes(key:MajorKey,range:ScaleRange,typeId:ScaleTypeId="maj
   // minor differs between the two, but the flag has to travel per note
   // because one exercise contains both directions.
   const path:{degree:number;up:boolean}[]=[];
-  if(form==="scale"&&(start==="lowest"||range==="custom")){
+  if(groups>1&&groupsApply(form)){
+    // The same walks as below, cut into overlapping groups one direction
+    // at a time. Each direction is grouped on its own so no group turns
+    // around halfway; the note at each turn is the last of one group and
+    // the first of the next, as in any sequenced scale.
+    if(form==="arpeggio"){
+      // An arpeggio has too few notes per octave to group inside the span
+      // (one octave of C E G C is a single group of four), so like the
+      // interval forms the range says where each group *starts*: do mi sol
+      // do, mi sol do mi, sol do mi sol. Coming down is the exact mirror,
+      // which keeps every group whole at the turn.
+      const card=degreesPerOctave(type),chord=type.chord as readonly number[];
+      const tones:number[]=[];
+      for(let d=low;tones.length<200&&d<=Math.min(ceiling,high+card*2);d++)if(chord.includes(((d%card)+card)%card))tones.push(d);
+      const climb:number[]=[];
+      for(let i=0;i+groups<=tones.length&&tones[i]<high;i++)climb.push(...tones.slice(i,i+groups));
+      climb.forEach(degree=>path.push({degree,up:true}));
+      [...climb].reverse().forEach(degree=>path.push({degree,up:false}));
+    }else{
+      const walk=Array.from({length:high-low+1},(_,i)=>low+i);
+      const opening=start==="tonic"?Math.max(low,0):low;
+      const segments:[number[],boolean][]=opening>low
+        ?[[walk.filter(d=>d>=opening),true],[[...walk].reverse(),false],[walk.filter(d=>d<=opening),true]]
+        :[[walk,true],[[...walk].reverse(),false]];
+      for(const [seg,up] of segments)windows(seg,groups).forEach(degree=>path.push({degree,up}));
+    }
+  }else if(form==="scale"&&start==="lowest"){
     // Straight up the span and back down, so the exercise opens on the
     // lowest note it will play rather than in the middle of its range.
     for(let i=low;i<=high;i++)path.push({degree:i,up:true});
@@ -379,9 +428,9 @@ function beatChunks(count:number,perQuarter:number,durations:{divisions:number}[
   return chunks;
 }
 
-export function scaleMusicXML(key:MajorKey,range:ScaleRange,articulationSelection:ArticulationSelection=defaultArticulationSelection,rhythm:RhythmChoice="even",typeId:ScaleTypeId="major",form:ScaleFormId="scale",ending:ScaleEnding="none",start:ScaleStart="tonic",span:ScaleSpan=DEFAULT_SCALE_SPAN):string{
+export function scaleMusicXML(key:MajorKey,range:ScaleRange,articulationSelection:ArticulationSelection=defaultArticulationSelection,rhythm:RhythmChoice="even",typeId:ScaleTypeId="major",form:ScaleFormId="scale",ending:ScaleEnding="none",start:ScaleStart="tonic",span:ScaleSpan=DEFAULT_SCALE_SPAN,groups:ScaleGroupSize=1):string{
   const type=typeById(typeId),spelled=keyForType(key,type);
-  const notes=scaleNotes(key,range,typeId,form,ending,start,span);
+  const notes=scaleNotes(key,range,typeId,form,ending,start,span,groups);
   const held=ending==="hold"?notes[notes.length-1]:null;
   const runLength=held?notes.length-1:notes.length;
   const durations=resolveRhythm(runLength,rhythm);
@@ -441,12 +490,12 @@ export function scaleMusicXML(key:MajorKey,range:ScaleRange,articulationSelectio
  * consecutive keys instead of repeating the same articulation everywhere.
  */
 export type ScaleBlock={key:MajorKey;type:ScaleTypeId;form:ScaleFormId;label:string};
-export function scaleBookMusicXML(blocks:readonly ScaleBlock[],range:ScaleRange,newLines=false,articulations:ArticulationSelection[]=[defaultArticulationSelection],rhythm:RhythmChoice="even",ending:ScaleEnding="none",start:ScaleStart="tonic",span:ScaleSpan=DEFAULT_SCALE_SPAN):string{
+export function scaleBookMusicXML(blocks:readonly ScaleBlock[],range:ScaleRange,newLines=false,articulations:ArticulationSelection[]=[defaultArticulationSelection],rhythm:RhythmChoice="even",ending:ScaleEnding="none",start:ScaleStart="tonic",span:ScaleSpan=DEFAULT_SCALE_SPAN,groups:ScaleGroupSize=1):string{
   let number=0;
   const measures=blocks.map((block,keyIndex)=>{
     const key=block.key;
     const articulationSelection=articulations[keyIndex%articulations.length]??defaultArticulationSelection;
-    const part=scaleMusicXML(key,range,articulationSelection,rhythm,block.type,block.form,ending,start,span).match(/<part id="P1">([\s\S]*)<\/part>/)![1];
+    const part=scaleMusicXML(key,range,articulationSelection,rhythm,block.type,block.form,ending,start,span,groups).match(/<part id="P1">([\s\S]*)<\/part>/)![1];
     const first=number===0;
     return part.replace(/<measure number="\d+" implicit="yes">/g,()=>`<measure number="${++number}" implicit="yes">`)
       .replace(/<clef>.*?<\/clef>/,first?"<clef><sign>G</sign><line>2</line></clef>":"")

@@ -52,7 +52,7 @@ function Embouchure(){
    <Workbench
     viewport={<>
      <div ref={host} className="emb-canvas"/>
-     <div className="emb-viewport-top"><button type="button" onClick={()=>reset.current()}>{(zh?"重置视角":"Reset view")}</button></div>
+     <div className="emb-viewport-top"><button type="button" className="text-action" onClick={()=>reset.current()}>{zh?"恢复默认视角":"Restore default view"}</button></div>
     </>}
     panel={<>
      <strong className="emb-note">{noteName(note)}</strong>

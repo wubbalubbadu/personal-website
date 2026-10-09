@@ -9,6 +9,8 @@ export function RecordingPanel({anchor,children,role,label}:{anchor:RefObject<HT
  const [position,setPosition]=useState({left:8,top:8});
  const fit=(left:number,top:number)=>{const box=panel.current?.getBoundingClientRect();return clampPanel(left,top,box?.width??320,box?.height??200,document.documentElement.clientWidth,window.innerHeight)};
  useLayoutEffect(()=>{
+  // Measure the real anchor before paint to avoid a visible position jump.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   const box=anchor.current?.getBoundingClientRect();setPosition(fit(box?.left??8,box?.bottom??8));
   const resize=()=>setPosition(old=>fit(old.left,old.top));window.addEventListener('resize',resize);return()=>window.removeEventListener('resize',resize);
  },[anchor]);

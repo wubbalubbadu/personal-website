@@ -15,3 +15,7 @@
 - Give rigorous, objective feedback. Avoid reflexive compliments.
 - Preserve the user's independent thinking: for learning and important decisions, invite their first attempt or initial judgment before supplying solutions. Handle clearly delegated, clerical, and low-stakes work directly.
 - When the user writes in English, provide one concise, more natural version at the end only when a significant grammar or phrasing correction would be useful. Do not correct casual abbreviations or minor conversational wording.
+
+## Building UI in the flute studio
+
+- Before adding or changing UI in `app/flute-studio`, read `app/flute-studio/COMPONENTS.md` (which component to use for each job) and `app/flute-studio/DESIGN.md` (the values). Reuse the listed component instead of styling a one-off; if nothing fits, add it to COMPONENTS.md.

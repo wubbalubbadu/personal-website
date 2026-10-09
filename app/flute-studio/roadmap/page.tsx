@@ -1,6 +1,7 @@
 "use client";
 
-import {useEffect,useState} from "react";
+import {CloseButton} from "../components/CloseButton";
+import {useEffect,useRef,useState} from "react";
 import {useLanguage} from "../i18n/LanguageContext";
 import "./roadmap.css";
 
@@ -10,16 +11,36 @@ export default function TechniqueRoadmapPage(){
   const {t}=useLanguage();
   const {regions}=t.roadmap;
   const [learned,setLearned]=useState<string[]>([]);
+  const dialog=useRef<HTMLDivElement>(null);
   const [active,setActive]=useState<{region:string;skill:string}|null>(null);
 
   useEffect(()=>{
-    try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");if(Array.isArray(saved))setLearned(saved);}catch{}
+    // Restore the browser checklist after hydration.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");if(Array.isArray(saved))setLearned(saved);}catch{/* Keep the in-memory checklist if storage is unavailable. */}
   },[]);
+
+  // Keep keyboard focus in the open detail and return it to the skill that opened it.
+  useEffect(()=>{
+    if(!active)return;
+    const previous=document.activeElement as HTMLElement|null;
+    const panel=dialog.current;
+    panel?.querySelector<HTMLButtonElement>("button")?.focus();
+    const key=(event:KeyboardEvent)=>{
+      if(event.key==="Escape"){event.preventDefault();setActive(null);return}
+      if(event.key!=="Tab"||!panel)return;
+      const buttons=[...panel.querySelectorAll<HTMLButtonElement>("button:not(:disabled)")],first=buttons[0],last=buttons.at(-1);
+      if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus()}
+      else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus()}
+    };
+    document.addEventListener("keydown",key);
+    return()=>{document.removeEventListener("keydown",key);if(previous?.isConnected)previous.focus()};
+  },[active]);
 
   function toggle(id:string){
     setLearned(prev=>{
       const next=prev.includes(id)?prev.filter(x=>x!==id):[...prev,id];
-      try{localStorage.setItem(STORAGE_KEY,JSON.stringify(next));}catch{}
+      try{localStorage.setItem(STORAGE_KEY,JSON.stringify(next));}catch{/* Keep the in-memory checklist if storage is unavailable. */}
       return next;
     });
   }
@@ -54,11 +75,11 @@ export default function TechniqueRoadmapPage(){
       })}
     </div>
   </div>
-  {activeSkill&&activeRegion&&<div className="roadmap-detail-backdrop" onClick={()=>setActive(null)}>
-    <div className={`roadmap-detail ${activeRegion.tone}`} onClick={e=>e.stopPropagation()}>
-      <button type="button" className="roadmap-detail__close" onClick={()=>setActive(null)} aria-label={t.roadmap.close}>×</button>
+  {activeSkill&&activeRegion&&<div className="roadmap-detail-backdrop" role="presentation" onClick={event=>{if(event.target===event.currentTarget)setActive(null)}}>
+    <div ref={dialog} className={`roadmap-detail ${activeRegion.tone}`} role="dialog" aria-modal="true" aria-labelledby="roadmap-detail-title">
+      <CloseButton className="roadmap-detail__close" label={t.roadmap.close} onClick={()=>setActive(null)}/>
       <p className="roadmap-detail__region">{activeRegion.title}</p>
-      <h3>{activeSkill.title}</h3>
+      <h3 id="roadmap-detail-title">{activeSkill.title}</h3>
       <p>{activeSkill.description}</p>
       <button type="button" className={learned.includes(activeSkill.id)?"roadmap-detail__mark active":"roadmap-detail__mark"} onClick={()=>toggle(activeSkill.id)}>
         {learned.includes(activeSkill.id)?`✓ ${t.roadmap.markUnlearned}`:t.roadmap.markLearned}

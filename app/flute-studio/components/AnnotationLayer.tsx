@@ -1,4 +1,5 @@
 'use client';
+import {CloseButton} from "./CloseButton";
 import {memo,useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {createPortal} from 'react-dom';
 import {PracticeIcon} from './PracticeIcon';
@@ -97,8 +98,9 @@ export function AnnotationLayer({id,active,layoutReady,layoutVersion,toolbar,zh,
     if(!active||!ready||!layoutReady)return;
     if(e.pointerType==='touch'&&(only||tool==='select'||tool==='text'||tool==='sticky'||contacts.current.blocked.has(e.pointerId)))return;
     if((e.target as Element).closest('textarea,button'))return;
+    // Pencil-only rejects fingers (handled above), never a mouse or trackpad:
+    // on a Mac there is no pencil, so the setting used to block all ink there.
     e.preventDefault();e.stopPropagation();
-    if(only&&e.pointerType!=='pen'&&tool!=='select'&&tool!=='text'&&tool!=='sticky')return;
     if(e.pointerType==='pen')contacts.current.penDown(e.pointerId,e.timeStamp);
     if(pointer.current!==null)return;
     endEditing();const p=point(e);pointer.current=e.pointerId;
@@ -248,7 +250,7 @@ export function AnnotationLayer({id,active,layoutReady,layoutVersion,toolbar,zh,
       <button className="markup-icon history-control has-tip" aria-label={zh?'撤销':'Undo'} data-tip={zh?'撤销':'Undo'} disabled={!historyState.canUndo} onClick={()=>travel('undo')}><PracticeIcon name="undo"/></button><button className="markup-icon history-control has-tip" aria-label={zh?'重做':'Redo'} data-tip={zh?'重做':'Redo'} disabled={!historyState.canRedo} onClick={()=>travel('redo')}><PracticeIcon name="redo"/></button>
       <button data-extra="" className="markup-icon history-control has-tip" aria-label={zh?'清除批注':'Clear'} data-tip={zh?'清除批注':'Clear'} disabled={!doc.marks.length&&!doc.legacy} onClick={()=>{endEditing();setSelected(null);commit(emptyAnnotations())}}><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5.5 7h13M10 7V5.5h4V7M7.5 7l.7 11.1a1 1 0 0 0 1 .9h5.6a1 1 0 0 0 1-.9L16.5 7"/></svg></button>
       <button className="markup-icon markup-more" aria-expanded={moreTools} aria-label={moreTools?(zh?'收起工具':'Fewer tools'):(zh?'更多工具':'More tools')} onClick={()=>setMoreTools(value=>!value)}><svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor" aria-hidden="true"><circle cx="4.5" cy="10" r="1.6"/><circle cx="10" cy="10" r="1.6"/><circle cx="15.5" cy="10" r="1.6"/></svg></button>
-      <button className="markup-icon markup-close" aria-label={zh?'关闭批注':'Close markup'} data-tip={zh?'关闭':'Close'} onClick={()=>{endEditing();onClose()}}><svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15"/></svg></button>
+      <CloseButton className="markup-icon markup-close" label={zh?'关闭批注':'Close markup'} onClick={()=>{endEditing();onClose()}}/>
       {storageError&&<span role="status">{zh?'无法保存。请保持页面打开。':'Could not save. Keep this page open.'}</span>}
     </div>,toolbar)}
     {/* A keyboard-enabled drawing application contains its own text editor. */}

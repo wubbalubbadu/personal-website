@@ -8,7 +8,7 @@ const url=code=>`data:text/javascript;base64,${Buffer.from(code).toString('base6
 const model=fs.readFileSync(new URL('../app/flute-studio/theory/model.ts',import.meta.url),'utf8');
 const pitchSource=fs.readFileSync(new URL('../app/flute-studio/theory/accidentals/pitch.ts',import.meta.url),'utf8');
 const pitchModule=url(compile(pitchSource).replace("'../model'",`'${url(compile(model))}'`));
-const {midiOf,letterMidi,soundingAcc,soundingMidi}=await import(pitchModule);
+const {midiOf,letterMidi,soundingAcc,soundingMidi,keyLetters,keyAcc}=await import(pitchModule);
 const pairsSource=fs.readFileSync(new URL('../app/flute-studio/theory/accidentals/pairs.ts',import.meta.url),'utf8');
 const judgeSource=fs.readFileSync(new URL('../app/flute-studio/theory/accidentals/signJudge.ts',import.meta.url),'utf8');
 const {judgeSign,guideParts,SIGN_PARTS,TRACE_TOLERANCE}=await import(url(compile(judgeSource)));
@@ -127,4 +127,25 @@ test('each upright of a natural is credited only to itself',()=>{
   const [a,b,c,d]=SIGN_PARTS.natural;
   assert.equal(verdict('natural',[[[119,440],[119,-440]],c,d]).pass,false);
   assert.equal(verdict('natural',[a,b,c,d]).pass,true);
+});
+
+test('a key signature names its letters in order',()=>{
+  assert.deepEqual(keyLetters(2),['F','C']);
+  assert.deepEqual(keyLetters(-3),['B','E','A']);
+  assert.deepEqual(keyLetters(0),[]);
+});
+
+test('a key signature changes its letter in every octave and across bar lines',()=>{
+  assert.equal(keyAcc(1,1),'sharp');
+  assert.equal(keyAcc(8,1),'sharp');
+  // F4 G4 | F5 with one sharp
+  assert.deepEqual(soundingMidi([n(1),n(2),n(8)],[2],1),[66,67,78]);
+  // B4 E5 with two flats
+  assert.deepEqual(soundingMidi([n(4),n(7)],[],-2),[70,75]);
+});
+
+test('a natural overrides the signature only on its line, until the bar line',()=>{
+  // F5 natural, A4, F5, F4 | G4, F5 with an F sharp signature (lesson 5, step 3)
+  const row=[n(8,'natural'),n(3),n(8),n(1),n(2),n(8)];
+  assert.deepEqual(soundingMidi(row,[4],1),[77,69,77,66,67,78]);
 });

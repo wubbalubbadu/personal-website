@@ -35,8 +35,7 @@
 
 .roadmap-detail-backdrop{position:fixed;inset:0;z-index:200;background:rgba(41,42,51,.28);display:grid;place-items:center;padding:24px;animation:roadmapFade .16s ease-out both}
 .roadmap-detail{position:relative;width:min(380px,100%);border-radius:24px;background:#fff;box-shadow:0 24px 70px rgba(41,42,51,.22);padding:28px;animation:roadmapPop .18s ease-out both}
-.roadmap-detail__close{position:absolute;top:16px;right:16px;width:32px;height:32px;border:0;border-radius:12px;background:transparent;color:#85868e;font-size:20px;line-height:1;cursor:pointer;transition:background-color .16s ease}
-.roadmap-detail__close:hover{background:#f5f5f7}
+.roadmap-detail__close{position:absolute;top:14px;right:14px}
 .roadmap-detail__region{margin:0;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--tone-ink)}
 .roadmap-detail h3{margin:8px 26px 0 0;font-size:20px;line-height:1.2;font-weight:700;letter-spacing:-.02em}
 .roadmap-detail>p:last-of-type{margin:10px 26px 20px 0;font-size:14px;line-height:1.45;color:#71747e}

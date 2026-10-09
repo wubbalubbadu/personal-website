@@ -36,6 +36,8 @@ export function ReaderPopover({label,trigger,children,className="",panelClassNam
   // `placed` gate covers the rest: until the first measurement lands the
   // panel is laid out but not painted.
   useLayoutEffect(()=>{
+    // Reset the pre-paint placement gate when the controlled panel closes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if(!open){setPlaced(false);return}
     // Anchors to the trigger's LEFT edge (clamped to stay on-screen) rather
     // than its right edge — a trigger sitting anywhere left-of-center would

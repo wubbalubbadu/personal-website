@@ -48,7 +48,7 @@
   .account-menu__panel{position:fixed;top:52px!important;right:10px!important}
 }
 
-.account-menu__private{display:grid;gap:8px;padding:4px 12px 12px}.account-menu__private label{display:grid;gap:5px;font-size:12px}.account-menu__private input{width:100%;box-sizing:border-box;padding:9px;border:1px solid #dadbe0;border-radius:8px;font:inherit}.account-menu__private button{padding:9px;border:0;border-radius:8px;background:#292a33;color:white;font:inherit;cursor:pointer}.account-menu__private p{margin:0;font-size:12px}
+.account-menu__private{display:grid;gap:8px;padding:4px 12px 12px}.account-menu__private label{display:grid;gap:5px;font-size:12px}.account-menu__private input{width:100%;box-sizing:border-box;padding:9px;border:1px solid #dadbe0;border-radius:8px;font:inherit}.account-menu__private button{padding:9px;border:0;border-radius:8px;background:#e7eee3;color:#40553d;font:inherit;cursor:pointer}.account-menu__private p{margin:0;font-size:12px}
 
 html body .account-menu__private button{justify-self:start;padding:8px 18px;min-height:40px;border-radius:12px;background:#f1f1f4!important;color:#494953!important;font-size:14px;font-weight:500}
 html body .account-menu__private button:hover:not(:disabled){background:#f5f5f7!important}
@@ -71,3 +71,8 @@ html body .account-menu__private button{min-height:34px;height:34px;padding:6px 
 html body .account-menu .account-menu__item:hover{background-color:#f5f5f7!important}
 html body .account-menu .account-menu__item.is-on,html body .account-menu .account-menu__item.is-on:hover{background-color:transparent!important;color:#292a33!important;font-weight:400!important}
 html body .account-menu .account-menu__item.is-on:hover{background-color:#f5f5f7!important}
+
+/* Backup reminder: a small dot on the gear when one is due, and the line under Sync devices. */
+.account-menu__trigger{position:relative}
+.account-menu__dot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:#d9822b;box-shadow:0 0 0 2px #fff}
+.account-menu__backup.is-due{color:#a8621c}

@@ -52,7 +52,7 @@
 .preview-card__copy b {
   display: block;
   font-size: 16px;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: -0.01em;
 }
 .preview-card__copy small {
@@ -240,8 +240,8 @@
 .home-preview { margin: 0 0 30px; }
 .home-preview__group {
   margin: 0 0 14px;
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 650;
   line-height: 1.15;
   letter-spacing: -0.025em;
   color: #292a33;
@@ -438,4 +438,3 @@
 .home-shelf__column li a:hover{background:#f8faf7}
 .home-shelf__column a:focus-visible{outline:2px solid #79588e;outline-offset:2px}
 .home-shelf__browse{font-size:13px;color:#79588e;text-decoration:none;margin-top:8px}
-.home-shelf__browse:hover{text-decoration:underline}

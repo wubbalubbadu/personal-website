@@ -1,3 +1,5 @@
+> **Archived October 7, 2026:** superseded by later lesson 4 rebuilds; the code is the reference now.
+
 # Lesson 4 revision 2 (corrected after review)
 
 Builds on the current code (revision 1 is in: `SignTracing.tsx`, `MatchNotes.tsx`, `pairs.ts`, the

@@ -42,6 +42,16 @@ export default function TheoryHome(){
       <div className="theory-course__art" aria-hidden="true"><EngravedRow clef notes={[{v:1,p:1,acc:'sharp'},{v:1,p:4,acc:'flat'},{v:1,p:1,acc:'natural'}]} finalBar={false} right={RIGHT} viewBox={ART}/></div>
       <div><div><h2>4. {zh?'升号、降号与还原号':'Sharps, flats and naturals'}</h2><p>{zh?'升号、降号，以及一个记号管多久。':'Sharps, flats and how long a sign lasts.'}</p></div></div>
     </Link>
+    <Link className={`theory-course ${completed.keys?"is-complete":""}`} href="/flute-studio/theory/key-signatures">
+      {completed.keys&&<span className="course-check"><span aria-hidden="true">✓</span> {zh?'已完成':'Completed'}</span>}
+      <div className="theory-course__art" aria-hidden="true"><EngravedRow clef keySignature={2} notes={[{v:1,p:1},{v:1,p:5},{v:1,p:8}]} finalBar={false} right={RIGHT} viewBox={ART}/></div>
+      <div><div><h2>5. {zh?'调号':'Key signatures'}</h2><p>{zh?'在开头只写一次：哪些音要变，什么时候改回来。':'Say it once at the start: which notes change, and how to change one back.'}</p></div></div>
+    </Link>
+    <Link className={`theory-course ${completed.rests?"is-complete":""}`} href="/flute-studio/theory/rests">
+      {completed.rests&&<span className="course-check"><span aria-hidden="true">✓</span> {zh?'已完成':'Completed'}</span>}
+      <div className="theory-course__art" aria-hidden="true"><EngravedRow clef={false} notes={[{v:1},{v:1,rest:true},{v:2}]} meter={{top:4,bottom:4}} right={RIGHT} viewBox={ART}/></div>
+      <div><div><h2>6. {zh?'休止符':'Rests'}</h2><p>{zh?'认识休止符的时值，在安静时继续数拍。':'Read rest lengths and keep counting through silence.'}</p></div></div>
+    </Link>
     </section>
   </main>;
 }

@@ -140,7 +140,8 @@
   .library-content .pick-one-trigger span{display:none}
 }
 
-.library-search:focus-within{box-shadow:0 0 0 3px rgba(41,42,51,.16)!important}
+.library-search:focus-within{border-color:#c9cbd1!important;box-shadow:none!important}
+.library-search>svg{flex:none;color:#9a9ba2}
 .library-content .category-tabs{flex-wrap:wrap;overflow:visible;row-gap:8px}
 /* Every chip in view, wrapping onto as many lines as it takes (not a
    sideways scroller, which hid most of the tags). studio-route scoping

@@ -2,7 +2,7 @@
 
 import {useRef,useState,useSyncExternalStore} from "react";
 import {useLanguage} from "../i18n/LanguageContext";
-import {apply,collect,decode,describe,drawingSize,encode,type DecodeError,type Snapshot} from "../lib/transfer";
+import {apply,collect,decode,describe,drawingSize,encode,markBackedUp,type DecodeError,type Snapshot} from "../lib/transfer";
 import "../practice/practice-page.css";
 import "./transfer.css";
 
@@ -33,9 +33,9 @@ export default function TransferPage(){
       if(typeof ClipboardItem!=="undefined"&&navigator.clipboard?.write){
         await navigator.clipboard.write([new ClipboardItem({"text/plain":makeCode().then(code=>new Blob([code],{type:"text/plain"}))})]);
       }else await navigator.clipboard.writeText(await makeCode());
-      setSent("copied");
+      setSent("copied");markBackedUp();
     }catch{
-      try{await navigator.clipboard.writeText(await makeCode());setSent("copied")}catch{setSent("failed")}
+      try{await navigator.clipboard.writeText(await makeCode());setSent("copied");markBackedUp()}catch{setSent("failed")}
     }
   }
   async function sendFile(){
@@ -43,11 +43,11 @@ export default function TransferPage(){
       const file=new File([await makeCode()],`cookie-flute-studio-${new Date().toISOString().slice(0,10)}.txt`,{type:"text/plain"});
       // Phones get the share sheet (AirDrop, Quick Share, Messages, Drive...);
       // anything without one downloads the file.
-      if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file]});setSent("shared");return}
+      if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file]});setSent("shared");markBackedUp();return}
       const url=URL.createObjectURL(file),link=document.createElement("a");
       link.href=url;link.download=file.name;link.click();
       setTimeout(()=>URL.revokeObjectURL(url),1000);
-      setSent("saved");
+      setSent("saved");markBackedUp();
     }catch(error){
       // Closing the share sheet is not a failure.
       if((error as Error)?.name!=="AbortError")setSent("failed");

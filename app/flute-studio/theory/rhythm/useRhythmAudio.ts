@@ -1,7 +1,7 @@
 'use client';
 import {useCallback, useEffect, useRef, useState} from 'react';
 import {toneSamples} from '../toneSamples';
-import {timings} from './rhythmModel';
+import {playbackEvents} from './rhythmModel';
 import {metronomeSamples, clapSamples} from './metronomeSamples';
 export function useRhythmAudio() {
   const ctx = useRef<AudioContext | null>(null), voices = useRef(new Map<AudioBufferSourceNode, GainNode>());
@@ -18,16 +18,17 @@ export function useRhythmAudio() {
       try { source.stop(now + .065); } catch { /* Voice already ended. */ }
     }); voices.current.clear();
   }, []);
-  const play = useCallback(async (values: readonly number[], pitches: number[] = [], offset = 0, metronome = true) => {
+  const play = useCallback(async (values: readonly number[], pitches: (number|null)[] = [], offset = 0, metronome = true) => {
     stop(); const token = generation.current;
     try {
       const audio = ctx.current && ctx.current.state !== 'closed' ? ctx.current : (ctx.current = new AudioContext());
       await audio.resume(); if (token !== generation.current) return;
       if (audio.state !== 'running') throw new Error('Audio unavailable');
       setError(false);
-      const events = timings(values), start = audio.currentTime + .025;
-      events.forEach((event, i) => {
-        const samples = toneSamples(440 * 2 ** (((pitches[i] ?? 67) - 69) / 12), event.duration, audio.sampleRate);
+      const events = playbackEvents(values,pitches), start = audio.currentTime + .025;
+      events.forEach(event => {
+        if(event.midi===null)return;
+        const samples = toneSamples(440 * 2 ** ((event.midi! - 69) / 12), event.duration, audio.sampleRate);
         const buffer = audio.createBuffer(1, samples.length, audio.sampleRate); buffer.copyToChannel(samples, 0);
         const voice = audio.createBufferSource(), gain = audio.createGain(); voice.buffer = buffer;
         voice.connect(gain).connect(audio.destination); voices.current.set(voice, gain);
@@ -44,7 +45,7 @@ export function useRhythmAudio() {
       const tick = () => {
         if (token !== generation.current) return;
         const time = audio.currentTime - start; setElapsed(time < end.start + end.duration ? Math.max(0, time) : -1);
-        const index = events.findIndex(event => time >= event.start && time < event.start + event.duration); setActive(index < 0 ? -1 : index + offset);
+        const index = events.findIndex(event => time >= event.start && time < event.start + event.duration); setActive(index < 0 || events[index].midi===null ? -1 : index + offset);
         if (time < end.start + end.duration) frame.current = requestAnimationFrame(tick);
       }; tick();
     } catch { setError(true); stop(); }
@@ -87,16 +88,16 @@ export function useRhythmAudio() {
    * more softly. `countOffset` starts the count later (a pickup one beat before beat 1 in 3 is 2).
    * `beat` reports the beat sounding now (counted from 0) for lighting counts.
    */
-  const counted = useCallback(async ({values, pitches = [], top = 4, beatUnit = 1, countOffset = 0, speak = true, click = true, notes = true, offset = 0, secondsPerQuarter = .65}:
-    {values: readonly number[]; pitches?: number[]; top?: number; beatUnit?: number; countOffset?: number; speak?: boolean; click?: boolean; notes?: boolean; offset?: number; secondsPerQuarter?: number}) => {
+  const counted = useCallback(async ({values, pitches = [], top = 4, beatUnit = 1, countOffset = 0, speak = true, click = true, notes = true, offset = 0, secondsPerQuarter = .65, onEnd, onError}:
+    {values: readonly number[]; pitches?: (number|null)[]; top?: number; beatUnit?: number; countOffset?: number; speak?: boolean; click?: boolean; notes?: boolean; offset?: number; secondsPerQuarter?: number; onEnd?:()=>void; onError?:()=>void}) => {
     stop(); const token = generation.current;
     try {
       const audio = await running(); const clips = speak ? await loadCounts(audio) : [];
       if (token !== generation.current) return; setError(false);
-      const events = timings(values, secondsPerQuarter), start = audio.currentTime + .06;
+      const events = playbackEvents(values,pitches,secondsPerQuarter), start = audio.currentTime + .06;
       // Balance: the melody leads, the clicks keep time underneath, the voice counts softly on top.
       // (The count clips are normalised near full scale, the tone is quiet, so both need scaling.)
-      if (notes) events.forEach((event, i) => voice(audio, toneSamples(440 * 2 ** (((pitches[i] ?? 67) - 69) / 12), event.duration, audio.sampleRate), start + event.start, 2.4));
+      if (notes) events.filter(event=>event.midi!==null).forEach(event => voice(audio, toneSamples(440 * 2 ** ((event.midi! - 69) / 12), event.duration, audio.sampleRate), start + event.start, 2.4));
       const total = values.reduce((a, b) => a + b, 0), beats = Math.round(total / beatUnit), beatSeconds = beatUnit * secondsPerQuarter;
       const onsets = new Set(events.map(e => Math.round(e.start / beatSeconds * 1000)));
       for (let b = 0; b < beats; b++) {
@@ -109,10 +110,10 @@ export function useRhythmAudio() {
         if (token !== generation.current) return;
         const time = audio.currentTime - start, playing = time < end;
         setElapsed(playing ? Math.max(0, time) : -1); setBeat(playing && time >= 0 ? Math.floor(time / beatSeconds) : -1);
-        const index = events.findIndex(event => time >= event.start && time < event.start + event.duration); setActive(index < 0 ? -1 : index + offset);
-        if (playing) frame.current = requestAnimationFrame(tick);
+        const index = events.findIndex(event => time >= event.start && time < event.start + event.duration); setActive(index < 0 || events[index].midi===null ? -1 : index + offset);
+        if (playing) frame.current = requestAnimationFrame(tick); else onEnd?.();
       }; tick();
-    } catch { setError(true); stop(); }
+    } catch { if(token===generation.current){setError(true); stop(); onError?.();} }
   }, [stop]);
   // One clap, layered over whatever is playing (it must not cut off the count-in clicks).
   const clap = useCallback(async () => {

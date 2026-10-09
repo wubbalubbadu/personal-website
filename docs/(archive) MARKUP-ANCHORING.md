@@ -1,3 +1,5 @@
+> **Archived October 7, 2026:** superseded: anchored annotations (with editable text, sticky notes and highlighter) are built; this was the handoff for two reverted attempts.
+
 # Markup anchoring — handoff
 
 Context for whoever picks up "pencil markup should stay with its note".

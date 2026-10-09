@@ -1,4 +1,5 @@
 import {tallyGroups} from "../lib/tallyLog";
+import "./tally-sticks.css";
 
 /** Tally marks as drawn on paper: four upright sticks and a fifth across them. */
 export default function TallySticks({count}:{count:number}){

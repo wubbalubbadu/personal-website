@@ -64,7 +64,7 @@ export default function MusicLibrary(){
       <div className="library-content">
         <header className="library-page-header" data-tab-title><div><h1>{t.library.title}</h1></div></header>
         <div className="search-filter">
-          <label className="library-search"><span>⌕</span><input value={query} onChange={e=>setQuery(e.target.value)} placeholder={t.library.searchPlaceholder}/></label>
+          <label className="library-search"><svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><circle cx="9" cy="9" r="5.5"/><path d="m13.2 13.2 3.3 3.3"/></svg><span className="sr-only">{t.library.searchPlaceholder}</span><input value={query} onChange={e=>setQuery(e.target.value)} placeholder={t.library.searchPlaceholder}/></label>
         </div>
         {/* Chips in order of how often they are the way in: your saved music
             right after All, then the three kinds of music, then the lighter shelves.

@@ -1,4 +1,5 @@
 'use client';
+import {CloseButton} from "../../components/CloseButton";
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, type ComponentProps } from 'react';
 import { ScoreViewer } from '../../components/ScoreViewer';
@@ -99,7 +100,7 @@ export function TonePracticeReader({groups:providedGroups,pattern,zh,...reader}:
     <nav className="tone-group-nav" aria-label={zh?'练习组':'Practice groups'}>
       <button disabled={group===0} onClick={()=>navigate(-1)}>‹ {zh?'上一组':'Previous'}</button>
       <span className="tone-group-count">{group+1} / {groups.length}</span>
-      <button disabled={group===groups.length-1} onClick={()=>navigate(1)}>{zh?'下一组':'Next'} ›</button>
+      <button disabled={group===groups.length-1} onClick={()=>navigate(1)}>{zh?'下一组':'Next'}</button>
       <button className="has-tip" aria-pressed={repeat} data-tip={zh?'演奏完这一组后回到开头':'Go back to the start of this group when you finish it'} onClick={()=>{setRepeat(!repeat);session.setRepeat(!repeat)}}>{zh?'重复这一组':'Repeat group'}</button>
     </nav>
     <div className="tone-closeup-music">
@@ -112,7 +113,7 @@ export function TonePracticeReader({groups:providedGroups,pattern,zh,...reader}:
     <ScoreViewer {...reader} practiceActions={pitchButton} practiceRow={pitchRow} stage={stage}
       dock={enabled&&details&&!closeup?<div className="tone-dock">
           {groups[group]&&<div className="tone-dock-music"><ToneNotation block={groups[group]} pattern={pattern} active={selected?.id??0} cursorAfter={review===null&&session.cursorAfter} startEvent={startEvent} attempts={session.attempts} onSelect={select} zh={zh}/></div>}
-          {graph}<button className="tone-dock-close" aria-label={zh?'关闭图表':'Close graph'} onClick={()=>setDetails(false)}>×</button></div>
+          {graph}<CloseButton className="tone-dock-close" label={zh?'关闭图表':'Close graph'} onClick={()=>setDetails(false)}/></div>
         :!enabled&&report?<PitchReportCard report={report} zh={zh} onDone={()=>setReport(null)}/>:undefined}
       onPracticeNote={enabled?select:undefined} practiceEvent={enabled&&!closeup?session.cursor:undefined}
       scoreMarks={enabled?context=><ToneMarks {...context} active={session.cursor} cursorAfter={session.cursorAfter} live={session.live} attempts={session.attempts} running={running} onSelect={select} zh={zh}/>:undefined}/>
@@ -140,6 +141,6 @@ function PitchReportCard({report,zh,onDone}:{report:PitchReport;zh:boolean;onDon
     </ul>
     {worst.length>0&&<p className="tone-report-line">{zh?'先练：':'Start with: '}{worst.join(' · ')}</p>}
     {report.medianHoldMs<HOLD_GOAL_MS&&report.notes>=3&&<p className="tone-report-line">{zh?`试着把每个音保持到 ${HOLD_GOAL_MS/1000} 秒。`:`Try holding each note for ${HOLD_GOAL_MS/1000}s.`}</p>}
-    <footer><Link href="/flute-studio/practice#pitch">{zh?'查看你的音准倾向 ›':'See your pitch tendencies ›'}</Link><button onClick={onDone}>{zh?'完成':'Done'}</button></footer>
+    <footer><Link href="/flute-studio/practice#pitch">{zh?'查看你的音准倾向':'See your pitch tendencies'}</Link><button onClick={onDone}>{zh?'完成':'Done'}</button></footer>
   </section>;
 }

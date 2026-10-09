@@ -466,10 +466,19 @@ function overlay(root:HTMLDivElement,className:string,text:string,x:number,y:num
 function markPlayStart(root:HTMLElement,from:number|null,to:number|null=from){
   root.querySelectorAll(".play-start-bar").forEach(node=>node.remove());
   if(from===null)return;
+  tintBars(root,from,to??from,"play-start-bar");
+}
+/** Saved tricky bits in this piece, as yellow bands ("Show on the page", Tricky bits). Same painting as the selection. */
+function markTrickyBits(root:HTMLElement,ranges:{from:number;to:number}[]){
+  root.querySelectorAll(".tricky-bar").forEach(node=>node.remove());
+  for(const range of ranges)tintBars(root,range.from,range.to,"tricky-bar");
+}
+/** One band of tints over bars from..to (measure positions), closed up at the bar lines inside a line. */
+function tintBars(root:HTMLElement,from:number,to:number,className:string){
   const tints:SVGRectElement[]=[];
-  for(let measure=from;measure<=(to??from);measure++){
+  for(let measure=from;measure<=to;measure++){
     const bar=root.querySelector<SVGGElement>(`.vf-stavenote[data-measure="${measure}"]`)?.closest<SVGGElement>(".vf-measure");
-    const tint=bar&&tintBar(bar,"play-start-bar");
+    const tint=bar&&tintBar(bar,className);
     if(tint)tints.push(tint);
   }
   // Neighbouring bars on one line: close the sliver at each bar line so the selection reads as one band.
@@ -700,13 +709,13 @@ function reshapeSlurs(root:Element){
   });
 }
 
-function tagFermatas(root:HTMLDivElement,text:string){
+function tagFermatas(root:HTMLDivElement,text:string,zh=false){
   root.querySelectorAll<SVGPathElement>(".vf-modifiers path").forEach(path=>{
     const box=path.getBoundingClientRect();
     if(!box.width||!box.height)return;
     const wide=box.width>box.height*1.35, notALine=box.height>box.width*0.3;
     if(!wide||!notALine)return;
-    path.dataset.theoryTitle="Fermata";
+    path.dataset.theoryTitle=zh?"延长记号":"Fermata";
     path.dataset.theory=text;
     path.classList.add("theory-target");
   });
@@ -718,15 +727,16 @@ function tagFermatas(root:HTMLDivElement,text:string){
  * after a signature carries the event index that says which measure that
  * is, and the score's facts say what that measure's key and meter are.
  */
-function addTheoryTargets(root:HTMLDivElement,noteKeys?:string[][],facts?:ScoreFacts|null,measureStarts:number[]=[]){
+function addTheoryTargets(root:HTMLDivElement,noteKeys?:string[][],facts?:ScoreFacts|null,measureStarts:number[]=[],zh=false){
   const tag=(node:SVGElement,title:string,text:string)=>{node.dataset.theoryTitle=title;node.dataset.theory=text;node.classList.add("theory-target")};
-  const targets:[string,string,string][]=[
-    [".vf-clef","Treble clef","The curl circles the G line. Flute music is normally written in this clef."],
-    [".vf-stavetie","Tie","Hold the connected notes as one continuous sound. Do not tongue the second note."],
+  const targets:[string,{en:string;zh:string},{en:string;zh:string}][]=[
+    [".vf-clef",{en:"Treble clef",zh:"高音谱号"},{en:"The curl circles the G line. Flute music is normally written in this clef.",zh:"谱号的卷曲处围绕第二线的 G 音。长笛通常使用高音谱号。"}],
+    [".vf-stavetie",{en:"Tie",zh:"延音线"},{en:"Hold the connected notes as one continuous sound. Do not tongue the second note.",zh:"将连接的同音高音符吹成一个持续的音，第二个音不重新吐音。"}],
+    [".vf-curve",{en:"Slur",zh:"连音线"},{en:"Connect the notes smoothly. Tongue the first note, then keep the air flowing through the rest.",zh:"音与音平滑相接。第一个音吐音，后面的音保持气流连贯。"}],
   ];
-  targets.forEach(([selector,title,text])=>root.querySelectorAll<SVGElement>(selector).forEach(node=>tag(node,title,text)));
+  targets.forEach(([selector,title,text])=>root.querySelectorAll<SVGElement>(selector).forEach(node=>tag(node,title[zh?"zh":"en"],text[zh?"zh":"en"])));
 
-  tagFermatas(root,"Hold the note longer than its written value. How much longer is your choice. Here it marks the end of the exercise, so let the sound settle before you stop.");
+  tagFermatas(root,zh?"将音保持得比谱面时值更长，延长多少由乐句决定。":"Hold the note longer than its written value. Choose how much longer according to the phrase.",zh);
 
   const notes=[...root.querySelectorAll<SVGGElement>(".vf-stavenote[data-event]")];
   const eventAfter=(node:Element)=>{
@@ -741,8 +751,8 @@ function addTheoryTargets(root:HTMLDivElement,noteKeys?:string[][],facts?:ScoreF
 
   root.querySelectorAll<SVGElement>(".vf-timesignature").forEach(node=>{
     const meter=measureAfter(node);
-    if(meter){const {title,text}=timeSignatureText(meter);tag(node,title,text)}
-    else tag(node,"Time signature","The top number gives beats per measure; the bottom number identifies the beat value.");
+    if(meter){const {title,text}=timeSignatureText(meter,zh);tag(node,title,text)}
+    else tag(node,zh?"拍号":"Time signature",zh?"上方数字表示每小节包含多少个下方数字所代表的音符时值。":"The top number gives beats per measure; the bottom number identifies the beat value.");
   });
 
   root.querySelectorAll<SVGElement>(".vf-keysignature").forEach(node=>{
@@ -753,13 +763,13 @@ function addTheoryTargets(root:HTMLDivElement,noteKeys?:string[][],facts?:ScoreF
       // 7th of the harmonic minor one after it.
       const from=facts.measures.indexOf(measure);
       const until=facts.measures.findIndex((entry,index)=>index>from&&entry.keyWritten);
-      const {title,text}=keySignatureFromFifths(measure.fifths,measure.mode,facts.lastPitch,facts.measures.slice(from,until<0?undefined:until));
+      const {title,text}=keySignatureFromFifths(measure.fifths,measure.mode,facts.lastPitch,facts.measures.slice(from,until<0?undefined:until),zh);
       tag(node,title,text);return;
     }
     const event=eventAfter(node);
     const altered=event===undefined?undefined:noteKeys?.[event];
-    tag(node,"Key signature",altered?keySignatureFromNotes(altered)
-      :"Shows which notes are sharped or flatted for the rest of the piece, unless an accidental changes one.");
+    tag(node,zh?"调号":"Key signature",altered?keySignatureFromNotes(altered,zh)
+      :zh?"说明哪些音需要升高或降低，直到调号改变；临时记号可改变这些音。":"Shows which notes are sharped or flatted for the rest of the piece, unless an accidental changes one.");
   });
 
   // Metronome marks, matched to the score's own marks by measure, then by
@@ -768,7 +778,7 @@ function addTheoryTargets(root:HTMLDivElement,noteKeys?:string[][],facts?:ScoreF
     const event=eventAfter(node);
     const measureNumber=event===undefined||!measureStarts.length?undefined:measureForEvent(event,measureStarts);
     const mark=facts?.metronomes.find(entry=>entry.measure===measureNumber)??facts?.metronomes[index];
-    const {title,text}=metronomeText(mark,mark?facts?.measures[mark.measure-1]:undefined,node.textContent??"");
+    const {title,text}=metronomeText(mark,mark?facts?.measures[mark.measure-1]:undefined,node.textContent??"",zh);
     tag(node,title,text);
   });
 
@@ -776,7 +786,7 @@ function addTheoryTargets(root:HTMLDivElement,noteKeys?:string[][],facts?:ScoreF
   // tooltip that says "this is text" teaches nothing.
   root.querySelectorAll<SVGTextElement>(".vf-text:not(.measure-number) text").forEach(node=>{
     const words=node.textContent?.trim()??"";
-    const explained=performanceTermText(words,facts?.metronomes.find(entry=>entry.words===words));
+    const explained=performanceTermText(words,facts?.metronomes.find(entry=>entry.words===words),zh);
     if(explained)tag(node,explained.title,explained.text);
     // One style per kind of marking, whatever OSMD's own tempo-word list happened to catch.
     const style=directionStyle(words);
@@ -868,15 +878,19 @@ function StoryCard({composer,title,story,style,onClose}:{composer:string;title:s
     {story.tempoHint&&<p>{story.tempoHint}</p>}
   </div>;
 }
-export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceActions,practiceRow,stage,dock,onPracticeNote,practiceEvent,defaultNoteSpacing,onTempoChange,unmetered=false,lineBreak,practiceTempo,scoreMarks,headerActions,save,extraSystemSpacing=0}:{config:ScoreViewerConfig;toolbar?:React.ReactNode;settings?:(controls:ReaderControls)=>React.ReactNode;/** Pinned below the music inside the scroll area — for a live readout that has to stay visible while the page scrolls. */aside?:React.ReactNode;/** Title and music to print instead of what is on screen. The PDF is written with jsPDF's built-in Latin-1 fonts, which cannot encode Chinese at all, so a Chinese book prints from an English copy of itself. */printConfig?:{title:string;asset:string};practiceActions?:React.ReactNode;/** A tool row of the host's own, stacked above mark-up's row so both modes can be open at once. */practiceRow?:React.ReactNode;/** Replaces the music area in place (e.g. a close-up view) while the toolbar stays. The engraving stays mounted underneath so its layout survives the switch. */stage?:React.ReactNode|((view:{fingering:boolean})=>React.ReactNode);/** A panel under the music, on the same canvas, that shrinks the score instead of covering it. */dock?:React.ReactNode;onPracticeNote?:(event:number)=>void;practiceEvent?:number;/** Starting note spacing, for books whose notes are faster than the exercise default assumes. Overridden by a saved preference. */defaultNoteSpacing?:number;onTempoChange?:(tempo:number)=>void;unmetered?:boolean;lineBreak?:{value:boolean;onChange:(value:boolean)=>void};practiceTempo?:{value:boolean;onChange:(value:boolean)=>void};scoreMarks?:(context:ScoreMarksContext)=>React.ReactNode;headerActions?:(controls:ReaderControls)=>React.ReactNode;save?:{saved:boolean;onToggle:()=>void;label:string;savedLabel:string};extraSystemSpacing?:number}) {
+export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceActions,practiceRow,stage,dock,onPracticeNote,practiceEvent,defaultNoteSpacing,onTempoChange,unmetered=false,lineBreak,practiceTempo,scoreMarks,headerActions,save,clockTarget,extraSystemSpacing=0}:{config:ScoreViewerConfig;toolbar?:React.ReactNode;settings?:(controls:ReaderControls)=>React.ReactNode;/** Pinned below the music inside the scroll area — for a live readout that has to stay visible while the page scrolls. */aside?:React.ReactNode;/** Title and music to print instead of what is on screen. The PDF is written with jsPDF's built-in Latin-1 fonts, which cannot encode Chinese at all, so a Chinese book prints from an English copy of itself. */printConfig?:{title:string;asset:string};practiceActions?:React.ReactNode;/** A tool row of the host's own, stacked above mark-up's row so both modes can be open at once. */practiceRow?:React.ReactNode;/** Replaces the music area in place (e.g. a close-up view) while the toolbar stays. The engraving stays mounted underneath so its layout survives the switch. */stage?:React.ReactNode|((view:{fingering:boolean})=>React.ReactNode);/** A panel under the music, on the same canvas, that shrinks the score instead of covering it. */dock?:React.ReactNode;onPracticeNote?:(event:number)=>void;practiceEvent?:number;/** Starting note spacing, for books whose notes are faster than the exercise default assumes. Overridden by a saved preference. */defaultNoteSpacing?:number;onTempoChange?:(tempo:number)=>void;unmetered?:boolean;lineBreak?:{value:boolean;onChange:(value:boolean)=>void};practiceTempo?:{value:boolean;onChange:(value:boolean)=>void};scoreMarks?:(context:ScoreMarksContext)=>React.ReactNode;headerActions?:(controls:ReaderControls)=>React.ReactNode;save?:{saved:boolean;onToggle:()=>void;label:string;savedLabel:string};clockTarget?:import("../lib/practiceClock").ClockTarget;extraSystemSpacing?:number}) {
   const {t,lang}=useLanguage();
   const zh=lang==="zh";
+  const theoryZh=useRef(zh);theoryZh.current=zh;
   const {bpm,setBpm,setPlaybackBpm,metro,toggleMetro,stopMetro,toggleDrone,stopAllDrones,drones,initializeScore,setAccent,getAudio,alignMetronome,metroHeld,setBeats}=usePracticeAudio();
   const [droneArmed,setDroneArmed]=useState(false);
   // Notification pills say their piece and go: about 2.5 seconds on screen.
   const [droneHint,setDroneHint]=useState(false),droneHintTimer=useRef(0);
   const [notice,setNotice]=useState(""),noticeTimer=useRef(0);
   const {bits:trickyBits}=useTrickyBits(),router=useRouter(),initialBarsApplied=useRef(false);
+  const pieceBits=trickyBits.filter(bit=>bit.pieceId===config.id);
+  // What the yellow bands should cover now; the re-render pass reads it, so a fresh engraving gets them back.
+  const trickyRangesRef=useRef<{from:number;to:number}[]>([]);
   function flashDroneHint(){/* Where there is hover, the button's own tooltip says this; the pill is for touch. */if(window.matchMedia("(hover:hover)").matches)return;setDroneHint(true);window.clearTimeout(droneHintTimer.current);droneHintTimer.current=window.setTimeout(()=>setDroneHint(false),2500)}
   const [accompanimentMode,setAccompanimentMode]=useState<'off'|'piano'|'both'>('piano'),[pianoLoading,setPianoLoading]=useState(false),[pianoError,setPianoError]=useState('');
   const playbackAccompaniment=useRef<'off'|'piano'|'both'>('off');
@@ -922,7 +936,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   // Which overlay rows are actually on screen. Held in a ref because the
   // layout pass also runs from a ResizeObserver and from the load effect,
   // neither of which re-closes over current state.
-  const overlayVisibilityRef=useRef<OverlayVisibility>({names:false,solfege:false,accidentals:false,tonguing:true,sticks:false});
+  const overlayVisibilityRef=useRef<OverlayVisibility>({names:false,solfege:false,accidentals:false,tonguing:false,sticks:false});
   const [loading,setLoading]=useState(true); const [error,setError]=useState(""); const [selectedMeasure,setSelectedMeasureRaw]=useState<number|null>(null); const startMeasure=selectedMeasure??1; const smartStartMeasure=selectedMeasure??(config.smartDrone?.[0]?.measure??1); const [playing,setPlaying]=useState(false); const [playingFrom,setPlayingFrom]=useState<number|null>(null); const [playingEvent,setPlayingEvent]=useState<number|null>(null); const [annotating,setAnnotating]=useState(false);
   const playingRef=useRef(playing);playingRef.current=playing;
   // One selection for everything: a bar (where Listen starts) or a range of bars (Play, Loop, Close-up, Tricky bits). selectedMeasure is its first bar; rangeEnd is the last bar of a range, or null for a single bar. Bar numbers here are positions (1, 2, 3...), not printed numbers.
@@ -949,10 +963,14 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   // "tap the page to read distraction-free" mode. See scoreClick below for
   // the tap trigger and the effect further down for the fullscreen attempt.
   const [focusMode,setFocusMode]=useState(false);
-  const [noteDisplay,setNoteDisplay]=useState<NoteDisplay>("off"); const [accidentals,setAccidentals]=useState(false); const [tonguing,setTonguing]=useState(true); const [fingering,setFingering]=useState(false); const [rhythmMode,setRhythmMode]=useState<RhythmMode>("off");  const [magnify,setMagnify]=useState(1); const [fingerTip,setFingerTip]=useState<{pitch:string;name:string;octave:string;solfege:string;beat:string;x:number;y:number}|null>(null); const [theoryTip,setTheoryTip]=useState<{title:string;text:string;x:number;y:number}|null>(null); const [storyCard,setStoryCard]=useState<{x:number;y:number}|null>(null);
+  const [noteDisplay,setNoteDisplay]=useState<NoteDisplay>("off"); const [accidentals,setAccidentals]=useState(false); /* Tonguing syllables are personal (players tongue as they like), so the reader no longer shows them. */const tonguing=false; const [fingering,setFingering]=useState(false); const [rhythmMode,setRhythmMode]=useState<RhythmMode>("off");  const [magnify,setMagnify]=useState(1); const [fingerTip,setFingerTip]=useState<{pitch:string;name:string;octave:string;solfege:string;beat:string;x:number;y:number}|null>(null); const [theoryTip,setTheoryTip]=useState<{title:string;text:string;x:number;y:number}|null>(null); const [storyCard,setStoryCard]=useState<{x:number;y:number}|null>(null);
   // Unmetered exercise books have no beat grid. Keep this effective value
   // off even if an older saved exercise preference contains a rhythm mode.
   const activeRhythmMode:RhythmMode=unmetered?"off":rhythmMode;
+  // "Show on the page: Tricky bits": this piece's saved bits as yellow bands. Remembered on this device.
+  const [showTricky,setShowTrickyState]=useState(false);
+  useEffect(()=>{try{if(localStorage.getItem("cookie:reader-show-tricky")==="1")setShowTrickyState(true)}catch{/* off */}},[]);// eslint-disable-line react-hooks/set-state-in-effect
+  const setShowTricky=(on:boolean)=>{setShowTrickyState(on);try{localStorage.setItem("cookie:reader-show-tricky",on?"1":"0")}catch{/* this visit only */}};
   const [theoryEnabled,setTheoryEnabled]=useState(false),[sizePreference,setSizePreference]=useState(.8),[fitNote,setFitNote]=useState("");
   const sizePreferenceRef=useRef(sizePreference);
   // The size the reader chose (saved and shared). The size on screen can differ: a phone zooms a short piece up to fill the page without changing this.
@@ -1015,7 +1033,6 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
         if(Number.isFinite(own?.noteSpacing))setNoteSpacing(own.noteSpacing);
         if(typeof saved.noteDisplay==="string")setNoteDisplay(saved.noteDisplay);
         if(typeof saved.accidentals==="boolean")setAccidentals(saved.accidentals);
-        if(typeof saved.tonguing==="boolean")setTonguing(saved.tonguing);
         if(typeof saved.fingering==="boolean")setFingering(saved.fingering);
         /* The old counting mode is gone: a saved "counts" now shows the beat sticks. */if(typeof saved.rhythmMode==="string")setRhythmMode(saved.rhythmMode==="off"?"off":"bars");
         /* eslint-enable react-hooks/set-state-in-effect */
@@ -1120,15 +1137,27 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     tagReminderAccidentals(drawn,remindersOn.current?reminderEvents.current:new Set(),fromEvent);
     placePracticeOverlays(root,seq.events,seq.measureStarts,seq.unitsPerBeat,seq.keyAccidentals??new Set(),config.displayPitches,config.noteKeySignatures,unmetered,config.syllables,overlayVisibilityRef.current,scoreFactsRef.current?.measures,fromEvent>0?measureForEvent(fromEvent,seq.measureStarts):1);
     placeNameLabels(fromEvent>0?measureForEvent(fromEvent,seq.measureStarts):1);
-    addTheoryTargets(root,config.noteKeySignatures,scoreFactsRef.current,seq.measureStarts);
+    addTheoryTargets(root,config.noteKeySignatures,scoreFactsRef.current,seq.measureStarts,theoryZh.current);
     updateDroneHighlight();
     markPlayStart(root,selectionRef.current?.from??null,selectionRef.current?.to??null);
+    markTrickyBits(root,trickyRangesRef.current);
     // Two pages draws the title and composer inside the score. Tag them so CSS
     // can give them the page heading's fonts (Georgia title, grey system-font
     // composer), and so the composer opens the same card when there is one.
     root.querySelectorAll<SVGTextElement>("svg text").forEach(text=>{const words=text.textContent?.trim();if(words===title){text.dataset.scoreTitle="";text.textContent="";for(const part of title.split(/(\d+)/)){const span=document.createElementNS('http://www.w3.org/2000/svg','tspan');span.textContent=part;if(/^\d+$/.test(part))span.setAttribute('font-family','Times New Roman, serif');text.appendChild(span)}}else if(words===composer){text.dataset.composer="";const svg=text.ownerSVGElement;const titleText=svg?Array.from(svg.querySelectorAll<SVGTextElement>("text")).find(node=>node.textContent?.trim()===title):undefined;if(titleText){const bounds=titleText.getBBox();text.setAttribute("x",String(bounds.x+bounds.width/2));text.setAttribute("text-anchor","middle");const composerBounds=text.getBBox();text.setAttribute("y",String(bounds.y+bounds.height+composerBounds.height*1.6));}if(config.story)text.dataset.composerCard=""}});
   }
+  // Dismiss an open translation when the language changes; its next tap reads the new labels.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(()=>setTheoryTip(null),[zh]);
+  // Re-label the engraved SVG when language changes, including later incremental pages.
+  useEffect(()=>{const root=scoreRef.current;if(root)addTheoryTargets(root,config.noteKeySignatures,scoreFactsRef.current,sequenceRef.current.measureStarts,zh)},[zh,layoutVersion,config.noteKeySignatures]);
   useEffect(()=>{const root=scoreRef.current;if(!root)return;markPlayStart(root,selection?.from??null,selection?.to??null);placeRangeUi()},[selectedMeasure,rangeEnd,layoutVersion]);
+  const trickySignature=showTricky?pieceBits.map(bit=>bit.id).join("|"):"";
+  useEffect(()=>{
+    trickyRangesRef.current=showTricky?pieceBits.map(bit=>({from:bit.from,to:bit.to})):[];
+    const root=scoreRef.current;if(root)markTrickyBits(root,trickyRangesRef.current);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- trickySignature stands in for pieceBits
+  },[trickySignature,layoutVersion]);
   // While it plays, the start-bar tint steps aside: the moving note shows
   // where you are, and a tinted bar left behind reads as a second cursor.
   // The selection itself stays, so the next Play starts there again.
@@ -1695,7 +1724,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   // Playback shares the studio's one AudioContext with the metronome, so the
   // beat grid handed to it is on the same clock. It is not ours to close:
   // leaving the page stops our notes and hands the metronome back.
-  useEffect(()=>()=>{playbackTimers.current.forEach(window.clearTimeout);playbackNodes.current.forEach(o=>{try{o.stop()}catch{/* ended */}});smartTimers.current.forEach(window.clearTimeout);smartNodes.current.forEach(o=>{try{o.stop()}catch{/* ended */}});alignMetronome(null)},[]);
+  useEffect(()=>()=>{playbackTimers.current.forEach(window.clearTimeout);playbackNodes.current.forEach(o=>{try{o.stop()}catch{/* ended */}});smartTimers.current.forEach(window.clearTimeout);smartNodes.current.forEach(o=>{try{o.stop()}catch{/* ended */}});alignMetronome(null);/* The metronome lives in the studio-wide audio engine, so leaving the music has to stop it. */stopMetro()},[]);
   const audio=getAudio;
   // Report real tempo CHANGES only. This effect also re-runs whenever the
   // onTempoChange callback's identity changes, which happens every time the
@@ -2568,11 +2597,11 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   const readerControls:ReaderControls={bpm,setTempo:setBpm,metronome:metro,toggleMetronome:toggleMetro,playing,playFromEvent,playingFrom,playingEvent,download:downloadPdf,exporting};
   const droneControls=<>          <div className="transport-menu">
             <button aria-label={t.scoreViewer.drone} aria-pressed={droneArmed||drones.length>0} data-tip={droneArmed?undefined:t.scoreViewer.droneTip} className={droneArmed||drones.length?"tool on has-tip drone-tool":"tool has-tip drone-tool"} onMouseLeave={event=>{delete event.currentTarget.dataset.tipOff}} onClick={event=>{/* The tip explains the button; right after pressing it, it only gets in the way. */event.currentTarget.dataset.tipOff="";if(droneArmed)stopAllDrones();else flashDroneHint();setDroneArmed(!droneArmed)}}><PracticeIcon name="drone"/>{t.scoreViewer.drone}<small>{drones.length?drones.join("+"):droneArmed?t.scoreViewer.droneOn:t.scoreViewer.droneOff}</small></button>
-          </div>{config.smartDrone&&<button type="button" data-tip={smartRunning?"Stop":"Tonic drone with count-in"} aria-pressed={smartRunning} aria-label={smartRunning?"Stop auto drone":"Start auto drone"} className={`tool has-tip smart-drone-trigger${smartRunning?" on":""}`} onClick={()=>{
+          </div>{config.smartDrone&&<button type="button" data-tip={smartRunning?(zh?"停止":"Stop"):(zh?"预备拍后自动跟随主音":"Tonic drone with count-in")} aria-pressed={smartRunning} aria-label={smartRunning?(zh?"停止自动持续音":"Stop auto drone"):(zh?"开始自动持续音":"Start auto drone")} className={`tool has-tip smart-drone-trigger${smartRunning?" on":""}`} onClick={()=>{
       if(smartRunning){stopAutoDrone();return}
       stopAllDrones();setDroneArmed(false);if(!metro){toggleMetro();smartStartedMetronome.current=true}setSmartEvent(null);setSmartRunning(true);
       const first=sequenceRef.current.measureStarts[smartStartMeasure-1]??0;scheduleAutoDrone(first,true);
-    }}><span className="auto-drone-icon"><PracticeIcon name="drone"/><PracticeIcon name={smartRunning?'pause':'play'}/></span>Auto drone</button>}</>;
+    }}><span className="auto-drone-icon"><PracticeIcon name="drone"/><PracticeIcon name={smartRunning?'pause':'play'}/></span>{zh?"自动持续音":"Auto drone"}</button>}</>;
   const accompanimentControl=config.accompaniment&&<ReaderPopover panelClassName="reader-play-card" label={zh?'伴奏':'Accompaniment'} trigger={<><PracticeIcon name="piano"/>{zh?'伴奏':'Accompaniment'}</>} className={`tool has-tip reader-accompaniment${playing&&playbackAccompaniment.current!=='off'?' on':''}`}><div className="reader-play-row"><div className="reader-choice" role="group" aria-label={zh?"伴奏方式":"Accompaniment playback"}>{([['piano',zh?'仅钢琴':'Piano only'],['both',zh?'钢琴与长笛':'Piano + flute']] as const).map(([mode,label])=><button key={mode} aria-pressed={accompanimentMode===mode} onClick={()=>{if(playing)stopPlayback();setAccompanimentMode(mode)}}>{label}</button>)}</div><button className={playing?"reader-play-start on":"reader-play-start"} disabled={pianoLoading} aria-label={playing?(zh?'暂停':'Pause'):(zh?'开始播放':'Start playback')} onClick={()=>togglePlayback(true)}><PracticeIcon name={playing?'pause':'play'}/></button></div>{pianoLoading&&<p role="status">{zh?'正在载入钢琴…':'Loading piano…'}</p>}{pianoError&&<p role="alert">{pianoError}</p>}</ReaderPopover>;
   const viewControls=<div className="reader-view">{settings?.(readerControls)}
 
@@ -2592,15 +2621,15 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
         <button data-tip={t.scoreViewer.noteDisplayTip} className={noteDisplay!=="off"?"tool on has-tip":"tool has-tip"} onClick={cycleNoteDisplay}><span>A♭</span>{noteDisplay==="off"?t.scoreViewer.noteDisplay:noteDisplay==="names"?t.scoreViewer.noteNames:t.scoreViewer.solfege}</button>
         {!unmetered&&<button data-tip={t.scoreViewer.rhythmDisplay} className={rhythmMode!=="off"?"tool on has-tip":"tool has-tip"} onClick={cycleRhythm}><span>▥</span>{t.scoreViewer.rhythm}</button>}
         <button data-tip={t.scoreViewer.accidentalsTip} className={accidentals?"tool on has-tip":"tool has-tip"} onClick={()=>setAccidentals(!accidentals)}><span>♯</span>{t.scoreViewer.accidentals}</button>
-        <button data-tip={t.scoreViewer.tonguingTip} className={tonguing?"tool on has-tip":"tool has-tip"} onClick={()=>setTonguing(!tonguing)}><span>•</span>{t.scoreViewer.tonguing}</button>
         <button data-tip={t.scoreViewer.fingeringTip} className={fingering?"tool on has-tip":"tool has-tip"} onClick={()=>setFingering(!fingering)}><span>●○</span>{t.scoreViewer.fingering}</button>
-<button data-tip={t.scoreViewer.musicalTermsTip} className={theoryEnabled?"tool on has-tip":"tool has-tip"} aria-pressed={theoryEnabled} onClick={()=>setTheoryEnabled(v=>!v)}><span>𝑓</span>{zh?"音乐术语":"Musical terms"}</button></div>
-            </div><button className="reader-settings-reset" onClick={()=>{/* A clean page: every "Show on the page" overlay off, not just the layout sliders. */setNoteDisplay("off");setRhythmMode("off");setAccidentals(false);setTonguing(false);setFingering(false);setTheoryEnabled(false);userSizeRef.current=.8;setSizePreference(.8);setSystemSpacing(12);setNoteSpacing(defaultNoteSpacing??(unmetered?0.82:1));/* Pinch or Ctrl-scroll zoom is part of the view too. */magnifyRef.current=1;setMagnify(1);scoreScrollRef.current?.closest<HTMLElement>(".restored-reader")?.style.setProperty("--viewer-magnify","1");setPageWidth(initialReaderLayout(tabletReader(navigator.maxTouchPoints,Math.min(screen.width,screen.height))));try{localStorage.removeItem(`${viewPrefsKey}:tablet-layout`)}catch{/* Defaults still apply for this visit. */}}}>{zh?"恢复默认":"Restore defaults"}</button>
+<button data-tip={t.scoreViewer.musicalTermsTip} className={theoryEnabled?"tool on has-tip":"tool has-tip"} aria-pressed={theoryEnabled} onClick={()=>setTheoryEnabled(v=>!v)}><span>𝑓</span>{zh?"音乐术语":"Musical terms"}</button>
+        {pieceBits.length>0&&<button data-tip={zh?"把保存的难点小节标成黄色":"Shade your saved tricky bits in yellow"} className={showTricky?"tool on has-tip":"tool has-tip"} aria-pressed={showTricky} onClick={()=>setShowTricky(!showTricky)}><span><PracticeIcon name="bookmark"/></span>{zh?"难点":"Tricky bits"}</button>}</div>
+            </div><button className="reader-settings-reset" onClick={()=>{/* A clean page: every "Show on the page" overlay off, not just the layout sliders. */setNoteDisplay("off");setRhythmMode("off");setAccidentals(false);setFingering(false);setTheoryEnabled(false);setShowTricky(false);userSizeRef.current=.8;setSizePreference(.8);setSystemSpacing(12);setNoteSpacing(defaultNoteSpacing??(unmetered?0.82:1));/* Pinch or Ctrl-scroll zoom is part of the view too. */magnifyRef.current=1;setMagnify(1);scoreScrollRef.current?.closest<HTMLElement>(".restored-reader")?.style.setProperty("--viewer-magnify","1");setPageWidth(initialReaderLayout(tabletReader(navigator.maxTouchPoints,Math.min(screen.width,screen.height))));try{localStorage.removeItem(`${viewPrefsKey}:tablet-layout`)}catch{/* Defaults still apply for this visit. */}}}>{zh?"恢复默认":"Restore defaults"}</button>
           </ReaderPopover>
         </div>;
   return <main className="app-shell reader-workspace restored-reader" data-layout={pageWidth} data-annotating={annotating} data-dock={dock||closeupOpen?"true":undefined} style={{"--reader-page-width":pageWidth==="900"?"900px":"100%","--viewer-magnify":magnify} as React.CSSProperties}>
     <section className="workspace">
-      <header className="topbar"><div><Link className="back has-tip" href={backHref} aria-label={backLabel?`${t.scoreViewer.back}: ${backLabel}`:t.scoreViewer.back} data-tip={backLabel||t.scoreViewer.back}><BackChevron/></Link>{(config.backName??(toolbar?undefined:title))&&<span className="back__name">{config.backName??title}</span>}{!toolbar&&<strong>{title}</strong>}</div><div><span className="topbar-toolbar-slot">{toolbar}</span>{/* No star: a score goes on one of your lists (want to learn, working on, learned). Scale Studio instead saves the panel as a set: a + that turns into a tick. */}{save?<button type="button" className="icon-btn has-tip reader-set-save" aria-pressed={save.saved} data-tip={save.saved?save.savedLabel:save.label} aria-label={save.saved?save.savedLabel:save.label} onClick={save.onToggle}>{save.saved?<CheckIcon/>:<PlusIcon/>}</button>:<StatusButton id={config.listId??config.id} zh={lang==="zh"}/>}{headerActions?.(readerControls)}{pdfPath&&<a className="icon-btn has-tip" href={pdfPath} download data-tip={t.scoreViewer.downloadPdf} aria-label={t.scoreViewer.downloadPdf}><DownloadIcon/></a>}{/* The reader hides the studio nav, so the two controls that live there on every other page — practice tools and the account menu — come here instead, on the same row as the back link. */}<span className="topbar-spacer"/><PracticeClockButton/><div id="reader-tools-slot" className="topbar-tools-slot"/><AccountMenu/></div></header>
+      <header className="topbar"><div><Link className="back has-tip" href={backHref} aria-label={backLabel?`${t.scoreViewer.back}: ${backLabel}`:t.scoreViewer.back} data-tip={backLabel||t.scoreViewer.back}><BackChevron/></Link>{(config.backName??(toolbar?undefined:title))&&<span className="back__name">{config.backName??title}</span>}{!toolbar&&<strong>{title}</strong>}</div><div><span className="topbar-toolbar-slot">{toolbar}</span>{/* No star: a score goes on one of your lists (want to learn, working on, learned). Scale Studio instead saves the panel as a set: a + that turns into a tick. */}{save?<button type="button" className="icon-btn has-tip reader-set-save" aria-pressed={save.saved} data-tip={save.saved?save.savedLabel:save.label} aria-label={save.saved?save.savedLabel:save.label} onClick={save.onToggle}>{save.saved?<CheckIcon/>:<PlusIcon/>}</button>:<StatusButton id={config.listId??config.id} zh={lang==="zh"}/>}{headerActions?.(readerControls)}{pdfPath&&<a className="icon-btn has-tip" href={pdfPath} download data-tip={t.scoreViewer.downloadPdf} aria-label={t.scoreViewer.downloadPdf}><DownloadIcon/></a>}{/* The reader hides the studio nav, so the two controls that live there on every other page — practice tools and the account menu — come here instead, on the same row as the back link. */}<span className="topbar-spacer"/><PracticeClockButton target={clockTarget}/><div id="reader-tools-slot" className="topbar-tools-slot"/><AccountMenu/></div></header>
 
       <div className="practice-bar"><div className="tool-group">        <button data-tip={t.scoreViewer.markUpTip} className={annotating?"tool on coral has-tip":"tool has-tip"} onClick={()=>setAnnotating(!annotating)}><PracticeIcon name="markup"/>{t.scoreViewer.markUp}</button>
       </div>

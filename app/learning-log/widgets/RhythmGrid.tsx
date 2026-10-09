@@ -42,6 +42,8 @@ export default function RhythmGrid() {
 
   // keep the live sequencer pointed at current state
   useEffect(() => {
+    // This is the imperative audio sequencer, not a React state object.
+    // eslint-disable-next-line react-hooks/immutability
     seq.pattern = pattern;
   }, [pattern, seq]);
   useEffect(() => {
@@ -100,7 +102,7 @@ export default function RhythmGrid() {
         <button
           type="button"
           className="ll-chip"
-          onClick={() => setPattern((p) => ({ ...p, hat: p.hat.map((_, i) => true) }))}
+          onClick={() => setPattern((p) => ({ ...p, hat: p.hat.map(() => true) }))}
         >
           hi-hat → 16ths
         </button>

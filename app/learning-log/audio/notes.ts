@@ -58,7 +58,7 @@ export function playFreq(freq: number, opts: NoteOpts = {}): () => void {
   g.connect(analyser());
   osc.start();
 
-  let releaseAt = t0 + a.attack + a.decay + Math.max(0, hold);
+  const releaseAt = t0 + a.attack + a.decay + Math.max(0, hold);
   const release = (when?: number) => {
     const r = when ?? ctx.currentTime;
     g.gain.cancelScheduledValues(r);

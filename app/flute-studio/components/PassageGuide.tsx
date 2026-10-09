@@ -1,4 +1,5 @@
 "use client";
+import {CloseButton} from "./CloseButton";
 import Link from 'next/link';
 import {useMemo,useState} from 'react';
 import {PracticeNotation} from './PracticeNotation';
@@ -57,13 +58,13 @@ export function PassageGuide({xml,events,from,to,quarterBpm,numbers,onClose,semp
     <header className="passage-guide__heading"><h2>{`${zh?"小节":"Bars"} ${numbers?.from??low}–${numbers?.to??high}`}</h2>
       <div className="passage-guide__modes reader-choice" role="group" aria-label={zh?"练习":"Practice"}>{(['technique','pitch'] as Mode[]).map(m=><button type="button" key={m} aria-pressed={mode===m} onClick={()=>choose(m)}>{m==='technique'?(zh?'技巧':'Technique'):(zh?'音准':'Pitch')}</button>)}</div>
       <div className="passage-guide__options">{toggles.map(x=><button type="button" key={x.glyph} className="passage-guide__icon has-tip" data-tip={x.label} aria-label={x.label} aria-pressed={x.on} onClick={x.onClick}><span aria-hidden="true">{x.glyph}</span></button>)}</div>
-      {/* Mark up's close button: same icon, size and colour, no hover fill. */}<button type="button" className="passage-guide__close markup-close" aria-label={zh?"关闭近看":"Close close-up"} data-tip={zh?"关闭":"Close"} onClick={onClose}><svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15"/></svg></button></header>
+      {/* Mark up's close button: same icon, size and colour, no hover fill. */}<CloseButton className="passage-guide__close markup-close" label={zh?"关闭近看":"Close close-up"} onClick={onClose}/></header>
     {source.error?<p role="alert">{source.error}</p>:<div className="passage-guide__list">
       {original(mode==='pitch'?pitch.marks:undefined,mode==='pitch'?pitch.onNote:undefined)}
       {mode==='pitch'&&pitch.panel}
       {/* Kept mounted while Pitch is open, so coming back to Technique does not redraw every exercise. */}
       <div hidden={mode==='pitch'}>
-        {scale&&<div className="passage-guide__row"><h3>{scale.label}<Link href={`/flute-studio/exercises/scales?key=${encodeURIComponent(scale.key)}&type=${scale.type}${'form' in scale&&scale.form==='arpeggio'?'&form=arpeggio':''}`}>{zh?"音阶练习":"Scale Studio"} ›</Link></h3>{player('scale',scale.xml,scale.label)}</div>}
+        {scale&&<div className="passage-guide__row"><h3>{scale.label}<Link href={`/flute-studio/exercises/scales?key=${encodeURIComponent(scale.key)}&type=${scale.type}${'form' in scale&&scale.form==='arpeggio'?'&form=arpeggio':''}`}>{zh?"音阶练习":"Scale Studio"}</Link></h3>{player('scale',scale.xml,scale.label)}</div>}
         {sections.map(section=><section className="passage-guide__section" key={section.title}><h4>{label(section.title)}</h4>
           {section.rows.map(r=><div className="passage-guide__row" key={r.id}><h3>{label(r.title)}{r.shuffle&&<button type="button" className="passage-guide__shuffle" onClick={()=>{setActive(null);r.shuffle!()}}>{zh?"重新排列":"Shuffle"}</button>}</h3>{player(r.id,r.xml,r.title.toLowerCase(),false,!!r.gen,undefined,undefined,true)}</div>)}
         </section>)}

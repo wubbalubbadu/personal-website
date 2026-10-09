@@ -178,7 +178,7 @@ html body .reader-settings-panel .scale-book__set.is-active{background:#f1f1f4!i
   body .reader-settings-panel:has(.scale-book__phone-tabs) .scale-book__save-field input{height:40px;border-radius:12px}
   body .reader-settings-panel:has(.scale-book__phone-tabs) .scale-book__save-button{
     height:40px!important;padding:0 16px!important;border:0!important;border-radius:12px!important;align-self:flex-end;
-    background:#292a33!important;color:#fff!important;font-size:14px!important;font-weight:500!important;box-shadow:none!important;
+    background:#e7eee3!important;color:#40553d!important;font-size:14px!important;font-weight:500!important;box-shadow:none!important;
   }
   body .reader-settings-panel:has(.scale-book__phone-tabs) .reader-settings-reset{
     display:block!important;width:auto;height:30px;margin:10px 0 0 auto!important;padding:0 12px!important;border-radius:999px;
@@ -223,8 +223,8 @@ html body .reader-settings-panel .scale-book__set.is-active{background:#f1f1f4!i
   html body .studio-route .lesson-shell .lesson-scene{justify-content:flex-start!important;padding-top:28px}
   html body .studio-route .lesson-shell .lesson-talk{margin-top:auto}
   html body .studio-route .lesson-shell .lesson-bubble{min-height:96px}
-  html body .studio-route .lesson-shell .lesson-next{background:#292a33!important;color:#fff!important}
-  html body .studio-route .lesson-shell .lesson-next:hover{background:#3a3b45!important}
+  html body .studio-route .lesson-shell .lesson-next{background:#e7eee3!important;color:#40553d!important}
+  html body .studio-route .lesson-shell .lesson-next:hover{background:#dce8d7!important}
 }
 
 /* The shorter Scales sheet: rows of choices swipe sideways instead of
@@ -449,8 +449,8 @@ html body .restored-reader .markup-row-surface.annotation-toolbar .markup-icon{b
   html body .reader-settings-panel .scale-book__field-label{margin:10px 0 6px!important;padding:0!important;font-size:12.5px;color:#85868e}
   html body .reader-settings-panel .scale-book__section-body>.scale-book__field-label:first-child{margin-top:0!important}
   html body .reader-settings-panel .scale-book__save{margin-top:0!important;padding-top:14px!important;border-top:1px solid #efeff1!important}
-  html body .reader-settings-panel .scale-book__save-button{background:#292a33!important;color:#fff!important;font-weight:500!important;font-size:13px!important;border-radius:10px!important}
-  html body .reader-settings-panel .scale-book__save-button:hover{background:#3a3b45!important}
+  html body .reader-settings-panel .scale-book__save-button{background:#e7eee3!important;color:#40553d!important;font-weight:500!important;font-size:13px!important;border-radius:10px!important}
+  html body .reader-settings-panel .scale-book__save-button:hover{background:#dce8d7!important}
   html body .reader-settings-panel .reader-settings-reset{display:block;margin:10px 0 0 auto!important;height:28px;padding:0 11px!important;border-radius:999px;background:#f1f1f4!important;color:#6f7178!important;font-size:12px!important}
 }
 @media(min-width:761px){
@@ -474,7 +474,7 @@ html body .reader-settings-panel .scale-book__save{
 html body .reader-settings-panel .scale-book__save-field{flex:1;min-width:0;display:block!important}
 html body .reader-settings-panel .scale-book__save-field>span{display:none!important}
 html body .reader-settings-panel .scale-book__save-field input{width:100%;height:34px!important;border:0!important;background:transparent!important;padding:0!important;font-size:14px;color:#292a33;outline:0;box-shadow:none!important}
-html body .reader-settings-panel .scale-book__save-button{height:32px!important;padding:0 14px!important;border-radius:9px!important;align-self:center!important;background:#292a33!important;color:#fff!important;font-size:13px!important;font-weight:500!important}
+html body .reader-settings-panel .scale-book__save-button{height:32px!important;padding:0 14px!important;border-radius:9px!important;align-self:center!important;background:#e7eee3!important;color:#40553d!important;font-size:13px!important;font-weight:500!important}
 html body .reader-settings-panel .reader-settings-reset{
   display:block!important;width:auto!important;height:auto!important;min-height:0!important;margin:10px 2px 0 auto!important;padding:2px 0!important;
   border:0!important;border-radius:0!important;background:none!important;color:#85868e!important;font-size:12.5px!important;font-weight:500!important;
@@ -579,7 +579,7 @@ html body .recorder-pop audio{width:100%;height:40px;margin:12px 0 10px}
 html body .recorder-pop .recorder-actions{display:flex;gap:8px}
 html body .recorder-pop .recorder-actions button{flex:1;height:40px;border:0;border-radius:12px;font:inherit;font-size:14px;font-weight:500;cursor:pointer}
 html body .recorder-pop .recorder-delete{background:#f1f1f4;color:#b04a3c}
-html body .recorder-pop .recorder-save{background:#292a33;color:#fff}
+html body .recorder-pop .recorder-save{background:#e7eee3;color:#40553d}
 html body .recorder-pop .recorder-note{display:block;margin-top:8px;text-align:center}
 
 /* Scales keeps its rainbow icon and word but loses the spinning border
@@ -898,3 +898,4 @@ html:root body .reader-play-card p{margin:8px 2px 0;font-size:13px;color:#6f7178
   html:root body .reader-settings-panel .scale-book__chip[aria-pressed="true"]{background:var(--studio-on-bg,#eee7f2)!important;color:var(--studio-on-ink,#79588e)!important}
   html:root body .restored-reader .topbar .book-stepper__arrow svg{width:22px!important;height:22px!important}
 }
+html body .osmd-score .tricky-bar{fill:rgba(236,183,40,.2)}

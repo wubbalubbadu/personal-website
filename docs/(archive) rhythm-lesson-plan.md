@@ -1,3 +1,5 @@
+> **Archived October 7, 2026:** lesson 2 (Note lengths) is built; the course plan lives in app/flute-studio/theory/LESSONS.md.
+
 # Rhythm lesson: note lengths
 
 The lesson focuses on reading duration symbols. The staff-and-notes lesson supplies pitch context. Measures, time signatures, rests, dots, and ties follow separately. Each click is explicitly defined as a quarter-note pulse for these examples, not as a universal rule about beats.

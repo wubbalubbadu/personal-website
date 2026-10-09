@@ -6,8 +6,9 @@ import {PracticeIcon} from "./components/PracticeIcon";
 import {useEffect,useRef,useState} from "react";
 import {createPortal} from "react-dom";
 import {useLanguage} from "./i18n/LanguageContext";
-import {setPencilOnly,usePencilOnly} from "./lib/pencilMode";
+import {setPencilOnly,usePencilOnly,useTouchScreen} from "./lib/pencilMode";
 import {GearIcon} from "./components/HeaderIcons";
+import {backupStatus,requestPersistentStorage} from "./lib/transfer";
 import "./account-menu.css";
 
 /**
@@ -27,8 +28,14 @@ export default function AccountMenu(){
   const {t,lang,setLang}=useLanguage();
   const privateMusic=usePrivateMusic();
   const [code,setCode]=useState("");
-  const pencil=usePencilOnly();
+  const pencil=usePencilOnly(),touchScreen=useTouchScreen();
   const [open,setOpen]=useState(false);
+  // Read after hydration (localStorage), and again each time the menu opens.
+  const [backup,setBackup]=useState<{days:number|null;due:boolean}>({days:null,due:false});
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(()=>{setBackup(backupStatus())},[open]);
+  // Once per page load is plenty; the browser remembers the answer.
+  useEffect(()=>{requestPersistentStorage()},[]);
   const [position,setPosition]=useState({top:62,right:16});
   useEffect(()=>{
     const close=()=>setOpen(false);
@@ -75,7 +82,8 @@ export default function AccountMenu(){
           </button>)}
       </div>
 
-      <hr className="account-menu__rule"/>
+      {/* Only a touch screen has fingers to tell apart from a pencil. */}
+      {touchScreen&&<><hr className="account-menu__rule"/>
       <p className="account-menu__group">{t.settings.drawing}</p>
       <div className="account-menu__choices">
         <button
@@ -89,7 +97,7 @@ export default function AccountMenu(){
 
         </button>
       </div>
-      <p className="account-menu__footnote">{t.settings.pencilOnlyNote}</p>
+      <p className="account-menu__footnote">{t.settings.pencilOnlyNote}</p></>}
 
       <hr className="account-menu__rule"/>
       <p className="account-menu__group">{lang==="zh"?"数据":"Your data"}</p>
@@ -98,6 +106,11 @@ export default function AccountMenu(){
           <span>{lang==="zh"?"设备同步":"Sync devices"}</span><PracticeIcon name="next"/>
         </Link>
       </div>
+      {/* A reminder, not a warning: the browser can clear this site's data (Safari after a week or so unused). */}
+      <p className={backup.due?"account-menu__footnote account-menu__backup is-due":"account-menu__footnote account-menu__backup"}>{backup.days===null
+        ?(lang==="zh"?"还没有备份过。生成一次代码或文件，就有了一份备份。":"Not backed up yet. Making a code or file once gives you a copy.")
+        :backup.days===0?(lang==="zh"?"今天已备份":"Backed up today")
+        :(lang==="zh"?`上次备份：${backup.days} 天前`:`Last backup: ${backup.days} ${backup.days===1?"day":"days"} ago`)}</p>
 
       <hr className="account-menu__rule"/>
       <p className="account-menu__group">{lang==="zh"?"私人曲库":"Private music"}</p>
@@ -134,7 +147,7 @@ export default function AccountMenu(){
       }}
     >
       {/* A gear rather than initials: there is no account, only settings. */}
-      <GearIcon/>
+      <GearIcon/>{backup.due&&!open&&<span className="account-menu__dot" aria-hidden="true"/>}
     </button>
 
     {open&&(sheet?createPortal(<div className="account-menu account-menu--sheet" ref={sheetRef}>{panel}</div>,document.body):panel)}

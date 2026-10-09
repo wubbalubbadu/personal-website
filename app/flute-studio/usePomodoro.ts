@@ -34,6 +34,8 @@ export function usePomodoro(){
   const label=useRef<FocusLabel|null>(null);
 
   useEffect(()=>{
+    // Restore the browser timer preferences after hydration.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRounds(readRounds());
     const minutes=readFocusMinutes();
     setFocusMinutes(minutes);

@@ -3,6 +3,7 @@ import type {ReactNode} from 'react';
 import {usePhoneNotation} from './usePhoneNotation';
 import TrebleClef from './TrebleClef';
 import {noteY,ledgerLines} from './model';
+import RestGlyph,{restY} from './rhythm/RestGlyph';
 import RhythmNote,{STEM_X} from './rhythm/RhythmNote';
 import {MUSIC_GLYPHS} from './rhythm/musicGlyphs';
 import type {NoteValue} from './rhythm/rhythmModel';
@@ -25,7 +26,7 @@ import './engraved-row.css';
  * its measures are known. Changing `bars` or `even` slides the notes to their new places.
  */
 /** A note's length in quarter notes; dotted lengths (.75, 1.5, 3) get an augmentation dot. */
-export type RowNote={v:number;p?:number;/** The sign written in front of the note. */acc?:'sharp'|'flat'|'natural';/** Room kept for a sign, written or not (when given, it decides the room even if the written sign is narrower), so nothing moves when signs come and go. */room?:'sharp'|'flat'|'natural'};
+export type RowNote={v:number;p?:number;rest?:boolean;/** Use the whole-rest glyph for an entire measure, while v retains its actual duration. */measureRest?:boolean;/** The sign written in front of the note. */acc?:'sharp'|'flat'|'natural';/** Room kept for a sign, written or not (when given, it decides the room even if the written sign is narrower), so nothing moves when signs come and go. */room?:'sharp'|'flat'|'natural'};
 export type Meter={top:number;bottom:number;symbol?:'common'|'cut'};
 
 const RHYTHM_P=1;                      // rhythm-only rows sit in the bottom space, like printed rhythm staffs
@@ -45,11 +46,24 @@ const SIGN_SCALE=.064,SIGN_AT=35,SIGN_CLEAR=12;
 const accRoom=(acc:'sharp'|'flat'|'natural')=>Math.ceil(SIGN_AT-ACCIDENTAL_EXTENT[acc].from*SIGN_SCALE+SIGN_CLEAR-NOTE_LEAD);
 const MAX_ACC_ROOM=Math.max(accRoom('sharp'),accRoom('flat'),accRoom('natural'));
 
-export type RowLayout={xs:number[];barXs:number[];gapXs:number[];startX:number;endX:number;meterX:number;starts:number[];beatX:(beat:number)=>number};
+export type RowLayout={xs:number[];barXs:number[];gapXs:number[];startX:number;endX:number;meterX:number;/** Where the key signature's first sign goes (its signs follow KEY_STRIDE apart). */keyX:number;starts:number[];beatX:(beat:number)=>number};
+
+/**
+ * Key signature: signs in the standard treble places, each KEY_STRIDE after the last (sharps and flats alike, so switching between
+ * them never moves the notes), and KEY_GAP before the time signature or the first note.
+ */
+export const KEY_STRIDE=23;
+const KEY_GAP=12;
+const SHARP_SIGN_P=[8,5,9,6,3,7,4],FLAT_SIGN_P=[4,7,3,6,2,5,1];
+/** Staff position of sign i in a signature of sharps (key > 0) or flats (key < 0). */
+export const keySignP=(key:number,i:number)=>(key<0?FLAT_SIGN_P:SHARP_SIGN_P)[i];
+const keyWidth=(room:number)=>room>0?room*KEY_STRIDE+KEY_GAP:0;
 
 /** Where everything goes. Pages use this for their own overlays (beat sticks, tap targets). */
-export function layoutRow(notes:RowNote[],{bars=[],even=false,clef=true,meter=null,left=40,right=860,reserveAcc=false}:{bars?:number[];even?:boolean;clef?:boolean;meter?:Meter|null;left?:number;right?:number;reserveAcc?:boolean}={}):RowLayout{
+export function layoutRow(notes:RowNote[],{bars=[],even=false,clef=true,meter=null,left=40,right=860,reserveAcc=false,keyRoom=0}:{bars?:number[];even?:boolean;clef?:boolean;meter?:Meter|null;left?:number;right?:number;reserveAcc?:boolean;/** Room for this many key signature signs, drawn or not. */keyRoom?:number}={}):RowLayout{
   let head=left+(clef?122:14);
+  const keyX=head;
+  head+=keyWidth(keyRoom);
   const meterX=head;
   if(meter)head+=meterWidth(meter)+(clef?14:20);
   const startX=head+8;
@@ -92,16 +106,24 @@ export function layoutRow(notes:RowNote[],{bars=[],even=false,clef=true,meter=nu
     cursor+=roomFor(notes[i]);
     xs.push(cursor+NOTE_LEAD);cursor+=widthOf(i);
   });
+  // A full-measure rest is centered visually, but its time still begins at the bar line.
+  const timeXs=[...xs];
+  notes.forEach((n,i)=>{if(n.rest&&n.measureRest){
+    const barIndex=bars.filter(b=>b>0&&b<=i).length;
+    const leftEdge=barIndex?barXs[barIndex-1]:startX;
+    const rightEdge=barXs[barIndex]??endX;
+    xs[i]=(leftEdge+rightEdge)/2;
+  }});
   const starts:number[]=[];let t=0;notes.forEach(n=>{starts.push(t);t+=n.v});
   // A beat's x: at a note's onset, or partway between onsets when the beat falls inside a long note.
   const beatX=(beat:number)=>{
-    const anchors=[...starts.map((s,i)=>({t:s,x:xs[i]})),{t,x:endX-18}];
+    const anchors=[...starts.map((s,i)=>({t:s,x:timeXs[i]})),{t,x:endX-18}];
     const after=anchors.findIndex(a=>a.t>=beat);
     if(after<=0)return anchors[Math.max(0,after)].x;
     const a=anchors[after-1],b=anchors[after];
     return a.x+(b.x-a.x)*(beat-a.t)/(b.t-a.t);
   };
-  return {xs,barXs,gapXs,startX,endX,meterX,starts,beatX};
+  return {xs,barXs,gapXs,startX,endX,meterX,keyX,starts,beatX};
 }
 
 function meterWidth(m:Meter){
@@ -137,7 +159,7 @@ type Props={
   children?:(layout:RowLayout)=>ReactNode;
   /** Leave room in front of every note for a sign that may be added. */
   reserveAcc?:boolean;
-  className?:string;label?:string;
+  className?:string;label?:string;interactive?:boolean;
   /** SVG viewBox; the default frames the staff with room for stems and one row of counts underneath. */
   viewBox?:string;
   /** Notes drawn at a quarter of their strength (to be there, but not yet). */
@@ -154,17 +176,24 @@ type Props={
   finalBar?:boolean;
   /** Where the row ends, for a short row that needs more room between its notes than `narrow` gives (overrides it). */
   right?:number;
+  /** The key signature: sharps (positive) or flats (negative). */
+  keySignature?:number;
+  /** Room kept for this many signs (default: the signature's own), so signs can come and go without moving anything. */
+  keyRoom?:number;
+  /** Signs from this index on drop in when they appear, one after another. */
+  keyNew?:number;
 };
 
-export function phoneRowRight(notes:RowNote[],clef:boolean,meter:Meter|null,reserveAcc=false){
+export function phoneRowRight(notes:RowNote[],clef:boolean,meter:Meter|null,reserveAcc=false,keyRoom=0){
   const room=notes.reduce((sum,n)=>{const sign=n.room??n.acc;return sum+(reserveAcc?MAX_ACC_ROOM:sign?accRoom(sign):0)},0);
-  return Math.min(860,Math.max(480,40+(clef?122:14)+(meter?70:0)+notes.length*44+room));
+  return Math.min(860,Math.max(480,40+(clef?122:14)+keyWidth(keyRoom)+(meter?70:0)+notes.length*44+room));
 }
 
 type GraphicsProps={
   notes:RowNote[];layout:RowLayout;clef?:boolean;meter?:Meter|null;beams?:number[][];active?:number|number[];faint?:number[];hidden?:number[];appear?:number[];
   /** The final double bar; off for a few notes that are not a whole piece (a card picture). */
   finalBar?:boolean;
+  keySignature?:number;keyNew?:number;
   below?:Props['below'];children?:Props['children'];
 };
 
@@ -173,15 +202,25 @@ type GraphicsProps={
  * lines, beams. The one place that does. EngravedRow wraps it in an svg; a page that needs several staffs in
  * one drawing (a line joining two of them) places it inside its own svg.
  */
-export function RowGraphics({notes,layout,clef=true,meter=null,beams=[],active=-1,faint=[],hidden=[],appear=[],finalBar=true,below,children}:GraphicsProps){
-  const {xs,barXs,endX,meterX}=layout;
+export function RowGraphics({notes,layout,clef=true,meter=null,beams=[],active=-1,faint=[],hidden=[],appear=[],finalBar=true,keySignature=0,keyNew=Infinity,below,children}:GraphicsProps){
+  const {xs,barXs,endX,meterX,keyX}=layout;
   const pos=notes.map(n=>clef?n.p??4:RHYTHM_P);
+  // Never beam through a rest, even if a caller supplied one continuous group.
+  beams=beams.flatMap(group=>{
+    const runs:number[][]=[[]];
+    group.forEach(i=>{if(!notes[i]||notes[i].rest)runs.push([]);else runs[runs.length-1].push(i)});
+    return runs.filter(run=>run.length>1);
+  });
   const beamed=new Map<number,number[]>();beams.forEach(g=>g.forEach(i=>beamed.set(i,g)));
   const down=(i:number)=>{const g=beamed.get(i);return g?g.reduce((s,j)=>s+pos[j],0)/g.length>=4:pos[i]>=4};
   const left=40;
   return <>
     {[0,2,4,6,8].map(l=><line key={l} x1={left} x2={endX} y1={noteY(l)} y2={noteY(l)} className="engraved-row__line"/>)}
     {clef&&<TrebleClef x={left+42}/>}
+    {/* The key signature. A sign that drops in sits in a wrapper, so its animation never fights the sign's own placement. */}
+    {Array.from({length:Math.abs(keySignature)},(_,i)=><g key={`${keySignature>0?'s':'f'}${i}`} className={`engraved-row__key${i>=keyNew?' is-dropping':''}`} style={i>=keyNew?{animationDelay:`${(i-keyNew)*.45}s`}:undefined}>
+      <path d={ACCIDENTALS[keySignature>0?'sharp':'flat']} transform={`translate(${keyX+i*KEY_STRIDE+(keySignature>0?0:2)} ${noteY(keySignP(keySignature,i))}) scale(.064 -.064)`}/>
+    </g>)}
     {meter&&<TimeSignature meter={meter} x={meterX}/>}
     {barXs.map((x,i)=><line key={i} x1="0" x2="0" y1={noteY(8)} y2={noteY(0)} className="engraved-row__bar" style={{transform:`translateX(${x}px)`}}/>)}
     {finalBar&&<>
@@ -189,6 +228,10 @@ export function RowGraphics({notes,layout,clef=true,meter=null,beams=[],active=-
       <line x1={endX-2.5} x2={endX-2.5} y1={noteY(8)} y2={noteY(0)} className="engraved-row__final"/>
     </>}
     {notes.map((n,i)=>{
+      if(n.rest)return <g key={`rest-${i}`} className={`engraved-row__rest${appear.includes(i)?' is-appearing':''}`}
+        style={{transform:`translate(${xs[i]}px,${restY(n.v,n.measureRest)}px)`,opacity:hidden.includes(i)?0:faint.includes(i)?.25:1}} aria-hidden={hidden.includes(i)||undefined}>
+        <RestGlyph value={n.measureRest?4:shapeOf(n.v)} measureRest={n.measureRest}/>
+      </g>;
       const p=pos[i],g=beamed.get(i),isDown=down(i);
       return <g key={i} className={`engraved-row__note ${(Array.isArray(active)?active.includes(i):active===i)?'is-active':''}${appear.includes(i)?' is-appearing':''}`} style={{transform:`translate(${xs[i]}px,${noteY(p)}px)`,opacity:hidden.includes(i)?0:faint.includes(i)?.25:1}} aria-hidden={hidden.includes(i)||undefined}>
         {ledgerLines(p).map(l=><line key={l} x1="-22" x2="22" y1={noteY(l)-noteY(p)} y2={noteY(l)-noteY(p)} className="engraved-row__ledger"/>)}
@@ -227,19 +270,19 @@ export function RowGraphics({notes,layout,clef=true,meter=null,beams=[],active=-
   </>;
 }
 
-export default function EngravedRow({notes,bars=[],even=false,clef=true,meter=null,beams=[],active=-1,below,children,reserveAcc=false,className='',label,viewBox='20 62 870 222',faint=[],hidden=[],appear=[],crop=false,narrow=false,finalBar=true,right:rightProp}:Props){
+export default function EngravedRow({notes,bars=[],even=false,clef=true,meter=null,beams=[],active=-1,below,children,reserveAcc=false,className='',label,interactive=false,viewBox='20 62 870 222',faint=[],hidden=[],appear=[],crop=false,narrow=false,finalBar=true,right:rightProp,keySignature=0,keyRoom=Math.abs(keySignature),keyNew}:Props){
   const phone=usePhoneNotation();
   // `narrow`: a short row uses the narrower width phones use, centred, instead of a few notes spread thinly across the page.
   const short=phone||narrow||rightProp!==undefined;
-  const right=rightProp??(short?phoneRowRight(notes,clef,meter,reserveAcc):860);
+  const right=rightProp??(short?phoneRowRight(notes,clef,meter,reserveAcc,keyRoom):860);
   const frame=viewBox.split(" ");
-  const layout=layoutRow(notes,{bars,even,clef,meter,right,reserveAcc});
+  const layout=layoutRow(notes,{bars,even,clef,meter,right,reserveAcc,keyRoom});
   // A row that needed more room than `right` grew; the frame grows with it, so nothing is cut off.
   if(short||layout.endX>right)frame[2]=String(Math.max(Number(frame[2]),layout.endX+10));
   if(short)frame[2]=String(layout.endX+10);
   // A close-up crops around the notes, tall enough for the whole clef, so nothing is scaled differently.
   if(crop){frame[0]='20';frame[1]='50';frame[2]=String(layout.endX+10-20);frame[3]='205'}
-  return <svg className={`engraved-row ${className}`} viewBox={frame.join(" ")} role="img" aria-label={label}>
-    <RowGraphics notes={notes} layout={layout} clef={clef} meter={meter} beams={beams} active={active} faint={faint} hidden={hidden} appear={appear} finalBar={finalBar} below={below}>{children}</RowGraphics>
+  return <svg className={`engraved-row ${className}`} viewBox={frame.join(" ")} role={interactive?'group':'img'} aria-label={label}>
+    <RowGraphics notes={notes} layout={layout} clef={clef} meter={meter} beams={beams} active={active} faint={faint} hidden={hidden} appear={appear} finalBar={finalBar} keySignature={keySignature} keyNew={keyNew} below={below}>{children}</RowGraphics>
   </svg>;
 }

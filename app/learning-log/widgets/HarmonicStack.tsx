@@ -29,7 +29,6 @@ export default function HarmonicStack() {
   const [live, setLive] = useState(false);
   const ctxRef = useRef<{ osc: OscillatorNode; gain: GainNode } | null>(null);
 
-  useEffect(() => () => stop(), []);
 
   function buildWave() {
     const real = new Float32Array(N + 1);
@@ -76,6 +75,8 @@ export default function HarmonicStack() {
     ctxRef.current = null;
     setLive(false);
   }
+
+  useEffect(() => () => stop(), []);
 
   // retune the live wave when weights change
   useEffect(() => {

@@ -1,0 +1,4 @@
+/* Tally sticks (TallySticks.tsx): four upright, the fifth across. Shared by tricky bits, the rep pill and Exercises. */
+.tally-sticks{flex:1;display:flex;flex-wrap:wrap;gap:8px;min-height:30px;align-items:center}
+.tally-sticks svg{display:block;flex:0 0 auto}
+.tally-sticks line{stroke:#45464f;stroke-width:2.2;stroke-linecap:round}

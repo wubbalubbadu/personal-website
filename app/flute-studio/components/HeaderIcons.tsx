@@ -22,3 +22,8 @@ export function PlusIcon(){
 export function CheckIcon(){
   return <svg {...base}><path d="M4.5 10.5 8 14l7.5-8"/></svg>;
 }
+
+/** Fold and unfold: a chevron that points down when closed and turns up when open (rotate it with CSS). */
+export function ChevronIcon(){
+  return <svg {...base} className="chevron-icon"><path d="M5.5 8 10 12.5 14.5 8"/></svg>;
+}

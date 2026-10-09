@@ -14,3 +14,8 @@ export function assessHold(milliseconds: number, value: NoteValue, unit = 650) {
   const expected = value * unit;
   return Math.abs(milliseconds - expected) <= Math.max(160, expected * .18);
 }
+
+/** A null pitch explicitly means silence. An omitted pitch preserves the existing G4 default. */
+export function playbackEvents(values:readonly number[], pitches:readonly (number|null)[] = [], unit=.65){
+  return timings(values,unit).map((event,i)=>({...event,midi:pitches[i]===null?null:(pitches[i]??67)}));
+}

@@ -1,0 +1,9 @@
+/* The rep pill (RepPill.tsx): the tempo pill's shape and size, in neutral grey so the two read as a pair, not a twin. */
+.rep-pill{display:inline-flex;align-items:center;gap:2px;padding:1px 2px 1px 6px;border-radius:999px;background:#f1f1f4;color:#45464f;font-size:12px;line-height:1;white-space:nowrap}
+.rep-pill:has(> .rep-pill__step:only-child){padding-left:1px}
+.rep-pill .tally-sticks{flex:none;gap:2px;min-height:0}
+.rep-pill .tally-sticks svg{width:15px;height:13px}
+.rep-pill .tally-sticks line{stroke-width:2.6}
+.rep-pill b{margin:0 2px 0 4px;font-weight:700;font-variant-numeric:tabular-nums}
+.rep-pill__step{width:18px;height:18px;display:grid;place-items:center;border:0;border-radius:50%;background:transparent;color:#6f7078;font:600 13px/1 inherit;cursor:pointer;padding:0}
+.rep-pill__step:hover{background:#e3e3e8;color:#292a33}

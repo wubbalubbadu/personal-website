@@ -1,3 +1,5 @@
+> **Archived October 7, 2026:** superseded: lesson 4 changed substantially after this revision (see the code).
+
 # Lesson 4 revision 3 (amended after review)
 
 Builds on the current code (revisions 1 and 2 are in). Same rules: no commits, every string

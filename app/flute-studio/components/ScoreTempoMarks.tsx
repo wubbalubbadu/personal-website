@@ -1,7 +1,9 @@
 "use client";
 import {useLayoutEffect,useState} from "react";
-import {PracticeIcon} from "./PracticeIcon";
-export function ScoreTempoMarks({root,version,marks,onChange,onSound,soundingId}:{root:HTMLDivElement|null;version:number;marks:{id:string;label:string;tempo:number}[];onChange:(id:string,tempo:number)=>void;onSound:(id:string,tempo:number)=>void;soundingId:string|null}){
+import {TempoPill} from "./TempoPill";
+import {RepPill} from "./RepPill";
+import type {RepItem} from "../lib/repLog";
+export function ScoreTempoMarks({root,version,marks,onChange,onSound,soundingId,zh=false}:{root:HTMLDivElement|null;version:number;marks:{id:string;label:string;tempo:number;/** Count reps of this exercise beside its tempo (RepPill). */rep?:RepItem}[];zh?:boolean;onChange:(id:string,tempo:number)=>void;onSound:(id:string,tempo:number)=>void;soundingId:string|null}){
   // Carries the layout version the positions were measured against. Marks
   // are drawn only while that matches the CURRENT version: toggling them on
   // changes the system spacing, so the score re-engraves under them, and
@@ -9,7 +11,6 @@ export function ScoreTempoMarks({root,version,marks,onChange,onSound,soundingId}
   // Better to show nothing for the frame it takes to re-measure — with the
   // fade-in below that reads as the marks arriving, not as them twitching.
   const [spots,setSpots]=useState<{version:number;placed:{id:string;x:number;y:number}[]}>({version:-1,placed:[]});
-  const [draft,setDraft]=useState<{id:string;value:string}|null>(null);
   // A string, not the array: `marks` is rebuilt on every render of the
   // page, so depending on it directly would re-measure forever.
   const signature=marks.map(m=>m.label).join("|");
@@ -47,26 +48,13 @@ export function ScoreTempoMarks({root,version,marks,onChange,onSound,soundingId}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },[root,version,signature]);
   const byId=new Map(marks.map(m=>[m.id,m]));
-  const commit=(id:string,value:number)=>onChange(id,Math.max(40,Math.min(220,Math.round(value))));
   return <>{(spots.version===version?spots.placed:[]).map(spot=>{
     const mark=byId.get(spot.id);
     if(!mark)return null;
-    const sounding=soundingId===spot.id;
-    return <span className={sounding?"score-tempo-mark is-sounding":"score-tempo-mark"} style={{left:spot.x,top:spot.y}} key={spot.id}>
-      {/* The same action the metronome button on this exercise's Tempos row
-          performs: take the tempo from here, and click. A number printed on
-          the page that you can also hear is the whole point of putting it
-          there. */}
-      <button type="button" className="score-tempo-mark__sound" aria-pressed={sounding} aria-label={sounding?`${mark.label}: stop metronome`:`${mark.label}: metronome at ${mark.tempo}`} onClick={()=>onSound(spot.id,mark.tempo)}><PracticeIcon name="metronome"/></button>
-      {/* One BPM a click, not five: on the page you are nudging a tempo you
-          already have, not dialling one in from scratch. */}
-      <button type="button" className="score-tempo-mark__step" aria-label={`${mark.label}: 1 BPM slower`} disabled={mark.tempo<=40} onClick={()=>commit(spot.id,mark.tempo-1)}>−</button>
-      <label className="score-tempo-mark__value"><input type="number" min={40} max={220} aria-label={`${mark.label}: practice tempo in BPM`}
-        value={draft?.id===spot.id?draft.value:mark.tempo}
-        onChange={e=>setDraft({id:spot.id,value:e.target.value})}
-        onBlur={()=>{if(draft?.id!==spot.id)return;const next=Number(draft.value);const valid=Number.isFinite(next)&&draft.value.trim()!=="";setDraft(null);if(valid)commit(spot.id,next)}}
-        onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/></label>
-      <button type="button" className="score-tempo-mark__step" aria-label={`${mark.label}: 1 BPM faster`} disabled={mark.tempo>=220} onClick={()=>commit(spot.id,mark.tempo+1)}>+</button>
+    // The same action as the metronome button on this exercise's Tempos row: take the tempo from here, and click.
+    return <span key={spot.id} className="score-tempo-mark" style={{left:spot.x,top:spot.y}}>
+      <TempoPill label={mark.label} tempo={mark.tempo} sounding={soundingId===spot.id} onSound={()=>onSound(spot.id,mark.tempo)} onChange={value=>onChange(spot.id,value)}/>
+      {mark.rep&&<RepPill item={mark.rep} tempo={mark.tempo} zh={zh}/>}
     </span>;
   })}</>;
 }

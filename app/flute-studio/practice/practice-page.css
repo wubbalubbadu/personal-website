@@ -119,7 +119,7 @@
 .pitch-card__subhead{margin-top:18px!important}
 .pitch-card__focus.is-fixed b{color:#40553d}
 .pitch-map__cell b i{font-style:normal;font-weight:500}
-.pitch-card__test{margin-left:auto;font-size:13px;font-weight:600;color:#46633d;text-decoration:none;white-space:nowrap}
+.pitch-card__test{margin-left:auto;font-size:14px;font-weight:600;color:#46633d;text-decoration:none;white-space:nowrap}
 
 /* My Studio follows the app's quiet card hierarchy: work first, data below. */
 .practice-page__content> :is(.studio-work,.studio-data,.studio-tracker){margin-bottom:28px}
@@ -139,7 +139,6 @@
 .practice-page .studio-mini-list a:hover{background:#f1f1f4}
 .practice-page .practice-card__empty{font-size:13px;margin-top:12px;color:#71747e}
 .practice-page .practice-card__empty a{color:#79588e;text-decoration:none}
-.practice-page .practice-card__empty a:hover{text-decoration:underline}
 .practice-page .focus-card__clock{font-size:44px;font-weight:600}
 .practice-page .focus-card__primary{background:#eee7f2;color:#79588e;font-weight:500}
 .practice-page .focus-card__primary:hover{background:#e5d9ee}
@@ -226,7 +225,6 @@
 .routine-list li.done .routine-list__check span{background:#678956;border-color:#678956;color:#fff}
 .routine-list__check input:focus-visible+span{outline:2px solid #b8bac2;outline-offset:2px}
 .routine-list__text{flex:0 1 auto;min-width:0;font-size:14px;line-height:1.4;word-break:break-word;color:inherit;text-decoration:none}
-a.routine-list__text:hover{text-decoration:underline;text-underline-offset:3px}
 .routine-list li.done .routine-list__text{color:#98999f;text-decoration:line-through}
 .routine-delete{flex:0 0 auto;display:grid;place-items:center;width:32px;height:32px;padding:0;border:0;border-radius:10px;background:transparent;color:#85868e;cursor:pointer;opacity:0;transition:opacity .12s ease}
 .routine-list li:hover .routine-delete,.routine-delete:focus-visible{opacity:1}
@@ -342,8 +340,8 @@ a.routine-list__text:hover{text-decoration:underline;text-underline-offset:3px}
 .practice-today__actions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:auto;padding-top:20px;align-self:stretch}
 .practice-today__actions button{height:44px;padding:0 16px;border:0;border-radius:13px;background:#f1f1f4;color:#3d3f47;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
 .practice-today__actions button:hover{background:#e8e8ec}
-.practice-today__actions .practice-today__primary{flex:1;background:#292a33;color:#fff}
-.practice-today__actions .practice-today__primary:hover{background:#3a3b45}
+.practice-today__actions .practice-today__primary{flex:1;background:#e7eee3;color:#40553d}
+.practice-today__actions .practice-today__primary:hover{background:#dce8d7}
 .practice-today__actions button:focus-visible{outline:2px solid #b8bac2;outline-offset:2px}
 .practice-today__steps{padding:24px 24px 26px;min-width:0}
 .practice-today__steps h3{margin:0;font-size:16px;font-weight:600}
@@ -384,3 +382,201 @@ a.routine-list__text:hover{text-decoration:underline;text-underline-offset:3px}
 .studio-day__undo button{margin-left:6px;padding:0;border:0;background:none;font:inherit;font-weight:650;color:#292a33;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 
 .practice-today__clock .session-review{align-self:stretch;margin:16px 0 4px;padding:14px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px #ececef}
+
+/* Deadlines (lib/deadlines.ts): the + button by the title, Coming up cards with a pill per piece, Past folded away. */
+.practice-page .practice-page__header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.practice-page__add-deadline{flex:none;height:34px;padding:0 14px;border:0;border-radius:999px;background:#f1f1f2;color:#5f6169;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.practice-page__add-deadline:hover{background:#e7e7ea;color:#292a33}
+.practice-page .deadlines{margin:0 0 16px}
+.deadline-card{margin:0 0 10px;padding:16px 20px;border-radius:20px;background:#fff;box-shadow:0 0 0 1px #ececef}
+.deadline-card__head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.deadline-card__name{padding:0;border:0;background:none;font:inherit;font-size:16px;font-weight:650;color:#292a33;text-align:left;cursor:pointer}
+.deadline-card__name:hover{color:#46633d}
+.deadline-card__when{flex:none;font-size:12.5px;font-weight:600;color:#765d31;background:#f3ead6;padding:3px 10px;border-radius:999px}
+.deadline-card__pieces{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0;padding:0;list-style:none}
+.deadline-card__pieces .tag-pill{height:28px;padding:0 12px;font-size:13px;text-decoration:none}
+.deadline-card__pieces a.tag-pill:hover{filter:brightness(.96)}
+.deadlines--past summary{margin:0 0 10px;padding:4px 0;font-size:13px;font-weight:600;color:#85868e;cursor:pointer}
+.deadlines--past .deadline-card{opacity:.7}
+.deadline-dialog__row{display:grid;grid-template-columns:minmax(0,1fr) 170px;gap:12px;margin-bottom:16px}
+.deadline-dialog__row label,.deadline-dialog__label{display:grid;gap:6px;margin:0;font-size:12.5px;font-weight:600;color:#6f7078}
+.deadline-dialog__row input{height:40px;padding:0 12px;border:1px solid #e1e1e5;border-radius:12px;font:inherit;font-size:15px;color:#292a33;background:#fff}
+.deadline-dialog__label{margin-bottom:6px}
+.deadline-dialog__pieces{display:grid;gap:2px;margin:0 0 8px;padding:0;list-style:none}
+.deadline-dialog__pieces li{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 4px 6px 10px;border-radius:10px;background:#f7f7f8}
+.deadline-dialog__pieces span{font-size:14px;font-weight:600}
+.deadline-dialog__pieces small{margin-left:8px;font-weight:400;color:#85868e}
+.deadline-dialog__pieces button{display:grid;place-items:center;width:28px;height:28px;border:0;border-radius:8px;background:none;color:#85868e;cursor:pointer}
+.deadline-dialog__pieces button:hover{color:#a5372f}
+.deadline-dialog__error{margin:8px 0 0;font-size:13px;color:#a2402d}
+.deadline-dialog__actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.deadline-dialog__actions button{height:38px;padding:0 16px;border:0;border-radius:999px;background:#f1f1f2;color:#3f4048;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.deadline-dialog__actions .deadline-dialog__save{background:#46633d;color:#fff}
+.deadline-dialog__actions .deadline-dialog__delete{margin-right:auto;background:none;color:#a2402d}
+@media(max-width:560px){.deadline-dialog__row{grid-template-columns:1fr}.deadline-card{padding:14px 16px}}
+
+/* Working on as cards (Edit shows a remove button on each), then the folded lists: tricky bits, want, learned, recent. */
+.practice-page .working{margin:0 0 18px}
+.working__head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.working__edit{height:30px;padding:0 12px;border:0;border-radius:999px;background:none;color:#46633d;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.working__edit:hover,.working__edit[aria-pressed="true"]{background:#e4ecdf}
+.working__grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin:0;padding:0;list-style:none}
+.working-card{position:relative}
+.working-card>:is(a,span){display:flex;flex-direction:column;align-items:flex-start;gap:2px;height:100%;box-sizing:border-box;padding:14px 16px 15px;border-radius:18px;background:#fff;box-shadow:0 0 0 1px #ececef;color:inherit;text-decoration:none;transition:box-shadow .15s}
+.working-card>a:hover{box-shadow:0 0 0 1px #d9d9de,0 4px 14px rgba(0,0,0,.05)}
+.working-card>span.is-disabled{opacity:.5}
+.working-card b{font-size:15px;font-weight:650;line-height:1.3;color:#292a33}
+.working-card small{font-size:12.5px;color:#85868e}
+.working-card .working-card__meta{margin-top:6px;color:#6f7078}
+.working-card .tag-pill{margin-top:8px}
+.working-card__remove{position:absolute;top:8px;right:8px;display:grid;place-items:center;width:28px;height:28px;border:0;border-radius:999px;background:#f1f1f2;color:#5f6169;cursor:pointer}
+.working-card__remove:hover{background:#f4e4de;color:#825747}
+.studio-folds{display:grid;margin:0 0 28px;border-top:1px solid #ececef}
+.studio-fold{border-bottom:1px solid #ececef}
+.studio-fold summary{display:flex;align-items:center;gap:8px;padding:14px 4px;font-size:15px;font-weight:600;color:#292a33;cursor:pointer;list-style:none}
+.studio-fold summary::-webkit-details-marker{display:none}
+.studio-fold summary::after{content:"";margin-left:auto;width:7px;height:7px;border-right:1.7px solid #9a9ba2;border-bottom:1.7px solid #9a9ba2;transform:rotate(45deg) translateY(-2px);transition:transform .15s}
+.studio-fold[open] summary::after{transform:rotate(225deg) translateY(-2px)}
+.studio-fold summary small{font-size:13px;font-weight:500;color:#9a9ba2}
+.studio-fold__list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:2px 16px;margin:0 0 6px;padding:0;list-style:none}
+.studio-fold__list :is(a,span){display:block;padding:8px 6px;border-radius:10px;color:inherit;text-decoration:none}
+.studio-fold__list a:hover{background:#f5f5f7}
+.studio-fold__list span.is-disabled{opacity:.5}
+.studio-fold__list b{display:block;font-size:14px;font-weight:600;line-height:1.3}
+.studio-fold__list small{display:block;margin-top:2px;font-size:12.5px;color:#85868e}
+.studio-fold__more{display:inline-block;margin:0 6px 14px;color:#46633d;font-size:13px;font-weight:600;text-decoration:none}
+@media(max-width:560px){.working__grid{grid-template-columns:1fr 1fr;gap:8px}.working-card>:is(a,span){padding:12px 13px;border-radius:16px}.working-card b{font-size:14px}}
+.working__grid.is-tidying .working-card>:is(a,span){padding-right:44px}
+
+/* Today's practice, October 2026: the clock is one strip across the top, the routine fills the width under it.
+   The routine reads like a notes app checklist: no grey rows, a hairline under each item, two columns when wide. */
+.practice-page .practice-today{display:block}
+.practice-page .practice-today__clock{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:12px 24px;text-align:left;padding:20px 24px;border-right:0;border-bottom:1px solid #eeefec}
+.practice-page .practice-today__what{flex:1 1 220px;min-width:0}
+.practice-page .practice-today__clock h2{margin:0;font-size:16px}
+.practice-page .practice-today__now{margin:4px 0 0;min-height:0;font-size:15px}
+.practice-page .practice-today__time{margin:0;font-size:40px;display:flex;align-items:baseline;gap:10px}
+.practice-page .practice-today__total{margin:0;font-size:13px;font-weight:500;letter-spacing:0}
+.practice-page .practice-today__actions{flex:0 0 auto;margin:0;padding:0;align-self:center}
+.practice-page .practice-today__actions .practice-today__primary{flex:none;min-width:120px}
+.practice-page .practice-today__clock .session-review{flex-basis:100%}
+.practice-page .practice-today__steps{padding:18px 24px 14px}
+.practice-page .practice-today .routine-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:28px;row-gap:0;margin:0}
+.practice-page .practice-today .routine-list li{min-height:46px;padding:0 2px;border-radius:0;border-bottom:1px solid #f0f0f2;background:none}
+.practice-page .practice-today .routine-list li:hover,.practice-page .practice-today .routine-list li.is-current{background:none}
+.practice-page .practice-today .routine-list li.is-current .routine-list__text{font-weight:600}
+.practice-page .practice-today .routine-delete:hover{background:none;color:#a5372f}
+.practice-page .routine-list__add{border-bottom:0!important}
+.practice-page .routine-list__add .suggest-field{flex:1;min-width:0}
+.practice-page .routine-list__add .routine-add{height:46px;padding:0;background:none;border-radius:0;box-shadow:none}
+.practice-page .routine-list__add .routine-add:focus-within{box-shadow:none}
+.practice-page .routine-list__add .routine-add>svg{width:22px;color:#9a9ca3}
+.practice-page .routine-list__add .routine-add input::placeholder{color:#a3a4ab}
+@media(max-width:700px){
+  .practice-page .practice-today .routine-list{grid-template-columns:1fr}
+  .practice-page .practice-today__clock{padding:16px 18px}
+  .practice-page .practice-today__time{font-size:34px}
+  .practice-page .practice-today__steps{padding:14px 18px 10px}
+}
+
+/* Section heads with their one action (+ Deadline), shelves with a real heading and a count, cards that lift like the
+   home page's preview cards, and a trash icon (shown on hover, always on touch) to take a piece off Working on. */
+.practice-page .section-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.section-head__action{flex:none;padding:0;border:0;background:none;color:#46633d;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.section-head__action:hover{color:#2f4628}
+.practice-page .shelf{margin:0 0 22px}
+.practice-page .shelf__title small{margin-left:8px;font-size:15px;font-weight:500;color:#9a9ba2;letter-spacing:0}
+.practice-page .shelf__title button{display:inline-flex;align-items:baseline;padding:0;border:0;background:none;font:inherit;color:inherit;letter-spacing:inherit;cursor:pointer}
+.practice-page .shelf__title button i{align-self:center;width:8px;height:8px;margin-left:12px;border-right:2px solid #9a9ba2;border-bottom:2px solid #9a9ba2;transform:rotate(45deg) translateY(-3px);transition:transform .15s}
+.practice-page .shelf__title button[aria-expanded="true"] i{transform:rotate(225deg) translateY(-1px)}
+.practice-page .shelf__title button:not([aria-expanded="true"]){color:#6f7078}
+.practice-page .working-card>:is(a,span){border-radius:var(--studio-card-radius);box-shadow:var(--studio-card-shadow);transition:transform .18s ease,box-shadow .18s ease}
+.practice-page .working-card>a:hover,.practice-page .working-card>a:focus-visible{transform:translateY(-3px);box-shadow:var(--studio-card-hover-shadow)}
+.practice-page .working-card:has(.working-card__remove)>:is(a,span){padding-right:44px}
+.practice-page .working-card__remove{top:10px;right:8px;width:32px;height:32px;border-radius:10px;background:none;color:#9a9ca3;opacity:0;transition:opacity .12s ease}
+.practice-page .working-card:hover .working-card__remove,.practice-page .working-card__remove:focus-visible{opacity:1}
+.practice-page .working-card__remove:hover{background:none;color:#a5372f}
+.practice-page .working-card__remove svg{width:16px;height:16px}
+@media(hover:none){.practice-page .working-card__remove{opacity:1}}
+
+/* Second pass after review: bordered white cards with no lift (a lift reads well only on tinted cards), fewer bold
+   weights, a quieter clock number, and the routine's Open link. */
+.practice-page .shelf__title small{font-size:14px}
+.practice-page .working-card>:is(a,span){border-radius:18px;box-shadow:0 0 0 1px #e6e6ea;transform:none;transition:box-shadow .15s}
+.practice-page .working-card>a:hover,.practice-page .working-card>a:focus-visible{transform:none;box-shadow:0 0 0 1px #c9cbd1}
+.practice-page .working-card b{font-size:16px;font-weight:600}
+.practice-page .working-card small{font-size:13px}
+.practice-page .working-card__pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.practice-page .working-card__pills .tag-pill{margin:0}
+.practice-page .deadline-card__name{font-weight:600}
+.practice-page .practice-today__clock h2{font-weight:600}
+.practice-page .practice-today__now{font-weight:500}
+.practice-page .practice-today__time{font-size:30px;font-weight:450;letter-spacing:.01em;color:#3d3f47}
+.practice-page .practice-today .routine-list li.is-current .routine-list__text{font-weight:inherit;color:#292a33}
+.practice-page .practice-today .routine-list li.is-current .routine-list__check span{border-color:#46633d;border-width:2px}
+.practice-page .routine-list__text{padding:12px 0;border:0;background:none;font:inherit;font-size:15px;color:inherit;text-align:left;cursor:pointer}
+.practice-page .routine-list__open{flex:none;font-size:13px;font-weight:600;color:#46633d;text-decoration:none;opacity:0;transition:opacity .12s}
+.practice-page .routine-list li:hover .routine-list__open,.practice-page .routine-list__open:focus-visible{opacity:1}
+@media(hover:none){.practice-page .routine-list__open{opacity:1}}
+.practice-page .shelf__title .chevron-icon{align-self:center;width:22px;height:22px;margin-left:10px;color:#6f7078;transition:transform .15s}
+.practice-page .shelf__title button[aria-expanded="true"] .chevron-icon{transform:rotate(180deg)}
+
+/* The clock's controls as one soft pill (the approved floating-control look): white, hairline border, round icon buttons. */
+.practice-page .practice-today__actions{display:inline-flex;gap:2px;padding:3px;border:1px solid #d4d5da;border-radius:999px;background:#fff;box-shadow:0 3px 10px rgba(41,42,51,.08)}
+.practice-page .practice-today__actions button,.practice-page .practice-today__actions .practice-today__primary{flex:none;display:grid;place-items:center;width:38px;min-width:0;height:38px;padding:0;border:0;border-radius:999px;background:transparent;color:#292a33}
+.practice-page .practice-today__actions button:hover{background:#f1f1f4}
+.practice-page .practice-today__actions svg{width:18px;height:18px}
+
+/* Repetitions (lib/repLog.ts): the day's list in the day panel, and the all-time "Most practised" card. */
+.studio-day__reps{margin-top:14px;padding-top:12px;border-top:1px solid #efeff1}
+.studio-day__reps h3{margin:0 0 6px;font-size:14px;font-weight:600;color:#45464f}
+.studio-day__reps ul{display:grid;gap:2px;margin:0;padding:0;list-style:none}
+.studio-day__reps li{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;padding:6px 0}
+.studio-day__reps li .history-day__meta{grid-column:1}
+.studio-day__reps li b{grid-column:2;grid-row:1 / span 2;align-self:center;font-size:16px;font-weight:600;font-variant-numeric:tabular-nums}
+.practice-page .most-practised{margin:0 0 20px}
+.most-practised h2{margin:0 0 10px;font-size:16px;font-weight:600}
+.most-practised ol{display:grid;gap:2px;margin:0;padding:0;list-style:none}
+.most-practised li{display:grid;grid-template-columns:24px minmax(0,1fr) auto;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px solid #f2f2f4}
+.most-practised li:last-child{border-bottom:0}
+.most-practised__rank{font-size:13px;font-weight:600;color:#9a9ba2;font-variant-numeric:tabular-nums}
+.most-practised__title{font-size:15px;color:#292a33;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.most-practised b{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums}
+.most-practised b small{font-size:13px;font-weight:400;color:#85868e}
+
+/* Pitch tendencies, smaller: fixed 36px square cells instead of columns that stretch across the page, the map only as
+   wide as itself, the notes beside it taking the rest, and the flat / in tune / sharp key on the right. */
+.practice-page .pitch-card__body{grid-template-columns:auto minmax(0,1fr)}
+.practice-page .pitch-map__row{grid-template-columns:24px repeat(12,36px);gap:3px;min-width:0}
+.practice-page .pitch-map{gap:3px}
+.practice-page .pitch-map__cell{width:36px;height:36px;aspect-ratio:auto;border-radius:7px}
+.practice-page .pitch-map__cell b{font-size:12px}
+.practice-page .pitch-map__cell small{font-size:9.5px}
+.practice-page .pitch-map__head span,.practice-page .pitch-map__octave{font-size:12px}
+.practice-page .pitch-map__legend{justify-content:flex-end;padding-left:0;font-size:12px}
+@media(max-width:900px){.practice-page .pitch-card__body{grid-template-columns:1fr}}
+.practice-page .pitch-map{width:max-content;max-width:100%}
+
+/* Item cards, compact: narrower columns (more per row), less padding, the kind pill closer to the title. */
+.practice-page .working__grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}
+.practice-page .working-card>:is(a,span){padding:11px 14px 12px;border-radius:14px}
+.practice-page .working-card b{font-size:15px}
+.practice-page .working-card small{font-size:12.5px}
+.practice-page .working-card__pills{margin-top:6px}
+.practice-page .working-card__pills .tag-pill{height:20px;padding:0 7px;font-size:11.5px}
+.practice-page .working-card:has(.working-card__remove)>:is(a,span){padding-right:32px}
+.practice-page .working-card__remove{top:6px;right:4px;width:28px;height:28px}
+
+/* A piece you can open, inside a deadline: white with a hairline and its list's status dot (Working on, Want to
+   learn, Learned). Deliberately not a tag pill: tags describe, these go somewhere. */
+.piece-chip{display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 12px 0 10px;border-radius:999px;background:#fff;box-shadow:0 0 0 1px #e1e1e5;color:#292a33;font-size:13px;font-weight:500;text-decoration:none;white-space:nowrap}
+a.piece-chip:hover{box-shadow:0 0 0 1px #c9cbd1}
+.piece-chip .status-dot{width:7px;height:7px}
+.piece-chip .status-dot--none{background:transparent;box-shadow:inset 0 0 0 1.5px #c9cbd1}
+/* Tricky bits on My Studio: one card per piece, its bars listed inside. */
+.practice-page .tricky-group-card>div{display:block;height:100%;box-sizing:border-box;padding:11px 14px 10px;border-radius:14px;box-shadow:0 0 0 1px #e6e6ea}
+.practice-page .tricky-group-card b{display:block;font-size:15px;font-weight:600;color:#292a33;margin-bottom:4px}
+.practice-page .tricky-group-card ul{display:grid;gap:0;margin:0;padding:0;list-style:none}
+.practice-page .tricky-group-card a{display:block;padding:3px 0;font-size:13px;color:#45464f;text-decoration:none}
+.practice-page .tricky-group-card a:hover{color:#46633d}
+.practice-page .tricky-group-card a small{font-size:13px;color:#9a9ba2}

@@ -1,4 +1,4 @@
-import {majorKeys,ranges,scaleForms,scaleTypes,type ScaleEnding,type ScaleFormId,type ScaleRange,type ScaleStart,type ScaleTypeId} from "./scale-score";
+import {majorKeys,ranges,scaleForms,scaleTypes,type ScaleSpan,type ScaleEnding,type ScaleFormId,type ScaleRange,type ScaleStart,type ScaleTypeId} from "./scale-score";
 import type {ArticulationSelection,RhythmChoice,SyllableScheme} from "../../components/notePatterns";
 
 /**
@@ -24,6 +24,10 @@ export type ScaleSetConfig={
   ending:ScaleEnding;
   /** Optional: sets saved before the option existed default to the tonic. */
   scaleStart?:ScaleStart;
+  /** The two ends of a custom range. Absent in sets saved before it was stored. */
+  customSpan?:ScaleSpan;
+  /** 1 straight, 3 or 4 broken. Absent in sets saved before it existed. */
+  groupSize?:number;
   newLines:boolean;
   keys:string[];
   articulationRotation:{articulation:ArticulationSelection;syllables:SyllableScheme;custom?:boolean}[];
@@ -84,6 +88,20 @@ export function saveScaleSet(name:string,config:ScaleSetConfig):ScaleSet|null{
 }
 
 /**
+ * The type half of a book title. Three or more types used to read
+ * "3 种音阶" / "3 scale types", which then had the form word appended
+ * ("3 种音阶音阶"). Three minors together are just "minor" (the natural,
+ * harmonic and melodic set a student plays as one routine); any other mix
+ * is "mixed", and the form word finishes the phrase either way.
+ */
+export function typeWordFor(types:readonly {id:string;label:string;zh:string}[],zh:boolean){
+  if(types.length===1)return zh?types[0].zh:types[0].label;
+  if(types.length===2)return zh?`${types[0].zh}与${types[1].zh}`:`${types[0].label} & ${types[1].label.toLowerCase()}`;
+  const allMinor=types.every(t=>t.id==="natural"||t.id==="harmonic"||t.id==="melodic");
+  return allMinor?(zh?"小调":"Minor"):(zh?"多种":"Mixed");
+}
+
+/**
  * The one-line summary under a set's name, used both in the Scale Studio
  * panel and on the Exercises hub so a set reads the same in both places:
  * what it contains, then how much of it — "Major & harmonic minor thirds ·
@@ -95,11 +113,7 @@ export function describeSet(config:ScaleSetConfig,zh:boolean){
   const range=ranges.find(r=>r.id===config.range);
   const keyCount=(config.keys??[]).length;
 
-  const typeWord=types.length===1
-    ?(zh?types[0].zh:types[0].label)
-    :types.length===2
-      ?(zh?`${types[0].zh}与${types[1].zh}`:`${types[0].label} & ${types[1].label.toLowerCase()}`)
-      :(zh?`${types.length} 种音阶`:`${types.length} scale types`);
+  const typeWord=typeWordFor(types,zh);
   const formWord=forms.length===1
     ?(forms[0].id==="scale"?(zh?"音阶":"scales"):(zh?forms[0].zh:forms[0].label.toLowerCase().replace(/([^s])$/,"$1s")))
     :(zh?"多种形式":"mixed forms");
@@ -107,5 +121,7 @@ export function describeSet(config:ScaleSetConfig,zh:boolean){
     ?(zh?"全部 12 个调":"all 12 keys")
     :(zh?`${keyCount} 个调`:`${keyCount} ${keyCount===1?"key":"keys"}`);
 
-  return [`${typeWord}${zh?"":" "}${formWord}`,keyWord,range?(zh?range.zh:range.label.toLowerCase()):null].filter(Boolean).join(" · ");
+  const broken=(config.groupSize??1)>1&&forms.some(f=>f.id==="scale"||f.id==="arpeggio");
+  const pattern=broken?(zh?`${config.groupSize===3?"三":"四"}音一组`:`in ${config.groupSize}s`):"";
+  return [`${typeWord}${zh?"":" "}${formWord}${pattern?(zh?`（${pattern}）`:` ${pattern}`):""}`,keyWord,range?(zh?range.zh:range.label.toLowerCase()):null].filter(Boolean).join(" · ");
 }

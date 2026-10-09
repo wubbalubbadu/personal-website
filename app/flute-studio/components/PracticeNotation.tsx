@@ -1,6 +1,7 @@
 "use client";
 import {useCallback,useEffect,useRef,useState,type ReactNode} from 'react';
 import {deriveScoreEvents} from './deriveScoreEvents';
+import {measureStops,cursorAt,type CursorBeat} from './playbackCursor';
 import {usePracticeAudio,pitchFrequency} from '../PracticeAudio';
 import {installGhostNoteFix} from '../lib/ghostNoteFix';
 import {PracticeIcon} from './PracticeIcon';
@@ -8,7 +9,9 @@ import {fermataAttackIndexes} from './practiceTechniques';
 import {installReminderAccidentalFix,setReminderAccidentals,reminderAccidentalsOn} from '../lib/reminderAccidentalFix';
 import {decorateRow,withReminders,noDisplay,type PracticeDisplay} from './practiceDisplay';
 
-export function PracticeNotation({xml,label,quarterBpm,playing,onPlay,onStop,loop=false,clicks=false,sempreStaccato=false,autoBeam=false,zoom=.8,hideTime=false,display,marks,onNote}:{xml:string;label:string;quarterBpm:number;playing:boolean;onPlay:()=>void;onStop:()=>void;loop?:boolean;clicks?:boolean;sempreStaccato?:boolean;autoBeam?:boolean;zoom?:number;hideTime?:boolean;/** The reader's display options (note names, accidentals, rhythm). Left out, the row shows only the notes. */display?:PracticeDisplay;/** Marks drawn over the engraving (the Tone Lab's results). `version` changes whenever the notation is redrawn. */marks?:(context:{root:HTMLDivElement;version:number})=>ReactNode;/** A tap on a note, by its event index (set once display is on). */onNote?:(event:number)=>void}){
+export function PracticeNotation({xml,label,quarterBpm,playing,onPlay,onStop,loop=false,clicks=false,sempreStaccato=false,autoBeam=false,zoom=.8,hideTime=false,display,marks,onNote,wrap=false,controls}:{xml:string;label:string;quarterBpm:number;playing:boolean;onPlay:()=>void;onStop:()=>void;loop?:boolean;clicks?:boolean;sempreStaccato?:boolean;autoBeam?:boolean;zoom?:number;hideTime?:boolean;/** The reader's display options (note names, accidentals, rhythm). Left out, the row shows only the notes. */display?:PracticeDisplay;/** Marks drawn over the engraving (the Tone Lab's results). `version` changes whenever the notation is redrawn. */marks?:(context:{root:HTMLDivElement;version:number})=>ReactNode;/** A tap on a note, by its event index (set once display is on). */onNote?:(event:number)=>void;
+  /** Flow onto as many lines as the width needs instead of one line you scroll sideways. */wrap?:boolean;
+  /** More controls in the row with Listen (a tempo, a counter). */controls?:ReactNode}){
   const root=useRef<HTMLDivElement>(null),sequence=useRef<ReturnType<typeof deriveScoreEvents>|null>(null);
   const {getAudio}=usePracticeAudio();
   const [ready,setReady]=useState(false),[error,setError]=useState(''),[version,setVersion]=useState(0),[hostEl,setHostEl]=useState<HTMLDivElement|null>(null);
@@ -27,7 +30,7 @@ export function PracticeNotation({xml,label,quarterBpm,playing,onPlay,onStop,loo
       const shown=display??noDisplay,reminded=shown.accidentals?withReminders(xml):null,source=reminded?.xml??xml;
       const score=new OpenSheetMusicDisplay(next,{backend:'svg',autoResize:false,drawingParameters:'compacttight',drawTitle:false,drawComposer:false,drawPartNames:false});
       score.setOptions({pageFormat:'Endless',drawMeasureNumbers:true,newSystemFromXML:false,autoBeam});
-      score.EngravingRules.MinNoteDistance=1.4;score.EngravingRules.RenderSingleHorizontalStaffline=true;score.EngravingRules.RenderTimeSignatures=!hideTime;score.EngravingRules.SlurNoteHeadYOffset=.9;
+      score.EngravingRules.MinNoteDistance=1.4;score.EngravingRules.RenderSingleHorizontalStaffline=!wrap;score.EngravingRules.RenderTimeSignatures=!hideTime;score.EngravingRules.SlurNoteHeadYOffset=.9;
       score.EngravingRules.RenderMultipleRestMeasures=false;score.EngravingRules.AutoGenerateMultipleRestMeasuresFromRestMeasures=false;
       await score.load(source);if(disposed)return;score.Zoom=zoom;
       // The reminder flag is shared with the reader's own engraver: borrow it for this draw only.
@@ -49,7 +52,7 @@ export function PracticeNotation({xml,label,quarterBpm,playing,onPlay,onStop,loo
       let frame=0;resize=new ResizeObserver(()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>{if(!disposed&&host.clientWidth>0&&Math.abs(width-host.clientWidth)>2){width=host.clientWidth;draw();if(display)decorateRow(next,source,derived,shown,reminded?.reminders??[]);setVersion(v=>v+1)}})});resize.observe(host);
     }catch(e){if(!disposed)setError(e instanceof Error?e.message:'Could not draw this exercise.')}})();
     return()=>{disposed=true;resize?.disconnect();next.remove()};
-  },[xml,sempreStaccato,autoBeam,zoom,hideTime,display?.names,display?.accidentals,display?.rhythm]);
+  },[xml,sempreStaccato,autoBeam,zoom,hideTime,wrap,display?.names,display?.accidentals,display?.rhythm]);
   useEffect(()=>{
     if(!playing||!ready||!sequence.current){return}
     const context=getAudio(),seq=sequence.current,seconds=60/quarterBpm/seq.unitsPerBeat;
@@ -82,29 +85,27 @@ export function PracticeNotation({xml,label,quarterBpm,playing,onPlay,onStop,loo
   // The position line glides between notes on the audio clock, like the main reader's cursor, instead of jumping on timers.
   useEffect(()=>{
     const host=root.current,seq=sequence.current;if(!playing||!ready||!host||!seq)return;
-    const notes=Array.from(host.querySelectorAll<SVGGElement>('.vf-stavenote')),svg=notes[0]?.closest('svg');if(!svg)return;
-    const matrix=svg.getScreenCTM()?.inverse();if(!matrix)return;
-    const marks=notes.map(note=>{const b=note.getBoundingClientRect();return {x:new DOMPoint(b.left,b.top-5).matrixTransform(matrix),bottom:new DOMPoint(b.left,b.bottom+5).matrixTransform(matrix),right:new DOMPoint(b.right,b.top).matrixTransform(matrix).x}});
-    const offsets:number[]=[];let total=0;seq.events.forEach(e=>{offsets.push(total);total+=e.d});
-    const line=document.createElementNS('http://www.w3.org/2000/svg','line');line.setAttribute('class','practice-position');svg.append(line);
-    const context=getAudio(),seconds=60/quarterBpm/seq.unitsPerBeat,length=total*seconds;let frame=0;
+    // The reader's own playback cursor (playbackCursor.ts): same purple line, same glide from note to note, so
+    // Listen looks the same here as in the score reader.
+    const stops=measureStops(host.querySelectorAll<SVGGElement>('.vf-stavenote'),host,1);if(!stops.some(Boolean))return;
+    const line=document.createElement('div');line.className='playback-cursor';host.append(line);
+    const seconds=60/quarterBpm/seq.unitsPerBeat,context=getAudio();
+    // Beats on the audio clock for the cycle playing now (a loop starts a new cycle each time round).
+    let beatsFor=-1,beats:CursorBeat[]=[],pointer={k:0},frame=0;
     const draw=()=>{
-      let t=context.currentTime-cycle.current;
-      if(t>=0&&length>0){
-        if(loop)t%=length;
-        const u=t/seconds;const k=offsets.findIndex((o,i)=>u>=o&&(i===offsets.length-1||u<offsets[i+1]));
-        if(k>=0&&marks[k]){
-          const end=offsets[k]+seq.events[k].d,span=Math.max(1e-6,end-offsets[k]),f=Math.min(1,(u-offsets[k])/span);
-          const nextX=marks[k+1]?marks[k+1].x.x:marks[k].right,x=marks[k].x.x+(nextX-marks[k].x.x)*f;
-          line.setAttribute('x1',String(x));line.setAttribute('x2',String(x));line.setAttribute('y1',String(marks[k].x.y));line.setAttribute('y2',String(marks[k].bottom.y));line.style.opacity='';
-          const box=line.getBoundingClientRect(),view=host.getBoundingClientRect();
-          if(box.right>view.right-30||box.left<view.left)host.scrollTo({left:host.scrollLeft+box.left-view.left-60,behavior:'smooth'});
-        }
-      }else line.style.opacity='0';
+      if(cycle.current!==beatsFor){
+        beatsFor=cycle.current;pointer={k:0};beats=[];let elapsed=0;
+        seq.events.forEach((event,index)=>{if(event.d>0)beats.push({index,at:beatsFor+elapsed*seconds,end:beatsFor+(elapsed+event.d)*seconds});elapsed+=event.d});
+      }
+      const at=cursorAt(context.currentTime,beats,stops,pointer);
+      if(!at)line.style.opacity='0';
+      else{line.style.opacity='1';line.style.transform=`translate(${at.x}px,${at.top}px)`;line.style.height=`${at.height}px`}
       frame=requestAnimationFrame(draw);
     };
     frame=requestAnimationFrame(draw);
     return()=>{cancelAnimationFrame(frame);line.remove()};
+  // getAudio is the shared engine's stable getter; loop changes restart playback, which re-runs this.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   },[playing,ready,quarterBpm,loop,xml]);
   // A tap on a note reports its event index (native listener: the notation is drawn outside React).
   useEffect(()=>{
@@ -112,5 +113,5 @@ export function PracticeNotation({xml,label,quarterBpm,playing,onPlay,onStop,loo
     const tap=(e:MouseEvent)=>{const node=(e.target as Element).closest<SVGGElement>('.vf-stavenote[data-event]');if(node)onNote(Number(node.dataset.event))};
     hostEl.addEventListener('click',tap);return()=>hostEl.removeEventListener('click',tap);
   },[hostEl,onNote]);
-  return <div className="practice-notation"><div className="practice-notation__stage"><div className="practice-notation__music" ref={hostRef} data-pills={display&&display.names!=='off'?'on':undefined} data-marks={marks?'on':undefined} aria-label={`${label} notation`}/>{marks&&hostEl&&ready&&<div className="practice-notation__marks">{marks({root:hostEl,version})}</div>}</div>{error?<p role="alert">{error}</p>:!ready?<p role="status">Preparing notation…</p>:null}<button type="button" className="practice-listen" aria-label={`${playing?'Stop':'Listen to'} ${label}`} disabled={!ready||!!error} onClick={playing?onStop:onPlay}><PracticeIcon name={playing?'pause':'play'}/>{playing?'Stop':'Listen'}</button></div>;
+  return <div className="practice-notation"><div className="practice-notation__stage"><div className="practice-notation__music" ref={hostRef} data-pills={display&&display.names!=='off'?'on':undefined} data-marks={marks?'on':undefined} aria-label={`${label} notation`}/>{marks&&hostEl&&ready&&<div className="practice-notation__marks">{marks({root:hostEl,version})}</div>}</div>{error?<p role="alert">{error}</p>:!ready?<p role="status">Preparing notation…</p>:null}<button type="button" className="practice-listen" aria-label={`${playing?'Stop':'Listen to'} ${label}`} disabled={!ready||!!error} onClick={playing?onStop:onPlay}><PracticeIcon name={playing?'pause':'play'}/>{playing?'Stop':'Listen'}</button>{controls}</div>;
 }

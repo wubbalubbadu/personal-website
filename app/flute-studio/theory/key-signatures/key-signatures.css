@@ -1,0 +1,34 @@
+/* Lesson 5. The frame, scene and keyboard come from lesson 4 (accidentals.css); this adds the key signature's moments. */
+
+/* Step 1: the empty place beside the clef, a dashed box that breathes until it is tapped. */
+.ks-slot{cursor:pointer;outline:none}
+.ks-slot rect{fill:#b9362e;fill-opacity:.05;stroke:#b9362e;stroke-width:2;stroke-dasharray:7 6;animation:ks-breathe 1.8s ease-in-out infinite}
+.ks-slot:hover rect,.ks-slot:focus-visible rect{fill-opacity:.12}
+@keyframes ks-breathe{50%{fill-opacity:.13;stroke-opacity:.55}}
+/* The written sharps fly from their notes into the signature and fade as they arrive; the signature's sign then drops in. */
+.ks-fly{fill:#b9362e;animation:ks-fly .7s cubic-bezier(.5,0,.3,1) both;pointer-events:none}
+@keyframes ks-fly{0%{transform:none;opacity:1}80%{opacity:1}100%{transform:translate(var(--dx),var(--dy));opacity:0}}
+.ks-once .engraved-row__key.is-dropping{animation-delay:.6s}
+
+/* A ring that spreads once around a note (or a sign) that just changed. */
+.ks-ring{fill:none;stroke:#b9362e;stroke-width:3;opacity:0;transform-box:fill-box;transform-origin:center;animation:ks-ring .9s ease-out both;pointer-events:none}
+@keyframes ks-ring{0%{opacity:.9;transform:scale(.6)}100%{opacity:0;transform:scale(1.7)}}
+
+/* Step 2: the order of the signs, as a reference beside the control. Letters already in the signature are solid; the newest pops. */
+.ks-order{display:inline-flex;gap:4px;font:600 18px var(--font,sans-serif)}
+.ks-order b{display:inline-grid;place-items:center;width:28px;height:32px;border-radius:8px;color:#c4bfb5;font-weight:600}
+.ks-order b.is-in{color:#292a33;background:#f3f0e9}
+.ks-order b.is-new{animation:ks-pop .5s cubic-bezier(.3,1.6,.5,1) .3s both}
+@keyframes ks-pop{0%{transform:scale(.4);color:#c4bfb5}100%{transform:none}}
+
+/* Step 2's check: a signature on its own, a little smaller than a full row, with its letters under it once read. */
+.acc-scene .engraved-row.ks-ask{height:calc(var(--scene-h) - 40px)}
+.ks-sign-letter{fill:#678956;font:700 22px var(--font,sans-serif);text-anchor:middle;animation:engraved-appear .35s ease both}
+.ks-ring.is-sign{stroke:#678956}
+.ks-letters button{min-width:48px}
+
+/* Step 3: the sign choices are the engraved signs themselves. */
+.ks-sign-icon{display:block;width:22px;height:40px;fill:#1b1b1f}
+.lesson-shell .ks-signs button{min-width:64px;display:grid;place-items:center}
+
+@media(prefers-reduced-motion:reduce){.ks-slot rect,.ks-order b.is-new,.ks-sign-letter{animation:none}.ks-fly,.ks-ring{animation:none;opacity:0}}

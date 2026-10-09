@@ -14,6 +14,14 @@
 .engraved-row__acc{animation:engraved-in .2s ease both}
 .engraved-row__below{transition:transform .4s cubic-bezier(.2,.8,.2,1)}
 .time-sig{fill:#1b1b1f}
+/* A key signature sign that drops into place: from above, a small overshoot, then still. */
+.engraved-row__key.is-dropping{animation:key-drop .55s cubic-bezier(.3,1.5,.5,1) both}
+@keyframes key-drop{0%{opacity:0;transform:translateY(-46px)}60%{opacity:1}100%{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.engraved-row__bar,.engraved-row__note,.engraved-row__below{transition:none}}
 @keyframes engraved-in{from{opacity:0}}
-@media(prefers-reduced-motion:reduce){.engraved-row,.engraved-row__acc,.engraved-row__note.is-appearing>*{animation:none}}
+@media(prefers-reduced-motion:reduce){.engraved-row__key.is-dropping,.engraved-row,.engraved-row__acc,.engraved-row__note.is-appearing>*{animation:none}}
+
+.engraved-row__rest{transition:transform .3s ease;fill:#1b1b1f}
+.engraved-row__rest.is-appearing>path{animation:rest-settle .3s ease both}
+@keyframes rest-settle{from{opacity:0;translate:0 -12px}to{opacity:1;translate:0 0}}
+@media(prefers-reduced-motion:reduce){.engraved-row__rest{transition:none}.engraved-row__rest.is-appearing>path{animation:none}}

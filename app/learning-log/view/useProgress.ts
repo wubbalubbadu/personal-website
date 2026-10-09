@@ -15,6 +15,8 @@ export function useProgress(course: Course) {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(storeKey);
+      // Restore browser progress after hydration.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (raw) setDone(new Set(JSON.parse(raw) as string[]));
     } catch {
       /* no storage — start empty */

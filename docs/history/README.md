@@ -5,7 +5,7 @@ Keep dated retrospectives here so older ideas and decisions remain readable whil
 - [September 26, 2026: old notes and development retrospective](2026-09-26-cookie-retrospective.md)
 - [September 26, 2026: subsequent product clarifications](2026-09-26-product-clarifications.md)
 - [Original notes preserved verbatim](2026-09-26-original-cookie-notes.txt)
-- [Current to-do list](../COOKIE-TODO-UPDATED.md)
+- [Current to-do list](../TODO.md) and the [idea bank and older notes](../COOKIE-TODO-UPDATED.md)
 
 For a future entry, record the date, what changed, why, what remains unresolved, and links to supporting commits or notes. Label implementation, testing and deployment separately. Preserve old entries as dated snapshots; add a correction when later evidence changes a conclusion.
 

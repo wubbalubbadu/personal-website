@@ -1,3 +1,5 @@
+> **October 7, 2026:** the short list of open work (deploy and device checks, known problems, next steps) is in [TODO.md](TODO.md). This file keeps the full idea bank and the older per-session notes.
+
 # Cookie app: updated to-do list
 
 Historical context: [September 26 retrospective and original notes](history/2026-09-26-cookie-retrospective.md).
@@ -209,6 +211,15 @@ Add drop-out practice, subdivisions and selectable accent patterns. Treat these 
 
 Provide pitch and rhythm feedback for ordinary repertoire, including tongued repetitions of the same pitch. This goes beyond the implemented long-tone tracker. Define supported music and behavior around mistakes, pauses and repeats before implementation.
 
+## Ideas from the October 8 session
+
+Not built. Future ideas only; nothing here is decided for now.
+
+- **Points for my students:** when I verify a piece is learned, the student gets 5 points; 20 points earns a small gift. Students need to see their own total to feel motivated, so a ledger kept only on my device is not enough. Possible no-account version: I send a short award code ("+5, Köhler 12") and they paste it in. A side idea, not for everyone.
+- **Markup manager on the Sync page:** list every score that has markup, with how much space it takes, a link to open the score, and Delete. Drawings are most of what is stored, so this frees space before making a sync code.
+- **More Scale Studio patterns borrowed from violin and piano practice:** turns (1-2-3-2, 1-2-1-3), dominant 7th and diminished 7th arpeggios, piano-exam broken chords (1-3-5-3), and rotating rhythms across keys the way articulations already rotate. Groups of 3 and 4 are built; choose which of these to add.
+- **Backend: decided no, for now (October 8).** No shared recordings, no email codes. Revisit only if students actually lose data even with the backup reminder. If sign-in ever happens: Google, asked only when needed, never on first launch.
+
 ## Ideas from the September 28 session
 
 Not built. Grouped by area; not a priority order.
@@ -372,7 +383,7 @@ Do not inherit old claims that a feature is “nearly free” or “mostly plumb
 
 - Pitch and repeat tracking: `app/flute-studio/lib/toneSession.ts`, `useToneSession.ts`, `usePitchStream.ts`, and `exercises/long-tones/TonePracticeReader.tsx`.
 - Markup and touch: `components/AnnotationLayer.tsx`, `lib/annotationAnchors.ts`, `lib/annotationDocument.ts`, and `reader-workspace.css`.
-- Drone and theory: `components/ScoreViewer.tsx`, `components/scoreTheory.ts`, and `docs/music-reader-teaching-todo.md`.
+- Drone and theory: `components/ScoreViewer.tsx`, `components/scoreTheory.ts`, and `docs/(archive) music-reader-teaching-todo.md`.
 - Scales: `exercises/scales/ScaleStudio.tsx`, `saved-sets.ts`, and `scale-score.ts`.
 - Practice and metronome: `practice/page.tsx`, `practice-data.ts`, and `PracticeAudio.tsx`.
 

@@ -24,10 +24,9 @@
 .tricky-preview__note{position:absolute;left:0;top:30px;font-size:13px;color:#a2a3aa}
 
 /* The pop-up. */
-.tricky-dialog{position:fixed;inset:0;z-index:500;display:grid;place-items:center;padding:20px}
-.tricky-dialog__scrim{position:absolute;inset:0;border:0;padding:0;background:rgba(41,42,51,.32);cursor:default}
-.tricky-dialog__panel{position:relative;width:min(860px,100%);max-height:calc(100dvh - 40px);overflow-y:auto;border-radius:22px;background:#fff;box-shadow:0 24px 70px rgba(41,42,51,.28);padding:14px 22px 18px;display:grid;gap:14px}
-.tricky-dialog header{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px}
+.tricky-dialog__panel{display:grid;gap:14px}
+.tricky-dialog__panel .dialog__head{margin-bottom:0}
+.tricky-dialog__heading{display:flex;align-items:center;gap:12px;min-width:0}
 .tricky-dialog__pager{display:inline-flex;align-items:center;gap:0;padding:0 2px;height:36px;border-radius:12px;background:#f1f1f4;font-size:14px;font-weight:500;color:#45464f;font-variant-numeric:tabular-nums}
 .tricky-dialog__pager button{width:30px;height:36px;border:0;border-radius:12px;background:transparent;color:#45464f;display:grid;place-items:center;cursor:pointer}
 .tricky-dialog__pager button:hover:not(:disabled){background:#e6e6ea}.tricky-dialog__pager button:disabled{opacity:.35;cursor:default}
@@ -35,13 +34,11 @@
 .tricky-dialog__title{display:grid;gap:1px;min-width:0}
 .tricky-dialog__title strong{font-size:16px;font-weight:600;color:#292a33;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tricky-dialog__title span{font-size:13px;color:#85868e}
-.tricky-dialog__close{width:40px;height:40px;border:0;border-radius:999px;background:transparent;color:#6f7178;display:grid;place-items:center;cursor:pointer}
-.tricky-dialog__close:hover{background:#f1f1f4;color:#292a33}.tricky-dialog__close svg{width:22px;height:22px}
 .tricky-dialog__music{min-height:120px}
 .tricky-dialog__note{margin:30px 0;font-size:14px;color:#85868e}
-.tricky-dialog .practice-listen{border:0;background:#f1f1f4;border-radius:12px;padding:0 14px;min-height:40px;font:inherit;font-size:14px;font-weight:500;color:#292a33;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
-.tricky-dialog .practice-listen:hover:not(:disabled){background:#e6e6ea}
-.tricky-dialog .practice-notation__stage{display:flex;align-items:center;gap:12px}.tricky-dialog .practice-notation__music{flex:1;min-width:0;overflow-x:auto}
+.tricky-dialog__panel .practice-listen{border:0;background:#f1f1f4;border-radius:12px;padding:0 14px;min-height:40px;font:inherit;font-size:14px;font-weight:500;color:#292a33;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.tricky-dialog__panel .practice-listen:hover:not(:disabled){background:#e6e6ea}
+.tricky-dialog__panel .practice-notation__stage{display:flex;align-items:center;gap:12px}.tricky-dialog__panel .practice-notation__music{flex:1;min-width:0;overflow-x:auto}
 
 .tricky-dialog__tempos{display:grid;gap:12px}
 .tricky-chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -59,24 +56,55 @@
 .tricky-dialog__tally{display:flex;align-items:center;gap:14px;padding-top:6px;border-top:1px solid #efeff1}
 .tricky-step{width:40px;height:40px;border:0;border-radius:999px;background:#f1f1f4;color:#292a33;font:inherit;font-size:22px;line-height:1;cursor:pointer}
 .tricky-step:hover:not(:disabled){background:#e6e6ea}.tricky-step:disabled{opacity:.35;cursor:default}
-.tally-sticks{flex:1;display:flex;flex-wrap:wrap;gap:8px;min-height:30px;align-items:center}
-.tally-sticks svg{display:block;flex:0 0 auto}
-.tally-sticks line{stroke:#45464f;stroke-width:2.2;stroke-linecap:round}
 .tricky-dialog__total{font-size:18px;font-weight:600;color:#292a33;min-width:5.5ch;text-align:right;font-variant-numeric:tabular-nums}
 .tricky-dialog__total small{font-size:13px;font-weight:400;color:#85868e}
-.tricky-dialog footer{padding-top:2px}
-.tricky-dialog footer a{font-size:14px;font-weight:600;color:#46633d;text-decoration:none}
+.tricky-dialog__panel footer{padding-top:2px}
+.tricky-dialog__panel footer a{font-size:14px;font-weight:600;color:#46633d;text-decoration:none}
 
 @media(max-width:760px){
   .tricky-grid{grid-template-columns:1fr}
-  .tricky-dialog{padding:0;place-items:end stretch}
-  .tricky-dialog__panel{width:100%;max-height:92dvh;border-radius:22px 22px 0 0;padding:14px 16px calc(18px + env(safe-area-inset-bottom))}
 }
 /* engraved.css stretches any .osmd-score svg to its container; here the engraving keeps the size OSMD drew. */
-html body .tricky-dialog .practice-notation__music svg,html body .tricky-preview svg{width:auto!important;max-width:none!important;height:auto!important}
+html body .tricky-dialog__panel .practice-notation__music svg,html body .tricky-preview svg{width:auto!important;max-width:none!important;height:auto!important}
 /* OSMD leaves an inline min-height on its container from a larger draw; let the engraving decide the height. */
-html body .tricky-dialog .practice-notation__music,html body .tricky-dialog .practice-notation__music>div,html body .tricky-preview__music,html body .tricky-preview__music>div{min-height:0!important;height:auto!important}
+html body .tricky-dialog__panel .practice-notation__music,html body .tricky-dialog__panel .practice-notation__music>div,html body .bit-practice .practice-notation__music,html body .bit-practice .practice-notation__music>div,html body .tricky-preview__music,html body .tricky-preview__music>div{min-height:0!important;height:auto!important}
 .tricky-step-label{height:38px;padding:0 6px;border:0;background:transparent;font:inherit;font-size:14px;font-weight:500;color:#85868e;cursor:pointer;font-variant-numeric:tabular-nums}
 .tricky-step-label:hover{color:#292a33}
 .tricky-step-input{width:60px}
 .tricky-dialog__music{overflow:hidden}
+
+/* October 2026 redesign: practising inside a bit (BitPractice), in the card dialog or on one continuous page. */
+.tricky-page__header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px}
+.bit-practice{display:grid;gap:12px}
+.bit-practice__music .practice-notation{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.bit-practice__music .practice-notation__stage{flex-basis:100%;min-width:0}
+.bit-practice__music .practice-notation__music{overflow:visible}
+.bit-practice__music .practice-notation__music svg{width:100%!important;height:auto!important}
+.bit-practice__music .practice-listen{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 14px;border:1px solid #d4d5da;border-radius:999px;background:#fff;font:inherit;font-size:14px;font-weight:500;color:#292a33;cursor:pointer}
+.bit-practice__music .practice-listen:hover:not(:disabled){background:#f1f1f4}
+.bit-practice__note{margin:24px 0;font-size:14px;color:#85868e}
+/* Tempo pill on the left, Listen pushed to the right. */
+.bit-practice__music .practice-notation__stage{order:0}
+.bit-practice__music .tempo-pill{order:1}
+.bit-practice__music .practice-listen{order:2;margin-left:auto}
+/* The ladder is only as wide as it needs: tempo, sticks, count, then − and + on the tempo you're on. */
+.bit-practice__ladder{display:grid;justify-content:start;gap:2px;margin:0;padding:0;list-style:none}
+/* A row is only as long as its contents: no reps yet means no empty space where the sticks will go. */
+.bit-practice__ladder li{display:flex;align-items:center;gap:12px;min-height:40px;padding:0 6px 0 10px;border-radius:12px}
+.bit-practice__tempo{flex:none;width:36px}
+.bit-practice__ladder .tally-sticks--empty{display:none}
+.bit-practice__steps{margin-left:4px}
+.bit-practice__ladder li.is-current{background:#f4eff7}
+.bit-practice__tempo{height:30px;padding:0;border:0;background:none;font:inherit;font-size:15px;font-weight:500;color:#6f7078;text-align:left;font-variant-numeric:tabular-nums;cursor:pointer}
+.bit-practice__ladder li.is-current .bit-practice__tempo{color:#79588e;font-weight:600}
+.bit-practice__count{font-size:14px;font-weight:500;color:#45464f;text-align:right;font-variant-numeric:tabular-nums}
+.bit-practice__steps{display:inline-flex;gap:4px}
+.bit-practice__step{width:32px;height:32px;display:inline-grid;place-items:center;border:1px solid #d4d5da;border-radius:999px;background:#fff;color:#292a33;font:inherit;font-size:18px;line-height:1;cursor:pointer}
+.bit-practice__step:hover:not(:disabled){background:#f1f1f4}
+.bit-practice__step:disabled{opacity:.35;cursor:default}
+.bit-practice__total{margin:0;font-size:13px;color:#85868e}
+.tricky-sheet{display:grid;gap:18px}
+.tricky-sheet__bit{padding:16px 20px 18px;border-radius:18px;background:#fff;box-shadow:0 0 0 1px #e6e6ea}
+.tricky-sheet__bit>header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:8px}
+.tricky-sheet__bit>header b{font-size:15px;font-weight:600;color:#45464f}
+.tricky-sheet__bit>header a{font-size:14px;font-weight:600;color:#46633d;text-decoration:none}

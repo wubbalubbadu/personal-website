@@ -1,3 +1,5 @@
+> **Archived October 7, 2026:** sessions 1 and 2 are built; the deferred session 3 (score following) moved to docs/TODO.md.
+
 # Score reader redesign
 
 ## Sessions 1 and 2: implemented, device acceptance pending

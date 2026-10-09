@@ -18,7 +18,19 @@ import { useEffect, useState } from "react";
 const KEY = "cookie:pencil-only:v1";
 const EVENT = "cookie:pencil-only";
 
+/**
+ * Whether this device has a touch screen at all. A Mac reports 0 touch
+ * points, an iPad (even one claiming to be a Mac) reports 5, so a pencil
+ * setting means nothing where this is false.
+ */
+export function hasTouchScreen() {
+  return typeof navigator !== "undefined" && navigator.maxTouchPoints > 0;
+}
+
 export function pencilOnly() {
+  // Without a touch screen there are no fingers to reject, and a value
+  // carried over from an iPad must not switch a laptop's ink off.
+  if (!hasTouchScreen()) return false;
   try {
     return localStorage.getItem(KEY) === "true";
   } catch {
@@ -42,8 +54,9 @@ export function usePencilOnly() {
   useEffect(() => {
     // Read after hydration: the server has no localStorage, and rendering
     // one value then another would mismatch.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setOnly(pencilOnly());
-    const onChange = (event: Event) => setOnly((event as CustomEvent<boolean>).detail);
+    const onChange = (event: Event) => setOnly(hasTouchScreen() && (event as CustomEvent<boolean>).detail);
     // `storage` covers the same setting changed in another tab.
     const onStorage = (event: StorageEvent) => {
       if (event.key === KEY) setOnly(pencilOnly());
@@ -56,4 +69,13 @@ export function usePencilOnly() {
     };
   }, []);
   return only;
+}
+
+/** Read after hydration for the same reason as `usePencilOnly`. */
+export function useTouchScreen() {
+  const [touch, setTouch] = useState(false);
+  // Device capability is unavailable during server rendering.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setTouch(hasTouchScreen()), []);
+  return touch;
 }

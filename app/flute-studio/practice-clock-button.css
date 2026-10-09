@@ -43,7 +43,7 @@ html body .studio-navigation__actions :is(.dock-launcher,.account-menu__trigger)
 .session-review .recorder-actions{display:flex;justify-content:flex-end;gap:8px;margin:0}
 .session-review .recorder-actions button{height:40px;padding:0 16px;border:0;border-radius:12px;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
 .session-review .recorder-delete{background:#f1f1f4;color:#3d3f47}
-.session-review .recorder-save{background:#292a33;color:#fff}
+.session-review .recorder-save{background:#e7eee3;color:#40553d}
 /* In the floating panel (outside My Studio): white, roomy, above the page. */
 .recorder-pop .session-review{padding:2px}
 .recorder-pop .session-review header{cursor:move}

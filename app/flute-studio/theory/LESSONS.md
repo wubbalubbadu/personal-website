@@ -70,6 +70,9 @@ fixed-height scene, then Cookie. Controls changing never moves the bubble or the
 **11. Sound is part of the lesson.** Every note you can see can be heard. One wind-like tone for
 notes, a click for the beat, a clap for clapping. Visuals stay in sync with the audio. Never play
 something that muddies the idea (no multi-note playback while showing one note's length).
+Every listening instruction names something to notice ("Do these two Fs still play the black key?").
+Tapping a note sounds it directly; Listen can replay a row, but pressing it is never the activity and
+never required to finish a step.
 
 **12. Restraint.** At most two controls per step besides Listen. Brief fades only. Balanced text
 sizes. Desktop and iPad, portrait and landscape.
@@ -88,7 +91,7 @@ Three tiers, so the list never looks like a hundred lessons:
 - **Extras:** things every part uses but you can pick up as you meet them.
 - **Later:** the "go deeper" theory track, built when there's time.
 
-Each lesson: about 10 minutes, 7 to 12 steps, checks inside the steps rather than a review page at the end.
+Keep lessons short and focused; use only the steps the topic needs, with checks inside the steps rather than a review page at the end.
 Pitch and rhythm come in blocks, in the order they turn up in beginner parts: the staff, then
 lengths and measures, then sharps, flats and key signatures together (B♭ and F♯ are in almost every
 first band part), then the rest of rhythm (rests, dots and ties, 6/8 in two). Triplets come later.
@@ -106,8 +109,8 @@ answers, and ends by pointing at the next one. The "bridge" column is that openi
 | 1 | **The staff and notes** (built) | How is pitch written down? | staff, spaces, notes, treble clef, other clefs *(brief)*, note names, finding notes, practice, ledger lines, Twinkle, read new notes | The Staff, Clefs, Ledger Lines |
 | 2 | **Note lengths** (built) | You can write *which* note. How do we write *how long*? | long and short, shapes, build a note, values, beams, hold, clap | Note Duration (part) |
 | 3 | **Measures and time signatures** (built) | You can read lengths against a beat. How are beats organised, and how do you keep your place? | why measures help, 4/4 and bar lines, counting note lengths, finding and placing beats, 2/4 and 3/4, the bottom number with 4/4 and 2/2, add bar lines, count, clap and build | Measures and Time Signatures, Simple Meter |
-| 4 | **Sharps, flats and naturals** (built) | You can find any letter on the staff. What about the sounds between the letters? | half steps (adjacent keys, including E to F), the sharp, the flat (two names for one key, E♯ = F, as a brief discovery), the natural, through the measure (same note, same octave, until a natural or the bar line), read a phrase (Ode to Joy in D); six steps, no whole steps or double sharps and flats | Steps and Accidentals |
-| 5 | **Key signatures** | Writing the same sharp every time is tiring. How does music say "always"? | why they exist, reading one, it applies in every octave, signature vs accidental, naming the major key *(brief trick: last sharp up a half step; the second-last flat, and one flat is F)*, each signature also names a minor key (G major and E minor share one) *(brief: the signature alone can't tell you which; the piece's last note usually does)* | Key Signatures, Key Signature Calculation *(brief)* |
+| 4 | **Sharps, flats and naturals** (built) | You can find any letter on the staff. What about the sounds between the letters? | between the notes (find the black keys between C, D and E; half steps), sharps (C♯, D♯) and flats going down (E♭, D♭), matching the two names of each black key, E♯ = F, naturals (the sharp lasts the measure; tap the extra one away; draw ♮), through the measure, same key two names; five steps, no whole steps or double sharps and flats | Steps and Accidentals |
+| 5 | **Key signatures** | Writing the same sharp every time is tiring. How does music say "always"? | three short steps: say it once (a signature replaces the written sharps; it applies in every octave), which letters change (sharps and flats each keep a fixed order, shown, not drilled), change one back (a natural overrides it only on that line or space, until the bar line). Naming the key moved to Major and minor scales | Key Signatures |
 | 6 | **Rests** | Measures have to add up. What fills a beat where you don't play? | a gap in a full measure, the quarter rest, half and whole rests (hat and hole), the whole-measure rest, the eighth rest (sixteenth *brief*), which rest fills the gap, counting through rests, read and clap | Rest Duration |
 | 7 | **Dots and ties** | Some notes last longer than any one shape, or across a bar line. How? | why, the dot, the tie across a bar line, counting "1 and 2 and" (a dotted quarter's eighth lands on "and"), dotted-quarter-eighth | Dots and Ties |
 | 8 | **6/8 in two, and putting it together** | Lesson 3 counted 6/8 as six eighths. How does it feel as two big beats? Then: read a whole melody. | 6/8 felt in two (each beat a dotted quarter), syncopation *(brief)*; wrap-up: a real 8-bar melody, name, count, clap, play along | Compound Meter *(part)* |
@@ -116,7 +119,7 @@ answers, and ends by pointing at the next one. The "bridge" column is that openi
 
 | Lesson | Steps cover | musictheory.net topics it absorbs |
 |---|---|---|
-| **Major and minor scales** | the step pattern, a scale in any key (links to Scale Studio), minor *(brief: natural, harmonic, melodic named)*, scale degrees and the tonic *(brief)* | Major Scale, Minor Scales, Scale Degrees *(brief)* |
+| **Major and minor scales** | the step pattern, a scale in any key (links to Scale Studio), minor *(brief: natural, harmonic, melodic named)*, scale degrees and the tonic *(brief)*, naming the key from its signature *(trick: last sharp up a half step; the second-last flat, and one flat is F; it names the major key)*, each signature also belongs to a minor key (G major and E minor share one) | Major Scale, Minor Scales, Scale Degrees *(brief)*, Key Signature Calculation |
 | **Dynamics and articulation** | p to f, hairpins, slurs, staccato, accent, tenuto, breath marks; hear each | (not covered there) |
 | **Tempo and road maps** | tempo words, fermata, repeats, first and second endings, D.C., D.S., Coda | (not covered there) |
 | **Triplets and odd meters** | triplets, 9/8 and 12/8, odd meters like 5/4 and 7/8 *(brief, one step)* | Compound Meter *(rest)*, Odd Meter *(brief)* |
@@ -129,4 +132,4 @@ harmony. These can link from the brief mentions above when built.
 **What we deliberately don't copy from musictheory.net:** its order (it finishes rhythm before
 steps and accidentals because it's teaching theory; we interleave by what shows up in beginner
 parts), its drill-heavy checks (we use short, varied checks inside each lesson), and its depth on
-meter classification and key-signature calculation (brief here).
+meter classification (brief here) and key-signature calculation (an Extras topic here).

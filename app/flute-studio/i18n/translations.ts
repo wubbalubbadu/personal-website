@@ -355,7 +355,7 @@ const en = {
   daily: {
     theoryLabel: "THEORY LESSON",
     exerciseLabel: "EXERCISE OF THE DAY",
-    tryIt: "Try it ›",
+    tryIt: "Try it",
     theoryLessons: [
       { title: "The staff & notes", text: "Music is written on five lines called the staff. Notes in the spaces spell F-A-C-E; notes on the lines spell E-G-B-D-F. Flute music always reads in treble clef." },
       { title: "Accidentals", text: "A sharp (♯) raises a note a half step, a flat (♭) lowers it a half step, and a natural (♮) cancels either one. A key signature places these at the start of the staff so you don't need to mark every note." },
@@ -811,7 +811,7 @@ const zh: typeof en = {
   daily: {
     theoryLabel: "乐理课",
     exerciseLabel: "每日练习",
-    tryIt: "去试试 ›",
+    tryIt: "去试试",
     theoryLessons: [
       { title: "五线谱与音符", text: "音乐记写在五条线组成的五线谱上。间上的音符从下到上是 F-A-C-E；线上的音符是 E-G-B-D-F。长笛谱一律使用高音谱号。" },
       { title: "变音记号", text: "升号（♯）将音升高半音，降号（♭）将音降低半音，还原号（♮）取消升号或降号的效果。调号把这些符号写在五线谱开头，这样就不必逐个音符标注。" },
