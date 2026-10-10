@@ -1,113 +1,182 @@
 'use client';
-import {useState,type ReactNode,type KeyboardEvent} from 'react';
+import {useCallback,useState,type ReactNode,type KeyboardEvent} from 'react';
 import {useLanguage} from '../../i18n/LanguageContext';
-import LessonFrame from '../LessonFrame';
+import LessonFrame,{type LessonNext} from '../LessonFrame';
 import EngravedRow,{type RowNote,type RowLayout} from '../EngravedRow';
 import {useRhythmAudio} from '../rhythm/useRhythmAudio';
+import {usePhoneNotation} from '../usePhoneNotation';
 import {useCourseProgress} from '../useCourseProgress';
-import TieGesture from './TieGesture';
 import RhythmPractice from './RhythmPractice';
-import {compileRhythm,dividedBeat,DRILLS,SYNCOPATED,type RhythmPattern} from './rhythmSequence';
+import {ACROSS,ACROSS_APART,compileRhythm,DOTTED_HALF,DOTTED_QUARTER,DOTTED_EIGHTH,DRILLS,HALF_QUARTERS,HALF_TIED,QUARTER_EIGHTHS,TIED_QUARTER,type RhythmPattern} from './rhythmSequence';
 import '../theory.css';
+import '../measures/measures.css';
 import './dots-and-ties.css';
 
-const FRAME='20 64 830 300',RIGHT=820;
-const action=(e:KeyboardEvent,fn:()=>void)=>{if((e.key==='Enter'||e.key===' ')&&!e.repeat){e.preventDefault();fn()}};
-const ACROSS:RhythmPattern={id:'across',items:[{written:2,rest:true},{written:1,rest:true},{written:1,tieNext:true},{written:1},{written:2,rest:true},{written:1,rest:true}],bars:[3]};
+// One frame for every step, so the staff never moves. Notes are spaced in proportion to time, so each sits on its count.
+// Under the staff: counts, ticks only when a step is about parts of a beat, and one bracket for the note being taught.
+const FRAME='20 64 830 300',COUNT_Y=248,LINE_Y=262,BRACKET_Y=286,NOTE_Y=188,SPEED=.7;
+// Sums never break across lines ("2 + 1" then "= 3" on the next).
+const keepSums=(text:string)=>text.replace(/(\S) ([+=]) (?=\S)/g,'$1\u00a0$2\u00a0');
+const keyAct=(e:KeyboardEvent,fn:()=>void)=>{if((e.key==='Enter'||e.key===' ')&&!e.repeat){e.preventDefault();fn()}};
+type Choice={id:string;label:string;right?:boolean};
+type Bracket={from:number;to:number;label?:string;done?:boolean};
 
 export default function DotsTiesLesson(){
   const {lang}=useLanguage(),zh=lang==='zh',tr=(en:string,cn:string)=>zh?cn:en;
-  const audio=useRhythmAudio(),course=useCourseProgress();
-  const [step,setStep]=useState(0),[stage,setStage]=useState(0),[feedback,setFeedback]=useState('');
-  const [ready,setReady]=useState(false),[tone,setTone]=useState<'correct'|'wrong'|null>(null);
-  const [joined,setJoined]=useState(false),[wrong,setWrong]=useState<number|null>(null);
-  const [round,setRound]=useState(0),[attempts,setAttempts]=useState<number[]>([]),[complete,setComplete]=useState(false),[challenge,setChallenge]=useState(false);
-  const names=[tr('Add a dot','加一个附点'),tr('Between beats','两拍之间'),tr('A dotted quarter','附点四分音符'),tr('Across a bar line','跨过小节线'),tr('Across a beat','跨过正拍'),tr('Three in a beat','一拍分三份'),tr('Rhythm practice','节奏练习')];
-  function navigate(i:number){audio.stop();setStep(i);setStage(0);setFeedback('');setReady(false);setTone(null);setJoined(false);setWrong(null)}
-  function changed(text:string){setFeedback(text);setTone('correct');setReady(true)}
-  function hear(pattern:RhythmPattern){
-    if(audio.elapsed>=0){audio.stop();return}
-    const d=compileRhythm(pattern);
-    void audio.counted({values:d.notes.map(n=>n.v),timeline:d.timeline,ties:d.ties,speak:false,secondsPerQuarter:.8});
+  const audio=useRhythmAudio(),course=useCourseProgress(),phone=usePhoneNotation();
+  const RIGHT=phone?520:820;
+  const [step,setStep]=useState(0),[stage,setStage]=useState(0),[picked,setPicked]=useState<string|null>(null),[tied,setTied]=useState(true);
+  // What is playing, for lighting counts and half-beat ticks: the time it started at and the pulse length (1 or ½ beat).
+  const [playing,setPlaying]=useState<{from:number;unit:number}|null>(null),[feedback,setFeedback]=useState(''),[practiceTone,setPracticeTone]=useState<'correct'|'wrong'|null>(null);
+  const [round,setRound]=useState(0),[attempts,setAttempts]=useState<number[]>([]),[complete,setComplete]=useState(false);
+  const [spot,setSpot]=useState<HTMLElement|null>(null),[pulse,setPulse]=useState(0);
+  const tapped=useCallback(()=>setPulse(p=>p+1),[]);
+  const names=[tr('Tie two notes','用延音线连起来'),tr('The dot','附点'),tr('One and a half beats','一拍半'),tr('Across the bar line','跨过小节线'),tr('Rhythm practice','节奏练习')];
+  function reset(){audio.stop();setPlaying(null);setPicked(null);setFeedback('');setPracticeTone(null)}
+  function navigate(i:number){reset();setStep(i);setStage(0);setTied(true);setRound(0)}
+  function toStage(i:number){reset();setStage(i)}
+
+  // Play the pattern (or one note and anything tied to it) with a click on every pulse: beats, or half beats (beats louder).
+  function hear(pattern:RhythmPattern,unit:number,from?:number,top=pattern.top??4){
+    const d=compileRhythm(pattern),i=from??0;
+    let end=from===undefined?d.notes.length-1:i;if(from!==undefined)while(d.ties.includes(end))end++;
+    const timeline=d.timeline.slice(i,end+1).map(e=>({...e,at:e.at-d.timeline[i].at}));
+    setPlaying({from:d.timeline[i].at,unit});
+    void audio.counted({values:timeline.map(e=>e.length),timeline,ties:d.ties.filter(n=>n>=i&&n<end).map(n=>n-i),offset:i,speak:false,secondsPerQuarter:SPEED,beatUnit:unit,top:unit<1?Math.round(1/unit):top,onEnd:()=>setPlaying(null),onError:()=>setPlaying(null)});
   }
-  const playback=(pattern:RhythmPattern,label:string)=><div className="lesson-tools"><button onClick={()=>hear(pattern)}>{audio.elapsed>=0?tr('Stop','停止'):label}</button></div>;
-  const hit=(x:number,y:number,label:string,fn:()=>void,w=52,h=52)=><rect className="dt-hit" x={x-w/2} y={y-h/2} width={w} height={h} role="button" tabIndex={0} aria-label={label} onClick={fn} onKeyDown={e=>action(e,fn)}/>;
-  const row=(notes:RowNote[],children:(l:RowLayout)=>ReactNode,options:{ties?:number[];bars?:number[];hidden?:number[];beams?:number[][];appear?:number[]}={})=><EngravedRow notes={notes} clef={false} meter={{top:4,bottom:4}} right={RIGHT} viewBox={FRAME} interactive active={audio.active} label={names[step]} {...options}>{children}</EngravedRow>;
-  const counts=(l:RowLayout,total=4,halves=false)=><g>{Array.from({length:total*(halves?2:1)},(_,i)=>{const t=i/(halves?2:1);return <text key={i} className={`dt-count ${audio.beat===Math.floor(t)?'is-sounding':''}`} x={l.beatX(t)} y="260">{Number.isInteger(t)?t%4+1:'&'}</text>})}</g>;
-  let narration='',message=feedback,scene:ReactNode=null,tools:ReactNode=null;
+  const pulseAt=playing&&audio.beat>=0?playing.from+audio.beat*playing.unit:-1;
+
+  // `map` turns a played note's index into the drawn note's index, for rows that keep a hidden slot so nothing slides.
+  const row=(notes:RowNote[],children:(l:RowLayout)=>ReactNode,o:{bars?:number[];ties?:number[];beams?:number[][];hidden?:number[];appear?:number[];top?:number;map?:number[]}={})=>
+    <EngravedRow notes={notes} clef={false} meter={{top:o.top??4,bottom:4}} right={RIGHT} viewBox={FRAME} interactive active={audio.active<0?-1:o.map?o.map[audio.active]??-1:audio.active} label={names[step]} proportional bars={o.bars} ties={o.ties} beams={o.beams} hidden={o.hidden} appear={o.appear}>{children}</EngravedRow>;
+  // Invisible targets on the music itself: no hover box, a focus ring only for the keyboard.
+  const hit=(key:string,x:number,y:number,w:number,h:number,label:string,fn:()=>void)=><rect key={key} className="dt-hit" x={x-w/2} y={y-h/2} width={w} height={h} role="button" tabIndex={0} aria-label={label} onClick={fn} onKeyDown={e=>keyAct(e,fn)}/>;
+  const noteHits=(l:RowLayout,pattern:RhythmPattern,unit:number,map?:number[],top=4)=>{const d=compileRhythm(pattern);return d.notes.map((_,i)=>!d.ties.includes(i-1)&&hit(`n${i}`,l.xs[map?map[i]:i]-4,150,40,124,tr(`Hear note ${i+1}`,`听第 ${i+1} 个音`),()=>hear(pattern,unit,i,top)))};
+  // Counts, and one bracket for the note being taught. Ticks only when the step is about parts of a beat (`div` per beat,
+  // up to `fineTo`), so there are no extra lines otherwise.
+  function timeLine(l:RowLayout,beats:number,div:number,bracket:Bracket|null,{top=4,fineTo=beats}:{top?:number;fineTo?:number}={}){
+    const x=(t:number)=>l.beatX(t),lit=(t:number)=>pulseAt>=0&&Math.abs(pulseAt-t)<.01;
+    const ticks:number[]=[];if(div>1)for(let t=0;t<=beats+1e-9;t+=t<fineTo-1e-9?1/div:1)ticks.push(Math.round(t*100)/100);
+    const y=div>1?BRACKET_Y:BRACKET_Y-16;
+    return <g className="dt-timeline">
+      {Array.from({length:beats},(_,b)=><text key={`c${b}`} className={`dt-count${pulseAt>=0&&Math.floor(pulseAt+.001)===b?' is-lit':''}`} x={x(b)} y={COUNT_Y}>{b%top+1}</text>)}
+      {div>1&&<path className="dt-line" d={`M${x(0)} ${LINE_Y} H${x(beats)}`}/>}
+      {ticks.map(t=>{const beat=Number.isInteger(t);return <path key={`t${t}`} className={`dt-tick${beat?' is-beat':''}${lit(t)?' is-lit':''}`} d={`M${x(t)} ${LINE_Y-(beat?7:4)} V${LINE_Y+(beat?7:4)}`}/>})}
+      {bracket&&(()=>{const a=x(bracket.from)+3,e=x(bracket.to)-3;return <g key={`${bracket.from}-${bracket.to}-${bracket.label}`} className={`dt-bracket${bracket.done?' is-done':''}`}><path d={`M${a} ${y-8} V${y} H${e} V${y-8}`}/>{bracket.label&&<text x={(a+e)/2} y={y+24}>{bracket.label}</text>}</g>})()}
+    </g>;
+  }
+  const choices=(list:Choice[],onRight:()=>void,miss:(id:string)=>string,right:string,wide=false)=><div className={`measures-choices${wide?' dt-wide-choices':''}`} role="group" aria-label={tr('Choose an answer','选一个答案')}>
+    {list.map(c=>{const done=list.some(x=>x.right&&x.id===picked);return <button key={c.id} disabled={done} className={picked===c.id?(c.right?'is-correct':'is-wrong'):''} onClick={()=>{setPicked(c.id);if(c.right){setFeedback(right);onRight()}else setFeedback(miss(c.id))}}>{c.label}</button>})}
+  </div>;
+  const answered=(list:Choice[])=>list.some(c=>c.right&&c.id===picked);
+  const tone=(list:Choice[]):'correct'|'wrong'|null=>picked===null?null:answered(list)?'correct':'wrong';
+  const beats=(n:string)=>tr(`${n} beats`,`${n} 拍`);
+
+  let narration='',message:ReactNode='',scene:ReactNode=null,extra:ReactNode=null,bubbleTone:'correct'|'wrong'|null=null,progress:{done:number;total:number}|undefined;
+  let next:LessonNext={label:tr(`Next: ${names[step+1]}`,`下一步：${names[step+1]}`),ready:false,onClick:()=>navigate(step+1)};
+  const ask=(label:string)=>{next={label,ready:true,onClick:()=>toStage(2)}};
 
   if(step===0){
-    narration=stage?tr('A dot adds half of the note’s original length. Half of two beats is one more beat.','附点增加原来时值的一半。两拍的一半是一拍，所以一共三拍。'):tr('This half note lasts two beats. We need one more beat of sound before the rest.','这个二分音符有两拍，休止前还需要多响一拍。');
-    const add=()=>{setStage(1);changed(tr('Two plus one makes three. The dot lets this note last three beats.','二加一等于三。这个附点让音符持续三拍。'))};
-    const notes:RowNote[]=[{v:3,written:stage?3:2},{v:1,rest:true}];
-    scene=row(notes,l=><>
-      {counts(l)}
-      {!stage&&<><circle className="dt-dot-target" cx={l.xs[0]+24} cy="188" r="6"/>{hit(l.xs[0]+24,188,tr('Add a dot','加上附点'),add)}</>}
-      {hit(l.xs[0]-(stage?0:15),188,tr('Hear the note','听这个音'),()=>void audio.play([stage?3:2],[67],0,false),stage?52:20)}
-      <path className="dt-span" d={`M${l.beatX(0)} 291 v8 H${l.beatX(2)} v-8`}/>
-      <text className="dt-label" x={(l.beatX(0)+l.beatX(2))/2} y="328">{tr('2 beats','2 拍')}</text>
-      <g className={stage?'dt-extension is-added':'dt-extension'}><path d={`M${l.beatX(2)} 291 v8 H${l.beatX(3)} v-8`}/><text className="dt-label" x={(l.beatX(2)+l.beatX(3))/2} y="328">{stage?tr('+ 1 beat','+ 1 拍'):tr('1 beat to fill','还差 1 拍')}</text></g>
-    </>);
-    message ||=tr('Tap the faint dot beside the note to make it longer.','点音符旁边的浅色圆点，把它延长。');
-    tools=playback({id:'dot-demo',items:stage?[{written:3},{written:1,rest:true}]:[{written:2},{written:1,rest:true},{written:1,rest:true}]},tr('Hear the held note','听持续的音'));
-  }else if(step===1){
-    narration=tr('Half of a quarter note is half a beat. Count “and” halfway between the numbers.','四分音符的一半是半拍。在数字中间数“和”。');
-    const reveal=()=>{setStage(1);changed(tr('1 and 2 and 3 and 4 and. The numbers keep the same steady beat.','1 和 2 和 3 和 4 和。数字仍然是稳定的拍子。'))};
-    scene=row(Array.from({length:8},()=>({v:.5,written:stage?.5:1})),l=><>
-      {counts(l,4,!!stage)}
-      <path className="dt-span" d={`M${l.beatX(0)} 294 H${l.beatX(4)}`}/>
-      {[0,.5,1,1.5,2,2.5,3,3.5].map(t=><g key={t}><circle className={t%1?'dt-midpoint':'dt-guide'} cx={l.beatX(t)} cy="294" r={t%1?6:4}/>{hit(l.beatX(t),294,tr(t%1?'Reveal the halfway count':'Hear a beat',t%1?'显示半拍':'听一拍'),()=>{if(!stage&&t%1)reveal();else if(stage)void audio.clap()},48,66)}</g>)}
-    </>,{hidden:stage?[]:[1,3,5,7],beams:stage?[[0,1],[2,3],[4,5],[6,7]]:[]});
-    message ||=tr('Tap halfway between 1 and 2 to divide each beat into two.','点 1 和 2 中间的位置，把每拍分成两份。');
-    tools=playback({id:'halves',items:Array.from({length:stage?8:4},()=>({written:stage?.5:1})),beams:[]},stage?tr('Hear two notes per beat','听每拍两个音'):tr('Hear the steady beat','听稳定的拍子'));
-  }else if(step===2){
-    narration=tr('A dotted quarter lasts one and a half beats: 1 + ½.','附点四分音符持续一拍半：1 + ½。');
-    const choose=(t:number)=>{if(t===1.5){setStage(1);setWrong(null);changed(tr('The eighth note starts on the “and” after 2. Together they fill two beats.','八分音符从第 2 拍后的“和”开始，两者合起来是两拍。'))}else{setWrong(t);setTone('wrong');setFeedback(t<1.5?tr('That starts before the dotted note finishes. Try the “and” after 2.','这里附点音符还没结束。试试第 2 拍后的“和”。'):tr('That leaves a gap. The dotted note finishes on the “and” after 2.','这里留下了空隙，附点音符在第 2 拍后的“和”结束。'))}};
-    scene=row([{v:1.5},{v:.5},{v:2,rest:true}],l=><>
-      {counts(l,4,true)}
-      <path className="dt-span" d={`M${l.beatX(0)} 285 v10 H${l.beatX(1.5)} v-10`}/>
-      <text className="dt-label" x={(l.beatX(0)+l.beatX(1.5))/2} y="326">{tr('1½ beats','1½ 拍')}</text>
-      {[0,.5,1,1.5,2,2.5,3,3.5].map(t=><g key={t}><circle className={wrong===t?'dt-wrong':'dt-midpoint'} cx={l.beatX(t)} cy="350" r="5"/>{hit(l.beatX(t),340,tr(`Place the eighth at ${Number.isInteger(t)?t+1:`the and after ${Math.floor(t)+1}`}`,`把八分音符放在${Math.floor(t)+1}${t%1?'拍后半拍':'拍'}`),()=>choose(t),48,62)}</g>)}
-      {stage===1&&<path className="dt-extension is-added" d={`M${l.beatX(1.5)} 285 v10 H${l.beatX(2)} v-10`}/>}
-    </>,{hidden:stage?[]:[1],appear:stage?[1]:[]});
-    message ||=tr('Where should the missing eighth note start? Tap its place below the counts.','缺少的八分音符应该从哪里开始？点数拍下方的位置。');
-    tools=playback({id:'quarter-demo',items:[{written:1.5},{written:.5,rest:!stage},{written:2,rest:true}]},tr('Hear where the note ends','听音符在哪里结束'));
-  }else if(step===3){
-    narration=stage===0?tr('A note starts on beat 4 and lasts two beats. It reaches past the bar line.','一个音从第 4 拍开始，持续两拍，会跨过小节线。'):joined?tr('A tie joins notes of the same pitch into one sound. Add their lengths.','延音线把同音高的音符连成一个声音，时值相加。'):tr('Write one quarter on each side of the bar line. A tie keeps the sound going.','小节线两边各写一个四分音符，用延音线让声音继续。');
-    const d=compileRhythm(ACROSS),notes=d.notes.map((n,i)=>i===2&&stage===0?{...n,written:2}:n);
-    const join=(value:boolean)=>{setJoined(value);setReady(value);setTone(value?'correct':null);setFeedback(value?tr('Keep the air going. Don’t tongue the second note. Tap the tie to remove it and compare.','气息保持连贯，第二个音不用再吐音。点延音线可移除并比较。'):'')};
-    scene=row(notes,l=><>
-      {counts(l,8)}
-      {!stage&&<><path className="dt-overflow" d={`M${l.xs[2]} 296 H${l.beatX(5)}`}/><path className="dt-bar-cue" d={`M${l.barXs[0]} 104 V211`}/>{hit(l.barXs[0],160,tr('Split the note at the bar line','在小节线处分开音符'),()=>{setStage(1);setFeedback('')},56,170)}<text className="dt-label" x={(l.xs[2]+l.beatX(5))/2} y="331">{tr('2 beats of sound','持续 2 拍')}</text></>}
-      {stage>0&&<TieGesture from={l.xs[2]} to={l.xs[3]} y={188} joined={joined} onJoin={join} zh={zh}/>}
-    </>,{bars:[3],hidden:stage?[]:[3],appear:stage?[3]:[],ties:joined?[2]:[]});
-    message ||=stage?tr('Draw from the first notehead to the second, or tap both in order.','从第一个音符头画到第二个，或依次点两个端点。'):tr('Tap the red bar line to divide the note where the measure ends.','点红色小节线，在小节结束的位置拆开音符。');
-    tools=stage?playback({...ACROSS,items:ACROSS.items.map((n,i)=>({...n,tieNext:i===2&&(joined||stage===0)}))},joined?tr('Hear one continuous sound','听一个连贯的音'):tr('Hear the two beats','听这两拍')):null;
-  }else if(step===4){
-    narration=joined?tr('This note starts between beats and holds across beat 2. That shift in emphasis is one kind of syncopation.','这个音从两拍之间开始，延续到第 2 拍。这种重音的错位是切分节奏的一种。'):tr('A tie can cross a beat inside a measure, too. The pulse underneath stays steady.','延音线也可以在小节内跨过一拍，下面的拍子仍然稳定。');
-    const d=compileRhythm(SYNCOPATED);
+    const join=stage===1,pattern=join?HALF_TIED:HALF_QUARTERS,d=compileRhythm(pattern);
+    narration=join?tr('A tie joins two notes of the same pitch into one sound. Their lengths add up: 2 + 1 = 3 beats.','延音线把两个同样音高的音连成一个声音，时值相加：2 + 1 = 3 拍。')
+      :tr('A half note lasts 2 beats. What if the first sound should last 3 beats?','二分音符有 2 拍。如果第一个声音要响 3 拍呢？');
+    message=join?tr('One sound, 3 beats. Next, a shorter way to write it.','一个声音，3 拍。接下来看一种更简单的写法。'):tr('Tap between the half note and the next quarter note to tie them.','点二分音符和后面四分音符的中间，用延音线把它们连起来。');
+    bubbleTone=join?'correct':null;
     scene=row(d.notes,l=><>
-      {counts(l,4,true)}
-      <TieGesture from={l.xs[1]} to={l.xs[2]} y={188} joined={joined} onJoin={value=>{setJoined(value);setReady(value);setTone(value?'correct':null);setFeedback(value?tr('Start on the “and” after 1. Hold through 2 without starting again.','在第 1 拍后的“和”开始，到第 2 拍继续保持，不重新起音。'):'')}} zh={zh}/>
-      {joined&&<path className="dt-span" d={`M${l.beatX(.5)} 295 v8 H${l.beatX(1.5)} v-8`}/>}
-    </>,{ties:joined?[1]:[],beams:SYNCOPATED.beams});
-    message ||=tr('Connect the eighth notes on the “and” after 1 and on beat 2.','把第 1 拍后的“和”与第 2 拍的八分音符连起来。');
-    tools=playback({...SYNCOPATED,items:SYNCOPATED.items.map(n=>({...n,tieNext:n.tieNext&&joined}))},joined?tr('Hear the held offbeat','听跨过正拍的音'):tr('Hear separate starts','听分开的起音'));
-  }else if(step===5){
-    narration=stage?tr('A triplet fits three equal notes into the time of two. These three eighths share one beat.','三连音把三个均匀的音放进原来两个音的时间里。这三个八分音符共用一拍。'):tr('Two eighth notes share one beat. What if we divide that same beat into three equal parts?','两个八分音符共用一拍。如果把这一拍平均分成三份呢？');
-    if(stage){scene=<RhythmPractice key="triplet-explore" pattern={dividedBeat(3)} zh={zh} onAttempt={()=>setReady(true)} onFeedback={setFeedback}/>;message ||=tr('Tap “Count me in”, then try three evenly spaced taps on beat 1 and one on 2, 3 and 4.','点“数拍开始”，第 1 拍均匀点三下，第 2、3、4 拍各点一下。');}
-    else{
-      const d=compileRhythm(dividedBeat(3));
-      scene=row(d.notes,l=><>{counts(l)}<path className="dt-span" d={`M${l.beatX(0)} 291 v8 H${l.beatX(1)} v-8`}/><text className="dt-label" x={(l.beatX(0)+l.beatX(1))/2} y="331">{tr('1 beat · divide into 3','1 拍 · 分成 3 份')}</text>{hit((l.beatX(0)+l.beatX(1))/2,303,tr('Divide the first beat into three','把第一拍分成三份'),()=>setStage(1),l.beatX(1)-l.beatX(0)+30,85)}</>,{beams:[[0,2]],hidden:[1]});
-      message=tr('Tap the span under the first beat. Its length stays the same.','点第一拍下方的时值线，它的长度保持不变。');
+      {timeLine(l,4,1,join?{from:0,to:3,label:tr('2 + 1 = 3 beats','2 + 1 = 3 拍')}:{from:0,to:2,label:beats('2')})}
+      {join?noteHits(l,HALF_TIED,1):hit('tie',(l.xs[0]+l.xs[1])/2,NOTE_Y+10,l.xs[1]-l.xs[0]-30,70,tr('Tie the half note to the quarter note','把二分音符和四分音符连起来'),()=>{setStage(1);hear(HALF_TIED,1)})}
+    </>,{ties:d.ties});
+    next.ready=join;
+  }else if(step===1){
+    if(stage<2){
+      // The dotted half keeps the tied quarter's slot (hidden), so the notes around it do not move: only the tie and dot change.
+      const dot=stage===1&&!tied,map=[0,2];
+      narration=dot?tr('A dot adds half of the note’s value. Half of 2 is 1, so a dotted half lasts 2 + 1 = 3 beats: the same sound as the tie.','附点加上音符一半的时值。2 的一半是 1，所以附点二分音符有 2 + 1 = 3 拍，和延音线的声音一样。')
+        :tr('A tie like this is a little awkward to read, so it is usually written with a dot instead.','这样的延音线读起来有点麻烦，所以通常改用附点来写。');
+      message=stage===0?tr('Tap the half note to add a dot.','点一下二分音符，加上附点。'):dot?tr('Same sound, easier to read. Tap the dot to see the tie again.','声音一样，读起来更简单。点附点可以再看延音线的写法。'):tr('Tap the half note to write it with a dot again.','点二分音符，再换成附点的写法。');
+      bubbleTone=stage===1?'correct':null;
+      scene=row([{v:2,written:dot?3:2},{v:1},{v:1}],l=><>
+        {timeLine(l,4,1,{from:0,to:3,label:dot?beats('3'):tr('2 + 1 = 3 beats','2 + 1 = 3 拍')})}
+        {stage>0&&(dot?noteHits(l,DOTTED_HALF,1,map):noteHits(l,HALF_TIED,1))}
+        {dot?hit('dot',l.xs[0]+26,NOTE_Y,44,56,tr('Show the tie again','再看延音线的写法'),()=>{setTied(true);hear(HALF_TIED,1)})
+          :hit('add',l.xs[0]+6,150,64,124,tr('Add a dot to the half note','给二分音符加附点'),()=>{setStage(1);setTied(false);hear(DOTTED_HALF,1)})}
+      </>,{ties:dot?[]:[0],hidden:dot?[1]:[],map:dot?map:undefined});
+      if(stage>0)ask(tr('Try a question','试一题'));
+    }else{
+      // A new case: 3/4, where a dotted half is a whole measure.
+      const list:Choice[]=[{id:'half',label:tr('Half note','二分音符')},{id:'dotted',label:tr('Dotted half','附点二分音符'),right:true},{id:'whole',label:tr('Whole note','全音符')}],done=answered(list);
+      const fill:RhythmPattern={id:'dotted-half-3',top:3,items:[{written:3}]};
+      narration=tr('In 3/4 there are three beats in a measure.','3/4 拍每小节有三拍。');
+      message=feedback||tr('Which single note fills a whole measure of 3/4?','哪一个音符能单独填满一小节 3/4 拍？');
+      bubbleTone=tone(list);
+      scene=row([{v:3}],l=><>
+        {timeLine(l,3,1,{from:0,to:3,label:done?beats('3'):'?',done},{top:3})}
+        {done&&noteHits(l,fill,1,undefined,3)}
+      </>,{top:3,hidden:done?[]:[0],appear:done?[0]:[]});
+      extra=choices(list,()=>hear(fill,1,undefined,3),id=>id==='half'?tr('A half note is 2 beats, and this measure has 3.','二分音符只有 2 拍，这个小节有 3 拍。'):tr('A whole note is 4 beats, one too many for 3/4.','全音符有 4 拍，对 3/4 拍来说多了一拍。'),tr('Right: a dotted half, 2 + 1 = 3 beats. You will meet it again in 3/4 music.','对：附点二分音符，2 + 1 = 3 拍。以后在 3/4 拍的乐曲里还会见到它。'),true);
+      next.ready=done;
     }
+  }else if(step===2){
+    if(stage<3){
+      // The dotted quarter keeps the tied eighth's slot (hidden), so the eighth and half note after it do not move.
+      const dot=stage===2&&!tied,map=[0,2,3],pattern=stage===0?QUARTER_EIGHTHS:TIED_QUARTER;
+      narration=stage===0?tr('The same works with shorter notes. A quarter note is 1 beat and an eighth note is ½ beat.','短一些的音符也一样。四分音符是 1 拍，八分音符是 ½ 拍。')
+        :dot?tr('Half of 1 beat is ½, so a dotted quarter lasts 1 + ½ = 1½ beats: three half beats.','1 拍的一半是 ½，所以附点四分音符有 1 + ½ = 1½ 拍，也就是三个半拍。')
+        :tr('Tied, they make one sound of 1 + ½ = 1½ beats.','连起来以后，是一个 1 + ½ = 1½ 拍的声音。');
+      message=stage===0?tr('Tap between the first two notes to tie them.','点前两个音的中间，用延音线把它们连起来。'):stage===1?tr('Now tap the quarter note to write it with a dot.','现在点四分音符，换成附点的写法。'):dot?tr('Listen to the clicks on every half beat. Tap the dot to see the tie again.','听每个半拍的点击声。点附点可以再看延音线的写法。'):tr('Tap the quarter note to write it with a dot again.','点四分音符，再换成附点的写法。');
+      bubbleTone=stage>0?'correct':null;
+      const bracket:Bracket=stage===0?{from:0,to:1,label:tr('1 beat','1 拍')}:{from:0,to:1.5,label:dot?tr('1½ = 3 halves','1½ = 3 个半拍'):tr('1 + ½ = 1½ beats','1 + ½ = 1½ 拍')};
+      scene=row([{v:1,written:dot?1.5:1},{v:.5},{v:.5},{v:2}],l=><>
+        {timeLine(l,4,2,bracket)}
+        {stage>0&&(dot?noteHits(l,DOTTED_QUARTER,.5,map):noteHits(l,pattern,.5))}
+        {stage===0?hit('tie',(l.xs[0]+l.xs[1])/2,NOTE_Y+10,l.xs[1]-l.xs[0]-20,70,tr('Tie the first two notes','把前两个音连起来'),()=>{setStage(1);hear(TIED_QUARTER,.5)})
+          :dot?hit('dot',l.xs[0]+26,NOTE_Y,44,56,tr('Show the tie again','再看延音线的写法'),()=>{setTied(true);hear(TIED_QUARTER,.5)})
+          :hit('add',l.xs[0]+6,150,64,124,tr('Add a dot to the quarter note','给四分音符加附点'),()=>{setStage(2);setTied(false);hear(DOTTED_QUARTER,.5)})}
+      </>,{ties:stage>0&&!dot?[0]:[],beams:dot?[]:[[1,2]],hidden:dot?[1]:[],map:dot?map:undefined});
+      if(stage===2)next={label:tr('Try a question','试一题'),ready:true,onClick:()=>toStage(3)};
+    }else{
+      // A new case: a dot on an eighth note, in the dotted eighth + sixteenth pair that fills one beat.
+      const list:Choice[]=[{id:'2',label:'2'},{id:'3',label:'3',right:true},{id:'4',label:'4'}],done=answered(list);
+      narration=done?tr('A dotted eighth and a sixteenth: 3 + 1 = 4 sixteenths, one beat. This pair is very common.','附点八分音符加一个十六分音符：3 + 1 = 4 个十六分音符，正好一拍。这个组合很常见。')
+        :tr('A sixteenth note is a quarter of a beat. The dot works the same way on an eighth note.','十六分音符是四分之一拍。附点加在八分音符上也是同样的道理。');
+      message=feedback||tr('A dotted eighth lasts as long as how many sixteenth notes?','附点八分音符和几个十六分音符一样长？');
+      bubbleTone=tone(list);
+      scene=row(compileRhythm(DOTTED_EIGHTH).notes,l=><>
+        {timeLine(l,4,4,{from:0,to:.75,label:done?tr('3 sixteenths','3 个十六分音符'):'?',done},{fineTo:1})}
+        {done&&noteHits(l,DOTTED_EIGHTH,.25)}
+      </>,{beams:DOTTED_EIGHTH.beams});
+      extra=choices(list,()=>hear(DOTTED_EIGHTH,.25),()=>tr('An eighth is 2 sixteenths. The dot adds half of that: 1 more.','八分音符等于 2 个十六分音符，附点再加一半，也就是再加 1 个。'),tr('Right: 2 + 1 = 3 sixteenths. Listen to the four clicks in beat 1.','对：2 + 1 = 3 个十六分音符。听第 1 拍里的四下点击。'));
+      next.ready=done;
+    }
+  }else if(step===3){
+    const join=stage===1,pattern=join?ACROSS:ACROSS_APART,d=compileRhythm(pattern);
+    narration=join?tr('One 2-beat sound now, carried over the bar line. A dot can’t do this, because each measure must add up to its own 4 beats.','现在是一个 2 拍的声音，跨过了小节线。附点做不到，因为每个小节都要自己凑满 4 拍。')
+      :tr('Ties can also cross a bar line. Here beat 4 and the next beat 1 are two separate notes.','延音线还能跨过小节线。这里第 4 拍和下一小节的第 1 拍是两个分开的音。');
+    message=join?tr('On a wind instrument, keep the air going and don’t tongue the tied note. Tap a note to hear it.','吹管乐器时，气息保持不断，连起来的那个音不要再吐音。点音符可以听。'):tr('Tap between the two notes to tie them across the bar line.','点两个音中间，用延音线把它们跨小节连起来。');
+    bubbleTone=join?'correct':null;
+    scene=row(d.notes,l=><>
+      {timeLine(l,8,1,join?{from:3,to:5,label:tr('1 + 1 = 2 beats','1 + 1 = 2 拍')}:null)}
+      {join?noteHits(l,ACROSS,1):hit('tie',(l.xs[2]+l.xs[3])/2,NOTE_Y+10,l.xs[3]-l.xs[2]-20,70,tr('Tie the notes across the bar line','用延音线把两个音跨小节连起来'),()=>{setStage(1);hear(ACROSS,1)})}
+    </>,{bars:pattern.bars,ties:d.ties});
+    next.ready=join;
   }else{
-    narration=challenge?tr('Five sixteenth notes can share one quarter-note beat: five in the time of four.','五个十六分音符可以共用一拍：五个音放进原来四个音的时间里。'):complete?tr('Dots extend notes. Ties join their lengths. Tuplets divide a span into equal parts.','附点延长音符，延音线连接时值，连音把一段时间平均分开。'):tr('Tap each new note’s start. Keep counting through held notes; don’t tap a tied continuation.','每次新音开始时点一下。长音时继续数拍，延音线后的音不用再点。');
-    scene=<RhythmPractice key={challenge?'five':`drill-${round}`} pattern={challenge?dividedBeat(5):DRILLS[round]} zh={zh} onAttempt={()=>{if(!attempts.includes(round))setAttempts(a=>[...a,round]);setReady(true)}} onFeedback={setFeedback}/>;
-    message ||=challenge?tr('Hear the rhythm first: five equal notes inside beat 1. Then try it at your own pace.','先听节奏：第 1 拍内有五个均匀的音，再慢慢试着点。'):complete?tr('Lesson complete. You can revisit any step or try five notes in a beat.','本课完成。可以回看任意步骤，也可以试试一拍五个音。'):tr(`Pattern ${round+1} of 4. Tap “Count me in”, then tap Cookie or press Space. We check starts, not how long you hold.`,`第 ${round+1} 个节奏，共 4 个。点“数拍开始”，再点 Cookie 或按空格。这里只练起音，不检查按住多久。`);
+    const last=DRILLS.length-1;
+    narration=complete?tr('Dots and ties both make a sound longer than one note shape. Only a tie can cross a bar line.','附点和延音线都能让声音比一个音符更长。只有延音线能跨过小节线。')
+      :round===1?tr('Now 3/4, three beats in a measure, and short then long: the eighth note comes first.','现在是 3/4 拍，每小节三拍，而且是先短后长：八分音符在前。')
+      :round===2?tr('Short-long again, and a tie. A tied note is one sound, so it gets one tap.','又是先短后长，还有一条延音线。连起来的音是一个声音，只点一下。')
+      :tr('Tap once when each new note starts. Keep counting while a note holds.','每个新音开始时点一下。音在延续时，心里继续数拍。');
+    message=feedback||(complete?tr('Lesson complete. You can go back to any step from the dots at the top.','这一课完成了。可以用上面的圆点回到任何一步。'):(DRILLS[round].top??4)===4?tr('4/4. Tap Count me in: four clicks, then tap me on each new note.','4/4 拍。点“数拍开始”：先听四下，然后每个新音点一下我。'):tr(`${DRILLS[round].top}/4, so the count-in is ${DRILLS[round].top} clicks. Tap Count me in, then tap me on each new note.`,`${DRILLS[round].top}/4 拍，所以准备时只有 ${DRILLS[round].top} 下。点“数拍开始”，然后每个新音点一下我。`));
+    bubbleTone=feedback?practiceTone:null;
+    scene=<RhythmPractice key={round} pattern={DRILLS[round]} zh={zh} right={RIGHT} frame={FRAME} onSpot={setSpot} onTapped={tapped} onAttempt={()=>setAttempts(a=>a.includes(round)?a:[...a,round])} onFeedback={(text,t)=>{setFeedback(text);setPracticeTone(t??null)}}/>;
+    progress={done:attempts.length,total:DRILLS.length};
+    const tried=attempts.includes(round),missing=DRILLS.map((_,r)=>r).find(r=>!attempts.includes(r));
+    const go=(r:number,text='')=>{setRound(r);setFeedback(text);setPracticeTone(null)};
+    if(complete)next={label:tr('Theory lessons','乐理课'),ready:true,href:'/flute-studio/theory'};
+    else if(round<last)next={label:tr('Next rhythm','下一个节奏'),ready:tried,onClick:()=>go(round+1),onSkip:()=>go(round+1)};
+    else next={label:tr('Finish lesson','完成本课'),ready:tried&&missing===undefined,onClick:()=>{setComplete(true);course.finish('dots');setFeedback('');setPracticeTone(null)},onSkip:()=>{if(missing!==undefined)go(missing,tr('Try each rhythm once to finish. Your timing does not need to be perfect.','每个节奏都试一次就能完成，不要求完全准确。'))}};
   }
-  const next=step<6?{label:tr(`Next: ${names[step+1]}`,`下一步：${names[step+1]}`),ready,onClick:()=>navigate(step+1)}:complete?{label:tr('Theory lessons','乐理课'),ready:true,href:'/flute-studio/theory'}:{label:round<3?tr('Next rhythm','下一个节奏'):tr('Finish lesson','完成本课'),ready:attempts.includes(round),onClick:()=>{if(round<3){setRound(r=>r+1);setReady(false);setFeedback('')}else if(attempts.length===4){setComplete(true);course.finish('dots');setFeedback('')}else{setRound([0,1,2,3].find(r=>!attempts.includes(r))??0);setFeedback('')}},onSkip:()=>{if(round<3){setRound(r=>r+1);setFeedback('')}else{setFeedback(tr('Try each of the four rhythms once to finish. Your timing does not need to be perfect.','四个节奏各试一次即可完成，不要求拍子完全准确。'));setRound([0,1,2,3].find(r=>!attempts.includes(r))??0)}}};
-  return <LessonFrame title={tr('Dots, ties and rhythm practice','附点、延音线与节奏练习')} className="dt-lesson" zh={zh} steps={names} current={step} onJump={navigate} heading={names[step]} narration={narration} fadeNarration message={message} tone={tone} next={next} progress={step===6?{done:attempts.length,total:4}:undefined} status={audio.error?tr('Audio could not start. Tap the sound control to retry.','声音未能启动，请再点播放。'):undefined} extra={step===6&&complete?<button className="lesson-secondary" onClick={()=>{setChallenge(c=>!c);setFeedback('')}}>{challenge?tr('Back to practice','回到练习'):tr('Try quintuplets','试试五连音')}</button>:null}>
-    <div key={step} className="dt-scene-content">{scene}{tools&&<div className="dt-scene-controls">{tools}</div>}</div>
+
+  return <LessonFrame title={tr('Dots and ties','附点与延音线')} className="dt-lesson" zh={zh} steps={names} current={step} onJump={navigate} heading={names[step]} narration={keepSums(narration)} fadeNarration message={message} tone={bubbleTone} next={next} extra={extra} progress={progress} cookieAway={step===4&&!complete?{slot:spot,pulse}:null} status={audio.error?tr('Sound could not start. Tap a note to try again.','声音没能启动，点一个音符再试。'):undefined}>
+    <div key={`${step}-${stage<2?0:2}`} className="dt-scene-content">{scene}</div>
   </LessonFrame>;
 }

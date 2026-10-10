@@ -567,3 +567,18 @@ export function alignDynamicLines(root:ParentNode){
     settle();
   });
 }
+
+/**
+ * Two ♩ = n marks drawn on the same spot (a bar whose file carries two tempo marks, as in Maggio's Elysian
+ * Fields) print as one unreadable "6З". Keep the first, which is the one playback follows (readScoreFacts takes a
+ * bar's first sounding tempo), and hide the ones stacked on it. Run after tuckMetronomeMarks, on final positions.
+ */
+export function hideStackedMetronomeMarks(root:ParentNode){
+  const kept:DOMRect[]=[];
+  root.querySelectorAll<SVGGElement>(".vf-stavetempo").forEach(mark=>{
+    mark.style.removeProperty("visibility");
+    const box=mark.getBoundingClientRect();if(!box.width)return;
+    const stacked=kept.some(other=>Math.abs(other.x-box.x)<box.height*.6&&Math.abs(other.y-box.y)<box.height*.6);
+    if(stacked)mark.style.visibility="hidden";else kept.push(box);
+  });
+}

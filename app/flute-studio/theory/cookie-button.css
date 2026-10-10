@@ -15,3 +15,6 @@
 .cookie-button.is-pressed .cookie-button__eye,.cookie-button:active:not(:disabled) .cookie-button__eye{height:2px;top:37px}
 .cookie-button.is-pressed .cookie-button__smile,.cookie-button:active:not(:disabled) .cookie-button__smile{height:9px;background:#6c4429;border-color:#6c4429}
 @media(prefers-reduced-motion:reduce){.cookie-button.cookie-button.cookie-button{transition:none}}
+/* "Hmm": a flat little mouth and eyes glancing aside, for a try that was not quite right (lesson Cookie at the tap spot). */
+.cookie-button.is-unsure .cookie-button__smile{top:48px;left:32px;width:11px;height:0;border-bottom-width:2px;border-radius:2px}
+.cookie-button.is-unsure .cookie-button__eye{transform:translateX(-2px)}

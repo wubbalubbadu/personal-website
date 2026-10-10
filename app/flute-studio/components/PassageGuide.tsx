@@ -10,12 +10,13 @@ import {runsFromXml,tupletsXml,groupedXml,randomGroupSizes,fermataPitchesXml,dot
 import {noDisplay,type PracticeDisplay} from './practiceDisplay';
 import {useLanguage} from '../i18n/LanguageContext';
 import type {PassageEvent} from './passageAnalysis';
+import {RhythmTap,type PassageRhythm} from './RhythmTap';
 import './passage-guide.css';
 
-type Mode='technique'|'pitch';
+type Mode='technique'|'pitch'|'rhythm';
 const MODE_KEY='cookie:closeup-mode';
 
-export function PassageGuide({xml,events,from,to,quarterBpm,numbers,onClose,sempreStaccato=false,initialDisplay=noDisplay,title}:{xml:string;events:PassageEvent[];from:number;to:number;quarterBpm:number;numbers?:{from:string;to:string};onClose:()=>void;sempreStaccato?:boolean;/** The reader's View settings when the close-up opened; the toggles here start from them. */initialDisplay?:PracticeDisplay;/** The piece's name, for the pitch history. */title:string}){
+export function PassageGuide({xml,events,from,to,quarterBpm,numbers,onClose,sempreStaccato=false,initialDisplay=noDisplay,title,rhythm}:{xml:string;events:PassageEvent[];from:number;to:number;quarterBpm:number;numbers?:{from:string;to:string};onClose:()=>void;sempreStaccato?:boolean;/** The reader's View settings when the close-up opened; the toggles here start from them. */initialDisplay?:PracticeDisplay;/** The piece's name, for the pitch history. */title:string;/** Note starts and beat clicks for the Rhythm mode (tap the passage yourself). */rhythm?:PassageRhythm}){
   // Scale Studio's Back returns here (the piece), not to Exercises.
   const pathname=usePathname();
   const {t,lang}=useLanguage(),s=t.scoreViewer,zh=lang==="zh";
@@ -23,7 +24,7 @@ export function PassageGuide({xml,events,from,to,quarterBpm,numbers,onClose,semp
   const label=(text:string)=>zh?(labels[text]??text.replace(/^(\d+) as /,"$1 分为 ")):text;
   const [active,setActive]=useState<string|null>(null),[display,setDisplay]=useState(initialDisplay),repeat=false;
   // Technique is the default; the last choice is remembered so reopening costs no click.
-  const [mode,setMode]=useState<Mode>(()=>{try{return localStorage.getItem(MODE_KEY)==='pitch'?'pitch':'technique'}catch{return 'technique'}});
+  const [mode,setMode]=useState<Mode>(()=>{try{const saved=localStorage.getItem(MODE_KEY);return saved==='pitch'||saved==='rhythm'?saved:'technique'}catch{return 'technique'}});
   const source=useMemo(()=>{try{return {xml:extractMeasures(xml,from,to),error:''}}catch(e){return {xml:'',error:zh?'无法打开这些小节。':e instanceof Error?e.message:'Could not open these measures.'}}},[xml,from,to,zh]);
   const pitch=usePitchPractice({xml:source.xml,title,on:mode==='pitch',silence:active!==null,onStart:()=>setActive(null)});
   const choose=(next:Mode)=>{setActive(null);setMode(next);try{localStorage.setItem(MODE_KEY,next)}catch{/* The choice lasts for this visit. */}};
@@ -59,14 +60,15 @@ export function PassageGuide({xml,events,from,to,quarterBpm,numbers,onClose,semp
   const original=(marks?:Parameters<typeof PracticeNotation>[0]['marks'],onNote?:(event:number)=>void)=><div className="passage-guide__row passage-guide__row--original"><h3>{label("Original")}</h3>{player('original',source.xml,'original',sempreStaccato,false,display,marks?{marks,onNote:onNote!}:undefined)}</div>;
   return <section className="passage-guide" aria-label={zh?"乐谱近看":"Music close-up"}>
     <header className="passage-guide__heading"><h2>{`${zh?"小节":"Bars"} ${numbers?.from??low}–${numbers?.to??high}`}</h2>
-      <div className="passage-guide__modes reader-choice" role="group" aria-label={zh?"练习":"Practice"}>{(['technique','pitch'] as Mode[]).map(m=><button type="button" key={m} aria-pressed={mode===m} onClick={()=>choose(m)}>{m==='technique'?(zh?'技巧':'Technique'):(zh?'音准':'Pitch')}</button>)}</div>
+      <div className="passage-guide__modes reader-choice" role="group" aria-label={zh?"练习":"Practice"}>{(['technique','pitch',...(rhythm?['rhythm']:[])] as Mode[]).map(m=><button type="button" key={m} aria-pressed={mode===m} onClick={()=>choose(m)}>{m==='technique'?(zh?'技巧':'Technique'):m==='pitch'?(zh?'音准':'Pitch'):(zh?'节奏':'Rhythm')}</button>)}</div>
       <div className="passage-guide__options">{toggles.map(x=><button type="button" key={x.glyph} className="passage-guide__icon has-tip" data-tip={x.label} aria-label={x.label} aria-pressed={x.on} onClick={x.onClick}><span aria-hidden="true">{x.glyph}</span></button>)}</div>
       {/* Mark up's close button: same icon, size and colour, no hover fill. */}<CloseButton className="passage-guide__close markup-close" label={zh?"关闭近看":"Close close-up"} onClick={onClose}/></header>
     {source.error?<p role="alert">{source.error}</p>:<div className="passage-guide__list">
       {original(mode==='pitch'?pitch.marks:undefined,mode==='pitch'?pitch.onNote:undefined)}
       {mode==='pitch'&&pitch.panel}
+      {mode==='rhythm'&&rhythm&&<RhythmTap rhythm={rhythm} quarterBpm={quarterBpm} zh={zh}/>}
       {/* Kept mounted while Pitch is open, so coming back to Technique does not redraw every exercise. */}
-      <div hidden={mode==='pitch'}>
+      <div hidden={mode!=='technique'}>
         {scale&&<div className="passage-guide__row"><h3>{scale.label}<Link href={`/flute-studio/exercises/scales?key=${encodeURIComponent(scale.key)}&type=${scale.type}${'form' in scale&&scale.form==='arpeggio'?'&form=arpeggio':''}&back=${encodeURIComponent(pathname)}`}>{zh?"音阶练习":"Scale Studio"}</Link></h3>{player('scale',scale.xml,scale.label)}</div>}
         {sections.map(section=><section className="passage-guide__section" key={section.title}><h4>{label(section.title)}</h4>
           {section.rows.map(r=><div className="passage-guide__row" key={r.id}><h3>{label(r.title)}{r.shuffle&&<button type="button" className="passage-guide__shuffle" onClick={()=>{setActive(null);r.shuffle!()}}>{zh?"重新排列":"Shuffle"}</button>}</h3>{player(r.id,r.xml,r.title.toLowerCase(),false,!!r.gen,undefined,undefined,true)}</div>)}

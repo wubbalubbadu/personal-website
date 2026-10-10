@@ -127,9 +127,14 @@ export function useRhythmAudio() {
    * Seconds into the current `counted` run as the listener hears it now (the audio clock minus the
    * output latency), read at the moment of a tap rather than from the last animation frame. -1 when nothing runs.
    */
-  const position = useCallback(() => {
+  // `at` (an input event's timeStamp) asks for the moment of that event instead of now, read through
+  // getOutputTimestamp, which maps page time to the sample leaving the speakers; it skips the delay before the handler ran.
+  const position = useCallback((at?: number) => {
     const audio = ctx.current, r = run.current; if (!audio || !r) return -1;
-    const heard = audio.currentTime - (audio.outputLatency || audio.baseLatency || 0) - r.start;
+    const stamp = at !== undefined && typeof audio.getOutputTimestamp === 'function' ? audio.getOutputTimestamp() : null;
+    const heard = (stamp?.contextTime !== undefined && stamp.performanceTime !== undefined && stamp.performanceTime > 0
+      ? stamp.contextTime + (at! - stamp.performanceTime) / 1000
+      : audio.currentTime - (audio.outputLatency || audio.baseLatency || 0)) - r.start;
     return heard <= r.end + .5 ? heard : -1;
   }, []);
   return {play, stop, clicks, clap, counted, position, active, error, elapsed, beat};

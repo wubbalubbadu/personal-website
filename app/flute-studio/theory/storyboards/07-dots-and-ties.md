@@ -1,147 +1,121 @@
-# Lesson 7: Dots, ties and rhythm practice
+# Lesson 7: Dots and ties (storyboard, redesign, revision 3)
 
-Draft 3, October 9, 2026. Implemented locally October 10 at `/flute-studio/theory/dots-and-ties`, following the user’s implementation approval. No commit or deployment.
+October 10, 2026. Replaces draft 3 (now `(archive) 07-dots-and-ties.md`) after the user's review of the first build,
+then revised the same day after a second and a third review. Local only; no commit or deployment. Read with LESSONS.md and
+theory/COMPONENTS.md.
 
-Reference: https://www.musictheory.net/lessons/14. Reuse its clear duration equivalences and the reason ties cross bar lines, with original copy and learner-controlled interactions.
-Read with LESSONS.md and theory/COMPONENTS.md.
+## Why a redesign
 
-## Outcome and scope
+The first build was a list of mechanisms (add a dot, count "and", place an eighth, connect two notes, split a beat into
+three) without a question behind each one. This plan builds every step on what the learner already knows from lessons
+2, 3 and 6:
 
-Read dotted notes and ties, keep the beat through a simple syncopation, and divide a beat into equal parts. One lesson card with a short teaching sequence leading into reusable rhythm practice. Seven scenes; the core path is finite, with optional continued practice. Do not add a separate triplet or quintuplet lesson.
+- a quarter note is 1 beat, a half note 2, a whole note 4, an eighth half a beat;
+- two eighths share one count (lesson 3 brackets them under one number);
+- a measure of 4/4 holds exactly 4 beats.
 
-Include a concrete first encounter with syncopation and triplets. Quintuplets appear only in optional continued practice after the core lesson, not in the first teaching sequence or as another lesson. Other tuplet divisions can be added to that exercise later using the same interaction. No double dots, swing, or complex syncopation here. Mention once that dots also lengthen rests, without another quiz.
+The lesson answers one question: **how do we write lengths that no single note shape gives us?** First answer: a tie
+(lengths add up). Second: the dot, the usual shorthand for the same tie.
 
-## 1. Make room for three beats
+## Feedback and where it is answered
 
-Start: a 4/4 rhythm staff with a half note on beat 1 and a quarter rest on beat 4. The space for beat 3 is empty; a proportional duration span beneath the half note covers beats 1–2. This is explicitly an unfinished measure.
+First review:
 
-Narration: “This note needs to last three beats.” / “这个音要持续三拍。”
-Cookie: “Add a dot beside the note.” / “在音符右边加一个点。”
+| # | Feedback | Answer |
+|---|---|---|
+| 1 | Hover boxes (fill, red dashed circle) on the dot target, the dot and the bar line | No hover fill or outline on any target. Targets are the music itself with an invisible hit area, arrow cursor, a keyboard focus ring only. No dashed placeholder circles. |
+| 2 | The dot was added with no question behind it | Step 1 opens with: half = 2 beats, whole = 4; how do we write 3? |
+| 3 | "Between the beats" and counting "and" were confusing | Step gone. No "and" counting. Half a beat is "halfway through beat 2", built on lesson 3's "two eighths share one count". |
+| 4 | "Where should the missing eighth start?" made no sense | Nothing is missing. A reading question with three plain answers: Beat 2 / Halfway through 2 / Beat 3. |
+| 5 | Connect-the-notes did not work; teach ties by equivalence | See revision 2, point 3. |
+| 6 | Triplets were confusing | Out of this lesson (below). |
+| 7 | Muddled representation | One staff, one row of counts, one time line, one kind of bracket. |
+| 8 | Two cookies in practice | See revision 2, point 8. |
+| 9 | Practice instruction too dense | "Tap once when each new note starts. Keep counting while a note holds." The tie rule only on the tie round. |
 
-Tap the faint dot target or draw a small dot there. The printed augmentation dot appears in the correct space to the right of the notehead. A copy of half the original span extends the span by one beat. Keep the 2 + 1 = 3 relationship visible.
+Second review (revision 2):
 
-Narration after action: “A dot adds half the note’s original length.” / “附点加上原来时值的一半。”
+| # | Feedback | Answer |
+|---|---|---|
+| 0 | Theory lessons index did not scroll | The index's route scrolls (`theory-home.css`); phones already had their own scroll area. |
+| 1 | Likes adding the dot by tapping the note | Kept. |
+| 2 | 1½ beats is hard to feel; brackets not proportional; unclear which notes a bracket means | A time line under the staff where every half beat takes the same room, with half-beat ticks. Step 2 clicks on every half beat (beats louder) and lights each tick, so 1½ reads as three halves. Each note and its bracket share a colour (blue, amber, grey). Labels use fractions (½, 1½), not decimals: they match note names and how musicians say lengths. |
+| 3 | Ties introduced from the bar line made no sense | Step 3 shows two notes, the learner ties them, and the narration says the tie combined them into one sound of 1 + ½ = 1½ beats, the same as a dotted quarter. The bar line is step 4, a later use. |
+| 4 | Too many buttons | Slower is gone. Teaching steps have no buttons under the music (the action plays the result once; tapping a note replays it). Practice keeps Count me in and Hear it. |
+| 5 | Wrong taps showed green | New grading: taps pair with note starts (closest first, never two taps to one start) and are green only within 0.1 s. Early, late, extra and missed are orange, and the message counts each kind. |
+| 6 | Triplets | Their own later lesson; not built. |
+| 7 | Do not switch lessons 2, 3 and 6 to a new tap target yet | Left alone; noted in COMPONENTS.md. |
+| 8 | Replace the Tap pad: Cookie should move to the tap area and say "Tap on me" | Built: Cookie hops from the bubble to the tap spot (reduced motion: no hop) and back when practice ends or the step changes. The whole spot is the target; Cookie squishes on each tap. |
 
-Tap the note to hear one uninterrupted three-beat sound with three beat pulses. Cookie bridges to the next scene: “Half of a quarter note is half a beat. Let’s find that halfway point.” / “四分音符的一半是半拍。我们来找一拍的中点。” Sound is optional, not completion.
+Third review (revision 3):
 
-## 2. Count between the beats
+| # | Feedback | Answer |
+|---|---|---|
+| 1 | Notes sat off their counts (the quarter after a dotted half was drawn near beat 3½) | `EngravedRow` has an opt-in `proportional` spacing; this lesson (and its practice) uses it, so every notehead sits on its count, tick and bracket. Other lessons keep engraver spacing; 35 layouts compared identical to before. |
+| 2 | No spoken half-beat count | None, and the open question is dropped. |
+| 3 | Introduce the tie first, then the dot as its shorthand | New order: tie a half to a quarter (2 + 1 = 3); the dot as the shorter way to write it; the same for a quarter tied to an eighth (1½, a dotted quarter); then "a dotted quarter lasts as long as how many eighth notes?" with half-beat ticks. A dotted half check ("how many quarter notes?") was added. The bar line stays as a later step. |
+| 4 | Cookie should react to the practice result | Cookie at the tap spot uses the same tone as the questions: happy (the questions' pressed face) for a clean attempt, a new small "hmm" face (flat mouth, eyes aside) when taps were off. |
+| 5 | Practice: three rounds, harder each time, not all 4/4, with the short-long figure and a tie | 4/4 dotted quarter, eighth, half; 3/4 eighth, dotted quarter, quarter (short-long); 4/4 short-long then a quarter tied to an eighth. Cut time skipped: it makes the half note the beat, which needs its own explanation. |
 
-Bridge: the quarter note's extra half beat needs a place in our counting.
-Start: four quarter-note beat markers, then the learner taps between the first two to reveal equally spaced eighth subdivisions across the measure. Counts stay directly below: “1 & 2 & 3 & 4 &”. Explain & as “and”, not a new beat.
+## Triplets: removed from this lesson
 
-Narration: “Each beat can split into two equal parts. Count ‘and’ halfway between the numbers.” / “每一拍可以分成相等的两半。数字之间的半拍数‘and’。”
-Cookie: “Tap halfway between 1 and 2.” / “点一下 1 和 2 正中间的位置。”
+Triplets divide a beat into three, a new idea rather than a longer or joined length. They move to a short follow-up
+lesson of their own (LESSONS.md, "After beginner reading"). Quintuplets go with them. Syncopation is not named; the
+tied practice round gives a first taste.
 
-Replay names the focus: “Hear the ‘and’ halfway between the clicks.” Main clicks stay on numbers. Eighth markers appear without changing the tempo or staff position. This teaches subdivisions, not a precision timing exam. There is no separate check here: scene 3’s placement checks whether the learner can locate the half beat.
+## Shared look
 
-## 3. A dotted quarter
+- 4/4 rhythm staff with no clef, the same viewBox and staff position in every step, notes spaced in proportion to time.
+- Under the staff: counts, the time line (beat ticks, half-beat ticks when halves matter, a black tick at a bar line),
+  then one bracket per note in that note's colour (blue, amber, grey).
+- During playback the sounding note and the current count and tick turn red. Half-beat steps click on every half beat.
+- Targets: invisible hit areas over the music; no hover change; arrow cursor; a focus ring for keyboards only.
+- Questions use the lesson 3 answer buttons in Cookie's bubble. Fractions (½, 1½), never decimals.
+- Every action plays its result once. Tapping a note replays it with its pulses. No buttons under the music.
 
-Start: one 4/4 bar with a dotted quarter at 1 and a half rest on 3. The missing eighth between them is a visible gap. Under the first two beats, the duration diagram shows a quarter span plus an eighth span. The dot appears using the same spatial rule as scene 1.
+## 1. Tie two notes
 
-Narration: “A dotted quarter lasts one and a half beats.” / “附点四分音符持续一拍半。”
-Cookie: “Tap where the next note should start.” / “点一下下一个音应该开始的位置。”
+Sees: half note (blue, "2 beats"), quarter (amber), quarter (grey). Narration: "A half note lasts 2 beats. What if the
+first sound should last 3 beats?" Action: "Tap between the half note and the next quarter note to tie them." Feedback:
+tie, both blue, "2 + 1 = 3 beats", plays as one sound. "A tie joins two notes of the same pitch into one sound. Their
+lengths add up: 2 + 1 = 3 beats."
 
-Tap a half-beat position on the count grid to place the eighth note there. Dragging from a source is an optional equivalent, never required. Each position has a generous hit area and keyboard access. The correct start is the & after beat 2 (offset 3/2). Accept at the target rather than silently placing it before the learner acts. An incorrect onset shows the overlap or empty time span and leaves retry available.
+## 2. The dot
 
-Counts and a cursor show the first note continuing through 1, &, 2; the second begins on the next &. Two taps, not a new sound at every count. Optional replay prompt: “Listen for the short note between clicks 2 and 3.”
+Sees: the tied half and quarter. Narration: "A tie like this is a little awkward to read, so it is usually written with a
+dot instead." Action: "Tap the half note to add a dot." Feedback: the notes become a dotted half, same bracket, same
+sound. "A dot adds half of the note's value. Half of 2 is 1, so a dotted half lasts 2 + 1 = 3 beats: the same sound as
+the tie." Tapping the dot shows the tie again. Check: "A dotted half lasts as long as how many quarter notes?" (3), with
+one amber bracket per beat after the answer.
 
-After success a small optional equivalence shows dotted half = half + quarter and dotted quarter = quarter + eighth. No extra reference panel competing with the scene. Brief narration can state: “A dot adds half to a rest, too.”
+## 3. One and a half beats
 
-## 4. Keep the sound across the bar line
+Sees: quarter (blue, 1 beat), eighth (amber, ½), eighth, half, with half-beat ticks. Action 1: tie the first two
+("1 + ½ = 1½ beats"). Action 2: "Now tap the quarter note to write it with a dot": a dotted quarter, bracket
+"1½ = 3 halves", played with a click on every half beat. Check: "A dotted quarter lasts as long as how many eighth
+notes?" (3), with three amber half-beat brackets after the answer: "so the next note starts halfway through a beat."
 
-Start with a duration problem: a sound must begin on beat 4 and last two beats. A faint, unfinished half-note preview and its two-beat duration span show that only one beat fits before the bar line. Keep the overflow a clearly marked working preview, not an example of valid final notation.
+## 4. Across the bar line
 
-Narration: “This sound needs two beats, but only one fits before the bar line.” / “这个音要持续两拍，可小节线前只剩一拍。”
-Cookie: “Tap the bar line to split the written length.” / “点一下小节线，把要写的时值分开。”
+Unchanged from revision 2: tie beat 4 to the next beat 1; "A dot can't do this, because each measure must add up to its
+own 4 beats."
 
-The learner taps the bar line. The preview becomes two quarter notes of the same pitch, one on beat 4 and one on beat 1 of the next measure. Their duration spans still cover the original two beats. Explain that splitting the written duration alone would give two separate attacks.
+## 5. Rhythm practice
 
-Cookie then says: “Join the notes so the sound does not restart.” / “把两个音连起来，让声音不中断。”
+Three rounds: (1) 4/4 dotted quarter, eighth, half; (2) 3/4 eighth, dotted quarter, quarter ("Now 3/4, three beats in
+a measure, and short then long"); (3) 4/4 eighth, dotted quarter, quarter tied to eighth, eighth ("A tied note is one
+sound, so it gets one tap"). The count-in is one measure. Cookie at the tap spot, grading and feedback as in revision 2;
+Cookie looks happy after a clean attempt and goes "hmm" otherwise.
 
-Draw a forgiving arc, or tap the first note then the second. Replace the sketch with an engraved tie. Only now name it: “A tie joins notes of the same pitch into one continuous sound.” / “延音线把相同音高的音符连成一个持续的声音。”
+## Open questions
 
-Their duration spans join while the bar line remains. Replay keeps the click through the bar line but removes the second note attack. The second notehead is highlighted as a continuation, not a new note event. The same sound fits the measure structure without restarting at the bar line.
+- Lessons 2, 3 and 6 still tap on a second CookieButton; switch them to the Cookie tap spot once decided.
+- Triplets as their own lesson, or folded into the 6/8 follow-up?
+- A one-line tie versus slur contrast here, or leave it to the articulation lesson?
 
-Optional remove/re-add by tapping the tie permits comparison: “Listen for one start instead of two.” No separate permanent comparison buttons. Explain the wind-playing action: “Keep the air going; do not tongue the second tied note.” / “气息继续，不要在连着的第二个音上重新吐音。” A brief note distinguishes a slur as connecting notes, to be taught with articulation; do not teach slur technique here.
+## Built (October 10, local)
 
-## 5. Hold across a beat
-
-Start: eight eighth notes in 4/4, with the notes at the & after 1 and at 2 sharing the same pitch. Use a short, pleasant phrase rather than eight repeated high notes.
-
-Cookie: “Tie these two notes. Keep the sound going over beat 2.” / “把这两个音连起来，让声音延续过第 2 拍。”
-
-The learner joins the pair. A main-beat pulse still lands on 2, while the tied sound continues without a new attack. Keep the two eighth noteheads and tie visible so the beat boundary stays readable.
-
-Narration after action: “The sound starts between beats and carries over the next beat. This is one kind of syncopation.” / “声音在两拍之间开始，延续到下一拍。这是一种切分节奏。”
-
-Do not imply every offbeat note, dotted rhythm, or tie is syncopation. This scene deliberately chooses an offbeat attack sustained across the following beat.
-
-## 6. Divide the same beat
-
-Reuse the existing duration span. Two evenly spaced eighth notes fit inside one quarter-note beat. The learner changes the division to three; the same span now contains three eighth-note triplets with a real numeral 3. The main click and the total span do not speed up.
-
-Narration: “Three equal notes now fit in the time of two eighth notes.” / “三个均匀的音，现在占两个八分音符的时间。”
-Cookie: “Tap three evenly spaced sounds inside each beat.” / “在每一拍里均匀地点三下。”
-
-A count-in and slow demonstration precede a short attempt. Keep beat boundaries and the three subdivisions visible. The task is equal spacing, not faster random tapping. This is the introduction within the rhythm exercise, not a separate three-page lesson.
-
-Show the learner’s tap positions against the ideal three-part grid after the attempt. There is no pass/fail on triplet evenness in the first version. Offer another try or moving on; do not describe an uneven attempt as correct. Next becomes ready after an attempt, not after a timing score.
-
-There is no quintuplet control in this teaching scene. Its optional introduction belongs after the core rounds.
-
-## 7. Play the rhythm
-
-Four short, authored one-bar rounds, with visible progress dots. All examples use 4/4.
-
-**Timing convention:** spoken counts are one-based; internal offsets are exact rational quarter-note units from the start of the bar, with beat 1 at offset 0. Every event below names its count and its offset. Never call an internal offset a beat number. Offsets are implementation data, not UI text.
-
-| Round | Written rhythm | New sound starts |
-| --- | --- | --- |
-| 1 | Dotted half + quarter | Beat 1 (offset 0); beat 4 (offset 3) |
-| 2 | Dotted quarter + eighth + half | Beat 1 (offset 0); & after beat 2 (offset 3/2); beat 3 (offset 2) |
-| 3 | Eighth + two tied eighths spanning & after beat 1 to beat 2 + eighth + quarter + quarter | Beat 1 (offset 0); & after beat 1 (offset 1/2); & after beat 2 (offset 3/2); beat 3 (offset 2); beat 4 (offset 3). The tied continuation at beat 2 (offset 1) gets no tap. |
-| 4 | Three eighth-note triplets on beat 1, then three quarters | Beat 1, triplet positions first (offset 0), second (offset 1/3), third (offset 2/3); beat 2 (offset 1); beat 3 (offset 2); beat 4 (offset 3) |
-
-Keep triplets inside one beat first, before optional mixed subdivisions. Do not label their second or third division with the eighth-note “&” count.
-
-Cookie: “Tap Count me in. Then tap Cookie whenever a new note starts.” / “点‘数拍开始’，每个新音开始时点一下 Cookie。”
-
-Count-in precedes each attempt. The notation and counts stay visible. Tap/Space provides the response; microphone clapping is not required. Count clicks continue independently of the learner's taps. No sample melody plays over the learner’s attempt. Replay before an attempt is optional and explains the listening focus.
-
-Give feedback only after the full bar. In the first version, show the learner’s tap marks against the expected starts, with generous timing windows for the ordinary rhythms and no pass/fail for triplet evenness. Use unambiguous missing/extra-note feedback, such as “That tied note continues. It does not need another tap,” only when the observed taps support it. A small timing deviation should not be labelled a wrong rhythmic idea.
-
-Completion is participation-based for these motor-timing rounds: a recorded attempt with at least one tap makes Next ready; reviewing all four rounds finishes the drill. Green correctness feedback remains reserved for a supported correct result, not mere participation. The scene 3 placement and tie construction are the concept checks. This is an intentional exception to a timing-score gate, not removal of the learning checks.
-
-Retry the same pattern, offer slower practice, and keep controls fixed. Do not add a summary test page. Specify and test timing windows against tempo and the smallest onset interval before building feedback; never use a window wide enough to ambiguously match neighboring subdivisions. Device latency must not lock a beginner out of finishing.
-
-This drill checks note starts, not how long the learner physically sustains a note. Duration understanding is checked by the span/placement activities. Do not pretend tap accuracy measures sustained flute playing. Use the same audio clock for scheduling and tap timestamps. Do not add strict timing assessment until device latency has been tested, including real iPad input.
-
-## Continued practice, in this same card
-
-After the four core rounds, mark the lesson complete. Offer optional “Keep practising” within the exercise, with a compact choice of learned rhythms or a quintuplet challenge. No new lesson card, no additional completion requirement, and no endless drill disguised as a compulsory lesson.
-
-If the learner chooses the quintuplet challenge, first demonstrate five equal sixteenth-note quintuplets in the same one-quarter-note span normally occupied by four sixteenths. Show the engraved numeral 5, explain this example’s 5:4 ratio, then let the learner try it with neutral tap-position feedback. Do not imply a 5 always means five notes per beat. This is still inside the same card and never affects core completion.
-
-Start with authored, validated patterns. Later practice can mix familiar rhythms, but must preserve readable beat grouping, correct measure totals, explicit tuplet spans, and tie continuations. Introduce each new division before testing it. The learner can return directly to this practice scene from the existing lesson timeline.
-
-A combined “Dynamics and articulation” lesson remains a proposal. Keep loudness and note connection conceptually distinct even if they share one card. Trills and repeat navigation remain practical topics for later planning.
-
-## Shared UI and implementation checks before building
-
-Use LessonFrame, EngravedRow, CookieButton, ProgressDots, the shared duration-span treatment, and useRhythmAudio. Keep all engraving black except the established playing/correct states. Same staff scale and location; no keyboard because pitch is not the learning target. Tie examples use identical written pitches, with treble clef only if pitch comparison needs it.
-
-- EngravedRow already renders augmentation dots. Audit dot spacing and note/rest dots at line and space positions.
-- Add real tie geometry with explicit endpoints, including across bar lines. Do not reuse a decorative slur path without anchoring it to the noteheads.
-- Merge tied playback into one audio event with summed duration and no second attack. Preserve visual timing for each written segment, counting and measure boundaries.
-- Split duration and onset assessment. Test tied segments, a dot, and a rest together, not only isolated glyphs.
-- Tuplets need explicit written values, grouping and time ratios. An eighth-note triplet is written as an eighth, with duration 1/3 of a quarter; a sixteenth-note quintuplet in a quarter beat has duration 1/5. A float duration alone must not choose the note shape. Test exact group totals and main-beat alignment so longer drills do not drift.
-- Drawing has tap and keyboard alternatives. Selection follows the shared outline convention. Correct results remain visible; no automatic scene jumps.
-- Verify desktop/iPad layout, reduced motion, cancellation during playback, and retry. Do not claim real-device timing from desktop tests.
-
-## Local implementation verification (October 10)
-
-- Reuses `LessonFrame`, `EngravedRow`, `CookieButton`, course progress and the existing audio scheduler.
-- Automated checks cover exact tuplet timing, tied onsets and single-voice playback, engraved beam levels, fractional excerpts, and cancellation. Relevant theory/reader rhythm suite: 42 passing tests. Production build and scoped lint pass.
-- Desktop browser checks: dot placement, wrong/correct eighth placement, ties by drawing and keyboard, count-in/Space tapping, all four rounds, completion and optional quintuplets.
-- iPad viewport verification remains outstanding: the browser viewport override did not change the measured 1280 × 720 viewport. Real-device audio and touch behavior still need review.
-- Existing type-check errors remain outside this change in `vite.config.ts` and `worker/index.ts`.
+`dots-and-ties/DotsTiesLesson.tsx`, `RhythmPractice.tsx`, `rhythmSequence.ts` (`gradeTaps`), `dots-and-ties.css`;
+`LessonFrame.tsx` (`cookieAway`, Cookie's mood there) and `lesson-shell.css`; `cookie-button.css` (`is-unsure`);
+`EngravedRow.tsx` (`tones`, `proportional`); `theory-home.css` (index scroll).
+`TieGesture.tsx` and the short-lived `TapPad` were deleted. Tests in `tests/dots-and-ties.test.mjs`.

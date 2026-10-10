@@ -15,8 +15,9 @@ import {refineDirectionWords} from "./directionWords";
 import PracticeRecorder from "../PracticeRecorder";
 import {ReaderPopover} from "./ReaderPopover";
 import {PassageGuide} from "./PassageGuide";
+import type {PassageRhythm} from "./RhythmTap";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {AnnotationLayer} from "./AnnotationLayer";
 import { createPortal } from "react-dom";
 import type { MusicSheetCalculator, OpenSheetMusicDisplay as OSMDType } from "opensheetmusicdisplay";
@@ -24,7 +25,7 @@ import { useLanguage } from "../i18n/LanguageContext";
 import { useRecents } from "../lib/storage";
 import { deriveScoreEvents, resolveKeyAccidentals } from "./deriveScoreEvents";
 import type { ComposerInfo } from "../../../content/music-library";
-import {readScoreFacts,keySignatureFromFifths,keySignatureFromNotes,timeSignatureText,metronomeText,performanceTermText,directionStyle,directionRuns,tuckMetronomeMarks,alignDynamicLines,clearRehearsalMarks,spaceMetronomeMarks,METRONOME_TUCK_SHIFT,type ScoreFacts} from "./scoreTheory";
+import {readScoreFacts,keySignatureFromFifths,keySignatureFromNotes,timeSignatureText,metronomeText,performanceTermText,directionStyle,directionRuns,tuckMetronomeMarks,hideStackedMetronomeMarks,alignDynamicLines,clearRehearsalMarks,spaceMetronomeMarks,METRONOME_TUCK_SHIFT,type ScoreFacts} from "./scoreTheory";
 import {measureBeatOffsets,meterGrid} from "./rhythmGrid";
 import {installGhostNoteFix} from "../lib/ghostNoteFix";
 import {installReminderAccidentalFix,setReminderAccidentals} from "../lib/reminderAccidentalFix";
@@ -36,6 +37,9 @@ import {fingeringsForMidi, midiForPitch} from "../../../content/fingerings/flute
 import {StatusButton} from "./StatusButton";
 import {measureStops,cursorAt,type CursorBeat} from "./playbackCursor";
 import {SubdivisionIcon} from "./SubdivisionIcon";
+import {TempoPill} from "./TempoPill";
+import {CloseButton} from "./CloseButton";
+import {RepPill} from "./RepPill";
 import BackChevron from "./BackChevron";
 import {DownloadIcon,PlusIcon,CheckIcon,ChevronIcon} from "./HeaderIcons";
 import AccountMenu from "../AccountMenu";
@@ -97,7 +101,7 @@ type NoteDisplay = "off"|"names"|"solfege";
  * it to the unmetered exercise books — repertoire keeps whatever spacing
  * VexFlow has always given it.
  */
-type ReaderTuplet={notes:{beam?:unknown;getStemDirection:()=>number;getStemExtents:()=>{topY:number;baseY:number}}[];location:number;options:{bracketed?:boolean;y_offset?:number};getNestedTupletCount:()=>number;getYPosition:()=>number};
+type ReaderTuplet={notes:{beam?:unknown;getStemDirection:()=>number;getStemExtents:()=>{topY:number;baseY:number}}[];location:number;options:{bracketed?:boolean;y_offset?:number};bracketed?:boolean;getNestedTupletCount:()=>number;getYPosition:()=>number;draw:()=>void};
 const patchedTuplets=new WeakSet<object>();
 function patchTupletPlacement(osmd:OSMDType){
   let changed=false;
@@ -108,6 +112,13 @@ function patchTupletPlacement(osmd:OSMDType){
       if(patchedTuplets.has(prototype))continue;
       const original=prototype.getYPosition;
       if(!original)continue;
+      // A beamed tuplet shows its number only, as engravers do: the beam already groups the notes, and brackets on
+      // top (Maggio's 6 with a 3 inside) crossed each other and the words above. Unbeamed tuplets keep the bracket.
+      const draw=prototype.draw;
+      prototype.draw=function(this:ReaderTuplet){
+        if(this.notes.length&&this.notes.every(n=>n.beam)){this.bracketed=false;this.options.bracketed=false}
+        return draw.call(this);
+      };
       prototype.getYPosition=function(this:ReaderTuplet){
         if(this.location===-1&&!this.options.bracketed&&this.notes.every(n=>n.beam&&n.getStemDirection()===-1)){
           return Math.max(...this.notes.map(n=>n.getStemExtents().topY))+12+this.getNestedTupletCount()*15+(this.options.y_offset??0);
@@ -958,7 +969,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   const [loading,setLoading]=useState(true); const [error,setError]=useState(""); const [selectedMeasure,setSelectedMeasureRaw]=useState<number|null>(null);  const [playing,setPlaying]=useState(false); const [playingFrom,setPlayingFrom]=useState<number|null>(null); const [playingEvent,setPlayingEvent]=useState<number|null>(null); const [annotating,setAnnotating]=useState(false);
   const playingRef=useRef(playing);playingRef.current=playing;
   // One selection for everything: a bar (where Listen starts) or a range of bars (Play, Loop, Close-up, Tricky bits). selectedMeasure is its first bar; rangeEnd is the last bar of a range, or null for a single bar. Bar numbers here are positions (1, 2, 3...), not printed numbers.
-  const [rangeEnd,setRangeEnd]=useState<number|null>(null),[closeup,setCloseup]=useState<{from:number;to:number;numbers:{from:string;to:string}}|null>(null),[rangeMode,setRangeMode]=useState<null|"once"|"loop">(null),[rangeBarAt,setRangeBarAt]=useState<{x:number;y:number}|null>(null);
+  const [rangeEnd,setRangeEnd]=useState<number|null>(null),[closeup,setCloseup]=useState<{from:number;to:number;numbers:{from:string;to:string}}|null>(null),[rangeMode,setRangeMode]=useState<null|"once"|"loop"|"click">(null),[rangeBarAt,setRangeBarAt]=useState<{x:number;y:number}|null>(null);
   const selection=selectedMeasure===null?null:{from:selectedMeasure,to:Math.max(selectedMeasure,rangeEnd??selectedMeasure)};
   // One bar is a selection too: close up, loop or save a single bar. (A tap still sets where Listen starts.)
   const isRange=!!selection&&selection.to>=selection.from,closeupOpen=closeup!==null;
@@ -1018,6 +1029,20 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   // Bumped after every engrave so a host drawing on the score knows its
   // measurements are stale — note positions change on any re-render.
   const [layoutVersion,setLayoutVersion]=useState(0);
+  // Bars you are practising without saving them as a tricky bit: a tempo pill and a tally pinned above the first
+  // bar, like Scale Studio's, so the floating selection pill stays small. Stays until you take it off.
+  const [practicePin,setPracticePin]=useState<{from:number;to:number}|null>(null);
+  const [practicePinAt,setPracticePinAt]=useState<{x:number;y:number}|null>(null);
+  // Measured on the engraving (the marks layer shares .osmd-score's frame), again after every re-layout.
+  useLayoutEffect(()=>{
+    const root=scoreRef.current;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if(!practicePin||!root||!marksLayer){setPracticePinAt(null);return}
+    const bar=[...root.querySelectorAll<SVGGElement>(".vf-measure")].find(measure=>Number(measure.querySelector<SVGGElement>(".vf-stavenote[data-measure]")?.dataset.measure)===practicePin.from);
+    if(!bar){setPracticePinAt(null);return}
+    const box=bar.getBoundingClientRect(),frame=root.getBoundingClientRect();
+    setPracticePinAt({x:Math.max(0,Math.min(box.left-frame.left,frame.width-200)),y:box.top-frame.top-4});
+  },[practicePin,layoutVersion,marksLayer]);
   const readerAnchor=useRef<{event:string;offset:number}|null>(null);
   /** Last tempo actually handed to onTempoChange; null until the first. */
   const reportTempo=useRef<number|null>(null);
@@ -1367,7 +1392,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     // Words clear of rehearsal boxes first, then each ♩ = n mark goes beside
     // its own words. Mark by mark: a piece where one mark stands alone (so
     // the up-front shift is off) still gets the others tucked.
-    if(scoreRef.current){clearRehearsalMarks(scoreRef.current);tuckMetronomeMarks(scoreRef.current);alignDynamicLines(scoreRef.current)}
+    if(scoreRef.current){clearRehearsalMarks(scoreRef.current);tuckMetronomeMarks(scoreRef.current);hideStackedMetronomeMarks(scoreRef.current);alignDynamicLines(scoreRef.current)}
   }
   function prepareLayoutBox(){
     const osmd=osmdRef.current,scroller=scoreScrollRef.current,root=scoreRef.current;
@@ -2310,6 +2335,24 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     };
     window.addEventListener("keydown",key);return()=>window.removeEventListener("keydown",key);
   },[selectedMeasure,closeupOpen]);
+  /** The close-up's Rhythm mode: each new sound's start and each beat click (irregular meters in their groups), in
+   *  quarter notes from the passage's first bar, plus one measure of count-in in the first bar's beats. */
+  function passageRhythm(from:number,to:number):PassageRhythm{
+    const seq=sequenceRef.current,upq=seq.unitsPerBeat,measures=scoreFactsRef.current?.measures;
+    const onsets:number[]=[],clicks:{at:number;accent:boolean}[]=[];let countIn:{at:number;accent:boolean}[]=[];let at=0;
+    for(let measure=from;measure<=to;measure++){
+      const start=seq.measureStarts[measure-1]??0,end=seq.measureStarts[measure]??seq.events.length,slice=seq.events.slice(start,end);
+      const meter=measures?.[measure-1]??{beats:4,beatType:4};
+      const plan=measureBeatOffsets(slice.map(event=>event.d),meter,upq,measure===1);
+      let units=0;
+      for(const event of slice){if(event.p&&event.d>0&&!event.tied)onsets.push(at+units/upq);units+=Math.max(0,event.d)}
+      const offsets=plan?.offsets??Array.from({length:Math.ceil(units/upq)},(_,i)=>i*upq);
+      offsets.forEach((offset,k)=>clicks.push({at:at+offset/upq,accent:k===0&&!(plan?.pickup)}));
+      if(measure===from){const full=(plan?.barLength??units)/upq,whole=plan&&!plan.pickup?plan.offsets:Array.from({length:Math.round(full)},(_,i)=>i*upq);countIn=whole.map((offset,k)=>({at:offset/upq-full,accent:k===0}))}
+      at+=units/upq;
+    }
+    return {onsets,clicks,countIn,length:at};
+  }
   function openCloseup(){
     const current=selectionRef.current;if(!current||current.to<current.from)return;
     const printed=(position:number)=>scoreFactsRef.current?.measures[position-1]?.number??String(position);
@@ -2351,9 +2394,23 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     rangePlay.current={start,end,loop};setRangeMode(loop?"loop":"once");
     setFingerTip(null);setPlaying(true);setPlayingFrom(start);scheduleNotes(start);
   }
+  /** The selection's tempo pill metronome: loop just these bars as a click track (count-in once, melody silent). Again stops. */
+  function loopRangeClicks(bars?:{from:number;to:number}){
+    const current=bars??selectionRef.current;if(!current||current.to<current.from)return;
+    if(playing&&rangeMode==="click"){stopPlayback();return}
+    if(playing)stopPlayback(clickTrackRef.current);
+    if(smartRunning)stopAutoDrone();
+    smartMode.current=false;playbackAccompaniment.current="off";
+    const seq=sequenceRef.current,start=seq.measureStarts[current.from-1]??0,end=seq.measureStarts[current.to]??seq.events.length;
+    rangePlay.current={start,end,loop:true};setRangeMode("click");
+    clickTrackRef.current=true;setClickTrack(true);countInPending.current=true;if(!metro)toggleMetro();
+    setFingerTip(null);setPlaying(true);setPlayingFrom(start);scheduleNotes(start);
+  }
   function restartRange(){
     const range=rangePlay.current;if(!range)return;
-    stopPlayback();rangePlay.current=range;setRangeMode("loop");
+    // A click-track loop stays a click track (metronome on, melody silent) on every pass.
+    const clicking=clickTrackRef.current;
+    stopPlayback(clicking);rangePlay.current=range;setRangeMode(clicking?"click":"loop");
     setPlaying(true);setPlayingFrom(range.start);scheduleNotes(range.start,false);
   }
   const restartRangeRef=useRef(restartRange);restartRangeRef.current=restartRange;
@@ -2680,6 +2737,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
       reshapeSlurs(stage);
       spaceMetronomeMarks(stage);
       if(tuck)tuckMetronomeMarks(stage);
+      hideStackedMetronomeMarks(stage);
       alignDynamicLines(stage);
       const pages=[...stage.querySelectorAll<SVGSVGElement>(":scope > div > svg")];
       if(!pages.length)return;
@@ -2820,8 +2878,13 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
 </div>
       <div className="reader-rows">{practiceRow}<div className="markup-row" ref={setAnnotationToolbar}/></div>
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- The score is a pointer and touch surface (tap a bar, a note, a mark). Keyboard use goes through the page-level arrow keys and the toolbar buttons, so a tab stop on the engraving itself would add nothing. */}
-      <div className="score-scroll" ref={scoreScrollRef}>{countBeat!==null&&<div className="score-count-in" role="status" aria-label={`Count in, beat ${countBeat%countBar+1}`}><span>{Array.from({length:countBar},(_,beat)=><i key={beat} className={beat===countBeat%countBar?"current":beat<countBeat%countBar?"done":""}/>)}</span></div>}<div className="score-paper engraved" data-loading={loading}><div className="custom-score-heading"><h1>{title.split(/(\d+)/).map((part,index)=>/^\d+$/.test(part)?<span key={index} className="score-title-number">{part}</span>:part)}</h1>{config.subtitle&&<p className="excerpt-score-subtitle">{config.subtitle}</p>}{config.story?<button type="button" className="score-composer" aria-expanded={!!storyCard} onClick={e=>{e.stopPropagation();setTheoryTip(null);setStoryCard(storyCard?null:{x:e.clientX,y:e.clientY})}}>{composer}</button>:<div className="score-composer">{composer}</div>}</div>{showSpinner&&<div className="score-loading" role="status" aria-label={t.scoreViewer.engraving}/>}{error&&<div className="score-error">{error}</div>}<div ref={scoreRef} className="osmd-score" data-theory-enabled={theoryEnabled} data-note-tap={droneArmed||fingering||noteDisplay!=="off"||activeRhythmMode!=="off"||!!onPracticeNote?"on":undefined} onMouseMove={scoreMove} onMouseLeave={()=>{setFingerTip(null);setTheoryTip(null);setBeatTip(null)}} onPointerDown={scorePointerDown} onPointerMove={scorePointerMove} onPointerUp={scorePointerEnd} onPointerCancel={scorePointerEnd} onClick={scoreClick}/>{scoreMarks&&marksLayer&&createPortal(scoreMarks({root:scoreRef.current,version:layoutVersion,magnify,controls:readerControls}),marksLayer)}<AnnotationLayer key={id} id={id} active={annotating} layoutReady={!loading} layoutVersion={layoutVersion} toolbar={annotationToolbar} zh={zh} onClose={()=>setAnnotating(false)} zoom={magnify} onZoom={zoomAnnotations}/>
-      </div>{droneArmed&&droneHint&&<div className="drone-hint" role="status">{t.scoreViewer.droneTip}</div>}{notice&&<div className="drone-hint" role="status">{notice}</div>}{rangeBarAt&&isRange&&!(closeup&&selection&&closeup.from===selection.from&&closeup.to===selection.to)&&<div className="range-bar" role="toolbar" aria-label={zh?"所选小节":"Selected bars"} style={{left:rangeBarAt.x,top:rangeBarAt.y}}>{/* Icons only, each named by its tooltip. ▶ plays just these bars once; Listen in the toolbar plays on from them. */}<button type="button" className={rangeMode==="once"?"has-tip on":"has-tip"} data-tip={rangeMode==="once"?(zh?"停止":"Stop"):(zh?"播放所选小节":"Play selection")} aria-label={rangeMode==="once"?(zh?"停止":"Stop"):(zh?"播放所选小节":"Play selection")} onClick={()=>playRange(false)}><PracticeIcon name={rangeMode==="once"?"pause":"play"}/></button><button type="button" className={rangeMode==="loop"?"has-tip on":"has-tip"} data-tip={zh?"循环所选小节":"Loop selection"} aria-label={zh?"循环所选小节":"Loop selection"} aria-pressed={rangeMode==="loop"} onClick={()=>playRange(true)}><PracticeIcon name="loop"/></button>{config.practiceGuide&&<button type="button" className="has-tip" data-tip={zh?"近看":"Close-up"} aria-label={zh?"近看所选小节":"Close-up of selected bars"} onClick={openCloseup}><PracticeIcon name="zoom"/></button>}{config.practiceGuide&&(()=>{const saved=!!selection&&trickyBits.some(bit=>bit.id===bitId(config.id,selection.from,selection.to)),label=saved?(zh?"已存入精练小节，点按移除":"Saved to Tricky bits. Tap to remove"):(zh?"存入精练小节":"Save to Tricky bits");return <button type="button" className={saved?"has-tip on":"has-tip"} data-tip={label} aria-label={label} aria-pressed={saved} onClick={toggleTrickyBit}><PracticeIcon name={saved?"bookmarkFilled":"bookmark"}/></button>})()}</div>}{aside&&<div className="score-aside">{aside}</div>}</div>{stage&&<div className="reader-stage">{typeof stage==="function"?stage({fingering}):stage}</div>}{(dock||closeupOpen)&&<div className="reader-dock">{closeup&&<PassageGuide key={`${closeup.from}-${closeup.to}`} xml={guideXml.current} events={sequenceRef.current.events.slice(sequenceRef.current.measureStarts[closeup.from-1]??0,sequenceRef.current.measureStarts[closeup.to]??sequenceRef.current.events.length)} from={closeup.from} to={closeup.to} numbers={closeup.numbers} quarterBpm={bpm*(config.pulsePerMeasure?((scoreFactsRef.current?.measures[closeup.from-1]?.beats??4)*4/(scoreFactsRef.current?.measures[closeup.from-1]?.beatType??4)):tempoSectionAt(closeup.from)?.beat??1)} sempreStaccato={config.sempreStaccatoFromMeasure!==undefined&&closeup.from>=config.sempreStaccatoFromMeasure} title={title} initialDisplay={{names:noteDisplay,accidentals,rhythm:activeRhythmMode==="bars"}} onClose={()=>setCloseup(null)}/>}{dock}</div>}
+      <div className="score-scroll" ref={scoreScrollRef}>{countBeat!==null&&<div className="score-count-in" role="status" aria-label={`Count in, beat ${countBeat%countBar+1}`}><span>{Array.from({length:countBar},(_,beat)=><i key={beat} className={beat===countBeat%countBar?"current":beat<countBeat%countBar?"done":""}/>)}</span></div>}<div className="score-paper engraved" data-loading={loading}><div className="custom-score-heading"><h1>{title.split(/(\d+)/).map((part,index)=>/^\d+$/.test(part)?<span key={index} className="score-title-number">{part}</span>:part)}</h1>{config.subtitle&&<p className="excerpt-score-subtitle">{config.subtitle}</p>}{config.story?<button type="button" className="score-composer" aria-expanded={!!storyCard} onClick={e=>{e.stopPropagation();setTheoryTip(null);setStoryCard(storyCard?null:{x:e.clientX,y:e.clientY})}}>{composer}</button>:<div className="score-composer">{composer}</div>}</div>{showSpinner&&<div className="score-loading" role="status" aria-label={t.scoreViewer.engraving}/>}{error&&<div className="score-error">{error}</div>}<div ref={scoreRef} className="osmd-score" data-theory-enabled={theoryEnabled} data-note-tap={droneArmed||fingering||noteDisplay!=="off"||activeRhythmMode!=="off"||!!onPracticeNote?"on":undefined} onMouseMove={scoreMove} onMouseLeave={()=>{setFingerTip(null);setTheoryTip(null);setBeatTip(null)}} onPointerDown={scorePointerDown} onPointerMove={scorePointerMove} onPointerUp={scorePointerEnd} onPointerCancel={scorePointerEnd} onClick={scoreClick}/>{practicePin&&practicePinAt&&marksLayer&&createPortal((()=>{
+        const printed=(position:number)=>scoreFactsRef.current?.measures[position-1]?.number??String(position),from=printed(practicePin.from),to=printed(practicePin.to);
+        const bars=practicePin.from===practicePin.to?(zh?`第 ${from} 小节`:`bar ${from}`):(zh?`第 ${from} 至 ${to} 小节`:`bars ${from} to ${to}`);
+        // The tempo pill's metronome loops these bars as a click track; the tally logs reps at this tempo to today's practice log.
+        return <span className="passage-practice-mark" style={{left:practicePinAt.x,top:practicePinAt.y}}><TempoPill label={zh?`${bars}的速度`:`Tempo for ${bars}`} tempo={bpm} onChange={setBpm} sounding={rangeMode==="click"} onSound={()=>loopRangeClicks(practicePin)}/><RepPill item={{key:`passage:${config.id}:${practicePin.from}-${practicePin.to}`,title:zh?`${title} ${bars}`:`${title}, ${bars}`,kind:"piece"}} tempo={bpm} zh={zh}/><CloseButton className="passage-practice-mark__close" label={zh?"收起速度和计数":"Hide tempo and count"} onClick={()=>{if(rangeMode==="click")stopPlayback();setPracticePin(null)}}/></span>;
+      })(),marksLayer)}{scoreMarks&&marksLayer&&createPortal(scoreMarks({root:scoreRef.current,version:layoutVersion,magnify,controls:readerControls}),marksLayer)}<AnnotationLayer key={id} id={id} active={annotating} layoutReady={!loading} layoutVersion={layoutVersion} toolbar={annotationToolbar} zh={zh} onClose={()=>setAnnotating(false)} zoom={magnify} onZoom={zoomAnnotations}/>
+      </div>{droneArmed&&droneHint&&<div className="drone-hint" role="status">{t.scoreViewer.droneTip}</div>}{notice&&<div className="drone-hint" role="status">{notice}</div>}{rangeBarAt&&isRange&&!(closeup&&selection&&closeup.from===selection.from&&closeup.to===selection.to)&&<div className="range-bar" role="toolbar" aria-label={zh?"所选小节":"Selected bars"} style={{left:rangeBarAt.x,top:rangeBarAt.y}}>{/* Icons only, each named by its tooltip. ▶ plays just these bars once; Listen in the toolbar plays on from them. */}<button type="button" className={rangeMode==="once"?"has-tip on":"has-tip"} data-tip={rangeMode==="once"?(zh?"停止":"Stop"):(zh?"播放所选小节":"Play selection")} aria-label={rangeMode==="once"?(zh?"停止":"Stop"):(zh?"播放所选小节":"Play selection")} onClick={()=>playRange(false)}><PracticeIcon name={rangeMode==="once"?"pause":"play"}/></button><button type="button" className={rangeMode==="loop"?"has-tip on":"has-tip"} data-tip={zh?"循环所选小节":"Loop selection"} aria-label={zh?"循环所选小节":"Loop selection"} aria-pressed={rangeMode==="loop"} onClick={()=>playRange(true)}><PracticeIcon name="loop"/></button>{config.practiceGuide&&<button type="button" className="has-tip" data-tip={zh?"近看":"Close-up"} aria-label={zh?"近看所选小节":"Close-up of selected bars"} onClick={openCloseup}><PracticeIcon name="zoom"/></button>}{config.practiceGuide&&(()=>{const saved=!!selection&&trickyBits.some(bit=>bit.id===bitId(config.id,selection.from,selection.to)),label=saved?(zh?"已存入精练小节，点按移除":"Saved to Tricky bits. Tap to remove"):(zh?"存入精练小节":"Save to Tricky bits");return <button type="button" className={saved?"has-tip on":"has-tip"} data-tip={label} aria-label={label} aria-pressed={saved} onClick={toggleTrickyBit}><PracticeIcon name={saved?"bookmarkFilled":"bookmark"}/></button>})()}{config.practiceGuide&&selection&&(()=>{const on=!!practicePin&&practicePin.from===selection.from&&practicePin.to===selection.to,label=on?(zh?"收起速度和计数":"Hide tempo and count"):(zh?"为这几小节加速度和计数":"Tempo and count for these bars");return <button type="button" className={on?"has-tip on":"has-tip"} data-tip={label} aria-label={label} aria-pressed={on} onClick={()=>setPracticePin(on?null:{from:selection.from,to:selection.to})}><PracticeIcon name="tempo"/></button>})()}</div>}{aside&&<div className="score-aside">{aside}</div>}</div>{stage&&<div className="reader-stage">{typeof stage==="function"?stage({fingering}):stage}</div>}{(dock||closeupOpen)&&<div className="reader-dock">{closeup&&<PassageGuide key={`${closeup.from}-${closeup.to}`} rhythm={passageRhythm(closeup.from,closeup.to)} xml={guideXml.current} events={sequenceRef.current.events.slice(sequenceRef.current.measureStarts[closeup.from-1]??0,sequenceRef.current.measureStarts[closeup.to]??sequenceRef.current.events.length)} from={closeup.from} to={closeup.to} numbers={closeup.numbers} quarterBpm={bpm*(config.pulsePerMeasure?((scoreFactsRef.current?.measures[closeup.from-1]?.beats??4)*4/(scoreFactsRef.current?.measures[closeup.from-1]?.beatType??4)):tempoSectionAt(closeup.from)?.beat??1)} sempreStaccato={config.sempreStaccatoFromMeasure!==undefined&&closeup.from>=config.sempreStaccatoFromMeasure} title={title} initialDisplay={{names:noteDisplay,accidentals,rhythm:activeRhythmMode==="bars"}} onClose={()=>setCloseup(null)}/>}{dock}</div>}
 
     </section>{theoryTip&&<div className="theory-tip" style={clampTip(theoryTip.x,theoryTip.y,280,150,"below")}><strong>{theoryTip.title}</strong><p>{theoryTip.text}</p></div>}{storyCard&&config.story&&<StoryCard composer={composer} title={title} story={config.story} style={clampTip(storyCard.x,storyCard.y,340,260,"below")} onClose={()=>setStoryCard(null)}/>}{beatTip&&!fingerTip&&<div className="beat-tip" role="tooltip" style={{left:beatTip.x,top:beatTip.y}}>{beatTip.text}</div>}{fingerTip&&<div className={fingering?"flute-tip finger-chart":"flute-tip note-info-tip"} style={clampTip(fingerTip.x,fingerTip.y,fingering?238:200,fingering?(fingeringsForMidi(midiForPitch(fingerTip.pitch))?.fingerings.length??1)*88+34:56,"above")}>{(noteDisplay!=="off"||fingering)&&<strong>{noteDisplay==="solfege"?fingerTip.solfege:fingerTip.name}<sup>{fingerTip.octave}</sup></strong>}{fingering&&(()=>{
         // Every way to play the note, each with its name, drawn on the card itself: nothing to click, so the card can close the moment the pointer moves on.

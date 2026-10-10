@@ -145,3 +145,10 @@
 .lesson-talk #lesson-companion{display:flex;flex:0 0 64px}
 .lesson-cookie.cookie-button.cookie-button{transform:scale(.8);transform-origin:center}
 @media(max-width:700px){.lesson-talk{gap:6px}.lesson-talk #lesson-companion{flex-basis:48px}.lesson-cookie.cookie-button.cookie-button{transform:scale(.65)}}
+
+/* Cookie can leave the bubble for a spot in the scene (LessonFrame `cookieAway`). These wrappers carry the hop, the size
+   and the squish, because buttons here cannot be transformed (viewer-fixes.css). The empty spot keeps Cookie's width. */
+.lesson-cookie-move,.lesson-cookie-size,.lesson-cookie-squish{display:inline-flex;align-items:center;justify-content:center}
+.lesson-cookie-placeholder{display:block;width:76px;height:76px}/* the cookie button's own size */
+.lesson-cookie-move.is-away{pointer-events:none}
+.lesson-cookie-move.is-away .lesson-cookie-size{transform:scale(1.15)}

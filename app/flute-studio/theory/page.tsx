@@ -55,7 +55,7 @@ export default function TheoryHome(){
     <Link className={`theory-course ${completed.dots?"is-complete":""}`} href="/flute-studio/theory/dots-and-ties">
       {completed.dots&&<span className="course-check"><span aria-hidden="true">✓</span> {zh?'已完成':'Completed'}</span>}
       <div className="theory-course__art" aria-hidden="true"><EngravedRow clef={false} notes={[{v:1.5},{v:.5},{v:1},{v:1}]} ties={[2]} right={RIGHT} viewBox={ART}/></div>
-      <div><div><h2>7. {zh?'附点、延音线与节奏练习':'Dots, ties and rhythm practice'}</h2><p>{zh?'延长音符、连接声音，并练习附点和连音节奏。':'Extend notes, join sounds, and practise dotted and tuplet rhythms.'}</p></div></div>
+      <div><div><h2>7. {zh?'附点与延音线':'Dots and ties'}</h2><p>{zh?'写出三拍和一拍半，让声音跨过小节线，再点出这些节奏。':'Write three beats and one and a half, carry a sound over a bar line, then tap the rhythms.'}</p></div></div>
     </Link>
     </section>
   </main>;

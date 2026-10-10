@@ -36,3 +36,7 @@
 /* Card text at Home's card size (preview-card__copy: 16px title, 14px description). */
 .theory-home .theory-course h2{font-size:16px;font-weight:650;line-height:1.3;letter-spacing:-.01em}
 .theory-home .theory-course p{margin-top:4px;font-size:14px;line-height:1.4;color:#71747e}
+
+/* The page and body never scroll in the studio (globals.css), and the route is one screen tall, so the index scrolls its route.
+   (On phones the index is its own scroll area, above.) */
+.studio-route:has(>.theory-home){overflow-y:auto;overscroll-behavior-y:contain}

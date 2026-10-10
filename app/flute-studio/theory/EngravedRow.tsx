@@ -60,19 +60,20 @@ export const keySignP=(key:number,i:number)=>(key<0?FLAT_SIGN_P:SHARP_SIGN_P)[i]
 const keyWidth=(room:number)=>room>0?room*KEY_STRIDE+KEY_GAP:0;
 
 /** Where everything goes. Pages use this for their own overlays (beat sticks, tap targets). */
-export function layoutRow(notes:RowNote[],{bars=[],even=false,clef=true,meter=null,left=40,right=860,reserveAcc=false,keyRoom=0}:{bars?:number[];even?:boolean;clef?:boolean;meter?:Meter|null;left?:number;right?:number;reserveAcc?:boolean;/** Room for this many key signature signs, drawn or not. */keyRoom?:number}={}):RowLayout{
+export function layoutRow(notes:RowNote[],{bars=[],even=false,proportional=false,clef=true,meter=null,left=40,right=860,reserveAcc=false,keyRoom=0}:{bars?:number[];even?:boolean;/** Width in exact proportion to time, so every note sits on its beat (opt-in; printed music is not spaced this way). */proportional?:boolean;clef?:boolean;meter?:Meter|null;left?:number;right?:number;reserveAcc?:boolean;/** Room for this many key signature signs, drawn or not. */keyRoom?:number}={}):RowLayout{
   let head=left+(clef?122:14);
   const keyX=head;
   head+=keyWidth(keyRoom);
   const meterX=head;
   if(meter)head+=meterWidth(meter)+(clef?14:20);
   const startX=head+8;
-  const slots=notes.map(n=>even?1:SLOT[n.v]??1);
+  const slots=notes.map(n=>even?1:proportional?n.v:SLOT[n.v]??1);
   const barCount=bars.filter(b=>b>0&&b<notes.length).length;
   // A note that carries a sign (or will, or any note when signs may be added anywhere) gets room for it, so the row still fits.
   const signOf=(n:RowNote)=>n.room??n.acc;
   const roomFor=(n:RowNote)=>reserveAcc?MAX_ACC_ROOM:signOf(n)?accRoom(signOf(n)!):0;
-  const fixed=barCount*(BAR_BEFORE+BAR_AFTER)+NOTE_LEAD+notes.reduce((sum,n)=>sum+roomFor(n),0);
+  // Proportional rows also keep the 18 units before the final bar that beatX ends on, so the last beat is as wide as the rest.
+  const fixed=barCount*(BAR_BEFORE+BAR_AFTER)+NOTE_LEAD+(proportional?18:0)+notes.reduce((sum,n)=>sum+roomFor(n),0);
   // A sign must also clear the note before it (its head or ledger line reaches 22 units either side), so a note followed by a signed note
   // gets at least the width that needs; the other notes share what is left.
   const floorOf=notes.map((n,i)=>{
@@ -163,6 +164,8 @@ type Props={
   className?:string;label?:string;interactive?:boolean;
   /** SVG viewBox; the default frames the staff with room for stems and one row of counts underneath. */
   viewBox?:string;
+  /** Space notes in exact proportion to their length (see layoutRow). */
+  proportional?:boolean;
   /** Notes drawn at a quarter of their strength (to be there, but not yet). */
   faint?:number[];
   /** Notes that keep their place but are not drawn (a slot something else stands in for, like a question mark). */
@@ -281,13 +284,13 @@ export function RowGraphics({notes,layout,clef=true,meter=null,beams=[],ties=[],
   </>;
 }
 
-export default function EngravedRow({notes,bars=[],even=false,clef=true,meter=null,beams=[],ties=[],tuplets=[],active=-1,below,children,reserveAcc=false,className='',label,interactive=false,viewBox='20 62 870 222',faint=[],hidden=[],appear=[],crop=false,narrow=false,finalBar=true,right:rightProp,keySignature=0,keyRoom=Math.abs(keySignature),keyNew}:Props){
+export default function EngravedRow({notes,bars=[],even=false,proportional=false,clef=true,meter=null,beams=[],ties=[],tuplets=[],active=-1,below,children,reserveAcc=false,className='',label,interactive=false,viewBox='20 62 870 222',faint=[],hidden=[],appear=[],crop=false,narrow=false,finalBar=true,right:rightProp,keySignature=0,keyRoom=Math.abs(keySignature),keyNew}:Props){
   const phone=usePhoneNotation();
   // `narrow`: a short row uses the narrower width phones use, centred, instead of a few notes spread thinly across the page.
   const short=phone||narrow||rightProp!==undefined;
   const right=rightProp??(short?phoneRowRight(notes,clef,meter,reserveAcc,keyRoom):860);
   const frame=viewBox.split(" ");
-  const layout=layoutRow(notes,{bars,even,clef,meter,right,reserveAcc,keyRoom});
+  const layout=layoutRow(notes,{bars,even,proportional,clef,meter,right,reserveAcc,keyRoom});
   // A row that needed more room than `right` grew; the frame grows with it, so nothing is cut off.
   if(short||layout.endX>right)frame[2]=String(Math.max(Number(frame[2]),layout.endX+10));
   if(short)frame[2]=String(layout.endX+10);

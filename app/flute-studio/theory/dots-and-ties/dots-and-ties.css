@@ -1,46 +1,72 @@
+/* Lesson 7. LessonFrame owns the page; EngravedRow owns the notation. This file is the scene around the staff. */
 .lesson-shell.dt-lesson{--scene-h:clamp(230px,34vh,320px)}
-.dt-lesson .lesson-scene{min-height:calc(var(--scene-h) + 76px)}
-.dt-hit:focus{outline:none}
-.dt-scene-content{width:100%;display:flex;flex-direction:column;gap:8px}
+/* Every step reserves the practice step's height (staff + Cookie's tap spot + buttons), so the bubble never moves. */
+.dt-lesson .lesson-scene{min-height:calc(var(--scene-h) + 190px)}
+.dt-scene-content{width:100%;display:flex;flex-direction:column;align-items:center;gap:8px}
 .dt-lesson .engraved-row{height:var(--scene-h);min-height:200px}
-.dt-scene-controls,.dt-practice-controls{height:62px;display:flex;align-items:center;justify-content:center;gap:18px}
-.dt-practice{width:100%}
-.dt-hit{fill:transparent;cursor:pointer;touch-action:manipulation}
-.dt-hit:focus-visible,.dt-endpoint:focus-visible{outline:none;stroke:#678956;stroke-width:2;stroke-dasharray:4 4}
-.dt-hit:hover{fill:rgba(103,137,86,.035)}
-.dt-count{font:500 20px var(--font,sans-serif);text-anchor:middle;fill:#555762}
-.dt-count.is-sounding{fill:#b9362e}
-.dt-label{font:16px var(--font,sans-serif);text-anchor:middle;fill:#747681}
-.dt-span{fill:none;stroke:#888993;stroke-width:2;stroke-linecap:round}
-.dt-extension{fill:none;stroke:#b9b1a6;stroke-width:2;stroke-dasharray:4 5}
-.dt-extension text{stroke:none}
-.dt-extension.is-added{stroke:#b9362e;stroke-dasharray:500;animation:dt-grow .7s ease both}
-.dt-guide{fill:#878991}
-.dt-midpoint,.dt-dot-target{fill:white;stroke:#b9362e;stroke-width:2;stroke-dasharray:3 3;pointer-events:none}
-.dt-dot-target{fill:#ead8d4}
-.dt-cursor,.dt-tap{fill:#b9362e;pointer-events:none}
-.dt-wrong{fill:#c47644}
-.dt-tie-area{touch-action:none}
-.dt-selection{fill:none;stroke:#678956;stroke-width:2;pointer-events:none}
-.dt-ink{stroke:#b9362e;stroke-width:3;fill:none;stroke-linecap:round;pointer-events:none}
-.dt-endpoint{fill:#b9362e;stroke:transparent;stroke-width:30;cursor:pointer;touch-action:manipulation}
-.dt-overflow{stroke:#b9362e;stroke-width:4;stroke-linecap:round;stroke-dasharray:500;animation:dt-grow .8s ease both}
-.dt-bar-cue{stroke:#b9362e;stroke-width:3;animation:dt-beacon 1.2s ease 3;pointer-events:none}
-.dt-practice-controls .cookie-button{flex-shrink:0}
-.dt-audio-error{font-size:14px;text-align:center;color:#a12f28}
-@keyframes dt-grow{from{stroke-dashoffset:500}to{stroke-dashoffset:0}}
-@keyframes dt-beacon{50%{opacity:.35}}
-@media(max-width:760px){.dt-lesson .engraved-row{min-height:180px}.dt-scene-controls,.dt-practice-controls{height:86px;gap:8px}.dt-practice-controls .lesson-tools{max-width:250px}.dt-practice-controls .cookie-button{transform:scale(.8)}.dt-lesson .lesson-shell.dt-lesson{--scene-h:clamp(230px,34vh,320px)}
-.dt-lesson .lesson-scene{min-height:calc(var(--scene-h) + 76px)}
-.dt-hit:focus{outline:none}
-.dt-scene-content{gap:0}}
-@media(prefers-reduced-motion:reduce){.dt-extension.is-added,.dt-overflow,.dt-bar-cue{animation:none}}
+.dt-practice{width:100%;display:flex;flex-direction:column;align-items:center;gap:8px}
+.dt-practice-controls{width:100%;display:flex;flex-direction:column;align-items:center;gap:10px}
+
+/* Targets are the music itself: invisible, no hover change, the arrow cursor; a focus ring for keyboards only. */
+.dt-hit{fill:transparent;stroke:none;cursor:default;outline:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.dt-hit:focus-visible{stroke:#678956;stroke-width:2;stroke-dasharray:4 4}
+
+/* Counts, ticks when a step is about parts of a beat, and one neutral bracket for the note being taught. */
+.dt-count{font:600 22px var(--font,sans-serif);text-anchor:middle;fill:#85868e;transition:fill .1s}
+.dt-count.is-lit{fill:#b9362e}
+.dt-line{stroke:#d9d6cf;stroke-width:2}
+.dt-tick{stroke:#b5b1aa;stroke-width:2;stroke-linecap:round}
+.dt-tick.is-beat{stroke:#85868e}
+.dt-tick.is-bar{stroke:#1b1b1f}
+.dt-tick.is-lit{stroke:#b9362e;stroke-width:4}
+.dt-label{font:400 18px var(--font,sans-serif);text-anchor:middle;fill:#71747e}
+.dt-label.is-done{fill:#46633d;font-weight:600}
+.dt-bracket{animation:dt-fade .25s ease both}
+.dt-bracket path{fill:none;stroke:#85868e;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.dt-bracket text{font:500 17px var(--font,sans-serif);text-anchor:middle;fill:#71747e}
+.dt-bracket.is-done text{fill:#46633d;font-weight:600}
+
+/* Practice: grey guides at each note start; your taps under them. Only an on-time tap is green. */
+.dt-ruler{stroke:#d9d6cf;stroke-width:2}
+.dt-guide{fill:#b5b1aa}
+.dt-guide.is-missed{fill:none;stroke:#c0502f;stroke-width:2.5}
+.dt-tap{fill:#9a9ca3;animation:dt-fade .12s ease both}
+.dt-tap.is-on{fill:#678956}
+.dt-tap.is-early,.dt-tap.is-late{fill:#c0502f}
+.dt-tap.is-extra{fill:#fff;stroke:#c0502f;stroke-width:2}
+.dt-tap-link{stroke:#c0502f;stroke-width:1.5;stroke-dasharray:3 3}
+
+/* Cookie's tap spot: the whole area is the target (Cookie hops in from the bubble). No hover box, no fill. */
+.dt-tap-spot{position:relative;display:flex;align-items:center;justify-content:center;gap:14px;width:min(100%,320px);height:104px;border-radius:24px;cursor:default;outline:none;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+.dt-tap-spot:focus-visible{box-shadow:0 0 0 2px #678956}
+.dt-cookie-home{display:flex;align-items:center;justify-content:center;width:96px;height:96px}
+.dt-tap-say{position:relative;padding:8px 14px;border-radius:16px;background:#faf5ec;color:#453526;font-size:15px;font-weight:500;white-space:nowrap}
+.dt-tap-say small{display:block;font-size:12px;font-weight:400;color:#85868e}
+@media(hover:none){.dt-tap-say small{display:none}}
+.dt-tap-say::before{content:"";position:absolute;left:-6px;top:50%;width:12px;height:12px;background:#faf5ec;transform:translateY(-50%) rotate(45deg);border-radius:2px}
+.dt-tap-spot:not(:has(.dt-cookie-home:not(:empty))) .dt-tap-say{visibility:hidden}
+
+@keyframes dt-fade{from{opacity:0}}
+
 @media(min-width:761px){
   .studio-route .theory-shell.lesson-shell.dt-lesson{padding:68px 32px 12px;--scene-h:clamp(220px,31vh,300px)}
   .dt-lesson .lesson-talk{padding-bottom:8px}
 }
-.dt-lesson .engraved-row__note circle,.dt-lesson .engraved-row__tuplet{animation:dt-reveal .35s ease both}
-.dt-lesson .engraved-row__tie{transform-box:fill-box;transform-origin:left center;animation:dt-tie .35s ease both}
-@keyframes dt-reveal{from{opacity:0}to{opacity:1}}
-@keyframes dt-tie{from{transform:scaleX(.05);opacity:0}to{transform:scaleX(1);opacity:1}}
-@media(prefers-reduced-motion:reduce){.dt-lesson .engraved-row__note circle,.dt-lesson .engraved-row__tuplet,.dt-lesson .engraved-row__tie{animation:none}}
+@media(max-width:760px){
+  .dt-lesson .lesson-scene{min-height:0}
+  .dt-lesson .engraved-row{min-height:170px}
+  .dt-scene-content,.dt-practice{gap:4px}
+  /* The staff is drawn smaller on a phone; the words under it stay readable. */
+  .dt-count{font-size:26px}
+  .dt-label,.dt-bracket text{font-size:23px}
+  .dt-tap-spot{height:84px}
+  .dt-practice-controls{gap:4px}
+  .dt-practice .engraved-row{min-height:150px}
+}
+/* Answers too long to sit beside the question go on their own line under it, right-aligned like Next. */
+.dt-lesson .lesson-bubble:has(.dt-wide-choices){flex-wrap:wrap;row-gap:10px}
+.dt-lesson .lesson-bubble:has(.dt-wide-choices)>p{flex:1 0 100%}
+.dt-lesson .lesson-bubble:has(.dt-wide-choices) .lesson-actions{margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+.dt-lesson .dt-wide-choices{flex-wrap:wrap;justify-content:flex-end}
+.lesson-shell .dt-wide-choices button{white-space:nowrap}
+@media(prefers-reduced-motion:reduce){.dt-bracket,.dt-tap,.dt-count{animation:none;transition:none}}

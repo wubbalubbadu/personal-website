@@ -20,7 +20,7 @@ October 8, 2026 from a scan of the studio; the "Not reused yet" section lists wh
 | A piece you can open, listed inside something (a deadline's pieces) | **Piece chip** | `.piece-chip` in `practice/practice-page.css` | White, hairline, the piece's status dot (same as the lists). Not a tag pill: tags describe, chips go somewhere. Move to `components/` when a second page needs it. |
 | Which list a piece is on (Want to learn, Working on, Learned) | **Status dot** + **StatusButton** | `components/StatusButton.tsx`, `status-button.css`, tones in `lib/musicStatus.ts` | A dot, not a pill. The button is how anything goes on a list. |
 | A date or deadline label ("in 12 days") | **Tag pill**, `data-tone="sand"` | `tag-pill.css` | Same pill shape as tags. |
-| A tempo you can play, nudge and set | **TempoPill** | `components/TempoPill.tsx` + `tempo-pill.css` | Metronome tap, −, the number, +. `size` small (pinned on a score by `ScoreTempoMarks`) or large (inline, tricky bits). Blue so it never reads as printed. |
+| A tempo you can play, nudge and set | **TempoPill** | `components/TempoPill.tsx` + `tempo-pill.css` | Metronome tap, −, the number, +. `size` small (pinned on a score by `ScoreTempoMarks`, or above the first selected bar by the reader's "Tempo and count" pin with a RepPill and a CloseButton, `.passage-practice-mark`) or large (inline, tricky bits). Blue so it never reads as printed. |
 | Floating controls next to what they act on (bar selection, clock controls) | **Soft pill** | `.range-bar` in `components/passage-guide.css`; clock version `.practice-today__actions` | White, hairline border `#d4d5da`, small shadow, round 34 to 38px icon buttons (the bar-selection pill drops to 28px with a mouse, so it covers less music), tooltips name them. See memory "soft pill style". |
 | A button with a label that starts or saves something | **Soft tint button** (for now) | DESIGN.md "Buttons" | The user dislikes big tinted blocks; the soft pill is being tried instead. Don't add new big buttons until this is settled. |
 | A selected tab or filter chip | **Filter chip** | DESIGN.md "Filter/category tabs" | The only place dark `#292a33` fills are allowed. |
@@ -36,14 +36,16 @@ October 8, 2026 from a scan of the studio; the "Not reused yet" section lists wh
 | Extra choices for one reader tool (Metronome, Drone) | **Tool ▾ menu** | a ReaderPopover with `<ChevronIcon/>` as trigger, right after the tool button (`.metronome-options`, `.drone-options`) | The ▾ joins its tool as one tile: same grey or purple behind both, square inner corners, hover only darkens icons. Choices are `.reader-choice` rows; remembered per piece. |
 | SubdivisionIcon | **SubdivisionIcon** | `components/SubdivisionIcon.tsx` | Quarter, two eighths, four sixteenths drawn with the scale-notation glyphs; used in the metronome ▾ menu. |
 | An interactive theory lesson | **LessonFrame** | `theory/LessonFrame.tsx` | Shared timeline, narration, Cookie, progress and fixed Next. Reuse lesson control styles. |
-| Engraved lesson music, including rests | **EngravedRow / RowGraphics** | `theory/EngravedRow.tsx` | `RowNote.rest` preserves elapsed duration; `measureRest` centers a full-measure rest. RestGlyph uses the same VexFlow font as RhythmNote. |
+| Engraved lesson music, including rests | **EngravedRow / RowGraphics** | `theory/EngravedRow.tsx` | `tones` colours chosen notes to match something drawn for them (lesson 7 brackets). `proportional` spaces notes exactly by time so each sits on its count (lesson 7 only; printed music is not spaced this way). `RowNote.rest` preserves elapsed duration; `measureRest` centers a full-measure rest. RestGlyph uses the same VexFlow font as RhythmNote. |
 | Match note and rest lengths by drawing or tapping | **RestMatch** | `theory/rests/RestMatch.tsx` | Two rows from RowGraphics; pointer and keyboard alternatives; shared lesson typography. |
 | Progress through a short set (lesson steps, exercise rounds) | **Progress dots** | `theory/ProgressDots.tsx` | Dots, never "2 of 6" in words. |
+| Tap a passage's rhythm yourself (close-up Rhythm mode) | **RhythmTap** | `components/RhythmTap.tsx`, styles in `passage-guide.css` | Click choice (every beat, first beat, none), Start, a wide pad (any key or any finger). Answer marks only after grading; per-note grading (`gradePassage`). |
 | A tooltip | **has-tip** | `class="has-tip" data-tip="…"` | Icon-only buttons only. Not on close buttons, not where it can overflow the window edge. |
 | A hover label on the music itself (a note's count while beat sticks are on) | **beat-tip** | `.beat-tip` in `viewer-fixes.css`, rendered by ScoreViewer | Same small dark look as has-tip, above the notehead, hover only (a click on a note never opens it). |
 | A quiet housekeeping action (restore defaults, reset a view) | **Text action** | `.text-action` in `studio-shared.css` | Grey words, no border, no fill, darker on hover. The reader's and Scale Studio's "Reset" (`.reader-settings-reset`, a grey pill) should move to it. |
 | Counting today's repetitions of a skill (a scale, an exercise) | **RepPill** | `components/RepPill.tsx` + `rep-pill.css`, data in `lib/repLog.ts` | Sits beside its TempoPill and is built the same way, in pink: tally mark, −, the number (type to set it), +. Fixed width. Counts per day; the My Studio day panel and "Most practised" add them up. Used by Scale Studio's tempo marks. |
 | Counting a passage's repetitions over weeks | **Rep ladder** (inside `tricky-bits/BitPractice.tsx`) | `tricky-bits/` | One row per tempo, running total kept forever; also logs to `lib/repLog.ts` for the day report. |
+| Tapping a rhythm in a lesson (the thing you press on each note) | **Cookie at the tap spot** | `LessonFrame` prop `cookieAway` + the spot in `theory/dots-and-ties/RhythmPractice.tsx` (`.dt-tap-spot`) | The guide Cookie hops from the bubble to the tap spot (none with reduced motion) and says "Tap on me!". The whole spot (320 by 104, 84 high on phones) is the target; Cookie is only the picture and squishes on each tap, Space included; it looks happy after a clean attempt and goes "hmm" (`.is-unsure` in `cookie-button.css`) otherwise. No hover box. Its place by the bubble keeps its width, so nothing moves. Used by lesson 7; lessons 2, 3 and 6 still tap on a second CookieButton (see "Not reused yet").
 | Tally marks | **TallySticks** | `components/TallySticks.tsx` + `tally-sticks.css` | Four upright, the fifth across. |
 | Reference lists you dip into (Want to learn, Learned, Recently opened) | **List stacks** | `.list-stacks` in `practice/practice-page.css` (My Studio) | A row of piles: the top card shows, two edges peek out when there is more; the title links to the full list; tapping the pile opens its cards in a grid below, animated with view transitions (no animation where unsupported or with reduced motion). Not for what you practise from (Working on, Tricky bits stay open). |
 | Two or three ways to show one page (Cards / Continuous) | **View switch** | `.view-switch` in `studio-shared.css` | Grey track, chosen one white with a hairline, `aria-pressed`. |
@@ -132,6 +134,11 @@ Fix these by pointing them at the component above, not by restyling them in plac
 6. **Big action buttons.** Start, Save, Continue and others were each styled separately (and were black until today).
    Decide the action-button look (soft pill with a word, or something else), add it here, then convert them together.
 
+7. **Rhythm tapping on a second Cookie.** `rhythm/RhythmLesson.tsx` (hold step), `measures/MeasuresLesson.tsx` (page 7) and
+   `rests/RestsLesson.tsx` (step 1) tap on `CookieButton` while the guide Cookie is also on screen; lesson 2's tap step uses a 👏
+   `.rhythm-clap`. The user found two cookies confusing in lesson 7, where the guide Cookie now moves to the tap spot (`cookieAway`). The
+   user is still deciding whether these lessons follow; do not switch them yet (lesson 2's hold step needs press-and-hold).
+
 ## Keeping this current
 
 - Adding a component: add a row above, in the same session.
@@ -140,4 +147,4 @@ Fix these by pointing them at the component above, not by restyling them in plac
 
 Theory interaction rules and component usage: [theory/COMPONENTS.md](theory/COMPONENTS.md). `rests/SplitSpan.tsx` provides accessible duration splitting by cut gesture, tap, or keyboard.
 
-Theory rhythm practice: `theory/dots-and-ties/TieGesture.tsx` provides draw/tap/keyboard tie connections; `RhythmPractice.tsx` provides count-in and onset feedback. `EngravedRow` now owns ties and tuplet engraving as well. See the theory interaction contract for timing and completion rules.
+Theory rhythm practice: `theory/dots-and-ties/RhythmPractice.tsx` provides count-in, the Cookie tap spot and onset feedback. `EngravedRow` owns ties and tuplet engraving as well. See the theory interaction contract for timing and completion rules.

@@ -44,6 +44,8 @@ Lint cleanup is complete locally: 0 errors, 28 warnings remain. Intentional hydr
   slow piece counted in eighths doesn't need maths; subdivisions; accent any beat; silent beats (e.g. 1, rest, 3, 4).
   A tools-panel version can follow a piece's mixed meter too.
 - [ ] **Rhythm sticks option**: show every beat (now) or every eighth.
+- [ ] **Rhythm tapping in close-up: first version built 2026-10-10** (close-up Rhythm mode, `RhythmTap.tsx`). Still to come: In a close-up, tap the selected bars' rhythm as a game: count-in, slow-down (tempo pill), graded like lesson 7's practice (gradeTaps, 0.1 s window, orange for off). Any key counts as a tap (alternate keys or fingers for fast figures like septuplets); on iPad any finger anywhere on the pad. Later layers: simplify a tied rhythm (break ties), tap the subdivisions through rests, a guide for feeling the subdivision. No made-up words ("Mississippi strawberry pie") since they don't work for Chinese students; learn by tapping and listening.
+- [ ] **Beginner rhythm drills.** A set of 10 tapping exercises, generated fresh each time and getting harder, "how many can you pass"; reuses the lesson 7 practice interface. For students, not the user.
 - [x] **Count-in accent** fixed 2026-10-09: the first count-in click was booked a render late and dropped, so the accent seemed to move. Playback now books count-in clicks itself with the metronome's sound (`bookClick` in PracticeAudio.tsx).
 
 ## 4. Decided for later
