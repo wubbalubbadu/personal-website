@@ -1,4 +1,4 @@
-export type Meter={beats:number;beatType:number};
+export type Meter={beats:number;beatType:number;/** Irregular-meter groups in beat-type notes (scoreTheory). */groups?:number[]};
 export type FractionLike={Numerator:number;Denominator:number;WholeValue?:number};
 
 const gcd=(a:number,b:number)=>{a=Math.abs(a);b=Math.abs(b);while(b)[a,b]=[b,a%b];return a||1};
@@ -40,6 +40,12 @@ export function meterGrid(meter:Meter,unitsPerQuarter:number){
 export function measureBeatOffsets(durations:number[],meter:Meter,unitsPerQuarter:number,isOpeningMeasure=false){
   const {beatLength,barLength}=meterGrid(meter,unitsPerQuarter);
   const contentLength=durations.reduce((sum,duration)=>sum+Math.max(0,duration),0);
+  // An irregular meter beats in its groups (15/16 as 4+4+4+3 sixteenths), not in equal beats.
+  if(meter.groups?.length&&contentLength>=barLength-1e-9){
+    const written=unitsPerQuarter*4/meter.beatType,offsets:number[]=[];let at=0;
+    for(const group of meter.groups){offsets.push(at);at+=group*written}
+    return {beatLength,barLength,contentLength,pickup:0,offsets};
+  }
   const pickup=isOpeningMeasure&&contentLength>0&&contentLength<barLength?barLength-contentLength:0;
   const result:number[]=[];
   for(let offset=(beatLength-pickup%beatLength)%beatLength;offset<contentLength;offset+=beatLength)result.push(offset);

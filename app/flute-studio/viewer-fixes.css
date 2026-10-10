@@ -142,3 +142,5 @@ html body :is(.reader-workspace,.reader-settings-panel) button:hover:where(:not(
 /* Tooltips: a small dark pill with tight type, not a wide white card. Hidden on a button whose own panel is open, so one never ends up underneath it. */
 .workspace .has-tip::after{background:#1f2024!important;color:#fff!important;border:0!important;box-shadow:none!important;padding:5px 9px!important;border-radius:7px!important;font-size:12px!important;font-weight:500!important;line-height:1.3!important;letter-spacing:0!important;word-spacing:0!important;width:max-content!important;max-width:190px!important;white-space:normal!important;text-align:left!important;z-index:600!important}
 .workspace .has-tip[aria-expanded="true"]::after{display:none!important}
+/* Count of the hovered note while beat sticks are on: the same small dark tip as has-tip, above the notehead. */
+.beat-tip{position:fixed;z-index:600;transform:translate(-50%,calc(-100% - 8px));pointer-events:none;padding:5px 9px;border-radius:7px;background:#1f2024;color:#fff;font-size:12px;font-weight:500;line-height:1.3;white-space:nowrap}

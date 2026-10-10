@@ -25,3 +25,7 @@
 .engraved-row__rest.is-appearing>path{animation:rest-settle .3s ease both}
 @keyframes rest-settle{from{opacity:0;translate:0 -12px}to{opacity:1;translate:0 0}}
 @media(prefers-reduced-motion:reduce){.engraved-row__rest{transition:none}.engraved-row__rest.is-appearing>path{animation:none}}
+
+.engraved-row__tie{fill:#1b1b1f;stroke:none}
+.engraved-row__tuplet path{fill:none;stroke:#1b1b1f;stroke-width:1.7}
+.engraved-row__tuplet text{fill:#1b1b1f;font:italic 24px Georgia,serif}

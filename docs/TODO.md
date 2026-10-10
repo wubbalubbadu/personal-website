@@ -38,6 +38,14 @@ Lint cleanup is complete locally: 0 errors, 28 warnings remain. Intentional hydr
 - [ ] **Tempo word without a metronome mark** (Moderato, Allegro): use the word's usual speed range. Needs a rule first.
 - [ ] **Personal settings:** design what is remembered globally, per saved set and per exercise, then build.
 
+## Metronome and rhythm, ideas for later (October 9, 2026)
+
+- [ ] **Advanced metronome** (keep the current one simple): choose the click note (quarter, eighth, dotted quarter) so a
+  slow piece counted in eighths doesn't need maths; subdivisions; accent any beat; silent beats (e.g. 1, rest, 3, 4).
+  A tools-panel version can follow a piece's mixed meter too.
+- [ ] **Rhythm sticks option**: show every beat (now) or every eighth.
+- [x] **Count-in accent** fixed 2026-10-09: the first count-in click was booked a render late and dropped, so the accent seemed to move. Playback now books count-in clicks itself with the metronome's sound (`bookClick` in PracticeAudio.tsx).
+
 ## 4. Decided for later
 
 - [ ] **Auto-logging practice:** count time with a piece or exercise open while you play. Waits for clear rules (idle time, a tab left open).

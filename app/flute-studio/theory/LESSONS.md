@@ -92,7 +92,7 @@ for reading a simple tune. These are future directions, not approved implementat
 Keep lessons short and focused; use only the steps the topic needs, with checks inside the steps rather than a review page at the end.
 Pitch and rhythm come in blocks, in the order they turn up in beginner parts: the staff, then
 lengths and measures, then sharps, flats and key signatures together (B♭ and F♯ are in almost every
-first band part), then rests and dots and ties. Practical flute markings follow. Compound meter and triplets can be separate follow-ups.
+first band part), then rests and dots and ties. Practical flute markings follow. Triplets join the rhythm practice in lesson 7, with quintuplets as an optional challenge in that same card. Compound meter can be a separate follow-up.
 (Revised October 2026: the original map had rests before accidentals and a separate "smaller beats"
 lesson; lessons 2 and 3 now cover eighths and sixteenths, and "1 and 2 and" moved into Dots and ties,
 where a dotted quarter first needs it.) Any lesson can be opened from the list.
@@ -110,7 +110,7 @@ answers, and ends by pointing at the next one. The "bridge" column is that openi
 | 4 | **Sharps, flats and naturals** (built) | You can find any letter on the staff. What about the sounds between the letters? | between the notes (find the black keys between C, D and E; half steps), sharps (C♯, D♯) and flats going down (E♭, D♭), matching the two names of each black key, E♯ = F, naturals (the sharp lasts the measure; tap the extra one away; draw ♮), through the measure, same key two names; five steps, no whole steps or double sharps and flats | Steps and Accidentals |
 | 5 | **Key signatures** | Writing the same sharp every time is tiring. How does music say "always"? | three short steps: say it once (a signature replaces the written sharps; it applies in every octave), which letters change (sharps and flats each keep a fixed order, shown, not drilled), change one back (a natural overrides it only on that line or space, until the bar line). Naming the key moved to Major and minor scales | Key Signatures |
 | 6 | **Rests** | Measures have to add up. What fills a beat where you don't play? | a gap in a full measure, the quarter rest, half and whole rests (hat and hole), the whole-measure rest, the eighth rest (sixteenth *brief*), which rest fills the gap, counting through rests, read and clap | Rest Duration |
-| 7 | **Dots and ties** | Some notes last longer than any one shape, or across a bar line. How? | why, the dot, the tie across a bar line, counting "1 and 2 and" (a dotted quarter's eighth lands on "and"), dotted-quarter-eighth | Dots and Ties |
+| 7 | **Dots, ties and rhythm practice** | How do we extend a sound, hold across a beat, or divide a beat differently? | dots, ties across bar lines, eighth-note counting, dotted-quarter/eighth, a first syncopation, triplets; short rhythm drill with optional quintuplets and continued practice inside this same card | Dots and Ties; introductory tuplets |
 | 8 | **Slurs and articulation** | A curved line can mean something different from a tie. How do we start and connect flute notes? | tie versus slur; a slur joins notes without re-tonguing, while a tie prolongs the same pitch; staccato, accent, tenuto and breath marks; contrast a few short phrases, not a long drill | practical flute notation |
 | 9 | **Trills** | What does “tr” above a note ask us to do? | recognize the sign, alternate the written note and its upper neighbor, use the key signature and any specified accidental; show a slow example before normal speed; link to the existing trill chart for fingerings; avoid presenting stylistic starting-note conventions as universal | practical flute notation |
 | 10 | **Repeats and directions** | Where do we go when the music sends us back? | repeat signs, first and second endings; a short guided route through a score; introduce D.C., D.S. and Coda only as far as a compact example can explain clearly | score navigation |
@@ -129,7 +129,7 @@ and content when these short lesson drafts exist, rather than forcing every topi
 
 - **6/8 in two:** build on dotted quarters and show two groups of three eighths; a focused rhythm follow-up.
 - **Major and minor scales:** step patterns, tonic, scale degrees, major/minor key names and their signatures. Connect to Scale Studio. Key-name shortcuts belong here, after the musical meaning of a key.
-- **Triplets and other meters:** triplets, 9/8, 12/8 and introductory irregular grouping when needed.
+- **Other meters:** 9/8, 12/8 and introductory irregular grouping when needed. Triplets and optional quintuplets already belong to lesson 7’s rhythm exercise.
 
 ### Later
 

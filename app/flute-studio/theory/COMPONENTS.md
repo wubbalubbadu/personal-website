@@ -39,3 +39,12 @@ Use this with `LESSONS.md` and the studio-wide `COMPONENTS.md`. This is the shar
 ## Verification before handoff
 
 Check initial taps, retry, correct completion, navigation away during sound, keyboard input, and touch-sized targets. Check notation at desktop and iPad widths. Audio scheduler tests do not prove audible quality; viewport emulation does not prove real-device behavior. Keep those limits explicit.
+
+## Dots, ties and rhythm practice
+
+- `RowNote.written` is the printed value; `v` remains the performed quarter-note duration. Tuplets require both. `EngravedRow` accepts `ties` (indices of first notes) and `tuplets` (first/last index and numeral). Ties connect same-pitch noteheads, opposite the stems. Beam levels come from `written`, never a rounded performed duration.
+- `dots-and-ties/rhythmSequence.ts` compiles written values and actual:normal ratios onto an integer tick grid. Use the compiled timeline for sound and onset checking. Tied continuations do not create new attacks.
+- `useRhythmAudio.counted` accepts an exact timeline and tie indices. Audio merges tied segments into one voice; the visual timeline retains each printed note. Fractional excerpts end at their actual duration.
+- `dots-and-ties/TieGesture.tsx` joins two endpoints by drawing or selecting them in order. Tapping the finished tie removes it for comparison. No freehand tracing score is needed for this gesture.
+- `dots-and-ties/RhythmPractice.tsx` provides count-in, Cookie/Space input, a separate proportional beat ruler, playback, and slower practice. Assess after the entire measure. A recorded attempt permits progress; green correctness must never mean participation. Tuplet feedback compares tap spacing without an evenness pass/fail gate. Stop and unmount cancel scheduled sound.
+- Quintuplets are an optional challenge after completing the four core rhythms. They are demonstrated as five sixteenths in the time of four, not five eighths with an unstated ratio.

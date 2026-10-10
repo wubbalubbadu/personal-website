@@ -19,3 +19,32 @@ export function droneCountIn(clockStart:number,beatSeconds:number,beatsPerBar:nu
   const duration=beats*beatSeconds;
   return {beats,duration,start:clockStart+duration};
 }
+
+/**
+ * An auto drone for any piece without a hand-set one: in each bar, the pitch held longest in total (every
+ * occurrence added up, any octave), sounded at the lowest octave it is written in that bar. An even tie goes
+ * to the one that comes first; a bar of only rests is silent. The scheduler joins bars that land on the same
+ * pitch into one held note, so the drone only moves when the music does.
+ */
+export function longestPitchChanges(pitches:(string|null)[],events:{d:number}[],measureStarts:number[]):DroneChange[]{
+  return measureStarts.map((start,bar)=>{
+    const end=measureStarts[bar+1]??events.length;
+    // Insertion order is first appearance, so keeping the earlier one on a tie is just "only replace when longer".
+    const totals=new Map<string,{length:number;octave:number}>();
+    for(let i=start;i<end;i++){
+      const match=pitches[i]?.match(/^([A-G][♯♭]?)(\d)$/),length=events[i]?.d??0;
+      if(!match||!(length>0))continue;
+      const seen=totals.get(match[1]);
+      if(seen){seen.length+=length;seen.octave=Math.min(seen.octave,Number(match[2]))}
+      else totals.set(match[1],{length,octave:Number(match[2])});
+    }
+    let best:string|null=null,longest=0;
+    totals.forEach((total,name)=>{if(total.length>longest+1e-9){longest=total.length;best=`${name}${total.octave}`}});
+    return {measure:bar+1,pitch:best};
+  });
+}
+
+/** The piece's hand-set drone when it has one, otherwise the longest-held pitch of each bar. */
+export function droneChangesOf(authored:DroneChange[]|undefined,seq:{pitches:(string|null)[];events:{d:number}[];measureStarts:number[]}){
+  return authored??longestPitchChanges(seq.pitches,seq.events,seq.measureStarts);
+}

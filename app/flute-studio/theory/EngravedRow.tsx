@@ -26,7 +26,7 @@ import './engraved-row.css';
  * its measures are known. Changing `bars` or `even` slides the notes to their new places.
  */
 /** A note's length in quarter notes; dotted lengths (.75, 1.5, 3) get an augmentation dot. */
-export type RowNote={v:number;p?:number;rest?:boolean;/** Use the whole-rest glyph for an entire measure, while v retains its actual duration. */measureRest?:boolean;/** The sign written in front of the note. */acc?:'sharp'|'flat'|'natural';/** Room kept for a sign, written or not (when given, it decides the room even if the written sign is narrower), so nothing moves when signs come and go. */room?:'sharp'|'flat'|'natural'};
+export type RowNote={v:number;/** Printed length before any tuplet time ratio. */written?:number;p?:number;rest?:boolean;/** Use the whole-rest glyph for an entire measure, while v retains its actual duration. */measureRest?:boolean;/** The sign written in front of the note. */acc?:'sharp'|'flat'|'natural';/** Room kept for a sign, written or not (when given, it decides the room even if the written sign is narrower), so nothing moves when signs come and go. */room?:'sharp'|'flat'|'natural'};
 export type Meter={top:number;bottom:number;symbol?:'common'|'cut'};
 
 const RHYTHM_P=1;                      // rhythm-only rows sit in the bottom space, like printed rhythm staffs
@@ -149,6 +149,7 @@ export function TimeSignature({meter,x,className=''}:{meter:Meter;x:number;class
 
 type Props={
   notes:RowNote[];bars?:number[];even?:boolean;clef?:boolean;meter?:Meter|null;
+  ties?:number[];tuplets?:{from:number;to:number;count:number}[];
   /** Beamed groups, as note indices (eighths and sixteenths). */
   beams?:number[][];
   /** Index of the note sounding now (red), or several notes lit together. */
@@ -190,7 +191,7 @@ export function phoneRowRight(notes:RowNote[],clef:boolean,meter:Meter|null,rese
 }
 
 type GraphicsProps={
-  notes:RowNote[];layout:RowLayout;clef?:boolean;meter?:Meter|null;beams?:number[][];active?:number|number[];faint?:number[];hidden?:number[];appear?:number[];
+  notes:RowNote[];layout:RowLayout;ties?:number[];tuplets?:{from:number;to:number;count:number}[];clef?:boolean;meter?:Meter|null;beams?:number[][];active?:number|number[];faint?:number[];hidden?:number[];appear?:number[];
   /** The final double bar; off for a few notes that are not a whole piece (a card picture). */
   finalBar?:boolean;
   keySignature?:number;keyNew?:number;
@@ -202,7 +203,7 @@ type GraphicsProps={
  * lines, beams. The one place that does. EngravedRow wraps it in an svg; a page that needs several staffs in
  * one drawing (a line joining two of them) places it inside its own svg.
  */
-export function RowGraphics({notes,layout,clef=true,meter=null,beams=[],active=-1,faint=[],hidden=[],appear=[],finalBar=true,keySignature=0,keyNew=Infinity,below,children}:GraphicsProps){
+export function RowGraphics({notes,layout,clef=true,meter=null,beams=[],ties=[],tuplets=[],active=-1,faint=[],hidden=[],appear=[],finalBar=true,keySignature=0,keyNew=Infinity,below,children}:GraphicsProps){
   const {xs,barXs,endX,meterX,keyX}=layout;
   const pos=notes.map(n=>clef?n.p??4:RHYTHM_P);
   // Never beam through a rest, even if a caller supplied one continuous group.
@@ -230,16 +231,16 @@ export function RowGraphics({notes,layout,clef=true,meter=null,beams=[],active=-
     {notes.map((n,i)=>{
       if(n.rest)return <g key={`rest-${i}`} className={`engraved-row__rest${appear.includes(i)?' is-appearing':''}`}
         style={{transform:`translate(${xs[i]}px,${restY(n.v,n.measureRest)}px)`,opacity:hidden.includes(i)?0:faint.includes(i)?.25:1}} aria-hidden={hidden.includes(i)||undefined}>
-        <RestGlyph value={n.measureRest?4:shapeOf(n.v)} measureRest={n.measureRest}/>
+        <RestGlyph value={n.measureRest?4:shapeOf(n.written??n.v)} measureRest={n.measureRest}/>
       </g>;
       const p=pos[i],g=beamed.get(i),isDown=down(i);
       return <g key={i} className={`engraved-row__note ${(Array.isArray(active)?active.includes(i):active===i)?'is-active':''}${appear.includes(i)?' is-appearing':''}`} style={{transform:`translate(${xs[i]}px,${noteY(p)}px)`,opacity:hidden.includes(i)?0:faint.includes(i)?.25:1}} aria-hidden={hidden.includes(i)||undefined}>
         {ledgerLines(p).map(l=><line key={l} x1="-22" x2="22" y1={noteY(l)-noteY(p)} y2={noteY(l)-noteY(p)} className="engraved-row__ledger"/>)}
         {/* The sign sits just left of the head, centred on the note's line or space, and turns red with the note. */}
         {n.acc&&<path className="engraved-row__acc" d={ACCIDENTALS[n.acc]} transform="translate(-35 0) scale(.064 -.064)"/>}
-        {g?<path d={MUSIC_GLYPHS.filled.path} transform={`translate(${-MUSIC_GLYPHS.filled.width*.032} 0) scale(.064 -.064)`}/>:<RhythmNote value={shapeOf(n.v)} down={isDown}/>}
+        {g?<path d={MUSIC_GLYPHS.filled.path} transform={`translate(${-MUSIC_GLYPHS.filled.width*.032} 0) scale(.064 -.064)`}/>:<RhythmNote value={shapeOf(n.written??n.v)} down={isDown}/>}
         {/* Augmentation dot: to the right of the head, in a space (moved up a space when the note sits on a line). */}
-        {DOTTED.has(n.v)&&<circle cx="24" cy={p%2===0?-12:0} r="4"/>}
+        {DOTTED.has(n.written??n.v)&&<circle cx="24" cy={p%2===0?-12:0} r="4"/>}
       </g>;
     })}
     {beams.map((g,k)=>{
@@ -256,21 +257,31 @@ export function RowGraphics({notes,layout,clef=true,meter=null,beams=[],active=-
           const parts=[beam(x0-1,x1+1,0,'main')];
           // Sixteenths get a second beam: joined to a neighbouring sixteenth, or a short stub toward a longer neighbour.
           g.forEach((i,j)=>{
-            if(notes[i].v>.25)return;
-            const nextSixteenth=j<g.length-1&&notes[g[j+1]].v<=.25;
+            if((notes[i].written??notes[i].v)>.25)return;
+            const nextSixteenth=j<g.length-1&&(notes[g[j+1]].written??notes[g[j+1]].v)<=.25;
             if(nextSixteenth)parts.push(beam(sx(i)-1,sx(g[j+1])+1,1,`s${i}`));
-            else if(!(j>0&&notes[g[j-1]].v<=.25)){const toward=j>0?-1:1;parts.push(beam(Math.min(sx(i),sx(i)+toward*16),Math.max(sx(i),sx(i)+toward*16),1,`s${i}`))}
+            else if(!(j>0&&(notes[g[j-1]].written??notes[g[j-1]].v)<=.25)){const toward=j>0?-1:1;parts.push(beam(Math.min(sx(i),sx(i)+toward*16),Math.max(sx(i),sx(i)+toward*16),1,`s${i}`))}
           });
           return parts;
         })()}
       </g>;
+    })}
+    {ties.map(i=>{
+      if(!notes[i]||!notes[i+1]||notes[i].rest||notes[i+1].rest||pos[i]!==pos[i+1]||hidden.includes(i)||hidden.includes(i+1))return null;
+      const above=down(i),y=noteY(pos[i])+(above?-22:22),bend=above?-18:18,a=xs[i]+8,b=xs[i+1]-8;
+      return <path key={`tie-${i}`} className="engraved-row__tie" d={`M${a} ${y} C${a+(b-a)*.25} ${y+bend} ${b-(b-a)*.25} ${y+bend} ${b} ${y} C${b-(b-a)*.25} ${y+bend*.7} ${a+(b-a)*.25} ${y+bend*.7} ${a} ${y}`}/>;
+    })}
+    {tuplets.map(({from,to,count})=>{
+      if(!notes[from]||!notes[to])return null;
+      const a=xs[from]-18,b=xs[to]+18,mid=(a+b)/2,y=Math.min(...pos.slice(from,to+1).map(p=>noteY(p)))-112;
+      return <g key={`tuplet-${from}`} className="engraved-row__tuplet"><path d={`M${a} ${y+8} v-8 H${mid-14} M${mid+14} ${y} H${b} v8`}/><text x={mid} y={y+6} textAnchor="middle">{count}</text></g>;
     })}
     {below&&notes.map((_,i)=><g key={`b${i}`} className="engraved-row__below" style={{transform:`translateX(${xs[i]}px)`}}>{below(i,xs[i],layout)}</g>)}
     {children?.(layout)}
   </>;
 }
 
-export default function EngravedRow({notes,bars=[],even=false,clef=true,meter=null,beams=[],active=-1,below,children,reserveAcc=false,className='',label,interactive=false,viewBox='20 62 870 222',faint=[],hidden=[],appear=[],crop=false,narrow=false,finalBar=true,right:rightProp,keySignature=0,keyRoom=Math.abs(keySignature),keyNew}:Props){
+export default function EngravedRow({notes,bars=[],even=false,clef=true,meter=null,beams=[],ties=[],tuplets=[],active=-1,below,children,reserveAcc=false,className='',label,interactive=false,viewBox='20 62 870 222',faint=[],hidden=[],appear=[],crop=false,narrow=false,finalBar=true,right:rightProp,keySignature=0,keyRoom=Math.abs(keySignature),keyNew}:Props){
   const phone=usePhoneNotation();
   // `narrow`: a short row uses the narrower width phones use, centred, instead of a few notes spread thinly across the page.
   const short=phone||narrow||rightProp!==undefined;
@@ -283,6 +294,6 @@ export default function EngravedRow({notes,bars=[],even=false,clef=true,meter=nu
   // A close-up crops around the notes, tall enough for the whole clef, so nothing is scaled differently.
   if(crop){frame[0]='20';frame[1]='50';frame[2]=String(layout.endX+10-20);frame[3]='205'}
   return <svg className={`engraved-row ${className}`} viewBox={frame.join(" ")} role={interactive?'group':'img'} aria-label={label}>
-    <RowGraphics notes={notes} layout={layout} clef={clef} meter={meter} beams={beams} active={active} faint={faint} hidden={hidden} appear={appear} finalBar={finalBar} keySignature={keySignature} keyNew={keyNew} below={below}>{children}</RowGraphics>
+    <RowGraphics notes={notes} layout={layout} clef={clef} meter={meter} beams={beams} ties={ties} tuplets={tuplets} active={active} faint={faint} hidden={hidden} appear={appear} finalBar={finalBar} keySignature={keySignature} keyNew={keyNew} below={below}>{children}</RowGraphics>
   </svg>;
 }

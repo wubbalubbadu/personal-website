@@ -175,3 +175,11 @@ html body .passage-guide .passage-guide__row .practice-notation__music{padding-t
 html body .passage-guide .passage-guide__row--original{margin:6px 0 10px;padding:8px 14px!important;border:0;border-radius:14px;background:#f6f6f8}
 html body .passage-guide .passage-guide__row--original+.passage-guide__row{border-top:0}
 html body .passage-guide .passage-guide__row--original .practice-notation__music{padding-top:26px!important}
+/* Mouse and trackpad: a smaller selection pill and bar handles so they cover less music. Touch screens keep
+   the bigger finger-sized ones. (The handles' centres stay where they were.) */
+@media (hover:hover) and (pointer:fine){
+  html:root body .range-bar{padding:2px}
+  html:root body .range-bar button{width:28px!important;height:28px!important}
+  html:root body .range-bar button svg{width:16px!important;height:16px!important}
+  .range-handle,.range-handle[data-side="end"]{width:14px;height:14px;margin:1px 0 0 -7px;border-width:2px}
+}

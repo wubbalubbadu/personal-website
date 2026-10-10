@@ -5,7 +5,7 @@ import {SCORE_TEMPO_KEY,readTempoRatios,clampTempo} from "./lib/scoreTempo";
 import {droneSamplesIfReady,droneVoice,loadDroneSamples} from "./components/sampledDrone";
 
 type Voice={oscillator:OscillatorNode|AudioBufferSourceNode;gain:GainNode};
-const asVoice=({source,gain}:{source:AudioBufferSourceNode;gain:GainNode}):Voice=>({oscillator:source,gain});
+const asVoice=({source,gain}:{source:OscillatorNode|AudioBufferSourceNode;gain:GainNode}):Voice=>({oscillator:source,gain});
 /** A drone still waiting for its samples was never started, so stopping it throws; ignore that. */
 const stopVoice=(voice:Voice,at?:number)=>{try{voice.oscillator.stop(at)}catch{/* Not started yet. */}};
 /**
@@ -20,8 +20,22 @@ export type MetronomeGrid={time:number;beatSeconds:number;beatInBar:number;beats
   /** Exact beat times (AudioContext seconds) when they are not evenly spaced: through an accel. or rit. Beat 0 is `beatInBar`. */
   beatTimes?:number[];
   /** Which of `beatTimes` are downbeats, when the meter changes along the way. */
-  beatAccents?:boolean[]};
+  beatAccents?:boolean[];
+  /** Subdivision ticks between the beats (AudioContext seconds): quieter and lower, so the beat stays clear. */
+  subTimes?:number[]};
 const semitones:Record<string,number>={C:0,"C♯":1,"D♭":1,D:2,"D♯":3,"E♭":3,E:4,F:5,"F♯":6,"G♭":6,G:7,"G♯":8,"A♭":8,A:9,"A♯":10,"B♭":10,B:11};
+/** The metronome's click: strong (bar downbeat) is higher and louder. Shared with the reader's count-in so both sound the same. */
+export function bookClick(audio:BaseAudioContext,time:number,strong:boolean){
+  const oscillator=audio.createOscillator(),gain=audio.createGain();
+  oscillator.frequency.value=strong?1500:1100;
+  // Loud enough to hear over a flute. A click is 50ms of sound, so it needs a peak well above what a sustained tone would use.
+  gain.gain.setValueAtTime(strong?.55:.38,time);
+  gain.gain.exponentialRampToValueAtTime(.0001,time+.05);
+  oscillator.connect(gain).connect(audio.destination);
+  oscillator.start(time);
+  oscillator.stop(time+.06);
+  return oscillator;
+}
 export function pitchFrequency(note:string,octave:number){return 440*2**(((octave+1)*12+semitones[note]-69)/12)}
 function useAudioEngine(){
   const [bpm,setBpmState]=useState(60),[metro,setMetro]=useState(false),[accent,setAccent]=useState(true),[beats,setBeats]=useState(4),[drones,setDrones]=useState<string[]>([]),[grid,setGrid]=useState<MetronomeGrid|null>(null);
@@ -84,16 +98,7 @@ function useAudioEngine(){
     // more beats after you pressed stop.
     const booked=new Set<OscillatorNode>();
     const bookBeat=(time:number,downbeat?:boolean)=>{
-      const oscillator=audio.createOscillator(),gain=audio.createGain();
-      const strong=accent&&(downbeat??beat%barLength===0);
-      oscillator.frequency.value=strong?1500:1100;
-      // Loud enough to hear over a flute. A click is 50ms of sound, so it
-      // needs a peak well above what a sustained tone would use.
-      gain.gain.setValueAtTime(strong?.55:.38,time);
-      gain.gain.exponentialRampToValueAtTime(.0001,time+.05);
-      oscillator.connect(gain).connect(audio.destination);
-      oscillator.start(time);
-      oscillator.stop(time+.06);
+      const oscillator=bookClick(audio,time,accent&&(downbeat??beat%barLength===0));
       booked.add(oscillator);
       oscillator.onended=()=>booked.delete(oscillator);
       beat+=1;
@@ -101,10 +106,20 @@ function useAudioEngine(){
     // Playback's own beat times, when it bends the tempo: book each one as it
     // comes into the lookahead window, skipping any already past.
     const listed=grid?.beatTimes;let listedAt=0;
+    const subs=grid?.subTimes;let subAt=0;
+    const bookTick=(time:number)=>{
+      const oscillator=audio.createOscillator(),gain=audio.createGain();
+      oscillator.frequency.value=800;
+      gain.gain.setValueAtTime(.16,time);gain.gain.exponentialRampToValueAtTime(.0001,time+.03);
+      oscillator.connect(gain).connect(audio.destination);oscillator.start(time);oscillator.stop(time+.04);
+      booked.add(oscillator);oscillator.onended=()=>booked.delete(oscillator);
+    };
     const schedule=()=>{
+      if(subs)while(subAt<subs.length&&subs[subAt]<audio.currentTime+lookahead){if(subs[subAt]>=audio.currentTime)bookTick(subs[subAt]);subAt+=1}
       if(listed){
         while(listedAt<listed.length&&listed[listedAt]<audio.currentTime+lookahead){
-          if(listed[listedAt]>=audio.currentTime)bookBeat(listed[listedAt],grid?.beatAccents?.[listedAt]);else beat+=1;
+          // A click a few milliseconds late still plays, at once; only one that is really gone is skipped.
+          if(listed[listedAt]>=audio.currentTime-.03)bookBeat(Math.max(listed[listedAt],audio.currentTime+.005),grid?.beatAccents?.[listedAt]);else beat+=1;
           listedAt+=1;
         }
         return;
@@ -138,7 +153,7 @@ function useAudioEngine(){
     const key=`${note}${octave}`,audio=getAudio(),existing=voices.current.get(key);
     if(existing){existing.gain.gain.setTargetAtTime(.0001,audio.currentTime,.025);stopVoice(existing,audio.currentTime+.12);voices.current.delete(key)}
     else{
-      // A sampled oboe, a real instrument rather than a synth tone. The first
+      // The built flute-colour drone (sampledDrone.ts), dead steady. The first
       // press loads the samples; if they aren't in yet, start as soon as they are.
       const frequency=pitchFrequency(note,octave),samples=droneSamplesIfReady(audio);
       if(samples)voices.current.set(key,asVoice(droneVoice(audio,samples,frequency,audio.currentTime,.32)));

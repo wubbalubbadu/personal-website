@@ -177,7 +177,7 @@ export default function KeySignaturesLesson(){
     // The check: a signature on its own. Which letters does it change? Pick any number of letters, then Check.
     const key=asks[q],answer=keyLetters(key),lastQ=q===asks.length-1,right=checked==='right';
     narration=tr('Read a signature from left to right. Each sign sits on the line or space of the letter it changes.','调号从左往右读。每个记号都写在它要改变的那个音名的线或间上。');
-    message=right?(lastQ?tr(`Right: ${answer.join(', ')}. You can read a signature now.`,`对：${answer.join('、')}。你已经会读调号了。`):tr(`Right: ${answer.join(', ')}.`,`对：${answer.join('、')}。`))
+    message=right?(lastQ?tr(`Right: ${answer.map(l=>l+(key<0?'♭':'♯')).join(', ')}. You can read a signature now.`,`对：${answer.map(l=>l+(key<0?'♭':'♯')).join('、')}。你已经会读调号了。`):tr(`Right: ${answer.map(l=>l+(key<0?'♭':'♯')).join(', ')}.`,`对：${answer.map(l=>l+(key<0?'♭':'♯')).join('、')}。`))
       :checked==='wrong'?tr('Not quite. Read the signs left to right; each one sits on its letter’s line or space.','还不对。从左往右读；每个记号都写在它那个音名的线或间上。')
       :tr('Which letters does this signature change? Pick them, then Check.','这个调号改变了哪些音名？选好后点“检查”。');
     tone=right?'correct':checked==='wrong'?'wrong':null;

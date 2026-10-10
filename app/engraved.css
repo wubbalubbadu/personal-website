@@ -116,3 +116,10 @@
    than read. Key-signature accidentals never get this: they apply to
    every bar, so there is nothing to carry. */
 .osmd-score .reminder-accidental{fill:#2f8a55!important;stroke:#2f8a55!important}
+/* Beat sticks are coloured by how long each beat lasts (ScoreViewer sets data-beat): a quarter is red in every meter
+   (as before), a dotted quarter sand, an eighth blue, anything shorter (a dotted eighth in 15/16) teal, a half or more
+   green. So 7/8 as 3+2+2 reads sand, red, red, and 4/4 to 7/8 shows where the beat changes. */
+.beat-stick[data-beat="eighth"]{border-left-color:rgba(61,127,196,.6)}
+.beat-stick[data-beat="short"]{border-left-color:rgba(31,140,130,.6)}
+.beat-stick[data-beat="dotted"]{border-left-color:rgba(176,138,69,.7)}
+.beat-stick[data-beat="long"]{border-left-color:rgba(108,143,95,.6)}

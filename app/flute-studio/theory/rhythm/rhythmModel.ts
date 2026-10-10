@@ -19,3 +19,14 @@ export function assessHold(milliseconds: number, value: NoteValue, unit = 650) {
 export function playbackEvents(values:readonly number[], pitches:readonly (number|null)[] = [], unit=.65){
   return timings(values,unit).map((event,i)=>({...event,midi:pitches[i]===null?null:(pitches[i]??67)}));
 }
+
+/** Join scheduled sound events while retaining the original segments for highlighting. */
+export function sustainedEvents(events:readonly {start:number;duration:number;midi:number|null}[],ties:readonly number[]=[]){
+  const joined:{start:number;duration:number;midi:number|null}[]=[];
+  events.forEach((event,i)=>{
+    const previous=joined.at(-1);
+    if(ties.includes(i-1)&&previous&&event.midi!==null&&event.midi===previous.midi){previous.duration=event.start+event.duration-previous.start}
+    else joined.push({...event});
+  });
+  return joined;
+}

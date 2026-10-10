@@ -1,0 +1,46 @@
+.lesson-shell.dt-lesson{--scene-h:clamp(230px,34vh,320px)}
+.dt-lesson .lesson-scene{min-height:calc(var(--scene-h) + 76px)}
+.dt-hit:focus{outline:none}
+.dt-scene-content{width:100%;display:flex;flex-direction:column;gap:8px}
+.dt-lesson .engraved-row{height:var(--scene-h);min-height:200px}
+.dt-scene-controls,.dt-practice-controls{height:62px;display:flex;align-items:center;justify-content:center;gap:18px}
+.dt-practice{width:100%}
+.dt-hit{fill:transparent;cursor:pointer;touch-action:manipulation}
+.dt-hit:focus-visible,.dt-endpoint:focus-visible{outline:none;stroke:#678956;stroke-width:2;stroke-dasharray:4 4}
+.dt-hit:hover{fill:rgba(103,137,86,.035)}
+.dt-count{font:500 20px var(--font,sans-serif);text-anchor:middle;fill:#555762}
+.dt-count.is-sounding{fill:#b9362e}
+.dt-label{font:16px var(--font,sans-serif);text-anchor:middle;fill:#747681}
+.dt-span{fill:none;stroke:#888993;stroke-width:2;stroke-linecap:round}
+.dt-extension{fill:none;stroke:#b9b1a6;stroke-width:2;stroke-dasharray:4 5}
+.dt-extension text{stroke:none}
+.dt-extension.is-added{stroke:#b9362e;stroke-dasharray:500;animation:dt-grow .7s ease both}
+.dt-guide{fill:#878991}
+.dt-midpoint,.dt-dot-target{fill:white;stroke:#b9362e;stroke-width:2;stroke-dasharray:3 3;pointer-events:none}
+.dt-dot-target{fill:#ead8d4}
+.dt-cursor,.dt-tap{fill:#b9362e;pointer-events:none}
+.dt-wrong{fill:#c47644}
+.dt-tie-area{touch-action:none}
+.dt-selection{fill:none;stroke:#678956;stroke-width:2;pointer-events:none}
+.dt-ink{stroke:#b9362e;stroke-width:3;fill:none;stroke-linecap:round;pointer-events:none}
+.dt-endpoint{fill:#b9362e;stroke:transparent;stroke-width:30;cursor:pointer;touch-action:manipulation}
+.dt-overflow{stroke:#b9362e;stroke-width:4;stroke-linecap:round;stroke-dasharray:500;animation:dt-grow .8s ease both}
+.dt-bar-cue{stroke:#b9362e;stroke-width:3;animation:dt-beacon 1.2s ease 3;pointer-events:none}
+.dt-practice-controls .cookie-button{flex-shrink:0}
+.dt-audio-error{font-size:14px;text-align:center;color:#a12f28}
+@keyframes dt-grow{from{stroke-dashoffset:500}to{stroke-dashoffset:0}}
+@keyframes dt-beacon{50%{opacity:.35}}
+@media(max-width:760px){.dt-lesson .engraved-row{min-height:180px}.dt-scene-controls,.dt-practice-controls{height:86px;gap:8px}.dt-practice-controls .lesson-tools{max-width:250px}.dt-practice-controls .cookie-button{transform:scale(.8)}.dt-lesson .lesson-shell.dt-lesson{--scene-h:clamp(230px,34vh,320px)}
+.dt-lesson .lesson-scene{min-height:calc(var(--scene-h) + 76px)}
+.dt-hit:focus{outline:none}
+.dt-scene-content{gap:0}}
+@media(prefers-reduced-motion:reduce){.dt-extension.is-added,.dt-overflow,.dt-bar-cue{animation:none}}
+@media(min-width:761px){
+  .studio-route .theory-shell.lesson-shell.dt-lesson{padding:68px 32px 12px;--scene-h:clamp(220px,31vh,300px)}
+  .dt-lesson .lesson-talk{padding-bottom:8px}
+}
+.dt-lesson .engraved-row__note circle,.dt-lesson .engraved-row__tuplet{animation:dt-reveal .35s ease both}
+.dt-lesson .engraved-row__tie{transform-box:fill-box;transform-origin:left center;animation:dt-tie .35s ease both}
+@keyframes dt-reveal{from{opacity:0}to{opacity:1}}
+@keyframes dt-tie{from{transform:scaleX(.05);opacity:0}to{transform:scaleX(1);opacity:1}}
+@media(prefers-reduced-motion:reduce){.dt-lesson .engraved-row__note circle,.dt-lesson .engraved-row__tuplet,.dt-lesson .engraved-row__tie{animation:none}}

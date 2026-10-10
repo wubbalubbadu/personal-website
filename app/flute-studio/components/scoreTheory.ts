@@ -12,6 +12,9 @@ import musicTerms from "../../../content/music-terms.json";
  */
 
 export type MeasureFacts={fifths:number;mode:string|null;beats:number;beatType:number;symbol:string|null;
+  /** An irregular meter's beat groups, in beat-type notes (15/16 beamed 4+4+4+3 is [4,4,4,3]; 7/8 written "2+2+3" is
+   *  [2,2,3]). Absent for ordinary meters, whose beat is the beat-type note (or a dotted one in 6/8, 9/8, 12/8). */
+  groups?:number[];
   /** The bar number as printed (the XML's own number: a pickup bar is 0 and the next bar 1), which is not the bar's position. */
   number:string;
   /** Written pitches in this measure as letter+alter, e.g. "B0", "F1", "E-1". */
@@ -104,6 +107,42 @@ function readRamps(doc:Document,tempos:{measure:number;quarter:number}[]):TempoR
 
 const ALTER_SIGN:Record<string,string>={"-2":"𝄫","-1":"♭","0":"","1":"♯","2":"𝄪"};
 
+/** Meters whose beat isn't one note value: 5/8, 7/8, 8/8, 10/8, 15/16 and the like. (2, 3, 4, 6, 9 and 12 are regular.) */
+export function irregularMeter(beats:number,beatType:number){return beatType>=8&&![1,2,3,4,6,9,12].includes(beats)}
+/** When the beaming says nothing: twos, with a three last for an odd count (5 = 2+3, 7 = 2+2+3, 8 = 2+2+2+2). */
+export function defaultGroups(beats:number){const groups=Array(Math.floor(beats/2)).fill(2);if(beats%2)groups[groups.length-1]=3;return groups.length?groups:[beats]}
+/**
+ * An irregular bar's beat groups from its own beaming, as MuseScore follows it: a group starts where a beam begins or
+ * where an unbeamed note or rest stands. Groups shorter than two beat-type notes join their neighbour, longer than four
+ * split into threes, and anything that doesn't add up to the bar falls back to the default.
+ */
+export function beamGroups(measure:Element,beats:number,beatType:number,divisions:number):number[]|undefined{
+  const unit=divisions*4/beatType;if(!(unit>0))return undefined;
+  const firstVoice=measure.querySelector("note voice")?.textContent?.trim();
+  const starts:number[]=[];let position=0;
+  measure.querySelectorAll(":scope > note, :scope > backup, :scope > forward").forEach(node=>{
+    if(node.tagName!=="note")return;
+    if(node.querySelector("chord")||node.querySelector("grace"))return;
+    if(firstVoice&&node.querySelector("voice")?.textContent?.trim()!==firstVoice)return;
+    const beam=node.querySelector('beam[number="1"]')?.textContent?.trim();
+    // Only on the meter's own note value: a 32nd figure inside a group (beamed on its own) starts no new group.
+    const onGrid=Math.abs(position/unit-Math.round(position/unit))<1e-6;
+    if((beam==="begin"||!beam)&&onGrid&&!starts.includes(position))starts.push(position);
+    position+=Number(node.querySelector("duration")?.textContent)||0;
+  });
+  if(!starts.length||Math.abs(position/unit-beats)>.01)return undefined;
+  let groups=starts.map((start,i)=>((starts[i+1]??position)-start)/unit);
+  if(groups.some(length=>Math.abs(length-Math.round(length))>.01))return undefined;
+  groups=groups.map(Math.round);
+  const merged:number[]=[];
+  for(const length of groups){if(length<2&&merged.length)merged[merged.length-1]+=length;else merged.push(length)}
+  if(merged[0]<2&&merged.length>1){merged[1]+=merged[0];merged.shift()}
+  // A beat holds at most three eighths (four eighths beamed together are two quarter beats), or four sixteenths.
+  const most=beatType>=16?4:3;
+  const split=merged.flatMap(length=>length<=most?[length]:length===4?[2,2]:length%3===0?Array(length/3).fill(3):length%2===0?Array(length/2).fill(2):[...Array(Math.floor((length-3)/2)).fill(2),3]);
+  return split.reduce((a,b)=>a+b,0)===beats?split:undefined;
+}
+
 export function readScoreFacts(xml:string):ScoreFacts{
   const doc=new DOMParser().parseFromString(xml,"application/xml");
   const part=doc.querySelector("part");
@@ -111,8 +150,9 @@ export function readScoreFacts(xml:string):ScoreFacts{
   const metronomes:MetronomeFacts[]=[];
   const tempos:{measure:number;quarter:number;beat:number}[]=[];
   let current:MeasureFacts={fifths:0,mode:null,beats:4,beatType:4,symbol:null,number:"1",pitches:[],keyWritten:false};
-  let lastPitch:string|null=null;
+  let lastPitch:string|null=null,divisions=1;
   part?.querySelectorAll(":scope > measure").forEach(measure=>{
+    divisions=Number(measure.querySelector("attributes divisions")?.textContent)||divisions;
     const key=measure.querySelector("attributes key");
     const time=measure.querySelector("attributes time");
     current={...current,pitches:[],keyWritten:!!key,number:measure.getAttribute("number")||String(measures.length+1)};
@@ -120,11 +160,19 @@ export function readScoreFacts(xml:string):ScoreFacts{
       current.fifths=Number(key.querySelector("fifths")?.textContent??0)||0;
       current.mode=key.querySelector("mode")?.textContent?.trim().toLowerCase()||null;
     }
+    let written:number[]|undefined;
     if(time){
-      current.beats=Number(time.querySelector("beats")?.textContent)||current.beats;
+      const beatsText=time.querySelector("beats")?.textContent?.trim()??"";
+      // "3+2" over 8: the composer spells the grouping out.
+      if(beatsText.includes("+")){written=beatsText.split("+").map(Number).filter(n=>n>0);if(written.length)current.beats=written.reduce((a,b)=>a+b,0)}
+      else current.beats=Number(beatsText)||current.beats;
       current.beatType=Number(time.querySelector("beat-type")?.textContent)||current.beatType;
       current.symbol=time.getAttribute("symbol");
     }
+    if(time&&!written)delete current.groups;
+    if(written)current.groups=written;
+    else if(irregularMeter(current.beats,current.beatType))current.groups=beamGroups(measure,current.beats,current.beatType,divisions)??current.groups??defaultGroups(current.beats);
+    else delete current.groups;
     measures.push(current);
     const sounded=Number(measure.querySelector("sound[tempo]")?.getAttribute("tempo"));
     if(sounded>0&&sounded!==tempos.at(-1)?.quarter)tempos.push({measure:measures.length,quarter:sounded,beat:1});
@@ -470,5 +518,52 @@ export function tuckMetronomeMarks(root:ParentNode){
     const dx=owner.box.x+owner.box.width+size*.4-box.x;
     const dy=Number(owner.text.getAttribute("y"))-Number(figure.getAttribute("y"));
     if(Number.isFinite(dx)&&Number.isFinite(dy))mark.setAttribute("transform",`translate(${dx} ${dy})`);
+  });
+}
+
+/**
+ * Puts a connected run of dynamics under the staff on one line, the way an engraver would. OSMD places each
+ * hairpin and dynamic on its own, so "p < mp >" under a quintuplet came out with the crescendo (pushed down
+ * past the tuplet number along with its p and mp) far below the diminuendo right after it. Each run (items
+ * closer together than about two and a half dynamic letters) moves down to its lowest member; nothing moves up,
+ * so nothing new collides. Reads the untransformed coordinates, so running it twice changes nothing.
+ */
+export function alignDynamicLines(root:ParentNode){
+  const DYNAMIC=/^(p{1,4}|f{1,4}|m[pf]|s?fz?p?|sff?z?|fp|rfz?|n)$/;
+  root.querySelectorAll<SVGGElement>(".staffline").forEach(line=>{
+    type Item={nodes:SVGGElement[];x0:number;x1:number;y:number};
+    const items:Item[]=[];let unit=0;
+    // Bottom of the staff: the lowest stave line in this row. Only marks below it are aligned.
+    let staffBottom=-Infinity;
+    line.querySelectorAll<SVGPathElement>(".vf-measure > path").forEach(path=>{const box=path.getBBox();if(box.height<1&&box.width>20)staffBottom=Math.max(staffBottom,box.y)});
+    if(!Number.isFinite(staffBottom))return;
+    line.querySelectorAll<SVGGElement>(":scope > .vf-text").forEach(group=>{
+      const text=group.querySelector("text");if(!text||!DYNAMIC.test(text.textContent?.trim()??""))return;
+      const size=parseFloat(text.getAttribute("font-size")??"")||0,baseline=Number(text.getAttribute("y"));if(!size||!Number.isFinite(baseline))return;
+      unit=Math.max(unit,size);const box=text.getBBox();
+      // The hairpin beside a dynamic runs through about .39 of the letter height above the baseline (OSMD's own spacing).
+      items.push({nodes:[group],x0:box.x,x1:box.x+box.width,y:baseline-size*.39});
+    });
+    // A hairpin is two single-segment lines that share their pointed end.
+    const segments=[...line.querySelectorAll<SVGGElement>(":scope > .vf-line")].map(group=>{
+      const m=group.querySelector("path")?.getAttribute("d")?.match(/^M([\d.-]+) ([\d.-]+)L([\d.-]+) ([\d.-]+)$/);
+      return m?{group,a:[+m[1],+m[2]],b:[+m[3],+m[4]]}:null;
+    }).filter(Boolean) as {group:SVGGElement;a:number[];b:number[]}[];
+    const used=new Set<SVGGElement>();
+    segments.forEach(first=>{
+      if(used.has(first.group))return;
+      const second=segments.find(other=>other!==first&&!used.has(other.group)&&other.a[0]===first.a[0]&&other.a[1]===first.a[1]&&other.b[0]===first.b[0]);
+      if(!second)return;used.add(first.group);used.add(second.group);
+      items.push({nodes:[first.group,second.group],x0:Math.min(first.a[0],first.b[0]),x1:Math.max(first.a[0],first.b[0]),y:first.a[1]});
+    });
+    const below=items.filter(item=>item.y>staffBottom).sort((a,b)=>a.x0-b.x0);
+    const reach=(unit||20)*2.5;
+    let run:Item[]=[];
+    const settle=()=>{
+      if(run.length>1){const target=Math.max(...run.map(item=>item.y));run.forEach(item=>{const dy=target-item.y;item.nodes.forEach(node=>dy>.5?node.setAttribute("transform",`translate(0 ${dy})`):node.removeAttribute("transform"))})}
+      run=[];
+    };
+    below.forEach(item=>{if(run.length&&item.x0-Math.max(...run.map(other=>other.x1))>reach)settle();run.push(item)});
+    settle();
   });
 }

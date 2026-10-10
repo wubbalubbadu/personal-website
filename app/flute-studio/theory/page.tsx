@@ -52,6 +52,11 @@ export default function TheoryHome(){
       <div className="theory-course__art" aria-hidden="true"><EngravedRow clef={false} notes={[{v:1},{v:1,rest:true},{v:2}]} meter={{top:4,bottom:4}} right={RIGHT} viewBox={ART}/></div>
       <div><div><h2>6. {zh?'休止符':'Rests'}</h2><p>{zh?'认识休止符的时值，在安静时继续数拍。':'Read rest lengths and keep counting through silence.'}</p></div></div>
     </Link>
+    <Link className={`theory-course ${completed.dots?"is-complete":""}`} href="/flute-studio/theory/dots-and-ties">
+      {completed.dots&&<span className="course-check"><span aria-hidden="true">✓</span> {zh?'已完成':'Completed'}</span>}
+      <div className="theory-course__art" aria-hidden="true"><EngravedRow clef={false} notes={[{v:1.5},{v:.5},{v:1},{v:1}]} ties={[2]} right={RIGHT} viewBox={ART}/></div>
+      <div><div><h2>7. {zh?'附点、延音线与节奏练习':'Dots, ties and rhythm practice'}</h2><p>{zh?'延长音符、连接声音，并练习附点和连音节奏。':'Extend notes, join sounds, and practise dotted and tuplet rhythms.'}</p></div></div>
+    </Link>
     </section>
   </main>;
 }
