@@ -24,12 +24,13 @@ test('page text survives reload and follows the page origin when refitted',()=>{
   const restored=placeMark(JSON.parse(JSON.stringify(note)),pageLayout(750));
   assert.equal(restored.x,300);assert.equal(restored.y,450);assert.equal(restored.text,'Breathe');
 });
-test('Daphnis has a reachable original score, PDF, attribution and recording',()=>{
+test('Daphnis has a reachable original score, page images, attribution and recording',()=>{
   const catalog=JSON.parse(fs.readFileSync(new URL('content/music-catalog.json',root),'utf8'));
   const item=catalog.find(i=>i.id==='ravel-daphnis-et-chloe-176');
   assert.equal(item.status,'published');assert.equal(item.viewerPath,'/flute-studio/music/'+item.id);
   assert.ok(item.scorePath.endsWith('.musicxml'));assert.ok(fs.existsSync(new URL('public'+item.scorePath,root)));assert.ok(item.tags.includes('Excerpt'));
-  assert.ok(fs.existsSync(new URL('public'+item.pdfPath,root)));
+  // Excerpts ship as cropped page images; no PDF download (decided 2026-10-09).
+  assert.equal(item.pdfPath,undefined);
   for(const page of item.excerpt.pages){assert.ok(page.width>0&&page.height>0);assert.ok(fs.existsSync(new URL('public'+page.src,root)))}
   assert.equal(item.excerpt.sourceUrl,undefined);
   assert.match(item.recordings[0].youtubeId,/^[a-zA-Z0-9_-]{11}$/);
@@ -40,7 +41,8 @@ test('Mendelssohn excerpt keeps the printed scan and the corrected continuing ar
   assert.equal(item.status,'published');
   assert.ok(item.tags.includes('Excerpt'));
   assert.equal(item.excerpt.pages.length,1);
-  for(const path of [item.scorePath,item.pdfPath,item.excerpt.pages[0].src])assert.ok(fs.existsSync(new URL('public'+path,root)));
+  for(const path of [item.scorePath,item.excerpt.pages[0].src])assert.ok(fs.existsSync(new URL('public'+path,root)));
+  assert.equal(item.pdfPath,undefined);
   assert.equal(item.sempreStaccatoFromMeasure,1);
   assert.equal(item.pulsePerMeasure,true);
   assert.equal(item.defaultTempo,84);

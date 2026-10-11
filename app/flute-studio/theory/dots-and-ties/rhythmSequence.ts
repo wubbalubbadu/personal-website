@@ -17,10 +17,10 @@ export function compileRhythm(pattern:RhythmPattern){
   const ties:number[]=[];
   const timeline=pattern.items.map((item,i)=>{
     const [n,d]=lengths[i],ticks=n*ticksPerQuarter/d;
-    const event={at:cursor/ticksPerQuarter,length:ticks/ticksPerQuarter,midi:item.rest?null:item.pitch??67};cursor+=ticks;
+    const event={at:cursor/ticksPerQuarter,length:ticks/ticksPerQuarter,midi:item.rest?null:item.pitch??65};cursor+=ticks;
     if(item.tieNext){
       const next=pattern.items[i+1];
-      if(item.rest||!next||next.rest||(item.pitch??67)!==(next.pitch??67))throw new Error('A tie needs adjacent sounding notes of the same pitch');
+      if(item.rest||!next||next.rest||(item.pitch??65)!==(next.pitch??65))throw new Error('A tie needs adjacent sounding notes of the same pitch');
       ties.push(i);
     }
     return event;
@@ -42,11 +42,12 @@ export const ACROSS:RhythmPattern={id:'across',items:[{written:2},{written:1},{w
 export const ACROSS_APART:RhythmPattern={...ACROSS,id:'across-apart',items:ACROSS.items.map(n=>({...n,tieNext:false}))};
 /** A dotted eighth and a sixteenth sharing beat 1, then a quarter: a 2/4 measure, so the sixteenth has room even on a phone. */
 export const DOTTED_EIGHTH:RhythmPattern={id:'dotted-eighth',top:2,items:[{written:.75},{written:.25},{written:1}],beams:[[0,1]]};
-/** Three rounds, a little harder each time: a dotted quarter in 4/4; short-long in 3/4; short-long plus a tie in 4/4. */
+/** Contrast long-short, short-long, silence with a tied hold, and a quicker dotted pair. */
 export const DRILLS:RhythmPattern[]=[
   DOTTED_QUARTER,
   {id:'short-long-3',top:3,items:[{written:.5},{written:1.5},{written:1}]},
-  {id:'short-long-tied',items:[{written:.5},{written:1.5},{written:1,tieNext:true},{written:.5},{written:.5}],beams:[[3,4]]},
+  {id:'rest-and-tie',items:[{written:.5,rest:true},{written:.5},{written:1,tieNext:true},{written:1},{written:1}]},
+  DOTTED_EIGHTH,
 ];
 /** Where a tied note continues: no new start, so no tap. */
 export const continuations=(pattern:RhythmPattern)=>{const d=compileRhythm(pattern);return d.ties.map(i=>d.timeline[i+1].at)};

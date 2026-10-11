@@ -17,12 +17,12 @@ const {sustainedEvents}=await import(rhythmURL);
 const dividedBeat=count=>({id:`divide-${count}`,items:[...Array.from({length:count},()=>({written:count===5?.25:.5,ratio:count===3?[3,2]:[5,4]})),{written:1},{written:1},{written:1}],beams:[Array.from({length:count},(_,i)=>i)],tuplets:[{from:0,to:count-1,count}]});
 const SYNCOPATED={id:'syncopated',items:[{written:.5},{written:.5,tieNext:true},{written:.5},{written:.5},{written:1},{written:1}],beams:[[0,1],[2,3]]};
 
-test('three drills fill their meters, get harder, and tie continuations are not new onsets',()=>{
- assert.equal(DRILLS.length,3);
+test('varied drills fill their meters; rests and tied continuations are not new onsets',()=>{
+ assert.equal(DRILLS.length,4);
  assert.deepEqual(DRILLS.map(p=>compileRhythm(p).total),DRILLS.map(p=>p.top??4));
  assert.ok(DRILLS.some(p=>(p.top??4)!==4));
- assert.deepEqual(DRILLS.map(p=>compileRhythm(p).onsets),[[0,1.5,2],[0,.5,2],[0,.5,2,3.5]]);
- assert.deepEqual(DRILLS.map(continuations),[[],[],[3]]);
+ assert.deepEqual(DRILLS.map(p=>compileRhythm(p).onsets),[[0,1.5,2],[0,.5,2],[.5,1,3],[0,.75,1]]);
+ assert.deepEqual(DRILLS.map(continuations),[[],[],[2],[]]);
 });
 test('the dotted eighth and sixteenth fill one beat',()=>{
  const d=compileRhythm(DOTTED_EIGHTH);
@@ -32,7 +32,7 @@ test('a half tied to a quarter and a dotted half are the same sound',()=>{
  const sound=d=>sustainedEvents(d.timeline.map(e=>({start:e.at,duration:e.length,midi:e.midi})),d.ties);
  const tied=compileRhythm(HALF_TIED);
  assert.deepEqual(sound(tied).slice(0,1),sound(compileRhythm(DOTTED_HALF)).slice(0,1));
- assert.deepEqual(sound(tied)[0],{start:0,duration:3,midi:67});
+ assert.deepEqual(sound(tied)[0],{start:0,duration:3,midi:65});
  assert.deepEqual(compileRhythm(HALF_QUARTERS).onsets,[0,2,3]);
 });
 test('a dotted quarter and a quarter tied to an eighth are the same sound',()=>{
@@ -46,7 +46,7 @@ test('the tie across the bar line joins beat 4 to the next beat 1 as one 2-beat 
  const d=compileRhythm(ACROSS),apart=compileRhythm(ACROSS_APART);
  assert.equal(d.total,8);assert.equal(d.timeline[ACROSS.bars[0]].at,4);
  const voices=sustainedEvents(d.timeline.map(e=>({start:e.at,duration:e.length,midi:e.midi})),d.ties);
- assert.deepEqual(voices[2],{start:3,duration:2,midi:67});
+ assert.deepEqual(voices[2],{start:3,duration:2,midi:65});
  assert.deepEqual(continuations(ACROSS),[4]);
  assert.deepEqual(apart.ties,[]);assert.ok(apart.onsets.includes(4));
  assert.deepEqual(compileRhythm(QUARTER_EIGHTHS).onsets,[0,1,1.5,2]);
@@ -71,10 +71,10 @@ test('ties merge only sound, preserving segments for highlighting',()=>{
  const d=compileRhythm(SYNCOPATED),events=d.timeline.map(e=>({start:e.at,duration:e.length,midi:e.midi}));
  const voices=sustainedEvents(events,d.ties);
  assert.equal(voices.length,5);assert.equal(events.length,6);
- assert.deepEqual(voices[1],{start:.5,duration:1,midi:67});
+ assert.deepEqual(voices[1],{start:.5,duration:1,midi:65});
  assert.equal(events[2].start,1);
  const chain=compileRhythm({id:'chain',items:[{written:1,tieNext:true},{written:2,tieNext:true},{written:1}]});
- assert.deepEqual(sustainedEvents(chain.timeline.map(e=>({start:e.at,duration:e.length,midi:e.midi})),chain.ties),[{start:0,duration:4,midi:67}]);
+ assert.deepEqual(sustainedEvents(chain.timeline.map(e=>({start:e.at,duration:e.length,midi:e.midi})),chain.ties),[{start:0,duration:4,midi:65}]);
 });
 test('tap grading never calls a wrong tap on time',()=>{
  const spq=.75,ms=x=>x/1000/spq; // seconds to quarter notes
@@ -149,7 +149,7 @@ test('actual audio scheduler makes one tied voice, keeps fractional excerpts ali
   await audio.counted({values:data.notes.map(n=>n.v),timeline:data.timeline,ties:data.ties,speak:false,click:false,secondsPerQuarter:1,onEnd:()=>ended=true});
   assert.equal(tones.length,5);assert.equal(tones[1].d,1);assert.deepEqual(starts,[.06,.56,1.56,2.06,3.06]);
   audio.stop();context.currentTime=5;frame();assert.equal(ended,false);assert.ok(stops.length>0);
-  await audio.counted({values:[1/3],timeline:[{at:0,length:1/3,midi:67}],speak:false,click:false,secondsPerQuarter:1,onEnd:()=>ended=true});
+  await audio.counted({values:[1/3],timeline:[{at:0,length:1/3,midi:65}],speak:false,click:false,secondsPerQuarter:1,onEnd:()=>ended=true});
   context.currentTime=5.2;frame();assert.equal(ended,false);
   context.currentTime=5.5;frame();assert.equal(ended,true);
  }finally{Object.assign(globalThis,previous);delete globalThis.__dotTones}

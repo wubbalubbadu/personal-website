@@ -152,3 +152,8 @@
 .lesson-cookie-placeholder{display:block;width:76px;height:76px}/* the cookie button's own size */
 .lesson-cookie-move.is-away{pointer-events:none}
 .lesson-cookie-move.is-away .lesson-cookie-size{transform:scale(1.15)}
+
+/* Reserve the ready label before Skip changes to Next. Answers keep their position. */
+.lesson-action-slot{display:inline-grid;flex-shrink:0;align-items:center;justify-items:end}
+.lesson-action-slot>*{grid-area:1/1}
+.lesson-shell .lesson-action-measure{visibility:hidden;pointer-events:none;animation:none}

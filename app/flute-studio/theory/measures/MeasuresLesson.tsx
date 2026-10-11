@@ -1,6 +1,7 @@
 'use client';
 import {useEffect,useRef,useState,type ReactNode} from 'react';
 import {useLanguage} from '../../i18n/LanguageContext';
+import CountInPulse from '../../components/CountInPulse';
 import LessonFrame,{type LessonNext} from '../LessonFrame';
 import {usePhoneNotation} from '../usePhoneNotation';
 import EngravedRow,{layoutRow,phoneRowRight,type RowNote,type RowLayout,type Meter} from '../EngravedRow';
@@ -436,7 +437,6 @@ export default function MeasuresLesson(){
     const running=p7Mode==='clap'&&!p7Waiting&&audio.elapsed>=0,countIn=running&&audio.beat<r.top,tapping=running&&audio.beat>=r.top;
     // The count finished but not every note was tapped.
     const ranOut=p7Mode==='clap'&&!p7Waiting&&audio.elapsed<0&&p7Result===null;
-    const countWords=zh?['一','二','三','四','五','六']:['One','two','three','four','five','six'];
     narration=tr('Here’s why we count: it lets you play a rhythm you’ve never heard, straight from the page.','这就是数拍的用处：没听过的节奏，你也能直接照着谱子准时演奏出来。');
     const intro=[tr('In lesson 2 you copied rhythms you heard. This time nobody plays it first: read it. Press Start and I’ll give you 4 counts to get ready, then tap the cookie on each note.','第 2 课里你是听了再模仿。这次没人先弹给你听：自己读。点“开始”，我先数 4 下让你准备，然后每个音符点一下饼干。'),
       tr('This one is in 3/4, so you get 3 counts to get ready. Watch the eighth notes: two taps in one beat.','这个是 3/4，所以准备时我数 3 下。注意八分音符：一拍里点两下。'),
@@ -444,7 +444,7 @@ export default function MeasuresLesson(){
     message=p7Result===true?(lastRound?tr('Right in time, even in 6/8! That’s reading rhythm: count, then play.','连 6/8 都很准！这就是读节奏：先数，再演奏。'):tr('Right in time! Here’s the next one.','很准！来看下一个。'))
       :p7Result===false?tr('Close! The orange marks were early or late. Press Listen to hear how it goes, then Start again.','差一点！橙色的点早了或晚了。点“听一听”听听它是什么样，再点“开始”。')
       :p7Waiting?tr(`Here come ${r.top} counts to get ready…`,`准备好，我要数 ${r.top} 下了……`)
-      :countIn?tr(`Get ready: ${countWords.slice(0,Math.max(1,audio.beat+1)).join(' ')}…`,`准备：${countWords.slice(0,Math.max(1,audio.beat+1)).join(' ')}……`)
+      :countIn?tr('Follow the pulse, then tap each new note.','跟着拍点准备，然后每个新音点一下。')
       :tapping?tr('Now tap the cookie on each note!','现在，每个音符点一下饼干！')
       :ranOut?tr('The rhythm ended before every note got a tap. Press Start to try again.','节奏结束了，还有音符没点到。点“开始”再试一次。'):intro;
     tone=p7Result===true?'correct':p7Result===false?'wrong':null;
@@ -459,14 +459,14 @@ export default function MeasuresLesson(){
     // Each tap leaves a mark where it landed in time. Once all are in, each is green if it was close to its note, orange if early or late.
     // One rule for the marks and for passing: every tap within this many quarter notes of its own note (at least 150 ms).
     const closeEnough=Math.max(.22,.15/r.spq),onTime=(t:{at:number},i:number)=>i<starts.length&&Math.abs(t.at-starts[i])<=closeEnough;
-    scene=<EngravedRow key={`p7-${p7Round}`} clef={false} notes={r.notes} bars={r.bars} beams={r.beams} meter={{top:r.top,bottom:r.bottom}}
+    scene=<><CountInPulse beat={audio.beat} total={r.top} active={countIn&&audio.beat>=0} zh={zh}/><EngravedRow key={`p7-${p7Round}`} clef={false} notes={r.notes} bars={r.bars} beams={r.beams} meter={{top:r.top,bottom:r.bottom}}
       active={p7Mode==='clap'?clockNote:audio.active} below={counts({notes:r.notes,beatUnit:r.unit,top:r.top,litBeat})} label={tr('Rhythm to tap','要点的节奏')}>
       {layout=><>{p7Taps.map((t,i)=>{
         const judged=p7Taps.length===values.length,on=onTime(t,i);
         const total=starts[starts.length-1]+values[values.length-1],x=layout.beatX(Math.max(0,Math.min(total,t.at)))-(t.at<0?16:0);
         return <circle key={i} cx={x} cy={noteY(8)-22} r="7" className={`tap-mark ${judged?(on?'is-on':'is-off'):''}`}/>;
       })}</>}
-    </EngravedRow>;
+    </EngravedRow></>;
     const tap=(time:number)=>{
       // Only while the count runs: read the audio clock at the tap itself.
       const heard=audio.position();

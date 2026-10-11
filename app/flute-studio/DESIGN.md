@@ -82,6 +82,18 @@ Font family, everywhere: `-apple-system, BlinkMacSystemFont, "SF Pro Display",
 Don't invent a radius outside this set. If something needs to feel "bigger,"
 reach for 22–24px, not an arbitrary new number.
 
+**Which shape for which job (decided 2026-10-11).** The shape tells you what a control does:
+
+| Job | Shape | Examples |
+|---|---|---|
+| Choose one of a few (tabs, filters, modes, formats) | Capsule (999px), dark when chosen | Library chips, close-up Technique/Pitch/Rhythm, PDF/XML |
+| A small status or value | Capsule | Working on, tempo pill, tally pill, tags |
+| A button, and the hover behind it | Rounded square (8–12px) | Toolbar tools, timer/settings hover, Graph/Clear |
+| Toggles that can be on together | Rounded-square tile, icon over word (like the practice tools) | View settings "Show on the page" |
+| A card or panel | 14–24px (see above) | Settings panel, item cards |
+
+So a capsule never means "button", and a square tile never means "pick one".
+
 ## Elevation
 
 | Shadow | Use |

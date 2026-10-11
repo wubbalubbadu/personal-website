@@ -1,6 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import {CloseButton} from "./CloseButton";
+import {TEMPO_MIN,TEMPO_MAX} from "../lib/scoreTempo";
+import {hasTouchScreen} from "../lib/pencilMode";
+import {ExcerptTempoMark,useExcerptTempoMark} from "./ExcerptTempoMark";
 import PracticeClockButton from "../PracticeClockButton";
 import {useEffect,useLayoutEffect,useRef,useState} from "react";
 import type {MusicItem} from "../../../content/music-library";
@@ -28,6 +32,7 @@ export default function FixedScoreViewer({item,onInteractive}:{item:MusicItem;on
   const [fit,setFit]=useState<'page'|'width'>('width'),[pageWidth,setPageWidth]=useState(0),[layoutVersion,setLayoutVersion]=useState(0);
   const [page,setPage]=useState(0),[listen,setListen]=useState(false),[video,setVideo]=useState<string|null>(null),[error,setError]=useState(false),[focus,setFocus]=useState(false);
   const {zoom,zoomAt,reset}=usePaperMagnify(scroller,paper,annotating);
+  const [showTempo,setShowTempo]=useExcerptTempoMark();
   // Several passages of one piece are tabs. First visit opens the first (most
   // asked) one, after that the one you last had open; ?passage= wins over both.
   const passages=excerpt.passages??[{id:'main',label:excerpt.passage,zhLabel:excerpt.zhPassage,pages:excerpt.pages}];
@@ -89,7 +94,8 @@ export default function FixedScoreViewer({item,onInteractive}:{item:MusicItem;on
   });
   function toggleFocus(){
     if(focus){setFocus(false);if(document.fullscreenElement)void document.exitFullscreen().catch(()=>{});return}
-    setFocus(true);void shell.current?.requestFullscreen?.().catch(()=>{});
+    // Touch screens get focus mode alone: iPad Safari's full screen lays its own × over the toolbar's first buttons.
+    setFocus(true);if(!hasTouchScreen())void shell.current?.requestFullscreen?.().catch(()=>{});
   }
   const original=pages[page];
   return <main ref={shell} className="app-shell reader-workspace restored-reader fixed-score-reader" data-annotating={annotating} data-listen={listen||undefined}>
@@ -97,15 +103,16 @@ export default function FixedScoreViewer({item,onInteractive}:{item:MusicItem;on
       <header className="topbar"><div><Link className="back has-tip" href="/flute-studio/music?tag=excerpt" aria-label={zh?'返回曲库':'Back to Library'}><BackChevron/></Link><strong>{item.title}</strong></div><div>
         <span className="topbar-toolbar-slot"/>
         <StatusButton id={item.id} zh={zh}/>
-        {onInteractive&&(passage.scorePath??(passages.length===1&&item.scorePath))&&<div className="reader-choice" role="group" aria-label={zh?'乐谱格式':'Score format'}><button aria-pressed={true}>PDF</button><button aria-pressed={false} onClick={()=>onInteractive(passage.id)}>XML</button></div>}
+        {onInteractive&&(passage.scorePath??(passages.length===1&&item.scorePath))&&<div className="reader-choice format-switch" role="group" aria-label={zh?'乐谱格式':'Score format'}><button aria-pressed={true}>PDF</button><button aria-pressed={false} onClick={()=>onInteractive(passage.id)}>XML</button></div>}
         <span className="topbar-spacer"/><PracticeClockButton/><div id="reader-tools-slot" className="topbar-tools-slot"/><AccountMenu/>
       </div></header>
       <div className="practice-bar">
         <div className="tool-group"><button data-tip={t.scoreViewer.markUp} className={`tool has-tip${annotating?' on':''}`} aria-pressed={annotating} onClick={()=>setAnnotating(v=>!v)}><PracticeIcon name="markup"/>{t.scoreViewer.markUp}</button>
           {recordings.length>0&&<button data-tip={zh?"参考录音":"Reference recordings"} className={`tool has-tip${listen?' on':''}`} aria-expanded={listen} aria-controls="excerpt-recordings" onClick={()=>{setListen(v=>!v);setVideo(null)}}><PracticeIcon name="play"/>{zh?'聆听':'Listen'}</button>}
         </div>
-        <div className="transport"><PracticeRecorder/><div className="transport-pill"><div className="tempo-group"><button data-tip={t.scoreViewer.metronomeTip} className={`tool has-tip${metro?' on':''}`} aria-pressed={metro} onClick={toggleMetro}><PracticeIcon name="metronome"/>{t.scoreViewer.metronome}</button><div className="tempo"><button className="tempo-step" aria-label={zh?'减慢':'Slower'} disabled={bpm<=30} onClick={()=>setBpm(bpm-1)}>−</button><label className="tempo-field"><input aria-label={t.scoreViewer.tempoAria} type="number" min="30" max="220" value={bpm} onChange={e=>{const n=Number(e.target.value);if(n>=30&&n<=220)setBpm(n)}}/></label><button className="tempo-step" aria-label={zh?'加快':'Faster'} disabled={bpm>=220} onClick={()=>setBpm(bpm+1)}>+</button></div></div><button className="tool has-tip reader-tap" data-tip={t.scoreViewer.tapTempo} aria-label={t.scoreViewer.tapTempo} onClick={tapTempo}><PracticeIcon name="tap"/>{zh?"打拍":"Tap"}</button></div></div>
+        <div className="transport"><PracticeRecorder/><div className="transport-pill"><div className="tempo-group"><button data-tip={t.scoreViewer.metronomeTip} className={`tool has-tip${metro?' on':''}`} aria-pressed={metro} onClick={toggleMetro}><PracticeIcon name="metronome"/>{t.scoreViewer.metronome}</button><div className="tempo"><button className="tempo-step" aria-label={zh?'减慢':'Slower'} disabled={bpm<=TEMPO_MIN} onClick={()=>setBpm(bpm-1)}>−</button><label className="tempo-field"><input aria-label={t.scoreViewer.tempoAria} type="number" min="30" max="220" value={bpm} onChange={e=>{const n=Number(e.target.value);if(n>=30&&n<=220)setBpm(n)}}/></label><button className="tempo-step" aria-label={zh?'加快':'Faster'} disabled={bpm>=TEMPO_MAX} onClick={()=>setBpm(bpm+1)}>+</button></div></div><button className="tool has-tip reader-tap" data-tip={t.scoreViewer.tapTempo} aria-label={t.scoreViewer.tapTempo} onClick={tapTempo}><PracticeIcon name="tap"/>{zh?"打拍":"Tap"}</button></div></div>
         <div className="reader-header restored-view-controls"><div className="reader-view"><ReaderPopover label={zh?'显示设置':'View settings'} className="tool has-tip" trigger={<><PracticeIcon name="view"/>{zh?'显示':'View'}</>}>
+          <div className="reader-setting-row"><span>{zh?"练习速度":"Practice tempo"}</span><div className="reader-choice" role="group" aria-label={zh?"练习速度":"Practice tempo"}><button aria-pressed={!showTempo} onClick={()=>setShowTempo(false)}>{zh?"隐藏":"Hidden"}</button><button aria-pressed={showTempo} onClick={()=>setShowTempo(true)}>{zh?"显示在乐谱上":"On the page"}</button></div></div>
           <div className="reader-setting-row"><span>{zh?'页面大小':'Page size'}</span><div className="reader-choice"><button aria-pressed={fit==='page'} onClick={()=>{setFit('page');reset()}}>{zh?'整页':'Fit page'}</button><button aria-pressed={fit==='width'} onClick={()=>{setFit('width');reset()}}>{zh?'适应宽度':'Fit width'}</button></div></div>
         </ReaderPopover></div>
         <div className="reader-pages" data-mode="pages"><button className="reader-pages__top" aria-label={zh?'回到开头':'Back to top'} disabled={page===0} onClick={()=>turn(0)}><PracticeIcon name="top"/></button><button aria-label={t.scoreViewer.previousPage} disabled={page===0} onClick={()=>turn(page-step)}><PracticeIcon name="previous"/></button><button aria-label={t.scoreViewer.nextPage} disabled={page+step>=pages.length} onClick={()=>turn(page+step)}><PracticeIcon name="next"/></button><span aria-live="polite">{shown.length>1?`${page+1}–${page+2}`:page+1} / {pages.length}</span><button className="tool has-tip" data-tip={focus?t.scoreViewer.exitFocusMode:t.scoreViewer.focusModeTip} aria-pressed={focus} aria-label={focus?t.scoreViewer.exitFocusMode:t.scoreViewer.enterFocusMode} onClick={toggleFocus}><PracticeIcon name={focus?'exitFullscreen':'fullscreen'}/></button></div></div>
@@ -114,6 +121,8 @@ export default function FixedScoreViewer({item,onInteractive}:{item:MusicItem;on
       <div className="score-scroll" ref={scroller} data-passages={passages.length>1||undefined}>
         {/* Passage tabs sit on the grey around the page, not in a toolbar row of their own. */}
         {passages.length>1&&<div className="excerpt-passages" role="group" aria-label={zh?'片段':'Passages'}>{passages.map(p=><button key={p.id} className={p.id===passage.id?'active':undefined} aria-pressed={p.id===passage.id} onClick={()=>choosePassage(p.id)}>{zh?p.zhLabel??p.label:p.label}</button>)}</div>}
+        {/* Outside the page, so it never moves the page under its Draw marks; as wide as the page so it starts at its left edge. */}
+        {showTempo&&pageWidth>0&&<div className="excerpt-tempo-row" style={{width:`${pageWidth*shown.length+(shown.length-1)*16}px`}}><ExcerptTempoMark itemId={item.id} passageId={passage.id} title={[item.title,zh?passage.zhLabel??passage.label:passage.label].filter(Boolean).join(' · ')} tempo={bpm} onChange={setBpm} sounding={metro} onSound={toggleMetro} zh={zh}/></div>}
         <div className="score-paper engraved fixed-score-paper" data-spread={spread||undefined} ref={paper} style={{'--score-layout-width':`${(pageWidth||original.width)*shown.length+(shown.length-1)*16}px`,'--sheet-width':`${pageWidth||original.width}px`,visibility:pageWidth?'visible':'hidden'} as React.CSSProperties}>
           <div className="osmd-score fixed-score-page" data-score-page={page}>
             {/* Native image dimensions reserve the page before loading. */}
@@ -126,9 +135,13 @@ export default function FixedScoreViewer({item,onInteractive}:{item:MusicItem;on
         </div>
       </div>
       {listen&&<aside id="excerpt-recordings" className="excerpt-recordings" aria-label={zh?'参考录音':'Reference recordings'}>
-        <header><strong>{zh?'参考录音':'Recordings'}</strong><button aria-label={zh?'关闭录音':'Close recordings'} onClick={()=>{setListen(false);setVideo(null)}}><PracticeIcon name="close"/></button></header>
-        {recordings.map(r=><div className="excerpt-recording" key={r.id}><strong>{r.title}</strong><p>{r.performer}</p><div><button aria-pressed={video===r.id} onClick={()=>setVideo(video===r.id?null:r.id)}><PracticeIcon name={video===r.id?'stop':'play'}/>{video===r.id?(zh?'停止':'Stop'):(zh?'播放':'Play')}</button><a href={`https://www.youtube.com/watch?v=${r.youtubeId}${r.startSeconds?`&t=${r.startSeconds}s`:''}`} target="_blank" rel="noreferrer">YouTube ↗</a></div></div>)}
-        {selected&&<iframe key={selected.id} title={`${selected.title} · ${selected.performer}`} src={`https://www.youtube-nocookie.com/embed/${selected.youtubeId}?autoplay=1&start=${selected.startSeconds??0}`} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen referrerPolicy="strict-origin-when-cross-origin"/>}
+        {/* Built from the reader's own pieces: CloseButton, the grey/purple chip (.scale-book__chip, purple while playing), a .text-action link. */}
+        <header><span>{zh?'参考录音':'Recordings'}</span><CloseButton label={zh?'关闭录音':'Close recordings'} onClick={()=>{setListen(false);setVideo(null)}}/></header>
+        {recordings.map(r=><div className="excerpt-recording" key={r.id}>
+          <strong>{r.title}</strong><span>{r.performer}</span>
+          <div><button type="button" className={`scale-book__chip${video===r.id?' selected':''}`} aria-pressed={video===r.id} onClick={()=>setVideo(video===r.id?null:r.id)}><PracticeIcon name={video===r.id?'stop':'play'}/>{video===r.id?(zh?'停止':'Stop'):(zh?'播放':'Play')}</button><a className="text-action" href={`https://www.youtube.com/watch?v=${r.youtubeId}${r.startSeconds?`&t=${r.startSeconds}s`:''}`} target="_blank" rel="noreferrer">{zh?'在 YouTube 打开':'Open in YouTube'}</a></div>
+          {video===r.id&&<iframe title={`${r.title} · ${r.performer}`} src={`https://www.youtube-nocookie.com/embed/${r.youtubeId}?autoplay=1&start=${r.startSeconds??0}`} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen referrerPolicy="strict-origin-when-cross-origin"/>}
+        </div>)}
       </aside>}
     </section>
   </main>;

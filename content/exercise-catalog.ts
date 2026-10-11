@@ -39,6 +39,7 @@ export type ExerciseEntry={
 };
 
 export const exerciseCatalog:readonly ExerciseEntry[]=[
+  {id:"cookie-scales",focus:"technique",title:"Cookie’s Favorite Scale Routine",zhTitle:"Cookie 的音阶练习",detail:"Advanced scales and arpeggios, one focused exercise at a time",zhDetail:"进阶音阶与琶音，每次专注一项",href:"/flute-studio/exercises/cookie-scales",minutes:30,difficulty:"advanced",key:"All keys",description:"Low B to high D, starting and finishing at the lowest note.",techniques:["scales","arpeggios","range"]},
   {
     id:"scale-studio",
     focus:"technique",

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import {usePathname} from 'next/navigation';
 import {useMemo,useState} from 'react';
 import {PracticeNotation} from './PracticeNotation';
+import {PracticeIcon} from './PracticeIcon';
 import {usePitchPractice} from './PitchPractice';
 import {extractMeasures,relatedScale} from './practiceExcerpt';
 import {runsFromXml,tupletsXml,groupedXml,randomGroupSizes,fermataPitchesXml,dotted,repeatedPairs,splitOptions} from './practiceTechniques';
@@ -16,6 +17,9 @@ import './passage-guide.css';
 
 type Mode='technique'|'pitch'|'rhythm';
 const MODE_KEY='cookie:closeup-mode';
+
+/** Your bars are drawn at one size in every mode (Technique, Pitch, Rhythm), so switching modes never resizes them. */
+const ORIGINAL_ZOOM=.8;
 
 export function PassageGuide({xml,events,from,to,quarterBpm,numbers,onClose,sempreStaccato=false,initialDisplay=noDisplay,title,rhythm}:{xml:string;events:PassageEvent[];from:number;to:number;quarterBpm:number;numbers?:{from:string;to:string};onClose:()=>void;sempreStaccato?:boolean;/** The reader's View settings when the close-up opened; the toggles here start from them. */initialDisplay?:PracticeDisplay;/** The piece's name, for the pitch history. */title:string;/** Note starts and beat clicks for the Rhythm mode (tap the passage yourself). */rhythm?:PassageRhythm}){
   // Scale Studio's Back returns here (the piece), not to Exercises.
@@ -50,24 +54,24 @@ export function PassageGuide({xml,events,from,to,quarterBpm,numbers,onClose,semp
     return list;
   },[runs,ctx,source.xml,seed,groupSeed]);
   const low=Math.min(from,to),high=Math.max(from,to);
-  const player=(id:string,score:string,name:string,staccato=false,autoBeam=false,shown?:PracticeDisplay,tone?:{marks:Parameters<typeof PracticeNotation>[0]['marks'];onNote:(event:number)=>void},hideTime=autoBeam)=><PracticeNotation marks={tone?.marks} onNote={tone?.onNote} autoBeam={autoBeam} hideTime={hideTime} zoom={id==='original'?.85:.65} xml={score} label={name} quarterBpm={quarterBpm} playing={active===id} onPlay={()=>setActive(id)} onStop={()=>setActive(null)} loop={repeat} sempreStaccato={staccato} display={shown}/>;
+  const player=(id:string,score:string,name:string,staccato=false,autoBeam=false,shown?:PracticeDisplay,tone?:{marks:Parameters<typeof PracticeNotation>[0]['marks'];onNote:(event:number)=>void},hideTime=autoBeam)=><PracticeNotation marks={tone?.marks} onNote={tone?.onNote} autoBeam={autoBeam} hideTime={hideTime} zoom={id==='original'?ORIGINAL_ZOOM:.65} xml={score} label={name} quarterBpm={quarterBpm} playing={active===id} onPlay={()=>setActive(id)} onStop={()=>setActive(null)} loop={repeat} sempreStaccato={staccato} display={shown}/>;
   const flip=(next:PracticeDisplay)=>{setActive(null);setDisplay(next)};
   const cycleNames=()=>flip({...display,names:display.names==='off'?'names':display.names==='names'?'solfege':'off'});
   const namesLabel=display.names==='off'?s.noteDisplay:display.names==='names'?s.noteNames:s.solfege;
   // The View panel's own three toggles (same glyphs and wording), icon only here.
-  const toggles:{glyph:string;label:string;on:boolean;onClick:()=>void}[]=[
-    {glyph:'A♭',label:namesLabel,on:display.names!=='off',onClick:cycleNames},
-    {glyph:'▥',label:s.rhythm,on:display.rhythm,onClick:()=>flip({...display,rhythm:!display.rhythm})},
-    {glyph:'♯',label:s.accidentals,on:display.accidentals,onClick:()=>flip({...display,accidentals:!display.accidentals})}];
+  const toggles:{glyph:'noteNames'|'beatSticks'|'sharp';label:string;on:boolean;onClick:()=>void}[]=[
+    {glyph:'noteNames',label:namesLabel,on:display.names!=='off',onClick:cycleNames},
+    {glyph:'beatSticks',label:s.rhythm,on:display.rhythm,onClick:()=>flip({...display,rhythm:!display.rhythm})},
+    {glyph:'sharp',label:s.accidentals,on:display.accidentals,onClick:()=>flip({...display,accidentals:!display.accidentals})}];
   const original=(marks?:Parameters<typeof PracticeNotation>[0]['marks'],onNote?:(event:number)=>void)=><div className="passage-guide__row passage-guide__row--original"><h3>{label("Original")}</h3>{player('original',source.xml,'original',sempreStaccato,false,display,marks?{marks,onNote:onNote!}:undefined)}</div>;
   return <section className="passage-guide" aria-label={zh?"乐谱近看":"Music close-up"}>
     <header className="passage-guide__heading"><h2>{`${zh?"小节":"Bars"} ${numbers?.from??low}–${numbers?.to??high}`}</h2>
-      <div className="passage-guide__modes reader-choice" role="group" aria-label={zh?"练习":"Practice"}>{(['technique','pitch',...(rhythm?['rhythm']:[])] as Mode[]).map(m=><button type="button" key={m} aria-pressed={mode===m} onClick={()=>choose(m)}>{m==='technique'?(zh?'技巧':'Technique'):m==='pitch'?(zh?'音准':'Pitch'):(zh?'节奏':'Rhythm')}</button>)}</div>
-      <div className="passage-guide__options">{toggles.map(x=><button type="button" key={x.glyph} className="passage-guide__icon has-tip" data-tip={x.label} aria-label={x.label} aria-pressed={x.on} onClick={x.onClick}><span aria-hidden="true">{x.glyph}</span></button>)}</div>
+      <div className="passage-guide__modes passage-guide__chips" role="group" aria-label={zh?"练习":"Practice"}>{(['technique','pitch',...(rhythm?['rhythm']:[])] as Mode[]).map(m=><button type="button" key={m} aria-pressed={mode===m} onClick={()=>choose(m)}>{m==='technique'?(zh?'技巧':'Technique'):m==='pitch'?(zh?'音准':'Pitch'):(zh?'节奏':'Rhythm')}</button>)}</div>
+      <div className="passage-guide__options">{toggles.map(x=><button type="button" key={x.glyph} className="passage-guide__icon has-tip" data-tip={x.label} aria-label={x.label} aria-pressed={x.on} onClick={x.onClick}><PracticeIcon name={x.glyph}/></button>)}</div>
       {/* Mark up's close button: same icon, size and colour, no hover fill. */}<CloseButton className="passage-guide__close markup-close" label={zh?"关闭近看":"Close close-up"} onClick={onClose}/></header>
     {source.error?<p role="alert">{source.error}</p>:<div className="passage-guide__list">
       {/* Rhythm: the passage wraps to the panel's width (no sideways scrolling), with the tap results under its notes. */}
-      {mode==='rhythm'&&rhythm?<div className="passage-guide__row passage-guide__row--original"><h3>{label("Original")}</h3><PracticeNotation xml={source.xml} label="original" quarterBpm={quarterBpm} playing={active==='original'} onPlay={()=>setActive('original')} onStop={()=>setActive(null)} sempreStaccato={sempreStaccato} wrap zoom={.6} marks={rhythmTap.marks}/></div>
+      {mode==='rhythm'&&rhythm?<div className="passage-guide__row passage-guide__row--original"><h3>{label("Original")}</h3><PracticeNotation zoom={ORIGINAL_ZOOM} xml={source.xml} label="original" quarterBpm={quarterBpm} playing={active==='original'} onPlay={()=>setActive('original')} onStop={()=>setActive(null)} sempreStaccato={sempreStaccato} wrap marks={rhythmTap.marks}/></div>
         :original(mode==='pitch'?pitch.marks:undefined,mode==='pitch'?pitch.onNote:undefined)}
       {mode==='pitch'&&pitch.panel}
       {mode==='rhythm'&&rhythm&&rhythmTap.panel}

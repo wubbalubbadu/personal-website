@@ -27,6 +27,8 @@ Built and checked in the desktop browser only. The preview has no microphone, so
 
 Lint cleanup is complete locally: 0 errors, 28 warnings remain. Intentional hydration and interactive-canvas exceptions are documented beside the code.
 
+- [ ] **Tempo pill would not change in full screen** (iPad, 2026-10-10, not reproduced). Likely Safari's full-screen × sitting over the toolbar; touch devices no longer use Safari full screen (2026-10-11), so recheck in focus mode.
+- [ ] **Bar numbers sit very high** over high notes (Leonore 3, bar 3): the engraver places the number above the highest note; consider a fixed lane just above the staff.
 - [ ] **Slurs cut through high runs** (Arnold bars 39 and 51): the arch should follow the highest note under it.
 - [ ] **Phone CSS cleanup:** superseded rules in `studio-shell.css` (listed in the archived to-do); check at phone and tablet widths before deleting.
 

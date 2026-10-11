@@ -1,4 +1,5 @@
 "use client";
+import CountInPulse from './CountInPulse';
 import {useEffect,useMemo,useRef,useState,type ReactNode} from "react";
 import {bookClick,usePracticeAudio} from "../PracticeAudio";
 
@@ -126,10 +127,10 @@ export function useRhythmTap({xml,rhythm,quarterBpm,zh}:{xml:string;rhythm:Passa
   const marks=({root,version}:{root:HTMLDivElement;version:number})=><RhythmMarks root={root} version={version} notes={written.notes} bars={written.bars} clicks={rhythm.clicks} result={result} onsetIds={onsetNotes.map(note=>note.id)}/>;
   const panel:ReactNode=<div className="rhythm-tap">
     <div className="rhythm-tap__controls">
-      <div className="reader-choice" role="group" aria-label={zh?"节拍器":"Clicks"}>{clickChoices.map(([value,label])=><button type="button" key={value} aria-pressed={clicks===value} disabled={running} onClick={()=>setClicks(value)}>{label}</button>)}</div>
+      <div className="passage-guide__chips" role="group" aria-label={zh?"节拍器":"Clicks"}>{clickChoices.map(([value,label])=><button type="button" key={value} aria-pressed={clicks===value} disabled={running} onClick={()=>setClicks(value)}>{label}</button>)}</div>
       <button type="button" className="rhythm-tap__start" onClick={running?()=>{stop();setPhase("idle")}:start}>{running?(zh?"停止":"Stop"):phase==="done"?(zh?"再来一次":"Try again"):(zh?"开始":"Start")}</button>
       {/* The reader's count-in dots, one per click: in x/8 every eighth, with each group's first a little larger. */}
-      {phase==="count"&&<div className="score-count-in rhythm-tap__count" role="status" aria-label={zh?"预备拍":"Count in"}><span>{rhythm.countIn.map((click,i)=><i key={i} className={[countAt===i?"current":countAt!==null&&i<countAt?"done":"",click.group||click.accent?"is-group":""].filter(Boolean).join(" ")}/>)}</span></div>}
+      {phase==="count"&&<div className="score-count-in rhythm-tap__count"><CountInPulse beat={countAt??-1} total={rhythm.countIn.length} groups={rhythm.countIn.map(c=>!!(c.group||c.accent))} zh={zh}/></div>}
     </div>
     <div className={pressed?"rhythm-tap__pad is-pressed":"rhythm-tap__pad"} role="button" tabIndex={-1} aria-label={zh?"敲击区":"Tap pad"} onPointerDown={event=>{event.preventDefault();tap()}}>
       <span>{phase==="tap"?(zh?"每个新音开始时敲一下":"Tap when each new note starts"):(zh?"在这里敲，或按任意键。连音线连着的音和休止符不用敲。":"Tap here or press any key. Tied notes and rests take no tap.")}</span>

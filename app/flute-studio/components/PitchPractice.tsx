@@ -26,7 +26,8 @@ export function usePitchPractice({xml,title,on,silence,onStart}:{xml:string;titl
   const session=useToneSession(targets),{pause,start}=session;
   const running=session.status==='listening'||session.status==='starting';
   // The graph opens from the row's Graph button, or by tapping a note that has a result (as in the Tone Lab).
-  const [graph,setGraph]=useState(false);
+  // Open by default: the graph is what Pitch is for (the Graph button still hides it).
+  const [graph,setGraph]=useState(true);
   const select=(id:number)=>{const index=targets.findIndex(t=>t.id===id);if(index<0)return;session.select(index);if(session.attempts.some(a=>a.target.id===id))setGraph(true)};
   // Results go to the pitch history once each, when Pitch closes or the page is left, like the Tone Lab.
   const saved=useRef(new Set<number>()),save=useRef(()=>{});
@@ -51,7 +52,7 @@ export function usePitchPractice({xml,title,on,silence,onStart}:{xml:string;titl
       <button type="button" className="has-tip" aria-pressed={graph} data-tip={zh?"查看音高随时间的变化":"Show how the pitch moved over time"} onClick={()=>setGraph(!graph)}>{zh?"曲线":"Graph"}</button>
       <button type="button" disabled={!all.length} onClick={()=>{session.clear();saved.current.clear();session.select(0)}}>{zh?"清除":"Clear"}</button>
       <span className="divider"/>
-      <Link className="pitch-history" href="/flute-studio/practice#pitch">{zh?"音准记录":"Pitch history"}</Link>
+      <Link className="pitch-history" href="/flute-studio/practice#pitch">{zh?"音准记录 ›":"Pitch history ›"}</Link>
     </div></div>
     {graph&&<div className="tone-graph">
       <ToneTrace attempts={take} selectedId={null} onSelect={id=>{const a=take.find(x=>x.id===id);if(a)select(a.target.id)}} zh={zh}/>

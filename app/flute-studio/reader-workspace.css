@@ -922,7 +922,9 @@ html body .restored-reader .practice-bar .transport>button.tool.smart-drone-trig
 html body .restored-reader .practice-bar .score-recorder>button.tool.record-button.on,
 html body .restored-reader .practice-bar button.tool.on.has-tip{background:var(--studio-on-bg)!important;color:var(--studio-on-ink)!important;border-radius:12px!important;box-shadow:none!important}
 
+/* A number in a title ("No. 3") is the title's own size and style, just with full-height (lining) digits; a general heading-span rule used to shrink it to a small grey italic. */
 .score-title-number{font-family:"Times New Roman",serif}
+html body .workspace .custom-score-heading h1 .score-title-number.score-title-number{font-size:1em!important;font-style:normal!important;font-weight:inherit!important;color:inherit!important;font-variant-numeric:lining-nums;vertical-align:baseline!important;margin:0!important}
 html body .workspace .custom-score-heading h1 .score-title-number{display:inline!important}
 
 /* A single engraving heading system is used in every page layout. */
@@ -1040,3 +1042,7 @@ html body .has-tip:not([data-tip])::after,html body .has-tip[data-tip=""]::after
 html:root body .range-bar,html body .drone-hint{border:var(--pill-border)!important;background:var(--pill-bg)!important;box-shadow:var(--pill-shadow)!important}
 /* Right after a press, the button's tooltip stays hidden until the pointer leaves it. */
 html body .has-tip[data-tip-off]::after{display:none!important}
+/* Two pages: the title sits at the top of the left page, on a white band across both pages (spine line through it),
+   not on the grey above them. Books engrave their own title on page one (.spread-viewport hides this heading). */
+html body .restored-reader[data-layout="spread"] .score-paper.engraved:has(.score-spread)>.custom-score-heading{box-sizing:border-box;width:100%;margin:0!important;padding:24px calc(50% + 16px) 12px 16px!important;background:linear-gradient(90deg,#fff calc(50% - .5px),#e5e5e0 calc(50% - .5px) calc(50% + .5px),#fff calc(50% + .5px))}
+html body .restored-reader[data-layout="spread"] .score-paper.engraved>.custom-score-heading~* .score-spread,html body .restored-reader[data-layout="spread"] .score-spread{margin-top:0!important}

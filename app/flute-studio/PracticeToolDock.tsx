@@ -2,6 +2,7 @@
 
 import {CloseButton} from "./components/CloseButton";
 import { closeMic, openMic } from "./lib/audioSession";
+import { TEMPO_MIN, TEMPO_MAX, clampTempo } from "./lib/scoreTempo";
 import { MicBlocked } from "./components/MicBlocked";
 import Link from "next/link";
 import { createPortal } from "react-dom";
@@ -217,7 +218,7 @@ export default function PracticeToolDock() {
     }
     const intervals = tapTimes.current.slice(1).map((time, index) => time - tapTimes.current[index]);
     const nextBpm = Math.round(60000 / median(intervals));
-    setBpm(Math.max(30, Math.min(220, nextBpm)));
+    setBpm(clampTempo(nextBpm));
     setTapHint(t.toolDock.tapsAveraged(tapTimes.current.length));
   };
 
@@ -473,9 +474,9 @@ export default function PracticeToolDock() {
                 {metro?<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1.5"/></svg>:<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.5v9l7.5-4.5z"/></svg>}
               </button>
               <div className="tp-stepper">
-                <button type="button" aria-label={t.toolDock.decreaseTempo} onClick={()=>setBpm(Math.max(30,bpm-1))}>−</button>
+                <button type="button" aria-label={t.toolDock.decreaseTempo} onClick={()=>setBpm(Math.max(TEMPO_MIN,bpm-1))}>−</button>
                 <b>{bpm}</b>
-                <button type="button" aria-label={t.toolDock.increaseTempo} onClick={()=>setBpm(Math.min(220,bpm+1))}>+</button>
+                <button type="button" aria-label={t.toolDock.increaseTempo} onClick={()=>setBpm(Math.min(TEMPO_MAX,bpm+1))}>+</button>
               </div>
               <button type="button" className="tp-chip" onClick={tapTempo}>{zh?"点拍":"Tap"}</button>
               <button type="button" className="tp-chip" onClick={()=>setBeats(beats>=6?2:beats===4?6:beats+1)} aria-label={zh?`每小节 ${beats} 拍`:`${beats} beats a bar`}>{zh?`${beats} 拍`:`${beats} beats`}</button>

@@ -12,7 +12,7 @@ test('saved speed preserves proportion through opening and dotted-quarter sectio
 test('unavailable or malformed preference data does not break playback',()=>{
  for(const raw of [null,'{','null','[]','4'])assert.deepEqual(readTempoRatios(raw),{});
  assert.deepEqual(readTempoRatios('{"a":0,"b":-1,"c":"2","d":0.5}'),{d:.5});
- assert.equal(clampTempo(10),30);assert.equal(clampTempo(300),220);
+ assert.equal(clampTempo(5),10);assert.equal(clampTempo(10),10);assert.equal(clampTempo(300),250);
 });
 test('live tempo follows audio time, includes silence, and survives a replacement schedule',()=>{
  const points=[{at:10,bpm:69},{at:11,bpm:75.4},{at:12,bpm:81.6}];

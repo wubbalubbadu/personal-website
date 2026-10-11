@@ -85,3 +85,7 @@ html:root body .reader-settings-panel .has-tip:focus-visible::after{
     opacity:1!important;visibility:visible!important;transition-delay:.35s!important;
   }
 }
+/* The drawn View icons (Note display, Rhythm, Accidentals) at the size where their drawing matches the text glyphs
+   beside them (●○ and 𝑓, about 20px of ink): optical size, not box size. */
+html:root body .reader-settings-panel .reader-display-options .tool>span svg{width:26px!important;height:26px!important}
+html body .passage-guide .passage-guide__icon svg{width:24px;height:24px}

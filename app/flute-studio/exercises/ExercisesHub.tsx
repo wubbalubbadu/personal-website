@@ -32,6 +32,7 @@ const cardTint:Record<string,string>={"scale-studio":"preview-card--scales","lon
 
 function Preview({id,zh}:{id:string;zh:boolean}){
   switch(id){
+    case "cookie-scales":
     case "scale-studio": return <ScaleStudioPreview zh={zh}/>;
     case "long-tones": return <LongTonePreview zh={zh}/>;
     case "breathing-lab": return <BreathingPreview zh={zh}/>;

@@ -6,7 +6,8 @@
 .passage-guide button{font:inherit;cursor:pointer;border:0;background:transparent;color:inherit;min-height:40px;padding:6px 12px;box-shadow:none}
 .passage-guide__tabs{display:flex;gap:8px;margin:20px 0;border-bottom:1px solid #e6e6e9;padding-bottom:10px}
 .passage-guide__tabs button{font-weight:550}
-html body .passage-guide button[aria-pressed=true]:not(.reader-choice button){background:#e5ece1!important;color:#46633d!important}
+/* Pressed = selected, so the studio's selected purple (not the old green); the View switch keeps its white chosen tab. */
+html body .passage-guide button[aria-pressed=true]:not(.reader-choice button):not(.passage-guide__chips button){background:#f1e5f5!important;color:#6d4585!important}
 .passage-guide__options{display:flex;gap:6px;flex-wrap:wrap;font-size:13px}.passage-guide__original>header{justify-content:space-between}
 .passage-guide__cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px;margin-top:28px;border-top:1px solid #e6e6e9;padding-top:26px}
 .passage-guide__cards article{min-width:0}.passage-guide__cards article>header{align-items:baseline;gap:8px}.passage-guide__cards header>span{font-size:12px;color:#878892}
@@ -158,7 +159,7 @@ html body .passage-guide .pitch-row .pitch-history{font-size:14px;font-weight:50
 /* The close-up's × is Mark up's: 40px, grey #727982, no hover fill, a touch darker on hover. */
 html body .passage-guide button.passage-guide__close,html body .passage-guide button.passage-guide__close:hover{display:grid;place-items:center;width:40px;height:40px;min-width:40px;min-height:40px;padding:0 10px;border:0;border-radius:12px;background:transparent!important;box-shadow:none!important;color:#727982}
 html body .passage-guide button.passage-guide__close:hover{color:#41464b}
-/* Technique and Pitch use the app's own segmented control (the View panel's .reader-choice). */
+/* Technique, Pitch and Rhythm are separate chips, the Library's filter chips (library.css .library-chips): grey, dark when chosen. */
 .passage-guide__heading .passage-guide__modes{flex-wrap:nowrap}
 /* Exercise sections: a small heading over their rows. */
 .passage-guide__section>h4{margin:10px 0 0;padding-top:8px;border-top:1px solid #ececef;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#85868e}
@@ -232,3 +233,19 @@ html:root body .passage-guide .rhythm-tap__count{position:static;transform:none;
 /* The bar tools' grip: two columns of dots at the left end. Drag it to move the pill off the music. */
 html:root body .range-bar__grip{align-self:stretch;width:14px;margin:0 -2px 0 4px;touch-action:none;cursor:grab;background:radial-gradient(circle,#a3a4ad 1.2px,transparent 1.6px) center/6px 6px;background-repeat:repeat;-webkit-mask:linear-gradient(#000,#000) center/12px 18px no-repeat;mask:linear-gradient(#000,#000) center/12px 18px no-repeat}
 html:root body .range-bar__grip:active{cursor:grabbing}
+
+html body .passage-guide .passage-guide__chips{display:flex;gap:6px}
+html body .passage-guide .passage-guide__chips.passage-guide__chips button{height:32px!important;min-height:0!important;padding:0 13px!important;border:0!important;border-radius:999px!important;background:#f1f1f2;color:#5f6169;font:inherit;font-size:13px!important;font-weight:560!important;cursor:pointer}
+html body .passage-guide .passage-guide__chips button:hover{background:#e6e6ea}
+html body .passage-guide .passage-guide__chips button[aria-pressed="true"],html body .passage-guide .passage-guide__chips button[aria-pressed="true"]:hover{background:#292a33;color:#fff}
+/* Close-up Pitch row: words, never boxes (the .text-action look): grey, darker on hover; Graph while shown is dark.
+   Pitch history is the same grey with › (it opens another page). The blue cursor marks where to start, so its
+   "Start here" label is left out here, where it landed on the dynamics under the staff. */
+html body .passage-guide .pitch-practice .pitch-row .pitch-row-surface>button:not(.pitch-start),
+html body .passage-guide .pitch-practice .pitch-row .pitch-row-surface>button:not(.pitch-start):is(:hover,[aria-pressed=true]){background:transparent!important;box-shadow:none!important;border:0!important}
+html body .passage-guide .pitch-practice .pitch-row .pitch-row-surface>button:not(.pitch-start){color:#6f7178!important;font-weight:500}
+html body .passage-guide .pitch-practice .pitch-row .pitch-row-surface>button[aria-pressed=true]{color:#292a33!important;font-weight:600}
+html body .passage-guide .pitch-practice .pitch-row .pitch-row-surface>:is(button,a):not(:disabled):not(.is-on):hover{color:#292a33!important}
+html body .passage-guide .pitch-practice .pitch-row .pitch-history{color:#6f7178!important;font-weight:500;text-decoration:none}
+html body .passage-guide .tone-note-time{display:none}
+html body .passage-guide .tone-analysis-empty{text-align:center;margin-left:auto!important;margin-right:auto!important}

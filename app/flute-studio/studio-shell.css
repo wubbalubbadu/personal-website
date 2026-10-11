@@ -168,7 +168,9 @@ html body .reader-header .audio-tool.active{background:#ececef!important;color:#
 html body :is(.reader-settings-panel,.restored-reader) :is(.scale-book__chip.selected,.scale-book__preset.selected,.reader-choice button[aria-pressed="true"],.reader-terms.on,.pitch-grid button.selected,.reader-display-options .tool.on){
   background:#292a33!important;color:#fff!important;box-shadow:none!important;
 }
-html body .reader-settings-panel .scale-book__set.is-active{background:#f1f1f4!important}
+/* The set on screen (until you change something): the panel's selected-chip purple. */
+html body .reader-settings-panel .scale-book__set.is-active{background:#f1e5f5!important}
+html body .reader-settings-panel .scale-book__set.is-active .scale-book__set-open :is(b,small){color:#6d4585!important}
 
 /* The Scales sheet on a phone: saving and restoring live in the Sets tab,
    beside the saved sets, as phone buttons (the header's + also saves). */
@@ -989,4 +991,22 @@ html:root body .reader-setting-note{margin:10px 0 0;font-size:13px;line-height:1
   html:root body .restored-reader .practice-bar .reader-pages:not(#_):not(#_)>button:not(:disabled):is(:hover,:focus-visible)::before{opacity:1!important}
   html:root body .restored-reader .reader-pages:not(#_)>span{min-width:0!important;padding:0 2px!important}
   html:root body .restored-reader .practice-bar .tool:not(#_):not(.tempo-group .tool):not(.drone-tool):not(.reader-tap):not([aria-label*="focus"]){width:auto!important;min-width:46px!important;max-width:none!important;padding-left:0!important;padding-right:0!important;justify-content:center!important}
+}
+
+/* Saved-set trash: just the grey icon, no box of its own (a generic panel-button fill made a pill on the row's pill).
+   Red only where a real hover exists; on iPad a tap left the hover colour stuck. */
+html body .reader-settings-panel .scale-book__set .scale-book__set-delete.scale-book__set-delete{background:transparent!important;box-shadow:none!important;color:#a5a7ad}
+@media(hover:hover){html body .reader-settings-panel .scale-book__set .scale-book__set-delete.scale-book__set-delete:hover{color:#a5372f}}
+@media(hover:none){html body .reader-settings-panel .scale-book__set .scale-book__set-delete.scale-book__set-delete:hover{color:#a5a7ad}}
+/* PDF / XML: pick one, so the Library's filter chips (DESIGN.md "Which shape for which job"): grey capsule, dark when
+   chosen. Never the status pill's look (Working on stays light, with its dot), so the two can't be mistaken. */
+html:root body .format-switch.format-switch{display:inline-flex;gap:6px;background:transparent!important;padding:0!important}
+html:root body .format-switch.format-switch>button{height:32px!important;min-height:0!important;padding:0 13px!important;border:0!important;border-radius:999px!important;background:#f1f1f2!important;color:#5f6169!important;font-size:13px!important;font-weight:560!important;box-shadow:none!important}
+html:root body .format-switch.format-switch>button:hover{background:#e6e6ea!important}
+html:root body .format-switch.format-switch>button[aria-pressed="true"],html:root body .format-switch.format-switch>button[aria-pressed="true"]:hover{background:#292a33!important;color:#fff!important}
+/* The metronome ▾ sits at the far end of the tempo pill, after Tap, with a wider target: beside − it was too easy to
+   miss, even with a Pencil. Phones keep their own order (the max-width:760px block above). */
+@media(min-width:761px){
+  html:root body .restored-reader .practice-bar .tempo-group:not(#_)>.reader-popover-anchor{order:20!important}
+  html:root body .restored-reader .practice-bar .tempo-group:not(#_) .metronome-options{width:30px!important;min-width:30px!important}
 }

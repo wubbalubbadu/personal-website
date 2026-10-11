@@ -1,5 +1,6 @@
 'use client';
 import {useCallback,useEffect,useRef,useState} from 'react';
+import CountInPulse from '../../components/CountInPulse';
 import EngravedRow from '../EngravedRow';
 import {useRhythmAudio} from '../rhythm/useRhythmAudio';
 import {compileRhythm,continuations,gradeTaps,type RhythmPattern,type TapMark} from './rhythmSequence';
@@ -71,7 +72,7 @@ export default function RhythmPractice({pattern,zh,right,frame,onAttempt,onFeedb
   return <div className="dt-practice">
     <EngravedRow proportional notes={data.notes} ties={data.ties} beams={pattern.beams} bars={pattern.bars} clef={false} meter={{top,bottom:4}} right={right} viewBox={frame} active={active} interactive label={tr('The rhythm, with your taps under it','节奏，下面是你的点击')}>
       {l=>{const x=(t:number)=>l.beatX(Math.max(-.3,Math.min(top,t)));return <>
-        {data.timeline.map((e,i)=>!data.ties.includes(i-1)&&<rect key={i} className="dt-hit" x={l.xs[i]-24} y="98" width="48" height="114" role="button" tabIndex={0} aria-label={tr(`Hear note ${i+1}`,`听第 ${i+1} 个音`)} onClick={()=>hearNote(i)} onKeyDown={ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();hearNote(i)}}}/>)}
+        {data.timeline.map((e,i)=>e.midi!==null&&!data.ties.includes(i-1)&&<rect key={i} className="dt-hit" x={l.xs[i]-24} y="98" width="48" height="114" role="button" tabIndex={0} aria-label={tr(`Hear note ${i+1}`,`听第 ${i+1} 个音`)} onClick={()=>hearNote(i)} onKeyDown={ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();hearNote(i)}}}/>)}
         {Array.from({length:top},(_,b)=>b).map(b=><text key={b} className={`dt-count${lit===b?' is-lit':''}`} x={x(b)} y={COUNT_Y}>{b+1}</text>)}
         {judged&&<path className="dt-ruler" d={`M${x(0)} ${MARK_Y} H${x(top)}`}/>}
         {judged&&data.onsets.map((t,i)=><circle key={t} className={`dt-guide${missing.includes(i)?' is-missed':''}`} cx={x(t)} cy={MARK_Y} r={missing.includes(i)?7:5}/>)}
@@ -79,10 +80,10 @@ export default function RhythmPractice({pattern,zh,right,frame,onAttempt,onFeedb
           {judged&&(m.timing==='early'||m.timing==='late')&&<path className="dt-tap-link" d={`M${x(m.at)} ${MARK_Y+22} L${x(data.onsets[m.onset])} ${MARK_Y+6}`}/>}
           <circle className={`dt-tap${judged?` is-${m.timing}`:''}`} cx={x(m.at)} cy={MARK_Y+22} r="6"/>
         </g>)}
-        {countIn>0&&<text className="dt-label" x={(x(0)+x(top))/2} y={MARK_Y+60}>{tr('Get ready','准备')} {countIn}</text>}
       </>}}
     </EngravedRow>
     <div className="dt-practice-controls">
+      <CountInPulse beat={countIn-1} total={top} active={countIn>0} zh={zh}/>
       {/* Cookie comes here from the bubble. The whole area is the tap target; Cookie itself is only the picture. */}
       <div className={`dt-tap-spot${mode==='tap'?' is-live':''}`} role="button" tabIndex={0} aria-disabled={mode!=='tap'} aria-label={tr('Tap Cookie on each new note','每个新音点一下 Cookie')}
         onPointerDown={e=>{e.preventDefault();if(mode==='tap')tap(e.timeStamp);else onTapped()}} onKeyDown={e=>{if(e.key==='Enter'&&!e.repeat){e.preventDefault();if(mode==='tap')tap(e.timeStamp)}}}>

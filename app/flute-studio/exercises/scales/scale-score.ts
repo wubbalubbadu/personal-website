@@ -127,6 +127,8 @@ export const scaleTypes=[
   {id:"locrian",label:"Locrian",zh:"洛克里亚调式",intervals:[0,1,3,5,6,8,10],letters:diatonicLetters,descending:null,mode:"major",chord:[0,2,4],reach:diatonicReach,openSignature:false,modeFifthsOffset:-5},
   {id:"majorPentatonic",label:"Major pentatonic",zh:"大调五声音阶",intervals:[0,2,4,7,9],letters:[0,1,2,4,5],descending:null,mode:"major",chord:[0,2,3],reach:diatonicReach,openSignature:true},
   {id:"minorPentatonic",label:"Minor pentatonic",zh:"小调五声音阶",intervals:[0,3,5,7,10],letters:[0,2,3,4,6],descending:null,mode:"minor",chord:[0,1,3],reach:diatonicReach,openSignature:true},
+  {id:"majorSeventh",label:"Major seventh",zh:"大七和弦",intervals:[0,2,4,5,7,9,11],letters:diatonicLetters,descending:null,mode:"major",chord:[0,2,4,6],reach:diatonicReach,openSignature:false},
+  {id:"minorSeventh",label:"Minor seventh",zh:"小七和弦",intervals:[0,2,3,5,7,8,10],letters:diatonicLetters,descending:null,mode:"minor",chord:[0,2,4,6],reach:diatonicReach,openSignature:false},
 ] as const;
 export type ScaleType=typeof scaleTypes[number];
 export type ScaleTypeId=ScaleType["id"];
@@ -135,6 +137,7 @@ export type ScaleTypeId=ScaleType["id"];
 export const scaleForms=[
   {id:"scale",label:"Scale",zh:"音阶"},
   {id:"arpeggio",label:"Arpeggio",zh:"琶音"},
+  {id:"brokenArpeggio",label:"Broken arpeggio",zh:"交错琶音"},
   {id:"seconds",label:"Seconds",zh:"二度"},
   {id:"thirds",label:"Thirds",zh:"三度"},
   {id:"fourths",label:"Fourths",zh:"四度"},
@@ -282,10 +285,16 @@ function noteAt(key:SpelledKey,degree:number,type:ScaleType,descending=false):Sc
 function ascendingDegrees(form:ScaleFormId,low:number,high:number,ceiling:number,type:ScaleType):number[]{
   const out:number[]=[];
   const card=degreesPerOctave(type);
-  if(form==="arpeggio"){
+  if(form==="arpeggio"||form==="brokenArpeggio"){
     const chord=type.chord as readonly number[];
     for(let d=low;d<=high;d++){const i=((d%card)+card)%card;if(chord.includes(i))out.push(d)}
     if(out.at(-1)!==high&&((high%card)+card)%card===0)out.push(high);
+    if(form==="brokenArpeggio"){
+      const broken:number[]=[];
+      // C G E B | G C B E, then the same path mirrored down.
+      for(let i=0;i+3<out.length;i+=2)broken.push(out[i],out[i+2],out[i+1],out[i+3]);
+      return broken.length?broken:out;
+    }
     return out;
   }
   // The octave is one full turn of whatever set this type is, so it comes

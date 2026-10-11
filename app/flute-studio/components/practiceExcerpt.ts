@@ -74,15 +74,19 @@ export function relatedScale(events:PassageEvent[],sourceXml?:string){
     const tones=type.id==='major'||!union?own:new Set(scaleTypes.filter(t=>['natural','harmonic','melodic'].includes(t.id)).flatMap(t=>t.intervals.map(i=>(key.pc+i)%12)));
     const matched=distinct.filter(p=>tones.has(p)),ownMatched=distinct.filter(p=>own.has(p)).length;
     const steps=pcs.slice(1).filter((p,i)=>tones.has(p)&&tones.has(pcs[i])&&[1,2,10,11].includes((p-pcs[i]+12)%12)).length;
-    return {key,type,matched,steps,score:matched.length*3+ownMatched*.1+(type.id==='melodic'?.05:0)+steps+(pcs[0]===key.pc?1:0)+(pcs.at(-1)===key.pc?1:0)};
+    return {key,type,matched,steps,score:matched.length*3+ownMatched*.1+(type.id==='melodic'?.05:0)+(type.id==='major'?.02:0)+steps+(pcs[0]===key.pc?1:0)+(pcs.at(-1)===key.pc?1:0)};
   })).filter(c=>c.matched.length/distinct.length>=.8&&c.steps>=3).sort((a,b)=>b.score-a.score);
-  const best=rank(false)[0]??rank(true)[0];if(!best)return null;
+  const ranked=rank(false),best=ranked[0]??rank(true)[0];if(!best)return null;
+  // Same notes, nothing to tell them apart (no tonic at either end): a major key and its relative natural minor tie.
+  // Major is shown (it is the usual reading of a key signature), with the minor named beside it.
+  const relative=best.type.id==='major'?ranked.find(c=>c.type.id==='natural'&&c.key.pc===(best.key.pc+9)%12&&Math.abs(c.score-best.score)<.05):undefined;
   const written=sourceXml?Array.from(new DOMParser().parseFromString(sourceXml,'application/xml').querySelectorAll('pitch')).map(p=>{const alter=Number(p.querySelector('alter')?.textContent??0);return `${p.querySelector('step')?.textContent}${alter===1?'♯':alter===-1?'♭':''}${p.querySelector('octave')?.textContent}`}):pitches;
   const evidence=[...new Set(written.filter(p=>best.matched.includes(pitchClass(p)!)).map(p=>p.replace(/\d+$/,'')))];
   const midi=pitches.map(p=>{const m=p.match(/(\d+)$/)!;return (Number(m[1])+1)*12+pitchClass(p)!});
   const span={low:Math.max(59,Math.min(...midi)),high:Math.min(98,Math.max(...midi))};
   const spelling=keyForType(best.key,best.type).label;
-  return {label:`${spelling[0].toUpperCase()+spelling.slice(1)} ${best.type.label.toLowerCase()}`,key:best.key.id,type:best.type.id as ScaleTypeId,evidence,xml:scaleMusicXML(best.key,'custom',{kind:'whole',mode:'tongue'},'even',best.type.id,'scale','none','lowest',span)};
+  const also=relative?` (or ${keyForType(relative.key,relative.type).label.replace(/^./,c=>c.toUpperCase())} minor)`:'';
+  return {label:`${spelling[0].toUpperCase()+spelling.slice(1)} ${best.type.label.toLowerCase()}${also}`,key:best.key.id,type:best.type.id as ScaleTypeId,evidence,xml:scaleMusicXML(best.key,'custom',{kind:'whole',mode:'tongue'},'even',best.type.id,'scale','none','lowest',span)};
 }
 
 /**

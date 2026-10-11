@@ -7,7 +7,9 @@ export function readTempoRatios(raw:string|null):Record<string,number>{
     return Object.fromEntries(Object.entries(saved).filter(([,ratio])=>typeof ratio==='number'&&Number.isFinite(ratio)&&ratio>0));
   }catch{return {}}
 }
-export function clampTempo(value:number){return Math.max(30,Math.min(220,Math.round(value)))}
+/** Every metronome's range, like a real one: very slow practice down to 10, up to 250. Breathing Lab keeps its own. */
+export const TEMPO_MIN=10,TEMPO_MAX=250;
+export function clampTempo(value:number){return Math.max(TEMPO_MIN,Math.min(TEMPO_MAX,Math.round(value)))}
 export type TempoPoint={at:number;bpm:number};
 /** The scheduler holds each note at its sampled ramp speed. Display that same speed. */
 export function scheduledTempoAt(points:TempoPoint[],time:number):number|null{

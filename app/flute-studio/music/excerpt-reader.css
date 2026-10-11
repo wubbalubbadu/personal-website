@@ -5,6 +5,19 @@
 .fixed-score-reader .excerpt-passages button{flex:0 0 auto;height:34px;display:inline-flex;align-items:center;border:0;border-radius:17px;padding:0 14px;background:#fff;color:#5a5c63;font-family:inherit;font-size:13px;font-weight:600;line-height:1;cursor:pointer}
 .fixed-score-reader .excerpt-passages button:hover{color:#292a33}
 .fixed-score-reader .excerpt-passages button.active{background:#292a33!important;color:#fff!important}
+/* Recordings: the same white surface and hairline as the Scales settings panel; type from DESIGN.md (14/600 title,
+   13px grey meta); chips at the settings panel's chip size (34px, 9px radius, 12.5/500). */
+.excerpt-recordings{grid-area:recordings;min-width:0;min-height:0;overflow:auto;background:#fff;border-left:1px solid #e6e7e3;padding:14px 18px;color:#292a33}
+.excerpt-recordings>header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.excerpt-recordings>header>span{font-size:14px;font-weight:600}
+.excerpt-recording{display:grid;gap:2px;padding:12px 0;border-top:1px solid #f0f0f2}
+.excerpt-recording>strong{font-size:14px;font-weight:600;line-height:1.35}
+.excerpt-recording>span{font-size:13px;color:#85868e;line-height:1.35}
+.excerpt-recording>div{display:flex;align-items:center;gap:8px;margin-top:8px}
+.excerpt-recording .scale-book__chip{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:9px;font-size:12.5px;font-weight:500}
+.excerpt-recording .scale-book__chip svg{width:16px;height:16px}
+.excerpt-recording a.text-action{text-decoration:none}
+.excerpt-recordings iframe{display:block;border:0;aspect-ratio:16/9;width:100%;margin-top:10px;border-radius:10px;background:#f1f1f4}
 @media(min-width:1500px){.fixed-score-reader .excerpt-passages{position:absolute;left:16px;top:12px;flex-direction:column;align-items:flex-start;margin:0;max-width:200px}}
 .fixed-score-reader .practice-bar{gap:4px!important}
 .reader-workspace .score-paper:has(.excerpt-score-subtitle) .custom-score-heading{display:block!important;text-align:center}
@@ -18,16 +31,6 @@ html body .fixed-score-reader .osmd-score.fixed-score-page{padding:0!important;l
 .fixed-score-paper[data-spread] .fixed-score-page>img{width:var(--sheet-width)!important;flex:0 0 var(--sheet-width);background:#fff}
 .fixed-score-page>img{display:block;width:100%;height:auto;max-width:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .fixed-score-reader[data-listen] .workspace{grid-template-columns:minmax(0,1fr) 310px!important;grid-template-rows:auto auto auto minmax(0,1fr)!important;grid-template-areas:"document document" "header header" "markup markup" "score recordings"!important}
-.excerpt-recordings{grid-area:recordings;min-width:0;min-height:0;overflow:auto;background:#fafbf9;border-left:1px solid var(--line);padding:14px 16px;color:#41464b;font-size:14px}
-.excerpt-recordings>header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-.excerpt-recordings button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;border:0;border-radius:8px;padding:6px 10px;background:#eef2eb;color:#41464b;font:inherit;cursor:pointer}
-.excerpt-recordings>header button{background:transparent}
-.excerpt-recordings svg{width:18px;height:18px}
-.excerpt-recording>strong{font-size:14px;font-weight:600;line-height:1.5}
-.excerpt-recording p{color:#777a80;line-height:1.5;margin:6px 0 12px}
-.excerpt-recording>div{display:flex;align-items:center;gap:14px}
-.excerpt-recordings a{color:#5b7251;font-size:13px;text-underline-offset:3px}
-.excerpt-recordings iframe{display:block;border:0;aspect-ratio:16/9;width:100%;margin:14px 0;border-radius:10px;background:#e8e9e5}
 .excerpt-load-error{position:absolute;inset:20px 12px auto;padding:15px;line-height:1.5;background:#fff}
 @media(max-width:760px){
   .fixed-score-reader .excerpt-caption{padding:7px 12px;font-size:12px;gap:4px 10px}

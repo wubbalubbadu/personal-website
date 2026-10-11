@@ -9,6 +9,8 @@ import {ScoreViewer,type ScoreViewerConfig} from "../../components/ScoreViewer";
 import {PracticeIcon} from "../../components/PracticeIcon";
 import KeyExerciseViewer from "../../components/KeyExerciseViewer";
 import FixedScoreViewer from "../../components/FixedScoreViewer";
+import {ExcerptTempoMark,useExcerptTempoMark} from "../../components/ExcerptTempoMark";
+import {usePracticeAudio} from "../../PracticeAudio";
 import {recordOpened} from "../../lib/bookProgress";
 import {useLanguage} from "../../i18n/LanguageContext";
 import "../books/book.css";
@@ -20,6 +22,9 @@ export default function UploadedMusicPage(){
   const {lang}=useLanguage(),zh=lang==="zh";
   // Which excerpt passage is open as XML (null: the printed page). Each passage can carry its own MusicXML.
   const [interactive,setInteractive]=useState<string|null>(null);
+  // An excerpt's tempo and tally: the same pair (and tally) as the printed-page view.
+  const [showTempo,setShowTempo]=useExcerptTempoMark();
+  const {bpm,setBpm,metro,toggleMetro}=usePracticeAudio();
   const item=musicLibrary.find(entry=>entry.id===params.id);
   // Arriving from Tricky bits: bars to select, which saved bit it was, and whether the bars are being changed.
   const [deepLink,setDeepLink]=useState<{bars?:{from:number;to:number};open?:string;change?:string}|null>(null);
@@ -71,5 +76,7 @@ export default function UploadedMusicPage(){
     {next?<Link className="book-stepper__arrow" href={next.viewerPath!} aria-label={zh?`下一首：第 ${next.book!.number} 首`:`Next: No. ${next.book!.number}`}><PracticeIcon name="next"/></Link>:<span className="book-stepper__arrow is-off" aria-hidden="true"><PracticeIcon name="next"/></span>}
   </span>:null;
   if(item.keySections)return <KeyExerciseViewer key={item.id} config={config} sections={item.keySections} stepper={stepper}/>;
-  return <ScoreViewer key={xmlId} config={config} headerActions={()=> <>{stepper}{item.excerpt&&<div className="reader-choice" role="group" aria-label={zh?"乐谱格式":"Score format"}><button aria-pressed={false} onClick={()=>setInteractive(null)}>PDF</button><button aria-pressed={true}>XML</button></div>}</>}/>;
+  const passageLabel=zh?xmlPassage?.zhLabel??xmlPassage?.label??item.excerpt?.zhPassage??item.excerpt?.passage:xmlPassage?.label??item.excerpt?.passage;
+  const excerptTempo=item.excerpt&&interactive?{practiceTempo:{value:showTempo,onChange:setShowTempo},paperTop:showTempo?<ExcerptTempoMark itemId={item.id} passageId={interactive} title={[item.title,passageLabel].filter(Boolean).join(' · ')} tempo={bpm} onChange={setBpm} sounding={metro} onSound={toggleMetro} zh={zh}/>:undefined}:{};
+  return <ScoreViewer key={xmlId} config={config} {...excerptTempo} headerActions={()=> <>{stepper}{item.excerpt&&<div className="reader-choice format-switch" role="group" aria-label={zh?"乐谱格式":"Score format"}><button aria-pressed={false} onClick={()=>setInteractive(null)}>PDF</button><button aria-pressed={true}>XML</button></div>}</>}/>;
 }

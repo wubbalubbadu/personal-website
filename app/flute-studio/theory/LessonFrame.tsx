@@ -72,7 +72,7 @@ export default function LessonFrame({title,zh,className='',steps,current,onJump,
       <div id="lesson-companion">{away?<span className="lesson-cookie-placeholder" aria-hidden="true"/>:cookie}</div>
       <div className={`lesson-bubble ${tone?`is-${tone}`:''}`}>
         <p role="status" aria-live="polite">{message}</p>
-        {(action||extra)&&<div className="lesson-actions">{extra}{action}</div>}
+        {(action||extra)&&<div className="lesson-actions">{extra}{next&&<span className="lesson-action-slot"><span className="lesson-next lesson-action-measure" aria-hidden="true">{next.label}</span>{action}</span>}</div>}
       </div>
     </div>
     {status&&<p className="lesson-status" role="alert">{status}</p>}

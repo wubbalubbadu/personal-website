@@ -1,6 +1,7 @@
 'use client';
 import {useRef,useState,type ReactNode,type PointerEvent,type CSSProperties} from 'react';
 import {useLanguage} from '../../i18n/LanguageContext';
+import CountInPulse from '../../components/CountInPulse';
 import LessonFrame,{type LessonNext} from '../LessonFrame';
 import EngravedRow,{type RowNote,type RowLayout} from '../EngravedRow';
 import CookieButton from '../CookieButton';
@@ -75,7 +76,6 @@ export default function RestsLesson(){
       </g>)}
       {stage===0?<rect className="rests-hit is-inviting" x={l.xs[1]-32} y="92" width="64" height="125" rx="12" role="button" tabIndex={0} aria-label={tr('Make beat 2 silent','让第 2 拍安静')} onClick={replace} onKeyDown={e=>keyAction(e,replace)}/>:<text className="rests-caption" x={l.xs[1]} y="314">{labelFor(1)}</text>}
       {tapMarks.map((at,i)=><circle key={i} cx={l.beatX(Math.max(0,Math.min(4,at)))} cy="85" r="6" className={`rests-tap${tapResult==='correct'?' is-right':''}`}/>)}
-      {tapping&&beat<0&&<text className="rests-caption" x="355" y="370">{tr('Get ready','准备')} {Math.max(1,beat+5)}</text>}
     </>,4,stage===1?[1]:[]);
     if(stage>0){tools=<>{playButton(SILENCE)}<button className="measures-primary" onClick={startTap} disabled={tapping}>{tr('Count me in','数拍开始')}</button></>;extra=<CookieButton disabled={!tapping} aria-label={tr('Tap with the notes','跟着音符点')} onPointerDown={e=>{e.preventDefault();tap()}} onKeyDown={e=>keyAction(e,tap)}/>;progress={done:passed?1:0,total:1}}
   }else if(step===1){
@@ -151,6 +151,6 @@ export default function RestsLesson(){
   }
 
   return <LessonFrame className="rests-lesson" title={tr('Rests','休止符')} zh={zh} steps={names} current={step} onJump={navigate} heading={names[step]} narration={narration} fadeNarration message={message} tone={tone} next={next} extra={extra} progress={progress} status={audio.error?tr('Sound could not start. Tap Replay or Start to try again.','声音没能启动。点重播或开始再试一次。'):undefined}>
-    <div className="rests-scene">{scene}<div className="measures-tools">{tools}</div></div>
+    <div className="rests-scene">{scene}{step===0&&stage>0&&<CountInPulse beat={Math.floor(audio.elapsed/UNIT)} active={tapping&&audio.elapsed>=0&&audio.elapsed/UNIT<4} zh={zh}/>}<div className="measures-tools">{tools}</div></div>
   </LessonFrame>;
 }

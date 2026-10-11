@@ -24,3 +24,6 @@
    no other sign that it is on. */
 .tempo-pill.is-sounding .tempo-pill__sound{background:#79588e;color:#fff}
 .tempo-pill.is-sounding .tempo-pill__sound:hover{background:#6a4c7d;color:#fff}
+/* An excerpt's tempo + tally pair (ExcerptTempoMark), above the music: same pills and gap as Scale Studio's .score-tempo-mark. */
+.excerpt-tempo-row{margin:0 auto 8px;max-width:100%}
+.excerpt-tempo-mark{display:inline-flex;align-items:center;gap:4px}

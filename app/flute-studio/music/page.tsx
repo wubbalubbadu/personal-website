@@ -13,7 +13,7 @@ import "./library-fixes.css";
 
 /** Chinese labels for the known tags; others show as typed. */
 
-/** The chips that come first, after All; other tags follow Saved music and Good first pieces. */
+/** The chips that come first, after All; other tags follow Saved music and Beginner. */
 const LEAD_TAGS=["classical","exercise","etude","excerpt"];
 
 /** The URL only changes by navigation, which remounts the page, so nothing to subscribe to. */
@@ -82,7 +82,7 @@ export default function MusicLibrary(){
               <span className="library-chips__divider" aria-hidden="true"/>
               {lead.map(tag=>chip(tag,tagLabel(tag)))}
               <span className="library-chips__divider" aria-hidden="true"/>
-              {chip("beginner",zh?"适合入门":"Good first pieces")}
+              {chip("beginner",zh?"入门":"Beginner")}
               {rest.map(tag=>chip(tag,tagLabel(tag)))}
             </>;
           })()}

@@ -29,7 +29,9 @@ export function PracticeNotation({xml,label,quarterBpm,playing,onPlay,onStop,loo
     (async()=>{try{
       const {OpenSheetMusicDisplay,VexFlowConverter,AccidentalCalculator,MusicSheetCalculator}=await import('opensheetmusicdisplay');installGhostNoteFix(VexFlowConverter);installReminderAccidentalFix(AccidentalCalculator,MusicSheetCalculator);if(disposed)return;setError('');
       // Reminder accidentals are the reader's rule, written into the notation before it is engraved.
-      const shown=display??noDisplay,reminded=shown.accidentals?withReminders(xml):null,source=reminded?.xml??xml;
+      const shown=display??noDisplay,reminded=shown.accidentals?withReminders(xml):null;
+      // No "♩ = 120" on a practice row: the tempo lives in the tempo pill, and the mark crowded the first bar.
+      const source=(reminded?.xml??xml).replace(/<direction\b(?:(?!<\/direction>)[\s\S])*?<metronome\b[\s\S]*?<\/direction>/g,'');
       const score=new OpenSheetMusicDisplay(next,{backend:'svg',autoResize:false,drawingParameters:'compacttight',drawTitle:false,drawComposer:false,drawPartNames:false});
       score.setOptions({pageFormat:'Endless',drawMeasureNumbers:true,newSystemFromXML:false,autoBeam});
       score.EngravingRules.MinNoteDistance=1.4;score.EngravingRules.RenderSingleHorizontalStaffline=!wrap;score.EngravingRules.RenderTimeSignatures=!hideTime;score.EngravingRules.SlurNoteHeadYOffset=.9;

@@ -203,8 +203,7 @@
     "title": "Deja Vu",
     "composer": "TOMORROW X TOGETHER",
     "tags": [
-      "Pop",
-      "K-pop"
+      "Pop"
     ],
     "status": "published",
     "scorePath": "/music/txt-deja-vu/score.mxl",
@@ -217,8 +216,7 @@
     "title": "Ditto",
     "composer": "NewJeans",
     "tags": [
-      "Pop",
-      "K-pop"
+      "Pop"
     ],
     "status": "published",
     "scorePath": "/music/ditto/score.mxl",
@@ -255,8 +253,6 @@
     "viewerPath": "/flute-studio/music/hwang-jin-yi-flower-day",
     "tags": [
       "Pop",
-      "K-pop",
-      "Film",
       "Accompaniment"
     ],
     "accompanimentKind": "piano",
@@ -267,8 +263,7 @@
     "title": "Gold Dust",
     "composer": "NCT 127",
     "tags": [
-      "Pop",
-      "K-pop"
+      "Pop"
     ],
     "status": "published",
     "scorePath": "/music/gold-dust/score.mxl",
@@ -396,8 +391,7 @@
     "title": "Mystery of Love",
     "composer": "Sufjan Stevens",
     "tags": [
-      "Pop",
-      "Film"
+      "Pop"
     ],
     "status": "published",
     "scorePath": "/mystery-of-love.mxl",
@@ -1631,22 +1625,6 @@
     "accompanimentKind": "piano"
   },
   {
-    "id": "karen-mok-yin-tian",
-    "title": "Yin Tian",
-    "zhTitle": "阴天",
-    "composer": "Karen Mok",
-    "status": "published",
-    "scorePath": "/music/karen-mok-yin-tian/score.musicxml",
-    "fullScorePath": "/music/karen-mok-yin-tian/full-score.musicxml",
-    "readingPartId": "P1",
-    "partCount": 1,
-    "viewerPath": "/flute-studio/music/karen-mok-yin-tian",
-    "tags": [
-      "Pop"
-    ],
-    "defaultTempo": 68
-  },
-  {
     "id": "li-jian",
     "title": "贝加尔湖畔",
     "composer": "Li Jian",
@@ -1656,6 +1634,21 @@
     "readingPartId": "P1",
     "partCount": 1,
     "viewerPath": "/flute-studio/music/li-jian",
+    "tags": [
+      "Pop"
+    ]
+  },
+  {
+    "id": "karen-mok-yin-tian",
+    "title": "阴天",
+    "zhTitle": "阴天",
+    "composer": "莫文蔚",
+    "status": "published",
+    "scorePath": "/music/karen-mok-yin-tian/score.musicxml",
+    "fullScorePath": "/music/karen-mok-yin-tian/full-score.musicxml",
+    "readingPartId": "P1",
+    "partCount": 1,
+    "viewerPath": "/flute-studio/music/karen-mok-yin-tian",
     "tags": [
       "Pop"
     ]

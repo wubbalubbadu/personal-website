@@ -1,5 +1,5 @@
 "use client";
-import {createContext,useContext,useEffect,useRef,useState,type ReactNode} from "react";
+import {createContext,useContext,useEffect,useLayoutEffect,useRef,useState,type ReactNode} from "react";
 
 import {SCORE_TEMPO_KEY,readTempoRatios,clampTempo} from "./lib/scoreTempo";
 import {preferPlayback} from "./lib/audioSession";
@@ -40,7 +40,7 @@ export function bookClick(audio:BaseAudioContext,time:number,strong:boolean){
 export function pitchFrequency(note:string,octave:number){return 440*2**(((octave+1)*12+semitones[note]-69)/12)}
 function useAudioEngine(){
   const [bpm,setBpmState]=useState(60),[metro,setMetro]=useState(false),[accent,setAccent]=useState(true),[beats,setBeats]=useState(4),[drones,setDrones]=useState<string[]>([]),[grid,setGrid]=useState<MetronomeGrid|null>(null),[subdivision,setSubdivision]=useState<1|2|3|4>(1);
-  const context=useRef<AudioContext|null>(null),voices=useRef(new Map<string,Voice>()),tempoRatios=useRef<Record<string,number>|null>(null),printedTempo=useRef(60),score=useRef<string|null>(null);
+  const bpmRef=useRef(60),retime=useRef<(()=>void)|null>(null),context=useRef<AudioContext|null>(null),voices=useRef(new Map<string,Voice>()),tempoRatios=useRef<Record<string,number>|null>(null),printedTempo=useRef(60),score=useRef<string|null>(null);
   const getAudio=()=>{preferPlayback();let audio=context.current;if(!audio||audio.state==='closed'){audio=context.current=new AudioContext();droneSamplesIfReady(audio)/* fetch the drone samples early */}void audio.resume();return audio};
   function ratios(){
     if(tempoRatios.current===null){try{tempoRatios.current=readTempoRatios(localStorage.getItem(SCORE_TEMPO_KEY))}catch{tempoRatios.current={}}}
@@ -85,10 +85,12 @@ function useAudioEngine(){
    * tempo holds even if the scheduler itself is throttled — the lookahead
    * is deliberately longer than the ~1s a throttled tab wakes at.
    */
+  // Layout effects run before effects, so the metronome below always reads this render's tempo.
+  useLayoutEffect(()=>{bpmRef.current=bpm},[bpm]);
   useEffect(()=>{
     if(!metro||grid?.hold)return;
     const audio=getAudio();
-    const secondsPerBeat=grid?grid.beatSeconds:60/bpm,barLength=grid?grid.beatsPerBar:beats;
+    let secondsPerBeat=grid?grid.beatSeconds:60/bpmRef.current;const barLength=grid?grid.beatsPerBar:beats;
     const lookahead=1.6;
     let beat=0;
     let nextTime=0;
@@ -97,11 +99,14 @@ function useAudioEngine(){
     // always a few beats scheduled ahead, and simply clearing the timer
     // left them to play out — which is why it kept ticking for about four
     // more beats after you pressed stop.
-    const booked=new Set<OscillatorNode>();
+    // Each booked click with its start time and beat number, so a tempo change can cancel only the ones still to come.
+    const booked=new Map<OscillatorNode,{time:number;beat:number}>(),beatLog:{time:number;beat:number}[]=[];
     const bookBeat=(time:number,downbeat?:boolean)=>{
       const oscillator=bookClick(audio,time,accent&&(downbeat??beat%barLength===0));
-      booked.add(oscillator);
+      booked.set(oscillator,{time,beat});
       oscillator.onended=()=>booked.delete(oscillator);
+      // Kept after the click ends (booked forgets it): a re-time needs the last beat heard to continue the pulse from.
+      beatLog.push({time,beat});if(beatLog.length>16)beatLog.shift();
       beat+=1;
     };
     // Playback's own beat times, when it bends the tempo: book each one as it
@@ -113,7 +118,7 @@ function useAudioEngine(){
       oscillator.frequency.value=800;
       gain.gain.setValueAtTime(.16,time);gain.gain.exponentialRampToValueAtTime(.0001,time+.03);
       oscillator.connect(gain).connect(audio.destination);oscillator.start(time);oscillator.stop(time+.04);
-      booked.add(oscillator);oscillator.onended=()=>booked.delete(oscillator);
+      booked.set(oscillator,{time,beat:-1});oscillator.onended=()=>booked.delete(oscillator);
     };
     const schedule=()=>{
       if(subs)while(subAt<subs.length&&subs[subAt]<audio.currentTime+lookahead){if(subs[subAt]>=audio.currentTime)bookTick(subs[subAt]);subAt+=1}
@@ -142,18 +147,36 @@ function useAudioEngine(){
     const start=window.setTimeout(()=>{
       if(listed){beat=grid!.beatInBar;nextTime=1}
       else if(grid){const k=Math.max(0,Math.ceil((audio.currentTime+.02-grid.time)/grid.beatSeconds));nextTime=grid.time+k*grid.beatSeconds;beat=grid.beatInBar+k}
-      else nextTime=audio.currentTime+0.06;
+      else{secondsPerBeat=60/bpmRef.current;nextTime=audio.currentTime+0.06}
       schedule();
     },grid?0:260);
     const timer=window.setInterval(()=>{if(nextTime)schedule()},250);
+    // A new tempo while clicking (typed, −/+, held): keep the beat going. Cancel only the clicks not yet sounded and
+    // continue one new-tempo beat after the last one heard, so no old click lands on top of a new one and nothing
+    // needs stopping and restarting. Playback's own grid sets its own times, so this is the free-running click only.
+    retime.current=()=>{
+      if(grid||!nextTime)return;
+      const now=audio.currentTime;
+      // A click due within 0.1s plays (stopping it that late could clip it, and holding + would otherwise silence every beat).
+      booked.forEach((info,oscillator)=>{if(info.time>now+.1){try{oscillator.stop(now)}catch{/* already ended */}booked.delete(oscillator)}});
+      for(let i=beatLog.length-1;i>=0;i--)if(beatLog[i].time>now+.1)beatLog.splice(i,1);
+      const last=beatLog.at(-1),lastTime=last?.time??-Infinity,lastBeat=last?.beat??beat-1;
+      secondsPerBeat=60/bpmRef.current;
+      beat=lastBeat+1;
+      nextTime=Number.isFinite(lastTime)?Math.max(lastTime+secondsPerBeat,now+.02):now+.06;
+      schedule();
+    };
     return()=>{
       window.clearTimeout(start);
       window.clearInterval(timer);
+      retime.current=null;
       const now=audio.currentTime;
-      booked.forEach(oscillator=>{try{oscillator.stop(now)}catch{/* already ended */}});
+      booked.forEach((_,oscillator)=>{try{oscillator.stop(now)}catch{/* already ended */}});
       booked.clear();
     };
-  },[metro,bpm,accent,beats,grid,subdivision]);
+  // bpm is read through bpmRef: a tempo change re-times the running click (retime) instead of restarting it.
+  },[metro,accent,beats,grid,subdivision]);
+  useEffect(()=>{retime.current?.()},[bpm]);
   function toggleDrone(note:string,octave:number){
     const key=`${note}${octave}`,audio=getAudio(),existing=voices.current.get(key);
     if(existing){existing.gain.gain.setTargetAtTime(.0001,audio.currentTime,.025);stopVoice(existing,audio.currentTime+.12);voices.current.delete(key)}

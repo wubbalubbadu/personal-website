@@ -10,6 +10,7 @@ import CookieButton from '../CookieButton';
 import {assessHold, assessTaps, VALUES, type NoteValue} from './rhythmModel';
 import {useRhythmAudio} from './useRhythmAudio';
 import {usePhoneNotation} from '../usePhoneNotation';
+import CountInPulse from '../../components/CountInPulse';
 import LessonFrame, {type LessonNext} from '../LessonFrame';
 import {useCourseProgress} from '../useCourseProgress';
 import '../theory.css';
@@ -191,7 +192,7 @@ export default function RhythmLesson() {
     heading={names[step]} narration={narration} message={message} tone={tone} next={next} progress={progress}
     status={audio.error?tr('Sound could not start. Tap Listen to retry.','声音未能启动，请点“听一听”重试。'):''}>
     <div className="rhythm-visual">{visual}</div>
-    {clicks&&id!=='build'&&id!=='hold'&&<div className="rhythm-pulse" aria-label={tr('Beats','拍子')}>{dots.map((on,i)=><i key={i} className={on?'is-on':''}/>)}</div>}
+    {clicks&&id!=='build'&&id!=='hold'&&id!=='tap'&&<div className="rhythm-pulse" aria-label={tr('Beats','拍子')}>{dots.map((on,i)=><i key={i} className={on?'is-on':''}/>)}</div>}
     {/* Hold: a line grows while you hold, over a track marked with the note's beats; let go at the end mark. */}
     {/* Every beat is the same width in every round, so a whole note's line is four times a quarter note's.
         The track is centred; there's room past the end mark (1.5 beats) to show holding too long. */}
@@ -202,6 +203,7 @@ export default function RhythmLesson() {
     </div>}
     {id==='values'&&<p className="rhythm-pulse-caption">{tr('One click = one beat = one quarter note.','一声点击 = 一拍 = 一个四分音符。')}</p>}
     <div className="rhythm-controls">
+      {id==='tap'&&<CountInPulse beat={audio.beat} active={audio.beat>=0&&audio.beat<4&&audio.active<0} zh={zh}/>}
       {tools}
       {id==='hold'&&<div className="rhythm-hold">
         <CookieButton pressed={holding} aria-label={tr('Hold the cookie for the note length','按住饼干保持音符时值')} onPointerDown={e=>{e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);startHold(performance.now())}} onPointerUp={()=>endHold(performance.now())} onPointerCancel={cancelHold} onLostPointerCapture={()=>{if(holdStart.current!==null)cancelHold()}} onKeyDown={e=>{if((e.key===' '||e.key==='Enter')&&!e.repeat){e.preventDefault();startHold(performance.now())}}} onKeyUp={e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();endHold(performance.now())}}} onBlur={()=>{if(holdStart.current!==null)cancelHold()}}/>
