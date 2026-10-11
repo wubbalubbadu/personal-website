@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePracticeAudio } from '../PracticeAudio';
 import { detectPitch } from './pitch';
 import { TONE_MIN_RMS, ToneSession, type ToneTarget, type ToneSnapshot } from './toneSession';
+import { closeMic, openMic } from './audioSession';
 
 export function useToneSession(targets: ToneTarget[]) {
   const { getAudio } = usePracticeAudio();
@@ -20,7 +21,7 @@ export function useToneSession(targets: ToneTarget[]) {
     generation.current++;
     cancelAnimationFrame(animation.current);
     const r = resources.current;
-    r?.stream.getTracks().forEach(t => t.stop());
+    closeMic(r?.stream);
     r?.source.disconnect(); r?.filter.disconnect(); r?.analyser.disconnect(); r?.sink.disconnect();
     resources.current = null; setLevel(0);
     void wake.current?.release(); wake.current = null;
@@ -33,10 +34,10 @@ export function useToneSession(targets: ToneTarget[]) {
     let acquired: MediaStream | null = null;
     try {
       if (!navigator.mediaDevices?.getUserMedia) throw new Error('unavailable');
-      acquired = await navigator.mediaDevices.getUserMedia({audio:{autoGainControl:false,echoCancellation:false,noiseSuppression:false}});
-      if (token !== generation.current) { acquired.getTracks().forEach(t => t.stop()); return; }
+      acquired = await openMic();
+      if (token !== generation.current) { closeMic(acquired); return; }
       const context = getAudio(); await context.resume();
-      if (token !== generation.current) { acquired.getTracks().forEach(t => t.stop()); return; }
+      if (token !== generation.current) { closeMic(acquired); return; }
       const source = context.createMediaStreamSource(acquired), filter = context.createBiquadFilter(), analyser = context.createAnalyser();
       filter.type = 'highpass'; filter.frequency.value = 150; filter.Q.value = .7;
       analyser.fftSize = 4096;
@@ -75,7 +76,7 @@ export function useToneSession(targets: ToneTarget[]) {
       };
       animation.current = requestAnimationFrame(tick);
     } catch (e) {
-      acquired?.getTracks().forEach(t => t.stop());
+      closeMic(acquired);
       if (token !== generation.current) return;
       release(); setStatus('paused');
       setError(e instanceof DOMException && e.name === 'NotAllowedError' ? 'permission' : 'unavailable');

@@ -61,11 +61,12 @@
 .scale-book__range { display:grid; gap:12px; font-weight:600; }
 .scale-book__range select { width:100%; padding:12px; border:0; border-radius:12px; background:#f1f1f4; color:#292a33; font-family:inherit; font-size:14px; font-weight:400; }
 .scale-book__rotation-hint { margin:0 0 10px; color:#71747e; font-size:12.5px; font-style:italic; }
-.scale-book__preset-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px; }
-.scale-book__preset { position:relative; display:flex; align-items:center; justify-content:center; border:0; border-radius:10px; background:#f1f1f4; color:#292a33; padding:8px 4px; min-height:44px; }
+.scale-book__preset-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:8px; }
+.scale-book__preset { position:relative; display:flex; align-items:center; justify-content:center; border:0; border-radius:10px; background:#f1f1f4; color:#292a33; padding:2px 0; min-height:44px; }
 .scale-book__preset:hover { background:#e7e7ea; }
 .scale-book__preset.selected { background:#dce8d7; box-shadow:inset 0 0 0 2px #678956; color:#40553d; }
-.scale-book__preset-icon { display:block; }
+/* Four tiles a row, like the key grid above them: the notation fills most of each tile, 2px padding. */
+.scale-book__preset-icon { display:block; width:68px; height:38px; }
 .scale-book__preset-custom-badge { position:absolute; top:3px; left:3px; display:inline-grid; place-items:center; width:15px; height:15px; border-radius:50%; background:#71747e; color:#fff; font:11px/1 serif; font-style:normal; }
 .scale-book__preset.selected .scale-book__preset-custom-badge { background:#678956; }
 .scale-book__custom-editor { margin-top:12px; padding-top:12px; border-top:1px dashed #dcded5; }

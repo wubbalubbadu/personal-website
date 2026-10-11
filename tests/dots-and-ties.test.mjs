@@ -26,7 +26,7 @@ test('three drills fill their meters, get harder, and tie continuations are not 
 });
 test('the dotted eighth and sixteenth fill one beat',()=>{
  const d=compileRhythm(DOTTED_EIGHTH);
- assert.equal(d.total,4);assert.deepEqual(d.onsets,[0,.75,1,2]);assert.equal(d.notes[0].written,.75);
+ assert.equal(d.total,DOTTED_EIGHTH.top);assert.deepEqual(d.onsets,[0,.75,1]);assert.equal(d.notes[0].written,.75);
 });
 test('a half tied to a quarter and a dotted half are the same sound',()=>{
  const sound=d=>sustainedEvents(d.timeline.map(e=>({start:e.at,duration:e.length,midi:e.midi})),d.ties);

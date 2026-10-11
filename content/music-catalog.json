@@ -74,63 +74,6 @@
     "accompanimentKind": "piano"
   },
   {
-    "id": "beethoven-leonore-3",
-    "title": "Leonore Overture No. 3",
-    "composer": "Ludwig van Beethoven",
-    "tags": [
-      "Classical",
-      "Excerpt"
-    ],
-    "status": "published",
-    "scorePath": "/music/beethoven-leonore-3/m328.musicxml",
-    "viewerPath": "/flute-studio/music/beethoven-leonore-3",
-    "excerpt": {
-      "part": "Flute 1",
-      "passage": "Tempo I to m. 360 · Opening",
-      "zhPassage": "Tempo I 至第 360 小节 · 开头",
-      "workLabel": "Overture, Op. 72b · Flute 1",
-      "zhWorkLabel": "序曲，作品 72b · 第一长笛",
-      "source": "https://imslp.org/wiki/Leonora_Overture_No.3%2C_Op.72b_(Beethoven%2C_Ludwig_van)",
-      "pages": [
-        {
-          "src": "/music/beethoven-leonore-3/m328.jpg",
-          "width": 1900,
-          "height": 990
-        }
-      ],
-      "passages": [
-        {
-          "id": "m328",
-          "label": "Tempo I to m. 360",
-          "zhLabel": "Tempo I 至第 360 小节",
-          "pages": [
-            {
-              "src": "/music/beethoven-leonore-3/m328.jpg",
-              "width": 1900,
-              "height": 990
-            }
-          ],
-          "scorePath": "/music/beethoven-leonore-3/m328.musicxml"
-        },
-        {
-          "id": "opening",
-          "label": "Opening (Adagio)",
-          "zhLabel": "开头（柔板）",
-          "pages": [
-            {
-              "src": "/music/beethoven-leonore-3/opening.jpg",
-              "width": 1900,
-              "height": 1050
-            }
-          ],
-          "scorePath": "/music/beethoven-leonore-3/opening.musicxml"
-        }
-      ]
-    },
-    "year": 1806,
-    "about": "Beethoven's third try at an overture for his only opera, then called Leonore and later Fidelio. Leonore disguises herself as a guard to free her husband Florestan from a political prison. The offstage trumpet call is the moment the minister arrives and Florestan is saved, so the flute's run after Tempo I sounds like pure relief. Beethoven found the overture too big for the opera and replaced it, and it now lives on as a concert piece."
-  },
-  {
     "id": "ravel-daphnis-et-chloe-176",
     "title": "Daphnis et Chloé",
     "composer": "Maurice Ravel",
@@ -301,6 +244,25 @@
     "defaultTempo": 184
   },
   {
+    "id": "hwang-jin-yi-flower-day",
+    "title": "Flower Day",
+    "composer": "Hwang Jin Yi",
+    "status": "published",
+    "scorePath": "/music/hwang-jin-yi-flower-day/score.musicxml",
+    "fullScorePath": "/music/hwang-jin-yi-flower-day/full-score.musicxml",
+    "readingPartId": "P1",
+    "partCount": 2,
+    "viewerPath": "/flute-studio/music/hwang-jin-yi-flower-day",
+    "tags": [
+      "Pop",
+      "K-pop",
+      "Film",
+      "Accompaniment"
+    ],
+    "accompanimentKind": "piano",
+    "defaultTempo": 54
+  },
+  {
     "id": "gold-dust",
     "title": "Gold Dust",
     "composer": "NCT 127",
@@ -352,6 +314,63 @@
     ],
     "defaultTempo": 70,
     "accompanimentKind": "piano"
+  },
+  {
+    "id": "beethoven-leonore-3",
+    "title": "Leonore Overture No. 3",
+    "composer": "Ludwig van Beethoven",
+    "tags": [
+      "Classical",
+      "Excerpt"
+    ],
+    "status": "published",
+    "scorePath": "/music/beethoven-leonore-3/m328.musicxml",
+    "viewerPath": "/flute-studio/music/beethoven-leonore-3",
+    "excerpt": {
+      "part": "Flute 1",
+      "passage": "Tempo I to m. 360 · Opening",
+      "zhPassage": "Tempo I 至第 360 小节 · 开头",
+      "workLabel": "Overture, Op. 72b · Flute 1",
+      "zhWorkLabel": "序曲，作品 72b · 第一长笛",
+      "source": "https://imslp.org/wiki/Leonora_Overture_No.3%2C_Op.72b_(Beethoven%2C_Ludwig_van)",
+      "pages": [
+        {
+          "src": "/music/beethoven-leonore-3/m328.jpg",
+          "width": 1900,
+          "height": 990
+        }
+      ],
+      "passages": [
+        {
+          "id": "m328",
+          "label": "Tempo I to m. 360",
+          "zhLabel": "Tempo I 至第 360 小节",
+          "pages": [
+            {
+              "src": "/music/beethoven-leonore-3/m328.jpg",
+              "width": 1900,
+              "height": 990
+            }
+          ],
+          "scorePath": "/music/beethoven-leonore-3/m328.musicxml"
+        },
+        {
+          "id": "opening",
+          "label": "Opening (Adagio)",
+          "zhLabel": "开头（柔板）",
+          "pages": [
+            {
+              "src": "/music/beethoven-leonore-3/opening.jpg",
+              "width": 1900,
+              "height": 1050
+            }
+          ],
+          "scorePath": "/music/beethoven-leonore-3/opening.musicxml"
+        }
+      ]
+    },
+    "year": 1806,
+    "about": "Beethoven's third try at an overture for his only opera, then called Leonore and later Fidelio. Leonore disguises herself as a guard to free her husband Florestan from a political prison. The offstage trumpet call is the moment the minister arrives and Florestan is saved, so the flute's run after Tempo I sounds like pure relief. Beethoven found the overture too big for the opera and replaced it, and it now lives on as a concert piece."
   },
   {
     "id": "christian-petzold-minuet-in-g-major",
@@ -1626,5 +1645,19 @@
       "Pop"
     ],
     "defaultTempo": 68
+  },
+  {
+    "id": "li-jian",
+    "title": "贝加尔湖畔",
+    "composer": "Li Jian",
+    "status": "published",
+    "scorePath": "/music/li-jian/score.musicxml",
+    "fullScorePath": "/music/li-jian/full-score.musicxml",
+    "readingPartId": "P1",
+    "partCount": 1,
+    "viewerPath": "/flute-studio/music/li-jian",
+    "tags": [
+      "Pop"
+    ]
   }
 ]

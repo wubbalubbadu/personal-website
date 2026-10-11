@@ -92,3 +92,5 @@
   .tools-panel__close{display:none}
 }
 @media(prefers-reduced-motion:reduce){.tp-meter__needle,.tp-meter__cents,.tp-notes button{transition:none}}
+/* The tuner's "microphone is off" line: the same 13px grey as the reading under the needle (.tp-meter__cents), wrapped. */
+.tp-mic-note{margin:8px 0 0;font-size:13px;line-height:1.4;color:#73777f;text-align:center}

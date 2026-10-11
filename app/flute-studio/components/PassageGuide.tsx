@@ -10,7 +10,8 @@ import {runsFromXml,tupletsXml,groupedXml,randomGroupSizes,fermataPitchesXml,dot
 import {noDisplay,type PracticeDisplay} from './practiceDisplay';
 import {useLanguage} from '../i18n/LanguageContext';
 import type {PassageEvent} from './passageAnalysis';
-import {RhythmTap,type PassageRhythm} from './RhythmTap';
+import {useRhythmTap,type PassageRhythm} from './RhythmTap';
+const NO_RHYTHM:PassageRhythm={clicks:[],countIn:[],length:0};
 import './passage-guide.css';
 
 type Mode='technique'|'pitch'|'rhythm';
@@ -27,6 +28,7 @@ export function PassageGuide({xml,events,from,to,quarterBpm,numbers,onClose,semp
   const [mode,setMode]=useState<Mode>(()=>{try{const saved=localStorage.getItem(MODE_KEY);return saved==='pitch'||saved==='rhythm'?saved:'technique'}catch{return 'technique'}});
   const source=useMemo(()=>{try{return {xml:extractMeasures(xml,from,to),error:''}}catch(e){return {xml:'',error:zh?'无法打开这些小节。':e instanceof Error?e.message:'Could not open these measures.'}}},[xml,from,to,zh]);
   const pitch=usePitchPractice({xml:source.xml,title,on:mode==='pitch',silence:active!==null,onStart:()=>setActive(null)});
+  const rhythmTap=useRhythmTap({xml:source.xml,rhythm:rhythm??NO_RHYTHM,quarterBpm,zh});
   const choose=(next:Mode)=>{setActive(null);setMode(next);try{localStorage.setItem(MODE_KEY,next)}catch{/* The choice lasts for this visit. */}};
   const runs=useMemo(()=>{try{return source.xml?runsFromXml(source.xml):[]}catch{return []}},[source.xml]);
   const ctx=useMemo(()=>({key:source.xml.match(/<key[ >][\s\S]*?<\/key>/)?.[0],clef:source.xml.match(/<clef[ >][\s\S]*?<\/clef>/)?.[0]}),[source.xml]);
@@ -64,9 +66,11 @@ export function PassageGuide({xml,events,from,to,quarterBpm,numbers,onClose,semp
       <div className="passage-guide__options">{toggles.map(x=><button type="button" key={x.glyph} className="passage-guide__icon has-tip" data-tip={x.label} aria-label={x.label} aria-pressed={x.on} onClick={x.onClick}><span aria-hidden="true">{x.glyph}</span></button>)}</div>
       {/* Mark up's close button: same icon, size and colour, no hover fill. */}<CloseButton className="passage-guide__close markup-close" label={zh?"关闭近看":"Close close-up"} onClick={onClose}/></header>
     {source.error?<p role="alert">{source.error}</p>:<div className="passage-guide__list">
-      {original(mode==='pitch'?pitch.marks:undefined,mode==='pitch'?pitch.onNote:undefined)}
+      {/* Rhythm: the passage wraps to the panel's width (no sideways scrolling), with the tap results under its notes. */}
+      {mode==='rhythm'&&rhythm?<div className="passage-guide__row passage-guide__row--original"><h3>{label("Original")}</h3><PracticeNotation xml={source.xml} label="original" quarterBpm={quarterBpm} playing={active==='original'} onPlay={()=>setActive('original')} onStop={()=>setActive(null)} sempreStaccato={sempreStaccato} wrap zoom={.6} marks={rhythmTap.marks}/></div>
+        :original(mode==='pitch'?pitch.marks:undefined,mode==='pitch'?pitch.onNote:undefined)}
       {mode==='pitch'&&pitch.panel}
-      {mode==='rhythm'&&rhythm&&<RhythmTap rhythm={rhythm} quarterBpm={quarterBpm} zh={zh}/>}
+      {mode==='rhythm'&&rhythm&&rhythmTap.panel}
       {/* Kept mounted while Pitch is open, so coming back to Technique does not redraw every exercise. */}
       <div hidden={mode!=='technique'}>
         {scale&&<div className="passage-guide__row"><h3>{scale.label}<Link href={`/flute-studio/exercises/scales?key=${encodeURIComponent(scale.key)}&type=${scale.type}${'form' in scale&&scale.form==='arpeggio'?'&form=arpeggio':''}&back=${encodeURIComponent(pathname)}`}>{zh?"音阶练习":"Scale Studio"}</Link></h3>{player('scale',scale.xml,scale.label)}</div>}

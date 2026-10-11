@@ -14,9 +14,9 @@
 /* Text action (COMPONENTS.md): a quiet word for housekeeping, like restoring defaults. No border, no fill, grey,
    darker on hover. Not for primary actions, not for links that go somewhere (those are green text links).
    Two classes, so it beats a page's generic "section button" rule without !important. */
-.studio-route .text-action{display:inline-flex;align-items:center;min-height:32px;padding:0 4px;border:0;border-radius:8px;background:transparent;box-shadow:none;font:inherit;font-size:14px;font-weight:500;color:#6f7178;cursor:pointer}
-.studio-route .text-action:hover{background:transparent;color:#292a33}
-.studio-route .text-action:focus-visible{outline:2px solid #b8bac2;outline-offset:2px}
+:is(.studio-route,.tp-tuner) .text-action{display:inline-flex;align-items:center;min-height:32px;padding:0 4px;border:0;border-radius:8px;background:transparent;box-shadow:none;font:inherit;font-size:14px;font-weight:500;color:#6f7178;cursor:pointer}
+:is(.studio-route,.tp-tuner) .text-action:hover{background:transparent;color:#292a33}
+:is(.studio-route,.tp-tuner) .text-action:focus-visible{outline:2px solid #b8bac2;outline-offset:2px}
 
 /* View switch (COMPONENTS.md): two or three ways to show the same page (Cards / Continuous). A quiet grey track;
    the chosen one is white with a hairline, so "selected" reads without a dark fill. */

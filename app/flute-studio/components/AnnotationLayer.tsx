@@ -15,6 +15,25 @@ const Shape=memo(function Shape({mark}:{mark:InkMark}){
   return <path data-mark-id={mark.id} d={mark.kind==='pen'?penOutline(mark):markPath(mark)} fill={mark.kind==='pen'?mark.color:'none'} stroke={mark.kind==='pen'?'none':mark.color} strokeWidth={mark.width} strokeLinecap="round" strokeLinejoin="round" opacity={mark.kind==='highlighter'?.3:1}/>;
 });
 
+
+/**
+ * Grows a Mark Up text box to fit what is typed: as wide as its longest line (measured in the box's own font, so
+ * wide letters and Chinese fit, which counting characters did not), up to the max-width in CSS, then taller as it wraps.
+ */
+let measurer:CanvasRenderingContext2D|null=null;
+function fitTextarea(el:HTMLTextAreaElement|null){
+  if(!el)return;
+  const style=getComputedStyle(el);
+  measurer??=document.createElement('canvas').getContext('2d');
+  if(measurer){
+    measurer.font=style.font;
+    const widest=Math.max(0,...el.value.split('\n').map(line=>measurer!.measureText(line).width));
+    const min=parseFloat(style.minWidth)||0,max=parseFloat(style.maxWidth)||Infinity;
+    el.style.width=`${Math.ceil(Math.min(max,Math.max(min,widest+parseFloat(style.fontSize)*.6)))}px`;
+  }
+  el.style.height='auto';el.style.height=`${el.scrollHeight}px`;
+}
+
 export function AnnotationLayer({id,active,layoutReady,layoutVersion,toolbar,zh,onClose,onZoom,zoom}:Props){
   const only=usePencilOnly();
   const [tool,setTool]=useState<Tool>('pen'),[color,setColor]=useState('#e52e31');
@@ -218,7 +237,14 @@ export function AnnotationLayer({id,active,layoutReady,layoutVersion,toolbar,zh,
       }
       state.up(e.pointerId,e.timeStamp);touchStart.current.delete(e.pointerId);gesture.current=null;
     }
-    function prevent(e:Event){if(liveConfig.current.active&&!liveConfig.current.only&&!(e.target as Element).closest('textarea,button'))e.preventDefault()}
+    // Fingers only: Safari also sends the Pencil as touches (touchType "stylus"), and cancelling those swallowed its
+    // strokes, which is why the Pencil only drew with "Apple Pencil only" on (where nothing is cancelled).
+    function prevent(e:Event){
+      if(!liveConfig.current.active||liveConfig.current.only||(e.target as Element).closest('textarea,button'))return;
+      const touches=(e as TouchEvent).changedTouches;
+      if(touches?.length&&[...touches].every(t=>(t as Touch&{touchType?:string}).touchType==='stylus'))return;
+      e.preventDefault();
+    }
     el.addEventListener('pointerdown',touchDown,{capture:true,passive:false});el.addEventListener('pointermove',touchMove,{capture:true,passive:false});el.addEventListener('pointerup',touchUp,true);el.addEventListener('pointercancel',touchUp,true);
     el.addEventListener('touchstart',prevent,{passive:false});el.addEventListener('touchmove',prevent,{passive:false});el.addEventListener('contextmenu',prevent);el.addEventListener('selectstart',prevent);
     return()=>{el.removeEventListener('pointerdown',touchDown,true);el.removeEventListener('pointermove',touchMove,true);el.removeEventListener('pointerup',touchUp,true);el.removeEventListener('pointercancel',touchUp,true);el.removeEventListener('touchstart',prevent);el.removeEventListener('touchmove',prevent);el.removeEventListener('contextmenu',prevent);el.removeEventListener('selectstart',prevent)};
@@ -262,7 +288,7 @@ export function AnnotationLayer({id,active,layoutReady,layoutVersion,toolbar,zh,
       <svg className="annotation-ink" aria-hidden="true">{placedMarks.filter(isInk).map(mark=><Shape key={mark.id} mark={mark}/>)}<path ref={livePath} fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
       {selectedMark&&isInk(selectedMark)&&active&&<svg className="annotation-selection" aria-hidden="true"><path d={markPath(selectedMark)} fill="none" stroke="#57799d" strokeWidth={selectedMark.width+6} strokeOpacity=".25"/></svg>}
       {placedMarks.filter((m):m is TextMark=>!isInk(m)).map(mark=><div key={mark.id} data-mark-id={mark.id} className={`annotation-text ${mark.kind} ${active&&selected===mark.id?'is-selected':''}`} style={{left:mark.x,top:mark.y,color:mark.color}}>
-        {editing===mark.id&&active?<textarea aria-label={mark.kind==='sticky'?(zh?'便签':'Sticky note'):(zh?'批注文字':'Annotation text')} value={mark.text} rows={Math.max(1,mark.text.split('\n').length)} style={{width:`${Math.min(28,Math.max(2,...mark.text.split('\n').map(s=>s.length+1)))}ch`}} onBlur={endEditing} onChange={e=>{const text=e.target.value;commit({...docRef.current,marks:docRef.current.marks.map(m=>m.id===mark.id?{...m,text}:m)},`typing:${mark.id}`);e.target.style.height='auto';e.target.style.height=`${e.target.scrollHeight}px`}}/>:<span>{mark.text||' '}</span>}
+        {editing===mark.id&&active?<textarea aria-label={mark.kind==='sticky'?(zh?'便签':'Sticky note'):(zh?'批注文字':'Annotation text')} value={mark.text} rows={1} ref={fitTextarea} onBlur={endEditing} onChange={e=>{const text=e.target.value;commit({...docRef.current,marks:docRef.current.marks.map(m=>m.id===mark.id?{...m,text}:m)},`typing:${mark.id}`);fitTextarea(e.target)}}/>:<span>{mark.text||' '}</span>}
       </div>)}
     </div>
   </>;

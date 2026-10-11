@@ -142,9 +142,9 @@ export default function DotsTiesLesson(){
       message=feedback||tr('A dotted eighth lasts as long as how many sixteenth notes?','附点八分音符和几个十六分音符一样长？');
       bubbleTone=tone(list);
       scene=row(compileRhythm(DOTTED_EIGHTH).notes,l=><>
-        {timeLine(l,4,4,{from:0,to:.75,label:done?tr('3 sixteenths','3 个十六分音符'):'?',done},{fineTo:1})}
+        {timeLine(l,2,4,{from:0,to:.75,label:done?tr('3 sixteenths','3 个十六分音符'):'?',done},{fineTo:1,top:2})}
         {done&&noteHits(l,DOTTED_EIGHTH,.25)}
-      </>,{beams:DOTTED_EIGHTH.beams});
+      </>,{beams:DOTTED_EIGHTH.beams,top:2});
       extra=choices(list,()=>hear(DOTTED_EIGHTH,.25),()=>tr('An eighth is 2 sixteenths. The dot adds half of that: 1 more.','八分音符等于 2 个十六分音符，附点再加一半，也就是再加 1 个。'),tr('Right: 2 + 1 = 3 sixteenths. Listen to the four clicks in beat 1.','对：2 + 1 = 3 个十六分音符。听第 1 拍里的四下点击。'));
       next.ready=done;
     }

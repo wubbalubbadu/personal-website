@@ -40,8 +40,8 @@ export const TIED_QUARTER:RhythmPattern={id:'tied-quarter',items:[{written:1,tie
 /** Beat 4 tied over the bar line to beat 1: one sound of 2 beats. ACROSS_APART is the same notes before the tie. */
 export const ACROSS:RhythmPattern={id:'across',items:[{written:2},{written:1},{written:1,tieNext:true},{written:1},{written:1},{written:2}],bars:[3]};
 export const ACROSS_APART:RhythmPattern={...ACROSS,id:'across-apart',items:ACROSS.items.map(n=>({...n,tieNext:false}))};
-/** A dotted eighth and a sixteenth sharing beat 1, then a quarter and a half. */
-export const DOTTED_EIGHTH:RhythmPattern={id:'dotted-eighth',items:[{written:.75},{written:.25},{written:1},{written:2}],beams:[[0,1]]};
+/** A dotted eighth and a sixteenth sharing beat 1, then a quarter: a 2/4 measure, so the sixteenth has room even on a phone. */
+export const DOTTED_EIGHTH:RhythmPattern={id:'dotted-eighth',top:2,items:[{written:.75},{written:.25},{written:1}],beams:[[0,1]]};
 /** Three rounds, a little harder each time: a dotted quarter in 4/4; short-long in 3/4; short-long plus a tie in 4/4. */
 export const DRILLS:RhythmPattern[]=[
   DOTTED_QUARTER,

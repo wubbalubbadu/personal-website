@@ -950,8 +950,9 @@ html:root body .restored-reader .practice-bar .tempo-group>.reader-popover-ancho
 html:root body .restored-reader .practice-bar .tempo-group .metronome-options{display:grid!important;place-items:center!important;width:20px!important;min-width:20px!important;height:38px!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:rgba(41,42,51,.05)!important;box-shadow:none!important;color:#9a9ba2!important;transform:none!important;align-self:stretch!important}
 html:root body .restored-reader .practice-bar .tempo-group .metronome-options:hover,html:root body .restored-reader .practice-bar .tempo-group .metronome-options[aria-expanded="true"]{background:rgba(41,42,51,.05)!important;color:#292a33!important}
 html:root body .restored-reader .practice-bar .tempo-group .metronome-options svg{width:14px!important;height:14px!important;flex:0 0 14px!important}
-.metronome-subdivide button{display:grid;place-items:center;padding:2px 6px}
-.metronome-subdivide .subdivision-icon{width:44px;height:26px}
+/* The Steady click buttons' padding; the icon's frame is cropped to the beat (SubdivisionIcon), so 26px of height is mostly notes. */
+.metronome-subdivide button{display:grid;place-items:center}
+.metronome-subdivide .subdivision-icon{width:36px;height:26px}
 /* Inside the tempo box, hovering only darkens the icon: no grey tile, no rounded hover shape (outranks the 11px hover at line 839). */
 html:root body .restored-reader .practice-bar .tempo-group .metronome-options:not(#_):is(:hover,:focus-visible,[aria-expanded="true"]){background:rgba(41,42,51,.05)!important;background-color:rgba(41,42,51,.05)!important;background-image:none!important;border-radius:0!important;box-shadow:none!important;color:#292a33!important}
 html:root body .restored-reader .practice-bar .tempo-group>.tool:not(.on):not(#_):is(:hover,:focus-visible){background:rgba(41,42,51,.05)!important;background-color:rgba(41,42,51,.05)!important;background-image:none!important;border-radius:9px 0 0 9px!important;box-shadow:none!important}
@@ -959,6 +960,7 @@ html:root body .restored-reader .practice-bar .tempo-group>.tool:not(.on):not(#_
    tile, never one half (outranks the per-button 11px hover at line 839 with :not(#_)). */
 html:root body .restored-reader .practice-bar .drone-group:not(#_){display:flex!important;flex-direction:row!important;align-items:stretch!important;gap:0!important;border-radius:12px;background:transparent}
 html:root body .restored-reader .practice-bar .drone-group:not(#_):hover{background:#f5f5f7}
+/* Drone on: the whole Drone box lights, ▾ included (the user wants the selection to be the whole box). */
 html:root body .restored-reader .practice-bar .drone-group:not(#_):has(.drone-tool.on){background:var(--studio-on-bg,#eee7f2)}
 html:root body .restored-reader .practice-bar .drone-group:not(#_) .drone-tool{background:transparent!important;background-color:transparent!important;box-shadow:none!important;border-radius:12px 0 0 12px!important;padding-right:2px!important}
 html:root body .restored-reader .practice-bar .drone-group:not(#_)>.reader-popover-anchor{display:flex!important;align-self:stretch!important;align-items:stretch!important;height:auto!important;margin:0!important}
@@ -972,5 +974,19 @@ html:root body .reader-setting-note{margin:10px 0 0;font-size:13px;line-height:1
   html:root body .restored-reader .practice-bar .tempo-group>.reader-popover-anchor:not(#_){order:0!important}
   html:root body .restored-reader .practice-bar .tempo-group .metronome-options:not(#_){background:transparent!important;background-color:transparent!important;height:auto!important;align-self:stretch!important}
 }
-/* Metronome on: its ▾ turns purple with it, like the Drone tile, so the lit part reads as one piece. */
-html:root body .restored-reader .practice-bar .tempo-group:has(>.tool.on) .metronome-options:not(#_),html:root body .restored-reader .practice-bar .tempo-group:has(>.tool.on) .metronome-options:not(#_):is(:hover,:focus-visible,[aria-expanded="true"]){background:var(--studio-on-bg,#eee7f2)!important;background-color:var(--studio-on-bg,#eee7f2)!important;color:var(--studio-on-ink,#79588e)!important}
+/* Metronome on: only the metronome button lights; its ▾ stays grey (a purple ▾ read as a second lit control). */
+/* Labeled tools (Draw, Listen, Record, Scales, Tempos, View) are at least 46px, so short labels share one width and their
+   icons sit at even intervals; a long label (Accompaniment) widens its own button instead of overlapping its neighbours; sized by their words, "Tempos" pushed its icon closer to View than to Scales. Phones keep the flex row above. */
+@media(min-width:761px){
+  /* Page controls: a hairline after View marks them as their own group (no pill: grey reads as another adjustable tool),
+     and their icons sit as close as the labeled tools', with the page number tight between the arrows. */
+  html:root body .restored-reader .reader-pages:not(#_){position:relative;margin-left:7px!important;padding-left:11px!important;gap:0!important}
+  html:root body .restored-reader .reader-pages:not(#_)::before{content:"";position:absolute;left:0;top:50%;height:24px;width:1px;transform:translateY(-50%);background:#e3e3e8}
+  html:root body .restored-reader .reader-pages:not(#_)>button{width:32px!important;min-width:32px!important;padding:0!important}
+  /* Hover like the top bar's timer and settings: only the 30px grey square (::before, reader-workspace.css), never a box filling the button. */
+  html:root body .restored-reader .reader-pages:not(#_):not(#_)>button:is(:hover,:focus-visible,:active){background:transparent!important;background-color:transparent!important;box-shadow:none!important}
+  html:root body .restored-reader .practice-bar .reader-pages:not(#_):not(#_)>button::before{display:block!important;opacity:0!important}
+  html:root body .restored-reader .practice-bar .reader-pages:not(#_):not(#_)>button:not(:disabled):is(:hover,:focus-visible)::before{opacity:1!important}
+  html:root body .restored-reader .reader-pages:not(#_)>span{min-width:0!important;padding:0 2px!important}
+  html:root body .restored-reader .practice-bar .tool:not(#_):not(.tempo-group .tool):not(.drone-tool):not(.reader-tap):not([aria-label*="focus"]){width:auto!important;min-width:46px!important;max-width:none!important;padding-left:0!important;padding-right:0!important;justify-content:center!important}
+}

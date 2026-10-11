@@ -17,6 +17,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { usePracticeAudio } from "../PracticeAudio";
 import { detectPitch } from "./pitch";
 import { NoteSegmenter, type PlayedNote, type TimedFrame } from "./noteSegmenter";
+import { closeMic, openMic } from "./audioSession";
 
 /**
  * ~24 readings a second. Fast enough that a trace looks continuous and the
@@ -59,7 +60,7 @@ export function usePitchStream(): PitchStream {
   const stop = useCallback(() => {
     cancelAnimationFrame(frame.current);
     frame.current = 0;
-    stream.current?.getTracks().forEach(track => track.stop());
+    closeMic(stream.current);
     stream.current = null;
     setStatus("idle");
     setLive(null);
@@ -84,9 +85,7 @@ export function usePitchStream(): PitchStream {
       // All three processors fight pitch detection: gain control rides over
       // a diminuendo, noise suppression eats the quiet end of a note, and
       // echo cancellation treats a sustained tone as an echo to remove.
-      const media = await navigator.mediaDevices.getUserMedia({
-        audio: { autoGainControl: false, echoCancellation: false, noiseSuppression: false },
-      });
+      const media = await openMic();
       stream.current = media;
 
       const context = getAudio();
@@ -135,7 +134,7 @@ export function usePitchStream(): PitchStream {
       };
       frame.current = requestAnimationFrame(loop);
     } catch {
-      stream.current?.getTracks().forEach(track => track.stop());
+      closeMic(stream.current);
       stream.current = null;
       setStatus("denied");
     }

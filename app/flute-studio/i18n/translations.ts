@@ -283,7 +283,7 @@ const en = {
     fingering: "Fingering",
     noFingering: "No fingering listed",
     fingeringTip: "Turn on, then tap or hover a note",
-    markUp: "Mark up",
+    markUp: "Draw",
     markUpTip: "Write on the page",
     musicalTermsTip: "Tap a marking for what it means",
     play: "Listen",

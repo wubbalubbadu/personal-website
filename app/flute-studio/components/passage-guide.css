@@ -216,3 +216,19 @@ html:root body .passage-guide .rhythm-tap__start{min-height:36px!important;heigh
 html:root body .passage-guide .rhythm-tap__start:hover{background:#dde7d8!important}
 html:root body .passage-guide .rhythm-tap__result{color:#a35f1c!important}
 html:root body .passage-guide .rhythm-tap__result.is-perfect{color:#46633d!important}
+/* Rhythm mode v2: the count-in uses the reader's dots inline; results are drawn under the notes (RhythmMarks). */
+html:root body .passage-guide .rhythm-tap__count{position:static;transform:none;padding:8px 12px;box-shadow:none;border:1px solid #e3e4e8}
+.rhythm-tap__count i.is-group{width:14px;height:14px}
+.rhythm-tap__count>span{align-items:center;gap:8px}
+.rhythm-tap__pad{height:72px}
+.rhythm-tap__pad span{font-size:14px;color:#9a9ba2;text-align:center;padding:0 12px}
+.rhythm-marks{position:absolute;inset:0;pointer-events:none}
+.rhythm-marks__beat{position:absolute;transform:translateX(-50%);font-size:11px;font-weight:600;line-height:1;color:#b4b6bd}
+.rhythm-marks__beat.is-bar{color:#6e707a}
+.rhythm-marks__start{position:absolute;width:9px;height:9px;margin-left:-4.5px;border-radius:50%;background:#c9cad0}
+.rhythm-marks__start.is-on{background:#46633d}
+.rhythm-marks__start.is-missed{background:transparent;box-shadow:inset 0 0 0 2px #d9822b}
+.rhythm-marks__tap{position:absolute;width:7px;height:7px;margin-left:-3.5px;border-radius:50%;background:#d9822b}
+/* The bar tools' grip: two columns of dots at the left end. Drag it to move the pill off the music. */
+html:root body .range-bar__grip{align-self:stretch;width:14px;margin:0 -2px 0 4px;touch-action:none;cursor:grab;background:radial-gradient(circle,#a3a4ad 1.2px,transparent 1.6px) center/6px 6px;background-repeat:repeat;-webkit-mask:linear-gradient(#000,#000) center/12px 18px no-repeat;mask:linear-gradient(#000,#000) center/12px 18px no-repeat}
+html:root body .range-bar__grip:active{cursor:grabbing}

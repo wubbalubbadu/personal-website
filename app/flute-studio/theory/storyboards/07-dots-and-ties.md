@@ -1,4 +1,4 @@
-# Lesson 7: Dots and ties (storyboard, redesign, revision 3)
+# Lesson 7: Dots and ties (storyboard, redesign, revision 4)
 
 October 10, 2026. Replaces draft 3 (now `(archive) 07-dots-and-ties.md`) after the user's review of the first build,
 then revised the same day after a second and a third review. Local only; no commit or deployment. Read with LESSONS.md and
@@ -57,6 +57,17 @@ Third review (revision 3):
 | 4 | Cookie should react to the practice result | Cookie at the tap spot uses the same tone as the questions: happy (the questions' pressed face) for a clean attempt, a new small "hmm" face (flat mouth, eyes aside) when taps were off. |
 | 5 | Practice: three rounds, harder each time, not all 4/4, with the short-long figure and a tie | 4/4 dotted quarter, eighth, half; 3/4 eighth, dotted quarter, quarter (short-long); 4/4 short-long then a quarter tied to an eighth. Cut time skipped: it makes the half note the beat, which needs its own explanation. |
 
+Fourth review (revision 4):
+
+| # | Feedback | Answer |
+|---|---|---|
+| 1 | Colours confusing (blue "2 beats" became blue "3 beats"); "a million lines" | No note colours. Under the staff only the counts and one neutral bracket for the note being taught; ticks only in steps about parts of a beat. No second-row brackets. |
+| 2 | Only animate what changes | When a tie becomes a dot (or back), the dotted note keeps the tied note's slot as a hidden note, so no note slides or fades in; only the tie, the dot and the bracket change. Checked: note positions and running animations are identical before and after. |
+| 3 | Checks re-asked the demo | Step 2 check: "Which single note fills a whole measure of 3/4?" (half / dotted half / whole). Step 3 check: a 2/4 measure (so the sixteenth has room on a phone) with a dotted eighth plus sixteenth beamed in beat 1 and sixteenth ticks: "A dotted eighth lasts as long as how many sixteenth notes?" (3), then "3 + 1 = 4 sixteenths, one beat. This pair is very common." |
+| 4 | Guides gave the taps away; 3/4 count-in was a surprise | Guide marks, the beat line and note lighting are hidden during the attempt and appear with the grading. The bubble names the meter before the count-in ("3/4, so the count-in is 3 clicks"), and Count me in repeats it ("3/4: one measure of 3 clicks, then start"). |
+| 5 | Always a bit ahead of the grey marks | Output latency was already subtracted. Measured in the browser pane: outputLatency 32 ms; the old reading was 4 to 9 ms later than `getOutputTimestamp`, so it could only make taps look late, not early. Taps are now timed from the input event through `getOutputTimestamp`. The early feeling is the normal habit of tapping 20 to 50 ms ahead of a heard beat, so the 0.1 s on-time window is now centred 25 ms early. Marks are still drawn where you tapped. |
+| 6 | Double dots | Not here. Planned "More topics" lesson in LESSONS.md: double dots, double sharps and flats. |
+
 ## Triplets: removed from this lesson
 
 Triplets divide a beat into three, a new idea rather than a longer or joined length. They move to a short follow-up
@@ -66,8 +77,8 @@ tied practice round gives a first taste.
 ## Shared look
 
 - 4/4 rhythm staff with no clef, the same viewBox and staff position in every step, notes spaced in proportion to time.
-- Under the staff: counts, the time line (beat ticks, half-beat ticks when halves matter, a black tick at a bar line),
-  then one bracket per note in that note's colour (blue, amber, grey).
+- Under the staff: counts, ticks only when the step is about parts of a beat, and one neutral bracket for the note being
+  taught. No note colours.
 - During playback the sounding note and the current count and tick turn red. Half-beat steps click on every half beat.
 - Targets: invisible hit areas over the music; no hover change; arrow cursor; a focus ring for keyboards only.
 - Questions use the lesson 3 answer buttons in Cookie's bubble. Fractions (½, 1½), never decimals.
@@ -75,9 +86,9 @@ tied practice round gives a first taste.
 
 ## 1. Tie two notes
 
-Sees: half note (blue, "2 beats"), quarter (amber), quarter (grey). Narration: "A half note lasts 2 beats. What if the
+Sees: half note ("2 beats" bracket), quarter, quarter. Narration: "A half note lasts 2 beats. What if the
 first sound should last 3 beats?" Action: "Tap between the half note and the next quarter note to tie them." Feedback:
-tie, both blue, "2 + 1 = 3 beats", plays as one sound. "A tie joins two notes of the same pitch into one sound. Their
+tie, the bracket becomes "2 + 1 = 3 beats", plays as one sound. "A tie joins two notes of the same pitch into one sound. Their
 lengths add up: 2 + 1 = 3 beats."
 
 ## 2. The dot
@@ -85,15 +96,13 @@ lengths add up: 2 + 1 = 3 beats."
 Sees: the tied half and quarter. Narration: "A tie like this is a little awkward to read, so it is usually written with a
 dot instead." Action: "Tap the half note to add a dot." Feedback: the notes become a dotted half, same bracket, same
 sound. "A dot adds half of the note's value. Half of 2 is 1, so a dotted half lasts 2 + 1 = 3 beats: the same sound as
-the tie." Tapping the dot shows the tie again. Check: "A dotted half lasts as long as how many quarter notes?" (3), with
-one amber bracket per beat after the answer.
+the tie." Tapping the dot shows the tie again. Check (revision 4): "Which single note fills a whole measure of 3/4?" (dotted half).
 
 ## 3. One and a half beats
 
-Sees: quarter (blue, 1 beat), eighth (amber, ½), eighth, half, with half-beat ticks. Action 1: tie the first two
+Sees: quarter ("1 beat" bracket), eighth, eighth, half, with half-beat ticks. Action 1: tie the first two
 ("1 + ½ = 1½ beats"). Action 2: "Now tap the quarter note to write it with a dot": a dotted quarter, bracket
-"1½ = 3 halves", played with a click on every half beat. Check: "A dotted quarter lasts as long as how many eighth
-notes?" (3), with three amber half-beat brackets after the answer: "so the next note starts halfway through a beat."
+"1½ = 3 halves", played with a click on every half beat. Check (revision 4): a dotted eighth and a sixteenth beamed in beat 1: "A dotted eighth lasts as long as how many sixteenth notes?" (3).
 
 ## 4. Across the bar line
 
@@ -117,5 +126,5 @@ Cookie looks happy after a clean attempt and goes "hmm" otherwise.
 
 `dots-and-ties/DotsTiesLesson.tsx`, `RhythmPractice.tsx`, `rhythmSequence.ts` (`gradeTaps`), `dots-and-ties.css`;
 `LessonFrame.tsx` (`cookieAway`, Cookie's mood there) and `lesson-shell.css`; `cookie-button.css` (`is-unsure`);
-`EngravedRow.tsx` (`tones`, `proportional`); `theory-home.css` (index scroll).
+`EngravedRow.tsx` (`proportional`); `rhythm/useRhythmAudio.ts` (`position(at)`); `theory-home.css` (index scroll).
 `TieGesture.tsx` and the short-lived `TapPad` were deleted. Tests in `tests/dots-and-ties.test.mjs`.

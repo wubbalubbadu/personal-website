@@ -1,5 +1,6 @@
 "use client";
 import {useEffect,useState,type CSSProperties} from 'react';
+import {MicBlocked} from '../../components/MicBlocked';
 import type {ScoreMarksContext} from '../../components/ScoreViewer';
 import {PracticeIcon} from '../../components/PracticeIcon';
 import {toneFinding,type ToneAttempt} from '../../lib/toneSession';
@@ -27,6 +28,7 @@ export function PitchMic({session,disabled,onToggle,zh}:{session:ReturnType<type
     <button className={`pitch-start has-tip ${running?'is-on':''}`} style={{'--level':Math.min(1,session.level*8)} as CSSProperties} aria-pressed={running} disabled={disabled} data-tip={running?(zh?'正在聆听 · 点一下暂停':'Listening · tap to pause'):(zh?'已暂停 · 点一下继续聆听':'Paused · tap to listen')} onClick={onToggle}><PracticeIcon name="mic"/>{zh?'麦克风':'Mic'}</button>
     {readout===null&&session.live
       ?<span className="pitch-readout is-live" aria-live="off"><b>{session.live.target.pitch}</b><span>{((session.live.frames.at(-1)!.at-session.live.startedAt)/1000).toFixed(1)}s</span><span className={`grade-${liveTone}`}>{liveCents>0?`↑ ${liveCents}¢`:liveCents<0?`↓ ${-liveCents}¢`:'0¢'}</span></span>
+      :session.error==='permission'?<span className="pitch-readout"><MicBlocked zh={zh}/></span>
       :<span className={`pitch-readout ${session.error?'is-error':''}`} role="status">{readout}</span>}
   </>;
 }

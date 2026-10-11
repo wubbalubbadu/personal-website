@@ -34,14 +34,14 @@ const paths:Record<PracticeIconName,ReactNode>={
   bookmark:<path d="M7 4h10v16l-5-3.6L7 20Z"/>,
   more:<><circle cx="5.5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="18.5" cy="12" r="1.4" fill="currentColor"/></>,
   bookmarkFilled:<path d="M7 4h10v16l-5-3.6L7 20Z" fill="currentColor"/>,
-  view:<><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></>,
+  view:<><path d="M2.5 12.6S6 5.1 12 5.1 21.5 12.6 21.5 12.6 18 20.1 12 20.1 2.5 12.6 2.5 12.6Z"/><circle cx="12" cy="12.6" r="3.3"/></>,
   gear:<><circle cx="12" cy="12" r="3.2"/><path d="M19.4 14.4a1.5 1.5 0 0 0 .3 1.7l.1.1a1.9 1.9 0 1 1-2.7 2.7l-.1-.1a1.5 1.5 0 0 0-1.7-.3 1.5 1.5 0 0 0-.9 1.4v.2a1.9 1.9 0 0 1-3.8 0v-.1a1.5 1.5 0 0 0-1-1.4 1.5 1.5 0 0 0-1.7.3l-.1.1a1.9 1.9 0 1 1-2.7-2.7l.1-.1a1.5 1.5 0 0 0 .3-1.7 1.5 1.5 0 0 0-1.4-.9h-.2a1.9 1.9 0 0 1 0-3.8h.1a1.5 1.5 0 0 0 1.4-1 1.5 1.5 0 0 0-.3-1.7l-.1-.1a1.9 1.9 0 1 1 2.7-2.7l.1.1a1.5 1.5 0 0 0 1.7.3h.1a1.5 1.5 0 0 0 .9-1.4v-.2a1.9 1.9 0 0 1 3.8 0v.1a1.5 1.5 0 0 0 .9 1.4 1.5 1.5 0 0 0 1.7-.3l.1-.1a1.9 1.9 0 1 1 2.7 2.7l-.1.1a1.5 1.5 0 0 0-.3 1.7v.1a1.5 1.5 0 0 0 1.4.9h.2a1.9 1.9 0 0 1 0 3.8h-.1a1.5 1.5 0 0 0-1.4.9Z"/></>,
   tap:<><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="7.4" opacity=".45"/></>,
   record:<circle cx="12" cy="12" r="6" fill="currentColor" stroke="none"/>,
   // A dial, not a metronome: the practice bar already has a metronome
   // button, and two metronomes in one toolbar would read as one control
   // drawn twice. This one is "how fast", not "click along".
-  tempo:<><path d="M3.8 17.5a8.5 8.5 0 1 1 16.4 0"/><path d="m12 17.5 4.4-5.2"/><circle cx="12" cy="17.6" r="1.4" fill="currentColor" stroke="none"/></>,
+  tempo:<><path d="M5.3 19.5a9 9 0 1 1 13.4 0"/><path d="m12 13.5 4-4.2"/><circle cx="12" cy="13.5" r="1.5" fill="currentColor" stroke="none"/></>,
   print:<><path d="M7 9V4h10v5"/><path d="M7 18H5.5A1.5 1.5 0 0 1 4 16.5v-5A1.5 1.5 0 0 1 5.5 10h13a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 1-1.5 1.5H17"/><path d="M7 14h10v6H7Z"/></>,
 };
 /**

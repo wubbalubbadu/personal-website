@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import {MicBlocked} from "../../components/MicBlocked";
 import {useEffect,useRef,useState,useSyncExternalStore} from "react";
 import {usePitchStream} from "../../lib/usePitchStream";
 import {useLanguage} from "../../i18n/LanguageContext";
@@ -147,7 +148,7 @@ export default function TendencyTest(){
               <span className="tp-meter__cents">{cents!==null?`${cents>0?"+":""}${cents}¢`:micProblem?"—":(zh?"吹一个 A":"Play an A")}</span>
             </div>
           </div>
-          {micProblem&&<p className="tendency__hint">{micProblem}</p>}
+          {micProblem&&<p className="tendency__hint"><MicBlocked zh={zh} unavailable={pitch.status==="unavailable"}/></p>}
           <div className="tendency__actions">
             <button type="button" className="tendency__primary" onClick={()=>{setReadings({});begin(passSequence(low,high),"play")}}>{zh?"调好了，继续":"Continue"}</button>
             <button type="button" className="tendency__secondary" onClick={()=>{setReadings({});begin(passSequence(low,high),"play")}}>{zh?"跳过":"Skip"}</button>

@@ -69,11 +69,12 @@ export function Stem({ x, top = BEAM_TOP }: { x: number; top?: number }) {
 
 /**
  * A full beam across a run of notes. `level` 0 is the outer (top) beam,
- * 1 the next one down — 1 beam for eighths, 2 for sixteenths.
+ * 1 the next one down — 1 beam for eighths, 2 for sixteenths. It ends flush
+ * with the last stem (it used to add the stem offset twice and overhang it).
  */
 export function Beam({ from, to, level = 0 }: { from: number; to: number; level?: number }) {
   const y = BEAM_TOP + level * (BEAM_THICKNESS + BEAM_GAP);
-  return <rect x={from + STEM_DX} y={y} width={to - from + STEM_DX + STEM_WIDTH} height={BEAM_THICKNESS} fill="currentColor" />;
+  return <rect x={from + STEM_DX} y={y} width={to - from + STEM_WIDTH} height={BEAM_THICKNESS} fill="currentColor" />;
 }
 
 /**
@@ -139,9 +140,10 @@ export function SyllableText({ x, text }: { x: number; text: string }) {
   );
 }
 
-export function GlyphSvg({ children, className }: { children: React.ReactNode; className?: string }) {
+/** `viewBox` crops the standard frame for a short group (a single beat), so the notes fill the icon instead of floating in it. */
+export function GlyphSvg({ children, className, viewBox = ICON_VIEWBOX }: { children: React.ReactNode; className?: string; viewBox?: string }) {
   return (
-    <svg viewBox={ICON_VIEWBOX} width={ICON_WIDTH} height={ICON_HEIGHT} className={className} aria-hidden="true">
+    <svg viewBox={viewBox} width={ICON_WIDTH} height={ICON_HEIGHT} className={className} aria-hidden="true">
       {children}
     </svg>
   );

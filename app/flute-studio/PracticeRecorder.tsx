@@ -1,5 +1,6 @@
 "use client";
-import {CloseButton} from "./components/CloseButton";
+import {micBlockedText} from "./components/MicBlocked";
+import {closeMic,openMic} from "./lib/audioSession";
 import {useEffect,useRef,useState} from "react";
 import {useLanguage} from "./i18n/LanguageContext";
 import {PracticeIcon} from "./components/PracticeIcon";
@@ -14,26 +15,26 @@ import {RecordingPanel} from "./components/RecordingPanel";
  */
 export default function PracticeRecorder(){
   const {t,lang}=useLanguage(),zh=lang==="zh";
-  const [recording,setRecording]=useState(false),[elapsed,setElapsed]=useState(0),[take,setTake]=useState<{url:string;type:string}|null>(null),[error,setError]=useState("");
+  const [recording,setRecording]=useState(false),[elapsed,setElapsed]=useState(0),[take,setTake]=useState<{url:string;type:string}|null>(null),[error,setError]=useState(0);
   const recordButton=useRef<HTMLButtonElement>(null);
-  const recorder=useRef<MediaRecorder|null>(null),chunks=useRef<Blob[]>([]),stream=useRef<MediaStream|null>(null),started=useRef(0);
-  useEffect(()=>()=>{stream.current?.getTracks().forEach(track=>track.stop())},[]);
+  const errorTimer=useRef(0),recorder=useRef<MediaRecorder|null>(null),chunks=useRef<Blob[]>([]),stream=useRef<MediaStream|null>(null),started=useRef(0);
+  useEffect(()=>()=>closeMic(stream.current),[]);
   useEffect(()=>()=>{if(take)URL.revokeObjectURL(take.url)},[take]);
   useEffect(()=>{if(!recording)return;const id=setInterval(()=>setElapsed(Math.floor((Date.now()-started.current)/1000)),1000);return()=>clearInterval(id)},[recording]);
   async function start(){
     try{
-      setError("");setTake(null);
-      const media=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+      setTake(null);
+      const media=await openMic();
       stream.current=media;chunks.current=[];
       const next=new MediaRecorder(media);
       next.ondataavailable=e=>{if(e.data.size)chunks.current.push(e.data)};
       next.onstop=()=>{
         const blob=new Blob(chunks.current,{type:next.mimeType});
         setTake({url:URL.createObjectURL(blob),type:next.mimeType});
-        media.getTracks().forEach(track=>track.stop());
+        closeMic(media);
       };
       next.start();recorder.current=next;started.current=Date.now();setElapsed(0);setRecording(true);
-    }catch{setError(t.recorder.micRequired)}
+    }catch{setError(n=>n+1);window.clearTimeout(errorTimer.current);errorTimer.current=window.setTimeout(()=>setError(0),2500)}
   }
   function stop(){recorder.current?.stop();setRecording(false)}
   /** Saves the take as an audio file, named by the date and time it ended. */
@@ -62,8 +63,7 @@ export default function PracticeRecorder(){
       </div>
       <small className="recorder-note">{zh?"录音不会上传。":"Recordings are never uploaded."}</small>
     </RecordingPanel>}
-    {error&&!take&&<RecordingPanel anchor={recordButton} role="alert">
-      <header><span className="record-error">{error}</span><CloseButton label={zh?"关闭":"Close"} onClick={()=>setError("")}/></header>
-    </RecordingPanel>}
+    {/* Mic refused: the reader's notice pill over the music (.drone-hint, fades in 2.5s), not a panel. Keyed so a second try replays it. */}
+    {error>0&&!take&&<div key={error} className="drone-hint" role="status">{micBlockedText(zh)}</div>}
   </div>;
 }

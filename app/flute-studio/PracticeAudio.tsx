@@ -2,6 +2,7 @@
 import {createContext,useContext,useEffect,useRef,useState,type ReactNode} from "react";
 
 import {SCORE_TEMPO_KEY,readTempoRatios,clampTempo} from "./lib/scoreTempo";
+import {preferPlayback} from "./lib/audioSession";
 import {droneSamplesIfReady,droneVoice,loadDroneSamples} from "./components/sampledDrone";
 
 type Voice={oscillator:OscillatorNode|AudioBufferSourceNode;gain:GainNode};
@@ -38,9 +39,9 @@ export function bookClick(audio:BaseAudioContext,time:number,strong:boolean){
 }
 export function pitchFrequency(note:string,octave:number){return 440*2**(((octave+1)*12+semitones[note]-69)/12)}
 function useAudioEngine(){
-  const [bpm,setBpmState]=useState(60),[metro,setMetro]=useState(false),[accent,setAccent]=useState(true),[beats,setBeats]=useState(4),[drones,setDrones]=useState<string[]>([]),[grid,setGrid]=useState<MetronomeGrid|null>(null);
+  const [bpm,setBpmState]=useState(60),[metro,setMetro]=useState(false),[accent,setAccent]=useState(true),[beats,setBeats]=useState(4),[drones,setDrones]=useState<string[]>([]),[grid,setGrid]=useState<MetronomeGrid|null>(null),[subdivision,setSubdivision]=useState<1|2|3|4>(1);
   const context=useRef<AudioContext|null>(null),voices=useRef(new Map<string,Voice>()),tempoRatios=useRef<Record<string,number>|null>(null),printedTempo=useRef(60),score=useRef<string|null>(null);
-  const getAudio=()=>{let audio=context.current;if(!audio||audio.state==='closed'){audio=context.current=new AudioContext();droneSamplesIfReady(audio)/* fetch the drone samples early */}void audio.resume();return audio};
+  const getAudio=()=>{preferPlayback();let audio=context.current;if(!audio||audio.state==='closed'){audio=context.current=new AudioContext();droneSamplesIfReady(audio)/* fetch the drone samples early */}void audio.resume();return audio};
   function ratios(){
     if(tempoRatios.current===null){try{tempoRatios.current=readTempoRatios(localStorage.getItem(SCORE_TEMPO_KEY))}catch{tempoRatios.current={}}}
     return tempoRatios.current;
@@ -124,8 +125,12 @@ function useAudioEngine(){
         }
         return;
       }
+      // Back from another tab, or after iOS interrupted the audio: rejoin from now rather than playing every missed beat at once.
+      if(nextTime<audio.currentTime-.05){const missed=Math.ceil((audio.currentTime+.05-nextTime)/secondsPerBeat);nextTime+=missed*secondsPerBeat;beat+=missed}
       while(nextTime<audio.currentTime+lookahead){
         bookBeat(nextTime);
+        // Subdivision ticks between free-running beats (playback lays its own as subTimes).
+        if(!subs)for(let k=1;k<subdivision;k++)bookTick(nextTime+k*secondsPerBeat/subdivision);
         nextTime+=secondsPerBeat;
       }
     };
@@ -148,7 +153,7 @@ function useAudioEngine(){
       booked.forEach(oscillator=>{try{oscillator.stop(now)}catch{/* already ended */}});
       booked.clear();
     };
-  },[metro,bpm,accent,beats,grid]);
+  },[metro,bpm,accent,beats,grid,subdivision]);
   function toggleDrone(note:string,octave:number){
     const key=`${note}${octave}`,audio=getAudio(),existing=voices.current.get(key);
     if(existing){existing.gain.gain.setTargetAtTime(.0001,audio.currentTime,.025);stopVoice(existing,audio.currentTime+.12);voices.current.delete(key)}
@@ -168,8 +173,17 @@ function useAudioEngine(){
     setDrones([...voices.current.keys()]);
   }
   function stopAllDrones(){const audio=context.current;voices.current.forEach(voice=>{if(audio){voice.gain.gain.setTargetAtTime(.0001,audio.currentTime,.025);stopVoice(voice,audio.currentTime+.12)}else stopVoice(voice)});voices.current.clear();setDrones([])}
+  /**
+   * Switching Safari tabs (or a call, or Siri) suspends the AudioContext, and iOS leaves it "interrupted" on return,
+   * so the metronome went silent until reload. Resume on coming back, and on the next touch if Safari wants a gesture.
+   */
+  useEffect(()=>{
+    const wake=()=>{const audio=context.current;if(!audio||document.hidden||audio.state==="running"||audio.state==="closed")return;preferPlayback();void audio.resume().catch(()=>{})};
+    document.addEventListener("visibilitychange",wake);window.addEventListener("focus",wake);window.addEventListener("pageshow",wake);window.addEventListener("pointerdown",wake,true);
+    return()=>{document.removeEventListener("visibilitychange",wake);window.removeEventListener("focus",wake);window.removeEventListener("pageshow",wake);window.removeEventListener("pointerdown",wake,true)};
+  },[]);
   useEffect(()=>()=>{voices.current.forEach(voice=>stopVoice(voice));void context.current?.close();context.current=null;voices.current.clear()},[]);
-  return {bpm,setBpm,setPlaybackBpm,metro,toggleMetro,stopMetro,accent,setAccent,beats,setBeats,drones,toggleDrone,stopAllDrones,initializeScore,getAudio,alignMetronome:setGrid,metroHeld:metro&&!!grid?.hold};
+  return {bpm,setBpm,setPlaybackBpm,metro,toggleMetro,stopMetro,accent,setAccent,beats,setBeats,drones,toggleDrone,stopAllDrones,initializeScore,getAudio,alignMetronome:setGrid,subdivision,setSubdivision,metroHeld:metro&&!!grid?.hold};
 }
 const Context=createContext<ReturnType<typeof useAudioEngine>|null>(null);
 export function PracticeAudioProvider({children}:{children:ReactNode}){const value=useAudioEngine();return <Context.Provider value={value}>{children}</Context.Provider>}

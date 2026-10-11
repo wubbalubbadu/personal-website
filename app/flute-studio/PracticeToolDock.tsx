@@ -1,6 +1,8 @@
 "use client";
 
 import {CloseButton} from "./components/CloseButton";
+import { closeMic, openMic } from "./lib/audioSession";
+import { MicBlocked } from "./components/MicBlocked";
 import Link from "next/link";
 import { createPortal } from "react-dom";
 import BackChevron from "./components/BackChevron";
@@ -100,6 +102,8 @@ export default function PracticeToolDock() {
   const [signalActive, setSignalActive] = useState(false);
   const [listening, setListening] = useState(false);
   const [tunerMessage, setTunerMessage] = useState("");
+  // The mic was refused (or there is none): shown under the meter until the next try. The old message only showed while listening, so it never appeared.
+  const [micProblem, setMicProblem] = useState<"blocked" | "unavailable" | null>(null);
   // Which fingering the dock is showing, chosen as a note name plus an
   // octave rather than one pitch out of 41. Local to the dock: looking a
   // note up mid-practice should not disturb anything else.
@@ -152,7 +156,7 @@ export default function PracticeToolDock() {
   const getContext = () => getAudio();
 
   const stopListening = () => {
-    stream.current?.getTracks().forEach((track) => track.stop());
+    closeMic(stream.current);
     stream.current = null;
     if (frame.current !== null) cancelAnimationFrame(frame.current);
     frame.current = null;
@@ -162,7 +166,7 @@ export default function PracticeToolDock() {
   };
 
   useEffect(() => () => {
-    stream.current?.getTracks().forEach((track) => track.stop());
+    closeMic(stream.current);
     if (frame.current !== null) cancelAnimationFrame(frame.current);
     /* The context is shared now, so it is not ours to close. */
   }, []);
@@ -223,19 +227,14 @@ export default function PracticeToolDock() {
       stopListening();
       return;
     }
+    setMicProblem(null);
     if (!navigator.mediaDevices?.getUserMedia) {
-      setTunerMessage(t.toolDock.micNotAvailable);
+      setMicProblem("unavailable");
       return;
     }
 
     try {
-      const media = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          autoGainControl: false,
-          echoCancellation: false,
-          noiseSuppression: false,
-        },
-      });
+      const media = await openMic();
       stream.current = media;
       const context = getContext();
       await context.resume();
@@ -312,7 +311,7 @@ export default function PracticeToolDock() {
     } catch {
       setListening(false);
       setSignalActive(false);
-      setTunerMessage(t.toolDock.micAccessDenied);
+      setMicProblem("blocked");
     }
   };
 
@@ -446,6 +445,7 @@ export default function PracticeToolDock() {
                 {/* The reading rides under the needle, so the eye stays on one spot. */}
                 <span className="tp-meter__cents">{signalActive?`${reading.cents>0?"+":""}${Math.round(reading.cents)}¢`:listening?tunerMessage:(zh?"点“听音”开始":"Tap Listen to start")}</span>
               </div>
+              {micProblem&&<p className="tp-mic-note"><MicBlocked zh={zh} unavailable={micProblem==="unavailable"}/></p>}
             </section>
 
             {/* Drones: tap a note to hold it, tap again to stop; several can
