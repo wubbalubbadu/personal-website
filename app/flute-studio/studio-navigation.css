@@ -213,3 +213,10 @@ html body :is(.studio-navigation__actions,.topbar) :is(.dock-launcher,.account-m
   html body .studio-navigation__tab{font-weight:500!important}
   html body .studio-navigation__tab.is-active{font-weight:600!important}
 }
+/* Phone top bar: slimmer icon buttons and tab padding, so the last tab (Me) shows in full instead of "M". */
+@media(max-width:760px){
+  .studio-navigation__tab{padding:0 6px}
+  .studio-navigation__tab::after{left:6px;right:6px}
+  html body .studio-navigation__actions :is(.practice-clock-button,.dock-launcher,.account-menu__trigger){width:32px!important;min-width:32px!important}
+  html body .studio-navigation .studio-navigation__actions{gap:0!important}
+}

@@ -1046,3 +1046,11 @@ html body .has-tip[data-tip-off]::after{display:none!important}
    not on the grey above them. Books engrave their own title on page one (.spread-viewport hides this heading). */
 html body .restored-reader[data-layout="spread"] .score-paper.engraved:has(.score-spread)>.custom-score-heading{box-sizing:border-box;width:100%;margin:0!important;padding:24px calc(50% + 16px) 12px 16px!important;background:linear-gradient(90deg,#fff calc(50% - .5px),#e5e5e0 calc(50% - .5px) calc(50% + .5px),#fff calc(50% + .5px))}
 html body .restored-reader[data-layout="spread"] .score-paper.engraved>.custom-score-heading~* .score-spread,html body .restored-reader[data-layout="spread"] .score-spread{margin-top:0!important}
+/* Count-in: one white pill per counted bar, side by side (a two-bar count-in reads as two bars). The outer box only
+   places them; each CountInPulse carries the pill. */
+.score-count-in.score-count-in{display:flex;gap:10px;padding:0;background:transparent;box-shadow:none}
+.score-count-in.score-count-in .count-in-pulse{padding:12px 18px;border-radius:20px;background:#fff;box-shadow:0 3px 18px #00000015}
+/* Restore defaults reads like "Fit page" beside Page layout: the same small grey word (.reader-text-action), not a
+   different-looking button. */
+html body .reader-settings-panel .reader-settings-reset.reader-settings-reset{padding:2px 0;font-size:12.5px;color:#85868e;font-weight:500}
+@media(hover:hover){html body .reader-settings-panel .reader-settings-reset.reader-settings-reset:hover{color:#292a33}}

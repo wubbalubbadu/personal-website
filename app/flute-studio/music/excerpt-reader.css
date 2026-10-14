@@ -44,3 +44,5 @@ html body .fixed-score-reader .osmd-score.fixed-score-page{padding:0!important;l
   .excerpt-recordings,.excerpt-caption{display:none!important}
   html body .fixed-score-reader .score-paper.fixed-score-paper{width:100%!important;transform:none!important;break-inside:avoid}
 }
+/* The tempo and tally pills ride at the end of the passage tabs (no row of their own). */
+.fixed-score-reader .excerpt-passages .excerpt-tempo-mark{flex:none;align-self:center;margin-left:8px}

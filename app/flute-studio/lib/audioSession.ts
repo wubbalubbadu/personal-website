@@ -9,21 +9,27 @@
 type AudioSessionType="auto"|"playback"|"play-and-record";
 const session=()=>(typeof navigator!=="undefined"?(navigator as Navigator&{audioSession?:{type:AudioSessionType}}).audioSession:undefined);
 const open=new Set<MediaStream>();
+let pending=0;
 
 function setType(type:AudioSessionType){const s=session();if(s&&s.type!==type){try{s.type=type}catch{/* unsupported value */}}}
 
 /** Before any audio plays: plain playback, so the click is at media volume (and not muted by the ring switch). */
-export function preferPlayback(){if(!open.size)setType("playback")}
+export function preferPlayback(){if(!open.size&&!pending)setType("playback")}
 
 export async function openMic(constraints:MediaStreamConstraints["audio"]={autoGainControl:false,echoCancellation:false,noiseSuppression:false}){
+  pending++;
   setType("play-and-record");
-  try{const stream=await navigator.mediaDevices.getUserMedia({audio:constraints});open.add(stream);return stream}
-  catch(error){if(!open.size)setType("playback");throw error}
+  try{const stream=await navigator.mediaDevices.getUserMedia({audio:constraints});open.add(stream);
+    for(const track of stream.getAudioTracks())track.addEventListener("ended",()=>{if(stream.getAudioTracks().every(t=>t.readyState==="ended"))closeMic(stream)},{once:true});
+    return stream}
+  finally{pending--;preferPlayback()}
 }
 
 export function closeMic(stream:MediaStream|null|undefined){
   if(!stream)return;
   stream.getTracks().forEach(track=>track.stop());
-  open.delete(stream);
-  if(!open.size)setType("playback");
+  const wasOpen=open.delete(stream);
+  if(wasOpen&&!open.size&&!pending){setType("playback");window.dispatchEvent(new Event(MIC_CLOSED))}
 }
+/** Fired when the last microphone closes, so the audio engine can swap in a fresh context (see PracticeAudio). */
+export const MIC_CLOSED="cookie:mic-closed";

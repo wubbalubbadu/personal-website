@@ -155,3 +155,5 @@ Theory rhythm practice: `theory/dots-and-ties/RhythmPractice.tsx` provides count
 
 ### Count-in for rhythm activities
 Use `components/CountInPulse.tsx` for reader, metronome, and theory tapping count-ins. Pass the zero-based beat from the audio clock, the count length, and optional group accents. The blue current pulse and completed dots match the reader. Set `active={false}` to reserve its space without showing it. Do not create another “Get ready” counter or run a separate animation timer.
+
+- **ScaleTemposPanel** (components/ScaleTemposPanel.tsx): shared Tempos popover for Scale Studio and Cookie’s Scale Routine. Reuses the same playback, metronome, BPM editing, and page-tempo visibility controls.

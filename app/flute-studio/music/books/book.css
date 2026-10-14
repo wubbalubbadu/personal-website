@@ -9,13 +9,13 @@
 .book-page__list{margin:8px 0 60px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(41,42,51,.08)}
 .book-row{display:grid;grid-template-columns:minmax(0,1fr) 56px;align-items:center;border-bottom:1px solid #ececef}
 .book-row:last-child{border-bottom:0}
-.book-row:has(.book-row__main:hover){background:#f7f7f9}
+@media (hover:hover) and (pointer:fine){.book-row:has(.book-row__main:hover){background:#f7f7f9}}
 .book-row__main{min-width:0;display:flex;align-items:center;gap:16px;padding:12px 8px 12px 20px;color:#292a33;text-decoration:none}
 .book-row__copy{flex:1;min-width:0}
 .book-row__copy strong{display:block;font-size:15px;font-weight:620}
 .book-row__copy small{display:block;margin-top:3px;color:#85868e;font-size:13px}
 .book-row__done{width:40px;height:40px;border:0;border-radius:50%;background:transparent;display:grid;place-items:center;cursor:pointer;color:#c7c8cd}
-.book-row__done:hover{background:#f1f1f2;color:#8a8c93}
+@media (hover:hover) and (pointer:fine){.book-row__done:hover{background:#f1f1f2;color:#8a8c93}}
 .book-row__done svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .book-row__done[aria-pressed="true"]{color:#46633d}
 .book-row__done[aria-pressed="true"] circle{fill:#e4ecdf}
@@ -27,7 +27,7 @@
 .book-stepper__arrow{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:#686a72;text-decoration:none;line-height:1}
 /* The same drawn chevrons as the page turner, not typed characters. */
 .book-stepper__arrow svg{width:20px;height:20px;stroke-width:1.7}
-a.book-stepper__arrow:hover{background:#e7e7ea;color:#292a33}
+@media (hover:hover) and (pointer:fine){a.book-stepper__arrow:hover{background:#e7e7ea;color:#292a33}}
 .book-stepper__arrow.is-off{opacity:.35}
 
 /* Back arrow and title share one row, with the title at the same height as the Library page's title. */

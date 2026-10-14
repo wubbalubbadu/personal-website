@@ -1,0 +1,2 @@
+/* Position in the score overlay, independently of the page hosting the reader. */
+.score-tempo-mark { position:absolute; transform:translateY(-100%); pointer-events:auto; display:inline-flex; align-items:center; gap:4px; }

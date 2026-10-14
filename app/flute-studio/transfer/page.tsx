@@ -1,8 +1,10 @@
 "use client";
 
-import {useRef,useState,useSyncExternalStore} from "react";
+import {useEffect,useRef,useState,useSyncExternalStore} from "react";
 import {useLanguage} from "../i18n/LanguageContext";
-import {apply,collect,decode,describe,drawingSize,encode,markBackedUp,type DecodeError,type Snapshot} from "../lib/transfer";
+import {apply,collect,decode,describe,drawingSize,encode,markBackedUp,removeStored,storageReport,type DecodeError,type Snapshot} from "../lib/transfer";
+import {musicLibrary} from "../../../content/music-library";
+import {PracticeIcon} from "../components/PracticeIcon";
 import "../practice/practice-page.css";
 import "./transfer.css";
 
@@ -129,7 +131,39 @@ export default function TransferPage(){
               </div>}
           </div>}
         </section>
+
+        <StoredOnDevice zh={zh}/>
       </div>
     </div>
   </main>;
+}
+
+/** Which piece a stored drawing belongs to: the longest catalog id its page key starts with; Scale Studio by name. */
+function scoreTitle(scoreId:string,zh:boolean){
+  if(scoreId.startsWith("scale-book"))return zh?"音阶练习":"Scale Studio";
+  const item=musicLibrary.filter(entry=>scoreId===entry.id||scoreId.startsWith(`${entry.id}:`)).sort((a,b)=>b.id.length-a.id.length)[0];
+  return item?(zh?item.zhTitle??item.title:item.title):scoreId;
+}
+
+/**
+ * Stored on this device: every kind of saved data with its size, and pencil drawings piece by piece, each with a
+ * trash button (COMPONENTS.md Trash) that asks once ("Tap again to delete") before deleting from this device only.
+ */
+function StoredOnDevice({zh}:{zh:boolean}){
+  const [version,setVersion]=useState(0),[armed,setArmed]=useState<string|null>(null);
+  const [report,setReport]=useState<ReturnType<typeof storageReport>|null>(null);
+  // localStorage is only readable after hydration; re-read after every delete.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(()=>setReport(storageReport(zh,id=>scoreTitle(id,zh))),[zh,version]);
+  useEffect(()=>{if(!armed)return;const timer=window.setTimeout(()=>setArmed(null),3000);return()=>window.clearTimeout(timer)},[armed]);
+  if(!report)return null;
+  const trash=(id:string,label:string,keys:string[])=><button type="button" className={armed===id?"storage-row__delete is-armed":"storage-row__delete"} aria-label={armed===id?(zh?`再点一次删除 ${label}`:`Tap again to delete ${label}`):(zh?`删除 ${label}`:`Delete ${label}`)} onClick={()=>{if(armed!==id){setArmed(id);return}removeStored(keys);setArmed(null);setVersion(v=>v+1)}}>{armed===id&&<span>{zh?"再点一次删除":"Tap again to delete"}</span>}<PracticeIcon name="delete"/></button>;
+  return <section className="practice-card transfer-card storage-card" aria-labelledby="stored-title">
+    <h2 id="stored-title">{zh?"这台设备上保存的内容":"Stored on this device"}</h2>
+    <p className="transfer-card__hint">{zh?"删除只影响这台设备。想保留的话，先用上面的方法发送一份。":"Deleting only affects this device. To keep a copy, send it first with the card above."}</p>
+    {report.groups.length?<ul className="storage-list">{report.groups.map(group=><li key={group.id}>
+      <div className="storage-row"><span><b>{group.label}</b><small>{kb(group.chars)}</small></span>{trash(group.id,group.label,group.keys)}</div>
+      {group.id==="drawings"&&report.drawings.length>1&&<ul className="storage-list storage-list--pieces">{report.drawings.map(piece=><li key={piece.id}><div className="storage-row"><span><b>{piece.label}</b><small>{kb(piece.chars)}</small></span>{trash(piece.id,piece.label,piece.keys)}</div></li>)}</ul>}
+    </li>)}</ul>:<p className="transfer-card__hint">{zh?"这台设备上还没有保存任何内容。":"Nothing is stored on this device yet."}</p>}
+  </section>;
 }

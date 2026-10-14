@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { FluteDiagram } from '../components/FluteDiagram';
+import { useTouchScreen } from '../lib/pencilMode';
 import { fluteKeys, type FluteKeyId } from '../../../content/fingerings/keys';
 import { trills, trillPitches, movingKeys, trillRegisters, trillRegisterFor, sourceForTrill, type Trill } from '../../../content/fingerings/trills';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -12,6 +13,8 @@ import './trills.css';
 
 function Pitch({ value }: { value: string }) { return <>{value.slice(0,-1)}<sub>{value.slice(-1)}</sub></>; }
 function TrillRow({ trill, zh }: { trill: Trill; zh: boolean }) {
+  // Phones and iPads can't hover, so the hint only says tap there.
+  const touch = useTouchScreen();
   const [variant, setVariant] = useState(0);
   const fingering = variant ? trill.alternatives![variant-1] : trill;
   const [playing, setPlaying] = useState(false);
@@ -58,7 +61,7 @@ function TrillRow({ trill, zh }: { trill: Trill; zh: boolean }) {
         <FluteDiagram pressed={down} moving={moving} inspectable onInspect={setInspected} hasBFoot={fingering.requires !== "c-foot"} className="trill-diagram"/>
         {fingering.note && <p className="trill-row__hint">{zh ? fingering.zhNote : fingering.note}</p>}
         <p className="trill-row__movement">{zh ? '交替按下与放开：' : 'Press and release: '}{names}{moving.length > 1 ? (zh ? '（同时）' : ' together') : ''}.</p>
-        <p className="trill-row__key-name" aria-live="polite">{key ? `${zh ? key.zh : key.label}${moving.includes(key.id) ? (zh ? ' · 颤动键' : ' · Moving key') : ''}` : (zh ? '悬停或点选按键，查看名称。' : 'Hover or tap a key for its name.')}</p>
+        <p className="trill-row__key-name" aria-live="polite">{key ? `${zh ? key.zh : key.label}${moving.includes(key.id) ? (zh ? ' · 颤动键' : ' · Moving key') : ''}` : (touch ? (zh ? '点选按键，查看名称。' : 'Tap a key for its name.') : (zh ? '悬停或点选按键，查看名称。' : 'Hover or tap a key for its name.'))}</p>
       </>}
     </div>
   </section>;

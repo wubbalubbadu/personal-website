@@ -1,4 +1,5 @@
 "use client";
+import "./score-tempo-marks.css";
 import {useLayoutEffect,useState} from "react";
 import {TempoPill} from "./TempoPill";
 import {RepPill} from "./RepPill";

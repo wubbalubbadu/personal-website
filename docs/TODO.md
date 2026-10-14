@@ -50,6 +50,32 @@ Lint cleanup is complete locally: 0 errors, 28 warnings remain. Intentional hydr
 - [ ] **Beginner rhythm drills.** A set of 10 tapping exercises, generated fresh each time and getting harder, "how many can you pass"; reuses the lesson 7 practice interface. For students, not the user.
 - [x] **Count-in accent** fixed 2026-10-09: the first count-in click was booked a render late and dropped, so the accent seemed to move. Playback now books count-in clicks itself with the metronome's sound (`bookClick` in PracticeAudio.tsx).
 
+## Low priority, from the October 11 iPad session
+
+- [ ] **Clear practice history by month** on Sync devices (the Stored on this device card deletes whole groups today).
+- [ ] **Tempo pill returns to your starting number** after Follows-the-music playback stops (it stays on the last section's tempo).
+- [ ] **Opening a saved tricky bit selects its bars**, so Steady click counts in their time signature.
+- [ ] **Excerpt tempo and tally on XML pages beside the printed tempo mark** (now in the page's top-left corner).
+- [ ] **Close-up notation about 1.5× the score**, drawn once at its final size (no visible resize).
+- [ ] **More excerpt XML:** passages of the same symphony that only have the printed page.
+- [ ] **Verify on iPad while practising:** metronome stays loud after the mic; Pencil (palm, and Pencil-only not scrolling); count-in pills and subdivision; selection pill placement and drag.
+
+## Phone pass (October 11): to prioritise
+
+- [ ] **Customize scales panel:** many buttons without clear grouping, and the chosen options use a bigger font than the tabs.
+- [ ] **Library status chips** (Want to learn / Working on / Learned): grey capsules with a dot stand out on the phone; find a cleaner look (not black, not plain white).
+- [ ] **Breathing Lab:** the in-animation controls (Cycle, Flower & balls, Body, Embouchure) are an older style; Shorter inhale still needs scrolling.
+- [ ] **Fingering chart on phone:** notation too small, things off-centre, old button style, too much scrolling. Idea: pick an octave, show the note on the staff, not every button at once.
+- [ ] **Trill chart on phone:** notation slightly small; still a lot of scrolling.
+- [ ] **Body and embouchure page:** fonts, interaction and look all need a redesign (low traffic).
+- [ ] **Theory lessons on phone:** not yet tested.
+- [ ] **Toolbar icon spacing per page** (Scale Studio, Long Tones, pieces with piano): left as is for now; revisit with a list of each page's toolbar.
+- [ ] **Running practice clock on phone** widens and covers the tabs.
+
+## Ideas for later (October 14)
+
+- [ ] **Related scales for a whole piece:** like the close-up's "G major (or E minor)" but for the full score. Options discussed: one Scale Studio set of every key the piece uses, a section-by-section key list linking to Scale Studio, and/or scales limited to the piece's own range. Decide where it opens from and what it produces.
+
 ## 4. Decided for later
 
 - [ ] **Auto-logging practice:** count time with a piece or exercise open while you play. Waits for clear rules (idle time, a tab left open).

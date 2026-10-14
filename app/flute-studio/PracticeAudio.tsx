@@ -2,7 +2,8 @@
 import {createContext,useContext,useEffect,useLayoutEffect,useRef,useState,type ReactNode} from "react";
 
 import {SCORE_TEMPO_KEY,readTempoRatios,clampTempo} from "./lib/scoreTempo";
-import {preferPlayback} from "./lib/audioSession";
+import {MIC_CLOSED,preferPlayback} from "./lib/audioSession";
+import {hasTouchScreen} from "./lib/pencilMode";
 import {droneSamplesIfReady,droneVoice,loadDroneSamples} from "./components/sampledDrone";
 
 type Voice={oscillator:OscillatorNode|AudioBufferSourceNode;gain:GainNode};
@@ -37,9 +38,17 @@ export function bookClick(audio:BaseAudioContext,time:number,strong:boolean){
   oscillator.stop(time+.06);
   return oscillator;
 }
+/** A subdivision tick: quieter and lower than a beat click, so the beat stays clear. Shared with the reader's count-in. */
+export function bookTick(audio:BaseAudioContext,time:number){
+  const oscillator=audio.createOscillator(),gain=audio.createGain();
+  oscillator.frequency.value=800;
+  gain.gain.setValueAtTime(.16,time);gain.gain.exponentialRampToValueAtTime(.0001,time+.03);
+  oscillator.connect(gain).connect(audio.destination);oscillator.start(time);oscillator.stop(time+.04);
+  return oscillator;
+}
 export function pitchFrequency(note:string,octave:number){return 440*2**(((octave+1)*12+semitones[note]-69)/12)}
 function useAudioEngine(){
-  const [bpm,setBpmState]=useState(60),[metro,setMetro]=useState(false),[accent,setAccent]=useState(true),[beats,setBeats]=useState(4),[drones,setDrones]=useState<string[]>([]),[grid,setGrid]=useState<MetronomeGrid|null>(null),[subdivision,setSubdivision]=useState<1|2|3|4>(1);
+  const [bpm,setBpmState]=useState(60),[metro,setMetro]=useState(false),[accent,setAccent]=useState(true),[beats,setBeats]=useState(4),[drones,setDrones]=useState<string[]>([]),[grid,setGrid]=useState<MetronomeGrid|null>(null),[audioEpoch,setAudioEpoch]=useState(0),[subdivision,setSubdivision]=useState<1|2|3|4>(1);
   const bpmRef=useRef(60),retime=useRef<(()=>void)|null>(null),context=useRef<AudioContext|null>(null),voices=useRef(new Map<string,Voice>()),tempoRatios=useRef<Record<string,number>|null>(null),printedTempo=useRef(60),score=useRef<string|null>(null);
   const getAudio=()=>{preferPlayback();let audio=context.current;if(!audio||audio.state==='closed'){audio=context.current=new AudioContext();droneSamplesIfReady(audio)/* fetch the drone samples early */}void audio.resume();return audio};
   function ratios(){
@@ -113,15 +122,12 @@ function useAudioEngine(){
     // comes into the lookahead window, skipping any already past.
     const listed=grid?.beatTimes;let listedAt=0;
     const subs=grid?.subTimes;let subAt=0;
-    const bookTick=(time:number)=>{
-      const oscillator=audio.createOscillator(),gain=audio.createGain();
-      oscillator.frequency.value=800;
-      gain.gain.setValueAtTime(.16,time);gain.gain.exponentialRampToValueAtTime(.0001,time+.03);
-      oscillator.connect(gain).connect(audio.destination);oscillator.start(time);oscillator.stop(time+.04);
+    const bookSubTick=(time:number)=>{
+      const oscillator=bookTick(audio,time);
       booked.set(oscillator,{time,beat:-1});oscillator.onended=()=>booked.delete(oscillator);
     };
     const schedule=()=>{
-      if(subs)while(subAt<subs.length&&subs[subAt]<audio.currentTime+lookahead){if(subs[subAt]>=audio.currentTime)bookTick(subs[subAt]);subAt+=1}
+      if(subs)while(subAt<subs.length&&subs[subAt]<audio.currentTime+lookahead){if(subs[subAt]>=audio.currentTime)bookSubTick(subs[subAt]);subAt+=1}
       if(listed){
         while(listedAt<listed.length&&listed[listedAt]<audio.currentTime+lookahead){
           // A click a few milliseconds late still plays, at once; only one that is really gone is skipped.
@@ -135,7 +141,7 @@ function useAudioEngine(){
       while(nextTime<audio.currentTime+lookahead){
         bookBeat(nextTime);
         // Subdivision ticks between free-running beats (playback lays its own as subTimes).
-        if(!subs)for(let k=1;k<subdivision;k++)bookTick(nextTime+k*secondsPerBeat/subdivision);
+        if(!subs)for(let k=1;k<subdivision;k++)bookSubTick(nextTime+k*secondsPerBeat/subdivision);
         nextTime+=secondsPerBeat;
       }
     };
@@ -175,7 +181,7 @@ function useAudioEngine(){
       booked.clear();
     };
   // bpm is read through bpmRef: a tempo change re-times the running click (retime) instead of restarting it.
-  },[metro,accent,beats,grid,subdivision]);
+  },[metro,accent,beats,grid,subdivision,audioEpoch]);
   useEffect(()=>{retime.current?.()},[bpm]);
   function toggleDrone(note:string,octave:number){
     const key=`${note}${octave}`,audio=getAudio(),existing=voices.current.get(key);
@@ -204,6 +210,28 @@ function useAudioEngine(){
     const wake=()=>{const audio=context.current;if(!audio||document.hidden||audio.state==="running"||audio.state==="closed")return;preferPlayback();void audio.resume().catch(()=>{})};
     document.addEventListener("visibilitychange",wake);window.addEventListener("focus",wake);window.addEventListener("pageshow",wake);window.addEventListener("pointerdown",wake,true);
     return()=>{document.removeEventListener("visibilitychange",wake);window.removeEventListener("focus",wake);window.removeEventListener("pageshow",wake);window.removeEventListener("pointerdown",wake,true)};
+  },[]);
+  /**
+   * After the microphone: a fresh audio context. While a mic is open iPad Safari routes the page's context at call
+   * volume, and setting the session back to playback did not always restore it (the click stayed soft until Safari
+   * was closed, which is what throws the old context away). So when the last mic closes, close the old context and
+   * open a new one; a running metronome restarts on it (audioEpoch) and held drone notes are sounded again.
+   * Touch devices only: desktop browsers never had the problem.
+   */
+  useEffect(()=>{
+    const swap=()=>{
+      const old=context.current;if(!old||!hasTouchScreen())return;
+      const held=[...voices.current.keys()];
+      voices.current.forEach(voice=>stopVoice(voice));voices.current.clear();
+      context.current=null;void old.close().catch(()=>{});
+      getAudio();
+      for(const key of held){const match=key.match(/^(.+?)(-?\d+)$/);if(match)toggleDrone(match[1],Number(match[2]))}
+      if(!held.length)setDrones([]);
+      setAudioEpoch(epoch=>epoch+1);
+    };
+    window.addEventListener(MIC_CLOSED,swap);return()=>window.removeEventListener(MIC_CLOSED,swap);
+  // getAudio and toggleDrone only read refs; the listener is set once.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   },[]);
   useEffect(()=>()=>{voices.current.forEach(voice=>stopVoice(voice));void context.current?.close();context.current=null;voices.current.clear()},[]);
   return {bpm,setBpm,setPlaybackBpm,metro,toggleMetro,stopMetro,accent,setAccent,beats,setBeats,drones,toggleDrone,stopAllDrones,initializeScore,getAudio,alignMetronome:setGrid,subdivision,setSubdivision,metroHeld:metro&&!!grid?.hold};

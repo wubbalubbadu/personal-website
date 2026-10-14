@@ -176,6 +176,19 @@ export function AnnotationLayer({id,active,layoutReady,layoutVersion,toolbar,zh,
     }
     drag.current=null;eraseBase.current=null;
   }
+  // Clear asks first: the first tap shows the reader's notice pill, a second tap while it shows (2.5s) clears (Undo still
+  // brings everything back). Clearing a whole page by one stray tap was too easy.
+  const [clearArmed,setClearArmed]=useState(false),clearTimer=useRef(0);
+  const armClear=()=>{setClearArmed(true);window.clearTimeout(clearTimer.current);clearTimer.current=window.setTimeout(()=>setClearArmed(false),2500)};
+  const disarmClear=()=>{window.clearTimeout(clearTimer.current);setClearArmed(false)};
+  useEffect(()=>()=>window.clearTimeout(clearTimer.current),[]);
+  // While Mark Up is on, nothing in the reader can be text-selected: a palm resting on the glass started Safari's
+  // text selection after a stroke or two and ended the drawing.
+  useEffect(()=>{
+    if(!active)return;
+    document.documentElement.classList.add('is-annotating');
+    return()=>document.documentElement.classList.remove('is-annotating');
+  },[active]);
   // Finger drawing uses controlled gestures; Pencil-only mode leaves fingers
   // to native scrolling. Rejected palms stay rejected until up.
   useEffect(()=>{
@@ -240,9 +253,12 @@ export function AnnotationLayer({id,active,layoutReady,layoutVersion,toolbar,zh,
     // Fingers only: Safari also sends the Pencil as touches (touchType "stylus"), and cancelling those swallowed its
     // strokes, which is why the Pencil only drew with "Apple Pencil only" on (where nothing is cancelled).
     function prevent(e:Event){
-      if(!liveConfig.current.active||liveConfig.current.only||(e.target as Element).closest('textarea,button'))return;
-      const touches=(e as TouchEvent).changedTouches;
-      if(touches?.length&&[...touches].every(t=>(t as Touch&{touchType?:string}).touchType==='stylus'))return;
+      if(!liveConfig.current.active||(e.target as Element).closest('textarea,button'))return;
+      const touches=(e as TouchEvent).changedTouches,stylus=!!touches?.length&&[...touches].every(t=>(t as Touch&{touchType?:string}).touchType==='stylus');
+      // Pencil-only: fingers scroll (the layer allows panning), so only the Pencil's move is cancelled, which keeps
+      // the page still under the pen. Cancelling its touchstart too could swallow the stroke (see above), so moves only.
+      if(liveConfig.current.only){if(stylus&&e.type==='touchmove')e.preventDefault();return}
+      if(stylus)return;
       e.preventDefault();
     }
     el.addEventListener('pointerdown',touchDown,{capture:true,passive:false});el.addEventListener('pointermove',touchMove,{capture:true,passive:false});el.addEventListener('pointerup',touchUp,true);el.addEventListener('pointercancel',touchUp,true);
@@ -274,13 +290,14 @@ export function AnnotationLayer({id,active,layoutReady,layoutVersion,toolbar,zh,
       <span className="annotation-colors">{['#e52e31','#2379c5','#2f9e4c','#222222','#f0ce38'].map(c=><button key={c} data-extra={!CORE_COLORS.includes(c)&&color!==c?'':undefined} style={{'--ink-color':c} as React.CSSProperties} aria-label={`${zh?'颜色':'Color'} ${c}`} aria-pressed={color===c} onClick={()=>setColor(c)}/>)}</span>
       <span className="divider"/>
       <button className="markup-icon history-control has-tip" aria-label={zh?'撤销':'Undo'} data-tip={zh?'撤销':'Undo'} disabled={!historyState.canUndo} onClick={()=>travel('undo')}><PracticeIcon name="undo"/></button><button className="markup-icon history-control has-tip" aria-label={zh?'重做':'Redo'} data-tip={zh?'重做':'Redo'} disabled={!historyState.canRedo} onClick={()=>travel('redo')}><PracticeIcon name="redo"/></button>
-      <button data-extra="" className="markup-icon history-control has-tip" aria-label={zh?'清除批注':'Clear'} data-tip={zh?'清除批注':'Clear'} disabled={!doc.marks.length&&!doc.legacy} onClick={()=>{endEditing();setSelected(null);commit(emptyAnnotations())}}><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5.5 7h13M10 7V5.5h4V7M7.5 7l.7 11.1a1 1 0 0 0 1 .9h5.6a1 1 0 0 0 1-.9L16.5 7"/></svg></button>
+      <button data-extra="" className="markup-icon history-control has-tip" aria-label={zh?'清除批注':'Clear'} data-tip={zh?'清除批注':'Clear'} disabled={!doc.marks.length&&!doc.legacy} aria-pressed={clearArmed} onClick={()=>{if(!clearArmed){armClear();return}disarmClear();endEditing();setSelected(null);commit(emptyAnnotations())}}><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5.5 7h13M10 7V5.5h4V7M7.5 7l.7 11.1a1 1 0 0 0 1 .9h5.6a1 1 0 0 0 1-.9L16.5 7"/></svg></button>
       <button className="markup-icon markup-more" aria-expanded={moreTools} aria-label={moreTools?(zh?'收起工具':'Fewer tools'):(zh?'更多工具':'More tools')} onClick={()=>setMoreTools(value=>!value)}><svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor" aria-hidden="true"><circle cx="4.5" cy="10" r="1.6"/><circle cx="10" cy="10" r="1.6"/><circle cx="15.5" cy="10" r="1.6"/></svg></button>
       <CloseButton className="markup-icon markup-close" label={zh?'关闭批注':'Close markup'} onClick={()=>{endEditing();onClose()}}/>
       {storageError&&<span role="status">{zh?'无法保存。请保持页面打开。':'Could not save. Keep this page open.'}</span>}
     </div>,toolbar)}
     {/* A keyboard-enabled drawing application contains its own text editor. */}
     {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex */}
+    {clearArmed&&createPortal(<div className="drone-hint" role="status">{zh?'再点一次“清除”，删除本页所有批注':'Tap Clear again to remove every mark on this page'}</div>,document.body)}
     <div ref={layer} role="application" aria-label={zh?'乐谱批注':'Score annotations'} tabIndex={active?0:-1} className={`annotation-layer ${active?'is-active':''} ${only?'is-pencil-only':''} tool-${tool}`} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onDoubleClick={e=>{if(active&&tool==='select'){const mark=markAt(point(e),e.target);if(mark&&!isInk(mark))setEditing(mark.id)}}} onKeyDown={keys}>
       {/* Legacy ink is a local data URL, not a network image. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}

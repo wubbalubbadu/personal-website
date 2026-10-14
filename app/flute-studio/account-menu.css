@@ -34,8 +34,10 @@
   background:none;font:inherit;font-size:14px;font-weight:400;color:#292a33;cursor:pointer;text-align:left;
 }
 /* !important: the reader gives every button a green hover. */
-.account-menu .account-menu__item:hover{background-color:rgba(41,42,51,.05)!important}
-.account-menu .account-menu__item.is-on,.account-menu .account-menu__item.is-on:hover{background-color:#eef3eb!important;color:#40553d;font-weight:500}
+/* Hover only where a real hover exists: on iPad a tapped row kept its hover grey, a third state between off and on. */
+@media(hover:hover){.account-menu .account-menu__item:not(.is-on):hover{background-color:rgba(41,42,51,.05)!important}}
+/* On = the studio's selected purple on every page (it was green outside the reader and purple inside). */
+.account-menu .account-menu__item.is-on,.account-menu .account-menu__item.is-on:hover{background-color:var(--studio-on-bg,#eee7f2)!important;color:var(--studio-on-ink,#79588e);font-weight:500}
 .account-menu__item b{font-size:13px;font-weight:500;color:inherit}
 .account-menu__footnote{margin:6px 10px 0;font-size:12px;line-height:1.45;color:#9a9ca3}
 .account-menu__rule{margin:10px 0;border:0;border-top:1px solid #efeff1}

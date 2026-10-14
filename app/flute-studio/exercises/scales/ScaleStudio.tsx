@@ -1,8 +1,8 @@
 "use client";
+import {ScaleTemposPanel} from "../../components/ScaleTemposPanel";
 import {ScoreTempoMarks as ScaleTempoMarks} from "../../components/ScoreTempoMarks";
 import {musicLibrary} from "../../../../content/music-library";
 import {ScoreViewer} from "../../components/ScoreViewer";
-import {TEMPO_MIN,TEMPO_MAX} from "../../lib/scoreTempo";
 import {ChevronIcon,DownloadIcon} from "../../components/HeaderIcons";
 import {ReaderPopover} from "../../components/ReaderPopover";
 import {KeySelection} from "../../components/KeySelection";
@@ -330,7 +330,6 @@ export default function ScaleStudio(){
   const [groupSize,setGroupSize]=useState<ScaleGroupSize>(1);
   // Which per-key tempo field is mid-edit, holding its raw text so a
   // half-typed "1" on the way to "120" is not clamped under the cursor.
-  const [tempoDraft,setTempoDraft]=useState<{id:string;value:string}|null>(null);
   // Which accordion section is open, lifted into real React state rather
   // than each <details>'s own uncontrolled DOM state. Necessary because
   // this whole dialog is rendered inside ScoreViewer via the `settings`
@@ -825,31 +824,11 @@ export default function ScaleStudio(){
         rebuilds the whole exercise meant opening a settings dialog to nudge
         a number by five. It renders after the Scales popover, so it lands
         between Scales and View settings in the toolbar. */}
-    <ReaderPopover label={zh?"练习速度":"Tempos"} trigger={<><PracticeIcon name="tempo"/>{zh?"速度":"Tempos"}</>} className="tool has-tip">
-      <div className="scale-book__tempo-list">{blocks.map((block,index)=>{
-          const id=blockTempoId(block,range),tempo=tempoForBlock(block,range,tempos),name=block.label;
-          const setTempo=(next:number)=>{setActiveBlock(id);setTempos(prev=>({...prev,[id]:next}));reader.setTempo(next)};
-          const running=reader.metronome&&activeBlock===id;
-          // Play starts the score at this exercise's first note and, like
-          // the transport, the same button stops it.
-          const eventStart=blockEventStarts[index];
-          // Which exercise is sounding follows the music, not the button
-          // that started it: pressing the transport's own Play used to
-          // leave the very first row lit for the whole book.
-          const blockEnd=blockEventStarts[index+1]??Infinity;
-          // playingFrom only stands in for the frame before the first note
-          // actually sounds; once there is a live position it is the only
-          // thing that counts, or the row you started from stays lit for
-          // the rest of the book.
-          const sounding=reader.playing&&(reader.playingEvent!==null?reader.playingEvent>=eventStart&&reader.playingEvent<blockEnd:reader.playingFrom===eventStart);
-          return <div className="scale-reader__tempo" key={id}><span className="scale-book__tempo-label"><b>{name}</b></span><div className="scale-book__metronome"><button disabled={tempo<=TEMPO_MIN} aria-label={`${name}: decrease tempo by 5`} onClick={()=>setTempo(tempo-5)}>−</button><label className="scale-book__tempo-field"><input type="number" min={TEMPO_MIN} max={TEMPO_MAX} aria-label={`${name}: tempo in BPM`} value={tempoDraft?.id===id?tempoDraft.value:tempo} onChange={e=>setTempoDraft({id,value:e.target.value})} onFocus={()=>setActiveBlock(id)} onBlur={()=>{if(tempoDraft?.id!==id)return;const next=Number(tempoDraft.value);const valid=Number.isFinite(next)&&tempoDraft.value.trim()!=="";setTempoDraft(null);if(valid)setTempo(Math.max(TEMPO_MIN,Math.min(TEMPO_MAX,Math.round(next))))}} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/></label><button disabled={tempo>=TEMPO_MAX} aria-label={`${name}: increase tempo by 5`} onClick={()=>setTempo(tempo+5)}>+</button><button className={sounding?"scale-book__row-tool on":"scale-book__row-tool"} aria-label={sounding?`${name}: stop playing`:`${name}: play from here`} aria-pressed={sounding} onClick={()=>{setTempo(tempo);reader.playFromEvent(eventStart)}}><PracticeIcon name={sounding?"stop":"play"}/></button><button className={running?"scale-book__row-tool on":"scale-book__row-tool"} aria-label={running?`${name}: stop metronome`:`${name}: start metronome`} aria-pressed={running} onClick={()=>{setTempo(tempo);if(running||!reader.metronome)reader.toggleMetronome()}}><PracticeIcon name="metronome"/></button></div></div>;
-      })}</div>
-      {/* A quiet text action in the corner rather than a full-width chip:
-          it is a view preference, not one of the tempos this panel is
-          actually about — the same reasoning (and the same styling) as
-          "Restore defaults" at the foot of Customize scales. */}
-      <button type="button" className="reader-settings-reset" aria-pressed={tempoMarks} onClick={()=>setTempoMarks(value=>!value)}>{tempoMarks?(zh?"隐藏乐谱上的练习速度":"Hide practice tempo on the page"):(zh?"在乐谱上显示练习速度":"Show practice tempo on the page")}</button>
-    </ReaderPopover>
+    <ScaleTemposPanel reader={reader} zh={zh} activeBlock={activeBlock} onActive={setActiveBlock}
+      rows={blocks.map((block,index)=>({id:blockTempoId(block,range),name:block.label,tempo:tempoForBlock(block,range,tempos),eventStart:blockEventStarts[index]}))}
+      onTempo={(id,tempo)=>{setActiveBlock(id);setTempos(prev=>({...prev,[id]:tempo}))}}
+      tempoMarks={tempoMarks} onTempoMarks={setTempoMarks}/>
+
     </>}/>
   </div>;
 }

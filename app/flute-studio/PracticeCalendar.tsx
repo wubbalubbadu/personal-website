@@ -1,6 +1,7 @@
 "use client";
 
 import {useMemo,useState,useSyncExternalStore,type KeyboardEvent,type ReactNode} from "react";
+import {useRepLog} from "./lib/repLog";
 import {useLanguage} from "./i18n/LanguageContext";
 import type {PracticeSession} from "./practice-data";
 import "./practice-calendar.css";
@@ -41,39 +42,49 @@ export function PracticeCalendar({sessions,selected=null,onSelect,legend=false,c
   const [offset,setOffset]=useState(0);
   const [peek,setPeek]=useState<string|null>(null);
 
-  const todayKey=useToday();
+  const todayKey=useToday(),repLog=useRepLog();
   const {cells,practisedDays,totalMinutes,monthLabel}=useMemo(()=>{
     if(!todayKey)return {cells:[],practisedDays:0,totalMinutes:0,monthLabel:""};
     const now=new Date(todayKey);
     const month=new Date(now.getFullYear(),now.getMonth()+offset,1);
-    const minutesByDay=new Map<string,number>();
+    const minutesByDay=new Map<string,number>(),repsByDay=new Map<string,number>();
     for(const session of sessions){
       const key=dayKey(session.startedAt);
       minutesByDay.set(key,(minutesByDay.get(key)??0)+session.durationSeconds/60);
+    }
+    // Tallies count too: someone who logs reps and never runs the clock practised all the same.
+    for(const [day,page] of Object.entries(repLog)){
+      const [y,m,d]=day.split("-").map(Number);if(!y||!m||!d)continue;
+      const reps=Object.values(page).reduce((total,entry)=>total+Object.values(entry.reps??{}).reduce((n,c)=>n+(Number(c)||0),0),0);
+      if(reps>0){const key=dayKey(new Date(y,m-1,d));repsByDay.set(key,(repsByDay.get(key)??0)+reps)}
     }
     const daysInMonth=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();
     // Monday-first, which is how a practice week reads.
     const lead=(new Date(month.getFullYear(),month.getMonth(),1).getDay()+6)%7;
     const today=dayKey(now);
-    const cells:{key:string;day:number|null;minutes:number;isToday:boolean}[]=[];
-    for(let i=0;i<lead;i+=1)cells.push({key:`lead-${i}`,day:null,minutes:0,isToday:false});
+    const cells:{key:string;day:number|null;minutes:number;reps:number;isToday:boolean}[]=[];
+    for(let i=0;i<lead;i+=1)cells.push({key:`lead-${i}`,day:null,minutes:0,reps:0,isToday:false});
     let practisedDays=0,totalMinutes=0;
     for(let day=1;day<=daysInMonth;day+=1){
       const date=new Date(month.getFullYear(),month.getMonth(),day);
       const key=dayKey(date);
-      const minutes=Math.round(minutesByDay.get(key)??0);
-      if(minutes>0){practisedDays+=1;totalMinutes+=minutes}
-      cells.push({key,day,minutes,isToday:key===today});
+      const minutes=Math.round(minutesByDay.get(key)??0),reps=repsByDay.get(key)??0;
+      if(minutes>0||reps>0)practisedDays+=1;
+      totalMinutes+=minutes;
+      cells.push({key,day,minutes,reps,isToday:key===today});
     }
     return {
       cells,practisedDays,totalMinutes,
       monthLabel:month.toLocaleDateString(lang==="zh"?"zh-CN":undefined,{month:"long",year:"numeric"}),
     };
-  },[sessions,offset,lang,todayKey]);
+  },[sessions,repLog,offset,lang,todayKey]);
 
   // Four bands, not a gradient: the eye reads "more than yesterday" from a
   // step far better than from a slightly darker green.
-  const level=(minutes:number)=>minutes===0?0:minutes<15?1:minutes<40?2:3;
+  // A day's practice = clock minutes plus tallied reps, each rep counted as half a minute (a tallied rep is
+  // usually one run of a short passage), so a reps-only day shades like a clocked one.
+  const level=(cell:{minutes:number;reps:number})=>{const amount=cell.minutes+cell.reps*.5;return amount===0?0:amount<15?1:amount<40?2:3};
+  const describe=(cell:{day:number|null;minutes:number;reps:number})=>[cell.minutes?t.practicePage.calendarMinutes(cell.minutes):"",cell.reps?(lang==="zh"?`${cell.reps} 次`:`${cell.reps} ${cell.reps===1?"rep":"reps"}`):""].filter(Boolean).join(" · ");
   const weekdays=lang==="zh"?["一","二","三","四","五","六","日"]:["M","T","W","T","F","S","S"];
 
   return <section className="practice-card calendar-card" aria-labelledby="calendar-title">
@@ -94,22 +105,22 @@ export function PracticeCalendar({sessions,selected=null,onSelect,legend=false,c
         :<span
           key={cell.key}
           className={`calendar-grid__cell${cell.isToday?" is-today":""}${selected===cell.key?" is-selected":""}${onSelect?" is-pickable":""}`}
-          data-level={level(cell.minutes)}
+          data-level={level(cell)}
           role={onSelect?"button":"gridcell"}
-          aria-label={cell.minutes?`${cell.day}: ${t.practicePage.calendarMinutes(cell.minutes)}`:`${cell.day}`}
+          aria-label={cell.minutes||cell.reps?`${cell.day}: ${describe(cell)}`:`${cell.day}`}
           {...(onSelect?{
             // Any day can be picked, practised or not: an empty day answers "nothing that day".
             tabIndex:0,"aria-pressed":selected===cell.key,
             onClick:()=>onSelect(cell.key),
             onKeyDown:(e:KeyboardEvent)=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();onSelect(cell.key)}},
-          }:cell.minutes?{
+          }:cell.minutes||cell.reps?{
             // Only days you actually practised are worth landing on — an
             // empty square has nothing to read out, and making all thirty
             // focusable would bury the rest of the page in tab stops.
             tabIndex:0,
-            onMouseEnter:()=>setPeek(`${cell.day} · ${t.practicePage.calendarMinutes(cell.minutes)}`),
+            onMouseEnter:()=>setPeek(`${cell.day} · ${describe(cell)}`),
             onMouseLeave:()=>setPeek(null),
-            onFocus:()=>setPeek(`${cell.day} · ${t.practicePage.calendarMinutes(cell.minutes)}`),
+            onFocus:()=>setPeek(`${cell.day} · ${describe(cell)}`),
             onBlur:()=>setPeek(null),
           }:{})}
         >{cell.day}</span>)}

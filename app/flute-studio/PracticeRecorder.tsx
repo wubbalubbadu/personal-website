@@ -34,7 +34,7 @@ export default function PracticeRecorder(){
         closeMic(media);
       };
       next.start();recorder.current=next;started.current=Date.now();setElapsed(0);setRecording(true);
-    }catch{setError(n=>n+1);window.clearTimeout(errorTimer.current);errorTimer.current=window.setTimeout(()=>setError(0),2500)}
+    }catch{closeMic(stream.current);stream.current=null;setError(n=>n+1);window.clearTimeout(errorTimer.current);errorTimer.current=window.setTimeout(()=>setError(0),2500)}
   }
   function stop(){recorder.current?.stop();setRecording(false)}
   /** Saves the take as an audio file, named by the date and time it ended. */

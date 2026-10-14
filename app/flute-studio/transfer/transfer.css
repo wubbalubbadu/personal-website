@@ -30,3 +30,17 @@
   .transfer-page__intro{font-size:14px}
 }
 
+/* Stored on this device: full width under the two cards; plain rows (title 15/600, size in grey meta), a hairline
+   between, the studio's grey trash that asks once. */
+.storage-card{grid-column:1/-1}
+.storage-list{list-style:none;margin:0;padding:0;display:grid}
+.storage-list>li+li{border-top:1px solid #f0f0f2}
+.storage-list--pieces{margin:0 0 6px 16px;border-left:1px solid #f0f0f2;padding-left:12px}
+.storage-row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px}
+.storage-row>span{display:grid;gap:2px}
+.storage-row b{font-size:15px;font-weight:600;color:#292a33}
+.storage-row small{font-size:13px;color:#85868e}
+.storage-row__delete{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 8px;border:0;border-radius:10px;background:transparent;color:#a5a7ad;font:inherit;font-size:13px;cursor:pointer}
+.storage-row__delete svg{width:18px;height:18px}
+@media(hover:hover){.storage-row__delete:hover{color:#a5372f}}
+.storage-row__delete.is-armed{color:#a5372f}

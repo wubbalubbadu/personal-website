@@ -72,3 +72,5 @@
 
 /* Pencil-only ink leaves finger scrolling and pinch zoom to the browser. */
 .annotation-layer.is-active.is-pencil-only{touch-action:pan-x pan-y pinch-zoom}
+/* Mark Up on: no text selection or callout anywhere in the reader (a resting palm triggered Safari's), except where you type. */
+html.is-annotating body,html.is-annotating body *:not(textarea):not(input){-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important}

@@ -27,3 +27,7 @@
 
 /* Words for screen readers only (a label whose visible form is an icon). */
 .sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* No grey flash on touch: iOS Safari tints whatever a finger lands on (even mid-scroll). Presses show through the
+   studio's own states instead. */
+.studio-route,.studio-route *,.studio-navigation,.studio-navigation *{-webkit-tap-highlight-color:transparent}

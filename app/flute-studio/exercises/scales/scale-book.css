@@ -113,7 +113,7 @@
    check mid-practice has to be readable without reaching for it. */
 .score-marks { position:absolute; inset:0; pointer-events:none; z-index:6; }
 /* Placement only; the look is TempoPill (components/tempo-pill.css). */
-.score-tempo-mark { position:absolute; transform:translateY(-100%); pointer-events:auto; display:inline-flex; align-items:center; gap:4px; }
+/* ScoreTempoMarks owns its positioning styles in components/score-tempo-marks.css. */
 
 
 /* A long exercise name ("C chromatic thirds") used to be cut off with an

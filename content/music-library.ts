@@ -58,6 +58,7 @@ export const bookPieces=(bookId:string)=>orderedBookPieces(musicLibrary,bookId) 
  * the Exercises tab only.
  */
 export const libraryShelf:MusicItem[]=[
+  {id:"cookie-scales",title:"Cookie’s Scale Routine",zhTitle:"Cookie 的音阶练习",composer:"",tags:["Exercise"],status:"published",scorePath:null,viewerPath:"/flute-studio/music/cookie-scales"},
   ...musicLibrary.filter(item=>!item.book),
   ...musicBooks.map((book):MusicItem=>({
     id:book.id,title:book.title,composer:book.composer,tags:book.tags,year:book.year,about:book.about,

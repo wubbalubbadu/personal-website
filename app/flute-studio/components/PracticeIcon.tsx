@@ -1,5 +1,5 @@
 import type {ReactNode} from "react";
-export type PracticeIconName = "delete" | "loop" | "zoom" | "plus" | "piano" | "metronome" | "tuner" | "mic" | "drone" | "markup" | "fullscreen" | "exitFullscreen" | "close" | "previous" | "next" | "settings" | "gear" | "view" | "bookmark" | "bookmarkFilled" | "more" | "tap" | "record" | "play" | "pause" | "stop" | "undo" | "redo" | "saved" | "aids" | "tempo" | "print" | "top" | "highlighter" | "arrow" | "eraser" | "text" | "sticky" | "select" | "noteNames" | "beatSticks" | "sharp";
+export type PracticeIconName = "delete" | "loop" | "zoom" | "plus" | "piano" | "metronome" | "tuner" | "mic" | "drone" | "markup" | "fullscreen" | "exitFullscreen" | "close" | "previous" | "next" | "settings" | "gear" | "view" | "bookmark" | "bookmarkFilled" | "more" | "tap" | "record" | "play" | "pause" | "stop" | "undo" | "redo" | "saved" | "aids" | "tempo" | "print" | "top" | "highlighter" | "arrow" | "eraser" | "text" | "sticky" | "select" | "noteNames" | "beatSticks" | "sharp" | "fingeringKeys" | "termF";
 const paths:Record<PracticeIconName,ReactNode>={
   delete:<><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6M14 11v6"/></>,
   loop:<path d="M17 3l4 4-4 4M3 11V9a2 2 0 0 1 2-2h16M7 21l-4-4 4-4M21 13v2a2 2 0 0 1-2 2H3"/>,
@@ -14,6 +14,9 @@ const paths:Record<PracticeIconName,ReactNode>={
   noteNames:<><ellipse cx="9" cy="9.2" rx="3.3" ry="2.4" transform="rotate(-20 9 9.2)" fill="currentColor" stroke="none"/><path d="M12.1 8.4V2.6"/><rect x="5.5" y="14" width="13" height="8" rx="2.6"/><path d="M13.6 16.3a2.4 2.4 0 1 0 0 3.4" strokeWidth="1.5"/></>,
   beatSticks:<><ellipse cx="6.4" cy="11" rx="2.7" ry="2" transform="rotate(-20 6.4 11)" fill="currentColor" stroke="none"/><ellipse cx="16.4" cy="11" rx="2.7" ry="2" transform="rotate(-20 16.4 11)" fill="currentColor" stroke="none"/><path d="M8.9 10.3V3.2h10v7.1"/><path d="M6 16.5v4.5M16 16.5v4.5"/></>,
   sharp:<><path d="M9.6 3.5v17M14.4 3v17"/><path d="M6 10.4 18 8.4M6 16 18 14" strokeWidth="2.3"/></>,
+  // Fingering: a pressed key and an open one (the chart's own ●○), drawn; musical terms: an italic f in strokes.
+  fingeringKeys:<><circle cx="7" cy="12" r="4.2" fill="currentColor" stroke="none"/><circle cx="17" cy="12" r="3.7"/></>,
+  termF:<><path d="M16.5 4.2c-1.5-.9-3.6-.3-4.1 1.9L9.6 18.2c-.5 2.1-2.5 2.8-4.1 1.9"/><path d="M8.2 10h7.2"/></>,
   mic:<><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></>,
   tuner:<><path d="M7 3v8a5 5 0 0 0 10 0V3M12 16v6"/><path d="M5 3h4M15 3h4"/></>,
   drone:<><path d="M11 4 6 8H3v8h3l5 4V4Z"/><path d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14"/></>,

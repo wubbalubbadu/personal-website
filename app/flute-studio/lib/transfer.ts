@@ -250,3 +250,30 @@ export function describe(snapshot:Snapshot,zh:boolean){
     .filter(group=>counts.has(group.id))
     .map(group=>zh?group.zh:group.en);
 }
+
+/** One kind of stored data on this device, for the Sync devices page's "Stored on this device" card. */
+export type StorageRow={id:string;label:string;keys:string[];chars:number};
+
+/**
+ * What this browser is holding, in the same groups a transfer code uses, plus the pencil drawings split by the score
+ * or page they belong to (so one piece's markup can go without the rest). `chars` counts stored text, about bytes.
+ */
+export function storageReport(zh:boolean,titleFor:(scoreId:string)=>string){
+  const groups=new Map<string,StorageRow>(),pieces=new Map<string,StorageRow>();
+  const names=[...GROUPS,{id:"settings",en:"Settings",zh:"设置"}];
+  let keys:string[]=[];try{keys=Object.keys(localStorage).filter(key=>key.startsWith("cookie"))}catch{/* storage blocked */}
+  for(const key of keys){
+    let value="";try{value=localStorage.getItem(key)??""}catch{/* unreadable */}
+    const chars=key.length+value.length,id=GROUPS.find(group=>group.match.test(key))?.id??"settings",name=names.find(group=>group.id===id)!;
+    const row=groups.get(id)??{id,label:zh?name.zh:name.en,keys:[],chars:0};row.keys.push(key);row.chars+=chars;groups.set(id,row);
+    if(id==="drawings"){
+      const scoreId=key.replace(/^cookie:/,"").replace(/:(annotations:v2|ink)$/,""),title=titleFor(scoreId);
+      const piece=pieces.get(title)??{id:`drawings:${title}`,label:title,keys:[],chars:0};piece.keys.push(key);piece.chars+=chars;pieces.set(title,piece);
+    }
+  }
+  const order=names.map(group=>group.id);
+  return {groups:[...groups.values()].sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id)),drawings:[...pieces.values()].sort((a,b)=>b.chars-a.chars)};
+}
+
+/** Delete these stored keys from this device only. */
+export function removeStored(keys:string[]){for(const key of keys){try{localStorage.removeItem(key)}catch{/* already gone */}}}
