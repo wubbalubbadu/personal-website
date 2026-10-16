@@ -1,4 +1,5 @@
 "use client";
+import {SCALE_TEMPO_KEY,scaleTrackingId,scaleTrackedTempo} from "./scale-tracking";
 import {ScaleTemposPanel} from "../../components/ScaleTemposPanel";
 import {ScoreTempoMarks as ScaleTempoMarks} from "../../components/ScoreTempoMarks";
 import {musicLibrary} from "../../../../content/music-library";
@@ -7,7 +8,7 @@ import {ChevronIcon,DownloadIcon} from "../../components/HeaderIcons";
 import {ReaderPopover} from "../../components/ReaderPopover";
 import {KeySelection} from "../../components/KeySelection";
 import {PracticeIcon,SpectrumDef} from "../../components/PracticeIcon";
-import {useCallback,useEffect,useState} from "react";
+import {useCallback,useEffect,useRef,useState} from "react";
 import {useLanguage} from "../../i18n/LanguageContext";
 
 import {groupsApply,scaleGroupings,type ScaleGroupSize,keySignatureNotes,DEFAULT_SCALE_SPAN,SCALE_HIGHEST_MIDI,SCALE_LOWEST_MIDI,SCALE_OCTAVES,SCALE_PITCH_CLASSES,midiForNote,octaveOfMidi,pitchClassOfMidi,scaleNoteName,type ScaleSpan,keyForType,majorKeys,ranges,scaleBookMusicXML,scaleForms,scaleNotes,scaleTypes,typeById,type MajorKey,type ScaleBlock,type ScaleEnding,type ScaleFormId,type ScaleRange,type ScaleStart,type ScaleTypeId} from "./scale-score";
@@ -44,7 +45,7 @@ const presetList:readonly ScalePreset[]=[
 ];
 const presets=Object.fromEntries(presetList.map(p=>[p.id,p])) as Record<string,ScalePreset>;
 const preferenceKey="cookie:scale-book:preferences:v3";
-const tempoKey="cookie:scale-book:tempos:v1";
+const tempoKey=SCALE_TEMPO_KEY;
 const allKeys=majorKeys.map(k=>k.id) as string[];
 const articulationModes:ArticulationMode[]=["slur","tongue","staccato","tenuto"];
 
@@ -386,6 +387,9 @@ export default function ScaleStudio(){
   // back over, so tweaking "Monday thirds" and saving updates it rather
   // than quietly spawning "Monday thirds 2".
   const [activeSet,setActiveSet]=useState<ScaleSet|null>(null);
+  // A piece's own scales (?scales=): only these key:type pairs are shown. Changing the keys or types yourself goes
+  // back to the usual every-key-by-every-type list; range, articulation and the rest adjust these freely.
+  const [pairs,setPairs]=useState<string[]|null>(null),pairsBase=useRef<{keys:string;types:string}|null>(null);
   const [justSaved,setJustSaved]=useState("");
 
   // Which exercise the transport's tempo belongs to. A tempo is per
@@ -398,26 +402,8 @@ export default function ScaleStudio(){
   // A custom range has to be part of the identity: two different spans are
   // different exercises, and would otherwise share a tempo and a score id.
   const rangeKey=range==="custom"?`custom-${Math.min(customSpan.low,customSpan.high)}-${Math.max(customSpan.low,customSpan.high)}`:range;
-  const blockTempoId=(block:ScaleBlock,range:ScaleRange)=>`scale-book:${block.type}:${block.form}${groupSize>1&&groupsApply(block.form)?`-in${groupSize}`:""}:${block.key.id}:${range==="custom"?rangeKey:range}`;
-  /**
-   * The tempo for a block, falling back to a WIDER range of the same
-   * exercise before falling back to 60.
-   *
-   * Ranges are ordered easiest-first, so anything you can already play
-   * over three octaves at 80 you can play over one at 80 — dropping back
-   * to 60 there was asking you to re-enter a tempo you had already
-   * proved. The reverse does not hold, so a narrower range never lends
-   * its tempo upwards.
-   */
-  function tempoForBlock(block:ScaleBlock,at:ScaleRange,store:Record<string,number>){
-    const order=ranges.map(r=>r.id) as ScaleRange[];
-    const from=order.indexOf(at);
-    for(let index=from;index<order.length;index+=1){
-      const stored=store[blockTempoId(block,order[index])];
-      if(stored)return stored;
-    }
-    return 60;
-  }
+  const blockTempoId=(block:ScaleBlock,range:ScaleRange)=>scaleTrackingId(block,range,customSpan,groupSize);
+  const tempoForBlock=(block:ScaleBlock,at:ScaleRange,store:Record<string,number>)=>scaleTrackedTempo(block,at,customSpan,groupSize,store);
   const saveTempo=useCallback((bpm:number)=>{if(!activeBlock)return;setTempos(prev=>prev[activeBlock]===bpm?prev:{...prev,[activeBlock]:bpm})},[activeBlock]);
 
   /** Everything a saved set restores. Mirrors ScaleSetConfig field for field. */
@@ -538,8 +524,17 @@ export default function ScaleStudio(){
       const preset=presets[params.get("preset")??""];
       if(preset)applyPreset(preset);
       else{
+        // ?scales=G:harmonic:scale,G:diminished:arpeggio (from "Scales in this piece"): exactly these key, type and
+        // form combinations, not every key by every type by every form (which would add ones the piece never uses).
+        const pieceScales=(params.get("scales")??"").split(",").map(pair=>pair.split(":")).filter(([k,t,f])=>majorKeys.some(m=>m.id===k)&&scaleTypes.some(st=>st.id===t)&&(f==="scale"||f==="arpeggio"));
         const key=params.get("key"),type=params.get("type");
-        if(key&&type&&majorKeys.some(k=>k.id===key)&&scaleTypes.some(t=>t.id===type)){
+        if(pieceScales.length){
+          const pieceKeys=[...new Set(pieceScales.map(([k])=>k))],pieceTypes=[...new Set(pieceScales.map(([,t])=>t))] as ScaleTypeId[];
+          setKeys(pieceKeys);setTypes(pieceTypes);setForms([...new Set(pieceScales.map(([,,f])=>f))] as typeof forms);
+          pairsBase.current={keys:[...pieceKeys].sort().join(),types:[...pieceTypes].sort().join()};
+          setPairs(pieceScales.map(([k,t,f])=>`${k}:${t}:${f}`));
+        }
+        else if(key&&type&&majorKeys.some(k=>k.id===key)&&scaleTypes.some(t=>t.id===type)){
           setKeys([key]);setTypes([type as ScaleTypeId]);setForms([params.get("form")==="arpeggio"?"arpeggio":"scale"]);
         }
       }
@@ -552,7 +547,14 @@ export default function ScaleStudio(){
     window.addEventListener("storage",sync);
     return()=>{window.removeEventListener(scaleSetsEvent,sync);window.removeEventListener("storage",sync)};
   },[]);
-  useEffect(()=>{if(loaded)try{localStorage.setItem(preferenceKey,JSON.stringify({range,customSpan,scaleStart,groupSize,keys,newLines,order,bySignature,grouping,ending,types,forms,articulationRotation,rhythm,tempoMarks}));}catch{/* Storage may be disabled. */}},[range,customSpan,scaleStart,groupSize,keys,newLines,order,grouping,ending,types,forms,articulationRotation,rhythm,tempoMarks,loaded]);
+  // Changing the keys or types yourself leaves the piece's list for the usual every-key-by-every-type one.
+  useEffect(()=>{
+    const base=pairsBase.current;if(!pairs||!base)return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if([...keys].sort().join()!==base.keys||[...types].sort().join()!==base.types){setPairs(null);pairsBase.current=null}
+  },[keys,types,pairs]);
+  // A piece's own scales are a visit, not your Scale Studio setup: they are not saved over your preferences.
+  useEffect(()=>{if(loaded&&!pairs)try{localStorage.setItem(preferenceKey,JSON.stringify({range,customSpan,scaleStart,groupSize,keys,newLines,order,bySignature,grouping,ending,types,forms,articulationRotation,rhythm,tempoMarks}));}catch{/* Storage may be disabled. */}},[range,customSpan,scaleStart,groupSize,keys,newLines,order,grouping,ending,types,forms,articulationRotation,rhythm,tempoMarks,loaded,pairs]);
   useEffect(()=>{if(loaded)try{localStorage.setItem(tempoKey,JSON.stringify(tempos));}catch{/* Storage may be disabled. */}},[tempos,loaded]);
 
   const chosenRange=ranges.find(r=>r.id===range)!;
@@ -576,9 +578,12 @@ export default function ScaleStudio(){
     // Circle of fifths: fewest sharps and flats first. Chromatic: by the signature's major key (C, D♭, D…).
     return {block:blockFor(key,type,form,english),rank:[...(order==="fifths"?[Math.abs(fifths),fifths<0?1:0]:[majorPc,0]),((key.pc-majorPc)%12+12)%12,scaleTypes.indexOf(type),scaleForms.indexOf(form)]};
   }))).sort((a,b)=>{for(let i=0;i<a.rank.length;i++)if(a.rank[i]!==b.rank[i])return a.rank[i]-b.rank[i];return 0}).map(item=>item.block);
-  const buildBlocks=(english=false):ScaleBlock[]=>bySignature?signatureBlocks(english):grouping==="key"
-    ?selected.flatMap(key=>chosenTypes.flatMap(type=>chosenForms.map(form=>blockFor(key,type,form,english))))
-    :chosenTypes.flatMap(type=>selected.flatMap(key=>chosenForms.map(form=>blockFor(key,type,form,english))));
+  const buildBlocks=(english=false):ScaleBlock[]=>{
+    const all=bySignature?signatureBlocks(english):grouping==="key"
+      ?selected.flatMap(key=>chosenTypes.flatMap(type=>chosenForms.map(form=>blockFor(key,type,form,english))))
+      :chosenTypes.flatMap(type=>selected.flatMap(key=>chosenForms.map(form=>blockFor(key,type,form,english))));
+    return pairs?all.filter(block=>pairs.includes(`${block.key.id}:${block.type}:${block.form}`)):all;
+  };
   const blocks:ScaleBlock[]=buildBlocks();
   // Must pass `scaleStart` too: the practice overlays (note names,
   // accidentals, syllables) index straight into this array, so if it is

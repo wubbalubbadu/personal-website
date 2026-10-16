@@ -1,4 +1,5 @@
 'use client';
+import {useRouter} from 'next/navigation';
 import {useRef,useState,type CSSProperties,type ReactNode} from 'react';
 import {useLanguage} from '../../i18n/LanguageContext';
 import LessonFrame,{type LessonNext} from '../LessonFrame';
@@ -44,7 +45,8 @@ const SignIcon=({acc}:{acc:Acc})=><svg className="ks-sign-icon" viewBox={`${SIGN
 
 export default function KeySignaturesLesson(){
   const {lang}=useLanguage(),zh=lang==='zh',tr=(en:string,cn:string)=>zh?cn:en;
-  const [step,setStep]=useState(0),[done,setDone]=useState(false);
+  const router=useRouter();
+  const [step,setStep]=useState(0);
   const audio=useRhythmAudio(),course=useCourseProgress(),id:StepId=FLOW[step];
   // The last thing touched, a note or a key: it and its partner stay lit until something else is touched.
   const [sel,setSel]=useState<{midi:number;index:number|null}|null>(null),[playMidis,setPlayMidis]=useState<number[]>([]);
@@ -82,7 +84,7 @@ export default function KeySignaturesLesson(){
   }
   const goStage=(s:number)=>{audio.stop();setPlayMidis([]);setSel(null);setRings([]);setStage(s)};
 
-  let narration:ReactNode='',message:ReactNode='',tone:'correct'|'wrong'|null=null,ready=false,pageNext:LessonNext|undefined,progress:{done:number;total:number}|undefined,tools:ReactNode=null;
+  let narration:ReactNode='',message:ReactNode='',tone:'correct'|'wrong'|null=null,ready=false,pageNext:LessonNext|undefined,progress:{done:number;total:number}|undefined,tools:ReactNode=null,extra:ReactNode=null;
   let scene:ReactNode=null,lit:KeyLight[]=[];
   const playing=(audio.active>=0||audio.elapsed>=0)&&playMidis.length>0;
   const touched=!playing&&sel?.index!=null?sel.index:-1;
@@ -93,8 +95,9 @@ export default function KeySignaturesLesson(){
   /** Rings around notes that just changed, one after another. */
   const ringsAt=(notes:ReadNote[],layout:RowLayout,delay=0)=>rings.map((i,k)=><circle key={`ring-${wave.current}-${i}`} className="ks-ring" cx={layout.xs[i]} cy={noteY(notes[i].p)} r="22"
     style={{animationDelay:`${delay+k*.12}s`}}/>);
-  const yesNo=(ask:string,onPick:(sharp:boolean)=>void,wrong:number|null)=><div className="measures-choices" role="group" aria-label={ask}>
-    {[tr('Sharp','升音'),tr('Plain','原音')].map((label,k)=><button key={k} className={wrong===k?'is-wrong':''} onClick={()=>onPick(k===0)}>{label}</button>)}
+  /** Sharp or Plain, in the bubble. `picked`: 0 sharp, 1 plain. Once right, both stay (disabled) with the answer marked. */
+  const yesNo=(ask:string,onPick:(sharp:boolean)=>void,picked:number|null,answer:number)=><div className="measures-choices" role="group" aria-label={ask}>
+    {[tr('Sharp','升音'),tr('Plain','原音')].map((label,k)=><button key={k} disabled={picked===answer} className={picked===k?(k===answer?'is-correct':'is-wrong'):''} onClick={()=>onPick(k===0)}>{label}</button>)}
   </div>;
 
   if(id==='once'){
@@ -128,9 +131,8 @@ export default function KeySignaturesLesson(){
       
       {noteHits(notes,layout)}
     </>}</EngravedRow>;
-    tools=!placed?button(tr('Listen','听一听'),()=>{setSel(null);void playMelody(ONCE,ONCE_BARS,0)})
-      :answered?button(tr('Listen','听一听'),()=>{setSel(null);void playMelody(notes,ONCE_BARS,1)})
-      :yesNo(tr('Sharp or plain?','升音还是原音？'),sharp=>{setPick(sharp?0:1);if(sharp){hear([staffMidis[LOW_F]]);setSel({midi:staffMidis[LOW_F],index:LOW_F})}},pick===1?1:null);
+    tools=button(tr('Listen','听一听'),()=>{setSel(null);void playMelody(notes,ONCE_BARS,key)});
+    if(placed)extra=yesNo(tr('Sharp or plain?','升音还是原音？'),sharp=>{setPick(sharp?0:1);if(sharp){hear([staffMidis[LOW_F]]);setSel({midi:staffMidis[LOW_F],index:LOW_F})}},pick,0);
   }
 
   else if(id==='letters'&&stage===1){
@@ -189,7 +191,7 @@ export default function KeySignaturesLesson(){
     </>}</EngravedRow>;
     const toggle=(l:string)=>{if(right)return;setChecked(null);setLetters(x=>x.includes(l)?x.filter(y=>y!==l):[...x,l])};
     const check=()=>{const ok=letters.length===answer.length&&answer.every(l=>letters.includes(l));setChecked(ok?'right':'wrong')};
-    tools=<>
+    extra=<>
       <div className="measures-choices ks-letters" role="group" aria-label={tr('Letters','音名')}>
         {['C','D','E','F','G','A','B'].map(l=><button key={l} aria-pressed={letters.includes(l)}
           className={letters.includes(l)?(right?'is-correct':checked==='wrong'&&!answer.includes(l)?'is-wrong':'is-picked'):''} disabled={right} onClick={()=>toggle(l)}>{l}{key<0?'♭':'♯'}</button>)}
@@ -220,13 +222,13 @@ export default function KeySignaturesLesson(){
         :answered?(lastQ?<>{why} {tr('Next lesson: what fills a beat where you don’t play?','下一课：不吹的拍子用什么来填？')}</>:why)
         :tr('The natural only covers its own line or space, until the bar line.','还原号只管它自己那条线或那个间，到小节线为止。');
       tone=pick===null?null:answered?'correct':'wrong';
-      tools=answered?button(tr('Listen','听一听'),()=>{setSel(null);void playMelody(notes,BACK_BARS,1)})
-        :yesNo(ask,sharp=>{setPick(sharp?0:1);if(sharp===Q.sharp){const m=staffMidis[Q.at];hear([m]);setSel({midi:m,index:Q.at})}},pick!==null&&!answered?pick:null);
+      if(answered)tools=button(tr('Listen','听一听'),()=>{setSel(null);void playMelody(notes,BACK_BARS,1)});
+      extra=yesNo(ask,sharp=>{setPick(sharp?0:1);if(sharp===Q.sharp){const m=staffMidis[Q.at];hear([m]);setSel({midi:m,index:Q.at})}},pick,Q.sharp?0:1);
       if(answered&&!lastQ)pageNext={label:tr('Next question →','下一题 →'),ready:true,onClick:()=>{audio.stop();setPlayMidis([]);setSel(null);setQ(x=>x+1);setPick(null)}};
     }
     ready=answered&&lastQ;
     progress={done:(natural?1:0)+q+(answered?1:0),total:1+BACK_Q.length};
-    if(!natural)tools=<div className="measures-choices ks-signs" role="group" aria-label={tr('Signs','记号')}>
+    if(!natural)extra=<div className="measures-choices ks-signs" role="group" aria-label={tr('Signs','记号')}>
       {(['sharp','flat','natural'] as const).map(acc=><button key={acc} className={tried===acc?'is-wrong':''} aria-label={acc==='sharp'?tr('Sharp','升号'):acc==='flat'?tr('Flat','降号'):tr('Natural','还原号')}
         onClick={()=>{setTried(acc);if(acc==='natural'){const m=soundingMidi(BACK.map((x,i)=>i===0?{...x,acc}:x),BACK_BARS,1)[0];hear([m]);setSel({midi:m,index:0})}}}><SignIcon acc={acc}/></button>)}
     </div>;
@@ -237,8 +239,7 @@ export default function KeySignaturesLesson(){
       <circle className="measure-circle" cx={layout.xs[circled]} cy={noteY(notes[circled].p)} r="24"/>
       {noteHits(notes,layout)}
     </>}</EngravedRow>;
-    if(ready)pageNext=done?{label:tr('Back to theory lessons','回到乐理课'),ready:true,href:'/flute-studio/theory'}
-      :{label:tr('Finish lesson','完成课程'),ready:true,onClick:()=>{course.finish('keys');setDone(true)}};
+    if(ready)pageNext={label:tr('Finish lesson','完成课程'),ready:true,onClick:()=>{course.finish('keys');router.push('/flute-studio/theory')}};
   }
 
   const last=step===FLOW.length-1;
@@ -248,7 +249,7 @@ export default function KeySignaturesLesson(){
   if(playing&&playMidis[audio.active]!==undefined)lit=[{midi:playMidis[audio.active],tone:'red'}];
 
   return <LessonFrame className="accidentals-lesson key-sig-lesson" title={tr('Key signatures','调号')} zh={zh} steps={names} current={step} onJump={navigate}
-    heading={names[step]} narration={narration} fadeNarration message={message} tone={tone} next={next} progress={progress}
+    heading={names[step]} narration={narration} fadeNarration message={message} tone={tone} next={next} extra={extra} progress={progress}
     status={audio.error?tr('Sound could not start. Tap again to retry.','声音未能启动，请再试一次。'):''}>
     <div className="acc-scene">
       {scene}

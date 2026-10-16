@@ -1,4 +1,5 @@
 'use client';
+import {useRouter} from 'next/navigation';
 import {useEffect,useRef,useState,type ReactNode} from 'react';
 import {useLanguage} from '../../i18n/LanguageContext';
 import CountInPulse from '../../components/CountInPulse';
@@ -85,15 +86,15 @@ function beatHint(q:BeatQuestion,zh:boolean){
   if(!parts.length)return zh?'它就在小节线后面，是新小节的第一拍。':'It comes right after the bar line, so it starts a new measure.';
   return zh?`从小节线数起：${parts.join('，')}，所以它从第 ${q.answer} 拍开始。`:`Count from the bar line: ${parts.join(', ')}, so this one starts on ${q.answer}.`;
 }
-// Top numbers quiz: one unusual time signature (7/4), then two measures to count, quarter note = one beat.
-type TopQuestion={notes:RowNote[];answer:number;choices:number[];given?:boolean};
+// Top numbers quiz: two measures to count, quarter note = one beat. (Unusual meters like 7/4 were cut: not beginner material.)
+type TopQuestion={notes:RowNote[];answer:number;choices:number[]};
 function makeTopQuestions():TopQuestion[]{
   const pool=[[.5,.5,1,1],[2,.5,.5,1],[.5,.5,1],[1,.5,.5,2],[1,1,.5,.5],[.5,.5,2]].map(m=>({notes:m.map(v=>({v})),answer:m.reduce((a,b)=>a+b,0),choices:[2,3,4]}));
   const first=pool[Math.floor(Math.random()*pool.length)],rest=pool.filter(q=>q.answer!==first.answer),second=rest[Math.floor(Math.random()*rest.length)];
-  return [{notes:[{v:2},{v:1},{v:1},{v:2},{v:1}],answer:7,choices:[4,7,11],given:true},first,second];
+  return [first,second];
 }
-// Bottom number question: 9/16, one measure of sixteenths beamed in threes.
-const NINE_SIXTEEN:RowNote[]=Array.from({length:9},()=>({v:.25}));
+// Bottom number question: 3/8, one measure of three eighths beamed together (common in beginner pieces, unlike 9/16).
+const THREE_EIGHT:RowNote[]=Array.from({length:3},()=>({v:.5}));
 // Count and clap: 4/4 and 3/4 with eighths, then 6/8, where the eighth gets the beat (slower, so each eighth is clappable).
 type ClapRound=Rhythm&{bottom:number;unit:number;spq:number;beams:number[][]};
 const clapRound=(values:number[],bars:number[],top:number,bottom:number,spq:number):ClapRound=>{const notes=values.map(v=>({v})),unit=bottom===8?.5:1;return {notes,bars,top,bottom,unit,spq,beams:beamGroups(notes,bottom===8?1.5:1)}};
@@ -114,7 +115,8 @@ function beatSlice(notes:RowNote[],beat:number){
 export default function MeasuresLesson(){
   const phone=usePhoneNotation();
   const {lang}=useLanguage(),zh=lang==='zh',tr=(en:string,cn:string)=>zh?cn:en;
-  const [step,setStep]=useState(0),[done,setDone]=useState(false);
+  const router=useRouter();
+  const [step,setStep]=useState(0);
   const audio=useRhythmAudio(),course=useCourseProgress(),id:StepId=FLOW[step];
   // Page 1: bars appear as the count returns to 1; then the time signature writes in.
   const [p1,setP1]=useState<'even'|'playing'|'barred'|'signed'>('even'),[p1Bars,setP1Bars]=useState<number[]>([]),[p1Measure,setP1Measure]=useState<number|null>(null);
@@ -165,7 +167,7 @@ export default function MeasuresLesson(){
     timers.current.push(setTimeout(()=>blink('bottom'),lead+total*beat+1900));
   }
 
-  let narration:ReactNode='',message:ReactNode='',scene:ReactNode=null,tools:ReactNode=null,tone:'correct'|'wrong'|null=null,ready=false,progress:{done:number;total:number}|undefined;
+  let narration:ReactNode='',message:ReactNode='',scene:ReactNode=null,tools:ReactNode=null,extra:ReactNode=null,tone:'correct'|'wrong'|null=null,ready=false,progress:{done:number;total:number}|undefined;
   // A page can set its own Next (question rounds); otherwise the default below applies.
   let pageNext:LessonNext|undefined;
 
@@ -217,32 +219,29 @@ export default function MeasuresLesson(){
     }else{
       const q=topQs[topQ],solved=topPick===q.answer,lastQ=topQ===topQs.length-1;
       progress={done:topQ+(solved?1:0),total:topQs.length};
-      narration=q.given?tr('The top number can be any number of beats, not just 2, 3 or 4. Some music uses 5/4 or 7/4.','上方数字可以是任何拍数，不只是 2、3、4。有的音乐用 5/4 或 7/4。')
-        :tr('In these, the quarter note gets one beat, and two eighth notes share one. Count the beats in the measure: that count is the top number.','这里四分音符算一拍，两个八分音符共用一拍。数一数这个小节有几拍，那就是上方数字。');
-      message=topPick===null?(q.given?tr('This piece is in 7/4. How many beats are in each measure?','这首曲子是 7/4 拍。每个小节有几拍？')
-          :topQ===1?tr('How many beats are in this measure? Pick the top number.','这个小节有几拍？选出上方数字。'):tr('Last one: how many beats, so which top number?','最后一题：几拍？上方数字是几？'))
-        :solved?(q.given?tr('Yes: the top 7 means 7 beats in each measure. You count 1 to 7.','对：上面的 7 表示每小节 7 拍，从 1 数到 7。'):tr(`Yes: ${q.answer} beats, so ${q.answer} on top.`,`对：${q.answer} 拍，所以上面是 ${q.answer}。`))
-        :q.given?tr('The top number is the beat count itself: 7/4 has 7 beats in every measure.','上方数字本身就是拍数：7/4 每小节 7 拍。')
+      narration=tr('In these, the quarter note gets one beat, and two eighth notes share one. Count the beats in the measure: that count is the top number.','这里四分音符算一拍，两个八分音符共用一拍。数一数这个小节有几拍，那就是上方数字。');
+      message=topPick===null?(topQ===0?tr('How many beats are in this measure? Pick the top number.','这个小节有几拍？选出上方数字。'):tr('Last one: how many beats, so which top number?','最后一题：几拍？上方数字是几？'))
+        :solved?tr(`Yes: ${q.answer} beats, so ${q.answer} on top.`,`对：${q.answer} 拍，所以上面是 ${q.answer}。`)
         :tr('Not quite. A half note is 2 beats, a quarter note 1, and two eighth notes together make 1.','还不对。二分音符 2 拍，四分音符 1 拍，两个八分音符合起来 1 拍。');
       tone=topPick===null?null:solved?'correct':'wrong';
       ready=solved&&lastQ;
       // The answers sit in Cookie's bubble, next to the question they answer. (No spoken count past 6: there are only six clips.)
-      tools=!solved&&<div className="measures-choices" role="group" aria-label={tr('Top number','上方数字')}>{q.choices.map(n=><button key={n} className={topPick===n?(n===q.answer?'is-correct':'is-wrong'):''}
+      extra=<div className="measures-choices" role="group" aria-label={tr('Top number','上方数字')}>{q.choices.map(n=><button key={n} disabled={solved} className={topPick===n?(n===q.answer?'is-correct':'is-wrong'):''}
         onClick={()=>{setTopPick(n);if(n===q.answer)void audio.counted({values:q.notes.map(x=>x.v),pitches:rhythmPitches(q.notes),top:n,speak:n<=6})}}>{n}</button>)}</div>;
       if(solved&&!lastQ)pageNext={label:tr('Next question →','下一题 →'),ready:true,onClick:()=>{audio.stop();setTopQ(n=>n+1);setTopPick(null)}};
-      scene=<EngravedRow key={`q-${topQ}`} clef={false} meter={q.given||solved?{top:q.answer,bottom:4}:null} notes={q.notes} beams={beamGroups(q.notes)} className={solved&&!q.given?'is-flash-top':''}
+      scene=<EngravedRow key={`q-${topQ}`} clef={false} meter={solved?{top:q.answer,bottom:4}:null} notes={q.notes} beams={beamGroups(q.notes)} className={solved?'is-flash-top':''}
         below={solved?counts({notes:q.notes,top:q.answer,litBeat:audio.beat,share:true}):undefined}/>;
     }
   }
 
   else if(id==='bottom'){
   if(bottomQuiz){
-    // Two short questions on a time signature they haven't seen: the top number, then the bottom number of 9/16.
-    const Q=[{ask:tr('This one is 9/16. How many beats are in each measure?','这个是 9/16。每个小节有几拍？'),choices:[{label:'9',right:true},{label:'16',right:false}],
-        yes:tr('Yes, the top number: 9 beats.','对，看上方数字：9 拍。'),no:tr('The top number is the beat count.','上方数字才是拍数。')},
-      {ask:tr('And which note gets one beat?','那么哪种音符算一拍？'),choices:[{label:tr('Quarter','四分音符'),right:false},{label:tr('Eighth','八分音符'),right:false},{label:tr('Sixteenth','十六分音符'),right:true}],
-        yes:tr('Yes! A 16 on the bottom means the sixteenth note gets one beat, so these 9 sixteenths fill the measure.','对！下方是 16，表示十六分音符算一拍，所以这 9 个十六分音符正好填满一个小节。'),
-        no:tr('The bottom number names the note: 4 is the quarter note, 8 the eighth note, so 16 is…','下方数字表示音符：4 是四分音符，8 是八分音符，那 16 就是……')}][bottomQ];
+    // Two short questions on a time signature they haven't seen yet: the top number, then the bottom number of 3/8.
+    const Q=[{ask:tr('This one is 3/8. How many beats are in each measure?','这个是 3/8。每个小节有几拍？'),choices:[{label:'3',right:true},{label:'8',right:false}],
+        yes:tr('Yes, the top number: 3 beats.','对，看上方数字：3 拍。'),no:tr('The top number is the beat count.','上方数字才是拍数。')},
+      {ask:tr('And which note gets one beat?','那么哪种音符算一拍？'),choices:[{label:tr('Quarter','四分音符'),right:false},{label:tr('Eighth','八分音符'),right:true},{label:tr('Sixteenth','十六分音符'),right:false}],
+        yes:tr('Yes: an 8 on the bottom means the eighth note gets the beat.','对：下方是 8，表示八分音符算一拍。'),
+        no:tr('The bottom number names the note: 4 is the quarter note, 2 the half note, so 8 is…','下方数字表示音符：4 是四分音符，2 是二分音符，那 8 就是……')}][bottomQ];
     const picked=bottomPick===null?null:Q.choices[bottomPick],solved=!!picked?.right,lastQ=bottomQ===1;
     progress={done:bottomQ+(solved?1:0),total:2};
     narration=tr('Now a time signature you haven’t seen. Read the top number, then the bottom number.','来看一个你没见过的拍号。先读上方数字，再读下方数字。');
@@ -250,10 +249,10 @@ export default function MeasuresLesson(){
     tone=picked===null?null:solved?'correct':'wrong';
     ready=solved&&lastQ;
     if(solved&&!lastQ)pageNext={label:tr('Next question →','下一题 →'),ready:true,onClick:()=>{audio.stop();setBottomQ(1);setBottomPick(null)}};
-    tools=!solved&&<div className="measures-choices" role="group" aria-label="9/16">{Q.choices.map((c,k)=><button key={k} className={bottomPick===k?(c.right?'is-correct':'is-wrong'):''}
-      onClick={()=>{setBottomPick(k);if(c.right)blink(lastQ?'bottom':'top');if(c.right&&lastQ)void audio.counted({values:NINE_SIXTEEN.map(n=>n.v),pitches:rhythmPitches(NINE_SIXTEEN),top:9,beatUnit:.25,secondsPerQuarter:1.6,speak:false})}}>{c.label}</button>)}</div>;
-    scene=<EngravedRow key="nine-sixteen" clef={false} meter={{top:9,bottom:16}} notes={NINE_SIXTEEN} beams={beamGroups(NINE_SIXTEEN,.75)} active={audio.active}
-      className={flash?`is-flash-${flash}`:''} below={solved&&lastQ?counts({notes:NINE_SIXTEEN,beatUnit:.25,top:9,litBeat:audio.beat}):undefined} label="9/16"/>;
+    extra=<div className="measures-choices" role="group" aria-label="3/8">{Q.choices.map((c,k)=><button key={k} disabled={solved} className={bottomPick===k?(c.right?'is-correct':'is-wrong'):''}
+      onClick={()=>{setBottomPick(k);if(c.right)blink(lastQ?'bottom':'top');if(c.right&&lastQ)void audio.counted({values:THREE_EIGHT.map(n=>n.v),pitches:rhythmPitches(THREE_EIGHT),top:3,beatUnit:.5,secondsPerQuarter:1.2,speak:false})}}>{c.label}</button>)}</div>;
+    scene=<EngravedRow key="three-eight" narrow clef={false} meter={{top:3,bottom:8}} notes={THREE_EIGHT} beams={[[0,1,2]]} active={audio.active}
+      className={flash?`is-flash-${flash}`:''} below={solved&&lastQ?counts({notes:THREE_EIGHT,beatUnit:.5,top:3,litBeat:audio.beat}):undefined} label="3/8"/>;
   }else{
       // Each example is one measure of the note that gets the beat, so the bottom number is easy to see.
       const EXAMPLES={'4/4':{m:{top:4,bottom:4},unit:1,notes:quarters(4)},'2/2':{m:{top:2,bottom:2},unit:2,notes:[{v:2},{v:2}] as RowNote[]},'6/8':{m:{top:6,bottom:8},unit:.5,notes:Array.from({length:6},()=>({v:.5})) as RowNote[]}};
@@ -303,7 +302,7 @@ export default function MeasuresLesson(){
         :solved?tr(`Yes, beat ${q.answer}!`,`对，第 ${q.answer} 拍！`):beatHint(q,zh);
       tone=p2Pick===null?null:solved?'correct':'wrong';
       ready=solved&&last;
-      tools=!solved&&<div className="measures-choices" role="group" aria-label={tr('Beat','拍')}>{[1,2,3,4].map(n=><button key={n} className={p2Pick===n?(n===q.answer?'is-correct':'is-wrong'):''}
+      extra=<div className="measures-choices" role="group" aria-label={tr('Beat','拍')}>{[1,2,3,4].map(n=><button key={n} disabled={solved} className={p2Pick===n?(n===q.answer?'is-correct':'is-wrong'):''}
         onClick={()=>{setP2Pick(n);if(n===q.answer){const b=q.bars[0];void audio.counted({values:q.notes.slice(b).map(x=>x.v),pitches:rhythmPitches(q.notes.slice(b)),offset:b})}}}>{n}</button>)}</div>;
       if(solved&&!last)pageNext={label:tr('Next question →','下一题 →'),ready:true,onClick:()=>{audio.stop();setP2Q(k=>k+1);setP2Pick(null)}};
       const start=q.bars[0],starts=onsets(q.notes);
@@ -315,7 +314,7 @@ export default function MeasuresLesson(){
   }
 
   else if(id==='beats'){
-    narration=tr('Beats and notes are different things. To see where the beats fall, draw a line where each beat starts. A long note can hold several beats, and several short notes can share one.','拍子和音符不是一回事。要看清拍子在哪里，就在每一拍开始的地方画一条线。一个长音可以占好几拍，几个短音也可以共用一拍。');
+    narration=tr('Beats and notes are different things. A long note can hold several beats, and several short notes can share one.','拍子和音符不是一回事。一个长音可以占好几拍，几个短音也可以共用一拍。');
     const stick=(b:number,x:number)=><line key={b} x1={x} x2={x} y1={58} y2={noteY(8)-4} className="beat-stick"/>;
     if(p3Phase==='demo'){
       const beams=[[1,2,3,4],[5,6]],marked=p3Demo;
@@ -397,8 +396,9 @@ export default function MeasuresLesson(){
       </EngravedRow>;
       const hint=()=>{const b=[...Array(total).keys()].find(k=>!p3Sticks.includes(k));if(b!==undefined){setP3Hint(b);setP3Miss(null)}};
       const reveal=()=>{setP3Revealed(true);setP3Sticks([...Array(total).keys()]);setP3Hint(null);setP3Miss(null);void audio.counted({values:r.notes.map(n=>n.v),pitches:rhythmPitches(r.notes),top:4})};
-      tools=done?<button className="measures-secondary" onClick={()=>void audio.counted({values:r.notes.map(n=>n.v),pitches:rhythmPitches(r.notes),top:4})}>{tr('Play','播放')}</button>
-        :<>
+      // Play is a scene control under the music; Hint and Show answer belong with the task, in the bubble.
+      if(done)tools=<button className="measures-secondary" onClick={()=>void audio.counted({values:r.notes.map(n=>n.v),pitches:rhythmPitches(r.notes),top:4})}>{tr('Play','播放')}</button>;
+      else extra=<>
           <button className="measures-secondary" onClick={hint}>{tr('Hint','提示')}</button>
           {(p3Misses>=2||p3Hint!==null)&&<button className="measures-secondary" onClick={reveal}>{tr('Show answer','显示答案')}</button>}
         </>;
@@ -438,7 +438,7 @@ export default function MeasuresLesson(){
     // The count finished but not every note was tapped.
     const ranOut=p7Mode==='clap'&&!p7Waiting&&audio.elapsed<0&&p7Result===null;
     narration=tr('Here’s why we count: it lets you play a rhythm you’ve never heard, straight from the page.','这就是数拍的用处：没听过的节奏，你也能直接照着谱子准时演奏出来。');
-    const intro=[tr('In lesson 2 you copied rhythms you heard. This time nobody plays it first: read it. Press Start and I’ll give you 4 counts to get ready, then tap the cookie on each note.','第 2 课里你是听了再模仿。这次没人先弹给你听：自己读。点“开始”，我先数 4 下让你准备，然后每个音符点一下饼干。'),
+    const intro=[tr('This time nobody plays it first: read it. Press Start for 4 counts, then tap the cookie on each note.','这次没人先弹给你听：自己读。点“开始”，先数 4 下，然后每个音符点一下饼干。'),
       tr('This one is in 3/4, so you get 3 counts to get ready. Watch the eighth notes: two taps in one beat.','这个是 3/4，所以准备时我数 3 下。注意八分音符：一拍里点两下。'),
       tr('Now 6/8. The bottom 8 means the eighth note gets the beat, so you get 6 counts to get ready, and each count is one eighth note.','现在是 6/8。下面的 8 表示八分音符算一拍，所以准备时我数 6 下，每数一下就是一个八分音符。')][p7Round];
     message=p7Result===true?(lastRound?tr('Right in time, even in 6/8! That’s reading rhythm: count, then play.','连 6/8 都很准！这就是读节奏：先数，再演奏。'):tr('Right in time! Here’s the next one.','很准！来看下一个。'))
@@ -449,8 +449,7 @@ export default function MeasuresLesson(){
       :ranOut?tr('The rhythm ended before every note got a tap. Press Start to try again.','节奏结束了，还有音符没点到。点“开始”再试一次。'):intro;
     tone=p7Result===true?'correct':p7Result===false?'wrong':null;
     // The last rhythm ends the lesson: there's no separate review page.
-    if(p7Result===true&&lastRound)pageNext=done?{label:tr('Back to theory lessons','回到乐理课'),ready:true,href:'/flute-studio/theory'}
-      :{label:tr('Finish lesson','完成课程'),ready:true,onClick:()=>{course.finish('measures');setDone(true)}};
+    if(p7Result===true&&lastRound)pageNext={label:tr('Finish lesson','完成课程'),ready:true,onClick:()=>{course.finish('measures');router.push('/flute-studio/theory')}};
     if(p7Result===true&&!lastRound)pageNext={label:tr('Next rhythm →','下一个节奏 →'),ready:true,onClick:()=>{audio.stop();setP7Round(k=>k+1);setP7Taps([]);setP7Result(null);setP7Mode(null)}};
     // While tapping, the counts under the notes run a measure behind the count-in.
     const litBeat=p7Mode==='clap'?audio.beat-r.top:audio.beat;
@@ -495,7 +494,7 @@ export default function MeasuresLesson(){
     :{label:tr(`Next: ${names[step+1]} →`,`下一步：${names[step+1]} →`),ready,onClick:()=>navigate(step+1)});
 
   return <LessonFrame className="measures-lesson" title={tr('Measures and time signatures','小节与拍号')} zh={zh} steps={names} current={step} onJump={navigate}
-    heading={names[step]} narration={narration} message={message} tone={tone} next={next} progress={progress}
+    heading={names[step]} narration={narration} fadeNarration message={message} tone={tone} next={next} extra={extra} progress={progress}
     status={audio.error?tr('Sound could not start. Tap again to retry.','声音未能启动，请再试一次。'):''}>
     <div className="measures-scene">{scene}</div>
     <div className="lesson-tools measures-tools">{tools}</div>

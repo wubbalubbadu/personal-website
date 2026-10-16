@@ -42,5 +42,5 @@
 .storage-row small{font-size:13px;color:#85868e}
 .storage-row__delete{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 8px;border:0;border-radius:10px;background:transparent;color:#a5a7ad;font:inherit;font-size:13px;cursor:pointer}
 .storage-row__delete svg{width:18px;height:18px}
-@media(hover:hover){.storage-row__delete:hover{color:#a5372f}}
+@media(hover:hover){.storage-row__delete:hover{color:#292a33}}
 .storage-row__delete.is-armed{color:#a5372f}

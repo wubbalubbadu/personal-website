@@ -101,3 +101,21 @@
   .bl-play-row .tempo-pill{flex:1 1 auto;justify-content:space-between}
 }
 .bl-play-row .tempo-pill{flex:1 1 auto;justify-content:space-between}
+
+/* Controls panel (Oct 16): it is narrow, so the counts are three rows (label left, stepper right) instead of three
+   steppers squeezed side by side; tempo and Start each get a full row. The tempo pill is plain grey here (beat sound is
+   a setting that stays on, so the shared "metronome on" blue and purple lit it all the time; on shows as a dark icon),
+   and Start is the studio's plain grey button, not green. */
+html body .bl-counts{grid-template-columns:1fr;gap:6px}
+html body .bl-count-step{display:flex;align-items:center;justify-content:space-between;gap:10px}
+html body .bl-count-step>span{font-size:13px;font-weight:600;color:#6f7178}
+html body .bl-count-step .bl-stepper{width:112px;flex:none}
+html body .bl-play-row{display:grid;grid-template-columns:1fr;gap:8px}
+html body .bl-play-row .tempo-pill{justify-content:space-between;width:100%;box-sizing:border-box;background:#f1f1f2;box-shadow:none}
+html body .bl-play-row .tempo-pill .tempo-pill__sound{background:transparent;color:#9a9ca3}
+/* Beat sound on: a white circle behind the metronome, the grey controls' own "selected" look (the trill chart's D/E
+   toggle); off: just the grey icon. */
+html body .bl-play-row .tempo-pill.is-sounding .tempo-pill__sound{background:#fff;color:#292a33;box-shadow:0 1px 2px rgba(41,42,51,.12)}
+html body .bl-play-row .tempo-pill :is(.tempo-pill__step,.tempo-pill__value input){color:#45464f}
+html body .bl-start.bl-start{width:100%;background:#f1f1f2!important;color:#292a33!important}
+@media(hover:hover){html body .bl-start.bl-start:hover{background:#e8e8ea!important}}

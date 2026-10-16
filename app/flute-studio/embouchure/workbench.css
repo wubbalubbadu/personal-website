@@ -203,3 +203,75 @@
 .emb .body-model-nav button[aria-pressed="true"]{background:#292a33;color:#fff}
 .emb .emb-play{background:#e7eee3;color:#40553d}
 .emb .emb-play:hover{background:#dce8d7}
+
+/* Redesign (Oct 16): one 16px rhythm down the panel. The note and Play scale share the top row; the staff is smaller;
+   the range is one line with its ends beside it (no floating name bubble: the heading already says the note); the tip
+   carries the card label (COMPONENTS.md "Card label"); nothing is pinned to the panel's bottom with empty space above. */
+.emb .workbench__panel{gap:16px;padding:22px 22px 24px}
+.emb-head{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%}
+.emb-note{font-size:32px;font-weight:700;letter-spacing:-.03em}
+.emb .emb-head .emb-play{align-self:center;margin:0;min-height:34px;height:34px;padding:0 14px;border-radius:999px;font-size:13px;font-weight:600;white-space:nowrap}
+.emb-staff{height:auto;width:100%;display:flex;justify-content:center}
+.emb-staff svg{width:auto;height:140px;max-width:100%}
+.emb-range{display:flex;align-items:center;gap:10px;width:100%;font-size:12px;font-weight:600;color:#85868e}
+.emb-range input[type="range"]{flex:1;min-width:0;height:20px;margin:0;accent-color:#678956;cursor:pointer}
+.emb-cue{width:100%;padding-top:14px;border-top:1px solid #ececef}
+.emb-cue p{margin:6px 0 0;font-size:15px;line-height:1.5;color:#292a33}
+.emb-label{display:block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#85868e}
+/* Breathing's panel in the same sizes. */
+.breath-title{font-size:24px;font-weight:700;letter-spacing:-.03em}
+.breath-parts{margin:0}
+.breath-parts div{padding:10px 0;border-bottom-color:#ececef}
+.breath-parts dt{font-size:14px;font-weight:600;color:#292a33}
+.breath-parts dd{margin-top:3px;font-size:13px;line-height:1.45;color:#6d6f76}
+.breath-legend{font-size:12px;color:#6d6f76}
+/* Phones: a shorter 3D view so the note, staff, range and tip are on screen with it. */
+@media(max-width:760px){
+  .emb-canvas{height:300px}
+  .emb .workbench__panel{padding:16px;gap:14px}
+  .emb-note{font-size:28px}
+  .emb-staff svg{height:110px}
+  .breath-canvas{min-height:340px}
+}
+
+/* Buttons here are the studio's plain grey, not the old soft green (Play scale, Play breath / Pause). */
+html body .emb .emb-play{background:#f1f1f2;color:#45464f}
+@media(hover:hover){html body .emb .emb-play:hover{background:#e8e8ea}}
+/* Sized to the window: the 3D views take the height left under the page title, so the page does not scroll when the
+   window is tall enough (the panel still sets a minimum). */
+.emb-canvas{height:clamp(300px,calc(100dvh - 300px),560px)}
+.breath-canvas{min-height:clamp(320px,calc(100dvh - 300px),580px)}
+/* Desktop and iPad: a tighter Breathing panel and a little more room under the title, so neither view scrolls on an
+   800px-tall window. */
+.emb-canvas{height:clamp(300px,calc(100dvh - 340px),560px)}
+.breath-canvas{min-height:clamp(320px,calc(100dvh - 340px),580px)}
+.emb .workbench__panel:has(.breath-cycle){gap:10px}
+.breath-parts div{padding:7px 0}
+.breath-cycle{max-width:220px}
+/* Phones: no page title (the Learn tab says where you are, as on the fingering chart); the 3D view takes what is
+   left after the panel, so the page fits without scrolling. */
+@media(max-width:760px){
+  html body .studio-page:has(.emb) .studio-page__head,html body .studio-page:has(.emb)>header{display:none}
+  html body .studio-page:has(.emb){padding-top:10px}
+  .emb .body-model-nav{margin-bottom:10px}
+  html body .emb-canvas{height:clamp(200px,calc(100dvh - 520px),340px)}
+  html body .breath-canvas{min-height:clamp(180px,calc(100dvh - 640px),300px)}
+  .breath-cycle{max-width:180px}
+  .breath-parts dd{display:none}
+}
+/* Breathing's guidance sentence is the panel's plain text, not the embouchure's labelled tip block. */
+.emb .breath-title{margin:0}
+.emb .workbench__panel:has(.breath-cycle) p.emb-cue{padding-top:0;border-top:0;margin:0;font-size:14px;line-height:1.5}
+/* No 96px of empty room under the workbench (it alone made Breathing scroll on an 800px window). */
+html body .studio-page:has(.emb){padding-bottom:24px}
+
+/* "Restore default view" is the studio's text action (14px, 500, grey); this page's general button rule had made it
+   12px/600 in a grey pill. */
+html body .emb .emb-viewport-top .text-action{min-height:32px;padding:0 4px;border:0;background:transparent;font-size:13px;font-weight:500;color:#6f7178}
+@media(hover:hover){html body .emb .emb-viewport-top .text-action:hover{background:transparent;color:#292a33;transform:none}}
+/* Breathing: fewer lines. Each body part is one line (name · what it does); the circle sits centred in the room left
+   in the panel, its legend right under it. */
+.emb .breath-parts div{display:grid;grid-template-columns:96px minmax(0,1fr);align-items:baseline;gap:10px}
+.emb .breath-parts dd{margin:0}
+.emb .workbench__panel:has(.breath-cycle) .breath-cycle{margin:auto 0;align-self:center}
+.emb .workbench__panel:has(.breath-cycle) .breath-legend{order:10;justify-content:center;width:100%}

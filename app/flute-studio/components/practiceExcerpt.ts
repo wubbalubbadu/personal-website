@@ -74,7 +74,9 @@ export function relatedScale(events:PassageEvent[],sourceXml?:string){
     const tones=type.id==='major'||!union?own:new Set(scaleTypes.filter(t=>['natural','harmonic','melodic'].includes(t.id)).flatMap(t=>t.intervals.map(i=>(key.pc+i)%12)));
     const matched=distinct.filter(p=>tones.has(p)),ownMatched=distinct.filter(p=>own.has(p)).length;
     const steps=pcs.slice(1).filter((p,i)=>tones.has(p)&&tones.has(pcs[i])&&[1,2,10,11].includes((p-pcs[i]+12)%12)).length;
-    return {key,type,matched,steps,score:matched.length*3+ownMatched*.1+(type.id==='melodic'?.05:0)+(type.id==='major'?.02:0)+steps+(pcs[0]===key.pc?1:0)+(pcs.at(-1)===key.pc?1:0)};
+    return {key,type,matched,steps,// Ties: major first (the plain reading of a signature), the final note above the first (a pickup on the
+      // dominant is common, an ending off the tonic rare), and the tonic's share of the notes.
+      score:matched.length*3+ownMatched*.1+(type.id==='melodic'?.05:0)+(type.id==='major'?.1:0)+steps+(pcs[0]===key.pc?1:0)+(pcs.at(-1)===key.pc?1.5:0)+pcs.filter(p=>p===key.pc).length/Math.max(1,pcs.length)};
   })).filter(c=>c.matched.length/distinct.length>=.8&&c.steps>=3).sort((a,b)=>b.score-a.score);
   const ranked=rank(false),best=ranked[0]??rank(true)[0];if(!best)return null;
   // Same notes, nothing to tell them apart (no tonic at either end): a major key and its relative natural minor tie.
@@ -109,4 +111,55 @@ function relatedArpeggio(pitches:string[],pcs:number[]){
   const span={low:Math.max(59,Math.min(...midi)),high:Math.min(98,Math.max(...midi))};
   const spelling=keyForType(best.key,type).label;
   return {label:`${spelling[0].toUpperCase()+spelling.slice(1)} ${best.typeId==='major'?'major':'minor'} arpeggio`,key:best.key.id,type:best.typeId as ScaleTypeId,form:'arpeggio' as const,evidence:[] as string[],xml:scaleMusicXML(best.key,'custom',{kind:'whole',mode:'tongue'},'even',best.typeId,'arpeggio','none','lowest',span)};
+}
+
+/**
+ * The scales and arpeggios a whole piece uses, in the order they first appear, for "Scales in this piece" (Scale
+ * Studio opens set to exactly these). Read from its fast runs: every unbroken stretch of six or more eighths or shorter
+ * (a rest or a long note ends it). A mostly stepwise run is a scale, judged on its own notes by relatedScale (so a G minor run
+ * with F♯ and E♭ is harmonic, one with F♯ and E natural melodic; both are kept). A leaping run is an arpeggio: a
+ * diminished seventh (every note a minor third apart) becomes the diminished arpeggio, a triad its key's arpeggio.
+ * A piece without enough runs falls back to its key-signature sections, each read whole (shorter windows of a slow
+ * tune picked up stray keys, like E minor from a phrase that ends on E).
+ */
+export type PieceScale={key:string;type:ScaleTypeId;form:'scale'|'arpeggio'};
+export function pieceScales(events:PassageEvent[],measureStarts:number[],signatures:number[],unitsPerBeat:number){
+  // Each reading is counted; a long unbroken run (the Scherzo is pages of sixteenths) is judged a bar or two at a
+  // time so its key changes are not blurred together, and a scale needs two readings to count, so one ambiguous
+  // fragment cannot add a stray key.
+  const counts=new Map<string,{scale:PieceScale;n:number;first:number}>();let order=0;
+  const add=(scale:PieceScale,weight=1)=>{const id=`${scale.key}:${scale.type}:${scale.form}`;const seen=counts.get(id);if(seen)seen.n+=weight;else counts.set(id,{scale,n:weight,first:order++})};
+  const judge=(run:PassageEvent[])=>{
+    const pcs=run.flatMap(e=>e.p&&!e.tied?[pitchClass(e.p)]:[]).filter((x):x is number=>x!==null);
+    if(pcs.length<4)return;
+    const moves=pcs.slice(1).map((p,i)=>Math.min((p-pcs[i]+12)%12,(pcs[i]-p+12)%12)),steps=moves.filter(m=>m>=1&&m<=2).length/Math.max(1,moves.length);
+    const distinct=[...new Set(pcs)];
+    // A diminished seventh: three or four notes, all a minor third (or tritone) apart, moving by leaps.
+    if(steps<.4&&distinct.length>=3&&distinct.every(p=>(p-distinct[0]+12)%3===0)){
+      const root=majorKeys.find(k=>k.pc===pcs[0]);if(root)add({key:root.id,type:'diminished',form:'arpeggio'});return;
+    }
+    const scale=relatedScale(run);
+    if(scale)add({key:scale.key,type:scale.type,form:'form' in scale&&scale.form==='arpeggio'?'arpeggio':'scale'});
+  };
+  let run:PassageEvent[]=[];
+  const fast=unitsPerBeat/2+1e-9;
+  const judgeRun=(notes:PassageEvent[])=>{if(notes.length<6)return;if(notes.length<=12){judge(notes);return}for(let i=0;i+4<=notes.length;i+=8)judge(notes.slice(i,Math.min(notes.length,i+8)))};
+  for(const event of events){
+    if(event.p&&!event.tied&&event.d<=fast){run.push(event);continue}
+    judgeRun(run);
+    run=[];
+  }
+  judgeRun(run);
+  const found=[...counts.values()].filter(entry=>entry.n>=2).sort((a,b)=>a.first-b.first).map(entry=>entry.scale);
+  if(found.length)return found;
+  counts.clear();
+  // No fast runs: read the piece by key-signature sections instead.
+  for(let start=1;start<=measureStarts.length;){
+    let end=start;
+    while(end<measureStarts.length&&signatures[end]===signatures[start-1])end++;
+    const scale=relatedScale(events.slice(measureStarts[start-1]??0,measureStarts[end]??events.length));
+    if(scale)add({key:scale.key,type:scale.type,form:'scale'});
+    start=end+1;
+  }
+  return [...counts.values()].sort((a,b)=>a.first-b.first).map(entry=>entry.scale);
 }

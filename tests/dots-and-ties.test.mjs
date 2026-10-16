@@ -131,7 +131,8 @@ test('real note shapes, dots, ties and tuplet beam levels are engraved independe
 const reactStub=url(`export const useRef=x=>({current:x});export const useState=x=>[x,()=>{}];export const useCallback=x=>x;export const useEffect=()=>{};`);
 const toneStub=url(`export function toneSamples(f,d){globalThis.__dotTones.push({f,d});return new Float32Array(4)}`);
 const sampleStub=url(`export const metronomeSamples=()=>new Float32Array(2);export const clapSamples=()=>new Float32Array(3);`);
-const source=compile(read('rhythm/useRhythmAudio.ts')).replace("'react'",`'${reactStub}'`).replace("'../toneSamples'",`'${toneStub}'`).replace("'./rhythmModel'",`'${rhythmURL}'`).replace("'./metronomeSamples'",`'${sampleStub}'`);
+const articulationURL=url(compile(read("articulation/articulationAudio.ts")));
+const source=compile(read('rhythm/useRhythmAudio.ts')).replace("'../articulation/articulationAudio'",`'${articulationURL}'`).replace("'react'",`'${reactStub}'`).replace("'../toneSamples'",`'${toneStub}'`).replace("'./rhythmModel'",`'${rhythmURL}'`).replace("'./metronomeSamples'",`'${sampleStub}'`);
 const {useRhythmAudio}=await import(url(source));
 test('actual audio scheduler makes one tied voice, keeps fractional excerpts alive and cancels stale completion',async()=>{
  const previous=Object.fromEntries(['AudioContext','AudioBuffer','requestAnimationFrame','cancelAnimationFrame'].map(k=>[k,globalThis[k]]));

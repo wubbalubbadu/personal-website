@@ -8,6 +8,8 @@ Use this with `LESSONS.md` and the studio-wide `COMPONENTS.md`. This is the shar
 - Narration explains the musical idea. Cookie gives one concrete action, then specific feedback. Do not repeat the same sentence in both.
 - The lesson-only Cookie stays beside the bubble. It uses `CookieButton`, has no timer or drag behavior, and does not depend on the floating site pet. Tapping its face is optional decoration, never progression.
 - Exercise answers and Hint belong in `extra`, inside the bubble. Scene controls such as playback belong in the reserved tools row. Keep controls mounted and disabled after success instead of removing them and shifting their neighbors.
+- **One button look for every lesson control** (defined once in `lesson-shell.css`): the quiet cream fill (`#f3f0e9`, no border, 12px radius, 44px tall, 500 weight). Picked and right are the same soft green fill (`#e4ecdf` / `#40553d`), wrong is soft orange (`#fff2e8` / `#a35432`). No borders or outlines for selection. Use the existing classes (`measures-choices` for an answer group, `measures-secondary` for a single control, `lesson-playback-button` for Hear/Stop); never restyle them per lesson. Only Next (green) and Skip (plain text) look different. Lesson 1's note-name tiles (`lesson-choices`) keep their size but use the same colours.
+- **Where controls go:** answers, Check, Hint and Show answer go in `extra` (the bubble, under the question, one row, Next on the right). Listen/Hear, Count me in, Add a sharp and exploration toggles go in the tools row under the music. A long answer row must still fit on one line at 1180×820 beside the reserved Next label; measure it.
 - `LessonNext` is the single progression control. Its label names the next action. Completion makes it ready. Never advance automatically while the learner is inspecting a result.
 - Keep staff position, scene height, tools row, and bubble stable within a lesson. Check both short desktop windows and iPad portrait layouts. Avoid hiding Cookie on narrow screens.
 
@@ -64,3 +66,17 @@ Check initial taps, retry, correct completion, navigation away during sound, key
 - Finish records completion and returns directly to the lesson list.
 
 - Lesson 7 reserves fixed narration, scene, and Cookie rows at each breakpoint. All duration brackets use the same baseline, with one label row. Do not reduce scene height for a question or let conditional controls move the bubble. Verify coordinates across states.
+
+## Rhythm practice and articulation (lessons 8 and 9)
+
+- Rhythm practice uses the existing exact-ratio compiler and RhythmPractice tap surface. Its renderer passes tuplet numerals as well as beams. Paired eighths, triplet eighths, and quintuplet sixteenths occupy the same one-beat span.
+- Articulation uses EngravedRow slurs and marks. Slurs clear mixed stems; ties still require matching pitches. The selected note has an outline; red remains reserved for playback.
+- Articulation playback uses useRhythmAudio with a continuous phase across slurred notes. Staccato shortens the sounding portion without changing note starts; accents change the attack; tenuto fills the written duration. This is an illustrative synthesized wind sound, not a recorded flute performance.
+- Both reuse LessonFrame, fixed scene/bubble layout, existing lesson choices, course completion, and direct return to the course list. No card subtitles.
+
+Playback controls keep the same footprint when their label changes to Stop: use
+`lesson-playback-button` with both labels in the same grid cell, hiding the inactive
+label from sight and accessibility. Pointer release clears button focus so subsequent
+Space taps do not leave a focus ring on Count me in. Keyboard navigation retains
+`:focus-visible`. Two/three subdivision choices use a soft selected fill, never a
+selection outline.

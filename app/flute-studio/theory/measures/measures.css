@@ -33,18 +33,12 @@
 
 /* Controls: at most one row, directly under the music. */
 .measures-tools{min-height:56px;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:12px}
-.measures-choices{display:flex;gap:10px}
-.lesson-shell .measures-choices button,.lesson-shell .measures-primary,.lesson-shell .measures-secondary{min-height:44px;min-width:64px;padding:8px 16px;border:1px solid #e5dccb;border-radius:12px;background:#fff;color:#292a33;font:600 16px var(--font,sans-serif);cursor:pointer}
-.lesson-shell .measures-choices button.is-picked{border-color:#678956;background:#f1f6ee;color:#40553d}
-.lesson-shell .measures-choices button.is-correct{border-color:#8eaf86;background:#dfeedd}
-.lesson-shell .measures-choices button.is-wrong{border-color:#d59575;background:#ffe3d8}
-.lesson-shell .measures-primary{background:#f3f0e9;border-color:transparent}
+/* Button looks live in lesson-shell.css (one look for every lesson). */
 .measures-pending{margin:40px 0!important;color:#9a9ca3!important}
 
 @media(prefers-reduced-motion:reduce){.is-flash-top .time-sig__top,.is-flash-bottom .time-sig__bottom,.time-sig{animation:none}.count,.measure-hit{transition:none}.beat-stick{animation:none}}
 /* Answers inside Cookie's bubble, next to the question. */
-.lesson-actions .measures-choices{gap:8px}
-.lesson-shell .lesson-actions .measures-choices button{min-width:52px;min-height:44px;padding:6px 12px}
+
 
 /* Page 2 and 8: the note a question is about. */
 .measure-circle{fill:none;stroke:#b9362e;stroke-width:2.5}

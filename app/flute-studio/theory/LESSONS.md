@@ -57,8 +57,8 @@ shows how much is left with progress dots (`ProgressDots`: a short row of dots t
 in their own row under the music, between the scene and Cookie). Never as words: Cookie says "Next one" and "Last one", not "Question 2 of 6". A miss gets a hint that teaches ("count up from G: G, A, B")
 and keeps the question in view, and a drawing or placing task has a Hint and, after a hint or two
 misses, Show answer. There is no separate review page at the end: it only repeats exercises the
-lesson already had. Checks sit right after the idea they test (a 7/4 question after the top number,
-a 9/16 question after the bottom number), and the lesson is complete when its last exercise passes.
+lesson already had. Checks sit right after the idea they test (a count-the-beats question after the top number,
+a 3/8 question after the bottom number; beginner meters only, no 7/4 or 9/16), and the lesson is complete when its last exercise passes.
 A short beginner wrap-up is the place to put the reading skills together; its final position follows the practical reading lessons below.
 
 **9. Say why we're moving on.** Each step's narration connects to the last one: from learning to
@@ -92,7 +92,7 @@ for reading a simple tune. These are future directions, not approved implementat
 Keep lessons short and focused; use only the steps the topic needs, with checks inside the steps rather than a review page at the end.
 Pitch and rhythm come in blocks, in the order they turn up in beginner parts: the staff, then
 lengths and measures, then sharps, flats and key signatures together (B♭ and F♯ are in almost every
-first band part), then rests and dots and ties. Practical flute markings follow. Triplets were tried in lesson 7 and moved out (October 10): they divide a beat, which is a different question from making a note longer, and need their own short lesson. Compound meter can be a separate follow-up.
+first band part), then rests and dots and ties. Practical flute markings follow. Lesson 8 introduces triplets and other tuplets through rhythm practice: they divide a beat, rather than make a note longer. Compound meter can be a separate follow-up.
 (Revised October 2026: the original map had rests before accidentals and a separate "smaller beats"
 lesson; lessons 2 and 3 now cover eighths and sixteenths. A spoken "1 and 2 and" count was planned for Dots and ties
 but dropped in the October 10 redesign and not planned anywhere: half a beat is said as "halfway through a beat".) Any lesson can be opened from the list.
@@ -110,11 +110,12 @@ answers, and ends by pointing at the next one. The "bridge" column is that openi
 | 4 | **Sharps, flats and naturals** (built) | You can find any letter on the staff. What about the sounds between the letters? | between the notes (find the black keys between C, D and E; half steps), sharps (C♯, D♯) and flats going down (E♭, D♭), matching the two names of each black key, E♯ = F, naturals (the sharp lasts the measure; tap the extra one away; draw ♮), through the measure, same key two names; five steps, no whole steps or double sharps and flats | Steps and Accidentals |
 | 5 | **Key signatures** | Writing the same sharp every time is tiring. How does music say "always"? | three short steps: say it once (a signature replaces the written sharps; it applies in every octave), which letters change (sharps and flats each keep a fixed order, shown, not drilled), change one back (a natural overrides it only on that line or space, until the bar line). Naming the key moved to Major and minor scales | Key Signatures |
 | 6 | **Rests** | Measures have to add up. What fills a beat where you don't play? | a gap in a full measure, the quarter rest, half and whole rests (hat and hole), the whole-measure rest, the eighth rest (sixteenth *brief*), which rest fills the gap, counting through rests, read and clap | Rest Duration |
-| 7 | **Dots and ties** | Half is 2 beats and whole is 4. How do we write 3, or 1½, or a sound that crosses a bar line? | a tie joins two notes and their lengths add (half + quarter = 3), the dot as its usual shorthand (dotted half), the same for 1½ (quarter tied to eighth = dotted quarter), checks on new cases (3/4 measure, dotted eighth + sixteenth), ties across a bar line, three tapping rounds (4/4, 3/4 short-long, a tie) where Cookie is the tap target; notes spaced in proportion to time; no spoken half-beat count, no triplets | Dots and Ties |
-| 8 | **Slurs and articulation** | A curved line can mean something different from a tie. How do we start and connect flute notes? | tie versus slur; a slur joins notes without re-tonguing, while a tie prolongs the same pitch; staccato, accent, tenuto and breath marks; contrast a few short phrases, not a long drill | practical flute notation |
-| 9 | **Trills** | What does “tr” above a note ask us to do? | recognize the sign, alternate the written note and its upper neighbor, use the key signature and any specified accidental; show a slow example before normal speed; link to the existing trill chart for fingerings; avoid presenting stylistic starting-note conventions as universal | practical flute notation |
-| 10 | **Repeats and directions** | Where do we go when the music sends us back? | repeat signs, first and second endings; a short guided route through a score; introduce D.C., D.S. and Coda only as far as a compact example can explain clearly | score navigation |
-| 11 | **Dynamics, tempo and expression** | How loudly, how fast, and with what character should we play? | common p, mp, mf, f and hairpins; common tempo words, ritardando and a tempo; fermata and a few common expression words; distinguish loudness, speed and character without making a vocabulary catalogue | practical performance markings |
+| 7 | **Dots and ties** | Half is 2 beats and whole is 4. How do we write 3, or 1½, or a sound that crosses a bar line? | a tie joins two notes and their lengths add (half + quarter = 3), the dot as its usual shorthand (dotted half), the same for 1½ (quarter tied to eighth = dotted quarter), checks on new cases (3/4 measure, dotted eighth + sixteenth), ties across a bar line, three tapping rounds (4/4, 3/4 short-long, a tie) where Cookie is the tap target; notes spaced in proportion to time; no spoken half-beat count, no triplets; tie or slur (the same curve: one sound over the same pitch, notes joined over different pitches) | Dots and Ties |
+| 8 | **Triplets** | How do three equal notes fit into one beat? | paired eighths versus triplets; the tuplet numeral; tapping triplets; quintuplets briefly as five sixteenths in one beat; mixed practice with rests, dots and ties | Tuplets |
+| ~~9~~ | ~~**Slurs and articulation**~~ *(retired October 15, 2026)* | | The slur moved into lesson 7. Staccato, accent, tenuto and breath marks are explained by the score reader's Musical terms where they appear; no separate lesson or reference chart. The code stays in `articulation/` (its accent sound is reused). | |
+| 10 | **Trills** | What does “tr” above a note ask us to do? | recognize the sign, alternate the written note and its upper neighbor, use the key signature and any specified accidental; show a slow example before normal speed; link to the existing trill chart for fingerings; avoid presenting stylistic starting-note conventions as universal | practical flute notation |
+| 11 | **Repeats and directions** | Where do we go when the music sends us back? | repeat signs, first and second endings; a short guided route through a score; introduce D.C., D.S. and Coda only as far as a compact example can explain clearly | score navigation |
+| 12 | **Dynamics, tempo and expression** | How loudly, how fast, and with what character should we play? | common p, mp, mf, f and hairpins; common tempo words, ritardando and a tempo; fermata and a few common expression words; distinguish loudness, speed and character without making a vocabulary catalogue | practical performance markings |
 
 **October 9 direction:** Keep these practical lessons short. Not every symbol needs a game,
 drawing activity or forced listening task. A clear engraved example, a useful sound comparison
@@ -125,12 +126,18 @@ A dot beside a note adds duration; a staccato dot above or below it changes arti
 A brief real-melody wrap-up can follow the practical reading sequence. Decide its exact position
 and content when these short lesson drafts exist, rather than forcing every topic into eight lessons.
 
+### Not everything is a lesson (decided October 15, 2026)
+
+A topic becomes a lesson only when it is a skill that needs practice (reading pitch, counting, key signatures, triplets).
+Single symbol-to-meaning facts are explained where they appear: the score reader's Musical terms layer, while reading a
+real piece. No separate reference chart. Triplets stay a lesson; the slur joined lesson 7; lesson 9 is retired.
+
 ### After beginner reading
 
 - **More topics** (planned, not built): an advanced lesson collecting signs left out of the beginner track, starting with double dots (a second dot adds half of the first dot's value) and double sharps and flats. Listed so lessons 4 and 7 can stay focused.
 - **6/8 in two:** build on dotted quarters and show two groups of three eighths; a focused rhythm follow-up.
 - **Major and minor scales:** step patterns, tonic, scale degrees, major/minor key names and their signatures. Connect to Scale Studio. Key-name shortcuts belong here, after the musical meaning of a key.
-- **Triplets:** three equal notes in one beat, heard and built on their own (quintuplets as an optional extra). Moved out of lesson 7.
+- Triplets and a brief quintuplet example are now in lesson 8, Rhythm practice.
 - **Other meters:** 9/8, 12/8 and introductory irregular grouping when needed.
 
 ### Later

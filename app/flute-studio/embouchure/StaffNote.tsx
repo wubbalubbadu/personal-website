@@ -8,5 +8,5 @@ import {StaffNote as SharedStaffNote} from '../components/StaffNote';
 // and its note naming.
 export default function StaffNote({midi}: {midi: number}) {
   const {lang}=useLanguage();
-  return <SharedStaffNote midi={midi} label={lang==="zh"?`高音谱表上的 ${noteName(midi)}`:`${noteName(midi)} on treble staff`}/>;
+  return <SharedStaffNote midi={midi} steady label={lang==="zh"?`高音谱表上的 ${noteName(midi)}`:`${noteName(midi)} on treble staff`}/>;
 }

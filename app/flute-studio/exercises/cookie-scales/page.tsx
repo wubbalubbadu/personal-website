@@ -3,6 +3,7 @@ import Link from 'next/link';
 import {useMemo,useState} from 'react';
 import {useSearchParams} from 'next/navigation';
 import {ScaleTemposPanel} from '../../components/ScaleTemposPanel';
+import {SCALE_TEMPO_KEY,scaleTrackingId,scaleTrackedTempo} from '../scales/scale-tracking';
 import {scaleNotes} from '../scales/scale-score';
 import '../scales/scale-book.css';
 import {ScoreTempoMarks} from '../../components/ScoreTempoMarks';
@@ -20,23 +21,40 @@ function RoutineReader({exercise,zh}:{exercise:RoutineExercise;zh:boolean}){
   const index=routine.indexOf(exercise),previous=routine[index-1],next=routine[index+1];
   const [showTempos,setShowTempos]=useState(true);
   const [tempos,setTempos]=useState<Record<string,number>>(()=>{
-    try{return JSON.parse(localStorage.getItem('cookie-routine-tempos')??'{}')}catch{return {}}
+    try{
+      const shared=JSON.parse(localStorage.getItem(SCALE_TEMPO_KEY)??'{}');
+      const legacy=JSON.parse(localStorage.getItem('cookie-routine-tempos')??'{}');
+      for(const item of routine)for(const block of routineBlocks(item)){
+        const oldId=`cookie-routine-${item.id}-${block.key.id}-${block.form}`;
+        const id=scaleTrackingId(block,'full',routineSpan,item.groups);
+        if(shared[id]===undefined&&Number.isFinite(legacy[oldId]))shared[id]=legacy[oldId];
+      }
+      return shared;
+    }catch{return {}}
   });
   const [activeBlock,setActiveBlock]=useState<string|null>(null);
   const blocks=useMemo(()=>routineBlocks(exercise),[exercise]);
   const starts=useMemo(()=>blocks.reduce<number[]>((out,block)=>[...out,out[out.length-1]+scaleNotes(block.key,'custom',block.type,block.form,'hold','lowest',routineSpan,exercise.groups).length],[0]),[blocks,exercise.groups]);
   const xml=useMemo(()=>routineXML(exercise),[exercise]);
-  return <ScoreViewer key={exercise.id} unmetered
+  return <ScoreViewer key={exercise.id} unmetered onTempoChange={tempo=>{
+    if(!activeBlock)return;
+    setTempos(previous=>{
+      if(previous[activeBlock]===tempo)return previous;
+      const updated={...previous,[activeBlock]:tempo};
+      try{localStorage.setItem(SCALE_TEMPO_KEY,JSON.stringify(updated))}catch{/* Storage can be unavailable. */}
+      return updated;
+    });
+  }}
     settings={reader=><ScaleTemposPanel reader={reader} zh={zh} activeBlock={activeBlock} onActive={setActiveBlock}
       rows={blocks.map((block,index)=>{
-        const id=`cookie-routine-${exercise.id}-${block.key.id}-${block.form}`;
-        return {id,name:block.label,tempo:tempos[id]??60,eventStart:starts[index]};
+        const id=scaleTrackingId(block,'full',routineSpan,exercise.groups);
+        return {id,name:block.label,tempo:scaleTrackedTempo(block,'full',routineSpan,exercise.groups,tempos),eventStart:starts[index]};
       })}
       onTempo={(id,tempo)=>{
         setActiveBlock(id);
         setTempos(previous=>{
           const updated={...previous,[id]:tempo};
-          try{localStorage.setItem('cookie-routine-tempos',JSON.stringify(updated))}catch{/* Storage can be unavailable. */}
+          try{localStorage.setItem(SCALE_TEMPO_KEY,JSON.stringify(updated))}catch{/* Storage can be unavailable. */}
           return updated;
         });
       }}
@@ -45,15 +63,15 @@ function RoutineReader({exercise,zh}:{exercise:RoutineExercise;zh:boolean}){
     practiceTempo={{value:showTempos,onChange:setShowTempos}}
     scoreMarks={showTempos?context=><ScoreTempoMarks root={context.root} version={context.version} zh={zh}
       marks={blocks.map(block=>{
-        const id=`cookie-routine-${exercise.id}-${block.key.id}-${block.form}`;
-        return {id,label:block.label,tempo:tempos[id]??60,rep:{key:id,title:block.label,kind:'scale' as const}};
+        const id=scaleTrackingId(block,'full',routineSpan,exercise.groups);
+        return {id,label:block.label,tempo:scaleTrackedTempo(block,'full',routineSpan,exercise.groups,tempos),rep:{key:id,title:block.label,kind:'scale' as const}};
       })}
       soundingId={context.controls.metronome?activeBlock:null}
       onChange={(id,tempo)=>{
         setActiveBlock(id);
         setTempos(previous=>{
           const updated={...previous,[id]:tempo};
-          try{localStorage.setItem('cookie-routine-tempos',JSON.stringify(updated))}catch{/* Storage can be unavailable. */}
+          try{localStorage.setItem(SCALE_TEMPO_KEY,JSON.stringify(updated))}catch{/* Storage can be unavailable. */}
           return updated;
         });
         context.controls.setTempo(tempo);

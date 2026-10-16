@@ -149,3 +149,9 @@ html body :is(.reader-workspace,.reader-settings-panel) button:hover:where(:not(
 /* ScoreViewer's paperTop slot: the page's top-left corner, level with the title, where nothing is engraved. */
 .score-paper.engraved{position:relative}
 .score-paper-top{position:absolute;left:16px;top:16px;z-index:4}
+/* "Scales in this piece ›" in View settings: the studio's text link (green, 600, no underline, › to another page). */
+/* The byline under a score's title: composer · work, one font (the work line's serif grey), one line. */
+/* An older rule hides every p and span in the heading (!important), so this overrides it the same way. */
+html body .workspace .custom-score-heading p.score-byline{display:block!important;margin:8px 0 0!important;text-align:center;color:#777a80!important;font:400 16px/1.4 Georgia,"Times New Roman",serif!important;letter-spacing:normal!important;text-transform:none!important}
+html body .workspace .custom-score-heading .score-byline .score-composer,html body .workspace .custom-score-heading .score-byline .excerpt-score-subtitle{display:inline!important;margin:0!important;padding:0!important;font:inherit!important;color:inherit!important}
+@media(hover:hover){html body .workspace .custom-score-heading .score-byline button.score-composer:hover{color:#292a33!important}}

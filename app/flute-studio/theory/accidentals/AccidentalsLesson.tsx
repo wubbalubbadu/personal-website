@@ -1,4 +1,5 @@
 'use client';
+import {useRouter} from 'next/navigation';
 import {useState,type ReactNode} from 'react';
 import {useLanguage} from '../../i18n/LanguageContext';
 import LessonFrame,{type LessonNext} from '../LessonFrame';
@@ -63,7 +64,8 @@ function StaffArrow({from,to,label}:{from:number;to:number;label:string}){
 
 export default function AccidentalsLesson(){
   const {lang}=useLanguage(),zh=lang==='zh',tr=(en:string,cn:string)=>zh?cn:en;
-  const [step,setStep]=useState(0),[done,setDone]=useState(false);
+  const router=useRouter();
+  const [step,setStep]=useState(0);
   const audio=useRhythmAudio(),course=useCourseProgress(),id:StepId=FLOW[step];
   // The last thing touched, a note or a key: it and its partner stay red until something else is touched (lesson 1's behaviour).
   const [sel,setSel]=useState<{midi:number;index:number|null}|null>(null),[playMidis,setPlayMidis]=useState<number[]>([]);
@@ -110,7 +112,7 @@ export default function AccidentalsLesson(){
     if(target==='same'){setRound(makeRound());setLines([0]);setSelected(null);setHintOn(false);setMisses({});setAttempt(null);setShownFor(null);setNote('start')}
   }
 
-  let narration:ReactNode='',message:ReactNode='',tone:'correct'|'wrong'|null=null,ready=false,pageNext:LessonNext|undefined,progress:{done:number;total:number}|undefined,tools:ReactNode=null;
+  let narration:ReactNode='',message:ReactNode='',tone:'correct'|'wrong'|null=null,ready=false,pageNext:LessonNext|undefined,progress:{done:number;total:number}|undefined,tools:ReactNode=null,extra:ReactNode=null;
   let notes:ReadNote[]=[],bars:number[]=[],meter:{top:number;bottom:number}|undefined,active:number|number[]=-1;
   let lit:KeyLight[]=[],scene:ReactNode=null,keysHidden=false;
   // The keyboard's range: the whole octave, or zoomed in on C to E so every half step is easy to see.
@@ -280,10 +282,9 @@ export default function AccidentalsLesson(){
     tone=pick===null?null:solved?'correct':'wrong';
     ready=solved&&lastQ;progress={done:q+(solved?1:0),total:MEASURE_Q.length};
     const choices=q===2?[tr('Flat','降音'),tr('Plain','原音')]:[tr('Sharp','升音'),tr('Plain','原音')];
-    // Once right, the buttons are gone (the row keeps its height) and only the measure holding the circled note plays.
-    tools=solved
-      ?listen(()=>playMelody(Q.notes,Q.bars,Q.from,Q.until))
-      :<div className="measures-choices" role="group" aria-label={ask}>{choices.map((label,k)=><button key={k} className={pick===k?'is-wrong':''}
+    // The answers sit in the bubble and stay (disabled) once right; Listen, under the music, replays the measure holding the circled note.
+    if(solved)tools=listen(()=>playMelody(Q.notes,Q.bars,Q.from,Q.until));
+    extra=<div className="measures-choices" role="group" aria-label={ask}>{choices.map((label,k)=><button key={k} disabled={solved} className={pick===k?(k===Q.answer?'is-correct':'is-wrong'):''}
         onClick={()=>{setPick(k);if(k===Q.answer)playMelody(Q.notes,Q.bars,Q.from,Q.until)}}>{label}</button>)}</div>;
     if(solved&&!lastQ)pageNext={label:tr('Next question →','下一题 →'),ready:true,onClick:()=>{audio.stop();setPlayMidis([]);setQ(x=>x+1);setPick(null);setSel(null)}};
     notes=Q.notes;bars=Q.bars;meter={top:4,bottom:4};staffMidis=soundingMidi(notes,bars);
@@ -322,12 +323,11 @@ export default function AccidentalsLesson(){
         }
         setMisses(x=>({...x,[l]:(x[l]??0)+1}));setAttempt({top:l,bottom:r});setNote('wrong');hear([keyOf('right',r)]);return false;
       }}/>;
-    tools=complete?null:<>
+    extra=complete?null:<>
       {button(hintOn?tr('Hide hint','收起提示'):tr('Hint','提示'),()=>setHintOn(h=>!h))}
       {attempt!==null&&(misses[attempt.top]??0)>=2&&shownFor!==attempt.top&&!lines.includes(attempt.top)&&button(tr('Show answer','显示答案'),()=>setShownFor(attempt.top))}
     </>;
-    if(complete)pageNext=done?{label:tr('Back to theory lessons','回到乐理课'),ready:true,href:'/flute-studio/theory'}
-      :{label:tr('Finish lesson','完成课程'),ready:true,onClick:()=>{course.finish('accidentals');setDone(true)}};
+    if(complete)pageNext={label:tr('Finish lesson','完成课程'),ready:true,onClick:()=>{course.finish('accidentals');router.push('/flute-studio/theory')}};
   }
 
   const last=step===FLOW.length-1;
@@ -339,7 +339,7 @@ export default function AccidentalsLesson(){
   if(playing)lit=sounding();
 
   return <LessonFrame className="accidentals-lesson" title={tr('Sharps, flats and naturals','升号、降号与还原号')} zh={zh} steps={names} current={step} onJump={navigate}
-    heading={names[step]} narration={narration} fadeNarration message={message} tone={tone} next={next} progress={progress}
+    heading={names[step]} narration={narration} fadeNarration message={message} tone={tone} next={next} extra={extra} progress={progress}
     status={audio.error?tr('Sound could not start. Tap again to retry.','声音未能启动，请再试一次。'):''}>
     <div className="acc-scene">
       {scene}

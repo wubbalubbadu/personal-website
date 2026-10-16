@@ -150,7 +150,7 @@ export function TimeSignature({meter,x,className=''}:{meter:Meter;x:number;class
 
 type Props={
   notes:RowNote[];bars?:number[];even?:boolean;clef?:boolean;meter?:Meter|null;
-  ties?:number[];tuplets?:{from:number;to:number;count:number}[];
+  slurs?:{from:number;to:number}[];marks?:{index:number;kind:'staccato'|'accent'|'tenuto'|'breath'}[];ties?:number[];tuplets?:{from:number;to:number;count:number}[];
   /** Beamed groups, as note indices (eighths and sixteenths). */
   beams?:number[][];
   /** Index of the note sounding now (red), or several notes lit together. */
@@ -194,7 +194,7 @@ export function phoneRowRight(notes:RowNote[],clef:boolean,meter:Meter|null,rese
 }
 
 type GraphicsProps={
-  notes:RowNote[];layout:RowLayout;ties?:number[];tuplets?:{from:number;to:number;count:number}[];clef?:boolean;meter?:Meter|null;beams?:number[][];active?:number|number[];faint?:number[];hidden?:number[];appear?:number[];
+  notes:RowNote[];layout:RowLayout;slurs?:{from:number;to:number}[];marks?:{index:number;kind:'staccato'|'accent'|'tenuto'|'breath'}[];ties?:number[];tuplets?:{from:number;to:number;count:number}[];clef?:boolean;meter?:Meter|null;beams?:number[][];active?:number|number[];faint?:number[];hidden?:number[];appear?:number[];
   /** The final double bar; off for a few notes that are not a whole piece (a card picture). */
   finalBar?:boolean;
   keySignature?:number;keyNew?:number;
@@ -206,7 +206,7 @@ type GraphicsProps={
  * lines, beams. The one place that does. EngravedRow wraps it in an svg; a page that needs several staffs in
  * one drawing (a line joining two of them) places it inside its own svg.
  */
-export function RowGraphics({notes,layout,clef=true,meter=null,beams=[],ties=[],tuplets=[],active=-1,faint=[],hidden=[],appear=[],finalBar=true,keySignature=0,keyNew=Infinity,below,children}:GraphicsProps){
+export function RowGraphics({notes,layout,clef=true,meter=null,beams=[],ties=[],slurs=[],marks=[],tuplets=[],active=-1,faint=[],hidden=[],appear=[],finalBar=true,keySignature=0,keyNew=Infinity,below,children}:GraphicsProps){
   const {xs,barXs,endX,meterX,keyX}=layout;
   const pos=notes.map(n=>clef?n.p??4:RHYTHM_P);
   // Never beam through a rest, even if a caller supplied one continuous group.
@@ -274,6 +274,34 @@ export function RowGraphics({notes,layout,clef=true,meter=null,beams=[],ties=[],
       const above=down(i),y=noteY(pos[i])+(above?-22:22),bend=above?-18:18,a=xs[i]+8,b=xs[i+1]-8;
       return <path key={`tie-${i}`} className="engraved-row__tie" d={`M${a} ${y} C${a+(b-a)*.25} ${y+bend} ${b-(b-a)*.25} ${y+bend} ${b} ${y} C${b-(b-a)*.25} ${y+bend*.7} ${a+(b-a)*.25} ${y+bend*.7} ${a} ${y}`}/>;
     })}
+    {slurs.map(({from,to})=>{
+      if(!notes[from]||!notes[to])return null;
+      const indices=Array.from({length:to-from+1},(_,n)=>from+n);
+      const above=indices.every(down),sign=above?-1:1;
+      // Anchor each end to its own notehead, outside the stem on that side.
+      const a=xs[from]+(above||!down(from)?8:20);
+      const b=xs[to]-(above||!down(to)?8:20);
+      const y1=noteY(pos[from])+sign*22,y2=noteY(pos[to])+sign*22;
+      let depth=24;
+      for(const i of indices.slice(1,-1)){
+        const t=(xs[i]-a)/(b-a);
+        if(t<=0||t>=1)continue;
+        const edge=noteY(pos[i])+sign*((above?!down(i):down(i))?104:26);
+        const baseline=y1+(y2-y1)*t;
+        depth=Math.max(depth,sign*(edge-baseline)/(3*t*(1-t)));
+      }
+      const bend=sign*depth;
+      return <path key={`slur-${from}-${to}`} className="engraved-row__tie engraved-row__slur" d={`M${a} ${y1} C${a+(b-a)/3} ${y1+(y2-y1)/3+bend} ${b-(b-a)/3} ${y2-(y2-y1)/3+bend} ${b} ${y2} C${b-(b-a)/3} ${y2-(y2-y1)/3+bend-sign*5} ${a+(b-a)/3} ${y1+(y2-y1)/3+bend-sign*5} ${a} ${y1}`}/>;
+
+    })}
+    {marks.map(({index,kind})=>{
+      if(!notes[index])return null;
+      const x=xs[index];
+      const y=kind==='breath'?Math.min(108,noteY(pos[index])-30):noteY(pos[index])+(down(index)?-24:24);
+      return <g key={`mark-${index}-${kind}`} className={`engraved-row__mark is-${kind}`} fill="currentColor" stroke="currentColor" strokeWidth="2.5">
+        {kind==='staccato'?<circle cx={x} cy={y} r="3.5"/>:kind==='tenuto'?<path d={`M${x-10} ${y} h20`}/>:kind==='accent'?<path fill="none" d={`M${x-10} ${y-7} l21 7 -21 7`}/>:<path d={`M${x+26} ${y-8} q12 5 -3 23 q6 -12 -2 -13 Z`}/>}
+      </g>;
+    })}
     {tuplets.map(({from,to,count})=>{
       if(!notes[from]||!notes[to])return null;
       const a=xs[from]-18,b=xs[to]+18,mid=(a+b)/2,y=Math.min(...pos.slice(from,to+1).map(p=>noteY(p)))-112;
@@ -284,7 +312,7 @@ export function RowGraphics({notes,layout,clef=true,meter=null,beams=[],ties=[],
   </>;
 }
 
-export default function EngravedRow({notes,bars=[],even=false,proportional=false,clef=true,meter=null,beams=[],ties=[],tuplets=[],active=-1,below,children,reserveAcc=false,className='',label,interactive=false,viewBox='20 62 870 222',faint=[],hidden=[],appear=[],crop=false,narrow=false,finalBar=true,right:rightProp,keySignature=0,keyRoom=Math.abs(keySignature),keyNew}:Props){
+export default function EngravedRow({notes,bars=[],even=false,proportional=false,clef=true,meter=null,beams=[],ties=[],slurs=[],marks=[],tuplets=[],active=-1,below,children,reserveAcc=false,className='',label,interactive=false,viewBox='20 62 870 222',faint=[],hidden=[],appear=[],crop=false,narrow=false,finalBar=true,right:rightProp,keySignature=0,keyRoom=Math.abs(keySignature),keyNew}:Props){
   const phone=usePhoneNotation();
   // `narrow`: a short row uses the narrower width phones use, centred, instead of a few notes spread thinly across the page.
   const short=phone||narrow||rightProp!==undefined;
@@ -297,6 +325,6 @@ export default function EngravedRow({notes,bars=[],even=false,proportional=false
   // A close-up crops around the notes, tall enough for the whole clef, so nothing is scaled differently.
   if(crop){frame[0]='20';frame[1]='50';frame[2]=String(layout.endX+10-20);frame[3]='205'}
   return <svg className={`engraved-row ${className}`} viewBox={frame.join(" ")} role={interactive?'group':'img'} aria-label={label}>
-    <RowGraphics notes={notes} layout={layout} clef={clef} meter={meter} beams={beams} ties={ties} tuplets={tuplets} active={active} faint={faint} hidden={hidden} appear={appear} finalBar={finalBar} keySignature={keySignature} keyNew={keyNew} below={below}>{children}</RowGraphics>
+    <RowGraphics notes={notes} layout={layout} clef={clef} meter={meter} beams={beams} ties={ties} slurs={slurs} marks={marks} tuplets={tuplets} active={active} faint={faint} hidden={hidden} appear={appear} finalBar={finalBar} keySignature={keySignature} keyNew={keyNew} below={below}>{children}</RowGraphics>
   </svg>;
 }

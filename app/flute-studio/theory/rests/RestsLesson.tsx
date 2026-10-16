@@ -1,4 +1,5 @@
 'use client';
+import {useRouter} from 'next/navigation';
 import {useRef,useState,type ReactNode,type PointerEvent,type CSSProperties} from 'react';
 import {useLanguage} from '../../i18n/LanguageContext';
 import CountInPulse from '../../components/CountInPulse';
@@ -23,10 +24,11 @@ const keyAction=(e:React.KeyboardEvent,act:()=>void)=>{if((e.key==='Enter'||e.ke
 
 export default function RestsLesson(){
   const {lang}=useLanguage(),zh=lang==='zh',tr=(en:string,cn:string)=>zh?cn:en;
+  const router=useRouter();
   const audio=useRhythmAudio(),course=useCourseProgress();
   const [step,setStep]=useState(0),[stage,setStage]=useState(0),[hint,setHint]=useState(false);
   const [feedback,setFeedback]=useState(''),[tone,setTone]=useState<'correct'|'wrong'|null>(null);
-  const [passed,setPassed]=useState(false),[done,setDone]=useState(false);
+  const [passed,setPassed]=useState(false);
   const [matched,setMatched]=useState<number[]>([]),[round,setRound]=useState(0);
   const [choice,setChoice]=useState<NoteValue|null>(null),[wrong,setWrong]=useState<NoteValue|null>(null);
   const [tapping,setTapping]=useState(false),[tapResult,setTapResult]=useState<TapResult|null>(null);
@@ -86,7 +88,7 @@ export default function RestsLesson(){
       if(matched.includes(a))return;
       const ok=matchingValue(a,b),all=ok?[...matched,a]:matched;setMatched(all);setPassed(all.length===3);setTone(ok?'correct':'wrong');setFeedback(ok?(all.length===3?tr('All three pairs last the same length.','三组都找对了，时值相同。'):tr('Same length. Find another pair.','时值相同。再找一组。')):tr('Compare their lengths. Hint brings the beat counts back.','这两个时值不同。点提示，可以再看拍数。'));
     }}/>;
-    if(!practice)next={label:tr('Match the lengths','连接时值'),ready:true,onClick:()=>stageTo(1)};
+    if(!practice)next={label:tr('Match the lengths →','连接时值 →'),ready:true,onClick:()=>stageTo(1)};
     else {extra=hintButton;progress={done:matched.length,total:3}}
   }else if(step===2){
     const question=stage===3,showTree=!question||hint;
@@ -105,7 +107,7 @@ export default function RestsLesson(){
       </>}
       {question&&!hint&&<g transform="translate(355 310)"><RestGlyph value={.25}/><text className="rests-caption" y="87">{labelFor(.25)}</text></g>}
     </svg>;
-    if(stage===2)next={label:tr('Try a question','试一试'),ready:true,onClick:()=>stageTo(3)};
+    if(stage===2)next={label:tr('Try a question →','试一试 →'),ready:true,onClick:()=>stageTo(3)};
     else if(stage<2)next={label:'',ready:false,onClick:()=>navigate(3)};
     else {extra=<>{answerNumbers(4,tr('Four short rests fill the same time.','四个短休止符刚好填满同样的时间。'),tr('Split the quarter into two eighths, then split both again.','先分成两个八分休止符，再把它们各分成两半。'))}{!passed&&hintButton}</>;progress={done:passed?1:0,total:1}}
   }else if(step===3){
@@ -113,15 +115,15 @@ export default function RestsLesson(){
     narration=tr('This symbol also means a whole measure of silence. Count the beats in the time signature.','这个记号也表示整小节休止。要数几拍，看拍号。');
     message=feedback||(stage<2?(stage===0?tr('Drag the 3 onto the top 4, or tap the 3 then the top number. Does the rest need to change?','把 3 拖到上面的 4，也可以先点 3 再点上面的数字。休止符需要变吗？'):tr('The same symbol now fills three beats.','同一个记号，现在表示休止三拍。')):tr('How many beats of silence fill this 2/4 measure?','这个 2/4 小节要休止几拍？'));
     scene=row(notes,l=><>{stage===0&&<MeterSwap x={l.meterX} zh={zh} onChange={()=>stageTo(1)}/>} {(stage<2||hint||passed)&&Array.from({length:top},(_,i)=><g key={i} className="rests-count-in"><text className="rests-count" x={l.startX+(i+.5)*(l.endX-l.startX)/top} y="272">{i+1}</text>{running&&Math.floor(audio.elapsed/UNIT)===i&&<circle className="rests-pulse" cx={l.startX+(i+.5)*(l.endX-l.startX)/top} cy="300" r="7"/>}</g>)}<path className="rests-span" d={`M${l.startX} 232 v10 h${l.endX-l.startX} v-10`}/></>,top);
-    if(stage===0)next={label:tr('Change to 3/4','换成 3/4'),ready:false,onClick:()=>stageTo(1)};
-    else if(stage===1)next={label:tr('Try another measure','再试一个小节'),ready:true,onClick:()=>stageTo(2)};
+    if(stage===0)next={label:tr('Change to 3/4 →','换成 3/4 →'),ready:false,onClick:()=>stageTo(1)};
+    else if(stage===1)next={label:tr('Try another measure →','再试一个小节 →'),ready:true,onClick:()=>stageTo(2)};
     else {extra=answerNumbers(2,tr('Two beats. The rest fills this whole measure.','两拍。这个休止符填满整个小节。'),tr('The top 2 means two quarter-note beats in this measure.','上面的 2 表示这个小节有两个四分音符拍。'));progress={done:passed?1:0,total:1}}
     tools=playButton(notes);
   }else{
     const r=GAPS[round],notes=r.notes;
     narration=tr('Notes and rests together fill the measure.','音符和休止符一起填满一个小节。');
     message=feedback||tr('Drag the rest that fills this gap. Or tap a rest, then the gap.','把合适的休止符拖进空缺。也可以先点休止符，再点空缺。');
-    function submit(v:NoteValue){if(passed)return;setChoice(null);setDraw(null);const ok=v===r.answer;setWrong(ok?null:v);respond(ok,tr('That fills the silence exactly.','刚好填满这段休止。'),v>r.answer?tr('This rest is too long for the gap.','这个休止符比空缺长。'):tr('This rest leaves part of the gap empty.','这个休止符还填不满空缺。'))}
+    function submit(v:NoteValue){if(passed)return;setChoice(null);setDraw(null);const ok=v===r.answer;setWrong(ok?null:v);respond(ok,round===GAPS.length-1?tr('That fills the silence exactly. Next lesson: dots and ties write even more note lengths.','刚好填满这段休止。下一课：用附点和延音线写出更多时值。'):tr('That fills the silence exactly.','刚好填满这段休止。'),v>r.answer?tr('This rest is too long for the gap.','这个休止符比空缺长。'):tr('This rest leaves part of the gap empty.','这个休止符还填不满空缺。'))}
     const localPoint=(e:PointerEvent<SVGElement>)=>{const m=gapSvg.current?.getScreenCTM();return m?new DOMPoint(e.clientX,e.clientY).matrixTransform(m.inverse()):null};
     scene=<div className="rests-gap-wrap" ref={el=>{gapSvg.current=el?.querySelector('svg')??null}}
       onPointerMove={e=>{const d=drag.current;if(!d)return;const p=localPoint(e as unknown as PointerEvent<SVGElement>);if(p&&Math.hypot(p.x-d.x,p.y-d.y)>6){d.moved=true;setDraw({...p,x:p.x,y:p.y,value:d.value})}}}
@@ -146,8 +148,8 @@ export default function RestsLesson(){
       }}</EngravedRow>
     </div>;
     progress={done:round+(passed?1:0),total:GAPS.length};extra=!passed?hintButton:null;tools=passed?playButton(notes):null;
-    if(passed&&round<GAPS.length-1)next={label:tr('Next gap','下一个空缺'),ready:true,onClick:()=>{audio.stop();setPlaying(false);setRound(r=>r+1);resetFeedback();setChoice(null);setWrong(null)}};
-    else if(passed)next=done?{label:tr('Back to theory lessons','回到乐理课'),ready:true,href:'/flute-studio/theory'}:{label:tr('Finish lesson','完成课程'),ready:true,onClick:()=>{audio.stop();course.finish('rests');setDone(true);setFeedback(tr('Next, dots and ties let us write more note lengths.','下一课，用附点和连音线写出更多时值。'))}};
+    if(passed&&round<GAPS.length-1)next={label:tr('Next gap →','下一个空缺 →'),ready:true,onClick:()=>{audio.stop();setPlaying(false);setRound(r=>r+1);resetFeedback();setChoice(null);setWrong(null)}};
+    else if(passed)next={label:tr('Finish lesson','完成课程'),ready:true,onClick:()=>{audio.stop();course.finish('rests');router.push('/flute-studio/theory')}};
   }
 
   return <LessonFrame className="rests-lesson" title={tr('Rests','休止符')} zh={zh} steps={names} current={step} onJump={navigate} heading={names[step]} narration={narration} fadeNarration message={message} tone={tone} next={next} extra={extra} progress={progress} status={audio.error?tr('Sound could not start. Tap Replay or Start to try again.','声音没能启动。点重播或开始再试一次。'):undefined}>

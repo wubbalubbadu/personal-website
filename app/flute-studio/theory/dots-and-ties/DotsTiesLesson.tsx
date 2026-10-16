@@ -7,6 +7,8 @@ import EngravedRow,{type RowNote,type RowLayout} from '../EngravedRow';
 import {useRhythmAudio} from '../rhythm/useRhythmAudio';
 import {usePhoneNotation} from '../usePhoneNotation';
 import {useCourseProgress} from '../useCourseProgress';
+import {pitchAt} from '../model';
+import type {ArticulationEvent} from '../articulation/articulationAudio';
 import RhythmNote from '../rhythm/RhythmNote';
 import type {NoteValue} from '../rhythm/rhythmModel';
 import RhythmPractice from './RhythmPractice';
@@ -23,6 +25,14 @@ const keepSums=(text:string)=>text.replace(/(\S) ([+=]) (?=\S)/g,'$1\u00a0$2\u00
 const keyAct=(e:KeyboardEvent,fn:()=>void)=>{if((e.key==='Enter'||e.key===' ')&&!e.repeat){e.preventDefault();fn()}};
 type Choice={id:string;label:string;right?:boolean};
 type Bracket={from:number;to:number;label?:string;done?:boolean};
+// Tie or slur (step 5): the same curve over the same pitch (a tie, one sound) and over different pitches (a slur, notes connected).
+type Curve={from:number;to:number};
+const CURVES:{notes:RowNote[];ties:number[];slurs:Curve[]}={notes:[{v:1,p:2},{v:1,p:2},{v:1,p:3},{v:1,p:4}],ties:[0],slurs:[{from:2,to:3}]};
+// The checks: is the curve a tie or a slur? A slur between neighbouring pitches, then a tie after a different note.
+const CURVE_Q:{notes:RowNote[];ties:number[];slurs:Curve[];tie:boolean}[]=[
+  {notes:[{v:2,p:3},{v:2,p:4}],ties:[],slurs:[{from:0,to:1}],tie:false},
+  {notes:[{v:1,p:5},{v:1,p:6},{v:2,p:6}],ties:[1],slurs:[],tie:true},
+];
 
 export default function DotsTiesLesson(){
   const {lang}=useLanguage(),zh=lang==='zh',tr=(en:string,cn:string)=>zh?cn:en;
@@ -35,9 +45,11 @@ export default function DotsTiesLesson(){
   const [round,setRound]=useState(0),[attempts,setAttempts]=useState<number[]>([]);
   const [spot,setSpot]=useState<HTMLElement|null>(null),[pulse,setPulse]=useState(0);
   const tapped=useCallback(()=>setPulse(p=>p+1),[]);
-  const names=[tr('Tie two notes','用延音线连起来'),tr('The dot','附点'),tr('One and a half beats','一拍半'),tr('Across the bar line','跨过小节线'),tr('Rhythm practice','节奏练习')];
+  const names=[tr('Tie two notes','用延音线连起来'),tr('The dot','附点'),tr('One and a half beats','一拍半'),tr('Across the bar line','跨过小节线'),tr('Tie or slur','延音线还是连奏线'),tr('Rhythm practice','节奏练习')];
+  // Step 5: which curves have been heard.
+  const [heardCurves,setHeardCurves]=useState<string[]>([]);
   function reset(){audio.stop();setPlaying(null);setPicked(null);setFeedback('');setPracticeTone(null)}
-  function navigate(i:number){reset();setStep(i);setStage(0);setTied(true);setRound(0)}
+  function navigate(i:number){reset();setStep(i);setStage(0);setTied(true);setRound(0);setHeardCurves([])}
   function toStage(i:number){reset();setStage(i)}
 
   // Play the pattern (or one note and anything tied to it) with a click on every pulse: beats, or half beats (beats louder).
@@ -88,7 +100,7 @@ export default function DotsTiesLesson(){
   const beats=(n:string)=>tr(`${n} beats`,`${n} 拍`);
 
   let narration='',message:ReactNode='',scene:ReactNode=null,extra:ReactNode=null,bubbleTone:'correct'|'wrong'|null=null,progress:{done:number;total:number}|undefined;
-  let next:LessonNext={label:tr(`Next: ${names[step+1]}`,`下一步：${names[step+1]}`),ready:false,onClick:()=>navigate(step+1)};
+  let next:LessonNext={label:tr(`Next: ${names[step+1]} →`,`下一步：${names[step+1]} →`),ready:false,onClick:()=>navigate(step+1)};
   const ask=(label:string)=>{next={label,ready:true,onClick:()=>toStage(2)}};
 
   if(step===0){
@@ -125,7 +137,7 @@ export default function DotsTiesLesson(){
         <svg viewBox="-35 -100 100 140" aria-hidden="true"><RhythmNote value={v as NoteValue}/><circle className="dt-added-dot" cx={v===4?33:27} cy="-4" r="3.5"/></svg>
         <span>{name}</span><strong>{v} + {v/2} = {v*1.5}</strong><small>{tr('beats','拍')}</small>
       </div>)}</div>;
-      next={label:tr('Try a question','试一题'),ready:true,onClick:()=>toStage(3)};
+      next={label:tr('Try a question →','试一题 →'),ready:true,onClick:()=>toStage(3)};
     }else{
       // A new case: 3/4, where a dotted half is a whole measure.
       const list:Choice[]=[{id:'half',label:tr('Half note','二分音符')},{id:'dotted',label:tr('Dotted half','附点二分音符'),right:true},{id:'whole',label:tr('Whole note','全音符')}],done=answered(list);
@@ -166,7 +178,7 @@ export default function DotsTiesLesson(){
           <g transform="translate(305 90) scale(.7)"><RhythmNote value={1}/><circle cx="26" cy="-4" r="3.5"/></g>
         </svg>}
       </>;
-      if(stage===2)next={label:tr('Try a question','试一题'),ready:true,onClick:()=>toStage(3)};
+      if(stage===2)next={label:tr('Try a question →','试一题 →'),ready:true,onClick:()=>toStage(3)};
     }else{
       // A new case: a dot on an eighth note, in the dotted eighth + sixteenth pair that fills one beat.
       const list:Choice[]=[{id:'2',label:'2'},{id:'3',label:'3',right:true},{id:'4',label:'4'}],done=answered(list);
@@ -192,6 +204,34 @@ export default function DotsTiesLesson(){
       {join?noteHits(l,ACROSS,1):hit('tie',(l.xs[2]+l.xs[3])/2,NOTE_Y+10,l.xs[3]-l.xs[2]-20,70,tr('Tie the notes across the bar line','用延音线把两个音跨小节连起来'),()=>{setStage(1)})}
     </>,{bars:pattern.bars,ties:d.ties});
     next.ready=join;
+  }else if(step===4){
+    // Pitched, so this step has a clef: a curve is a tie only between two notes of the same pitch.
+    const ex=stage===0?CURVES:CURVE_Q[stage-1];
+    // Play notes `from` to `to` as a wind tone: tied and slurred notes join with no new start.
+    const sing=(from:number,to:number)=>{
+      const events:ArticulationEvent[]=ex.notes.slice(from,to+1).map((n,k)=>{const i=from+k;return {midi:pitchAt(n.p??2).midi,beats:n.v,slurNext:ex.ties.includes(i)||ex.slurs.some(c=>i>=c.from&&i<c.to)}});
+      setPlaying(null);void audio.counted({values:events.map(e=>e.beats),pitches:events.map(e=>e.midi),articulation:events,offset:from,click:false,speak:false,secondsPerQuarter:SPEED});
+    };
+    const curves=[...ex.ties.map(i=>({id:'tie',from:i,to:i+1})),...ex.slurs.map(c=>({id:'slur',...c}))];
+    const stave=(children:(l:RowLayout)=>ReactNode)=><EngravedRow notes={ex.notes} clef meter={{top:4,bottom:4}} ties={ex.ties} slurs={ex.slurs} right={RIGHT} viewBox={FRAME} interactive active={audio.active} label={names[step]}>{children}</EngravedRow>;
+    if(stage===0){
+      const both=heardCurves.length===2;
+      narration=tr('A curve over two notes of the same pitch is a tie: one longer sound. Over different pitches it is a slur: the notes connect, and only the first starts with the tongue.','同一音高的两个音之间的弧线是延音线：一个更长的声音。不同音高之间的弧线是连奏线：音连在一起，只有第一个音吐音。');
+      message=both?tr('Same curve, two jobs: the tie made one sound, the slur joined two.','同样的弧线，两种作用：延音线连成一个声音，连奏线把两个音连起来。'):tr('Tap each curve to hear what it does.','点每条弧线，听听它的作用。');
+      bubbleTone=both?'correct':null;
+      scene=stave(l=><>{curves.map(c=>hit(c.id,(l.xs[c.from]+l.xs[c.to])/2,NOTE_Y-10,l.xs[c.to]-l.xs[c.from]+50,150,c.id==='tie'?tr('The tie','延音线'):tr('The slur','连奏线'),()=>{setHeardCurves(h=>h.includes(c.id)?h:[...h,c.id]);sing(c.from,c.to)}))}</>);
+      if(both)next={label:tr('Try a question →','试一题 →'),ready:true,onClick:()=>toStage(1)};
+    }else{
+      const q=CURVE_Q[stage-1],list:Choice[]=[{id:'tie',label:tr('Tie','延音线'),right:q.tie},{id:'slur',label:tr('Slur','连奏线'),right:!q.tie}],done=answered(list);
+      narration=tr('Look at the two notes under the curve: same pitch or not?','看弧线下面的两个音：音高一样吗？');
+      message=feedback||tr('Is this curve a tie or a slur?','这条弧线是延音线还是连奏线？');
+      bubbleTone=tone(list);progress={done:stage-1+(done?1:0),total:CURVE_Q.length};
+      scene=stave(l=><>{ex.notes.map((_,i)=>hit(`n${i}`,l.xs[i],NOTE_Y-30,40,124,tr(`Hear note ${i+1}`,`听第 ${i+1} 个音`),()=>{const c=curves.find(c=>i>=c.from&&i<=c.to);sing(c?c.from:i,c?c.to:i)}))}</>);
+      extra=choices(list,()=>{const c=curves[0];sing(c.from,c.to)},()=>q.tie?tr('Both notes are D, the same pitch: that makes it a tie.','两个音都是 D，音高相同：这是延音线。'):tr('A goes up to B: two different pitches, so it is a slur.','从 A 到 B 是两个不同的音高，所以是连奏线。'),
+        q.tie?tr('Tie: both notes are D, so they make one sound of 1 + 2 = 3 beats.','延音线：两个音都是 D，连成一个 1 + 2 = 3 拍的声音。'):tr('Slur: A then B, two pitches joined without a new tongue.','连奏线：A 到 B，两个音高连起来，第二个音不再吐音。'));
+      if(done&&stage<CURVE_Q.length)next={label:tr('Next question →','下一题 →'),ready:true,onClick:()=>toStage(stage+1)};
+      else next.ready=done;
+    }
   }else{
     const last=DRILLS.length-1;
     narration=round===1?tr('Now 3/4, three beats in a measure, and short then long: the eighth note comes first.','现在是 3/4 拍，每小节三拍，而且是先短后长：八分音符在前。')
@@ -204,11 +244,11 @@ export default function DotsTiesLesson(){
     progress={done:attempts.length,total:DRILLS.length};
     const tried=attempts.includes(round),missing=DRILLS.map((_,r)=>r).find(r=>!attempts.includes(r));
     const go=(r:number,text='')=>{setRound(r);setFeedback(text);setPracticeTone(null)};
-    if(round<last)next={label:tr('Next rhythm','下一个节奏'),ready:tried,onClick:()=>go(round+1),onSkip:()=>go(round+1)};
-    else next={label:tr('Finish lesson','完成本课'),ready:tried&&missing===undefined,onClick:()=>{audio.stop();course.finish('dots');router.push('/flute-studio/theory')},onSkip:()=>{if(missing!==undefined)go(missing,tr('Try each rhythm once to finish. Your timing does not need to be perfect.','每个节奏都试一次就能完成，不要求完全准确。'))}};
+    if(round<last)next={label:tr('Next rhythm →','下一个节奏 →'),ready:tried,onClick:()=>go(round+1),onSkip:()=>go(round+1)};
+    else next={label:tr('Finish lesson','完成课程'),ready:tried&&missing===undefined,onClick:()=>{audio.stop();course.finish('dots');router.push('/flute-studio/theory')},onSkip:()=>{if(missing!==undefined)go(missing,tr('Try each rhythm once to finish. Your timing does not need to be perfect.','每个节奏都试一次就能完成，不要求完全准确。'))}};
   }
 
-  return <LessonFrame title={tr('Dots and ties','附点与延音线')} className="dt-lesson" zh={zh} steps={names} current={step} onJump={navigate} heading={names[step]} narration={keepSums(narration)} fadeNarration message={message} tone={bubbleTone} next={next} extra={extra} progress={progress} cookieAway={step===4?{slot:spot,pulse}:null} status={audio.error?tr('Sound could not start. Tap a note to try again.','声音没能启动，点一个音符再试。'):undefined}>
-    <div key={`${step}-${step===1&&stage===2?"reference":(step===1&&stage>=3)||(step===2&&stage>=3)?"question":"demo"}`} className={`dt-scene-content${stage>0?" dt-transformed":""}`}>{scene}</div>
+  return <LessonFrame title={tr('Dots and ties','附点与延音线')} className="dt-lesson" zh={zh} steps={names} current={step} onJump={navigate} heading={names[step]} narration={keepSums(narration)} fadeNarration message={message} tone={bubbleTone} next={next} extra={extra} progress={progress} cookieAway={step===5?{slot:spot,pulse}:null} status={audio.error?tr('Sound could not start. Tap a note to try again.','声音没能启动，点一个音符再试。'):undefined}>
+    <div key={`${step}-${step===1&&stage===2?"reference":(step===1&&stage>=3)||(step===2&&stage>=3)?"question":step===4?stage:"demo"}`} className={`dt-scene-content${stage>0?" dt-transformed":""}`}>{scene}</div>
   </LessonFrame>;
 }

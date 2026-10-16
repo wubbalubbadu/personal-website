@@ -1,4 +1,5 @@
 'use client';
+import {useRouter} from 'next/navigation';
 import {useEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode} from 'react';
 import {useLanguage} from '../../i18n/LanguageContext';
 import TrebleClef from '../TrebleClef';
@@ -40,12 +41,13 @@ const fillBeat=(value:NoteValue)=>Array<NoteValue>(value<1?1/value:1).fill(value
 export default function RhythmLesson() {
   const phone=usePhoneNotation(),width=phone?520:760;
   const {lang}=useLanguage(), zh=lang==='zh', tr=(en:string,cn:string)=>zh?cn:en;
+  const router=useRouter();
   const [step,setStep]=useState(0),[variant,setVariant]=useState(0),[shape,setShape]=useState<number|null>(null);
   const [depth,setDepth]=useState(0),[treeRow,setTreeRow]=useState(0),[built,setBuilt]=useState(0),[drawn,setDrawn]=useState(false);
   const [beams,setBeams]=useState(0),[beamRound,setBeamRound]=useState(0),[drawing,setDrawing]=useState<number|null>(null);
   const [round,setRound]=useState(0),[holding,setHolding]=useState(false),[heldMs,setHeldMs]=useState(0),[feedback,setFeedback]=useState(''),[correct,setCorrect]=useState(false);
   const [tapRhythms,setTapRhythms]=useState<NoteValue[][]>(()=>TAP_TIERS.map(tier=>tier[0])),[taps,setTaps]=useState<number[]>([]);
-  const [selected,setSelected]=useState(0),[melody,setMelody]=useState<NoteValue[]>([1,1,1,1]),[positions,setPositions]=useState([2,3,4,2]),[done,setDone]=useState(false);
+  const [selected,setSelected]=useState(0),[melody,setMelody]=useState<NoteValue[]>([1,1,1,1]),[positions,setPositions]=useState([2,3,4,2]);
   const holdStart=useRef<number|null>(null),holdTimeout=useRef<ReturnType<typeof setTimeout>|null>(null),beamEnd=useRef<number|null>(null),dragged=useRef<number|null>(null);
   const audio=useRhythmAudio(),course=useCourseProgress();
   const id:StepId=FLOW[step];
@@ -73,7 +75,7 @@ export default function RhythmLesson() {
 
   function cancelHold(){holdStart.current=null;if(holdTimeout.current)clearTimeout(holdTimeout.current);setHolding(false);audio.stop()}
   function navigate(next:number){
-    cancelHold();setStep(next);setFeedback('');setCorrect(false);setDrawing(null);beamEnd.current=null;dragged.current=null;setDone(false);
+    cancelHold();setStep(next);setFeedback('');setCorrect(false);setDrawing(null);beamEnd.current=null;dragged.current=null;
     setRound(0);setBeams(0);setBeamRound(0);setBuilt(0);setDrawn(false);setTaps([]);setShape(null);
     if(FLOW[next]==='tap')setTapRhythms(pickTaps());
     if(FLOW[next]==='melody'){try{const saved=readSaved(localStorage.getItem(SAVE_KEY));if(saved.phrase.every(p=>p!==null))setPositions(saved.phrase as number[])}catch{/* Optional saved phrase. */}}
@@ -148,7 +150,7 @@ export default function RhythmLesson() {
       break;
     case 'melody':
       narration=tr('Put it together: choose pitches and lengths to make your own phrase.','把学到的放在一起：选择音高和时值，写出你自己的旋律。');
-      message=tr('Drag a note up or down. Pick a length below for the selected note.','上下拖动音符。在下面为选中的音符选一个时值。');
+      message=tr('Drag a note up or down. Pick a length below for the selected note. Next lesson: grouping beats into measures.','上下拖动音符。在下面为选中的音符选一个时值。下一课：把拍子组成小节。');
       tools=<div className="rhythm-values" role="group" aria-label={tr(`Length of note ${selected+1}`,`第 ${selected+1} 个音的时值`)}>{VALUES.map(value=><button key={value} aria-pressed={melody[selected]===value} aria-label={nameOf(value)} onClick={()=>{audio.stop();setMelody(old=>old.map((v,i)=>i===selected?value:v))}}><svg viewBox="-27 -100 75 140" aria-hidden="true"><RhythmNote value={value}/></svg></button>)}</div>;
       break;
   }
@@ -158,13 +160,12 @@ export default function RhythmLesson() {
   if(id==='beams'&&joined&&beamRound===0)next={label:tr('Now sixteenths →','再试十六分音符 →'),ready:true,onClick:()=>{audio.stop();setBeamRound(1);setBeams(0);setCorrect(false);setFeedback('')},onSkip:()=>navigate(step+1)};
   else if(id==='hold'&&correct&&round<HOLD_VALUES.length-1)next={label:tr('Next note →','下一个音符 →'),ready:true,onClick:nextRound,onSkip:()=>navigate(step+1)};
   else if(id==='tap'&&correct&&round<2)next={label:tr('Next rhythm →','下一个节奏 →'),ready:true,onClick:nextRound,onSkip:()=>navigate(step+1)};
-  else if(id==='melody')next=done?{label:tr('Back to theory lessons','回到乐理课'),ready:true,href:'/flute-studio/theory'}:{label:tr('Finish lesson','完成课程'),ready:true,onClick:()=>{cancelHold();course.finish('rhythm');setDone(true)}};
+  else if(id==='melody')next={label:tr('Finish lesson','完成课程'),ready:true,onClick:()=>{cancelHold();course.finish('rhythm');router.push('/flute-studio/theory')}};
   else if(id==='build'&&drawn&&built<3)next={label:tr('Next change →','下一步变化 →'),ready:true,onClick:()=>{audio.stop();setBuilt(b=>b+1);setDrawn(false)},onSkip:()=>navigate(step+1)};
   else next={...onward,ready:id==='build'?drawn&&built===3:id==='beams'?joined:id==='hold'||id==='tap'?correct:true};
-  if(id==='melody'&&done)message=tr('You’ve explored note lengths! Next comes grouping beats into measures.','你已经认识了音符时值！接下来，我们学习怎样把拍子组成小节。');
 
   const progress=id==='tap'?{done:taps.length,total:tapPattern.length}:id==='hold'?{done:round+(correct?1:0),total:HOLD_VALUES.length}:undefined;
-  const tone=correct||done||(id==='build'&&drawn)?'correct':(id==='hold'||id==='tap')&&feedback&&!correct?'wrong':null;
+  const tone=correct||(id==='build'&&drawn)?'correct':(id==='hold'||id==='tap')&&feedback&&!correct?'wrong':null;
   const visual=id==='values'?<DurationTree depth={depth} selected={treeRow} active={audio.active} onSelect={row=>{setTreeRow(row);void audio.play(Array(2**row).fill(VALUES[row]))}} zh={zh}/>
     :id==='build'?<NoteBuilder stage={built} drawn={drawn} labels={buildLabels} zh={zh} onDrawn={()=>setDrawn(true)}/>
     :<svg className={`rhythm-score ${id==='shapes'?'rhythm-shapes':''}`} viewBox={id==='shapes'?`0 0 ${width} 310`:`0 40 ${width} 245`} preserveAspectRatio="xMidYMid meet" aria-label={notes.map(nameOf).join(', ')}>
@@ -189,7 +190,7 @@ export default function RhythmLesson() {
     </svg>;
 
   return <LessonFrame className="rhythm-lesson" title={tr('Rhythm: note lengths','节奏：音符的时值')} zh={zh} steps={names} current={step} onJump={navigate}
-    heading={names[step]} narration={narration} message={message} tone={tone} next={next} progress={progress}
+    heading={names[step]} narration={narration} fadeNarration message={message} tone={tone} next={next} progress={progress}
     status={audio.error?tr('Sound could not start. Tap Listen to retry.','声音未能启动，请点“听一听”重试。'):''}>
     <div className="rhythm-visual">{visual}</div>
     {clicks&&id!=='build'&&id!=='hold'&&id!=='tap'&&<div className="rhythm-pulse" aria-label={tr('Beats','拍子')}>{dots.map((on,i)=><i key={i} className={on?'is-on':''}/>)}</div>}

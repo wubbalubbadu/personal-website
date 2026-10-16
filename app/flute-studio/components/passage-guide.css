@@ -7,7 +7,7 @@
 .passage-guide__tabs{display:flex;gap:8px;margin:20px 0;border-bottom:1px solid #e6e6e9;padding-bottom:10px}
 .passage-guide__tabs button{font-weight:550}
 /* Pressed = selected, so the studio's selected purple (not the old green); the View switch keeps its white chosen tab. */
-html body .passage-guide button[aria-pressed=true]:not(.reader-choice button):not(.passage-guide__chips button){background:#f1e5f5!important;color:#6d4585!important}
+html body .passage-guide button[aria-pressed=true]:not(.reader-choice button):not(.passage-guide__chips button):not(.pitch-row button){background:#f1e5f5!important;color:#6d4585!important}
 .passage-guide__options{display:flex;gap:6px;flex-wrap:wrap;font-size:13px}.passage-guide__original>header{justify-content:space-between}
 .passage-guide__cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px;margin-top:28px;border-top:1px solid #e6e6e9;padding-top:26px}
 .passage-guide__cards article{min-width:0}.passage-guide__cards article>header{align-items:baseline;gap:8px}.passage-guide__cards header>span{font-size:12px;color:#878892}
@@ -117,7 +117,7 @@ html body .passage-guide button.passage-guide__icon[aria-pressed=true]{backgroun
 html body .passage-guide__row>h3 small{font-size:12px!important;font-weight:400!important}
 /* The original carries names, accidentals and rhythm, so it gets the room: bigger notation, and headroom for the name pills. */
 .passage-guide__row--original{padding:6px 0!important}
-html body .passage-guide .passage-guide__row--original .practice-notation__music{padding-top:26px!important}
+html body .passage-guide .passage-guide__row--original .practice-notation__music:is([data-pills="on"],[data-marks="on"]){padding-top:26px!important}
 .passage-guide__none{margin:10px 0 4px}
 
 /* Pitch practice. */
@@ -175,7 +175,7 @@ html body .passage-guide .passage-guide__row .practice-notation__music{padding-t
 /* Original is the passage itself, drawn larger: it sits in its own light card, so the size reads as intended. */
 html body .passage-guide .passage-guide__row--original{margin:6px 0 10px;padding:8px 14px!important;border:0;border-radius:14px;background:#f6f6f8}
 html body .passage-guide .passage-guide__row--original+.passage-guide__row{border-top:0}
-html body .passage-guide .passage-guide__row--original .practice-notation__music{padding-top:26px!important}
+html body .passage-guide .passage-guide__row--original .practice-notation__music:is([data-pills="on"],[data-marks="on"]){padding-top:26px!important}
 /* Mouse and trackpad: a smaller selection pill and bar handles so they cover less music. Touch screens keep
    the bigger finger-sized ones. (The handles' centres stay where they were.) */
 @media (hover:hover) and (pointer:fine){
@@ -215,21 +215,27 @@ html body .passage-guide .passage-guide__row--original .practice-notation__music
 /* The close-up's legacy layers restyle every button and paragraph with !important; these win back RhythmTap's look. */
 html:root body .passage-guide .rhythm-tap__start{min-height:36px!important;height:36px!important;padding:0 16px!important;border:1px solid #d7e1d2!important;border-radius:999px!important;background:#e7eee3!important;color:#40553d!important;font-size:14px!important;font-weight:600!important}
 html:root body .passage-guide .rhythm-tap__start:hover{background:#dde7d8!important}
-html:root body .passage-guide .rhythm-tap__result{color:#a35f1c!important}
+html:root body .passage-guide .rhythm-tap__result{color:#45464f!important;font-weight:500!important}
 html:root body .passage-guide .rhythm-tap__result.is-perfect{color:#46633d!important}
 /* Rhythm mode v2: the count-in uses the reader's dots inline; results are drawn under the notes (RhythmMarks). */
-html:root body .passage-guide .rhythm-tap__count{position:static;transform:none;padding:8px 12px;box-shadow:none;border:1px solid #e3e4e8}
+/* The close-up's count-in sits in place (not pinned under the toolbar); each bar is its own pill, so no box around them. */
+html:root body .passage-guide .rhythm-tap__count.rhythm-tap__count{position:static;transform:none;padding:0;box-shadow:none;border:0;background:transparent}
 .rhythm-tap__count i.is-group{width:14px;height:14px}
 .rhythm-tap__count>span{align-items:center;gap:8px}
 .rhythm-tap__pad{height:72px}
 .rhythm-tap__pad span{font-size:14px;color:#9a9ba2;text-align:center;padding:0 12px}
-.rhythm-marks{position:absolute;inset:0;pointer-events:none}
-.rhythm-marks__beat{position:absolute;transform:translateX(-50%);font-size:11px;font-weight:600;line-height:1;color:#b4b6bd}
-.rhythm-marks__beat.is-bar{color:#6e707a}
-.rhythm-marks__start{position:absolute;width:9px;height:9px;margin-left:-4.5px;border-radius:50%;background:#c9cad0}
-.rhythm-marks__start.is-on{background:#46633d}
-.rhythm-marks__start.is-missed{background:transparent;box-shadow:inset 0 0 0 2px #d9822b}
-.rhythm-marks__tap{position:absolute;width:7px;height:7px;margin-left:-3.5px;border-radius:50%;background:#d9822b}
+/* The theory lessons' tap line (dots-and-ties.css .dt-ruler/.dt-guide/.dt-tap/.dt-tap-link), at the close-up's size. */
+.rhythm-marks{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.rhythm-marks__beat{font-size:11px;font-weight:600;text-anchor:middle;fill:#b4b6bd}
+.rhythm-marks__beat.is-bar{fill:#6e707a}
+.rhythm-marks__ruler{stroke:#d9d6cf;stroke-width:2}
+.rhythm-marks__start{fill:#b5b1aa}
+.rhythm-marks__tap{fill:#c0502f}
+.rhythm-marks__tap.is-on{fill:#678956}
+.rhythm-marks__link{stroke:#c0502f;stroke-width:1.5;stroke-dasharray:3 3;fill:none}
+/* Room under the music for the beat numbers and the tap line, clear of the buttons below. */
+/* RhythmMarks sets the room under the music itself, from where its tap line ends. */
+html body .passage-guide .passage-guide__row--rhythm{margin-bottom:14px}
 /* The bar tools (COMPONENTS.md "Soft pill", selection version): a capsule in the selected bars' own light purple,
    a little taller than the tempo pill; buttons are round inside it, so their hover circles stay within the pill.
    Drag it anywhere on the pill. */
@@ -237,3 +243,72 @@ html:root body .range-bar.range-bar{gap:2px;padding:3px!important;border-radius:
 html:root body .range-bar.range-bar button{width:36px!important;height:36px!important;border-radius:999px!important;color:#6d4585!important;background:transparent!important}
 html:root body .range-bar.range-bar button:hover:not(:disabled){background:#e6d5ee!important}
 html:root body .range-bar.range-bar button.on{background:#e6d5ee!important}
+/* Technique, Pitch and Rhythm (and the Rhythm click choices): the Library's filter chips, grey, dark when chosen.
+   (Restored 2026-10-15: these rules went missing in a later commit, so the chosen mode stopped showing.) */
+html body .passage-guide .passage-guide__chips{display:flex;gap:6px}
+html body .passage-guide .passage-guide__chips.passage-guide__chips button{height:32px!important;min-height:0!important;padding:0 13px!important;border:0!important;border-radius:999px!important;background:#f1f1f2!important;color:#5f6169!important;font:inherit;font-size:13px!important;font-weight:560!important;cursor:pointer}
+@media(hover:hover){html body .passage-guide .passage-guide__chips.passage-guide__chips button:hover{background:#e6e6ea!important}}
+html body .passage-guide .passage-guide__chips.passage-guide__chips button[aria-pressed="true"]{background:#292a33!important;color:#fff!important}
+/* Close-up Pitch row: words, never boxes (the .text-action look): grey, darker on hover; Graph while shown is dark.
+   Pitch history is the same grey with › (it opens another page). The blue cursor marks where to start, so its
+   "Start here" label is left out here, where it landed on the dynamics under the staff. (Restored 2026-10-15.) */
+html body .passage-guide .pitch-practice .pitch-row .pitch-row-surface>button:not(.pitch-start),
+html body .passage-guide .pitch-practice .pitch-row .pitch-row-surface>button:not(.pitch-start):is(:hover,[aria-pressed=true]){background:transparent!important;box-shadow:none!important;border:0!important}
+html body .passage-guide .pitch-practice .pitch-row .pitch-row-surface>button:not(.pitch-start){color:#6f7178!important;font-weight:500}
+html body .passage-guide .pitch-practice .pitch-row .pitch-row-surface>button[aria-pressed=true]{color:#292a33!important;font-weight:600}
+@media(hover:hover){html body .passage-guide .pitch-practice .pitch-row .pitch-row-surface>:is(button,a):not(:disabled):not(.is-on):hover{color:#292a33!important}}
+html body .passage-guide .pitch-practice .pitch-row .pitch-history{color:#6f7178!important;font-weight:500;text-decoration:none}
+html body .passage-guide .tone-note-time{display:none}
+html body .passage-guide .tone-analysis-empty{text-align:center;margin-left:auto!important;margin-right:auto!important}
+/* The close-up sits inside the reader's .osmd-score, whose rule (engraved.css) stretches every svg to full width:
+   on a wide window a three-bar Original grew to twice the reader's size. Music here keeps its drawn size. */
+html body .passage-guide .practice-notation__music svg{width:auto!important;height:auto!important;max-width:none}
+/* Short exercises sit two to a line (PassageGuide sets .is-two when every one fits in half the width). */
+.passage-guide__technique.is-two .passage-guide__section{display:grid;grid-template-columns:1fr 1fr;column-gap:28px}
+.passage-guide__technique.is-two .passage-guide__section>h4{grid-column:1/-1}
+.passage-guide__technique.is-two .passage-guide__row{grid-template-columns:120px minmax(0,1fr)}
+.passage-guide__technique.is-two .passage-guide__section>.passage-guide__row:nth-of-type(2){border-top:0}
+/* The Listen hover reads on both the white rows and the Original's grey card. */
+html body .passage-guide .practice-listen:not(:disabled):hover{background-color:rgba(41,42,51,.06)!important}
+/* Graph on/off shows like the close-up's display toggles beside it (.passage-guide__icon[aria-pressed=true]):
+   the same soft green fill, as a rounded square around the word. */
+html body .passage-guide .pitch-practice .pitch-row .pitch-row-surface>button[aria-pressed]:not(.pitch-start){min-height:34px;padding:0 12px!important;border-radius:10px!important}
+html body .passage-guide .pitch-practice .pitch-row .pitch-row-surface>button[aria-pressed=true]:not(.pitch-start){background:#e4ecdf!important;color:#40553d!important;font-weight:600}
+
+/* The Original card: no label, the music centred in the card (a Listen-wide gutter on each side keeps it centred). */
+html body .passage-guide .passage-guide__row--original{grid-template-columns:1fr!important}
+html body .passage-guide .passage-guide__row--original>.practice-notation{display:grid;grid-template-columns:96px minmax(0,1fr) 96px;align-items:center}
+.passage-guide__row--original>.practice-notation>.practice-notation__stage{grid-column:2;grid-row:1}
+.passage-guide__row--original>.practice-notation>p{grid-column:2}
+.passage-guide__row--original>.practice-notation>.practice-listen{grid-column:3;grid-row:1;justify-self:end}
+/* One-line music: its drawing box shrinks to the music and centres, so the note-name labels placed in it move too.
+   Wrapped music (Rhythm) is laid out at the full width, so only its svg centres. */
+html body .passage-guide .passage-guide__row--original .practice-notation__music:not([data-wrap])>div{width:max-content;max-width:100%;margin:0 auto}
+html body .passage-guide .passage-guide__row--original .practice-notation__music[data-wrap] svg{margin:0 auto}
+@media(max-width:700px){html body .passage-guide .passage-guide__row--original>.practice-notation{grid-template-columns:0 minmax(0,1fr) auto}}
+/* Rhythm in one row: click choices, Start, then the tap pad as a slim strip filling the rest (results show in it). */
+.rhythm-tap__controls{flex-wrap:nowrap}
+html:root body .passage-guide .rhythm-tap__pad{flex:1 1 220px;min-width:0;height:auto;min-height:44px;padding:6px 14px;border-radius:12px}
+.rhythm-tap__pad span{font-size:13px;line-height:1.35}
+@media(max-width:900px){.rhythm-tap__controls{flex-wrap:wrap}html:root body .passage-guide .rhythm-tap__pad{flex-basis:100%}}
+html:root body .passage-guide .rhythm-tap__pad .rhythm-tap__result{font-size:13px;color:#45464f!important}
+html:root body .passage-guide .rhythm-tap__pad .rhythm-tap__result.is-perfect{color:#46633d!important}
+/* Technique (no marks): room above for the note-name labels, kept whether they are on or off so toggling them never
+   moves the row, and none below (it only added scrolling). */
+html body .passage-guide .passage-guide__row--original .practice-notation__music:not([data-marks="on"]){padding-top:22px!important;padding-bottom:2px!important}
+/* Technique exercises as small cards (white, bordered, no lift), each as wide as its music, wrapping side by side.
+   The music on top; under it the name (with Scale Studio › or Shuffle) and Listen. */
+.passage-guide__cards-flow{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px}
+.passage-guide__card{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:16px;min-width:0;max-width:100%;padding:8px 12px 6px;border:1px solid #e6e6e9;border-radius:14px;background:#fff}
+.passage-guide__card>.practice-notation{display:contents}
+.passage-guide__card .practice-notation__stage{grid-column:1/-1;grid-row:1;min-width:0}
+html body .passage-guide .passage-guide__card .practice-notation__music{padding:4px 0!important}
+.passage-guide__card .practice-notation>p{grid-column:1/-1}
+.passage-guide__card>h3{grid-column:1;grid-row:2;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;margin:0;font-size:14px;font-weight:600;color:#45464f}
+.passage-guide__card .practice-listen{grid-column:2;grid-row:2;justify-self:end}
+html body .passage-guide .passage-guide__card>h3 a{font-size:13px;font-weight:600;color:#46633d;text-decoration:none}
+html body .passage-guide .passage-guide__card>h3 .passage-guide__shuffle{min-height:0;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;font-size:13px!important;font-weight:500!important;color:#85868e!important}
+@media(hover:hover){html body .passage-guide .passage-guide__card>h3 .passage-guide__shuffle:hover{color:#292a33!important}}
+/* Cards stretch to fill their row evenly, the music centred in each. */
+.passage-guide__card{flex:1 1 auto}
+html body .passage-guide .passage-guide__card .practice-notation__music>div{width:max-content;max-width:100%;margin:0 auto}

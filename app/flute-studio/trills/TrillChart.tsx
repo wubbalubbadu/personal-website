@@ -72,14 +72,17 @@ export default function TrillChart() {
   const requested = query.get('note') ?? '';
   const [selection, setSelection] = useState<string | null>(null);
   const pitch = selection ?? (trillPitches.includes(requested) ? requested : 'D4');
+  // Phones show one octave of base notes at a time (tabs above them), like the fingering chart.
+  const [shownRegister, setShownRegister] = useState<string | null>(null);
+  const activeRegister = shownRegister ?? trillRegisterFor(pitch).id;
   return <main className="fingering-chart trill-chart"><div className="fingering-chart__content">
     <header className="fingering-chart__header">
       <h1>{zh ? '颤音指法表' : 'Trill chart'}</h1>
-      <p className="fingering-chart__intro">{zh ? '选择本音，对照半音与全音颤音。红色标记需要交替按放的键；实心表示按下，空心表示放开。' : 'Choose a base note. Compare half-step and whole-step trills. Red keys move; filled means pressed, outlined means released.'}</p>
       <Link className="fingering-chart__sibling" href={`/flute-studio/fingerings?note=${encodeURIComponent(pitch)}`}>{zh ? '指法表' : 'Fingering chart'} →</Link>
     </header>
     <div className="trill-chart__results">{trills.filter(t => t.base === pitch).map(t => <TrillRow key={`${pitch}-${t.interval}`} trill={t} zh={zh}/>)}</div>
-    <div className="trill-chart__registers">{trillRegisters.map(register => <section key={register.id} className="fingering-chart__register trill-chart__selector" aria-label={zh ? register.zh : register.en}>
+    <label className="fingering-chart__octaves"><span>{zh ? '音区' : 'Octave'}</span><select value={activeRegister} onChange={event => setShownRegister(event.target.value)}>{trillRegisters.map(register => <option key={register.id} value={register.id}>{zh ? register.zh : register.en}</option>)}</select></label>
+    <div className="trill-chart__registers">{trillRegisters.map(register => <section key={register.id} className="fingering-chart__register trill-chart__selector" data-active={register.id === activeRegister || undefined} aria-label={zh ? register.zh : register.en}>
       <h3>{zh ? register.zh : register.en}</h3>
       <div className="fingering-chart__notes">{trillPitches.filter(p => trillRegisterFor(p).id === register.id).map(p => <button type="button" key={p} className={p === pitch ? 'selected' : ''} aria-pressed={p === pitch} onClick={() => setSelection(p)}><Pitch value={p}/></button>)}</div>
     </section>)}</div>

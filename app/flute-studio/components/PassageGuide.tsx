@@ -63,7 +63,8 @@ export function PassageGuide({xml,events,from,to,quarterBpm,numbers,onClose,semp
     {glyph:'noteNames',label:namesLabel,on:display.names!=='off',onClick:cycleNames},
     {glyph:'beatSticks',label:s.rhythm,on:display.rhythm,onClick:()=>flip({...display,rhythm:!display.rhythm})},
     {glyph:'sharp',label:s.accidentals,on:display.accidentals,onClick:()=>flip({...display,accidentals:!display.accidentals})}];
-  const original=(marks?:Parameters<typeof PracticeNotation>[0]['marks'],onNote?:(event:number)=>void)=><div className="passage-guide__row passage-guide__row--original"><h3>{label("Original")}</h3>{player('original',source.xml,'original',sempreStaccato,false,display,marks?{marks,onNote:onNote!}:undefined)}</div>;
+  // Your bars, centred in their grey card with no "Original" label: every mode shows them first, so the card says it.
+  const original=(marks?:Parameters<typeof PracticeNotation>[0]['marks'],onNote?:(event:number)=>void)=><div className="passage-guide__row passage-guide__row--original">{player('original',source.xml,'original',sempreStaccato,false,display,marks?{marks,onNote:onNote!}:undefined)}</div>;
   return <section className="passage-guide" aria-label={zh?"乐谱近看":"Music close-up"}>
     <header className="passage-guide__heading"><h2>{`${zh?"小节":"Bars"} ${numbers?.from??low}–${numbers?.to??high}`}</h2>
       <div className="passage-guide__modes passage-guide__chips" role="group" aria-label={zh?"练习":"Practice"}>{(['technique','pitch',...(rhythm?['rhythm']:[])] as Mode[]).map(m=><button type="button" key={m} aria-pressed={mode===m} onClick={()=>choose(m)}>{m==='technique'?(zh?'技巧':'Technique'):m==='pitch'?(zh?'音准':'Pitch'):(zh?'节奏':'Rhythm')}</button>)}</div>
@@ -71,16 +72,18 @@ export function PassageGuide({xml,events,from,to,quarterBpm,numbers,onClose,semp
       {/* Mark up's close button: same icon, size and colour, no hover fill. */}<CloseButton className="passage-guide__close markup-close" label={zh?"关闭近看":"Close close-up"} onClick={onClose}/></header>
     {source.error?<p role="alert">{source.error}</p>:<div className="passage-guide__list">
       {/* Rhythm: the passage wraps to the panel's width (no sideways scrolling), with the tap results under its notes. */}
-      {mode==='rhythm'&&rhythm?<div className="passage-guide__row passage-guide__row--original"><h3>{label("Original")}</h3><PracticeNotation zoom={ORIGINAL_ZOOM} xml={source.xml} label="original" quarterBpm={quarterBpm} playing={active==='original'} onPlay={()=>setActive('original')} onStop={()=>setActive(null)} sempreStaccato={sempreStaccato} wrap marks={rhythmTap.marks}/></div>
+      {mode==='rhythm'&&rhythm?<div className="passage-guide__row passage-guide__row--original passage-guide__row--rhythm"><PracticeNotation zoom={ORIGINAL_ZOOM} xml={source.xml} label="original" quarterBpm={quarterBpm} playing={active==='original'} onPlay={()=>setActive('original')} onStop={()=>setActive(null)} sempreStaccato={sempreStaccato} wrap marks={rhythmTap.marks}/></div>
         :original(mode==='pitch'?pitch.marks:undefined,mode==='pitch'?pitch.onNote:undefined)}
       {mode==='pitch'&&pitch.panel}
       {mode==='rhythm'&&rhythm&&rhythmTap.panel}
       {/* Kept mounted while Pitch is open, so coming back to Technique does not redraw every exercise. */}
-      <div hidden={mode!=='technique'}>
-        {scale&&<div className="passage-guide__row"><h3>{scale.label}<Link href={`/flute-studio/exercises/scales?key=${encodeURIComponent(scale.key)}&type=${scale.type}${'form' in scale&&scale.form==='arpeggio'?'&form=arpeggio':''}&back=${encodeURIComponent(pathname)}`}>{zh?"音阶练习":"Scale Studio"}</Link></h3>{player('scale',scale.xml,scale.label)}</div>}
-        {sections.map(section=><section className="passage-guide__section" key={section.title}><h4>{label(section.title)}</h4>
-          {section.rows.map(r=><div className="passage-guide__row" key={r.id}><h3>{label(r.title)}{r.shuffle&&<button type="button" className="passage-guide__shuffle" onClick={()=>{setActive(null);r.shuffle!()}}>{zh?"重新排列":"Shuffle"}</button>}</h3>{player(r.id,r.xml,r.title.toLowerCase(),false,!!r.gen,undefined,undefined,true)}</div>)}
-        </section>)}
+      {/* Each exercise is a small card, as wide as its music: the music, then its name and Listen under it. Cards sit
+          side by side and wrap, so short exercises do not each take a whole row. */}
+      <div className="passage-guide__technique" hidden={mode!=='technique'}>
+        <div className="passage-guide__cards-flow">
+        {scale&&<div className="passage-guide__card">{player('scale',scale.xml,scale.label)}<h3>{scale.label}<Link href={`/flute-studio/exercises/scales?key=${encodeURIComponent(scale.key)}&type=${scale.type}${'form' in scale&&scale.form==='arpeggio'?'&form=arpeggio':''}&back=${encodeURIComponent(pathname)}`}>{zh?"音阶练习 ›":"Scale Studio ›"}</Link></h3></div>}
+        {sections.flatMap(section=>section.rows).map(r=><div className="passage-guide__card" key={r.id}>{player(r.id,r.xml,r.title.toLowerCase(),false,!!r.gen,undefined,undefined,true)}<h3>{label(r.title)}{r.shuffle&&<button type="button" className="passage-guide__shuffle" onClick={()=>{setActive(null);r.shuffle!()}}>{zh?"重新排列":"Shuffle"}</button>}</h3></div>)}
+        </div>
         {!sections.length&&!scale&&<p className="passage-guide__none">{zh?"选择更多音符生成练习，或选择音准检查这些音符。":"Select a few more notes for exercises, or pick Pitch to check these."}</p>}
       </div>
     </div>}

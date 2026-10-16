@@ -32,7 +32,7 @@ export default function MusicRow({item,tagLabel}:{item:MusicItem;tagLabel:(tag:s
   // Tags wear a tint each (lib/tagTone); focus and count pills stay grey.
   // Your list is not a tag: it is the button at the row's end.
   const pills:{label:string;tone?:TagTone|"soon"}[]=[
-    ...(item.beginner?[{label:zh?"适合入门":"Good first piece",tone:BEGINNER_TONE}]:[]),
+    ...(item.beginner?[{label:zh?"入门":"Beginner",tone:BEGINNER_TONE}]:[]),
     ...item.tags.map(tag=>({label:tagLabel(tag),tone:tagTone(tag)})),
     ...(exercise?[{label:focusLabels[exercise.focus]}]:[]),
     // A book's row says how many pieces are inside it.

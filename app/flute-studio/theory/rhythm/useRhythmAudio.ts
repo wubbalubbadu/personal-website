@@ -1,5 +1,6 @@
 'use client';
 import {useCallback, useEffect, useRef, useState} from 'react';
+import {articulationSamples,type ArticulationEvent} from '../articulation/articulationAudio';
 import {toneSamples} from '../toneSamples';
 import {playbackEvents,sustainedEvents} from './rhythmModel';
 import {metronomeSamples, clapSamples} from './metronomeSamples';
@@ -88,8 +89,8 @@ export function useRhythmAudio() {
    * more softly. `countOffset` starts the count later (a pickup one beat before beat 1 in 3 is 2).
    * `beat` reports the beat sounding now (counted from 0) for lighting counts.
    */
-  const counted = useCallback(async ({values, pitches = [], top = 4, beatUnit = 1, countOffset = 0, speak = true, click = true, notes = true, offset = 0, secondsPerQuarter = .65, timeline, ties = [], onEnd, onError}:
-    {values: readonly number[]; pitches?: (number|null)[]; top?: number; beatUnit?: number; countOffset?: number; speak?: boolean; click?: boolean; notes?: boolean; offset?: number; secondsPerQuarter?: number; timeline?:readonly {at:number;length:number;midi:number|null}[]; ties?:readonly number[]; onEnd?:()=>void; onError?:()=>void}) => {
+  const counted = useCallback(async ({values, pitches = [], top = 4, beatUnit = 1, countOffset = 0, speak = true, click = true, notes = true, offset = 0, secondsPerQuarter = .65, timeline, ties = [], articulation, onEnd, onError}:
+    {values: readonly number[]; pitches?: (number|null)[]; top?: number; beatUnit?: number; countOffset?: number; speak?: boolean; click?: boolean; notes?: boolean; offset?: number; secondsPerQuarter?: number; timeline?:readonly {at:number;length:number;midi:number|null}[]; ties?:readonly number[]; articulation?:ArticulationEvent[]; onEnd?:()=>void; onError?:()=>void}) => {
     stop(); const token = generation.current;
     try {
       const audio = await running(); const clips = speak ? await loadCounts(audio) : [];
@@ -97,7 +98,8 @@ export function useRhythmAudio() {
       const events = timeline?timeline.map(e=>({start:e.at*secondsPerQuarter,duration:e.length*secondsPerQuarter,midi:e.midi})):playbackEvents(values,pitches,secondsPerQuarter), start = audio.currentTime + .06;
       // Balance: the melody leads, the clicks keep time underneath, the voice counts softly on top.
       // (The count clips are normalised near full scale, the tone is quiet, so both need scaling.)
-      if (notes) sustainedEvents(events,ties).filter(event=>event.midi!==null).forEach(event => voice(audio, toneSamples(440 * 2 ** ((event.midi! - 69) / 12), event.duration, audio.sampleRate), start + event.start, 2.4));
+      if(notes&&articulation)voice(audio,articulationSamples(articulation,secondsPerQuarter,audio.sampleRate),start,2.4);
+      if (notes&&!articulation) sustainedEvents(events,ties).filter(event=>event.midi!==null).forEach(event => voice(audio, toneSamples(440 * 2 ** ((event.midi! - 69) / 12), event.duration, audio.sampleRate), start + event.start, 2.4));
       const total = values.reduce((a, b) => a + b, 0), beats = Math.round(total / beatUnit), beatSeconds = beatUnit * secondsPerQuarter;
       const onsets = new Set(events.map(e => Math.round(e.start / beatSeconds * 1000)));
       for (let b = 0; b < beats; b++) {

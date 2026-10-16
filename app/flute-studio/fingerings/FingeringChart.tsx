@@ -45,23 +45,22 @@ export default function FingeringChart() {
     setPitch(next);
     setVariant(0);
   };
+  // Phones show one octave of note buttons at a time (picked from the tabs above them), starting on the
+  // shown note's octave; wider screens show every octave.
+  const [shownRegister, setShownRegister] = useState<string | null>(null);
+  const activeRegister = shownRegister ?? registerOf(note).id;
 
   return (
     <main className="fingering-chart">
       <div className="fingering-chart__content">
         <header className="fingering-chart__header">
           <h1>{zh ? "指法表" : "Fingering chart"}</h1>
-          <p className="fingering-chart__intro">
-            {zh
-              ? "长笛的基本指法，从低音 B 到超高音区。填黑表示按下，空心表示放开。"
-              : "Standard fingerings from low B up through the altissimo. Filled means closed, hollow means open."}
-          </p>
           <Link className="fingering-chart__sibling" href={`/flute-studio/trills?note=${encodeURIComponent(pitch)}`}>{zh ? "颤音指法表" : "Trill chart"} →</Link>
         </header>
 
         <section className="fingering-chart__now" aria-live="polite">
           <div className="fingering-chart__stave">
-            <StaffNote midi={midiForPitch(note.pitch)} spelling={note.names[0]} width={190} />
+            <StaffNote midi={midiForPitch(note.pitch)} spelling={note.names[0]} width={190} steady />
           </div>
           <div className="fingering-chart__detail">
             <h2>
@@ -91,11 +90,20 @@ export default function FingeringChart() {
           <FluteDiagram pressed={fingering.keys} className="fingering-chart__diagram" />
         </section>
 
+        {/* Phones: one octave of notes at a time, chosen here (Customize scales' octave dropdown). */}
+        <label className="fingering-chart__octaves">
+          <span>{zh ? "音区" : "Octave"}</span>
+          <select value={activeRegister} onChange={event => setShownRegister(event.target.value)}>
+            {REGISTERS.filter(register => fluteFingerings.some(n => registerOf(n).id === register.id)).map(register => (
+              <option key={register.id} value={register.id}>{zh ? register.zh : register.en}</option>
+            ))}
+          </select>
+        </label>
         {REGISTERS.map(register => {
           const notes = fluteFingerings.filter(n => registerOf(n).id === register.id);
           if (!notes.length) return null;
           return (
-            <section className="fingering-chart__register" key={register.id}>
+            <section className="fingering-chart__register" key={register.id} data-active={register.id === activeRegister || undefined}>
               <h3>{zh ? register.zh : register.en}</h3>
               <div className="fingering-chart__notes">
                 {notes.map(n => (

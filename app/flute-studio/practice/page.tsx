@@ -8,7 +8,7 @@ import {useLanguage} from "../i18n/LanguageContext";
 import {useTrickyBits} from "../lib/trickyBits";
 import {readSessions,type PracticeSession} from "../practice-data";
 import {useRecents} from "../lib/storage";
-import {useStatusEntries,setStatus,STATUS_LABELS,STATUS_TONES} from "../lib/musicStatus";
+import {useStatusEntries,STATUS_LABELS,STATUS_TONES} from "../lib/musicStatus";
 import {readScaleSets,scaleSetsEvent,type ScaleSet} from "../exercises/scales/saved-sets";
 import {daysUntil,useDeadlines,type Deadline} from "../lib/deadlines";
 import {hasTag,pieceTitle} from "../../../content/music-library";
@@ -16,6 +16,7 @@ import {tagTone} from "../lib/tagTone";
 import {DeadlineDialog} from "./DeadlineDialog";
 import {repDay,repTotals,repsOnDay,useRepLog} from "../lib/repLog";
 import "../components/status-button.css";
+import {StatusButton} from "../components/StatusButton";
 import "../components/tag-pill.css";
 import {musicLibrary as publicMusic,libraryShelf as publicShelf} from "../../../content/music-library";
 import {exerciseCatalog} from "../../../content/exercise-catalog";
@@ -219,8 +220,9 @@ export default function PracticePage(){
       </span>}</>;
     return <li key={item.id} className="working-card">
       {item.viewerPath?<Link href={item.viewerPath}>{body}</Link>:<span className="is-disabled">{body}</span>}
-      <button type="button" className="working-card__remove"
-        aria-label={zh?`把 ${item.title} 移出正在练`:`Take ${item.title} off Working on`} onClick={()=>setStatus(item.id,null)}><PracticeIcon name="delete"/></button>
+      {/* The Library's list button, not a trash can: taking a piece off a list deletes nothing, and the same menu
+          can move it to Learned. */}
+      <span className="working-card__list"><StatusButton id={item.id} zh={zh} compact/></span>
     </li>;
   };
   // The day picked on the calendar (today until you pick another) and what was practised then.

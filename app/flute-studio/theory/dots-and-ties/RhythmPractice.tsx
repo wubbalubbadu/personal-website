@@ -70,7 +70,7 @@ export default function RhythmPractice({pattern,zh,right,frame,onAttempt,onFeedb
   }
   const judged=graded&&mode==='idle';
   return <div className="dt-practice">
-    <EngravedRow proportional notes={data.notes} ties={data.ties} beams={pattern.beams} bars={pattern.bars} clef={false} meter={{top,bottom:4}} right={right} viewBox={frame} active={active} interactive label={tr('The rhythm, with your taps under it','节奏，下面是你的点击')}>
+    <EngravedRow proportional notes={data.notes} ties={data.ties} tuplets={pattern.tuplets} beams={pattern.beams} bars={pattern.bars} clef={false} meter={{top,bottom:4}} right={right} viewBox={frame} active={active} interactive label={tr('The rhythm, with your taps under it','节奏，下面是你的点击')}>
       {l=>{const x=(t:number)=>l.beatX(Math.max(-.3,Math.min(top,t)));return <>
         {data.timeline.map((e,i)=>e.midi!==null&&!data.ties.includes(i-1)&&<rect key={i} className="dt-hit" x={l.xs[i]-24} y="98" width="48" height="114" role="button" tabIndex={0} aria-label={tr(`Hear note ${i+1}`,`听第 ${i+1} 个音`)} onClick={()=>hearNote(i)} onKeyDown={ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();hearNote(i)}}}/>)}
         {Array.from({length:top},(_,b)=>b).map(b=><text key={b} className={`dt-count${lit===b?' is-lit':''}`} x={x(b)} y={COUNT_Y}>{b+1}</text>)}
@@ -91,8 +91,8 @@ export default function RhythmPractice({pattern,zh,right,frame,onAttempt,onFeedb
         <span className="dt-tap-say" aria-hidden="true">{tr('Tap on me!','点我！')}<small>{tr('or press Space','或按空格')}</small></span>
       </div>
       <div className="lesson-tools">
-        <button onClick={mode==='tap'?stop:start} disabled={mode==='listen'}>{mode==='tap'?tr('Stop','停止'):tr('Count me in','数拍开始')}</button>
-        <button disabled={mode==='tap'} onClick={listen}>{mode==='listen'?tr('Stop','停止'):tr('Hear it','听一遍')}</button>
+        <button className="lesson-playback-button" onPointerUp={e=>e.currentTarget.blur()} onClick={mode==='tap'?stop:start} disabled={mode==='listen'}><span aria-hidden={mode==='tap'} style={{visibility:mode==='tap'?'hidden':'visible'}}>{tr('Count me in','数拍开始')}</span><span aria-hidden={mode!=='tap'} style={{visibility:mode!=='tap'?'hidden':'visible'}}>{tr('Stop','停止')}</span></button>
+        <button className="lesson-playback-button" onPointerUp={e=>e.currentTarget.blur()} disabled={mode==='tap'} onClick={listen}><span aria-hidden={mode==='listen'} style={{visibility:mode==='listen'?'hidden':'visible'}}>{tr('Hear it','听一遍')}</span><span aria-hidden={mode!=='listen'} style={{visibility:mode!=='listen'?'hidden':'visible'}}>{tr('Stop','停止')}</span></button>
       </div>
     </div>
   </div>;

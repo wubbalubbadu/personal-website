@@ -40,3 +40,10 @@
 /* The page and body never scroll in the studio (globals.css), and the route is one screen tall, so the index scrolls its route.
    (On phones the index is its own scroll area, above.) */
 .studio-route:has(>.theory-home){overflow-y:auto;overscroll-behavior-y:contain}
+/* Completed: on the picture's corner, never over the title (top-right sat on long titles in the phone's side-by-side
+   card). On phones just the ✓ in a small white circle; the word stays for screen readers. */
+.theory-home .course-check{left:10px;right:auto;top:10px}
+@media(max-width:760px){
+  .theory-home .course-check{width:24px;height:24px;padding:0;justify-content:center;gap:0;font-size:13px}
+  .theory-home .course-check__word{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+}

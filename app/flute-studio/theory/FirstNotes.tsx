@@ -127,7 +127,7 @@ export default function FirstNotes(){
       break;
     }
     case 'names':{
-      narration=tr('Notes are named with seven letters, A to G, and then they start over. Listen to the two Es here: the top one sounds like the bottom one, only higher. That distance is called an octave.','音名只用七个字母，A 到 G，然后重新开始。听听这里的两个 E：上面的和下面的很像，只是更高。这个距离叫八度。');
+      narration=tr('Notes use seven letters, A to G, then start over. The two Es here sound alike, one higher: that distance is an octave.','音名只用七个字母 A 到 G，然后重新开始。这里的两个 E 听起来很像，只是一高一低：这个距离叫八度。');
       const heard=keyboardPitch===null?null:[0,1,2,3,4,5,6,7].map(notationPitch).find(p=>p.midi===keyboardPitch);
       message=heard?tr(`That’s ${heard.name} (${SOLFEGE[heard.name]}). ${heard.name==='E'?'Now try the other E!':'Try a few more.'}`,`这是 ${heard.name}（${SOLFEGE[heard.name]}）。${heard.name==='E'?'再试试另一个 E！':'多试几个。'}`)
         :tr('Tap a key or a note to hear it.','点琴键或音符听一听。');
@@ -171,7 +171,7 @@ export default function FirstNotes(){
       break;
     }
     case 'ledger':
-      narration=tr('Notes can go higher or lower than the staff. For those we add short extra lines called ledger lines. Middle C sits on one ledger line below. Clarinet and sax often read down there; flute often reads several ledger lines up.','音可以比五线谱更高或更低，这时我们加上短短的线，叫加线。中央 C 就在下面第一条加线上。单簧管和萨克斯常读下面的加线，长笛常读上面好几条加线。');
+      narration=tr('Notes can go above or below the staff, on short extra lines called ledger lines. Middle C sits on the first one below.','音可以写到五线谱上面或下面，用短短的加线。中央 C 就在下面第一条加线上。');
       message=tr('Slide lower or higher, and tap a note to hear it.','滑动看看更低或更高的音，点音符听一听。');
       markDone();
       scene=<LedgerExplorer key={sceneRun} zh={zh} onHear={midi=>void audio.play([midi],.65,0,true)}/>;
@@ -204,7 +204,7 @@ export default function FirstNotes(){
 
   if(!ready)return <main className="theory-shell"><p>{tr('Loading…','加载中…')}</p></main>;
   return <LessonFrame title={tr('The staff and notes','五线谱与音符')} zh={zh} steps={dots} current={step} onJump={go}
-    heading={dots[step]} narration={narration} message={message} tone={tone} next={next} progress={progress}
+    heading={dots[step]} narration={narration} fadeNarration message={message} tone={tone} next={next} progress={progress}
     status={audio.error?tr('Sound could not start. Tap a note to try again.','声音未能启动，请点一个音再试。'):!saving?tr('Progress cannot be saved in this browser.','此浏览器无法保存进度。'):''}>
     {scene}
   </LessonFrame>;

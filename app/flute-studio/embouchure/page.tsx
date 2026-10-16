@@ -47,7 +47,6 @@ function Embouchure(){
    return()=>{document.removeEventListener('pointerdown',pointer,true);document.removeEventListener('focusin',focus);document.removeEventListener('keydown',escape);cancelAnimationFrame(frame);resize.disconnect();controls.dispose();scene.traverse(o=>{if(o instanceof THREE.Mesh){o.geometry.dispose();const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach(m=>m.dispose());}});renderer.dispose();renderer.domElement.remove();};
  },[zh]);
  const choose=(n:number)=>{setPlaying(false);setNote(n);};
- const pointerPct=(note-MIN_NOTE)/(MAX_NOTE-MIN_NOTE)*100;
  return <div>
    <Workbench
     viewport={<>
@@ -55,17 +54,19 @@ function Embouchure(){
      <div className="emb-viewport-top"><button type="button" className="text-action" onClick={()=>reset.current()}>{zh?"恢复默认视角":"Restore default view"}</button></div>
     </>}
     panel={<>
-     <strong className="emb-note">{noteName(note)}</strong>
+     {/* The note and the button that plays through them, on one row; the staff under them. */}
+     <div className="emb-head">
+      <strong className="emb-note">{noteName(note)}</strong>
+      <button type="button" className="emb-play" onClick={()=>{if(playing){setPlaying(false);}else{direction.current=1;setNote(MIN_NOTE);setPlaying(true);}}}><span aria-hidden="true">{playing?'❚❚':'▶'}</span>{playing?(zh?"暂停":"Pause"):(zh?"播放音阶":"Play scale")}</button>
+     </div>
      <div className="emb-staff"><StaffNote midi={note}/></div>
+     {/* The range on one line, its ends beside it (the note's name is already the heading above). */}
      <section className="emb-range" aria-label={(zh?"长笛音高选择":"Flute note selection")}>
-      <div className="emb-range-track">
-       <input id="emb-note-range" type="range" min={MIN_NOTE} max={MAX_NOTE} value={note} aria-valuetext={noteName(note)} onChange={e=>choose(Number(e.target.value))}/>
-       <span className="emb-range-pointer" style={{left:`${pointerPct}%`}} aria-hidden="true">{noteName(note)}</span>
-      </div>
-      <div className="emb-range-ends"><span>B3</span><span>D7</span></div>
+      <span>B3</span>
+      <input id="emb-note-range" type="range" min={MIN_NOTE} max={MAX_NOTE} value={note} aria-valuetext={noteName(note)} onChange={e=>choose(Number(e.target.value))}/>
+      <span>D7</span>
      </section>
-     <p className="emb-cue">{guidance(note,zh)}</p>
-     <button type="button" className="emb-play" onClick={()=>{if(playing){setPlaying(false);}else{direction.current=1;setNote(MIN_NOTE);setPlaying(true);}}}><span aria-hidden="true">{playing?'❚❚':'▶'}</span>{playing?(zh?"暂停":"Pause"):(zh?"播放音阶":"Play scale")}</button>
+     <div className="emb-cue"><span className="emb-label">{zh?"变化":"What changes"}</span><p>{guidance(note,zh)}</p></div>
     </>}
    />
   </div>

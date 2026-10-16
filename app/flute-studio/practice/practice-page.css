@@ -228,7 +228,7 @@
 .routine-list li.done .routine-list__text{color:#98999f;text-decoration:line-through}
 .routine-delete{flex:0 0 auto;display:grid;place-items:center;width:32px;height:32px;padding:0;border:0;border-radius:10px;background:transparent;color:#85868e;cursor:pointer;opacity:0;transition:opacity .12s ease}
 .routine-list li:hover .routine-delete,.routine-delete:focus-visible{opacity:1}
-.routine-delete:hover{color:#a5372f}
+.routine-delete:hover{color:#292a33}
 .routine-delete:focus-visible{outline:2px solid #b8bac2;outline-offset:1px}
 .routine-delete svg{width:17px;height:17px}
 @media(hover:none){.routine-delete{opacity:1}}
@@ -407,7 +407,7 @@
 .deadline-dialog__pieces span{font-size:14px;font-weight:600}
 .deadline-dialog__pieces small{margin-left:8px;font-weight:400;color:#85868e}
 .deadline-dialog__pieces button{display:grid;place-items:center;width:28px;height:28px;border:0;border-radius:8px;background:none;color:#85868e;cursor:pointer}
-.deadline-dialog__pieces button:hover{color:#a5372f}
+.deadline-dialog__pieces button:hover{color:#292a33}
 .deadline-dialog__error{margin:8px 0 0;font-size:13px;color:#a2402d}
 .deadline-dialog__actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
 .deadline-dialog__actions button{height:38px;padding:0 16px;border:0;border-radius:999px;background:#f1f1f2;color:#3f4048;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
@@ -465,7 +465,7 @@
 .practice-page .practice-today .routine-list li{min-height:46px;padding:0 2px;border-radius:0;border-bottom:1px solid #f0f0f2;background:none}
 .practice-page .practice-today .routine-list li:hover,.practice-page .practice-today .routine-list li.is-current{background:none}
 .practice-page .practice-today .routine-list li.is-current .routine-list__text{font-weight:600}
-.practice-page .practice-today .routine-delete:hover{background:none;color:#a5372f}
+.practice-page .practice-today .routine-delete:hover{background:none;color:#292a33}
 .practice-page .routine-list__add{border-bottom:0!important}
 .practice-page .routine-list__add .suggest-field{flex:1;min-width:0}
 .practice-page .routine-list__add .routine-add{height:46px;padding:0;background:none;border-radius:0;box-shadow:none}
@@ -495,7 +495,7 @@
 .practice-page .working-card:has(.working-card__remove)>:is(a,span){padding-right:44px}
 .practice-page .working-card__remove{top:10px;right:8px;width:32px;height:32px;border-radius:10px;background:none;color:#9a9ca3;opacity:0;transition:opacity .12s ease}
 .practice-page .working-card:hover .working-card__remove,.practice-page .working-card__remove:focus-visible{opacity:1}
-.practice-page .working-card__remove:hover{background:none;color:#a5372f}
+.practice-page .working-card__remove:hover{background:none;color:#292a33}
 .practice-page .working-card__remove svg{width:16px;height:16px}
 @media(hover:none){.practice-page .working-card__remove{opacity:1}}
 
@@ -641,3 +641,44 @@ a.piece-chip:hover{box-shadow:0 0 0 1px #c9cbd1}
 @keyframes list-stack-in{from{opacity:0;transform:translateY(-12px) scale(.94)}}
 @keyframes list-stack-out{to{opacity:0;transform:translateY(-8px) scale(.96)}}
 @media(max-width:760px){.practice-page .list-stacks{grid-template-columns:1fr}}
+/* Phone: the twelve-note map fits the card instead of running off the right edge (12 fixed 36px columns are about
+   490px). Columns share the width, cells stay square; the count is left to the cell's label and the ✓ ("ends in
+   tune") moves to the corner so the cents number still fits. */
+@media(max-width:700px){
+  .practice-page .pitch-card__body{grid-template-columns:minmax(0,1fr)}
+  .practice-page .pitch-map{width:100%;max-width:100%;overflow:visible}
+  .practice-page .pitch-map__row{grid-template-columns:16px repeat(12,minmax(0,1fr));gap:2px}
+  .practice-page .pitch-map{gap:2px}
+  .practice-page .pitch-map__cell{position:relative;width:auto;height:auto;aspect-ratio:1;border-radius:5px}
+  .practice-page .pitch-map__cell b{font-size:10px;letter-spacing:-.02em}
+  .practice-page .pitch-map__cell small{display:none}
+  .practice-page .pitch-map__cell b i{position:absolute;top:0;right:2px;font-size:8px}
+  .practice-page .pitch-map__head span,.practice-page .pitch-map__octave{font-size:11px}
+  .practice-page .pitch-map__octave{padding-right:2px}
+}
+/* My Studio on phones: section headings 12px below the card above (a 40px heading margin on top of the 20px section
+   gap left ~60px). White cards sit on a light grey page (iOS grouped style) instead of white on white, so they need
+   no outline or shadow to stand apart. */
+@media(max-width:600px){
+  .practice-page .practice-page__content .home-preview__group{margin-top:12px!important}
+  html body .practice-page{background:#f5f5f7}
+  html body .practice-page :is(.practice-card,.studio-status-grid,.studio-data-grid){box-shadow:none!important;border:0!important;background:#fff}
+}
+@media(max-width:600px){
+  html body .practice-page :is(.deadline-card,.list-stack__card,.working-card>a){box-shadow:none!important;border:0!important;background:#fff}
+}
+@media(max-width:600px){
+  /* Tricky bits: white cards like the rest on the grey page (they were transparent with a hairline, blurring into it). */
+  html body .practice-page .tricky-group-card>div{background:#fff;box-shadow:none}
+  /* Today's practice: the time and play button on the right of the title, one compact block. */
+  html body .practice-page .practice-today__clock{display:grid!important;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;column-gap:10px;padding:16px 16px 14px!important;text-align:left}
+  html body .practice-page .practice-today__clock>.practice-today__what{grid-column:1;min-width:0}
+  html body .practice-page .practice-today__clock>.practice-today__time{grid-column:2;margin:0;font-size:32px}
+  html body .practice-page .practice-today__clock>.practice-today__actions{grid-column:3;margin:0}
+}
+/* Working on cards: the list button (StatusButton) where the trash was. Only the list's dot, in the same round button
+   as Library rows, at the card's top right. */
+.practice-page .working-card:has(.working-card__list)>:is(a,span.is-disabled){padding-right:60px}
+.practice-page .working-card__list{position:absolute;top:8px;right:8px}
+.practice-page .working-card__list .status-button__trigger{width:32px;height:32px;padding:0;justify-content:center}
+.practice-page .working-card__list .status-button__trigger>span{display:none}

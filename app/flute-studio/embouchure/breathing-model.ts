@@ -15,7 +15,9 @@ export function createBreathingModel(){
  const root=new THREE.Group();root.name='Breathing anatomy';
  const blue=new THREE.Color('#3999bd'),red=new THREE.Color('#d74b57');
  const material=(color:string,opacity=1)=>new THREE.MeshStandardMaterial({color,roughness:.65,metalness:0,transparent:false,alphaHash:opacity<1,opacity,depthWrite:true,side:THREE.DoubleSide});
- const bone=material('#ede8db'),lungMat=material('#dba7a2',.46),diaphMat=material('#9f647e');
+ // A diagram palette, not an anatomy one (bone-white ribs and flesh lungs read as a skeleton): ribs in the skin's warm
+ // tone, lungs a soft air blue, the diaphragm a light rose.
+ const bone=material('#ecd9cf'),lungMat=material('#b9d3e2',.5),diaphMat=material('#d39bb0');
  // Only the two separated lung shells blend; opaque tissue writes depth normally.
  lungMat.alphaHash=false;lungMat.transparent=true;lungMat.depthWrite=false;lungMat.side=THREE.FrontSide;
  const ribPivots:{group:THREE.Group,side:number}[]=[];

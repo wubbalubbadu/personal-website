@@ -62,3 +62,22 @@
   .roadmap-map{grid-template-columns:1fr;gap:14px}
   .roadmap-region{padding:18px}
 }
+
+/* Fits a laptop window without scrolling (Oct 16): less room above the title and under the page, tighter cards and
+   skill pills, three columns from 900px. Phones keep one column but drop the region blurbs and use smaller pills. */
+html body .roadmap-page{padding-bottom:24px}
+html body .roadmap-progress{margin-bottom:18px}
+.roadmap-page__content{width:min(1120px,100%)}
+@media(min-width:900px){.roadmap-map{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}}
+.roadmap-region{padding:16px 16px 18px;gap:12px;border-radius:18px}
+.roadmap-region__header h2{font-size:18px}
+.roadmap-region__skills{gap:6px}
+.roadmap-node{padding:7px 12px;font-size:12.5px}
+/* Mark as learned: the studio's plain grey button, not the old green. */
+.roadmap-detail__mark{border:0;background:#f1f1f2;color:#45464f}
+.roadmap-detail__mark:hover,.roadmap-detail__mark.active{background:#e8e8ea}
+@media(max-width:760px){
+  html body .roadmap-header{padding-top:12px}
+  .roadmap-region__header p{display:none}
+  .roadmap-map{gap:10px}
+}

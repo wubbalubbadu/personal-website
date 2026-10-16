@@ -49,3 +49,11 @@ html body .studio-navigation__actions :is(.dock-launcher,.account-menu__trigger)
 .recorder-pop .session-review header{cursor:move}
 /* The running clock shows pause or play before the time, so tapping it is no longer a guess. */
 .practice-clock-running__time svg{flex:none;width:13px;height:13px;margin-right:5px}
+/* Phone: the running clock is compact (time, a smaller dot and stop) so the tabs keep their room in the top bar. */
+@media(max-width:760px){
+  .studio-navigation__actions .practice-clock-running{height:32px;padding:0 2px;gap:0;border-radius:10px}
+  .studio-navigation__actions .practice-clock-running__time{height:28px;padding:0 5px;gap:4px;font-size:13px}
+  .studio-navigation__actions .practice-clock-running__time i{width:6px;height:6px}
+  .studio-navigation__actions .practice-clock-running__stop{width:24px;height:28px}
+  .studio-navigation__actions .practice-clock-running__stop span{width:8px;height:8px}
+}

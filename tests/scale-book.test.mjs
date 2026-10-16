@@ -91,3 +91,18 @@ test('notation is sixteenths with balanced beams, hidden internal bars and one e
     assert.equal(barStyles.at(-1),'light-heavy');
   }
 });
+
+test('routine and studio share scale tracking identities and range fallback',async()=>{
+  const scoreUrl='data:text/javascript;base64,'+Buffer.from(compiled).toString('base64');
+  const tracking=transpile(fs.readFileSync('app/flute-studio/exercises/scales/scale-tracking.ts','utf8')).replace('./scale-score',scoreUrl);
+  const {scaleTrackingId,scaleTrackedTempo}=await import('data:text/javascript;base64,'+Buffer.from(tracking).toString('base64'));
+  const block={type:'major',form:'scale',key:majorKeys[0]};
+  const span={low:59,high:98};
+  const id=scaleTrackingId(block,'full',span,1);
+  assert.equal(id,'scale-book:major:scale:C:full');
+  assert.equal(scaleTrackedTempo(block,'one',span,1,{[id]:88}),88);
+  assert.equal(scaleTrackedTempo(block,'full',span,1,{'scale-book:major:scale:C:one':120}),60);
+  assert.notEqual(scaleTrackingId(block,'full',span,3),id);
+  assert.notEqual(scaleTrackingId({...block,type:'natural'},'full',span,1),id);
+  assert.notEqual(scaleTrackingId({...block,form:'thirds'},'full',span,1),id);
+});

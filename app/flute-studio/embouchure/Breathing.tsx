@@ -55,7 +55,8 @@ export default function Breathing(){
   <div ref={host} tabIndex={0} role="application" aria-label={zh?"三维呼吸模型。按住 Shift 并按方向键旋转，按 Escape 退出。":"3D breathing model. Hold Shift and press arrow keys to rotate; press Escape to exit."} className="emb-canvas breath-canvas"/>
   {error&&<p role="alert">{(zh?"三维视图需要 WebGL，请尝试其他浏览器。":"The 3D viewer needs WebGL. Please try another browser.")}</p>}
  </>} panel={<>
-  <h2 className="breath-title">{pose.inhale?(zh?"吸气":"Inhale"):(zh?"呼气":"Exhale")}</h2>
+  {/* The phase and the button that plays it, on one row (like the embouchure's note and Play scale). */}
+  <div className="emb-head"><h2 className="breath-title">{pose.inhale?(zh?"吸气":"Inhale"):(zh?"呼气":"Exhale")}</h2><button type="button" className="emb-play" onClick={toggle}>{playing?(zh?"暂停":"Pause"):(zh?"播放呼吸示范":"Play breath")}</button></div>
   <p className="emb-cue">{pose.inhale?(zh?"放松腹部，感受气息下沉，让下肋向两侧和背部舒展。":"Drop and release the belly. Let the breath feel low and the lower ribs open around the sides and back."):phase>.5?(zh?"感受下肋和腹部的支持，保持核心灵活，不要僵硬地绷紧。":"Feel support around the lower ribs and belly. Keep the core responsive, without bracing."):(zh?"逐渐收腹以维持气流，保持动作柔韧。":"Gradually draw the belly inward to continue the airflow. Keep the effort supple.")}</p>
   <dl className="breath-parts">
    <div><dt>{(zh?"下肋":"Lower ribs")}</dt><dd>{pose.inhale?(zh?"向躯干四周舒展":"Opening around the torso"):phase>.5?(zh?"保持舒适的展开状态":"Staying comfortably open"):(zh?"逐渐回收":"Returning gradually")}</dd></div>
@@ -75,6 +76,5 @@ export default function Breathing(){
     <circle cx={110+60*Math.sin(angle)} cy={80-60*Math.cos(angle)} r="7" fill="#40553d" stroke="white" strokeWidth="2"/>
    </svg>
   </div>
-  <button type="button" className="emb-play" onClick={toggle}>{playing?(zh?"暂停":"Pause"):(zh?"播放呼吸示范":"Play breath")}</button>
  </>}/>;
 }

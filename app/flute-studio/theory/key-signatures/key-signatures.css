@@ -25,10 +25,15 @@
 .acc-scene .engraved-row.ks-ask{height:calc(var(--scene-h) - 40px)}
 .ks-sign-letter{fill:#678956;font:700 22px var(--font,sans-serif);text-anchor:middle;animation:engraved-appear .35s ease both}
 .ks-ring.is-sign{stroke:#678956}
-.ks-letters button{min-width:48px}
+/* Seven letters, Check and Next share one row of the bubble, so the letters are a little tighter than other answers. */
+.lesson-shell .ks-letters{gap:4px}
+.lesson-shell .ks-letters button{min-width:40px;padding:8px}
+.lesson-shell.key-sig-lesson .lesson-bubble:has(.ks-letters) .lesson-actions{gap:6px}
+.lesson-shell.key-sig-lesson .lesson-bubble:has(.ks-letters) .measures-secondary{padding:8px 14px}
 
 /* Step 3: the sign choices are the engraved signs themselves. */
-.ks-sign-icon{display:block;width:22px;height:40px;fill:#1b1b1f}
+/* Sized so a sign button is the same 44px height as every other answer. */
+.ks-sign-icon{display:block;width:16px;height:28px;fill:currentColor}
 .lesson-shell .ks-signs button{min-width:64px;display:grid;place-items:center}
 
 @media(prefers-reduced-motion:reduce){.ks-slot rect,.ks-order b.is-new,.ks-sign-letter{animation:none}.ks-fly,.ks-ring{animation:none;opacity:0}}

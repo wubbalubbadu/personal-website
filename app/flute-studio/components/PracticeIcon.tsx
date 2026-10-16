@@ -1,5 +1,5 @@
 import type {ReactNode} from "react";
-export type PracticeIconName = "delete" | "loop" | "zoom" | "plus" | "piano" | "metronome" | "tuner" | "mic" | "drone" | "markup" | "fullscreen" | "exitFullscreen" | "close" | "previous" | "next" | "settings" | "gear" | "view" | "bookmark" | "bookmarkFilled" | "more" | "tap" | "record" | "play" | "pause" | "stop" | "undo" | "redo" | "saved" | "aids" | "tempo" | "print" | "top" | "highlighter" | "arrow" | "eraser" | "text" | "sticky" | "select" | "noteNames" | "beatSticks" | "sharp" | "fingeringKeys" | "termF";
+export type PracticeIconName = "delete" | "loop" | "zoom" | "plus" | "piano" | "metronome" | "tuner" | "mic" | "drone" | "markup" | "fullscreen" | "exitFullscreen" | "close" | "previous" | "next" | "settings" | "gear" | "view" | "bookmark" | "bookmarkFilled" | "more" | "tap" | "record" | "play" | "pause" | "stop" | "undo" | "redo" | "saved" | "aids" | "tempo" | "print" | "top" | "highlighter" | "arrow" | "eraser" | "text" | "sticky" | "select" | "noteNames" | "beatSticks" | "sharp" | "fingeringKeys" | "termF" | "scale";
 const paths:Record<PracticeIconName,ReactNode>={
   delete:<><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6M14 11v6"/></>,
   loop:<path d="M17 3l4 4-4 4M3 11V9a2 2 0 0 1 2-2h16M7 21l-4-4 4-4M21 13v2a2 2 0 0 1-2 2H3"/>,
@@ -16,6 +16,8 @@ const paths:Record<PracticeIconName,ReactNode>={
   sharp:<><path d="M9.6 3.5v17M14.4 3v17"/><path d="M6 10.4 18 8.4M6 16 18 14" strokeWidth="2.3"/></>,
   // Fingering: a pressed key and an open one (the chart's own ●○), drawn; musical terms: an italic f in strokes.
   fingeringKeys:<><circle cx="7" cy="12" r="4.2" fill="currentColor" stroke="none"/><circle cx="17" cy="12" r="3.7"/></>,
+  // Three note heads stepping up: a scale.
+  scale:<><ellipse cx="5.2" cy="18" rx="3" ry="2.2" transform="rotate(-20 5.2 18)" fill="currentColor" stroke="none"/><ellipse cx="12" cy="12.2" rx="3" ry="2.2" transform="rotate(-20 12 12.2)" fill="currentColor" stroke="none"/><ellipse cx="18.8" cy="6.4" rx="3" ry="2.2" transform="rotate(-20 18.8 6.4)" fill="currentColor" stroke="none"/></>,
   termF:<><path d="M16.5 4.2c-1.5-.9-3.6-.3-4.1 1.9L9.6 18.2c-.5 2.1-2.5 2.8-4.1 1.9"/><path d="M8.2 10h7.2"/></>,
   mic:<><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></>,
   tuner:<><path d="M7 3v8a5 5 0 0 0 10 0V3M12 16v6"/><path d="M5 3h4M15 3h4"/></>,

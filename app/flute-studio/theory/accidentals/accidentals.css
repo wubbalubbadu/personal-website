@@ -78,3 +78,6 @@
 @media(prefers-reduced-motion:reduce){.acc-match-line.is-fading,.acc-question.is-leaving,.acc-erasing{animation:none;opacity:0}.acc-closeup .acc-preview{animation:none}}
 
 .acc-scene .acc-keys{position:relative;z-index:1}
+/* The matching steps (two staffs plus the full-height keyboard) have no scene controls: Hint and Show answer live in the bubble.
+   Their empty tools row folds away so the bubble stays on screen at 1180 x 820. */
+.accidentals-lesson .lesson-scene:has(.acc-match) .measures-tools:empty{display:none}

@@ -49,3 +49,9 @@ html body .status-button__menu .status-button__remove::before{content:"";positio
    Studio's save-as-set + / tick). */
 .topbar .icon-btn svg{width:20px;height:20px;display:block}
 .topbar .reader-set-save[aria-pressed="true"]{color:#46633d}
+/* Phone Library rows: a listed piece shows only its list's dot, in the same round button as +, so the row's tags fit
+   on one line beside it. The list's name stays in the button's label and its menu, and the filter chips name it. */
+@media(max-width:600px){
+  .status-button--compact .status-button__trigger[data-status]{width:34px;padding:0;justify-content:center}
+  .status-button--compact .status-button__trigger[data-status]>span{display:none}
+}

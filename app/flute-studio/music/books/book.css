@@ -1,6 +1,7 @@
 /* A book's page: back link, title, composer, Continue, then its numbers. */
 .book-page__back{margin-top:44px}
-.exercise-hub__header.book-page__header{padding-top:10px}
+.exercise-hub__header.book-page__header{padding-top:10px;padding-bottom:20px}
+/* 28px under the title, like Library, Exercises and Learn (was 42). */
 .book-page__composer{margin:8px 0 0!important;color:#6f7178!important;font-size:16px!important;font-weight:500!important;letter-spacing:0!important;text-transform:none!important}
 .book-page__about{max-width:640px;margin:12px 0 0;color:#5f6169;font-size:15px;line-height:1.55}
 .book-page__actions{display:flex;align-items:center;gap:16px;margin-top:22px}

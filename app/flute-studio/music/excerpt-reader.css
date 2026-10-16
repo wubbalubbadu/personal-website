@@ -2,9 +2,9 @@
 /* Passage tabs: Library filter chips in sentence case, on the grey around the page.
    A row above the page; a column in the left margin when the screen has room. */
 .fixed-score-reader .excerpt-passages{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 auto 12px;max-width:950px}
-.fixed-score-reader .excerpt-passages button{flex:0 0 auto;height:34px;display:inline-flex;align-items:center;border:0;border-radius:17px;padding:0 14px;background:#fff;color:#5a5c63;font-family:inherit;font-size:13px;font-weight:600;line-height:1;cursor:pointer}
-.fixed-score-reader .excerpt-passages button:hover{color:#292a33}
-.fixed-score-reader .excerpt-passages button.active{background:#292a33!important;color:#fff!important}
+.fixed-score-reader .excerpt-passages>button{flex:0 0 auto;height:34px;display:inline-flex;align-items:center;border:0;border-radius:17px;padding:0 14px;background:#fff;color:#5a5c63;font-family:inherit;font-size:13px;font-weight:600;line-height:1;cursor:pointer}
+.fixed-score-reader .excerpt-passages>button:hover{color:#292a33}
+.fixed-score-reader .excerpt-passages>button.active{background:#292a33!important;color:#fff!important}
 /* Recordings: the same white surface and hairline as the Scales settings panel; type from DESIGN.md (14/600 title,
    13px grey meta); chips at the settings panel's chip size (34px, 9px radius, 12.5/500). */
 .excerpt-recordings{grid-area:recordings;min-width:0;min-height:0;overflow:auto;background:#fff;border-left:1px solid #e6e7e3;padding:14px 18px;color:#292a33}

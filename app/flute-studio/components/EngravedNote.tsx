@@ -9,8 +9,11 @@ function parsePitch(value: string) {
   return { key: `${letter.toLowerCase()}/${octave}`, accidental: accidental === '♯' ? '#' : accidental === '♭' ? 'b' : 'n', step: Number(octave)*7 + letters.indexOf(letter) };
 }
 /** One engraving implementation for the chart, embouchure, tool dock and trills. */
-export function EngravedNote({ pitch, auxiliary, notation = 'quarter', width = 170, label }: {
+export function EngravedNote({ pitch, auxiliary, notation = 'quarter', width = 170, label, steady = false }: {
   pitch: string; auxiliary?: string; notation?: 'quarter' | 'whole'; width?: number; label?: string;
+  /** Same height and staff position for every note: ledger lines above the staff reach up out of the box instead of
+   *  making it taller, so whatever sits below never moves as the note changes. */
+  steady?: boolean;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
@@ -45,12 +48,14 @@ export function EngravedNote({ pitch, auxiliary, notation = 'quarter', width = 1
       new VF.Formatter().joinVoices([voice]).formatToStave([voice],stave);
       voice.draw(context,stave);
       const svg = container.querySelector('svg');
-      svg?.setAttribute('viewBox',`0 0 ${engravingWidth} ${height}`);
+      svg?.setAttribute('viewBox',steady?`0 ${extra} ${engravingWidth} 165`:`0 0 ${engravingWidth} ${height}`);
+      if (svg && steady) { svg.style.overflow='visible'; svg.setAttribute('height','165'); }
       svg?.setAttribute('aria-hidden','true');
       if (svg) { svg.style.width='100%'; svg.style.height='auto'; svg.style.display='block'; }
     }).catch(() => { if (!cancelled) setFailed(true); });
-    return () => { cancelled = true; container.replaceChildren(); };
-  }, [pitch,auxiliary,notation]);
+    // The next note's drawing replaces this one when it is ready; emptying here showed a blank instant (a flicker).
+    return () => { cancelled = true; };
+  }, [pitch,auxiliary,notation,steady]);
   return <div role="img" aria-label={label ?? (auxiliary ? `${pitch} trill to ${auxiliary}; small auxiliary note before the main note` : `${pitch} on the treble staff`)} style={{width,maxWidth:'100%'}}>
     <div ref={host}/>{failed && <span>Notation unavailable</span>}
   </div>;

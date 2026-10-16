@@ -183,3 +183,5 @@ html body .reader-workspace .pitch-row .divider{height:24px;background:#dedede;m
 html body .reader-workspace .pitch-row .pitch-start.pitch-start,html body .reader-workspace .pitch-row .pitch-start.pitch-start:hover{background:transparent!important;box-shadow:none!important;border:0!important}
 html body .reader-workspace .pitch-row .pitch-start.is-on{color:#a8392f}
 html body .reader-workspace .pitch-row .pitch-start.is-on svg{transform:scale(calc(1 + var(--level,0) * .35));transition:transform .08s linear}
+/* The mic-blocked sentence is longer than the readout's width: let it wrap to two lines instead of cutting off. */
+.pitch-readout:has([role=alert]){white-space:normal;width:22em;line-height:1.3;font-style:normal}

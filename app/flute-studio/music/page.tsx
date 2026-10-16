@@ -75,15 +75,21 @@ export default function MusicLibrary(){
             const lead=LEAD_TAGS.map(key=>tags.find(tag=>tagKey(tag)===key)).filter((tag):tag is string=>!!tag);
             const rest=tags.filter(tag=>!lead.includes(tag));
             return <>
+              {/* Two rows on the phone (each scrolls sideways): All and your three lists, then the music's
+                  coloured tags. Wider screens flow them as one wrapping group (the rows are display:contents). */}
+              <span className="library-chips__row">
               {chip("all",zh?"全部":"All")}
               {/* Your three lists, one kind of chip (grey, with a dot), then a thin
                   divider before the music's own tags. */}
               {STATUSES.map(value=>chip(`status:${value}`,STATUS_LABELS[value][zh?"zh":"en"],<i className="status-dot" data-tone={STATUS_TONES[value]} aria-hidden="true"/>))}
               <span className="library-chips__divider" aria-hidden="true"/>
+              </span>
+              <span className="library-chips__row">
               {lead.map(tag=>chip(tag,tagLabel(tag)))}
               <span className="library-chips__divider" aria-hidden="true"/>
               {chip("beginner",zh?"入门":"Beginner")}
               {rest.map(tag=>chip(tag,tagLabel(tag)))}
+              </span>
             </>;
           })()}
         </div>

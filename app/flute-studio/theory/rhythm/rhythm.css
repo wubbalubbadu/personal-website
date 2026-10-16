@@ -63,3 +63,7 @@
 .rhythm-hold-line__fill.is-right{background:#678956}
 .rhythm-hold-line__fill.is-off{background:#d08a5c}
 .rhythm-hold-line__end{position:absolute;left:calc(var(--beat) * (var(--beats) + 1.5));top:0;width:3px;height:20px;margin-left:-1px;border-radius:2px;background:#292a33}
+/* One geometry for every step (LESSONS.md, principle 10): the timeline keeps room for a two-line step name ("Clap the rhythm"),
+   and the scene keeps room for the pulse row (Note values) and the hold line (Hold the note), so the music never moves. */
+.lesson-shell.rhythm-lesson .theory-timeline button{min-height:69px}
+.lesson-shell.rhythm-lesson .lesson-scene{min-height:calc(var(--scene-h) + 140px)}

@@ -22,7 +22,7 @@ export function PracticeNotation({xml,label,quarterBpm,playing,onPlay,onStop,loo
   // Keep the latest callback for the playback timers, written after render rather than during it.
   useEffect(()=>{stopRef.current=onStop});
   useEffect(()=>{
-    let disposed=false,resize:ResizeObserver|undefined;
+    let disposed=false,swapped=false,resize:ResizeObserver|undefined;
     const host=root.current!;
     // Draw into a hidden sibling and swap it in when done, so replacing an exercise (Shuffle) never flashes blank.
     const next=document.createElement('div');next.style.cssText='position:absolute;left:0;top:0;width:100%;visibility:hidden';host.style.position='relative';host.append(next);
@@ -35,27 +35,30 @@ export function PracticeNotation({xml,label,quarterBpm,playing,onPlay,onStop,loo
       const score=new OpenSheetMusicDisplay(next,{backend:'svg',autoResize:false,drawingParameters:'compacttight',drawTitle:false,drawComposer:false,drawPartNames:false});
       score.setOptions({pageFormat:'Endless',drawMeasureNumbers:true,newSystemFromXML:false,autoBeam});
       score.EngravingRules.MinNoteDistance=1.4;score.EngravingRules.RenderSingleHorizontalStaffline=!wrap;score.EngravingRules.RenderTimeSignatures=!hideTime;score.EngravingRules.SlurNoteHeadYOffset=.9;
+      // Wrapped lines with marks under them (Rhythm's tap line) need room between the lines.
+      if(wrap)score.EngravingRules.MinSkyBottomDistBetweenSystems=10;
       score.EngravingRules.RenderMultipleRestMeasures=false;score.EngravingRules.AutoGenerateMultipleRestMeasuresFromRestMeasures=false;
       await score.load(source);if(disposed)return;score.Zoom=zoom;
       // The reminder flag is shared with the reader's own engraver: borrow it for this draw only.
-      const draw=()=>{const before=reminderAccidentalsOn();setReminderAccidentals(shown.accidentals);try{score.render()}finally{setReminderAccidentals(before)}};
+      const draw=()=>{const before=reminderAccidentalsOn();setReminderAccidentals(shown.accidentals);try{score.render()}finally{setReminderAccidentals(before)}fitToStaves(next)};
       draw();
       const derived=deriveScoreEvents(score,sempreStaccato?1:undefined),held=new Set(fermataAttackIndexes(xml));let attack=-1;
       // A fermata holds its note: twice as long, and never less than two beats (a held sixteenth must still be a hold).
       sequence.current=held.size?{...derived,events:derived.events.map(e=>{if(!(e.p&&!e.tied&&e.d>0))return e;attack++;return held.has(attack)?{...e,d:Math.max(e.d*2,derived.unitsPerBeat*2)}:e})}:derived;
       if(display)decorateRow(next,source,derived,shown,reminded?.reminders??[]);
       if(disposed)return;
-      // Replacing a drawing (Shuffle, a display toggle): hold the row at least as tall as before, so nothing below
-      // jumps, and fade the new music in rather than cutting to it.
-      const replacing=host.children.length>1;
-      if(replacing){host.style.minHeight=`${host.offsetHeight}px`;next.style.cssText='opacity:0;transition:opacity .16s ease'}else next.style.cssText='';
+      // Replacing a drawing (Shuffle, a display toggle): the new music is fully drawn before it is shown, so swap in
+      // one step. Fading (in from blank, or a cross-fade with both drawings overlapping) read as a glitch.
+      next.style.cssText='';
       Array.from(host.children).forEach(c=>{if(c!==next)c.remove()});
-      if(replacing)requestAnimationFrame(()=>{next.style.opacity='1';window.setTimeout(()=>{if(!disposed){host.style.minHeight='';next.style.cssText=''}},220)});
+      swapped=true;
       setReady(true);setVersion(v=>v+1);drawnRef.current?.();
       let width=host.clientWidth;
       let frame=0;resize=new ResizeObserver(()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>{if(!disposed&&host.clientWidth>0&&Math.abs(width-host.clientWidth)>2){width=host.clientWidth;draw();if(display)decorateRow(next,source,derived,shown,reminded?.reminders??[]);setVersion(v=>v+1)}})});resize.observe(host);
     }catch(e){if(!disposed)setError(e instanceof Error?e.message:'Could not draw this exercise.')}})();
-    return()=>{disposed=true;resize?.disconnect();next.remove()};
+    // A redraw (display toggle, Shuffle) keeps the music on screen until its replacement is drawn and swaps it out;
+    // removing it here blanked the row for the whole redraw, the flicker. Only an unfinished drawing is dropped.
+    return()=>{disposed=true;resize?.disconnect();if(!swapped)next.remove()};
   },[xml,sempreStaccato,autoBeam,zoom,hideTime,wrap,display?.names,display?.accidentals,display?.rhythm]);
   useEffect(()=>{
     if(!playing||!ready||!sequence.current){return}
@@ -117,5 +120,17 @@ export function PracticeNotation({xml,label,quarterBpm,playing,onPlay,onStop,loo
     const tap=(e:MouseEvent)=>{const node=(e.target as Element).closest<SVGGElement>('.vf-stavenote[data-event]');if(node)onNote(Number(node.dataset.event))};
     hostEl.addEventListener('click',tap);return()=>hostEl.removeEventListener('click',tap);
   },[hostEl,onNote]);
-  return <div className="practice-notation"><div className="practice-notation__stage"><div className="practice-notation__music" ref={hostRef} data-pills={display&&display.names!=='off'?'on':undefined} data-marks={marks?'on':undefined} aria-label={`${label} notation`}/>{marks&&hostEl&&ready&&<div className="practice-notation__marks">{marks({root:hostEl,version})}</div>}</div>{error?<p role="alert">{error}</p>:!ready?<p role="status">Preparing notation…</p>:null}<button type="button" className="practice-listen" aria-label={`${playing?'Stop':'Listen to'} ${label}`} disabled={!ready||!!error} onClick={playing?onStop:onPlay}><PracticeIcon name={playing?'pause':'play'}/>{playing?'Stop':'Listen'}</button>{controls}</div>;
+  return <div className="practice-notation"><div className="practice-notation__stage"><div className="practice-notation__music" ref={hostRef} data-pills={display&&display.names!=='off'?'on':undefined} data-marks={marks?'on':undefined} data-wrap={wrap?'':undefined} aria-label={`${label} notation`}/>{marks&&hostEl&&ready&&<div className="practice-notation__marks">{marks({root:hostEl,version})}</div>}</div>{error?<p role="alert">{error}</p>:!ready?<p role="status">Preparing notation…</p>:null}<button type="button" className="practice-listen" aria-label={`${playing?'Stop':'Listen to'} ${label}`} disabled={!ready||!!error} onClick={playing?onStop:onPlay}><PracticeIcon name={playing?'pause':'play'}/>{playing?'Stop':'Listen'}</button>{controls}</div>;
+}
+
+/** OSMD draws on a canvas with blank margins of its own (wider on the right, and as wide as the row when wrapped),
+ *  so centring the canvas left the music off-centre by a different amount in each mode. Trim the canvas to the
+ *  staves, clef to final bar line, at the same scale; words that reach past them (Adagio) still show (overflow is
+ *  visible). Every row then centres the same thing: the music. */
+function fitToStaves(host:HTMLElement){
+  const svg=host.querySelector('svg'),box=svg?.viewBox.baseVal;if(!svg||!box?.width)return;
+  const staves=Array.from(svg.querySelectorAll<SVGGElement>('.vf-measure')).map(g=>g.getBBox());if(!staves.length)return;
+  const ratio=Number(svg.getAttribute('width'))/box.width;if(!ratio)return;
+  const left=Math.max(box.x,Math.min(...staves.map(b=>b.x))-2),right=Math.min(box.x+box.width,Math.max(...staves.map(b=>b.x+b.width))+2);
+  svg.setAttribute('viewBox',`${left} ${box.y} ${right-left} ${box.height}`);svg.setAttribute('width',String((right-left)*ratio));svg.style.overflow='visible';
 }

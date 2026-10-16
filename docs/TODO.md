@@ -1,41 +1,51 @@
 # Cookie Flute Studio: to-do
 
-Updated October 7, 2026. Only open items. Everything built locally and not yet deployed is marked so. The full idea bank
+Updated October 15, 2026. Only open items. Everything built locally and not yet deployed is marked so. The full idea bank
 (and the older per-session notes) is in [COOKIE-TODO-UPDATED.md](COOKIE-TODO-UPDATED.md); pick ideas
 from there when you want something new, then move them here.
 
-## 1. Deploy, then check on a real iPhone, iPad and flute
+## 1. Check on a real iPhone, iPad and flute (while practising)
 
-Built and checked in the desktop browser only. The preview has no microphone, so nothing that listens has been tried.
+Deployed by you through October 11. Built since then (October 11 to 14) is local until the next deploy.
 
-- [ ] **Deploy** the local work (you deploy via Cloudflare Pages). Includes the private-music fix: the access code is now kept on the device, so you enter it once (it used to be forgotten each browser session).
-- [ ] **Cookie pet hidden locally:** the pet is unmounted, disabling its separate focus timer. Code and saved data are preserved for a future role. Desktop browser confirms the pet is absent and lesson instructions remain usable.
-- [ ] **Chinese reader tooltips built locally:** glossary, keys, meter and tempo translations pass automated tests; visual/device review remains pending.
-- [ ] **Practice clock (new):** the clock button in the top bar and the reader's top bar; Today's practice on My Studio; "Save this practice?" with a note; deleting a session and Undo. Check the top bar still fits on a phone with the extra button.
-- [ ] **My Studio redesign (new):** shelf, calendar with day panel, pitch map with square cells, at phone and iPad sizes.
-- [ ] **Theory lesson 4 (rebuilt):** all five steps on iPad with a finger and a pencil (drawing ♯ ♭ ♮), and in Chinese.
-- [ ] **Theory lesson 3:** the 6/8 round and tap judging.
-- [ ] **Pitch on iPad:** detection hears nothing or drops soft and held notes (fix in, unverified); the mic level ring; the pitch tendency test (tune its numbers after a real run).
-- [ ] **Reader:** markup while playing (not reproduced); playback start like MuseScore; music terms easy to tap; pinch zoom; tempos remembered after reload; Arnold's tempos, accel./rit., dynamics; switching pieces stops the old one.
-- [ ] **Phone layouts:** reader toolbar, Breathing Lab, charts, tools sheet (pull down to close).
-- [ ] **Recording:** record, keep, save to device on iPhone.
-- [ ] **Move to another device:** code and file, iPhone to iPad and back, Copy code in Safari.
+- [ ] **Metronome stays loud after using the mic** (new audio context when the last mic closes, October 11).
+- [ ] **Pencil:** a resting palm no longer starts text selection; with Apple Pencil only, the Pencil no longer scrolls the page.
+- [ ] **Count-in:** one pill per counted bar, subdivision ticks, and the pills stay under the toolbar while the score is scrolled.
+- [ ] **Selection pill:** sits above the bars' highest note; drag it anywhere on the pill.
+- [ ] **Pitch on iPad:** soft and held notes, the mic level, the pitch tendency test numbers.
+- [ ] **Recording** on iPhone: record, keep, save to device.
+- [ ] **Move to another device:** code and file, iPhone to iPad and back.
 - [ ] **Long tones with a real flute:** repeats, breathing and restarting, moving between groups.
+- [ ] **Theory lessons 3 and 4 on iPad** (finger and Pencil), and in Chinese.
 - [ ] **Köhler book:** reading and progress on iPad; the page total changing after a turn on phone.
+- [ ] **Close-up (October 15, local):** music centred and same place in all three modes; Technique exercises as small cards;
+  Rhythm in one screen (slim tap strip, result inside it, one-bar count-in explained), tap line like lesson 7, beat
+  counts on one line, purple position line while tapping; display toggles redraw without blanking; Graph shows on.
 
 ## 2. Known problems
 
 Lint cleanup is complete locally: 0 errors, 28 warnings remain. Intentional hydration and interactive-canvas exceptions are documented beside the code.
 
 - [ ] **Tempo pill would not change in full screen** (iPad, 2026-10-10, not reproduced). Likely Safari's full-screen × sitting over the toolbar; touch devices no longer use Safari full screen (2026-10-11), so recheck in focus mode.
-- [ ] **Bar numbers sit very high** over high notes (Leonore 3, bar 3): the engraver places the number above the highest note; consider a fixed lane just above the staff.
-- [ ] **Slurs cut through high runs** (Arnold bars 39 and 51): the arch should follow the highest note under it.
 - [ ] **Phone CSS cleanup:** superseded rules in `studio-shell.css` (listed in the archived to-do); check at phone and tablet widths before deleting.
+
+### Ticket: slurs cut through high notes (Arnold, Fantasy for Flute Solo)
+
+- **Where:** `/flute-studio/music/malcolm-arnold-fantasy-for-flute-solo`, XML view, bars **39, 51, 99, 130, 138**.
+  Private piece: unlock from the gear menu, Private music (code in `.private-music/access-code.txt`, local only).
+  Source score: `.private-music/originals/malcolm-arnold-fantasy-for-flute-solo-…/score.musicxml`. Slur settings:
+  `components/ScoreViewer.tsx` (`SlurNoteHeadYOffset`); close-up in `components/PracticeNotation.tsx`.
+- **Problem:** over runs that climb high, the slur arc is too flat and crosses noteheads and stems.
+- **Desired:** the arc clears the highest note under it (about one staff space, like OSMD elsewhere); ends stay on the
+  first and last notes; **only slurs that hit a note change**, every other slur in every piece stays exactly as is.
+- **Rules:** commit first as a revert point; no app-wide change to OSMD slur settings (that broke the last two tries).
+- **Approach:** after drawing, find slurs whose arc crosses a notehead or stem; redraw only those, raised.
+- **Done when:** the five bars look right on desktop and iPad; a before/after record of every slur shape across all
+  pieces shows only the colliding ones changed; close-up, page mode and PDF export still draw correctly.
+- **Out of scope:** ties, tuplet brackets, PDF excerpts. **Budget:** one attempt; if it fails, roll back and park.
 
 ## 3. Next, decided
 
-- [ ] **Theory lessons:** continue the course plan in `app/flute-studio/theory/LESSONS.md` (next: rests, key signatures, dots and ties, smaller beats). Move lesson 2 onto `EngravedRow` like lessons 3 and 4.
-- [ ] **Lesson 4 polish:** the matching step's keyboard is small; B and C (no black key between) is only mentioned in narration, not shown.
 - [ ] **Score following** (from the reader redesign): follow the playing bar in page and scroll modes; stop following when you browse, with Resume following; metronome-only playback never moves the score.
 - [ ] **Tempo word without a metronome mark** (Moderato, Allegro): use the word's usual speed range. Needs a rule first.
 - [ ] **Personal settings:** design what is remembered globally, per saved set and per exercise, then build.
@@ -53,12 +63,8 @@ Lint cleanup is complete locally: 0 errors, 28 warnings remain. Intentional hydr
 ## Low priority, from the October 11 iPad session
 
 - [ ] **Clear practice history by month** on Sync devices (the Stored on this device card deletes whole groups today).
-- [ ] **Tempo pill returns to your starting number** after Follows-the-music playback stops (it stays on the last section's tempo).
-- [ ] **Opening a saved tricky bit selects its bars**, so Steady click counts in their time signature.
 - [ ] **Excerpt tempo and tally on XML pages beside the printed tempo mark** (now in the page's top-left corner).
-- [ ] **Close-up notation about 1.5× the score**, drawn once at its final size (no visible resize).
 - [ ] **More excerpt XML:** passages of the same symphony that only have the printed page.
-- [ ] **Verify on iPad while practising:** metronome stays loud after the mic; Pencil (palm, and Pencil-only not scrolling); count-in pills and subdivision; selection pill placement and drag.
 
 ## Phone pass (October 11): to prioritise
 
@@ -70,13 +76,22 @@ Lint cleanup is complete locally: 0 errors, 28 warnings remain. Intentional hydr
 - [ ] **Body and embouchure page:** fonts, interaction and look all need a redesign (low traffic).
 - [ ] **Theory lessons on phone:** not yet tested.
 - [ ] **Toolbar icon spacing per page** (Scale Studio, Long Tones, pieces with piano): left as is for now; revisit with a list of each page's toolbar.
-- [ ] **Running practice clock on phone** widens and covers the tabs.
+- [ ] **Running practice clock on phone:** made compact (October 14) but four tabs plus a running clock still do not fit at 375px. Decide: shorten a tab label, hide the stop square while running (stop from the clock's panel), or let the tabs scroll.
 
-## Ideas for later (October 14)
+## Done October 14 (local, deploy to use)
 
-- [ ] **Related scales for a whole piece:** like the close-up's "G major (or E minor)" but for the full score. Options discussed: one Scale Studio set of every key the piece uses, a section-by-section key list linking to Scale Studio, and/or scales limited to the piece's own range. Decide where it opens from and what it produces.
+- [x] **Scales in this piece ›** under a piece's title: opens Scale Studio with exactly the scales and arpeggios its runs use (harmonic and melodic minor kept apart, diminished sevenths as the diminished arpeggio).
+- [x] **Practice calendar counts tallies** (a rep as half a minute), so tally-only days are shaded and tappable.
+- [x] **Count-in pinned under the toolbar**, so it stays in view while the score is scrolled.
+- [x] **Bar numbers in a fixed lane** just above the staff (they floated over high passages, Leonore bar 3).
+- [x] **Tempo returns to your starting number** when Follows-the-music playback stops.
+- [x] **Tapping a shaded tricky bit selects all its bars**, so its tools and Steady click follow those bars.
+- [x] **Score title on two lines:** composer and work share one grey serif line; Scales in this piece moved into View.
+- [x] **Two pages on a narrow window** falls back to the normal single page (it showed 16 nearly empty pages).
 
 ## 4. Decided for later
+
+- **Theory lessons:** done for now (reviewed in another thread); LESSONS.md keeps the plan if it resumes.
 
 - [ ] **Auto-logging practice:** count time with a piece or exercise open while you play. Waits for clear rules (idle time, a tab left open).
 - [ ] **Recordings list in My Studio:** waits for sync, so takes are not lost when a browser clears its data (Safari clears site data after about 7 days unused).
