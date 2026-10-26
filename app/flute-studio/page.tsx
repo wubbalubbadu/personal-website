@@ -4,7 +4,6 @@ import {useLanguage} from "./i18n/LanguageContext";
 import HomePreviewCards from "./HomePreviewCards";
 import ToolCards from "./tools/ToolCards";
 import HomeStudioCards from "./HomeStudioCards";
-import "./studio-home.css";
 
 export default function StudioHome(){
   const {lang}=useLanguage(),zh=lang==="zh";

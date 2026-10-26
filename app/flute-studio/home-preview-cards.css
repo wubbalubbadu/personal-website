@@ -354,19 +354,38 @@
 .music-demo__caption > span { display: inline-flex; gap: 8px; }
 @media (prefers-reduced-motion: reduce) { .music-demo__tap, .music-demo__drone i { animation: none; } }
 
-/* Breathing Lab card: the lab's own ring, phase and count, with one of its cues beside it. */
-.breath-demo { width: 100%; height: 100%; padding: 14px 28px 16px; display: flex; flex-direction: column; box-sizing: border-box; }
-.breath-demo__main { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; gap: 26px; }
-.breath-demo__ring { height: 100%; max-height: 150px; aspect-ratio: 1; overflow: visible; }
+/* Breathing Lab card: the lab's own ring beside its eight-round strip (breathing/Sequence.tsx, styled by
+   breathing-lab.css), sized up here so the strip reads at card distance. */
+.breath-demo { width: 100%; height: 100%; padding: 14px 24px 12px; display: flex; flex-direction: column; gap: 6px; box-sizing: border-box; }
+.breath-demo__main { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; gap: 28px; }
+.breath-demo__ring { height: 100%; max-height: 124px; aspect-ratio: 1; flex: none; overflow: visible; }
 .breath-demo__arc { transition: stroke-dasharray .5s ease; }
-.breath-demo__phase { font: 600 20px var(--font, sans-serif); fill: #71747e; }
-.breath-demo__count { font: 740 40px var(--font, sans-serif); fill: #292a33; font-variant-numeric: tabular-nums; }
-.breath-demo__total { font-size: 22px; font-weight: 500; fill: #85868e; }
-.breath-demo__side { width: 200px; display: flex; flex-direction: column; gap: 6px; }
-.breath-demo__side b { font-size: 15px; font-weight: 650; color: #292a33; animation: scale-preview-in .3s ease both; }
-.breath-demo__side p { margin: 0; font-size: 14px; line-height: 1.4; color: #53656a; animation: scale-preview-in .4s ease both; }
+.breath-demo__phase { font: 600 22px var(--font, sans-serif); fill: #71747e; }
+.breath-demo__count { font: 740 50px var(--font, sans-serif); fill: #292a33; font-variant-numeric: tabular-nums; }
+.breath-demo__total { font-size: 26px; font-weight: 500; fill: #85868e; }
+.breath-demo__rounds { flex: 0 1 300px; min-width: 0; }
+.breath-demo .bl-sequence { gap: 8px; }
+.breath-demo .bl-sequence__legend { font-size: 13px; }
+.breath-demo .bl-sequence li { padding-top: 6px; border-radius: 10px; }
+.breath-demo .bl-sequence li b { font-size: 16px; line-height: 1.45; }
+.breath-demo .bl-sequence li i { height: 3px; }
 .breath-demo__caption { align-self: center; }
 .breath-demo__caption > span { display: inline-flex; gap: 8px; }
+/* Sized by the card's own width (home duo, Exercises trio, phone), not the window. */
+.breath-demo { container-type: inline-size; }
+@container (max-width: 460px) {
+  .breath-demo__main { gap: 16px; }
+  .breath-demo__ring { max-height: 100px; }
+  .breath-demo .bl-sequence { gap: 6px; }
+  .breath-demo .bl-sequence__legend { font-size: 11px; }
+  .breath-demo .bl-sequence li b { font-size: 13px; }
+}
+@container (max-width: 340px) {
+  .breath-demo__ring { max-height: 84px; }
+  .breath-demo .bl-sequence li b { font-size: 12px; }
+}
+@media (max-width: 760px) { .home-preview-grid .breath-demo { padding: 10px 16px 8px; } }
+.preview-grid .breath-demo { padding: 12px 16px 10px; }
 @media (prefers-reduced-motion: reduce) { .breath-demo__arc { transition: none; } }
 
 /* Learn cards: small demos built from the real pages (LearnPreviews.tsx). */

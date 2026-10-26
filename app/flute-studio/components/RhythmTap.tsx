@@ -65,7 +65,7 @@ export function useRhythmTap({xml,rhythm,quarterBpm,zh}:{xml:string;rhythm:Passa
   const [countAt,setCountAt]=useState<number|null>(null);
   const [result,setResult]=useState<{marks:TapMark[];missing:number[];perfect:boolean}|null>(null);
   const [pressed,setPressed]=useState(false);
-  const run=useRef<{start:number;taps:number[];nodes:OscillatorNode[];timers:number[]}|null>(null);
+  const run=useRef<{start:number;taps:number[];nodes:AudioScheduledSourceNode[];timers:number[]}|null>(null);
   const secondsPerQuarter=60/Math.max(20,quarterBpm);
   const written=useMemo(()=>{try{return notesOf(xml)}catch{return {notes:[],bars:[]}}},[xml]);
   const onsetNotes=written.notes.filter(note=>note.onset);
@@ -77,7 +77,7 @@ export function useRhythmTap({xml,rhythm,quarterBpm,zh}:{xml:string;rhythm:Passa
     const context=audio.getAudio();void context.resume();
     const countLength=rhythm.countIn.length?-rhythm.countIn[0].at:0;
     const begin=context.currentTime+.3+countLength*secondsPerQuarter;
-    const nodes:OscillatorNode[]=[],timers:number[]=[];
+    const nodes:AudioScheduledSourceNode[]=[],timers:number[]=[];
     const msUntil=(at:number)=>Math.max(0,(begin+at*secondsPerQuarter-context.currentTime)*1000);
     rhythm.countIn.forEach((click,i)=>{nodes.push(bookClick(context,begin+click.at*secondsPerQuarter,click.accent));timers.push(window.setTimeout(()=>setCountAt(i),msUntil(click.at)))});
     for(const click of rhythm.clicks)if(clicks==="all"||(clicks==="first"&&click.accent))nodes.push(bookClick(context,begin+click.at*secondsPerQuarter,click.accent));

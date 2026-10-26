@@ -1,5 +1,6 @@
-import {majorKeys,ranges,scaleForms,scaleTypes,type ScaleSpan,type ScaleEnding,type ScaleFormId,type ScaleRange,type ScaleStart,type ScaleTypeId} from "./scale-score";
+import {majorKeys,ranges,scaleForms,scaleGroupings,scaleTypes,type ScaleSpan,type ScaleEnding,type ScaleFormId,type ScaleRange,type ScaleStart,type ScaleTypeId} from "./scale-score";
 import type {ArticulationSelection,RhythmChoice,SyllableScheme} from "../../components/notePatterns";
+import {deleteSaved,findSaved,readSaved,renameSaved,saveSaved,savedExercisesEvent,type SavedExercise} from "../../lib/savedExercises";
 
 /**
  * A saved set is a whole Scale Studio setup under a name, so a routine you
@@ -26,66 +27,46 @@ export type ScaleSetConfig={
   scaleStart?:ScaleStart;
   /** The two ends of a custom range. Absent in sets saved before it was stored. */
   customSpan?:ScaleSpan;
-  /** 1 straight, 3 or 4 broken. Absent in sets saved before it existed. */
-  groupSize?:number;
+  /** The pattern: 1 straight, 3 or 4 broken, "turn" or "neighbor" for turns. Absent in sets saved before it existed. */
+  groupSize?:number|string;
+  /** Rhythms rotating across keys, when more than one is chosen; `rhythm` is the first (what older readers use). */
+  rhythms?:RhythmChoice[];
   newLines:boolean;
   keys:string[];
   articulationRotation:{articulation:ArticulationSelection;syllables:SyllableScheme;custom?:boolean}[];
   rhythm:RhythmChoice;
 };
-export type ScaleSet={id:string;name:string;savedAt:string;config:ScaleSetConfig};
+/** A Scale Studio set: a saved exercise of kind "scales" (lib/savedExercises.ts holds every kind in one list). */
+export type ScaleSet=SavedExercise<ScaleSetConfig>;
 
-export const scaleSetsKey="cookie:scale-book:sets:v1";
-/** Same-tab notification — `storage` only fires in *other* tabs. */
-export const scaleSetsEvent="cookie:scale-sets-updated";
+/** Same-tab notification when any saved exercise changes, sets included. */
+export const scaleSetsEvent=savedExercisesEvent;
 
-export function readScaleSets():ScaleSet[]{
-  if(typeof localStorage==="undefined")return [];
-  try{
-    const parsed=JSON.parse(localStorage.getItem(scaleSetsKey)||"[]");
-    if(!Array.isArray(parsed))return [];
-    return parsed.filter((set:unknown)=>{
-      const s=set as Partial<ScaleSet>;
-      return !!s&&typeof s.id==="string"&&typeof s.name==="string"&&!!s.config&&typeof s.config==="object";
-    }) as ScaleSet[];
-  }catch{return []}
-}
-
-function writeScaleSets(sets:ScaleSet[]){
-  try{localStorage.setItem(scaleSetsKey,JSON.stringify(sets))}catch{/* storage may be disabled */}
-  window.dispatchEvent(new Event(scaleSetsEvent));
-}
-
-export function findScaleSet(id:string){return readScaleSets().find(set=>set.id===id)??null}
-
-export function deleteScaleSet(id:string){writeScaleSets(readScaleSets().filter(set=>set.id!==id))}
-
-export function renameScaleSet(id:string,name:string){
-  const trimmed=name.trim();
-  if(!trimmed)return;
-  writeScaleSets(readScaleSets().map(set=>set.id===id?{...set,name:trimmed}:set));
-}
+export function readScaleSets():ScaleSet[]{return readSaved("scales") as ScaleSet[]}
+export function findScaleSet(id:string){const found=findSaved(id);return found?.kind==="scales"?found as ScaleSet:null}
 
 /**
- * Saving under a name that already exists replaces that set rather than
- * adding a second one with the same label — re-saving after a tweak is the
- * common case, and two identically-named rows in the hub would be
- * impossible to tell apart.
+ * When each set was last *played*, for Home's warm-up rotation (the set played longest ago comes up next). Opening a
+ * set is not playing it: it counts when Listen, Record or the metronome runs while the set is on the page. A list of
+ * {id, at} records so a transfer keeps the later time per set; under scale-book:sets so it travels with the sets.
  */
-export function saveScaleSet(name:string,config:ScaleSetConfig):ScaleSet|null{
-  const trimmed=name.trim();
-  if(!trimmed)return null;
-  const sets=readScaleSets();
-  const existing=sets.find(set=>set.name.toLowerCase()===trimmed.toLowerCase());
-  const set:ScaleSet={
-    id:existing?.id??`set-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,7)}`,
-    name:trimmed,
-    savedAt:new Date().toISOString(),
-    config,
-  };
-  writeScaleSets(existing?sets.map(s=>s.id===set.id?set:s):[...sets,set]);
-  return set;
+export const setPlaysKey="cookie:scale-book:sets-played:v1";
+export type SetPlay={id:string;at:number};
+export function readSetPlays():SetPlay[]{
+  try{const parsed=JSON.parse(localStorage.getItem(setPlaysKey)||"[]");return Array.isArray(parsed)?parsed.filter(play=>play&&typeof play.id==="string"&&typeof play.at==="number"):[]}catch{return []}
 }
+export function markSetPlayed(id:string,at=Date.now()){
+  try{localStorage.setItem(setPlaysKey,JSON.stringify([...readSetPlays().filter(play=>play.id!==id),{id,at}]))}catch{/* storage may be disabled */}
+}
+/** The warm-up for today: the set played longest ago; never-played sets first, in the order they were saved. */
+export function warmUpSet(sets:ScaleSet[],plays:SetPlay[]):ScaleSet|null{
+  const last=new Map(plays.map(play=>[play.id,play.at]));
+  return [...sets].sort((a,b)=>(last.get(a.id)??-1)-(last.get(b.id)??-1)||a.savedAt.localeCompare(b.savedAt))[0]??null;
+}
+export function deleteScaleSet(id:string){deleteSaved(id)}
+export function renameScaleSet(id:string,name:string){renameSaved(id,name)}
+/** Saving under a name that already exists replaces that set (see saveSaved). */
+export function saveScaleSet(name:string,config:ScaleSetConfig):ScaleSet|null{return saveSaved("scales",name,config)}
 
 /**
  * The type half of a book title. Three or more types used to read
@@ -121,7 +102,7 @@ export function describeSet(config:ScaleSetConfig,zh:boolean){
     ?(zh?"全部 12 个调":"all 12 keys")
     :(zh?`${keyCount} 个调`:`${keyCount} ${keyCount===1?"key":"keys"}`);
 
-  const broken=(config.groupSize??1)>1&&forms.some(f=>f.id==="scale"||f.id==="arpeggio");
-  const pattern=broken?(zh?`${config.groupSize===3?"三":"四"}音一组`:`in ${config.groupSize}s`):"";
+  const grouping=scaleGroupings.find(g=>g.size===config.groupSize);
+  const pattern=grouping&&grouping.size!==1&&forms.some(f=>f.id==="scale"||f.id==="arpeggio")?(zh?grouping.zhTitle:grouping.title):"";
   return [`${typeWord}${zh?"":" "}${formWord}${pattern?(zh?`（${pattern}）`:` ${pattern}`):""}`,keyWord,range?(zh?range.zh:range.label.toLowerCase()):null].filter(Boolean).join(" · ");
 }

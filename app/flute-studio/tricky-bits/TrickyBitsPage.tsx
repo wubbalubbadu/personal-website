@@ -4,7 +4,7 @@ import {useRouter,useSearchParams} from "next/navigation";
 import {Suspense,useEffect,useMemo,useRef,useState} from "react";
 import {musicLibrary as publicMusic,musicBooks} from "../../../content/music-library";
 import {usePrivateMusic} from "../lib/privateMusic";
-import {removeBit,totalReps,useTrickyBits,type TrickyBit} from "../lib/trickyBits";
+import {activeBits,bitHref,removeBit,setBitDone,totalReps,useTrickyBits,type TrickyBit} from "../lib/trickyBits";
 import {useLanguage} from "../i18n/LanguageContext";
 import {PracticeIcon} from "../components/PracticeIcon";
 import TrickyPreview from "./TrickyPreview";
@@ -14,11 +14,14 @@ import {usePracticeAudio} from "../PracticeAudio";
 import "../exercises/exercises.css";
 import "./tricky-bits.css";
 
-const pieceLink=(bit:TrickyBit,extra="")=>`/flute-studio/music/${bit.pieceId}?bars=${bit.from}-${bit.to}&from=tricky-bits&open=${encodeURIComponent(bit.id)}${extra}`;
+/** The piece at these bars, selected, close-up open (lib/trickyBits.ts). */
+const pieceLink=(bit:TrickyBit)=>bitHref(bit);
 
 function Page(){
   const {t,lang}=useLanguage(),text=t.trickyBits,zh=lang==="zh";
-  const {bits,reps}=useTrickyBits();
+  // Done passages leave the cards for the folded Done group at the bottom (kept, not deleted).
+  const {bits:allBits,reps}=useTrickyBits(),bits=useMemo(()=>activeBits(allBits),[allBits]);
+  const doneBits=allBits.filter(bit=>bit.done).sort((a,b)=>b.done!-a.done!);
   const audio=usePracticeAudio();
   // Cards (open one bit at a time) or one continuous page you play straight down. Remembered on this device.
   const [view,setViewState]=useState<"cards"|"continuous">("cards");
@@ -35,6 +38,9 @@ function Page(){
   const privateMusic=usePrivateMusic();
   const router=useRouter(),params=useSearchParams();
   const [menu,setMenu]=useState<string|null>(null);
+  // A Done row's trash asks once before deleting (COMPONENTS.md Trash).
+  const [armed,setArmed]=useState<string|null>(null);
+  useEffect(()=>{if(!armed)return;const timer=window.setTimeout(()=>setArmed(null),3000);return()=>window.clearTimeout(timer)},[armed]);
   const [openId,setOpenId]=useState<string|null>(null);
   const [ready,setReady]=useState(false);
   const wanted=params.get("open");
@@ -81,7 +87,7 @@ function Page(){
         </div>}
       </header>
       {!ready?null:bits.length===0
-        ?<p className="tricky-empty">{text.empty}</p>
+        ?(doneBits.length?null:<p className="tricky-empty">{text.empty}</p>)
         :<div className={allSettled?"tricky-body":"tricky-body is-waiting"} aria-busy={!allSettled}>{groups.map(([pieceId,list])=>{
           const first=describe(list[0]);
           return <section key={pieceId} className="tricky-group">
@@ -110,7 +116,8 @@ function Page(){
                   <button type="button" className="tricky-card__more has-tip" data-tip={text.more} aria-label={text.more} aria-expanded={menu===bit.id} onClick={()=>setMenu(menu===bit.id?null:bit.id)}><PracticeIcon name="more"/></button>
                   {menu===bit.id&&<div className="tricky-card__menu" role="menu">
                     <Link role="menuitem" href={pieceLink(bit)}>{text.openPiece}</Link>
-                    <Link role="menuitem" href={pieceLink(bit,`&change=${encodeURIComponent(bit.id)}`)}>{text.changeBars}</Link>
+                    <Link role="menuitem" href={bitHref(bit,{change:true})}>{text.changeBars}</Link>
+                    <button type="button" role="menuitem" onClick={()=>{setBitDone(bit.id,true);setMenu(null)}}>{zh?"练好了":"Mark done"}</button>
                     <button type="button" role="menuitem" onClick={()=>{removeBit(bit.id);setMenu(null)}}>{text.remove}</button>
                   </div>}
                 </article>;
@@ -118,6 +125,16 @@ function Page(){
             </div>}
           </section>;
         })}</div>}
+      {ready&&doneBits.length>0&&<details className="tricky-done">
+        <summary>{zh?`练好了 (${doneBits.length})`:`Done (${doneBits.length})`}</summary>
+        <ul>{doneBits.map(bit=>{const piece=describe(bit);return <li key={bit.id}>
+          <Link href={pieceLink(bit)}><b>{piece.title}</b> <small>{text.bars} {bit.label}</small></Link>
+          <button type="button" className="text-action" onClick={()=>setBitDone(bit.id,false)}>{zh?"再练练":"Back to practising"}</button>
+          <button type="button" className={armed===bit.id?"tricky-done__delete is-armed":"tricky-done__delete"}
+            aria-label={armed===bit.id?(zh?`再点一下删除《${piece.title}》第 ${bit.label} 小节`:`Tap again to delete ${piece.title}, bars ${bit.label}`):(zh?`删除《${piece.title}》第 ${bit.label} 小节`:`Delete ${piece.title}, bars ${bit.label}`)}
+            onClick={()=>{if(armed!==bit.id){setArmed(bit.id);return}removeBit(bit.id);setArmed(null)}}><PracticeIcon name="delete"/></button>
+        </li>})}</ul>
+      </details>}
     </div>
     {open&&(()=>{const piece=describe(open);return <TrickyBitDialog bit={open} reps={reps[open.id]} piece={{title:piece.title,scorePath:piece.scorePath,href:pieceLink(open)}} position={ordered.indexOf(open)+1} total={ordered.length} onClose={()=>{setOpenId(null);if(wanted)router.replace("/flute-studio/tricky-bits")}} onStep={step}/>})()}
   </main>;

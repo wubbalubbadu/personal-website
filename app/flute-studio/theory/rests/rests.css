@@ -47,3 +47,10 @@
 .rests-cut-hit{fill:transparent;touch-action:none}
 .rests-split-target:hover .rests-cut,.rests-split-target:focus-visible .rests-cut{stroke-width:3;stroke-dasharray:none}
 .rests-split-target{touch-action:none}
+/* Phones: the staff is drawn small, so the main targets get bigger invisible tap areas (.rests-touch in RestsLesson and
+   MeterSwap; a transparent stroke around the split mark). Desktop keeps the drawn sizes. */
+.rests-touch{display:none;fill:transparent;touch-action:none}
+@media(max-width:760px){
+  .rests-touch{display:inline}
+  .rests-cut-hit{stroke:transparent;stroke-width:64}
+}

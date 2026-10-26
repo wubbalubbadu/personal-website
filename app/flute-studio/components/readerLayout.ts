@@ -23,8 +23,21 @@ export function pageOffsets(systems:{top:number;bottom:number}[],height:number,m
   }
   return offsets;
 }
-export function pageAt(offsets:number[],top:number){
+/** maxScroll: the scroller's real limit. Scrolled to the bottom is the last page, even when that page's start lies past it. */
+export function pageAt(offsets:number[],top:number,maxScroll?:number){
+  if(maxScroll!==undefined&&maxScroll>0&&top>=maxScroll-2)return offsets.length-1;
   let index=0;for(let i=1;i<offsets.length;i++){if(offsets[i]>top)break;index=i}return index;
+}
+/**
+ * The height pages are cut for, kept steady while a phone's window breathes: the reader's header tucking away
+ * (about 44px) or Safari's toolbar showing and hiding (50 to 80px) used to re-cut the pages, so the total changed
+ * after a turn ("1 / 3" became "1 / 4"). A new width (rotation) starts over; a shorter window is always taken, so
+ * every page still fits; a taller one only when it grows by more than `grow` (full screen, a real resize).
+ * The caller passes the height with Safari's toolbar showing (see smallViewportGap), so the shorter case is rare.
+ */
+export function stablePageHeight(previous:{width:number;height:number}|null,width:number,height:number,grow=120){
+  if(!previous||previous.width!==width||height<previous.height||height>previous.height+grow)return {width,height};
+  return previous;
 }
 
 export function tabletReader(touchPoints:number,shortestScreenEdge:number){

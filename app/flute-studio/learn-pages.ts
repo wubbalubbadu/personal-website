@@ -17,16 +17,21 @@ export type LearnPage = {
 export const LEARN_PAGES: readonly LearnPage[] = [
   {
     key: "theory", href: "/flute-studio/theory", en: "Theory lessons", zh: "乐理课",
-    enDetail: "Interactive tutorial for reading music.",
-    zhDetail: "学习识谱的互动教程。", icon: "theory",
+    enDetail: "Learn to read staff music through little games.",
+    zhDetail: "通过小游戏学看五线谱。", icon: "theory",
+  },
+  {
+    key: "rhythm-drills", href: "/flute-studio/rhythm-drills", en: "Rhythm drills", zh: "节奏训练",
+    enDetail: "Tap rhythms that keep getting harder, with real bars from the Library.",
+    zhDetail: "越点越难的节奏，还有曲库里的真实小节。", icon: "rhythm",
   },
   {
     key: "fingerings",
     href: "/flute-studio/fingerings",
     en: "Fingering chart",
     zh: "指法表",
-    enDetail: "Every note from low B up through the altissimo, with alternates",
-    zhDetail: "从低音 B 到超高音区的所有指法，含替代指法",
+    enDetail: "Every fingering from low B up, with alternates.",
+    zhDetail: "全音域指法，附替代指法。",
     icon: "fingerings",
   },
   {
@@ -34,8 +39,8 @@ export const LEARN_PAGES: readonly LearnPage[] = [
     href: "/flute-studio/trills",
     en: "Trill chart",
     zh: "颤音指法表",
-    enDetail: "Four octaves of trill fingerings",
-    zhDetail: "四个八度的颤音指法",
+    enDetail: "Trill fingerings for four octaves, with the moving keys shown.",
+    zhDetail: "四个八度的颤音指法，标出要动的键。",
     icon: "trills",
   },
   {
@@ -43,8 +48,8 @@ export const LEARN_PAGES: readonly LearnPage[] = [
     href: "/flute-studio/embouchure",
     en: "Body & embouchure",
     zh: "身体与嘴型",
-    enDetail: "An interactive model of posture, air and the aperture",
-    zhDetail: "姿势、气息与风口的交互模型",
+    enDetail: "A 3D look at posture, air and the lips, from low notes to high.",
+    zhDetail: "用 3D 模型看姿势、气息和嘴型。",
     icon: "embouchure",
   },
   {
@@ -52,8 +57,8 @@ export const LEARN_PAGES: readonly LearnPage[] = [
     href: "/flute-studio/roadmap",
     en: "Technique roadmap",
     zh: "技巧路线图",
-    enDetail: "What to work on next, and what it builds on",
-    zhDetail: "接下来该练什么，以及它以什么为基础",
+    enDetail: "Every flute skill on one map, and what each one builds on.",
+    zhDetail: "所有长笛技巧一张图，先学什么一目了然。",
     icon: "roadmap",
   },
 ];

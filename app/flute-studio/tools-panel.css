@@ -51,22 +51,18 @@
 
 /* The twelve notes: tap for a drone (filled green), the heard note outlined. */
 .tp-notes{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;margin-top:6px}
-.tp-notes button{height:34px;border:0;border-radius:10px;background:#f1f1f2;color:#45464f;font:inherit;font-size:14px;font-weight:560;cursor:pointer;transition:background-color .14s ease,box-shadow .14s ease}
+.tp-notes button{height:34px;border:0;border-radius:10px;background:#f1f1f2;color:#45464f;font:inherit;font-size:14px;font-weight:400;cursor:pointer;transition:background-color .14s ease,box-shadow .14s ease}
 .tp-notes button:hover{background:#e8e8ea}
-.tp-notes button.is-on{background:#e4ecdf;color:#46633d;font-weight:680}
+.tp-notes button.is-on{background:#e4ecdf;color:#46633d;font-weight:400}
 .tp-notes button.is-heard{box-shadow:inset 0 0 0 2px #4f8a45}
 .tp-notes button.is-heard.is-flat,.tp-notes button.is-heard.is-sharp{box-shadow:inset 0 0 0 2px #c3881f}
 .tp-stop{height:22px;padding:0 8px;border:0;border-radius:999px;background:#f1f1f2;color:#73777f;font:inherit;font-size:12px;font-weight:600;cursor:pointer}
 
 /* Steppers and chips. */
-.tp-stepper{display:inline-flex;align-items:center;gap:2px;height:34px;padding:0 3px;border-radius:10px;background:#f1f1f2}
-.tp-stepper button{width:28px;height:28px;border:0;border-radius:8px;background:transparent;color:#45464f;font:inherit;font-size:17px;cursor:pointer}
-.tp-stepper button:hover:not(:disabled){background:#e4e4e7}
-.tp-stepper button:disabled{opacity:.35;cursor:default}
-.tp-stepper b{min-width:34px;text-align:center;font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
-.tp-stepper span{padding:0 4px;font-size:12px;font-weight:600;color:#6f7178;white-space:nowrap}
-.tp-stepper--small{height:28px}
-.tp-stepper--small button{width:24px;height:24px;font-size:15px}
+/* Steppers here are the studio Stepper (components/Stepper.tsx); these only place them. */
+.tp-meter-step .stepper__value{min-width:30px}
+.tp-tempo{width:102px;flex:0 0 102px}
+.tp-tempo .stepper__value{min-width:28px}
 
 .tp-metro{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding-top:12px;border-top:1px solid #efefef}
 .tp-play{width:36px;height:36px;border:0;border-radius:50%;background:#f1f1f2;color:#292a33;display:grid;place-items:center;cursor:pointer;flex:0 0 auto}
@@ -75,6 +71,12 @@
 .tp-chip{height:30px;padding:0 10px;border:0;border-radius:999px;background:#f1f1f2;color:#45464f;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
 .tp-chip:hover{background:#e8e8ea}
 .tp-chip.is-on{background:#e4ecdf;color:#46633d}
+/* The same native select used by Scale Studio, in the panel's existing grey chip.
+   Its width does not change with 2/4, 2/2 or 12/8; the popup never participates in row layout. */
+.tp-meter-select{position:relative;display:inline-flex;flex:0 0 64px;width:64px}
+.tp-meter-select select{width:100%;appearance:none;-webkit-appearance:none;padding:0 16px;text-align:center;text-align-last:center;font-family:inherit}
+.tp-meter-select .chevron-icon{position:absolute;right:4px;top:50%;width:10px;height:10px;transform:translateY(-50%);pointer-events:none;fill:none;stroke:currentColor;stroke-width:1.7}
+.tools-panel select:focus-visible{outline:2px solid rgba(70,99,61,.45);outline-offset:2px}
 
 /* Fingering view. */
 .tp-back{border:0;background:transparent;padding:4px 0;color:#45464f;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
@@ -94,3 +96,63 @@
 @media(prefers-reduced-motion:reduce){.tp-meter__needle,.tp-meter__cents,.tp-notes button{transition:none}}
 /* The tuner's "microphone is off" line: the same 13px grey as the reading under the needle (.tp-meter__cents), wrapped. */
 .tp-mic-note{margin:8px 0 0;font-size:13px;line-height:1.4;color:#73777f;text-align:center}
+
+/* Metronome "More" (MetronomeMore in PracticeToolDock): a text action with a chevron on its own line under the
+   metronome row, then label + control rows like the drone row. Choices are the shared view switch (studio-shared),
+   with the reader's subdivision glyphs (SubdivisionIcon) and the click-note glyphs drawn the same way. */
+.tp-metro .tp-more{flex:none;gap:2px;min-height:28px;padding:0;font-size:13px;margin-left:auto}
+.tp-more .chevron-icon{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;transition:transform .16s ease}
+.tp-more[aria-expanded="true"] .chevron-icon{transform:rotate(180deg)}
+.tp-more__body{flex:0 0 100%;display:grid;gap:8px;min-width:0}
+.tp-more__body .view-switch button{height:28px;padding:0 10px}
+.tp-more__body .tp-glyphs button{display:grid;place-items:center;padding:0 7px}
+.tp-glyphs .subdivision-icon{width:30px;height:22px}
+/* Beat dots: big dark = accent, small grey = normal, ring = silent; the one sounding now is the count-in blue (CountInPulse). */
+.tp-beats{display:flex;flex-wrap:wrap;align-items:center;gap:3px;padding:2px 0}
+.tp-beats button{width:24px;height:24px;padding:0;border:0;border-radius:50%;background:transparent;display:grid;place-items:center;cursor:pointer}
+.tp-beats button:hover{background:#f1f1f4}
+.tp-beats button.is-group{margin-left:5px}
+.tp-beats i{display:block;width:9px;height:9px;border-radius:50%;background:#b9bbc2;transition:background-color .06s linear}
+.tp-beats [data-mark="accent"] i{width:14px;height:14px;background:#45464f}
+.tp-beats [data-mark="silent"] i{background:transparent;box-shadow:inset 0 0 0 1.5px #b9bbc2}
+.tp-beats .is-now i{background:#2e6fb0}
+.tp-beats [data-mark="silent"].is-now i{background:transparent;box-shadow:inset 0 0 0 1.5px #2e6fb0}
+.tp-beats__foot{min-height:28px}
+.tp-metro>.tp-beats,.tp-metro>.tp-beats__foot{flex:0 0 100%;min-width:0}
+.tp-hint{font-size:12px;font-weight:500;color:#73777f}
+.tp-beats__foot .text-action{min-height:28px;font-size:13px}
+@media(prefers-reduced-motion:reduce){.tp-more .chevron-icon,.tp-beats i{transition:none}}
+
+/* Sound and tuning options (lib/toolSounds.ts): a More under the tuner and the drones too, same text action and
+   label + control rows as the metronome's. Choices are the shared view switch; volumes are a plain slider
+   (.tp-volume, logged in COMPONENTS.md) in the selected purple. */
+.tp-drones .tp-more,.tp-tuner .tp-more{gap:2px;min-height:28px;padding:0;font-size:13px}
+.tp-drones .tp-more{margin-top:6px}
+.tp-drones .tp-more__body{margin-top:4px}
+.tp-tuner__foot{min-height:28px;margin-top:2px}
+.tp-tuner .tp-more__body{margin-top:2px}
+.tp-more__note{margin:0;line-height:1.4}
+.tp-volume{cursor:default}
+.tp-volume input{flex:0 1 180px;min-width:0;margin:0;accent-color:#6d4585;cursor:pointer}
+
+/* Pulse training: silent bars dash the beat dots and hide where you are; the round as small bar marks. */
+.tp-beats.is-silent i{background:transparent;box-shadow:inset 0 0 0 1.5px #c9cbd1}
+.tp-round{display:flex;flex-wrap:wrap;gap:4px}
+.tp-round i{display:block;width:14px;height:8px;border-radius:3px;background:#b9bbc2}
+.tp-round i.is-silent{background:transparent;box-shadow:inset 0 0 0 1.5px #c9cbd1}
+.tp-round i.is-now{outline:2px solid #2e6fb0;outline-offset:1px}
+
+.tools-panel select:focus:not(:focus-visible){outline:none}
+.tp-mic-note .text-action{margin-left:6px}
+
+/* Secondary text shares one scale; pitch names and the editable tempo retain their hierarchy. */
+.tools-panel .tp-more,.tools-panel .tp-meter__cents,.tools-panel .stepper--text .stepper__value,
+.tools-panel .tp-drone__foot .text-action{font-family:inherit;font-size:13px;font-weight:500;color:#73777f}
+.tp-tuner__foot .tp-more{order:1;margin-left:auto}
+.tp-drone__foot .tp-more{margin-left:auto;margin-top:0}
+.tp-drone__foot{margin-top:6px;min-height:28px}
+.tp-metro__foot{display:flex;align-items:center;gap:8px;flex:0 0 100%;min-width:0}
+.tp-metro__foot .tp-beats{flex:1;min-width:0}
+.tp-metro__foot .tp-beats__foot{flex:none}
+.tp-drone-active{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tp-drone-active .tp-chip{font-size:13px;font-weight:500}

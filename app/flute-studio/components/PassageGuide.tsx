@@ -7,7 +7,7 @@ import {PracticeNotation} from './PracticeNotation';
 import {PracticeIcon} from './PracticeIcon';
 import {usePitchPractice} from './PitchPractice';
 import {extractMeasures,relatedScale} from './practiceExcerpt';
-import {runsFromXml,tupletsXml,groupedXml,randomGroupSizes,fermataPitchesXml,dotted,repeatedPairs,splitOptions} from './practiceTechniques';
+import {runsFromXml,tupletsXml,groupedXml,randomGroupSizes,fermataPitchesXml,dotted,repeatedPairs,pausedGroups,splitOptions,passageShape,techniquesFor} from './practiceTechniques';
 import {noDisplay,type PracticeDisplay} from './practiceDisplay';
 import {useLanguage} from '../i18n/LanguageContext';
 import type {PassageEvent} from './passageAnalysis';
@@ -25,7 +25,7 @@ export function PassageGuide({xml,events,from,to,quarterBpm,numbers,onClose,semp
   // Scale Studio's Back returns here (the piece), not to Exercises.
   const pathname=usePathname();
   const {t,lang}=useLanguage(),s=t.scoreViewer,zh=lang==="zh";
-  const labels:Record<string,string>={"Original":"原谱","Dotted rhythm":"附点节奏","Long–short":"长短","Short–long":"短长","Pairs":"成对练习","Pairs ×2":"成对重复两次","Shifted pairs":"错位成对","Triplets":"三连音","Quintuplets":"五连音","Random groups":"随机分组","Groupings":"分组","Fermatas":"延长音","Hold a few":"延长部分音符"};
+  const labels:Record<string,string>={"Original":"原谱","Dotted rhythm":"附点节奏","Long-short":"长短","Short-long":"短长","Pairs":"成对练习","Pairs ×2":"成对重复两次","Shifted pairs":"错位成对","Triplets":"三连音","Quintuplets":"五连音","Random groups":"随机分组","Groupings":"分组","Fermatas":"延长音","Hold a few":"延长部分音符","Groups of 3":"三音一组","Groups of 4":"四音一组"};
   const label=(text:string)=>zh?(labels[text]??text.replace(/^(\d+) as /,"$1 分为 ")):text;
   const [active,setActive]=useState<string|null>(null),[display,setDisplay]=useState(initialDisplay),repeat=false;
   // Technique is the default; the last choice is remembered so reopening costs no click.
@@ -35,26 +35,32 @@ export function PassageGuide({xml,events,from,to,quarterBpm,numbers,onClose,semp
   const rhythmTap=useRhythmTap({xml:source.xml,rhythm:rhythm??NO_RHYTHM,quarterBpm,zh});
   const choose=(next:Mode)=>{setActive(null);setMode(next);try{localStorage.setItem(MODE_KEY,next)}catch{/* The choice lasts for this visit. */}};
   const runs=useMemo(()=>{try{return source.xml?runsFromXml(source.xml):[]}catch{return []}},[source.xml]);
+  const shape=useMemo(()=>{try{return source.xml?passageShape(source.xml):{kind:'empty' as const}}catch{return {kind:'empty' as const}}},[source.xml]);
+  // Dotted rhythms, pairs and groups rewrite the rhythm, so they are only for an even, untied run of four or more.
+  const drills=shape.kind==='uniform'&&techniquesFor(runs).length>0;
+  // Drills are written in sixteenths; played this much faster (or slower), their notes move at the written notes' speed.
+  const drillBpm=shape.kind==='uniform'?quarterBpm*shape.perQuarter/4:quarterBpm;
   const ctx=useMemo(()=>({key:source.xml.match(/<key[ >][\s\S]*?<\/key>/)?.[0],clef:source.xml.match(/<clef[ >][\s\S]*?<\/clef>/)?.[0]}),[source.xml]);
   const scale=useMemo(()=>relatedScale(events,source.xml),[events,source.xml]);
   // Random groups opens on a different pattern each time (Shuffle steps on from there).
   const [seed,setSeed]=useState(1),[groupSeed,setGroupSeed]=useState(()=>1+Math.floor(Math.random()*100000));
-  type Row={id:string;title:string;xml:string;gen?:boolean;shuffle?:()=>void};
+  type Row={id:string;title:string;xml:string;gen?:boolean;/** Beams written in the music: drawn as written, not auto-beamed by the beat. */beamed?:boolean;shuffle?:()=>void};
   // Exercises in sections; each row is just its name and the music.
   const sections=useMemo(()=>{
     const list:{title:string;rows:Row[]}[]=[],count=runs.flat().length;
-    if(runs.some(r=>r.length>1)){
-      list.push({title:'Dotted rhythm',rows:[{id:'ls',title:'Long–short',gen:true,xml:dotted(runs,'longShort',ctx)},{id:'sl',title:'Short–long',gen:true,xml:dotted(runs,'shortLong',ctx)}]});
+    if(drills){
+      list.push({title:'Dotted rhythm',rows:[{id:'ls',title:'Long-short',gen:true,xml:dotted(runs,'longShort',ctx)},{id:'sl',title:'Short-long',gen:true,xml:dotted(runs,'shortLong',ctx)}]});
       list.push({title:'Pairs',rows:[{id:'pairs',title:'Pairs ×2',gen:true,xml:repeatedPairs(runs,false,ctx)},{id:'shifted',title:'Shifted pairs',gen:true,xml:repeatedPairs(runs,true,ctx)}]});
+      list.push({title:'Groups',rows:[{id:'g3',title:'Groups of 3',gen:true,beamed:true,xml:pausedGroups(runs,3,ctx)},{id:'g4',title:'Groups of 4',gen:true,beamed:true,xml:pausedGroups(runs,4,ctx)}]});
     }
     const groupings:Row[]=count>=3?[{id:'triplets',title:'Triplets',xml:tupletsXml(runs,3,ctx)},{id:'quintuplets',title:'Quintuplets',xml:tupletsXml(runs,5,ctx)},{id:'random',title:'Random groups',xml:groupedXml(runs,randomGroupSizes(count,groupSeed),ctx),shuffle:()=>setGroupSeed(v=>v+1)}]:[];
     if(source.xml){try{splitOptions(source.xml).forEach(o=>groupings.push({id:'split'+o.title,title:o.title,xml:o.xml}))}catch{/* No tuplets to regroup. */}}
     if(groupings.length)list.push({title:'Groupings',rows:groupings});
     if(count)list.push({title:'Fermatas',rows:[{id:'fermata',title:'Hold a few',xml:fermataPitchesXml(runs,seed,ctx),shuffle:()=>setSeed(v=>v+1)}]});
     return list;
-  },[runs,ctx,source.xml,seed,groupSeed]);
+  },[runs,ctx,source.xml,seed,groupSeed,drills]);
   const low=Math.min(from,to),high=Math.max(from,to);
-  const player=(id:string,score:string,name:string,staccato=false,autoBeam=false,shown?:PracticeDisplay,tone?:{marks:Parameters<typeof PracticeNotation>[0]['marks'];onNote:(event:number)=>void},hideTime=autoBeam)=><PracticeNotation marks={tone?.marks} onNote={tone?.onNote} autoBeam={autoBeam} hideTime={hideTime} zoom={id==='original'?ORIGINAL_ZOOM:.65} xml={score} label={name} quarterBpm={quarterBpm} playing={active===id} onPlay={()=>setActive(id)} onStop={()=>setActive(null)} loop={repeat} sempreStaccato={staccato} display={shown}/>;
+  const player=(id:string,score:string,name:string,staccato=false,autoBeam=false,shown?:PracticeDisplay,tone?:{marks:Parameters<typeof PracticeNotation>[0]['marks'];onNote:(event:number)=>void},hideTime=autoBeam,bpm=quarterBpm)=><PracticeNotation marks={tone?.marks} onNote={tone?.onNote} autoBeam={autoBeam} hideTime={hideTime} zoom={id==='original'?ORIGINAL_ZOOM:.65} xml={score} label={name} quarterBpm={bpm} playing={active===id} onPlay={()=>setActive(id)} onStop={()=>setActive(null)} loop={repeat} sempreStaccato={staccato} display={shown}/>;
   const flip=(next:PracticeDisplay)=>{setActive(null);setDisplay(next)};
   const cycleNames=()=>flip({...display,names:display.names==='off'?'names':display.names==='names'?'solfege':'off'});
   const namesLabel=display.names==='off'?s.noteDisplay:display.names==='names'?s.noteNames:s.solfege;
@@ -80,9 +86,10 @@ export function PassageGuide({xml,events,from,to,quarterBpm,numbers,onClose,semp
       {/* Each exercise is a small card, as wide as its music: the music, then its name and Listen under it. Cards sit
           side by side and wrap, so short exercises do not each take a whole row. */}
       <div className="passage-guide__technique" hidden={mode!=='technique'}>
+        {/* Why the rhythm drills are missing, first, so it is read before the cards that are there. */}
         <div className="passage-guide__cards-flow">
         {scale&&<div className="passage-guide__card">{player('scale',scale.xml,scale.label)}<h3>{scale.label}<Link href={`/flute-studio/exercises/scales?key=${encodeURIComponent(scale.key)}&type=${scale.type}${'form' in scale&&scale.form==='arpeggio'?'&form=arpeggio':''}&back=${encodeURIComponent(pathname)}`}>{zh?"音阶练习 ›":"Scale Studio ›"}</Link></h3></div>}
-        {sections.flatMap(section=>section.rows).map(r=><div className="passage-guide__card" key={r.id}>{player(r.id,r.xml,r.title.toLowerCase(),false,!!r.gen,undefined,undefined,true)}<h3>{label(r.title)}{r.shuffle&&<button type="button" className="passage-guide__shuffle" onClick={()=>{setActive(null);r.shuffle!()}}>{zh?"重新排列":"Shuffle"}</button>}</h3></div>)}
+        {sections.flatMap(section=>section.rows).map(r=><div className="passage-guide__card" key={r.id}>{player(r.id,r.xml,r.title.toLowerCase(),false,!!r.gen&&!r.beamed,undefined,undefined,true,r.gen?drillBpm:quarterBpm)}<h3>{label(r.title)}{r.shuffle&&<button type="button" className="passage-guide__shuffle" onClick={()=>{setActive(null);r.shuffle!()}}>{zh?"重新排列":"Shuffle"}</button>}</h3></div>)}
         </div>
         {!sections.length&&!scale&&<p className="passage-guide__none">{zh?"选择更多音符生成练习，或选择音准检查这些音符。":"Select a few more notes for exercises, or pick Pitch to check these."}</p>}
       </div>

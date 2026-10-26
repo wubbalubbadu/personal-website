@@ -33,7 +33,7 @@ export async function unlockPrivateMusic(code:string){
   if(token===generation)publish({...state,loading:false,error:'unlock'});return false;
  }
 }
-export function lockPrivateMusic(){generation++;try{localStorage.removeItem(KEY);sessionStorage.removeItem(KEY)}catch{/* Optional storage. */}urls.splice(0).forEach(url=>URL.revokeObjectURL(url));publish(empty)}
+export function lockPrivateMusic(){generation++;void import('./offlineMusic').then(offline=>offline.removePrivateOffline());try{localStorage.removeItem(KEY);sessionStorage.removeItem(KEY)}catch{/* Optional storage. */}urls.splice(0).forEach(url=>URL.revokeObjectURL(url));publish(empty)}
 export function usePrivateMusic(){
  const snapshot=useSyncExternalStore(subscribe,()=>state,()=>empty);
  useEffect(()=>{if(state.unlocked||state.loading)return;try{const code=localStorage.getItem(KEY)??sessionStorage.getItem(KEY);if(code)void unlockPrivateMusic(code)}catch{/* No automatic restore. */}},[]);

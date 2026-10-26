@@ -81,3 +81,10 @@
 /* The matching steps (two staffs plus the full-height keyboard) have no scene controls: Hint and Show answer live in the bubble.
    Their empty tools row folds away so the bubble stays on screen at 1180 x 820. */
 .accidentals-lesson .lesson-scene:has(.acc-match) .measures-tools:empty{display:none}
+/* Phones: the full keyboard is wider than the screen at its fixed height, so it takes the screen width and the height
+   that gives (at most 84px, so the staff, the keyboard and Listen all fit above the bubble on a small phone). */
+@media(max-width:760px){
+  .lesson-scene .acc-scene .acc-keys.sequence-keyboard.is-visible{max-width:100%;width:100%;height:auto}
+  .lesson-scene .acc-scene .acc-keys.is-hint.sequence-keyboard.is-visible{height:auto}
+  .acc-scene .acc-keys svg{display:block;width:100%;height:auto;max-height:84px}
+}

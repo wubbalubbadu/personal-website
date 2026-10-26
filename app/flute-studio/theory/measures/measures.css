@@ -66,3 +66,6 @@
 .tap-mark{fill:#9a9ca3;animation:sig-in .12s ease both}
 .tap-mark.is-on{fill:#678956}
 .tap-mark.is-off{fill:#d08a5c}
+/* Phones: the time signature is small on screen, so its tap area reaches further on each side (a transparent stroke
+   counts for tapping without drawing anything; the hover tint keeps the drawn size). */
+@media(max-width:760px){.sig-hit{stroke:transparent;stroke-width:28}}

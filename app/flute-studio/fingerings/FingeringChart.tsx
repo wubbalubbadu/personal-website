@@ -7,27 +7,29 @@ import { FluteDiagram } from "../components/FluteDiagram";
 import { StaffNote } from "../components/StaffNote";
 import { useLanguage } from "../i18n/LanguageContext";
 import { REGISTERS, fluteFingerings, midiForPitch, registerForMidi, type NoteFingerings } from "../../../content/fingerings/flute";
+import { trillPitches } from "../../../content/fingerings/trills";
+import { NotePicker, PitchName, StepButton, nearestSameName, staffBoxStyle, staffStep } from "./NotePicker";
 import "./fingerings.css";
 
 /**
  * The fingering chart.
  *
- * Grouped by acoustic register rather than presented as one 41-note strip:
- * the registers are how a flutist already thinks about the instrument, and
- * the third octave in particular uses completely different (harmonic)
- * fingerings, so running them together implies a continuity that is not
- * there.
+ * One note at a time, large: its staff, its name and its fingering, with any
+ * alternates as choices under the name. Under that, an octave switch and that
+ * octave's notes. The octaves are the flute's registers (split at E, see
+ * REGISTERS) rather than a 41-note strip, since the third octave uses
+ * different, harmonic fingerings.
  *
- * The selected note puts its stave, its name and its diagram on one row,
- * so the thing you are reading and the thing you are playing are never
- * more than an eye movement apart.
- *
- * Alternates are behind a row of buttons rather than listed all at once —
- * a beginner needs one B♭, not three.
+ * Alternates are one choice at a time: a beginner needs one B♭, not three.
  */
-function registerOf(note: NoteFingerings) {
-  return registerForMidi(midiForPitch(note.pitch));
-}
+const registerOf = (note: NoteFingerings) => registerForMidi(midiForPitch(note.pitch));
+const writtenStep = (note: NoteFingerings) => staffStep(`${note.names[0][0]}${note.pitch.slice(-1)}`);
+const SHORT: Record<string, [string, string]> = {
+  first: ["First", "第一"],
+  second: ["Second", "第二"],
+  third: ["Third", "第三"],
+  altissimo: ["Altissimo", "超高"],
+};
 
 export default function FingeringChart() {
   const { lang } = useLanguage();
@@ -38,96 +40,92 @@ export default function FingeringChart() {
   const pitch = selectedPitch ?? (fluteFingerings.some(n => n.pitch === requested) ? requested! : "C4");
   const [variant, setVariant] = useState(0);
 
-  const note = fluteFingerings.find(n => n.pitch === pitch) ?? fluteFingerings[0];
+  const index = Math.max(0, fluteFingerings.findIndex(n => n.pitch === pitch));
+  const note = fluteFingerings[index];
   const fingering = note.fingerings[Math.min(variant, note.fingerings.length - 1)];
-  const octaveDigit = note.pitch.replace(/\D/g, "");
+  const activeRegister = registerOf(note).id;
+  const octaveNotes = fluteFingerings.filter(n => registerOf(n).id === activeRegister);
+  // Size the staff for the whole octave, so the arrows never make it jump.
+  const highest = Math.max(...octaveNotes.map(writtenStep));
+  const midi = midiForPitch(note.pitch);
+  const trillBase = trillPitches.find(p => midiForPitch(p) === midi);
+
   const select = (next: string) => {
     setPitch(next);
     setVariant(0);
   };
-  // Phones show one octave of note buttons at a time (picked from the tabs above them), starting on the
-  // shown note's octave; wider screens show every octave.
-  const [shownRegister, setShownRegister] = useState<string | null>(null);
-  const activeRegister = shownRegister ?? registerOf(note).id;
+  // Another octave shows the same note there (C♯ stays C♯), or the octave's lowest note.
+  const pickOctave = (id: string) => {
+    const notes = fluteFingerings.filter(n => registerOf(n).id === id);
+    select(nearestSameName(notes.map(n => n.pitch), note.pitch));
+  };
+  const step = (by: number) => {
+    const next = fluteFingerings[index + by];
+    return next ? () => select(next.pitch) : undefined;
+  };
+  const use = zh ? fingering.zhUse : fingering.use;
 
   return (
     <main className="fingering-chart">
       <div className="fingering-chart__content">
         <header className="fingering-chart__header">
           <h1>{zh ? "指法表" : "Fingering chart"}</h1>
-          <Link className="fingering-chart__sibling" href={`/flute-studio/trills?note=${encodeURIComponent(pitch)}`}>{zh ? "颤音指法表" : "Trill chart"} →</Link>
         </header>
 
-        <section className="fingering-chart__now" aria-live="polite">
-          <div className="fingering-chart__stave">
-            <StaffNote midi={midiForPitch(note.pitch)} spelling={note.names[0]} width={190} steady />
+        <section className="chart-now fingering-chart__now" aria-live="polite">
+          <div className="chart-now__music">
+            <StepButton direction="previous" onClick={step(-1)} zh={zh} />
+            <div className="chart-staff" style={staffBoxStyle(highest)}>
+              <StaffNote midi={midi} spelling={note.names[0]} width={400} />
+            </div>
+            <StepButton direction="next" onClick={step(1)} zh={zh} />
           </div>
-          <div className="fingering-chart__detail">
+          <div className="chart-now__detail">
             <h2>
               {note.names.join(" / ")}
-              <sub>{octaveDigit}</sub>
+              <sub>{note.pitch.slice(-1)}</sub>
             </h2>
             {note.fingerings.length > 1 && (
-              <div className="fingering-chart__variants" role="group" aria-label={zh ? "其他指法" : "Other fingerings"}>
-                {note.fingerings.map((option, index) => (
-                  <button
-                    key={option.label ?? index}
-                    type="button"
-                    className={index === variant ? "selected" : ""}
-                    aria-pressed={index === variant}
-                    onClick={() => setVariant(index)}
-                  >
-                    {option.label ?? (zh ? "标准" : "Standard")}
+              <div className="chart-choices" role="group" aria-label={zh ? "其他指法" : "Other fingerings"}>
+                {note.fingerings.map((option, i) => (
+                  <button key={option.label ?? i} type="button" aria-pressed={i === variant} onClick={() => setVariant(i)}>
+                    {(zh ? option.zhLabel : option.label) ?? (zh ? "标准" : "Standard")}
                   </button>
                 ))}
               </div>
             )}
-            {(zh ? fingering.zhUse : fingering.use) && <p className="fingering-chart__use">{zh ? fingering.zhUse : fingering.use}</p>}
-            {fingering.requires === "b-foot" && (
-              <p className="fingering-chart__requires">{zh ? "需要 B 尾管" : "Needs a B foot"}</p>
-            )}
+            {use && <p className="chart-now__use">{use}</p>}
+            {fingering.requires === "b-foot" && <p className="chart-now__requires">{zh ? "需要 B 尾管" : "Needs a B foot"}</p>}
           </div>
-          <FluteDiagram pressed={fingering.keys} className="fingering-chart__diagram" />
+          <FluteDiagram pressed={fingering.keys} className="chart-now__diagram" />
+          {trillBase && (
+            <Link className="chart-now__sibling" href={`/flute-studio/trills?note=${encodeURIComponent(trillBase)}`}>
+              {zh ? <>从 <PitchName value={trillBase} /> 开始的颤音</> : <>Trills from <PitchName value={trillBase} /></>}
+            </Link>
+          )}
         </section>
 
-        {/* Phones: one octave of notes at a time, chosen here (Customize scales' octave dropdown). */}
-        <label className="fingering-chart__octaves">
-          <span>{zh ? "音区" : "Octave"}</span>
-          <select value={activeRegister} onChange={event => setShownRegister(event.target.value)}>
-            {REGISTERS.filter(register => fluteFingerings.some(n => registerOf(n).id === register.id)).map(register => (
-              <option key={register.id} value={register.id}>{zh ? register.zh : register.en}</option>
-            ))}
-          </select>
-        </label>
-        {REGISTERS.map(register => {
-          const notes = fluteFingerings.filter(n => registerOf(n).id === register.id);
-          if (!notes.length) return null;
-          return (
-            <section className="fingering-chart__register" key={register.id} data-active={register.id === activeRegister || undefined}>
-              <h3>{zh ? register.zh : register.en}</h3>
-              <div className="fingering-chart__notes">
-                {notes.map(n => (
-                  <button
-                    key={n.pitch}
-                    type="button"
-                    className={n.pitch === note.pitch ? "selected" : ""}
-                    aria-pressed={n.pitch === note.pitch}
-                    onClick={() => select(n.pitch)}
-                  >
-                    {n.names[0]}
-                    <sub>{n.pitch.replace(/\D/g, "")}</sub>
-                  </button>
-                ))}
-              </div>
-            </section>
-          );
-        })}
+        <NotePicker
+          zh={zh}
+          octaves={REGISTERS.filter(r => fluteFingerings.some(n => registerOf(n).id === r.id)).map(r => ({
+            id: r.id,
+            label: SHORT[r.id][zh ? 1 : 0],
+            title: zh ? r.zh : r.en,
+          }))}
+          octave={activeRegister}
+          onOctave={pickOctave}
+          notes={octaveNotes.map(n => ({ pitch: n.pitch, label: <PitchName value={`${n.names[0]}${n.pitch.slice(-1)}`} /> }))}
+          selected={note.pitch}
+          onSelect={select}
+        />
 
-        <p className="fingering-chart__note">
-          {zh
-            ? "超高音区的指法因人而异、因乐器而异，这里只收录了有明确主指法的音。"
-            : "Altissimo fingerings vary by player and instrument; only the notes with one clear primary fingering are listed."}
-        </p>
+        {activeRegister === "altissimo" && (
+          <p className="chart-footnote">
+            {zh
+              ? "超高音区的指法因人而异、因乐器而异，这里只收录了有明确主指法的音。"
+              : "Altissimo fingerings vary by player and instrument; only the notes with one clear primary fingering are listed."}
+          </p>
+        )}
       </div>
     </main>
   );

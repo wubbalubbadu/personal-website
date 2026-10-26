@@ -180,3 +180,24 @@
   .library-chips__row::-webkit-scrollbar{display:none}
   .library-chips__row>.library-chips__divider:last-child{display:none}
 }
+
+/* One row under the title: a short search and the List / Shelf / Timeline switch beside it. */
+.library-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:-12px 0 10px}
+.library-find{flex:0 1 320px;min-width:0;height:36px;display:flex;align-items:center;gap:8px;padding:0 14px 0 12px;border-radius:999px;background:#f1f1f4;color:#85868e}
+.library-find svg{flex:none}
+.library-find input{flex:1;min-width:0;height:100%;border:0;outline:0;background:transparent;font:inherit;font-size:14px;color:#292a33}
+.library-find input::placeholder{color:#85868e}
+.library-find input::-webkit-search-cancel-button{opacity:.5}
+.library-find:focus-within{box-shadow:0 0 0 1px #d4d5da}
+.library-toolbar .view-switch{flex:none}
+@media(max-width:760px){
+  .library-toolbar{margin:4px 0 6px;gap:8px}
+  .library-find{flex:1 1 auto;padding:0 10px}
+  .library-toolbar .view-switch button{padding:0 10px}
+}
+/* Wider screens: the search runs up to the view switch, and the chips sit in two clear rows (tags, then your lists). */
+@media(min-width:761px){
+  .library-find{flex:1 1 auto}
+  .library-chips{flex-direction:column;align-items:flex-start}
+  .library-chips .library-chips__row{display:flex!important;flex-wrap:wrap;gap:8px}
+}

@@ -2,6 +2,7 @@
 import CountInPulse from './CountInPulse';
 import {connectsSlur} from "./playbackArticulation";
 import PracticeClockButton from "../PracticeClockButton";
+import {liftCollidingSlurs} from "./slurClearance";
 
 import Link from "next/link";
 import {voiceEnvelope} from "./voiceEnvelope";
@@ -24,9 +25,10 @@ import { createPortal } from "react-dom";
 import type { MusicSheetCalculator, OpenSheetMusicDisplay as OSMDType } from "opensheetmusicdisplay";
 import { useLanguage } from "../i18n/LanguageContext";
 import { useRecents } from "../lib/storage";
+import {readAids,saveAids,type AidsKind,type ReadingAids} from "../lib/readingAids";
 import { deriveScoreEvents, resolveKeyAccidentals } from "./deriveScoreEvents";
 import type { ComposerInfo } from "../../../content/music-library";
-import {readScoreFacts,keySignatureFromFifths,keySignatureFromNotes,timeSignatureText,metronomeText,performanceTermText,directionStyle,directionRuns,tuckMetronomeMarks,hideStackedMetronomeMarks,alignDynamicLines,clearRehearsalMarks,spaceMetronomeMarks,METRONOME_TUCK_SHIFT,type ScoreFacts} from "./scoreTheory";
+import {readScoreFacts,keySignatureFromFifths,keySignatureFromNotes,timeSignatureText,metronomeText,performanceTermText,directionStyle,directionRuns,tuckMetronomeMarks,printedTempoAnchor,hideStackedMetronomeMarks,alignDynamicLines,clearRehearsalMarks,spaceMetronomeMarks,METRONOME_TUCK_SHIFT,type ScoreFacts} from "./scoreTheory";
 import {measureBeatOffsets,meterGrid} from "./rhythmGrid";
 import {installGhostNoteFix} from "../lib/ghostNoteFix";
 import {installReminderAccidentalFix,setReminderAccidentals} from "../lib/reminderAccidentalFix";
@@ -38,19 +40,25 @@ import {FluteDiagramMini} from "./FluteDiagram";
 import {fingeringsForMidi, midiForPitch} from "../../../content/fingerings/flute";
 import {StatusButton} from "./StatusButton";
 import {measureStops,cursorAt,type CursorBeat} from "./playbackCursor";
+import {useScoreFollow,ResumeFollowingPill,type FollowSystem} from "./useScoreFollow";
+import {readKey,planFor,transposeXml,movePitchName,keyName,transposedKey,moveName,FLUTE_LOW,FLUTE_HIGH,B_FOOT_LOW,type KeySig,type Transposition,type TransposePlan} from "../lib/transpose";
 import {SubdivisionIcon} from "./SubdivisionIcon";
-import {TEMPO_MIN,TEMPO_MAX} from "../lib/scoreTempo";
+import {TEMPO_MIN,TEMPO_MAX,liveTempo as typedTempo,LIVE_TEMPO_DELAY,type TempoSection} from "../lib/scoreTempo";
 import {hasTouchScreen} from "../lib/pencilMode";
 import {TempoPill} from "./TempoPill";
+import {recordTempo,PLAYED_ENOUGH} from "../lib/tempoHistory";
+import {TempoTrendSection} from "./TempoTrend";
+import {TempoLadderSetup,TempoLadderCard,type LadderOptions} from "./TempoLadder";
 import {CloseButton} from "./CloseButton";
 import {RepPill} from "./RepPill";
 import BackChevron from "./BackChevron";
 import {DownloadIcon,PlusIcon,CheckIcon,ChevronIcon} from "./HeaderIcons";
 import AccountMenu from "../AccountMenu";
-import {notationScale,pageOffsets,pageAt,tabletReader,initialReaderLayout} from "./readerLayout";
+import {notationScale,pageOffsets,pageAt,stablePageHeight,tabletReader,initialReaderLayout} from "./readerLayout";
 import {addBit,removeBit,moveBit,bitId,useTrickyBits} from "../lib/trickyBits";
 import {useRouter} from "next/navigation";
 import "../reader-workspace.css";
+import {announcePractising,rememberLeftOff} from "../lib/readerActivity";
 import type { ArticulationMode } from "./notePatterns";
 
 
@@ -66,9 +74,9 @@ import type { ArticulationMode } from "./notePatterns";
 export type ScoreViewerConfig={title:string;composer:string;
   /** What tapping the composer's name shows: a short bio and a line about this piece. */
   story?:{composer?:ComposerInfo;year?:number;about?:string;tempoHint?:string};
-  asset:string;id:string;backHref:string;backLabel?:string;/** Bars (measure positions) to have selected when the piece opens, e.g. from a saved Tricky bit. */initialBars?:{from:number;to:number};/** The Tricky bit being edited: the next bar selection saved with the bookmark moves it instead of adding a new one. */changeBit?:string;/** Short visible name beside the back arrow on a phone (a book piece's composer, "Köhler"). */backName?:string;practiceGuide?:boolean;
+  asset:string;id:string;backHref:string;backLabel?:string;/** Bars (measure positions) to have selected when the piece opens, e.g. from a saved Tricky bit. */initialBars?:{from:number;to:number};/** Open the close-up on those bars too, ready to practise. */initialCloseup?:boolean;/** The Tricky bit being edited: the next bar selection saved with the bookmark moves it instead of adding a new one. */changeBit?:string;/** Short visible name beside the back arrow on a phone (a book piece's composer, "Köhler"). */backName?:string;practiceGuide?:boolean;
   /** Which list entry the list button changes, when not this score's own id (a book's numbers share the book's). */
-  accompaniment?:{asset:string;readingPartId:string;kind:"piano"|"chords"};smartDrone?:DroneChange[];smartDroneCountInBeats?:number;hideRehearsalMarks?:boolean;sempreStaccatoFromMeasure?:number;pulsePerMeasure?:boolean;listId?:string;pdfPath?:string;defaultTempo?:number;pitches?:(string|null)[];events?:{p:string|null;d:number;tied?:boolean;articulation?:ArticulationMode;slurContinuation?:boolean;level?:number;dynamics?:DynamicPoint[];accent?:boolean;trill?:string}[];measureStarts?:number[];subtitle?:string;tempoHint?:string;displayPitches?:(string|null)[];noteKeySignatures?:string[][];syllables?:(string|null)[]};
+  accompaniment?:{asset:string;readingPartId:string;kind:"piano"|"chords"};smartDrone?:DroneChange[];/** The reader can move the whole piece into another key (View > Key). Library pieces only: exercises build their own keys. */transposable?:boolean;smartDroneCountInBeats?:number;hideRehearsalMarks?:boolean;sempreStaccatoFromMeasure?:number;pulsePerMeasure?:boolean;listId?:string;/** false when the page tracks its own tempos (Scale Studio): skip the reader's per-score tempo memory. */rememberTempo?:boolean;/** The tempo-history key for playback on this page (lib/tempoHistory.ts); default piece:<id>. An excerpt passage passes its RepPill key so both land on one line. */tempoHistoryKey?:string;/** No Want-to-learn button in the top bar: a collection that keeps it on its own list page instead (Cookie's scale routine). */hideListStatus?:boolean;pdfPath?:string;defaultTempo?:number;pitches?:(string|null)[];events?:{p:string|null;d:number;tied?:boolean;articulation?:ArticulationMode;slurContinuation?:boolean;level?:number;dynamics?:DynamicPoint[];accent?:boolean;trill?:string}[];measureStarts?:number[];subtitle?:string;tempoHint?:string;displayPitches?:(string|null)[];noteKeySignatures?:string[][];syllables?:(string|null)[]};
 /**
  * Fingerings come from content/fingerings/flute.ts, the same data the
  * fingering chart and the practice dock read. The two tables that used to
@@ -490,6 +498,16 @@ function markTrickyBits(root:HTMLElement,ranges:{from:number;to:number}[]){
   root.querySelectorAll(".tricky-bar").forEach(node=>node.remove());
   for(const range of ranges)tintBars(root,range.from,range.to,"tricky-bar");
 }
+/**
+ * How much taller the window is now than with the browser's toolbars showing (iPhone Safari's collapsed address
+ * bar): window height minus 100svh, measured by a hidden probe. 0 on desktops and wherever svh is unsupported.
+ */
+function smallViewportGap(){
+  if(typeof document==="undefined")return 0;
+  let probe=document.getElementById("svh-probe");
+  if(!probe){probe=document.createElement("div");probe.id="svh-probe";probe.setAttribute("aria-hidden","true");probe.style.cssText="position:fixed;left:0;top:0;width:0;height:100svh;visibility:hidden;pointer-events:none";document.body.appendChild(probe)}
+  return Math.max(0,Math.round(window.innerHeight-probe.offsetHeight));
+}
 /** One band of tints over bars from..to (measure positions), closed up at the bar lines inside a line. */
 function tintBars(root:HTMLElement,from:number,to:number,className:string){
   const tints:SVGRectElement[]=[];
@@ -767,15 +785,16 @@ function seatMeasureNumbers(root:HTMLDivElement){
   });
 }
 function addTheoryTargets(root:HTMLDivElement,noteKeys?:string[][],facts?:ScoreFacts|null,measureStarts:number[]=[],zh=false){
-  const tag=(node:SVGElement,title:string,text:string)=>{node.dataset.theoryTitle=title;node.dataset.theory=text;node.classList.add("theory-target")};
+  // Explanations are built from several sentences joined with spaces; Chinese runs sentences together after full-width punctuation.
+  const tag=(node:SVGElement,title:string,text:string)=>{node.dataset.theoryTitle=title;node.dataset.theory=zh?text.replace(/([。！？；：])\s+/g,"$1").trim():text;node.classList.add("theory-target")};
   const targets:[string,{en:string;zh:string},{en:string;zh:string}][]=[
-    [".vf-clef",{en:"Treble clef",zh:"高音谱号"},{en:"The curl circles the G line. Flute music is normally written in this clef.",zh:"谱号的卷曲处围绕第二线的 G 音。长笛通常使用高音谱号。"}],
-    [".vf-stavetie",{en:"Tie",zh:"延音线"},{en:"Hold the connected notes as one continuous sound. Do not tongue the second note.",zh:"将连接的同音高音符吹成一个持续的音，第二个音不重新吐音。"}],
-    [".vf-curve",{en:"Slur",zh:"连音线"},{en:"Connect the notes smoothly. Tongue the first note, then keep the air flowing through the rest.",zh:"音与音平滑相接。第一个音吐音，后面的音保持气流连贯。"}],
+    [".vf-clef",{en:"Treble clef",zh:"高音谱号"},{en:"The curl circles the G line. Flute music is normally written in this clef.",zh:"高音谱号的圈绕着第二线，这条线就是 G。长笛谱一般都用高音谱号。"}],
+    [".vf-stavetie",{en:"Tie",zh:"延音线"},{en:"Hold the connected notes as one continuous sound. Do not tongue the second note.",zh:"连起来的两个同音吹成一个长音，第二个音不要再吐音。"}],
+    [".vf-curve",{en:"Slur",zh:"连奏线"},{en:"Connect the notes smoothly. Tongue the first note, then keep the air flowing through the rest.",zh:"音和音连贯地接起来：只吐第一个音，后面的音靠气息连过去。"}],
   ];
   targets.forEach(([selector,title,text])=>root.querySelectorAll<SVGElement>(selector).forEach(node=>tag(node,title[zh?"zh":"en"],text[zh?"zh":"en"])));
 
-  tagFermatas(root,zh?"将音保持得比谱面时值更长，延长多少由乐句决定。":"Hold the note longer than its written value. Choose how much longer according to the phrase.",zh);
+  tagFermatas(root,zh?"这个音要比写的时值更长一些，长多少看乐句的需要。":"Hold the note longer than its written value. Choose how much longer according to the phrase.",zh);
 
   const notes=[...root.querySelectorAll<SVGGElement>(".vf-stavenote[data-event]")];
   const eventAfter=(node:Element)=>{
@@ -791,7 +810,7 @@ function addTheoryTargets(root:HTMLDivElement,noteKeys?:string[][],facts?:ScoreF
   root.querySelectorAll<SVGElement>(".vf-timesignature").forEach(node=>{
     const meter=measureAfter(node);
     if(meter){const {title,text}=timeSignatureText(meter,zh);tag(node,title,text)}
-    else tag(node,zh?"拍号":"Time signature",zh?"上方数字表示每小节包含多少个下方数字所代表的音符时值。":"The top number gives beats per measure; the bottom number identifies the beat value.");
+    else tag(node,zh?"拍号":"Time signature",zh?"上面的数字是每小节几拍，下面的数字说明什么音符算一拍。":"The top number gives beats per measure; the bottom number identifies the beat value.");
   });
 
   root.querySelectorAll<SVGElement>(".vf-keysignature").forEach(node=>{
@@ -808,7 +827,7 @@ function addTheoryTargets(root:HTMLDivElement,noteKeys?:string[][],facts?:ScoreF
     const event=eventAfter(node);
     const altered=event===undefined?undefined:noteKeys?.[event];
     tag(node,zh?"调号":"Key signature",altered?keySignatureFromNotes(altered,zh)
-      :zh?"说明哪些音需要升高或降低，直到调号改变；临时记号可改变这些音。":"Shows which notes are sharped or flatted for the rest of the piece, unless an accidental changes one.");
+      :zh?"告诉你哪些音要升或降，一直到调号改变为止；临时记号可以临时改掉它们。":"Shows which notes are sharped or flatted for the rest of the piece, unless an accidental changes one.");
   });
 
   // Metronome marks, matched to the score's own marks by measure, then by
@@ -919,9 +938,40 @@ function StoryCard({composer,title,story,style,onClose}:{composer:string;title:s
 }
 
 
-export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceActions,practiceRow,stage,dock,onPracticeNote,practiceEvent,defaultNoteSpacing,onTempoChange,unmetered=false,lineBreak,practiceTempo,scoreMarks,headerActions,save,clockTarget,extraSystemSpacing=0,paperTop}:{config:ScoreViewerConfig;toolbar?:React.ReactNode;settings?:(controls:ReaderControls)=>React.ReactNode;/** Pinned below the music inside the scroll area — for a live readout that has to stay visible while the page scrolls. */aside?:React.ReactNode;/** Title and music to print instead of what is on screen. The PDF is written with jsPDF's built-in Latin-1 fonts, which cannot encode Chinese at all, so a Chinese book prints from an English copy of itself. */printConfig?:{title:string;asset:string};practiceActions?:React.ReactNode;/** A tool row of the host's own, stacked above mark-up's row so both modes can be open at once. */practiceRow?:React.ReactNode;/** Replaces the music area in place (e.g. a close-up view) while the toolbar stays. The engraving stays mounted underneath so its layout survives the switch. */stage?:React.ReactNode|((view:{fingering:boolean})=>React.ReactNode);/** A panel under the music, on the same canvas, that shrinks the score instead of covering it. */dock?:React.ReactNode;onPracticeNote?:(event:number)=>void;practiceEvent?:number;/** Starting note spacing, for books whose notes are faster than the exercise default assumes. Overridden by a saved preference. */defaultNoteSpacing?:number;onTempoChange?:(tempo:number)=>void;unmetered?:boolean;lineBreak?:{value:boolean;onChange:(value:boolean)=>void};practiceTempo?:{value:boolean;onChange:(value:boolean)=>void};scoreMarks?:(context:ScoreMarksContext)=>React.ReactNode;headerActions?:(controls:ReaderControls)=>React.ReactNode;save?:{saved:boolean;onToggle:()=>void;label:string;savedLabel:string};clockTarget?:import("../lib/practiceClock").ClockTarget;extraSystemSpacing?:number;/** Pinned to the page's top-left corner, beside the centred title (an excerpt's tempo and tally). */paperTop?:React.ReactNode}) {
+export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceActions,practiceRow,stage,dock,onPracticeNote,practiceEvent,defaultNoteSpacing,onTempoChange,unmetered=false,lineBreak,practiceTempo,scoreMarks,headerActions,save,clockTarget,storageId,extraSystemSpacing=0,paperTop}:{config:ScoreViewerConfig;toolbar?:React.ReactNode;settings?:(controls:ReaderControls)=>React.ReactNode;/** Pinned below the music inside the scroll area — for a live readout that has to stay visible while the page scrolls. */aside?:React.ReactNode;/** Title and music to print instead of what is on screen. The PDF is written with jsPDF's built-in Latin-1 fonts, which cannot encode Chinese at all, so a Chinese book prints from an English copy of itself. */printConfig?:{title:string;asset:string};practiceActions?:React.ReactNode;/** A tool row of the host's own, stacked above mark-up's row so both modes can be open at once. */practiceRow?:React.ReactNode;/** Replaces the music area in place (e.g. a close-up view) while the toolbar stays. The engraving stays mounted underneath so its layout survives the switch. */stage?:React.ReactNode|((view:{fingering:boolean})=>React.ReactNode);/** A panel under the music, on the same canvas, that shrinks the score instead of covering it. */dock?:React.ReactNode;onPracticeNote?:(event:number)=>void;practiceEvent?:number;/** Starting note spacing, for books whose notes are faster than the exercise default assumes. Overridden by a saved preference. */defaultNoteSpacing?:number;onTempoChange?:(tempo:number)=>void;unmetered?:boolean;lineBreak?:{value:boolean;onChange:(value:boolean)=>void};practiceTempo?:{value:boolean;onChange:(value:boolean)=>void};scoreMarks?:(context:ScoreMarksContext)=>React.ReactNode;headerActions?:(controls:ReaderControls)=>React.ReactNode;save?:{saved:boolean;onToggle:()=>void;label:string;savedLabel:string};clockTarget?:import("../lib/practiceClock").ClockTarget;/** What this score's own memory (pins, drone mode, pencil marks, reading aids) is kept under. Defaults to `config.id`; Scale Studio passes its saved set, since its `config.id` changes with every setting. */storageId?:string;extraSystemSpacing?:number;/** Pinned to the page's top-left corner, beside the centred title (an excerpt's tempo and tally). */paperTop?:React.ReactNode}) {
   const {t,lang}=useLanguage();
   const zh=lang==="zh";
+  // Transposition (lib/transpose.ts), remembered per piece. The written key and range come from the loaded XML.
+  const transposeStore=`cookie:reader-transpose:${config.id}`;
+  // Read before the first engrave (not in an effect), so a remembered key does not draw the piece twice.
+  const savedTransposition=(store:string):Transposition=>{
+    if(!config.transposable||typeof window==="undefined")return {semitones:0,octave:0};
+    try{const saved=JSON.parse(localStorage.getItem(store)??"null");if(saved&&Number.isInteger(saved.semitones)&&Number.isInteger(saved.octave))return {semitones:Math.max(-6,Math.min(6,saved.semitones)),octave:Math.max(-1,Math.min(1,saved.octave))}}catch{/* The written key. */}
+    return {semitones:0,octave:0};
+  };
+  const [transposition,setTranspositionState]=useState<Transposition>(()=>savedTransposition(transposeStore));
+  const [transposeInfo,setTransposeInfo]=useState<{written:KeySig;plan:TransposePlan|null;low:number|null;high:number|null;lowName:string;highName:string}|null>(null);
+  // Another piece in the same reader (a book's next number): its own remembered key.
+  const [transposeFor,setTransposeFor]=useState(transposeStore);
+  if(transposeFor!==transposeStore){setTransposeFor(transposeStore);setTranspositionState(savedTransposition(transposeStore))}
+  function setTransposition(next:Transposition){
+    // The piece is re-engraved in the new key, so whatever was sounding stops first.
+    if(playing)stopPlayback();if(smartRunning)stopAutoDrone();
+    setTranspositionState(next);
+    try{if(next.semitones||next.octave)localStorage.setItem(transposeStore,JSON.stringify(next));else localStorage.removeItem(transposeStore)}catch{/* This visit only. */}
+  }
+  /** The XML as the reader should see it: moved into the chosen key, with its range noted for the warning. */
+  function transposeForReader(xml:string,move:Transposition,note=true){
+    if(!config.transposable)return xml;
+    const written=readKey(xml);
+    if(!move.semitones&&!move.octave){if(note)setTransposeInfo({written,plan:null,low:null,high:null,lowName:"",highName:""});return xml}
+    const plan=planFor(written,move),moved=transposeXml(xml,plan);
+    if(note)setTransposeInfo({written,plan,low:moved.low,high:moved.high,lowName:moved.lowName,highName:moved.highName});
+    return moved.xml;
+  }
+  const transposePlan=transposeInfo?.plan??null;
+  /** The piece's hand-set drone notes, in the key it is shown in. */
+  const authoredDrone=transposePlan&&config.smartDrone?config.smartDrone.map(change=>({...change,pitch:change.pitch&&movePitchName(change.pitch,transposePlan),...(change.displayPitch?{displayPitch:movePitchName(change.displayPitch,transposePlan)}:{})})):config.smartDrone;
   const theoryZh=useRef(zh);theoryZh.current=zh;
   const {bpm,setBpm,setPlaybackBpm,metro,toggleMetro,stopMetro,toggleDrone,stopAllDrones,drones,initializeScore,setAccent,getAudio,alignMetronome,metroHeld,setBeats,beats:metroBeats,setSubdivision:setEngineSubdivision}=usePracticeAudio();
   // The steady click subdivides too, not only the click track; the tools-panel metronome goes back to plain beats on leaving.
@@ -964,6 +1014,10 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   // to "120" isn't clamped to 40 under the cursor; it commits on blur/Enter.
   const [tempoDraft,setTempoDraft]=useState<string|null>(null);
   function commitTempo(){if(tempoDraft===null)return;const next=Number(tempoDraft);setTempoDraft(null);if(Number.isFinite(next)&&tempoDraft.trim()!=="")setBpm(next)}
+  // Typing applies after a short pause, so a running click or Listen follows without closing the keyboard (typedTempo).
+  useEffect(()=>{if(tempoDraft===null)return;const value=typedTempo(tempoDraft);if(value===null||value===bpm)return;const timer=window.setTimeout(()=>setBpm(value),LIVE_TEMPO_DELAY);return()=>window.clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- setBpm comes from the audio context and is not stable; the draft and bpm are what matter.
+  },[tempoDraft,bpm]);
   const {record}=useRecents("music");
   const {title,composer,asset,id,backHref,pdfPath}=config;
   // Names the back button's actual destination (e.g. "‹ Library") instead of
@@ -988,6 +1042,8 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   // rather than state since only page TURNS need to re-render; the offsets
   // themselves are consumed imperatively by goToPage/the scroll-snap effect.
   const pageOffsetsRef = useRef<number[]>([0]);
+  /** The height pages were last cut for, per width (see stablePageHeight). */
+  const pageHeightRef = useRef<{width:number;height:number}|null>(null);
   const playbackTimers=useRef<number[]>([]); const playbackNodes=useRef<(OscillatorNode|AudioBufferSourceNode)[]>([]); const playbackPosition=useRef<{audioStart:number;unit:number;from:number}|null>(null);
   // Which overlay rows are actually on screen. Held in a ref because the
   // layout pass also runs from a ResizeObserver and from the load effect,
@@ -1020,7 +1076,10 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   // "tap the page to read distraction-free" mode. See scoreClick below for
   // the tap trigger and the effect further down for the fullscreen attempt.
   const [focusMode,setFocusMode]=useState(false);
-  const [noteDisplay,setNoteDisplay]=useState<NoteDisplay>("off"); const [accidentals,setAccidentals]=useState(false); /* Tonguing syllables are personal (players tongue as they like), so the reader no longer shows them. */const tonguing=false; const [fingering,setFingering]=useState(false); const [rhythmMode,setRhythmMode]=useState<RhythmMode>("off");  const [magnify,setMagnify]=useState(1); const [beatTip,setBeatTip]=useState<{text:string;x:number;y:number}|null>(null);const [fingerTip,setFingerTip]=useState<{pitch:string;name:string;octave:string;solfege:string;beat:string;x:number;y:number}|null>(null); const [theoryTip,setTheoryTip]=useState<{title:string;text:string;x:number;y:number}|null>(null); const [storyCard,setStoryCard]=useState<{x:number;y:number}|null>(null);
+  const [noteDisplay,setNoteDisplay]=useState<NoteDisplay>("off");
+  // Note names: pills above the notes or small labels under the staff, on every note or only ledger-line notes.
+  const [namePlace,setNamePlace]=useState<"above"|"below">("above"),[nameScope,setNameScope]=useState<"all"|"ledger">("all");
+  const nameStyleRef=useRef({place:namePlace,only:nameScope});nameStyleRef.current={place:namePlace,only:nameScope}; const [accidentals,setAccidentals]=useState(false); /* Tonguing syllables are personal (players tongue as they like), so the reader no longer shows them. */const tonguing=false; const [fingering,setFingering]=useState(false); const [rhythmMode,setRhythmMode]=useState<RhythmMode>("off");  const [magnify,setMagnify]=useState(1); const [beatTip,setBeatTip]=useState<{text:string;x:number;y:number}|null>(null);const [fingerTip,setFingerTip]=useState<{pitch:string;name:string;octave:string;solfege:string;beat:string;x:number;y:number}|null>(null); const [theoryTip,setTheoryTip]=useState<{title:string;text:string;x:number;y:number}|null>(null); const [storyCard,setStoryCard]=useState<{x:number;y:number}|null>(null);
   // Unmetered exercise books have no beat grid. Keep this effective value
   // off even if an older saved exercise preference contains a rhythm mode.
   const activeRhythmMode:RhythmMode=unmetered?"off":rhythmMode;
@@ -1061,7 +1120,8 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   // replace the last), kept per piece until you take them off. Each has its own tally; the tempo is the reader's.
   type PracticePin={from:number;to:number};
   const [practicePins,setPracticePinsState]=useState<PracticePin[]>([]);
-  const pinsKey=`cookie:practice-pins:${config.id}`;
+  const memoryId=storageId??config.id;
+  const pinsKey=`cookie:practice-pins:${memoryId}`;
   useEffect(()=>{
     let saved:PracticePin[]=[];try{const raw=JSON.parse(localStorage.getItem(pinsKey)??"[]");if(Array.isArray(raw))saved=raw.filter(p=>Number.isInteger(p?.from)&&Number.isInteger(p?.to))}catch{/* none */}
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -1075,7 +1135,6 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   // Measured on the engraving (the marks layer shares .osmd-score's frame), again after every re-layout.
   useLayoutEffect(()=>{
     const root=scoreRef.current;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if(!practicePins.length||!root||!marksLayer){setPracticePinAt([]);return}
     const frame=root.getBoundingClientRect(),bars=[...root.querySelectorAll<SVGGElement>(".vf-measure")];
     setPracticePinAt(practicePins.flatMap(pin=>{
@@ -1085,6 +1144,16 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
       return [{...pin,x:Math.max(0,Math.min(box.left-frame.left,frame.width-200)),y:box.top-frame.top-4}];
     }));
   },[practicePins,layoutVersion,marksLayer]);
+  // The host's paperTop (an excerpt's tempo and tally) sits beside the opening printed tempo, in the marks layer,
+  // measured again after every engrave (zoom, resize, page layout). Without a printed tempo it stays in the corner.
+  const paperTopRef=useRef<HTMLDivElement|null>(null);
+  const [paperTopAt,setPaperTopAt]=useState<{x:number;y:number}|null>(null);
+  const hasPaperTop=!!paperTop;
+  useLayoutEffect(()=>{
+    const root=scoreRef.current,pill=paperTopRef.current;
+    if(!hasPaperTop||!root||!marksLayer||loading||!pill){setPaperTopAt(null);return}
+    setPaperTopAt(printedTempoAnchor(root,pill.offsetWidth,pill.offsetHeight));
+  },[hasPaperTop,layoutVersion,marksLayer,loading]);
   const readerAnchor=useRef<{event:string;offset:number}|null>(null);
   /** Last tempo actually handed to onTempoChange; null until the first. */
   const reportTempo=useRef<number|null>(null);
@@ -1117,15 +1186,32 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
         if(Number.isFinite(saved.sizePreference)){userSizeRef.current=saved.sizePreference;setSizePreference(saved.sizePreference)}
         if(Number.isFinite(saved.systemSpacing))setSystemSpacing(saved.systemSpacing);
         if(Number.isFinite(own?.noteSpacing))setNoteSpacing(own.noteSpacing);
-        if(typeof saved.noteDisplay==="string")setNoteDisplay(saved.noteDisplay);
-        if(typeof saved.accidentals==="boolean")setAccidentals(saved.accidentals);
-        if(typeof saved.fingering==="boolean")setFingering(saved.fingering);
-        /* The old counting mode is gone: a saved "counts" now shows the beat sticks. */if(typeof saved.rhythmMode==="string")setRhythmMode(saved.rhythmMode==="off"?"off":"bars");
-        /* eslint-enable react-hooks/set-state-in-effect */
       }
+      /* eslint-enable react-hooks/set-state-in-effect */
     }catch{/* Unreadable preferences fall back to the defaults. */}
     viewPrefsLoaded.current=true;
   },[viewPrefsKey]);
+  /* Reading aids are this piece's own, over a default you carry between devices (lib/readingAids). The sizes above
+     stay with the screen. Saved only when you change one: `aidsLoadedFor` is state, so the save below waits for the
+     render that shows what was read, instead of writing the defaults over it first. */
+  const aidsKind:AidsKind=unmetered?"exercise":"piece";
+  const [aidsLoadedFor,setAidsLoadedFor]=useState<string|null>(null);
+  const loadedAids=useRef("");
+  useEffect(()=>{
+    const aids=readAids(memoryId,aidsKind);
+    /* eslint-disable react-hooks/set-state-in-effect */
+    if(aids){setNoteDisplay(aids.noteDisplay as NoteDisplay);setAccidentals(aids.accidentals);setFingering(aids.fingering);setRhythmMode(aids.rhythmMode as RhythmMode);setNamePlace(aids.namePlace==="below"?"below":"above");setNameScope(aids.nameScope==="ledger"?"ledger":"all")}
+    setAidsLoadedFor(memoryId);
+    /* eslint-enable react-hooks/set-state-in-effect */
+    loadedAids.current=aids?JSON.stringify(aids):"";
+  },[memoryId,aidsKind]);
+  useEffect(()=>{
+    if(aidsLoadedFor!==memoryId)return;
+    const aids:ReadingAids={noteDisplay,accidentals,fingering,rhythmMode,namePlace,nameScope},now=JSON.stringify(aids);
+    if(!loadedAids.current){loadedAids.current=now;return}
+    if(now===loadedAids.current)return;
+    loadedAids.current=now;saveAids(memoryId,aidsKind,aids);
+  },[aidsLoadedFor,memoryId,aidsKind,noteDisplay,accidentals,fingering,rhythmMode,namePlace,nameScope]);
   useEffect(()=>{
     // Only after the restore pass, or the defaults would overwrite what
     // was saved before it had a chance to load.
@@ -1133,11 +1219,10 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     try{
       localStorage.setItem(viewPrefsKey,JSON.stringify({
         sizePreference:userSizeRef.current,systemSpacing,noteSpacing,pageWidth,
-        noteDisplay,accidentals,tonguing,fingering,rhythmMode,
       }));
       localStorage.setItem(screenPrefsKey,JSON.stringify({sizePreference:userSizeRef.current,systemSpacing,pageWidth}));
     }catch{/* Storage may be disabled. */}
-  },[viewPrefsKey,sizePreference,systemSpacing,noteSpacing,pageWidth,noteDisplay,accidentals,tonguing,fingering,rhythmMode]);
+  },[viewPrefsKey,sizePreference,systemSpacing,noteSpacing,pageWidth]);
   const [spreadPageCount,setSpreadPageCount]=useState(0);
   const originalPageMargins=useRef<{left:number;right:number;top:number;narrow:number;bottom:number}|null>(null);
   const pageWidthRef=useRef(pageWidth);
@@ -1147,6 +1232,14 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   const exportingRef=useRef(false);
   const [exporting,setExporting]=useState(false);
   const pageTargetRef=useRef<number|null>(null);
+  // Anything that moves the cursor (Listen, the click track, the auto drone) keeps the playing line in view
+  // (useScoreFollow.tsx). The steady click has no cursor, so it never moves the score.
+  const follow=useScoreFollow({
+    scrollerRef:scoreScrollRef,active:playing||smartRunning,
+    pageOffsets:()=>pageOffsetsRef.current,
+    paged:()=>{const scroller=scoreScrollRef.current;if(!scroller)return false;if(scoreRef.current?.classList.contains("score-spread")||pageTargetRef.current!==null)return true;return pageOffsetsRef.current.some(offset=>Math.abs(offset-scroller.scrollTop)<2)},
+    turnPage:index=>goToPage(index,true),
+  });
   const metroTaps=useRef<number[]>([]);
   function tapTempo(){const now=performance.now();metroTaps.current=[...metroTaps.current.filter(t=>now-t<3000),now].slice(-5);const taps=metroTaps.current;if(taps.length>1)setBpm(60000/((now-taps[0])/(taps.length-1)))}
   // The bar Listen starts from, read by syncNotesAndOverlays (which runs from
@@ -1154,7 +1247,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   const selectedMeasureRef=useRef<number|null>(null);selectedMeasureRef.current=selectedMeasure;
   // A bar pulse and an eighth-note pulse use different tempo units. Do not
   // apply a saved ratio from the old eighth-note interpretation to this bar.
-  useEffect(()=>{tempoSectionRef.current=1;initializeScore(config.pulsePerMeasure?`${id}:bar-pulse`:id,config.defaultTempo??60)},[id]);
+  useEffect(()=>{tempoSectionRef.current=1;initializeScore(config.pulsePerMeasure?`${id}:bar-pulse`:id,config.defaultTempo??60,config.rememberTempo!==false)},[id]);
   // An unmetered book has no bar lines, so there is no downbeat for the
   // metronome to lean on — a stressed beat every four clicks implies a 4/4
   // that is not there.
@@ -1163,6 +1256,49 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   function cycleRhythm(){setRhythmMode(current=>current==="off"?"bars":"off")}
 
   useEffect(()=>{record(id)},[id,record]);
+  // Listen counts as playing what is on the page (Scale Studio's warm-up rotation listens for it).
+  useEffect(()=>{if(playing)announcePractising()},[playing]);
+  // Home's "Where you left off": the first bar on screen once scrolling or a page turn settles. A bar, which survives
+  // a different screen size where a page number would not. In the two-page view a turn need not scroll at all, so the
+  // first note inside the visible area is used rather than the scroll position.
+  const leftOffTimer=useRef(0);
+  function saveLeftOffSoon(){
+    window.clearTimeout(leftOffTimer.current);
+    leftOffTimer.current=window.setTimeout(()=>{
+      const scroller=scoreScrollRef.current,root=scoreRef.current;if(!scroller||!root)return;
+      const view=scroller.getBoundingClientRect();
+      const first=[...root.querySelectorAll<SVGElement>(".vf-stavenote[data-measure]")].find(note=>{const box=note.getBoundingClientRect();return box.width>0&&box.bottom>=view.top&&box.top<=view.bottom&&box.right>=view.left&&box.left<=view.right});
+      const bar=first?Number(first.dataset.measure):0;
+      rememberLeftOff(bar>1?{id,bar}:{id});
+    },400);
+  }
+  useEffect(()=>{
+    const scroller=scoreScrollRef.current;if(loading||!scroller)return;
+    scroller.addEventListener("scroll",saveLeftOffSoon,{passive:true});
+    return()=>{window.clearTimeout(leftOffTimer.current);scroller.removeEventListener("scroll",saveLeftOffSoon)};
+  },[loading,id]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Page turns only (not the first draw, which would forget a remembered bar before ?resume= gets there).
+  useEffect(()=>{if(!loading)saveLeftOffSoon()},[pageIndex]); // eslint-disable-line react-hooks/exhaustive-deps
+  // ?resume=<bar> (from Home's "Where you left off"): once the music is drawn, open at the page holding that bar.
+  // Long scores draw in batches, so it waits a few seconds for the bar to appear.
+  useEffect(()=>{
+    if(loading)return;
+    const bar=Number(new URLSearchParams(window.location.search).get("resume"));
+    if(!(bar>1))return;
+    let tries=0,timer=0;
+    const go=()=>{
+      const root=scoreRef.current,scroller=scoreScrollRef.current;
+      const note=root?.querySelector<SVGGElement>(`.vf-stavenote[data-measure="${bar}"]`);
+      if(!note||!scroller||!scroller.clientHeight){if(++tries<25)timer=window.setTimeout(go,200);return}
+      computePages();
+      const top=note.getBoundingClientRect().top-scroller.getBoundingClientRect().top+scroller.scrollTop,offsets=pageOffsetsRef.current;
+      let page=0;for(let i=0;i<offsets.length;i++)if(offsets[i]<=top)page=i;
+      pageTargetRef.current=offsets[page]??0;setPageIndex(page);
+      scroller.scrollTo({top:offsets[page]??Math.max(0,top-24),behavior:"instant"});
+    };
+    timer=window.setTimeout(go,100);
+    return()=>window.clearTimeout(timer);
+  },[loading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Re-tags every rendered note with its event index/measure/pitch (OSMD
   // gives us fresh DOM nodes with none of that whenever it re-renders) and
@@ -1216,7 +1352,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     const root=scoreRef.current;if(!root)return;
     const visible=overlayVisibilityRef.current,kind=visible.names?"names":visible.solfege?"solfege":null,seq=sequenceRef.current;
     if(!kind){root.querySelectorAll<HTMLElement>(".note-pill").forEach(pill=>pill.remove());return}
-    placeNoteLabels(root,{kind,events:seq.events,displayPitches:config.displayPitches,beatStarts:beatStartSet(),fromMeasure});
+    placeNoteLabels(root,{kind,events:seq.events,displayPitches:config.displayPitches,beatStarts:beatStartSet(),fromMeasure,...nameStyleRef.current});
   }
   /** Just the overlays (labels, accidentals, sticks), for a toggle: no theory targets, title or drone highlight to redo. */
   function placeLabels(){
@@ -1245,7 +1381,6 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     root.querySelectorAll<SVGTextElement>("svg text").forEach(text=>{const words=text.textContent?.trim();if(words===title){text.dataset.scoreTitle="";text.textContent="";for(const part of title.split(/(\d+)/)){const span=document.createElementNS('http://www.w3.org/2000/svg','tspan');span.textContent=part;if(/^\d+$/.test(part))span.setAttribute('font-family','Times New Roman, serif');text.appendChild(span)}}else if(words===composer){text.dataset.composer="";const svg=text.ownerSVGElement;const titleText=svg?Array.from(svg.querySelectorAll<SVGTextElement>("text")).find(node=>node.textContent?.trim()===title):undefined;if(titleText){const bounds=titleText.getBBox();text.setAttribute("x",String(bounds.x+bounds.width/2));text.setAttribute("text-anchor","middle");const composerBounds=text.getBBox();text.setAttribute("y",String(bounds.y+bounds.height+composerBounds.height*1.6));}if(config.story)text.dataset.composerCard=""}});
   }
   // Dismiss an open translation when the language changes; its next tap reads the new labels.
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(()=>setTheoryTip(null),[zh]);
   // Re-label the engraved SVG when language changes, including later incremental pages.
   useEffect(()=>{const root=scoreRef.current;if(root)addTheoryTargets(root,config.noteKeySignatures,scoreFactsRef.current,sequenceRef.current.measureStarts,zh)},[zh,layoutVersion,config.noteKeySignatures]);
@@ -1332,9 +1467,13 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
       else {const system=systems[systems.length-1];system.top=Math.min(system.top,top);system.bottom=Math.max(system.bottom,bottom)}
       lastLeft=box.left;
     });
-    const offsets=pageOffsets(systems,scroller.clientHeight,Math.max(0,scroller.scrollHeight-scroller.clientHeight));
+    // Cut for a steady height (stablePageHeight), measured as if Safari's toolbar were showing, so the header
+    // tucking away or the toolbar coming and going does not change the total after a turn.
+    const pageHeight=pageHeightRef.current=stablePageHeight(pageHeightRef.current,scroller.clientWidth,scroller.clientHeight-smallViewportGap());
+    const realMax=Math.max(0,scroller.scrollHeight-scroller.clientHeight);
+    const offsets=pageOffsets(systems,pageHeight.height,Math.max(0,scroller.scrollHeight-pageHeight.height));
     pageOffsetsRef.current=offsets;setPageCount(offsets.length);
-    if(pageTargetRef.current===null)setPageIndex(pageAt(offsets,scroller.scrollTop));
+    if(pageTargetRef.current===null)setPageIndex(pageAt(offsets,scroller.scrollTop,realMax));
     updatePageCut();
   }
   /**
@@ -1360,11 +1499,11 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     const scroller=scoreScrollRef.current;if(!scroller)return;
     scroller.addEventListener("scroll",updatePageCut,{passive:true});
     return()=>scroller.removeEventListener("scroll",updatePageCut);
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- reads refs only
   },[]);
   function resync(fromEvent=0){syncNotesAndOverlays(fromEvent);computePages();mountMarksLayer()}
   /** Jump to the very start, in either page-turn or free-scroll mode. */
   function backToTop(){
+    follow.browse();
     readerAnchor.current=null;
     setPageIndex(0);
     scoreScrollRef.current?.scrollTo({top:0,behavior:"smooth"});
@@ -1421,6 +1560,8 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   function finishRenderedScore(){
     if(scoreRef.current){
       reshapeSlurs(scoreRef.current);
+      // Then lift only the slurs that still cut through a note (high runs, Arnold Fantasy); the rest stay as drawn.
+      liftCollidingSlurs(scoreRef.current);
       refineDirectionWords(scoreRef.current);
       scoreRef.current.querySelectorAll<SVGTextElement>('svg text').forEach(text=>{
         if(!/^expressif et souple Solo$/i.test(text.textContent?.trim()??''))return;
@@ -1505,7 +1646,11 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     const width=scroller.clientWidth-parseFloat(padding.paddingLeft)-parseFloat(padding.paddingRight);
     if(root.parentElement)root.parentElement.style.setProperty("--score-layout-width",`${Math.min(pageWidthRef.current==="900"?900:Infinity,width)}px`);
     osmd.zoom=notationScale(Math.min(900,scroller.clientWidth),scroller.clientHeight,sizePreferenceRef.current);
-    osmd.EngravingRules.TitleBottomDistance=8;
+    // OSMD adds the page top margin to the first system, but not to the title.
+    // Offset the book's extra margin here so its title-to-music gap matches portrait;
+    // subsequent pages keep their normal book margins.
+    const portraitTop=margins?(osmd.EngravingRules.CompactMode?margins.narrow:margins.top):8;
+    osmd.EngravingRules.TitleBottomDistance=8-(paged?8-portraitTop:0);
     osmd.EngravingRules.MinimumDistanceBetweenSystems=systemSpacingTotal();
     osmd.EngravingRules.VoiceSpacingMultiplierVexflow=noteSpacingRef.current*labelSpacing.current;
     if(unmetered)osmd.EngravingRules.RenderXMeasuresPerLineAkaSystem=0;
@@ -1515,7 +1660,6 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
       const pageHeight=Math.max(100,scroller.clientHeight-48);
       osmd.EngravingRules.PageFormat.width=210;
       osmd.EngravingRules.PageFormat.height=210*pageHeight/(spreadWidth/2);
-      osmd.EngravingRules.TitleBottomDistance=8;
       root.style.setProperty("--book-page-ratio",`${spreadWidth/2} / ${pageHeight}`);
     }
     if(spread)root.style.width=`${spreadWidth/2}px`;else root.style.width="";
@@ -1547,7 +1691,9 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     return()=>cancelAnimationFrame(frame);
   },[practiceEvent,layoutVersion]);
 
-  function goToPage(index:number){
+  /** byFollow: score following turned it, so it is not the reader browsing away from the playing line. */
+  function goToPage(index:number,byFollow=false){
+    if(!byFollow)follow.browse();
     const scroller=scoreScrollRef.current,offsets=pageOffsetsRef.current;
     if(!scroller||!offsets.length)return;
     const clamped=Math.max(0,Math.min(index,offsets.length-1));
@@ -1610,7 +1756,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     // resetting a short quiet-timer on every frame while a target is set,
     // and only resume live scrollTop tracking once it fires.
     let settleTimer=0;
-    const onScroll=()=>{if(pageTargetRef.current!==null){window.clearTimeout(settleTimer);settleTimer=window.setTimeout(()=>{pageTargetRef.current=null;rememberPosition()},120);return}setPageIndex(pageAt(pageOffsetsRef.current,scroller.scrollTop));rememberPositionSoon()};
+    const onScroll=()=>{if(pageTargetRef.current!==null){window.clearTimeout(settleTimer);settleTimer=window.setTimeout(()=>{pageTargetRef.current=null;rememberPosition()},120);return}setPageIndex(pageAt(pageOffsetsRef.current,scroller.scrollTop,scroller.scrollHeight-scroller.clientHeight));rememberPositionSoon()};
     const interrupt=()=>{window.clearTimeout(settleTimer);pageTargetRef.current=null};
     scroller.addEventListener("wheel",interrupt,{passive:true});scroller.addEventListener("touchstart",interrupt,{passive:true});
     scroller.addEventListener("scroll",onScroll,{passive:true});
@@ -1622,6 +1768,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   function applyMagnify(value:number,x:number,y:number,dx=0,dy=0){
     const el=scoreScrollRef.current,paper=scoreRef.current?.parentElement;if(!el||!paper)return;
     const next=Math.max(.5,Math.min(3,value)),old=magnifyRef.current;
+    follow.browse();
     const box=paper.getBoundingClientRect();
     // Anchor to the paper, including its inset in the scroller. Moving the
     // midpoint pans the same musical point along with the fingers.
@@ -1667,13 +1814,13 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
 
   useEffect(()=>{let mounted=true;let backgroundTimer=0;const reminders=accidentals;
   // Same piece, different setting: keep the reading position, which means drawing it in one go (an incremental draw would not have reached the place yet).
-  const resume=osmdRef.current&&lastLoadedAsset.current===asset;lastLoadedAsset.current=asset;if(resume)rememberPosition(); async function load(){ try { if(unmetered&&!asset.includes("<note>")){scoreRef.current?.replaceChildren();osmdRef.current=null;setLoading(false);return;} setLoading(true); const {OpenSheetMusicDisplay,VexFlowConverter,AccidentalCalculator,MusicSheetCalculator}=await import("opensheetmusicdisplay");installGhostNoteFix(VexFlowConverter);installReminderAccidentalFix(AccidentalCalculator,MusicSheetCalculator);setReminderAccidentals(reminders);remindersOn.current=reminders; if(!mounted||!scoreRef.current)return; scoreRef.current.replaceChildren(); const osmd=new OpenSheetMusicDisplay(scoreRef.current,{backend:"svg",autoResize:false,drawTitle:!config.subtitle,drawComposer:!config.subtitle,drawingParameters:"compacttight"}); osmd.setOptions({pageFormat:"Endless",drawMeasureNumbers:true,drawPartNames:false,drawMetronomeMarks:true,newSystemFromXML:lineBreak?.value??false}); applySlurRules(osmd); osmd.EngravingRules.RenderRehearsalMarks=!config.hideRehearsalMarks; /* Chord symbols stay in the MusicXML (for a future accompaniment) but are never drawn. OSMD builds them inside load(), so this has to be set first. */ osmd.EngravingRules.RenderChordSymbols=false; if(unmetered)osmd.EngravingRules.MeasureRightMargin=2; /* Each rest bar drawn on its own, never folded into a multi-bar rest: notes are matched to the event list by drawing order, so three rests drawn as one "3" shifted every later note (and bar selection, and playback start) by three. */ osmd.EngravingRules.RenderMultipleRestMeasures=false; osmd.EngravingRules.AutoGenerateMultipleRestMeasuresFromRestMeasures=false; osmd.OnXMLRead = xml=>{guideXml.current=xml;scoreFactsRef.current=readScoreFacts(xml);
+  const resume=osmdRef.current&&lastLoadedAsset.current===asset;lastLoadedAsset.current=asset;if(resume)rememberPosition(); async function load(){ try { if(unmetered&&!asset.includes("<note>")){scoreRef.current?.replaceChildren();osmdRef.current=null;setLoading(false);return;} setLoading(true); const {OpenSheetMusicDisplay,VexFlowConverter,AccidentalCalculator,MusicSheetCalculator}=await import("opensheetmusicdisplay");installGhostNoteFix(VexFlowConverter);installReminderAccidentalFix(AccidentalCalculator,MusicSheetCalculator);setReminderAccidentals(reminders);remindersOn.current=reminders; if(!mounted||!scoreRef.current)return; scoreRef.current.replaceChildren(); const osmd=new OpenSheetMusicDisplay(scoreRef.current,{backend:"svg",autoResize:false,drawTitle:!config.subtitle,drawComposer:!config.subtitle,drawingParameters:"compacttight"}); osmd.setOptions({pageFormat:"Endless",drawMeasureNumbers:true,drawPartNames:false,drawMetronomeMarks:true,newSystemFromXML:lineBreak?.value??false}); applySlurRules(osmd); osmd.EngravingRules.RenderRehearsalMarks=!config.hideRehearsalMarks; /* Chord symbols stay in the MusicXML (for a future accompaniment) but are never drawn. OSMD builds them inside load(), so this has to be set first. */ osmd.EngravingRules.RenderChordSymbols=false; if(unmetered)osmd.EngravingRules.MeasureRightMargin=2; /* Each rest bar drawn on its own, never folded into a multi-bar rest: notes are matched to the event list by drawing order, so three rests drawn as one "3" shifted every later note (and bar selection, and playback start) by three. */ osmd.EngravingRules.RenderMultipleRestMeasures=false; osmd.EngravingRules.AutoGenerateMultipleRestMeasuresFromRestMeasures=false; osmd.OnXMLRead = original=>{const xml=transposeForReader(original,transposition);guideXml.current=xml;scoreFactsRef.current=readScoreFacts(xml,{openingTempo:config.pulsePerMeasure?undefined:config.defaultTempo});
         // The page's own opening mark wins over the catalog's suggestion (69,
         // not the uploader's rounded 70), counted in the mark's beat.
         // Only on the piece's first draw: redrawing the same piece (accidentals, layout) must not reset the tempo you set.
-        const opening=scoreFactsRef.current.tempos[0];if(opening&&!resume)initializeScore(id,opening.quarter/opening.beat);
+        const opening=scoreFactsRef.current.tempos[0];if(opening&&!resume)initializeScore(id,opening.quarter/opening.beat,config.rememberTempo!==false);
         reminderEvents.current=new Set();
-        return prepareScore(xml,title,composer,reminders?indexes=>{reminderEvents.current=new Set(indexes)}:undefined)}; await osmd.load(asset,title); if(!mounted||!scoreRef.current)return;
+        /* A moved key is said under the title, where the composer is engraved. */return prepareScore(xml,title,transposition.semitones||transposition.octave?`${composer} · ${zh?`已移调：${moveName(transposition,true)}`:`transposed ${moveName(transposition).toLowerCase()}`}`:composer,reminders?indexes=>{reminderEvents.current=new Set(indexes)}:undefined)}; await osmd.load(asset,title); if(!mounted||!scoreRef.current)return;
       // Measure count tracks engraving cost better than XML byte size: a
       // verbose short file is still quick, while a long score needs feedback.
       const longScore=osmd.Sheet.SourceMeasures.length>=80;
@@ -1783,7 +1930,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
           requestAnimationFrame(()=>{backgroundTimer=window.setTimeout(drawMore,0)});
         }
       },0);
-      } catch(e){setError(e instanceof Error?e.message:t.scoreViewer.engravingFailed);setLoading(false);} } load(); return()=>{mounted=false;window.clearTimeout(backgroundTimer)};},[asset,accidentals]);
+      } catch(e){setError(e instanceof Error?e.message:t.scoreViewer.engravingFailed);setLoading(false);} } load(); return()=>{mounted=false;window.clearTimeout(backgroundTimer)};},[asset,accidentals,transposition.semitones,transposition.octave]);
   useEffect(()=>{const root=scoreRef.current;if(!root)return;root.dataset.noteDisplay=noteDisplay;root.classList.toggle("show-accidentals",accidentals);root.dataset.rhythm=activeRhythmMode;root.dataset.tonguing=tonguing?"on":"off";
     const next={names:noteDisplay==="names",solfege:noteDisplay==="solfege",accidentals,tonguing,sticks:activeRhythmMode==="bars"};
     const previous=overlayVisibilityRef.current;
@@ -1791,9 +1938,17 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     // Turning a row on now has to build it, since it is no longer built
     // upfront and hidden with CSS.
     const changed=(Object.keys(next) as (keyof OverlayVisibility)[]).some(key=>next[key]!==previous[key]);
-    const pillsOn=next.names||next.solfege,pillsWereOn=previous.names||previous.solfege;
-    if(pillsOn!==pillsWereOn){labelSpacing.current=pillsOn?1.2:1;if(!loading&&osmdRef.current){rememberPosition();layoutScore()}}
+    // Labels on every note need room between the notes; ledger-line labels alone do not.
+    const room=(next.names||next.solfege)&&nameScope==="all"?1.2:1;
+    if(room!==labelSpacing.current){labelSpacing.current=room;if(!loading&&osmdRef.current){rememberPosition();layoutScore()}}
     if(changed&&!loading&&osmdRef.current)placeLabels();},[noteDisplay,accidentals,activeRhythmMode,tonguing,loading]);
+  // Placement or which notes: redo the labels, re-engraving only when the room between the notes changes.
+  useEffect(()=>{
+    if(loading||!osmdRef.current||noteDisplay==="off")return;
+    const room=nameScope==="all"?1.2:1;
+    if(room!==labelSpacing.current){labelSpacing.current=room;rememberPosition();layoutScore()}else placeNameLabels();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- reacts to these two settings only
+  },[namePlace,nameScope]);
   // The spinner announces a real wait, not the ~150ms a re-engrave takes
   // after a settings change. Flashing it on every click was half of what
   // made changing a scale feel glitchy: spinner in, spinner out, before
@@ -1918,14 +2073,15 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   // Saved choices live in localStorage, readable only after hydration.
   useEffect(()=>{
     let value:1|2|3|4=1,steady=false;
-    steady=true;try{const saved=Number(localStorage.getItem(`cookie:click-subdivision:${config.id}`));value=saved===2||saved===3||saved===4?saved:1;steady=localStorage.getItem("cookie:reader-metronome-follow")!=="1"}catch{/* defaults */}
+    // Both choices in the metronome menu are yours everywhere (decided October 21, 2026); a subdivision used to be kept per piece.
+    steady=true;try{const saved=Number(localStorage.getItem("cookie:reader-click-subdivision"));value=saved===2||saved===3||saved===4?saved:1;steady=localStorage.getItem("cookie:reader-metronome-follow")!=="1"}catch{/* defaults */}
     subdivisionRef.current=value;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSubdivisionState(value);setSteadyState(steady);
-    try{const mode=localStorage.getItem(`cookie:reader-drone-mode:${config.id}`);if(mode==="tap"||mode==="auto")setDroneModeState(mode)}catch{/* default */}
-  },[config.id]);
-  const setDroneMode=(mode:"tap"|"auto")=>{if(smartRunning)stopAutoDrone();if(trackDroneRef.current)setTrackDroneOn(false);if(mode==="auto"){stopAllDrones();setDroneArmed(false)}setDroneModeState(mode);try{localStorage.setItem(`cookie:reader-drone-mode:${config.id}`,mode)}catch{/* this visit only */}};
-  const setSubdivision=(value:1|2|3|4)=>{subdivisionRef.current=value;setSubdivisionState(value);try{localStorage.setItem(`cookie:click-subdivision:${config.id}`,String(value))}catch{/* this visit only */}};
+    try{const mode=localStorage.getItem(`cookie:reader-drone-mode:${memoryId}`);if(mode==="tap"||mode==="auto")setDroneModeState(mode)}catch{/* default */}
+  },[memoryId]);
+  const setDroneMode=(mode:"tap"|"auto")=>{if(smartRunning)stopAutoDrone();if(trackDroneRef.current)setTrackDroneOn(false);if(mode==="auto"){stopAllDrones();setDroneArmed(false)}setDroneModeState(mode);try{localStorage.setItem(`cookie:reader-drone-mode:${memoryId}`,mode)}catch{/* this visit only */}};
+  const setSubdivision=(value:1|2|3|4)=>{subdivisionRef.current=value;setSubdivisionState(value);try{localStorage.setItem("cookie:reader-click-subdivision",String(value))}catch{/* this visit only */}};
   // Plain steady click by default (you practise however you like); following the score is the opt-in.
   const setSteady=(on:boolean)=>{setSteadyState(on);try{localStorage.setItem("cookie:reader-metronome-follow",on?"0":"1")}catch{/* this visit only */}};
   /** The Metronome button: during Listen it clicks along (as before); on its own it starts or stops the click track. */
@@ -1934,7 +2090,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
       if(!metro)setBeats(scoreFactsRef.current?.measures[(selectedMeasure??1)-1]?.beats??4);
       if(metroHeld)alignMetronome(null);else toggleMetro();return}
     if(playing&&!clickTrackRef.current){if(metroHeld)alignMetronome(null);else toggleMetro();return}
-    if(clickTrackRef.current){stopPlayback();return}
+    if(clickTrackRef.current){if(playingEvent!==null)playheadRef.current=playingEvent;stopPlayback();return}
     if(smartRunning)stopAutoDrone();
     clickTrackRef.current=true;setClickTrack(true);countInPending.current=true;
     if(!metro)toggleMetro();
@@ -1954,7 +2110,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   function scheduleAutoDrone(fromIndex:number,withCountIn:boolean){
     clearAutoDroneSchedule();
     smartLastBpm.current=bpm;
-    const c=audio(),seq=sequenceRef.current,fromMeasure=measureForEvent(fromIndex,seq.measureStarts);lastStart.current=fromMeasure;
+    const c=audio(),seq=sequenceRef.current,fromMeasure=measureForEvent(fromIndex,seq.measureStarts);
     const meter=scoreFactsRef.current?.measures[fromMeasure-1]??{beats:4,beatType:4};
     const {beatLen,fullBar}=meterBeat(meter,seq.unitsPerBeat);
     const sectionBeat=config.pulsePerMeasure?fullBar/seq.unitsPerBeat:tempoSectionAt(fromMeasure)?.beat??beatLen/seq.unitsPerBeat;
@@ -1966,7 +2122,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     const plan=droneCountIn(clockStart,countGrid.beatSeconds,countGrid.beatsPerBar,withCountIn,unmetered?config.smartDroneCountInBeats??4:undefined);
     const start=plan.start;
     if(withCountIn){setCountLength(plan.beats);setCountBar(countGrid.beatsPerBar);for(let beat=0;beat<plan.beats;beat++)smartTimers.current.push(window.setTimeout(()=>setCountBeat(beat),Math.max(0,(clockStart+beat*countGrid.beatSeconds-c.currentTime)*1000)));smartTimers.current.push(window.setTimeout(()=>setCountBeat(null),Math.max(0,(start-c.currentTime)*1000)))}
-    const pitches=droneEvents(droneChangesOf(config.smartDrone,seq),seq.events,seq.measureStarts),onsets:number[]=[];
+    const pitches=droneEvents(droneChangesOf(authoredDrone,seq),seq.events,seq.measureStarts),onsets:number[]=[];
     let elapsed=0;
     for(let i=fromIndex;i<seq.events.length;i++){
       const event=seq.events[i],at=start+elapsed*unit/1000,end=at+event.d*unit/1000;
@@ -2041,7 +2197,12 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     const line=document.createElement("div");line.className="playback-cursor";paper.appendChild(line);
     const stops=measureStops(root.querySelectorAll<SVGGElement>(".vf-stavenote"),paper,magnifyRef.current);
     const source=playing?cursorBeats:smartCursorBeats;
-    let frame=0,beats=source.current,pointer={k:0},lastTop=-1;
+    // Engraved lines in the cursor's own units, top to bottom, so following can keep the next one in view.
+    const systems:FollowSystem[]=[];
+    for(const stop of stops){if(!stop)continue;const system=systems.find(s=>Math.abs(s.top-stop.top)<4);if(system)system.bottom=Math.max(system.bottom,stop.bottom);else systems.push({top:stop.top,bottom:stop.bottom})}
+    systems.sort((a,b)=>a.top-b.top);
+    follow.remeasure();
+    let frame=0,beats=source.current,pointer={k:0};
     const draw=()=>{
       if(source.current!==beats){beats=source.current;pointer={k:0}}
       const at=cursorAt(audio().currentTime,beats,stops,pointer);
@@ -2049,13 +2210,8 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
       else{
         line.style.opacity="1";
         line.style.transform=`translate(${at.x}px,${at.top}px)`;line.style.height=`${at.height}px`;
-        // Keep the line in view: when it moves to a line below the window,
-        // bring that line up to a third of the way down.
-        if(at.top!==lastTop){
-          lastTop=at.top;
-          const rect=line.getBoundingClientRect(),view=scroller.getBoundingClientRect();
-          if(rect.bottom>view.bottom-24||rect.top<view.top)scroller.scrollTo({top:scroller.scrollTop+rect.top-view.top-view.height/3,behavior:"smooth"});
-        }
+        // Following acts only when the cursor reaches a new line.
+        follow.update(line,at.top,at.height,systems);
       }
       frame=requestAnimationFrame(draw);
     };
@@ -2064,15 +2220,38 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   // Re-measure after engraving or zoom changes; the audio timeline stays intact.
   // eslint-disable-next-line react-hooks/exhaustive-deps -- scheduled audio and zoom read refs
   },[playing,smartRunning,loading,layoutVersion,magnify]);
+  // Now playing: the bar under the cursor gets the selection's soft purple (the selection itself hides while
+  // playing), so the place reads at a glance, not only from the thin line. Redrawn per bar, not per note.
+  const nowPlayingEvent=playing?playingEvent:smartRunning?smartEvent:null;
+  const nowPlayingBar=nowPlayingEvent===null?null:measureForEvent(nowPlayingEvent,sequenceRef.current.measureStarts);
+  useEffect(()=>{
+    const root=scoreRef.current;if(!root)return;
+    root.querySelectorAll(".now-playing-bar").forEach(node=>node.remove());
+    if(nowPlayingBar!==null&&!loading)tintBars(root,nowPlayingBar,nowPlayingBar,"now-playing-bar");
+  },[nowPlayingBar,loading,layoutVersion]);
+  // Stopped with no bar selected: the playhead as a parked line, so you can see where Play will start.
+  useEffect(()=>{
+    const root=scoreRef.current,paper=root?.closest<HTMLElement>(".score-paper"),at=playheadRef.current;
+    if(playing||smartRunning||loading||selectedMeasure!==null||at===null||!root||!paper)return;
+    const note=root.querySelectorAll<SVGGElement>(".vf-stavenote")[at];if(!note)return;
+    const stop=measureStops([note],paper,magnifyRef.current)[0];if(!stop)return;
+    if(getComputedStyle(paper).position==="static")paper.style.position="relative";
+    const line=document.createElement("div");line.className="playback-cursor playback-cursor--parked";
+    line.style.transform=`translate(${stop.x}px,${stop.top}px)`;line.style.height=`${stop.bottom-stop.top}px`;
+    paper.appendChild(line);
+    return()=>line.remove();
+  },[playing,smartRunning,loading,selectedMeasure,layoutVersion,magnify]);
   /** Set when playback itself moves the number, so the [bpm] effect does not reschedule twice. */
   const skipTempoReschedule=useRef(false);
   /** The note a section change resumes from (the new section's first), for the [bpm] effect. */
   const resumeSectionAt=useRef<number|null>(null);
   function tempoSectionAt(measure:number){
-    let section:{measure:number;quarter:number;beat:number}|null=null;
+    let section:TempoSection|null=null;
     for(const change of scoreFactsRef.current?.tempos??[])if(change.measure<=measure)section=change;
     return section;
   }
+  /** The word a section's speed came from when the score prints no number there (TEMPO-RULE.md): the number is our suggestion, the word its label. */
+  const tempoWord=tempoSectionAt(tempoSectionRef.current)?.word??null;
   /**
    * The beat the click follows in a bar: the meter's beat, unless the printed tempo counts a longer note that
    * divides the bar evenly (2/4 marked half = 60 clicks in halves, like the steady click, not in quarters).
@@ -2104,7 +2283,6 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     // the section you were in, so a jump from a 56 section to a 63 one speeds up by the same share.
     let playBpm=bpm;
     if(fresh){
-      lastStart.current=fromMeasure;
       const here=tempoSectionAt(fromMeasure),was=tempoSectionAt(tempoSectionRef.current);
       if(here&&was&&here!==was&&jump){playBpm=Math.max(TEMPO_MIN,Math.min(TEMPO_MAX,Math.round(bpm*printed(here)/printed(was))));skipTempoReschedule.current=true;setPlaybackBpm(playBpm,printed(here))}
       else if(here)setPlaybackBpm(bpm,printed(here));
@@ -2124,13 +2302,15 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     // A quarter second of lead: the metronome books its clicks a render later, and with only 80ms the first
     // count-in click was already in the past and got dropped (three clicks, then the music's strong downbeat).
     const clockStart=c.currentTime+.25;
-    const countGrid=unmetered&&smartMode.current?{...playbackGrid(fromIndex,clockStart,unit),time:clockStart,beatSeconds:60/playBpm,beatsPerBar:config.smartDroneCountInBeats??4,beatInBar:0}:playbackGrid(fromIndex,clockStart,unit);
+    const plainGrid=unmetered&&smartMode.current?{...playbackGrid(fromIndex,clockStart,unit),time:clockStart,beatSeconds:60/playBpm,beatsPerBar:config.smartDroneCountInBeats??4,beatInBar:0}:playbackGrid(fromIndex,clockStart,unit);
+    // A count-in while lined up counts at the recording's speed where you start.
+    const countGrid=plainGrid;
     const countPlan=droneCountIn(clockStart,countGrid.beatSeconds,countGrid.beatsPerBar,countInPending.current,unmetered?config.smartDroneCountInBeats??4:countGrid.pickupBeats>0?countGrid.beatsPerBar+countGrid.pickupBeats:undefined);
     const countBeats=countPlan.beats,countIn=countPlan.duration;countInPending.current=false;
     const rp=rangePlay.current,audioStart=countPlan.start,slice=seq.events.slice(fromIndex,rp?.end);
     if(countIn&&!smartMode.current){setCountLength(countBeats);setCountBar(countGrid.beatsPerBar);for(let beat=0;beat<countBeats;beat++){const at=audioStart-countIn+beat*countGrid.beatSeconds;/* Booked here, now, with the metronome's own click: left to the metronome it arrived a render late and lost the first (accented) click. */playbackNodes.current.push(bookClick(c,at,beat%countGrid.beatsPerBar===0));for(const tick of countInTicks(countGrid))playbackNodes.current.push(bookTick(c,at+tick));playbackTimers.current.push(window.setTimeout(()=>setCountBeat(beat),Math.max(0,(at-c.currentTime)*1000)))}playbackTimers.current.push(window.setTimeout(()=>setCountBeat(null),Math.max(0,(audioStart-c.currentTime)*1000)))}
     if(smartMode.current){
-      const pitches=droneEvents(droneChangesOf(config.smartDrone,seq),seq.events,seq.measureStarts);
+      const pitches=droneEvents(droneChangesOf(authoredDrone,seq),seq.events,seq.measureStarts);
       if(countIn){
         setCountLength(countBeats);setCountBar(countGrid.beatsPerBar);
         for(let beat=0;beat<countBeats;beat++)playbackTimers.current.push(window.setTimeout(()=>setCountBeat(beat),80+beat*countGrid.beatSeconds*1000));
@@ -2186,6 +2366,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
       const index=fromIndex+offset,start=cursor;
       if(index===changeIndex)changeAt=start;
       while(atMeasure<seq.measureStarts.length&&index>=(seq.measureStarts[atMeasure]??Infinity)){atMeasure++;intoBar=0}
+      // Lined up: this note lasts as long as the map says, written as a speed so everything downstream stays as is.
       const speed=speedAt(atMeasure+intoBar/Math.max(1,barLength(atMeasure)));
       intoBar+=event.d;
       timeline.push({units:unitsSoFar,ms:start,speed});unitsSoFar+=event.d;
@@ -2238,7 +2419,10 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
       cursor+=event.d*unit/speed;
     });
 
-    playbackTimers.current.push(window.setTimeout(rp?.loop?()=>restartRangeRef.current():stopPlayback,cursor+(rp?.loop?20:160)+countIn*1000));
+    // Played to the end: the playhead goes back to the top (a selection still starts the next Play itself).
+    // Timed from when the audio really starts (count-in plus the quarter-second lead): counting only the count-in fired
+    // a quarter second early, so a loop restarted before its last note had finished and the end of the bar was cut off.
+    playbackTimers.current.push(window.setTimeout(rp?.loop?()=>restartRangeRef.current():()=>{if(!rp)playheadRef.current=null;stopPlayback()},cursor+(rp?.loop?20:160)+(audioStart-c.currentTime)*1000));
     // Just before the first note of the next section, move the number by the
     // score's ratio; the [bpm] effect then reschedules everything from that
     // note on at the new speed, metronome included.
@@ -2260,7 +2444,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     if(!smartMode.current&&playbackAccompaniment.current!=='off'&&pianoSamples.current){
       const fromQuarter=seq.events.slice(0,fromIndex).reduce((sum,event)=>sum+event.d,0)/seq.unitsPerBeat;
       const msAt=(quarter:number)=>{const units=(quarter-fromQuarter)*seq.unitsPerBeat;let point=timeline[0];for(const next of timeline){if(next.units>units)break;point=next}return point?point.ms+(units-point.units)*unit/point.speed:units*unit};
-      for(const note of accompanimentNotes.current){if(note.at+note.duration<=fromQuarter)continue;const start=Math.max(fromQuarter,note.at),at=msAt(start),end=msAt(note.at+note.duration);playbackNodes.current.push(sampledPianoNote(c,pianoSamples.current,note.pitch,audioStart+at/1000,Math.max(.04,(end-at)/1000),note.level))}
+      for(const note of accompanimentNotes.current){if(note.at+note.duration<=fromQuarter)continue;const start=Math.max(fromQuarter,note.at),at=msAt(start),end=msAt(note.at+note.duration);playbackNodes.current.push(sampledPianoNote(c,pianoSamples.current,transposePlan?movePitchName(note.pitch,transposePlan):note.pitch,audioStart+at/1000,Math.max(.04,(end-at)/1000),note.level))}
     }
     playbackPosition.current={audioStart,unit,from:fromIndex};
     cursorBeats.current=beats;
@@ -2353,15 +2537,43 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     // firstUnits/beatLen let scheduleNotes place beats on a bending (accel./rit.) timeline.
     return {time:audioStart+(next*beatLen-position)*unit/1000,beatSeconds:beatLen*unit/1000,beatInBar:next%beatsPerBar,beatsPerBar,firstUnits:next*beatLen-position,beatLen,pickupBeats:pickup/beatLen};
   }
-  // Play, pause, play again: pausing remembers the note playback reached,
-  // and the next Play carries on from it instead of starting over. Choosing
-  // a bar (a new selectedMeasure) forgets it, so that bar is where it starts.
-  const resumeAt=useRef<number|null>(null);
+  // Where Play starts, MuseScore style: the selected bars; else the playhead, which is wherever you last tapped a bar
+  // or last stopped (the later of the two); else the top. The playhead is drawn as a parked purple line while
+  // stopped, so you can see where Play will begin. Playing to the very end puts it back at the top.
+  const playheadRef=useRef<number|null>(null);
+  function startEvent(){
+    const seq=sequenceRef.current,from=selectionRef.current?.from??selectedMeasure;
+    if(from!==null&&from!==undefined)return seq.measureStarts[from-1]??0;
+    return Math.max(0,Math.min(playheadRef.current??0,Math.max(0,seq.events.length-1)));
+  }
   // Two pages chosen but the window too narrow: the engraving falls back to one page, and so must the page's
   // layout styles (they kept squeezing a single page into a thin column, as 16 nearly empty pages).
   const [spreadShown,setSpreadShown]=useState(false);
   const startTempo=useRef<{bpm:number;reference:number}|null>(null);
-  useEffect(()=>{resumeAt.current=null;applySectionMeter(selectedMeasure??1)},[selectedMeasure]);
+  // Tempo over the weeks (lib/tempoHistory.ts): once Listen or the click track has run PLAYED_ENOUGH seconds on this
+  // visit (stops and bar taps add up), today's tempo is saved, counted in the opening's beat so that starting in a
+  // later section still compares. Not for pages that keep their own tempos (Scale Studio counts per exercise via reps).
+  const practiceRun=useRef<{seconds:number;since:number|null;best:number}>({seconds:0,since:null,best:0});
+  useEffect(()=>{practiceRun.current={seconds:0,since:null,best:0}},[id]);
+  useEffect(()=>{
+    if(config.rememberTempo===false||config.pulsePerMeasure||unmetered)return;
+    const run=practiceRun.current,opening=scoreFactsRef.current?.tempos[0],here=tempoSectionAt(tempoSectionRef.current);
+    const save=()=>recordTempo({key:config.tempoHistoryKey??`piece:${id}`,title,kind:"piece"},run.best);
+    if(!playing){
+      if(run.since!==null){run.seconds+=(Date.now()-run.since)/1000;run.since=null}
+      if(run.seconds>=PLAYED_ENOUGH)save();
+      return;
+    }
+    run.best=Math.max(run.best,opening&&here?bpm*printed(opening)/printed(here):bpm);
+    if(run.since===null)run.since=Date.now();
+    const left=PLAYED_ENOUGH-run.seconds-(Date.now()-run.since)/1000;
+    if(left<=0){save();return}
+    const timer=window.setTimeout(save,left*1000);
+    return()=>window.clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- reads the section refs as they are when playback or the number changes
+  },[playing,bpm]);
+  // Tapping a bar also moves the playhead there, so it is still where Play starts after the bar is let go.
+  useEffect(()=>{if(selectedMeasure!==null)playheadRef.current=sequenceRef.current.measureStarts[selectedMeasure-1]??null;applySectionMeter(selectedMeasure??1)},[selectedMeasure]);
   // Every reader notice (the .drone-hint pill: drone tip, notices, the recorder's mic message) sits just under the
   // toolbar, in the gap above the sheet, so it never covers the music. The toolbar's height changes with width and rows.
   useEffect(()=>{
@@ -2379,12 +2591,9 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
       setPianoLoading(true);setPianoError('');try{const context=audio();await context.resume();pianoSamples.current=await loadPiano(context);if(!accompanimentNotes.current.length)throw new Error('Accompaniment is not ready');countInPending.current=true}catch(error){setPianoError(error instanceof Error?error.message:'Could not load piano');return}finally{setPianoLoading(false)}
     }
     smartMode.current=false;
-    if(playing){resumeAt.current=playingEvent;stopPlayback();return}
+    if(playing){if(playingEvent!==null)playheadRef.current=playingEvent;stopPlayback();return}
     setPlaying(true);
-    // After Pause, carry on from there, but only while that spot is still on screen (same rule as with no selection).
-    const seq=sequenceRef.current,paused=resumeAt.current!==null&&visibleBars().includes(measureForEvent(resumeAt.current,seq.measureStarts))?resumeAt.current:null;
-    const first=paused??seq.measureStarts[(selectedMeasure??defaultStartMeasure())-1]??0;
-    resumeAt.current=null;
+    const first=startEvent();
     setPlayingFrom(first);scheduleNotes(first);
   }
   /**
@@ -2472,9 +2681,15 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     const {from,to}=config.initialBars;
     requestAnimationFrame(()=>{
       setRange(from,to);
-      requestAnimationFrame(()=>scoreRef.current?.querySelector(".play-start-bar")?.scrollIntoView({block:"center",behavior:"smooth"}));
+      requestAnimationFrame(()=>{
+        scoreRef.current?.querySelector(".play-start-bar")?.scrollIntoView({block:"center",behavior:"smooth"});
+        // From the passages list: the close-up opens on those bars, ready to practise (the same as tapping its button).
+        if(config.initialCloseup&&config.practiceGuide){
+          const printed=(position:number)=>scoreFactsRef.current?.measures[position-1]?.number??String(position);
+          setCloseup({from,to,numbers:{from:printed(from),to:printed(to)}});
+        }
+      });
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   },[loading,layoutVersion,config.initialBars]);
   function playRange(loop:boolean){
     const current=selectionRef.current;if(!current||current.to<current.from)return;
@@ -2501,6 +2716,46 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     clickTrackRef.current=true;setClickTrack(true);countInPending.current=true;if(!metro)toggleMetro();
     setFingerTip(null);setPlaying(true);setPlayingFrom(start);scheduleNotes(start);
   }
+  /**
+   * Tempo ladder (TempoLadder.tsx): a passage's way from a start tempo to a target, in steps. Nothing runs by itself:
+   * you play (Listen, the selection's loop, the metronome all use this tempo), the tally counts reps, and you step up
+   * or back when you choose. The tempo is the reader's own number. Reps (lib/repLog) and each step up go
+   * into tempo history, under the tricky bit when these bars are one, else the passage.
+   */
+  type Ladder=LadderOptions&{from:number;to:number;key:string;title:string};
+  const [ladder,setLadder]=useState<Ladder|null>(null);
+  const [ladderSetupOpen,setLadderSetupOpen]=useState(false);
+  const [ladderAt,setLadderAt]=useState<{x:number;y:number;below:boolean}|null>(null);
+  const LADDER_HEIGHT=104;
+  function startLadder(options:LadderOptions){
+    const current=selectionRef.current;if(!current||current.to<current.from)return;
+    const bit=trickyBits.find(entry=>entry.id===bitId(config.id,current.from,current.to));
+    const printedBar=(position:number)=>scoreFactsRef.current?.measures[position-1]?.number??String(position);
+    const bars=current.from===current.to?printedBar(current.from):zh?`${printedBar(current.from)} 至 ${printedBar(current.to)}`:`${printedBar(current.from)} to ${printedBar(current.to)}`;
+    setLadderSetupOpen(false);
+    setBpm(options.start);
+    setLadder({...options,from:current.from,to:current.to,
+      key:bit?`tricky:${bit.id}`:`passage:${config.id}:${current.from}-${current.to}`,title:zh?`${title} 第 ${bars} 小节`:`${title}, ${current.from===current.to?"bar":"bars"} ${bars}`});
+  }
+  /** A new tempo on the ladder. Moving up means the step below was played: it goes into tempo history. A running loop keeps going at the new tempo. */
+  function ladderTempo(tempo:number){
+    if(!ladder)return;
+    if(tempo>bpm)recordTempo({key:ladder.key,title:ladder.title,kind:ladder.key.startsWith("tricky:")?"tricky-bit":"piece"},bpm);
+    setBpm(tempo);
+  }
+  function closeLadder(){setLadder(null)}
+  // Pinned above the passage's first bar, in the marks layer (the practice pins' frame), measured after every engrave.
+  useLayoutEffect(()=>{
+    const root=scoreRef.current;
+    if(!ladder||!root||!marksLayer){setLadderAt(null);return}
+    const measures=[...root.querySelectorAll<SVGGElement>(".vf-measure")],frame=root.getBoundingClientRect();
+    const bar=measures.find(measure=>Number(measure.querySelector<SVGGElement>(".vf-stavenote[data-measure]")?.dataset.measure)===ladder.from);
+    if(!bar){setLadderAt(null);return}
+    // Above the bars, or under them on the first line (above it the card would cover the title) or near the top.
+    const box=bar.getBoundingClientRect(),firstLine=Math.abs(box.top-(measures[0]?.getBoundingClientRect().top??box.top))<8;
+    const above=box.top-frame.top-4,below=firstLine||above<LADDER_HEIGHT;
+    setLadderAt({x:Math.max(4,Math.min(box.left-frame.left,frame.width-304)),y:below?box.bottom-frame.top+8:above,below});
+  },[ladder,layoutVersion,marksLayer]);
   function restartRange(){
     const range=rangePlay.current;if(!range)return;
     // A click-track loop stays a click track (metronome on, melody silent) on every pass.
@@ -2574,20 +2829,9 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
    * coordinates, because score magnification makes screen rects of
    * SVG elements disagree with the pointer (see markPlayStart).
    */
-  // Where Listen, the metronome and the auto drone start with no bar selected: the bar you last started from if
-  // it is still on screen, otherwise the first bar you can see. Bar 1 only when you are looking at the top, never
-  // a sudden jump back there from the middle of the piece.
-  const lastStart=useRef<number|null>(null);
-  function visibleBars(){
-    const root=scoreRef.current,scroller=scoreScrollRef.current;if(!root||!scroller)return [];
-    const box=scroller.getBoundingClientRect(),toolbar=document.querySelector(".restored-reader .practice-bar")?.getBoundingClientRect();
-    const top=Math.max(box.top,toolbar?.bottom??0),bottom=Math.min(box.bottom,window.innerHeight);
-    return [...root.querySelectorAll<SVGGElement>(".vf-measure")].filter(bar=>{const r=bar.getBoundingClientRect();return r.height>0&&r.bottom>top+8&&r.top<bottom-8})
-      .map(bar=>Number(bar.querySelector<SVGGElement>(".vf-stavenote[data-measure]")?.dataset.measure)).filter(n=>n>0);
-  }
+  // Where the click track and the auto drone start with no bar selected: the playhead's bar (see startEvent).
   function defaultStartMeasure(){
-    const seen=visibleBars();if(!seen.length)return lastStart.current??1;
-    return lastStart.current&&seen.includes(lastStart.current)?lastStart.current:Math.min(...seen);
+    return playheadRef.current===null?1:measureForEvent(playheadRef.current,sequenceRef.current.measureStarts);
   }
   function measureAt(x:number,y:number){
     const root=scoreRef.current;if(!root)return null;
@@ -2680,10 +2924,12 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   useEffect(()=>{
     const scroller=scoreScrollRef.current;if(!scroller)return;
     const block=(e:TouchEvent)=>{if(touchSelecting.current&&e.cancelable)e.preventDefault()};
+    // Safety net: once every finger is off the glass nothing can still be selecting, whatever pointer events were missed.
+    const lifted=(e:TouchEvent)=>{if(e.touches.length===0)touchSelecting.current=false};
     const follow=()=>updateRangeBar();
     // Any scroll moves the pill with its bars, the page's as well as the score box's (capture catches both).
-    scroller.addEventListener("touchmove",block,{passive:false});window.addEventListener("scroll",follow,{passive:true,capture:true});window.addEventListener("resize",follow);
-    return()=>{scroller.removeEventListener("touchmove",block);window.removeEventListener("scroll",follow,{capture:true});window.removeEventListener("resize",follow)};
+    scroller.addEventListener("touchmove",block,{passive:false});window.addEventListener("touchend",lifted,{passive:true});window.addEventListener("touchcancel",lifted,{passive:true});window.addEventListener("scroll",follow,{passive:true,capture:true});window.addEventListener("resize",follow);
+    return()=>{scroller.removeEventListener("touchmove",block);window.removeEventListener("touchend",lifted);window.removeEventListener("touchcancel",lifted);window.removeEventListener("scroll",follow,{capture:true});window.removeEventListener("resize",follow)};
   });
   const moveHandleRef=useRef(moveHandle);moveHandleRef.current=moveHandle;
   /**
@@ -2694,6 +2940,10 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     swallowClick.current=false;
     // Pitch mode keeps selection: a drag (or a long press) picks bars, and a plain tap still goes to the note (scoreClick).
     if(annotating||(e.pointerType==="mouse"&&e.button!==0)||(e.target as Element).closest("[data-theory],.range-handle"))return;
+    // A second finger while one is down (a pinch, a resting hand) is not a new selection. It used to replace the
+    // gesture, so the first finger's lift was ignored, touchSelecting stayed on and the score stopped scrolling.
+    const active=gesture.current;
+    if(active&&active.id!==e.pointerId){window.clearTimeout(active.timer);gesture.current=null;touchSelecting.current=false;return}
     const bar=measureAt(e.clientX,e.clientY);if(bar===null)return;
     const g={id:e.pointerId,type:e.pointerType,x:e.clientX,y:e.clientY,bar,mode:"idle" as "idle"|"drag"|"press",timer:0};
     gesture.current=g;
@@ -2784,12 +3034,12 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     // Shift-click: everything from the first selected bar to this one.
     if(e.shiftKey&&measure!==null&&selection){const anchor=selection.from;setRange(Math.min(anchor,measure),Math.max(anchor,measure));setFingerTip(null);return}
     // Auto drone running: a tap on a bar redoes it from there, with a count-in, like the click track.
-    if(smartRunning&&!playing&&measure!==null){setSelectedMeasure(measure);setSmartEvent(null);scheduleAutoDrone(sequenceRef.current.measureStarts[measure-1]??0,true);setFingerTip(null);return}
+    if(smartRunning&&!playing&&measure!==null){follow.rejoin();setSelectedMeasure(measure);setSmartEvent(null);scheduleAutoDrone(sequenceRef.current.measureStarts[measure-1]??0,true);setFingerTip(null);return}
     // While Listen is playing, a tap on a bar jumps playback there.
     if(playing&&!smartMode.current&&measure!==null){
       // Following the music with the metronome: tapping a bar redoes it from there, still silent, with a count-in to come in on.
-      if(clickTrackRef.current){stopPlayback(true);setSelectedMeasure(measure);countInPending.current=true;setPlaying(true);const first=sequenceRef.current.measureStarts[measure-1]??0;setPlayingFrom(first);scheduleNotes(first,true,true);setFingerTip(null);return}
-      stopPlayback();setSelectedMeasure(measure);
+      if(clickTrackRef.current){stopPlayback(true);setSelectedMeasure(measure);follow.rejoin();countInPending.current=true;setPlaying(true);const first=sequenceRef.current.measureStarts[measure-1]??0;setPlayingFrom(first);scheduleNotes(first,true,true);setFingerTip(null);return}
+      stopPlayback();setSelectedMeasure(measure);follow.rejoin();
       const first=sequenceRef.current.measureStarts[measure-1]??0;
       setPlaying(true);setPlayingFrom(first);scheduleNotes(first,true,true);
       setFingerTip(null);return;
@@ -2804,6 +3054,8 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
       if(bit){setRange(bit.from,bit.to);setFingerTip(null);return}
     }
     // A bar inside the selection clears it, and so does a tap off the bars; any other bar becomes the new single bar.
+    // A tap on a bar moves the playhead there even when it lets the selection go, so Play still starts at that bar.
+    if(measure!==null)playheadRef.current=sequenceRef.current.measureStarts[measure-1]??playheadRef.current;
     setSelectedMeasure(measure===null||(selection&&measure>=selection.from&&measure<=selection.to)?null:measure);
     if(node)showNoteInfo(node,e.clientX,e.clientY);else setFingerTip(null);
   }
@@ -2860,7 +3112,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
       osmd.EngravingRules.RenderMultipleRestMeasures=false;osmd.EngravingRules.AutoGenerateMultipleRestMeasuresFromRestMeasures=false;
       const printTitle=plainAccidentals(printConfig?.title??title);
       let printFacts:ScoreFacts|null=null;
-      osmd.OnXMLRead=xml=>{printFacts=readScoreFacts(xml);return prepareScore(xml,printTitle)};
+      osmd.OnXMLRead=original=>{const xml=transposeForReader(original,transposition,false);printFacts=readScoreFacts(xml);return prepareScore(xml,printTitle)};
       const suppress=unmetered?applyExerciseRules(osmd):()=>{};
       await osmd.load(printConfig?.asset??asset,printTitle);
       suppress();
@@ -2890,6 +3142,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
       const scale=measured?Math.min(3,Math.max(.3,STAFF_SPACE_MM/measured)):1;
       if(Math.abs(scale-1)>0.01){osmd.zoom=scale;suppress();osmd.render()}
       reshapeSlurs(stage);
+      liftCollidingSlurs(stage);
       spaceMetronomeMarks(stage);
       if(tuck)tuckMetronomeMarks(stage);
       hideStackedMetronomeMarks(stage);
@@ -2930,12 +3183,12 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
     const root=scoreRef.current;if(!root)return;
     root.querySelectorAll('.vf-stavenote.smart-drone-active').forEach(n=>n.classList.remove('smart-drone-active'));
     if(!smartRunning||smartEvent===null)return;
-    const seq=sequenceRef.current,pitches=droneEvents(droneChangesOf(config.smartDrone,seq),seq.events,seq.measureStarts),audible=pitches[smartEvent];if(!audible)return;
+    const seq=sequenceRef.current,pitches=droneEvents(droneChangesOf(authoredDrone,seq),seq.events,seq.measureStarts),audible=pitches[smartEvent];if(!audible)return;
     let first=smartEvent,last=smartEvent;
     while(first>0&&pitches[first-1]===audible)first--;
     while(last+1<pitches.length&&pitches[last+1]===audible)last++;
     // Only the notes that are the drone's own pitch, in its own octave as written on the page, not everything it sounds under.
-    const tonic=droneEvents(droneChangesOf(config.smartDrone,seq).map(change=>({...change,pitch:change.displayPitch??change.pitch})),seq.events,seq.measureStarts)[smartEvent];if(!tonic)return;
+    const tonic=droneEvents(droneChangesOf(authoredDrone,seq).map(change=>({...change,pitch:change.displayPitch??change.pitch})),seq.events,seq.measureStarts)[smartEvent];if(!tonic)return;
     const spell=(pitch:string)=>pitch.replace(/#/g,'♯').replace(/^([A-G])b/,'$1♭'),target=spell(tonic);
     root.querySelectorAll<SVGGElement>('.vf-stavenote[data-event]').forEach(node=>{
       const index=Number(node.dataset.event),written=node.dataset.noteName&&node.dataset.noteOctave?node.dataset.noteName+node.dataset.noteOctave:node.dataset.pitch;
@@ -2948,7 +3201,7 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
   function bookTrackDrone(){
     const c=audio(),now=c.currentTime;
     trackDroneNodes.current.forEach(node=>{try{node.stop()}catch{/* already ended */}});trackDroneNodes.current=[];
-    const seq=sequenceRef.current,times=cursorBeats.current,pitches=droneEvents(droneChangesOf(config.smartDrone,seq),seq.events,seq.measureStarts);
+    const seq=sequenceRef.current,times=cursorBeats.current,pitches=droneEvents(droneChangesOf(authoredDrone,seq),seq.events,seq.measureStarts);
     for(let k=0;k<times.length;){
       const pitch=pitches[times[k].index];let end=k+1;
       while(end<times.length&&pitches[times[end].index]===pitch)end++;
@@ -2983,10 +3236,34 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
               {droneMode==="auto"&&<p className="reader-setting-note">{config.smartDrone?(zh?"使用这首曲子设定好的持续音。":"Uses this piece's own drone notes."):(zh?"每小节持续时间最长的音；全是休止的小节不发声。":"Each bar's longest-held note. Bars of rests stay silent.")}</p>}
             </ReaderPopover>
           </div></>;
-  const accompanimentControl=config.accompaniment&&<ReaderPopover panelClassName="reader-play-card" label={zh?'伴奏':'Accompaniment'} trigger={<><PracticeIcon name="piano"/>{zh?'钢琴':'Piano'}</>} className={`tool has-tip reader-accompaniment${playing&&playbackAccompaniment.current!=='off'?' on':''}`}><div className="reader-play-row"><div className="reader-choice" role="group" aria-label={zh?"伴奏方式":"Accompaniment playback"}>{([['piano',zh?'仅钢琴':'Piano only'],['both',zh?'钢琴与长笛':'Piano + flute']] as const).map(([mode,label])=><button key={mode} aria-pressed={accompanimentMode===mode} onClick={()=>{if(playing)stopPlayback();setAccompanimentMode(mode)}}>{label}</button>)}</div><button className={playing?"reader-play-start on":"reader-play-start"} disabled={pianoLoading} aria-label={playing?(zh?'暂停':'Pause'):(zh?'开始播放':'Start playback')} onClick={()=>togglePlayback(true)}><PracticeIcon name={playing?'pause':'play'}/></button></div>{pianoLoading&&<p role="status">{zh?'正在载入钢琴…':'Loading piano…'}</p>}{pianoError&&<p role="alert">{pianoError}</p>}</ReaderPopover>;
+  // One Accompaniment tool: the score's piano part (when the piece has one) and your own accompaniment file.
+  // The piece's piano part. While the samples load, the play button itself shows it (a spinning ring) instead of a
+  // line of text appearing under the row, which made the card jump.
+  const accompanimentControl=config.accompaniment&&<ReaderPopover panelClassName="reader-play-card" label={zh?'伴奏':'Accompaniment'} trigger={<><PracticeIcon name="piano"/>{zh?'钢琴':'Piano'}</>} className={`tool has-tip reader-accompaniment${playing&&playbackAccompaniment.current!=='off'?' on':''}`}><div className="reader-play-row"><div className="reader-choice" role="group" aria-label={zh?"伴奏方式":"Accompaniment playback"}>{([['piano',zh?'仅钢琴':'Piano only'],['both',zh?'钢琴与长笛':'Piano + flute']] as const).map(([mode,label])=><button key={mode} aria-pressed={accompanimentMode===mode} onClick={()=>{if(playing)stopPlayback();setAccompanimentMode(mode)}}>{label}</button>)}</div><button className={`reader-play-start${playing?" on":""}${pianoLoading?" is-loading":""}`} disabled={pianoLoading} aria-busy={pianoLoading} aria-label={pianoLoading?(zh?'正在载入钢琴':'Loading piano'):playing?(zh?'暂停':'Pause'):(zh?'开始播放':'Start playback')} onClick={()=>togglePlayback(true)}>{pianoLoading?<span className="reader-play-spinner" aria-hidden="true"/>:<PracticeIcon name={playing?'pause':'play'}/>}</button></div>{pianoError&&<p role="alert">{pianoError}</p>}</ReaderPopover>;
+  // Key: step the whole piece up or down a half step at a time, or move it an octave; one tap back to the original.
+  const moved=!!(transposition.semitones||transposition.octave);
+  const keyControls=config.transposable&&transposeInfo&&(()=>{
+    const shown=transposedKey(transposeInfo.written,transposition),{low,high,lowName,highName}=transposeInfo;
+    const step=(by:number)=>setTransposition({...transposition,semitones:transposition.semitones+by});
+    const octave=(value:number)=>setTransposition({...transposition,octave:value});
+    const tooLow=low!==null&&low<FLUTE_LOW,tooHigh=high!==null&&high>FLUTE_HIGH;
+    const canUp=transposition.octave<1&&high!==null&&high+12<=FLUTE_HIGH,canDown=transposition.octave>-1&&low!==null&&low-12>=FLUTE_LOW;
+    return <div className="reader-setting-row reader-setting-row--stack reader-key">
+      <div className="reader-row-head"><span>{zh?"调":"Key"}</span>{moved&&<button type="button" className="reader-text-action" onClick={()=>setTransposition({semitones:0,octave:0})}>{zh?"回到原调":"Original key"}</button>}</div>
+      <div className="reader-key__stepper">
+        <button type="button" aria-label={zh?"降低半音":"Down a half step"} disabled={transposition.semitones<=-6} onClick={()=>step(-1)}><PracticeIcon name="previous"/></button>
+        <span aria-live="polite"><strong>{keyName(shown,zh)}</strong><small>{moveName(transposition,zh)}</small></span>
+        <button type="button" aria-label={zh?"升高半音":"Up a half step"} disabled={transposition.semitones>=6} onClick={()=>step(1)}><PracticeIcon name="next"/></button>
+      </div>
+      <div className="reader-choice" role="group" aria-label={zh?"八度":"Octave"}>{([[0,zh?"原位":"As written"],[-1,zh?"低八度":"Octave lower"],[1,zh?"高八度":"Octave higher"]] as const).map(([value,label])=><button key={value} aria-pressed={transposition.octave===value} onClick={()=>octave(value)}>{label}</button>)}</div>
+      {moved&&tooLow&&<p className="reader-setting-note">{low===B_FOOT_LOW?(zh?"最低音是 B3，需要 B 尾管。":"The lowest note is B3, so you'd need a B foot."):(zh?`最低音是 ${lowName}，比长笛的低音 C 还低。`:`The lowest note is ${lowName}, below the flute's low C.`)}{canUp&&<> <button type="button" className="reader-text-action" onClick={()=>octave(transposition.octave+1)}>{zh?"升高八度":"Move up an octave"}</button></>}</p>}
+      {moved&&tooHigh&&<p className="reader-setting-note">{zh?`最高音是 ${highName}，比长笛的高音 D 还高。`:`The highest note is ${highName}, above the flute's top D.`}{canDown&&<> <button type="button" className="reader-text-action" onClick={()=>octave(transposition.octave-1)}>{zh?"降低八度":"Move down an octave"}</button></>}</p>}
+    </div>;
+  })();
   const viewControls=<div className="reader-view">{settings?.(readerControls)}
 
           <ReaderPopover label={zh?"显示设置":"View settings"} trigger={<><PracticeIcon name="view"/>{zh?"显示":"View"}</>} className="tool has-tip">
+            {keyControls}
 
             <div className="reader-setting-row"><div className="reader-row-head"><span>{zh?"页面布局":"Page layout"}</span><button type="button" className="reader-text-action" title={zh?"让整页谱子适合窗口":"Make the music fit this window"} onClick={fitToPage}>{zh?"适合一页":"Fit page"}</button></div>{fitNote&&<small className="reader-fit-note" role="status">{fitNote}</small>}<div className="reader-choice" role="group" aria-label={zh?"页面布局":"Page layout"}>{[["900",zh?"竖向单页":"Portrait"],["auto",zh?"适应窗口":"Fit window"],["spread",zh?"双页":"Two pages"]].map(([value,label])=><button key={value} aria-pressed={pageWidth===value} onClick={()=>{setPageWidth(value);if(tabletReader(navigator.maxTouchPoints,Math.min(screen.width,screen.height)))try{localStorage.setItem(`${viewPrefsKey}:tablet-layout`,value)}catch{/* Keep the selected layout for this visit. */}}}>{label}</button>)}</div></div>
             {practiceTempo&&<div className="reader-setting-row"><span>{zh?"练习速度":"Practice tempo"}</span><div className="reader-choice" role="group" aria-label={zh?"练习速度":"Practice tempo"}><button aria-pressed={!practiceTempo.value} onClick={()=>practiceTempo.onChange(false)}>{zh?"隐藏":"Hidden"}</button><button aria-pressed={practiceTempo.value} onClick={()=>practiceTempo.onChange(true)}>{zh?"显示在乐谱上":"On the page"}</button></div></div>}
@@ -3005,13 +3282,17 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
         <button data-tip={t.scoreViewer.fingeringTip} className={fingering?"tool on has-tip":"tool has-tip"} onClick={()=>setFingering(!fingering)}><span><PracticeIcon name="fingeringKeys"/></span>{t.scoreViewer.fingering}</button>
 <button data-tip={t.scoreViewer.musicalTermsTip} className={theoryEnabled?"tool on has-tip":"tool has-tip"} aria-pressed={theoryEnabled} onClick={()=>setTheoryEnabled(v=>!v)}><span><PracticeIcon name="termF"/></span>{zh?"音乐术语":"Musical terms"}</button>
         {pieceBits.length>0&&<button data-tip={zh?"把保存的难点小节标成黄色":"Shade your saved tricky bits in yellow"} className={showTricky?"tool on has-tip":"tool has-tip"} aria-pressed={showTricky} onClick={()=>setShowTricky(!showTricky)}><span><PracticeIcon name="bookmark"/></span>{zh?"难点":"Tricky bits"}</button>}</div>
+            {noteDisplay!=="off"&&<div className="reader-name-style">
+              <div className="reader-choice" role="group" aria-label={zh?"音名位置":"Where note names go"}><button aria-pressed={namePlace==="above"} onClick={()=>setNamePlace("above")}>{zh?"音符上方":"Above the notes"}</button><button aria-pressed={namePlace==="below"} onClick={()=>setNamePlace("below")}>{zh?"谱表下方":"Under the staff"}</button></div>
+              <div className="reader-choice" role="group" aria-label={zh?"给哪些音标音名":"Which notes get a name"}><button aria-pressed={nameScope==="all"} onClick={()=>setNameScope("all")}>{zh?"每个音":"Every note"}</button><button aria-pressed={nameScope==="ledger"} data-tip={zh?"只标加线上的音，适合高音练习曲":"Only notes on ledger lines, handy for high etudes"} className="has-tip" onClick={()=>setNameScope("ledger")}>{zh?"只标加线音":"Ledger lines only"}</button></div>
+            </div>}
             </div>{/* Tools that take this piece elsewhere to practise, as tiles like "Show on the page" (never on, since each opens
-                another page). Scales: Scale Studio set to this piece's own scales. */}{config.practiceGuide&&<div className="reader-setting-row reader-setting-row--stack"><span>{zh?"练习工具":"Practice tools"}</span><div className="reader-display-options"><button type="button" data-tip={zh?"在音阶练习里打开这首曲子用到的音阶":"Open the scales this piece uses in Scale Studio"} className="tool has-tip" onClick={openPieceScales}><span><PracticeIcon name="scale"/></span>{zh?"音阶":"Scales"}</button></div></div>}<button className="reader-settings-reset" onClick={()=>{/* A clean page: every "Show on the page" overlay off, not just the layout sliders. */setNoteDisplay("off");setRhythmMode("off");setAccidentals(false);setFingering(false);setTheoryEnabled(false);setShowTricky(false);userSizeRef.current=.8;setSizePreference(.8);setSystemSpacing(12);setNoteSpacing(defaultNoteSpacing??(unmetered?0.82:1));/* Pinch or Ctrl-scroll zoom is part of the view too. */magnifyRef.current=1;setMagnify(1);scoreScrollRef.current?.closest<HTMLElement>(".restored-reader")?.style.setProperty("--viewer-magnify","1");setPageWidth(initialReaderLayout(tabletReader(navigator.maxTouchPoints,Math.min(screen.width,screen.height))));try{localStorage.removeItem(`${viewPrefsKey}:tablet-layout`)}catch{/* Defaults still apply for this visit. */}}}>{zh?"恢复默认":"Restore defaults"}</button>
+                another page). Scales: Scale Studio set to this piece's own scales. */}{config.practiceGuide&&<div className="reader-setting-row reader-setting-row--stack"><span>{zh?"练习工具":"Practice tools"}</span><div className="reader-display-options"><button type="button" data-tip={zh?"在音阶练习里打开这首曲子用到的音阶":"Open the scales this piece uses in Scale Studio"} className="tool has-tip" onClick={openPieceScales}><span><PracticeIcon name="scale"/></span>{zh?"音阶":"Scales"}</button></div></div>}<button className="reader-settings-reset" onClick={()=>{/* A clean page: every "Show on the page" overlay off, not just the layout sliders, and the piece back in its own key and octave. */if(transposition.semitones||transposition.octave)setTransposition({semitones:0,octave:0});setNoteDisplay("off");setRhythmMode("off");setAccidentals(false);setFingering(false);setTheoryEnabled(false);setShowTricky(false);userSizeRef.current=.8;setSizePreference(.8);setSystemSpacing(12);setNoteSpacing(defaultNoteSpacing??(unmetered?0.82:1));/* Pinch or Ctrl-scroll zoom is part of the view too. */magnifyRef.current=1;setMagnify(1);scoreScrollRef.current?.closest<HTMLElement>(".restored-reader")?.style.setProperty("--viewer-magnify","1");setPageWidth(initialReaderLayout(tabletReader(navigator.maxTouchPoints,Math.min(screen.width,screen.height))));try{localStorage.removeItem(`${viewPrefsKey}:tablet-layout`)}catch{/* Defaults still apply for this visit. */}}}>{zh?"恢复默认":"Restore defaults"}</button>
           </ReaderPopover>
         </div>;
   return <main className="app-shell reader-workspace restored-reader" data-layout={pageWidth==="spread"&&!spreadShown?"900":pageWidth} data-annotating={annotating} data-dock={dock||closeupOpen?"true":undefined} style={{"--reader-page-width":pageWidth==="900"?"900px":"100%","--viewer-magnify":magnify} as React.CSSProperties}>
     <section className="workspace">
-      <header className="topbar"><div><Link className="back has-tip" href={backHref} aria-label={backLabel?`${t.scoreViewer.back}: ${backLabel}`:t.scoreViewer.back} data-tip={backLabel||t.scoreViewer.back}><BackChevron/></Link>{(config.backName??(toolbar?undefined:title))&&<span className="back__name">{config.backName??title}</span>}{!toolbar&&<strong>{title}</strong>}</div><div><span className="topbar-toolbar-slot">{toolbar}</span>{/* No star: a score goes on one of your lists (want to learn, working on, learned). Scale Studio instead saves the panel as a set: a + that turns into a tick. */}{save?<button type="button" className="icon-btn has-tip reader-set-save" aria-pressed={save.saved} data-tip={save.saved?save.savedLabel:save.label} aria-label={save.saved?save.savedLabel:save.label} onClick={save.onToggle}>{save.saved?<CheckIcon/>:<PlusIcon/>}</button>:<StatusButton id={config.listId??config.id} zh={lang==="zh"}/>}{headerActions?.(readerControls)}{pdfPath&&<a className="icon-btn has-tip" href={pdfPath} download data-tip={t.scoreViewer.downloadPdf} aria-label={t.scoreViewer.downloadPdf}><DownloadIcon/></a>}{/* The reader hides the studio nav, so the two controls that live there on every other page — practice tools and the account menu — come here instead, on the same row as the back link. */}<span className="topbar-spacer"/><PracticeClockButton target={clockTarget}/><div id="reader-tools-slot" className="topbar-tools-slot"/><AccountMenu/></div></header>
+      <header className="topbar"><div><Link className="back has-tip" href={backHref} aria-label={backLabel?`${t.scoreViewer.back}: ${backLabel}`:t.scoreViewer.back} data-tip={backLabel||t.scoreViewer.back}><BackChevron/></Link>{(config.backName??(toolbar?undefined:title))&&<span className="back__name">{config.backName??title}</span>}{!toolbar&&<strong>{title}</strong>}</div><div><span className="topbar-toolbar-slot">{toolbar}</span>{/* No star: a score goes on one of your lists (want to learn, working on, learned). Scale Studio instead saves the panel as a set: a + that turns into a tick. */}{save?<button type="button" className="icon-btn has-tip reader-set-save" aria-pressed={save.saved} data-tip={save.saved?save.savedLabel:save.label} aria-label={save.saved?save.savedLabel:save.label} onClick={save.onToggle}>{save.saved?<CheckIcon/>:<PlusIcon/>}</button>:config.hideListStatus?null:<StatusButton id={config.listId??config.id} zh={lang==="zh"}/>}{headerActions?.(readerControls)}{pdfPath&&<a className="icon-btn has-tip" href={pdfPath} download data-tip={t.scoreViewer.downloadPdf} aria-label={t.scoreViewer.downloadPdf}><DownloadIcon/></a>}{/* The reader hides the studio nav, so the two controls that live there on every other page — practice tools and the account menu — come here instead, on the same row as the back link. */}<span className="topbar-spacer"/><PracticeClockButton target={clockTarget}/><div id="reader-tools-slot" className="topbar-tools-slot"/><AccountMenu/></div></header>
 
       <div className="practice-bar"><div className="tool-group">        <button data-tip={t.scoreViewer.markUpTip} className={annotating?"tool on coral has-tip":"tool has-tip"} onClick={()=>setAnnotating(!annotating)}><PracticeIcon name="markup"/>{t.scoreViewer.markUp}</button>
       </div>
@@ -3022,7 +3303,8 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
             {/* Follow the music (the click track) or a plain steady click, without opening the tools panel. */}
             <div className="reader-setting-row"><div className="reader-row-head"><span>{zh?"节拍器":"Metronome"}</span></div>
               <div className="reader-choice" role="group" aria-label={zh?"节拍器":"Metronome"}><button aria-pressed={steadyClick} onClick={()=>setSteady(true)}>{zh?"稳定节拍":"Steady click"}</button><button aria-pressed={!steadyClick} onClick={()=>setSteady(false)}>{zh?"跟随乐谱":"Follows the music"}</button></div></div>
-          </ReaderPopover>{/* A div, not a label: buttons nested in a label get the label's hover applied to them as a set — hovering + lit up − too — and a tap on one activates the label, which focuses the number field and would raise the keyboard on a tablet. Only the field is labelled. */}<div className="tempo"><button type="button" className="tempo-step" aria-label={zh?"减慢":"Slower"} disabled={bpm<=TEMPO_MIN} onClick={()=>setBpm(bpm-1)}>−</button><label className="tempo-field"><input aria-label={t.scoreViewer.tempoAria} type="number" min="30" max="220" value={tempoDraft??(playing?liveTempo??bpm:bpm)} onFocus={()=>setTempoDraft(String(bpm))} onChange={e=>setTempoDraft(e.target.value)} onBlur={commitTempo} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/></label><button type="button" className="tempo-step" aria-label={zh?"加快":"Faster"} disabled={bpm>=TEMPO_MAX} onClick={()=>setBpm(bpm+1)}>+</button></div></div><button className="tool has-tip reader-tap" data-tip={t.scoreViewer.tapTempo} aria-label={t.scoreViewer.tapTempo} onClick={tapTempo}><PracticeIcon name="tap"/>{zh?"打拍":"Tap"}</button></div>{accompanimentControl}
+            {config.rememberTempo!==false&&!unmetered&&<TempoTrendSection historyKey={config.tempoHistoryKey??`piece:${id}`} zh={zh}/>}
+          </ReaderPopover>{/* A div, not a label: buttons nested in a label get the label's hover applied to them as a set — hovering + lit up − too — and a tap on one activates the label, which focuses the number field and would raise the keyboard on a tablet. Only the field is labelled. */}<div className="tempo"><button type="button" className="tempo-step" aria-label={zh?"减慢":"Slower"} disabled={bpm<=TEMPO_MIN} onClick={()=>setBpm(bpm-1)}>−</button><label className="tempo-field has-tip" data-tip={tempoWord?t.scoreViewer.suggestedTempo(tempoWord):""}><input aria-label={tempoWord?`${t.scoreViewer.tempoAria}, ${tempoWord}`:t.scoreViewer.tempoAria} type="number" min="30" max="220" value={tempoDraft??(playing?liveTempo??bpm:bpm)} onFocus={()=>setTempoDraft(String(bpm))} onChange={e=>setTempoDraft(e.target.value)} onBlur={commitTempo} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/></label><button type="button" className="tempo-step" aria-label={zh?"加快":"Faster"} disabled={bpm>=TEMPO_MAX} onClick={()=>setBpm(bpm+1)}>+</button></div></div><button className="tool has-tip reader-tap" data-tip={t.scoreViewer.tapTempo} aria-label={t.scoreViewer.tapTempo} onClick={tapTempo}><PracticeIcon name="tap"/>{zh?"打拍":"Tap"}</button></div>{accompanimentControl}
           {droneControls}
         </div>      <div className="reader-header restored-view-controls">
         {viewControls}
@@ -3034,13 +3316,14 @@ export function ScoreViewer({config,toolbar,settings,aside,printConfig,practiceA
 </div>
       <div className="reader-rows">{practiceRow}<div className="markup-row" ref={setAnnotationToolbar}/></div>
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- The score is a pointer and touch surface (tap a bar, a note, a mark). Keyboard use goes through the page-level arrow keys and the toolbar buttons, so a tab stop on the engraving itself would add nothing. */}
-      <div className="score-scroll" ref={scoreScrollRef}>{/* One pill per count-in bar, side by side, filling in turn: a two-bar count-in shows two. */}{countBeat!==null&&<div className="score-count-in">{Array.from({length:Math.max(1,Math.ceil(countLength/countBar))},(_,bar)=><CountInPulse key={bar} beat={countBeat>=(bar+1)*countBar?countBar:countBeat<bar*countBar?-1:countBeat-bar*countBar} total={countBar} zh={zh}/>)}</div>}<div className="score-paper engraved" data-loading={loading}>{paperTop&&<div className="score-paper-top">{paperTop}</div>}<div className="custom-score-heading"><h1>{title.split(/(\d+)/).map((part,index)=>/^\d+$/.test(part)?<span key={index} className="score-title-number">{part}</span>:part)}</h1>{/* Two lines, not three: the composer and the work share one grey line (the composer still opens its card). */}<p className="score-byline">{config.story?<button type="button" className="score-composer" aria-expanded={!!storyCard} onClick={e=>{e.stopPropagation();setTheoryTip(null);setStoryCard(storyCard?null:{x:e.clientX,y:e.clientY})}}>{composer}</button>:<span className="score-composer">{composer}</span>}{config.subtitle&&<span className="excerpt-score-subtitle"> · {config.subtitle}</span>}</p></div>{showSpinner&&<div className="score-loading" role="status" aria-label={t.scoreViewer.engraving}/>}{error&&<div className="score-error">{error}</div>}<div ref={scoreRef} className="osmd-score" data-theory-enabled={theoryEnabled} data-note-tap={droneArmed||fingering||noteDisplay!=="off"||activeRhythmMode!=="off"||!!onPracticeNote?"on":undefined} onMouseMove={scoreMove} onMouseLeave={()=>{setFingerTip(null);setTheoryTip(null);setBeatTip(null)}} onPointerDown={scorePointerDown} onPointerMove={scorePointerMove} onPointerUp={scorePointerEnd} onPointerCancel={scorePointerEnd} onClick={scoreClick}/>{practicePinAt.length>0&&marksLayer&&createPortal(practicePinAt.map(pin=>{
+      <div className="score-scroll" ref={scoreScrollRef}>{/* One pill per count-in bar, side by side, filling in turn: a two-bar count-in shows two. */}{countBeat!==null&&<div className="score-count-in">{Array.from({length:Math.max(1,Math.ceil(countLength/countBar))},(_,bar)=><CountInPulse key={bar} beat={countBeat>=(bar+1)*countBar?countBar:countBeat<bar*countBar?-1:countBeat-bar*countBar} total={countBar} zh={zh}/>)}</div>}<div className="score-paper engraved" data-loading={loading}>{paperTop&&!(paperTopAt&&marksLayer)&&<div className="score-paper-top" ref={paperTopRef}>{paperTop}</div>}<div className="custom-score-heading"><h1>{title.split(/(\d+)/).map((part,index)=>/^\d+$/.test(part)?<span key={index} className="score-title-number">{part}</span>:part)}</h1>{/* Two lines, not three: the composer and the work share one grey line (the composer still opens its card). */}<p className="score-byline">{config.story?<button type="button" className="score-composer" aria-expanded={!!storyCard} onClick={e=>{e.stopPropagation();setTheoryTip(null);setStoryCard(storyCard?null:{x:e.clientX,y:e.clientY})}}>{composer}</button>:<span className="score-composer">{composer}</span>}{config.subtitle&&<span className="excerpt-score-subtitle"> · {config.subtitle}</span>}{moved&&transposeInfo&&<span className="score-transposed"> · {zh?`已移调：${moveName(transposition,true)}`:`transposed ${moveName(transposition).toLowerCase()}`}</span>}</p></div>{showSpinner&&<div className="score-loading" role="status" aria-label={t.scoreViewer.engraving}/>}{error&&<div className="score-error">{error}</div>}<div ref={scoreRef} className="osmd-score" data-theory-enabled={theoryEnabled} data-note-tap={droneArmed||fingering||noteDisplay!=="off"||activeRhythmMode!=="off"||!!onPracticeNote?"on":undefined} onMouseMove={scoreMove} onMouseLeave={()=>{setFingerTip(null);setTheoryTip(null);setBeatTip(null)}} onPointerDown={scorePointerDown} onPointerMove={scorePointerMove} onPointerUp={scorePointerEnd} onPointerCancel={scorePointerEnd} onClick={scoreClick}/>{practicePinAt.length>0&&marksLayer&&createPortal(practicePinAt.map(pin=>{
         const printed=(position:number)=>scoreFactsRef.current?.measures[position-1]?.number??String(position),from=printed(pin.from),to=printed(pin.to);
         const bars=pin.from===pin.to?(zh?`第 ${from} 小节`:`bar ${from}`):(zh?`第 ${from} 至 ${to} 小节`:`bars ${from} to ${to}`),key=`${pin.from}-${pin.to}`;
         // The tempo pill's metronome loops these bars as a click track; the tally logs reps at this tempo to today's practice log.
-        return <span key={key} className="passage-practice-mark" style={{left:pin.x,top:pin.y}}><TempoPill label={zh?`${bars}的速度`:`Tempo for ${bars}`} tempo={bpm} onChange={setBpm} sounding={soundingPin===key&&(steadyClick?metro&&!metroHeld&&!playing:rangeMode==="click")} onSound={()=>{setSoundingPin(key);loopRangeClicks(pin)}}/><RepPill item={{key:`passage:${config.id}:${key}`,title:zh?`${title} ${bars}`:`${title}, ${bars}`,kind:"piece"}} tempo={bpm} zh={zh}/><CloseButton className="passage-practice-mark__close" label={zh?"收起速度和计数":"Hide tempo and count"} onClick={()=>{if(rangeMode==="click"&&soundingPin===key)stopPlayback();setPracticePins(practicePins.filter(p=>!samePin(p,pin)))}}/></span>;
-      }),marksLayer)}{scoreMarks&&marksLayer&&createPortal(scoreMarks({root:scoreRef.current,version:layoutVersion,magnify,controls:readerControls}),marksLayer)}<AnnotationLayer key={id} id={id} active={annotating} layoutReady={!loading} layoutVersion={layoutVersion} toolbar={annotationToolbar} zh={zh} onClose={()=>setAnnotating(false)} zoom={magnify} onZoom={zoomAnnotations}/>
-      </div>{droneArmed&&droneHint&&<div className="drone-hint" role="status">{t.scoreViewer.droneTip}</div>}{notice&&<div className="drone-hint" role="status">{notice}</div>}{rangeBarAt&&isRange&&!(closeup&&selection&&closeup.from===selection.from&&closeup.to===selection.to)&&<div className="range-bar" role="toolbar" aria-label={zh?"所选小节":"Selected bars"} style={{left:rangeBarAt.x+rangeBarNudge.x,top:rangeBarAt.y+rangeBarNudge.y}} onPointerDown={dragRangeBar} onClickCapture={e=>{if(rangeBarDragged.current){rangeBarDragged.current=false;e.preventDefault();e.stopPropagation()}}} onClick={e=>e.stopPropagation()}>{/* Icons only, each named by its tooltip. ▶ plays just these bars once; Listen in the toolbar plays on from them. */}<button type="button" className={rangeMode==="once"?"has-tip on":"has-tip"} data-tip={rangeMode==="once"?(zh?"停止":"Stop"):(zh?"播放所选小节":"Play selection")} aria-label={rangeMode==="once"?(zh?"停止":"Stop"):(zh?"播放所选小节":"Play selection")} onClick={()=>playRange(false)}><PracticeIcon name={rangeMode==="once"?"pause":"play"}/></button><button type="button" className={rangeMode==="loop"?"has-tip on":"has-tip"} data-tip={zh?"循环所选小节":"Loop selection"} aria-label={zh?"循环所选小节":"Loop selection"} aria-pressed={rangeMode==="loop"} onClick={()=>playRange(true)}><PracticeIcon name="loop"/></button>{config.practiceGuide&&<button type="button" className="has-tip" data-tip={zh?"近看":"Close-up"} aria-label={zh?"近看所选小节":"Close-up of selected bars"} onClick={openCloseup}><PracticeIcon name="zoom"/></button>}{config.practiceGuide&&(()=>{const saved=!!selection&&trickyBits.some(bit=>bit.id===bitId(config.id,selection.from,selection.to)),label=saved?(zh?"已存入精练小节，点按移除":"Saved to Tricky bits. Tap to remove"):(zh?"存入精练小节":"Save to Tricky bits");return <button type="button" className={saved?"has-tip on":"has-tip"} data-tip={label} aria-label={label} aria-pressed={saved} onClick={toggleTrickyBit}><PracticeIcon name={saved?"bookmarkFilled":"bookmark"}/></button>})()}{config.practiceGuide&&selection&&(()=>{const on=practicePins.some(p=>samePin(p,selection)),label=on?(zh?"收起速度和计数":"Hide tempo and count"):(zh?"为这几小节加速度和计数":"Tempo and count for these bars");return <button type="button" className={on?"has-tip on":"has-tip"} data-tip={label} aria-label={label} aria-pressed={on} onClick={()=>setPracticePins(on?practicePins.filter(p=>!samePin(p,selection)):[...practicePins,{from:selection.from,to:selection.to}])}><PracticeIcon name="tempo"/></button>})()}</div>}{aside&&<div className="score-aside">{aside}</div>}</div>{stage&&<div className="reader-stage">{typeof stage==="function"?stage({fingering}):stage}</div>}{(dock||closeupOpen)&&<div className="reader-dock">{closeup&&<PassageGuide key={`${closeup.from}-${closeup.to}`} rhythm={passageRhythm(closeup.from,closeup.to)} xml={guideXml.current} events={sequenceRef.current.events.slice(sequenceRef.current.measureStarts[closeup.from-1]??0,sequenceRef.current.measureStarts[closeup.to]??sequenceRef.current.events.length)} from={closeup.from} to={closeup.to} numbers={closeup.numbers} quarterBpm={bpm*(config.pulsePerMeasure?((scoreFactsRef.current?.measures[closeup.from-1]?.beats??4)*4/(scoreFactsRef.current?.measures[closeup.from-1]?.beatType??4)):tempoSectionAt(closeup.from)?.beat??1)} sempreStaccato={config.sempreStaccatoFromMeasure!==undefined&&closeup.from>=config.sempreStaccatoFromMeasure} title={title} initialDisplay={{names:noteDisplay,accidentals,rhythm:activeRhythmMode==="bars"}} onClose={()=>setCloseup(null)}/>}{dock}</div>}
+        return <span key={key} className="passage-practice-mark" style={{left:pin.x,top:pin.y}}><TempoPill label={zh?`${bars}的速度`:`Tempo for ${bars}`} tempo={bpm} onChange={setBpm} history={`passage:${config.id}:${key}`} sounding={soundingPin===key&&(steadyClick?metro&&!metroHeld&&!playing:rangeMode==="click")} onSound={()=>{setSoundingPin(key);loopRangeClicks(pin)}}/><RepPill item={{key:`passage:${config.id}:${key}`,title:zh?`${title} ${bars}`:`${title}, ${bars}`,kind:"piece"}} tempo={bpm} zh={zh}/><CloseButton className="passage-practice-mark__close" label={zh?"收起速度和计数":"Hide tempo and count"} onClick={()=>{if(rangeMode==="click"&&soundingPin===key)stopPlayback();setPracticePins(practicePins.filter(p=>!samePin(p,pin)))}}/></span>;
+      }),marksLayer)}{scoreMarks&&marksLayer&&createPortal(scoreMarks({root:scoreRef.current,version:layoutVersion,magnify,controls:readerControls}),marksLayer)}{ladder&&ladderAt&&marksLayer&&createPortal(<TempoLadderCard key={`${ladder.key}:${ladder.start}:${ladder.target}`} options={ladder} tempo={bpm} zh={zh} style={{left:ladderAt.x,top:ladderAt.y,transform:ladderAt.below?"none":undefined}}
+        rep={{key:ladder.key,title:ladder.title,kind:ladder.key.startsWith("tricky:")?"tricky-bit":"piece"}} onTempo={ladderTempo} onClose={closeLadder}/>,marksLayer)}{paperTop&&paperTopAt&&marksLayer&&createPortal(<div className="score-paper-top score-paper-top--beside-tempo" ref={paperTopRef} style={{left:paperTopAt.x,top:paperTopAt.y}}>{paperTop}</div>,marksLayer)}<AnnotationLayer key={memoryId} id={memoryId} active={annotating} layoutReady={!loading} layoutVersion={layoutVersion} toolbar={annotationToolbar} zh={zh} onClose={()=>setAnnotating(false)} zoom={magnify} onZoom={zoomAnnotations}/>
+      </div>{droneArmed&&droneHint&&<div className="drone-hint" role="status">{t.scoreViewer.droneTip}</div>}{notice&&<div className="drone-hint" role="status">{notice}</div>}{follow.showResume&&<ResumeFollowingPill direction={follow.direction} zh={zh} onResume={follow.resume}/>}{!ladder&&rangeBarAt&&isRange&&!(closeup&&selection&&closeup.from===selection.from&&closeup.to===selection.to)&&<div className="range-bar" role="toolbar" aria-label={zh?"所选小节":"Selected bars"} style={{left:rangeBarAt.x+rangeBarNudge.x,top:rangeBarAt.y+rangeBarNudge.y}} onPointerDown={dragRangeBar} onClickCapture={e=>{if(rangeBarDragged.current){rangeBarDragged.current=false;e.preventDefault();e.stopPropagation()}}} onKeyDown={e=>{if(e.key==="Enter"||e.key===" ")e.stopPropagation()}} onClick={e=>e.stopPropagation()}>{/* Icons only, each named by its tooltip. ▶ plays just these bars once; Listen in the toolbar plays on from them. */}<button type="button" className={rangeMode==="once"?"has-tip on":"has-tip"} data-tip={rangeMode==="once"?(zh?"停止":"Stop"):(zh?"播放所选小节":"Play selection")} aria-label={rangeMode==="once"?(zh?"停止":"Stop"):(zh?"播放所选小节":"Play selection")} onClick={()=>playRange(false)}><PracticeIcon name={rangeMode==="once"?"pause":"play"}/></button><button type="button" className={rangeMode==="loop"?"has-tip on":"has-tip"} data-tip={zh?"循环所选小节":"Loop selection"} aria-label={zh?"循环所选小节":"Loop selection"} aria-pressed={rangeMode==="loop"} onClick={()=>playRange(true)}><PracticeIcon name="loop"/></button>{config.practiceGuide&&<button type="button" className="has-tip" data-tip={zh?"近看":"Close-up"} aria-label={zh?"近看所选小节":"Close-up of selected bars"} onClick={openCloseup}><PracticeIcon name="zoom"/></button>}{config.practiceGuide&&(()=>{const saved=!!selection&&trickyBits.some(bit=>bit.id===bitId(config.id,selection.from,selection.to)),label=saved?(zh?"已存入精练小节，点按移除":"Saved to Tricky bits. Tap to remove"):(zh?"存入精练小节":"Save to Tricky bits");return <button type="button" className={saved?"has-tip on":"has-tip"} data-tip={label} aria-label={label} aria-pressed={saved} onClick={toggleTrickyBit}><PracticeIcon name={saved?"bookmarkFilled":"bookmark"}/></button>})()}{config.practiceGuide&&selection&&(()=>{const on=practicePins.some(p=>samePin(p,selection)),label=on?(zh?"收起速度和计数":"Hide tempo and count"):(zh?"为这几小节加速度和计数":"Tempo and count for these bars");return <button type="button" className={on?"has-tip on":"has-tip"} data-tip={label} aria-label={label} aria-pressed={on} onClick={()=>setPracticePins(on?practicePins.filter(p=>!samePin(p,selection)):[...practicePins,{from:selection.from,to:selection.to}])}><PracticeIcon name="tempo"/></button>})()}{config.practiceGuide&&selection&&(()=>{const bit=trickyBits.find(entry=>entry.id===bitId(config.id,selection.from,selection.to));return <ReaderPopover className="has-tip" label={zh?"速度阶梯":"Tempo ladder"} trigger={<PracticeIcon name="ladder"/>} open={ladderSetupOpen} onOpenChange={setLadderSetupOpen}><TempoLadderSetup key={`${selection.from}-${selection.to}`} initial={{start:bpm,target:bit?.goal&&bit.goal>bpm?bit.goal:bpm+10}} zh={zh} onStart={startLadder}/></ReaderPopover>})()}</div>}{aside&&<div className="score-aside">{aside}</div>}</div>{stage&&<div className="reader-stage">{typeof stage==="function"?stage({fingering}):stage}</div>}{(dock||closeupOpen)&&<div className="reader-dock">{closeup&&<PassageGuide key={`${closeup.from}-${closeup.to}`} rhythm={passageRhythm(closeup.from,closeup.to)} xml={guideXml.current} events={sequenceRef.current.events.slice(sequenceRef.current.measureStarts[closeup.from-1]??0,sequenceRef.current.measureStarts[closeup.to]??sequenceRef.current.events.length)} from={closeup.from} to={closeup.to} numbers={closeup.numbers} quarterBpm={bpm*(config.pulsePerMeasure?((scoreFactsRef.current?.measures[closeup.from-1]?.beats??4)*4/(scoreFactsRef.current?.measures[closeup.from-1]?.beatType??4)):tempoSectionAt(closeup.from)?.beat??1)} sempreStaccato={config.sempreStaccatoFromMeasure!==undefined&&closeup.from>=config.sempreStaccatoFromMeasure} title={title} initialDisplay={{names:noteDisplay,accidentals,rhythm:activeRhythmMode==="bars"}} onClose={()=>setCloseup(null)}/>}{dock}</div>}
 
     </section>{theoryTip&&<div className="theory-tip" style={clampTip(theoryTip.x,theoryTip.y,280,150,"below")}><strong>{theoryTip.title}</strong><p>{theoryTip.text}</p></div>}{storyCard&&config.story&&<StoryCard composer={composer} title={title} story={config.story} style={clampTip(storyCard.x,storyCard.y,340,260,"below")} onClose={()=>setStoryCard(null)}/>}{beatTip&&!fingerTip&&<div className="beat-tip" role="tooltip" style={{left:beatTip.x,top:beatTip.y}}>{beatTip.text}</div>}{fingerTip&&<div className={fingering?"flute-tip finger-chart":"flute-tip note-info-tip"} style={clampTip(fingerTip.x,fingerTip.y,fingering?238:200,fingering?(fingeringsForMidi(midiForPitch(fingerTip.pitch))?.fingerings.length??1)*88+34:56,"above")}>{(noteDisplay!=="off"||fingering)&&<strong>{noteDisplay==="solfege"?fingerTip.solfege:fingerTip.name}<sup>{fingerTip.octave}</sup></strong>}{fingering&&(()=>{
         // Every way to play the note, each with its name, drawn on the card itself: nothing to click, so the card can close the moment the pointer moves on.

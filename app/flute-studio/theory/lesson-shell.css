@@ -141,14 +141,14 @@
   .lesson-shell .lesson-choices{gap:8px}
   .lesson-shell .lesson-choices button{min-width:60px;min-height:44px;padding:4px 10px;font-size:18px}
   .lesson-shell .note-practice,.lesson-shell .clef-compare{gap:6px}
-  .lesson-shell .sequence-keyboard.is-visible{max-width:260px;margin:0 auto}
+  .lesson-shell .sequence-keyboard.is-visible{max-width:352px;margin:0 auto}
   .lesson-shell .lesson-scene:has(.sequence-keyboard.is-visible) .sequence-staff{height:calc(var(--scene-h) - 20px)}
   .lesson-shell .clef-compare .theory-staff{height:var(--scene-h)}
   .lesson-shell .theory-memory-methods{gap:6px}
   .lesson-shell .theory-memory-methods button{padding:6px;font-size:12px;min-height:44px}
   .lesson-shell .measures-tools{min-height:44px;margin-top:4px;gap:6px;flex-wrap:wrap}
   .lesson-shell .measures-choices{gap:6px}
-  .lesson-shell .rhythm-controls{height:60px;min-height:44px;gap:8px}
+  .lesson-shell.lesson-shell .rhythm-controls{height:60px;min-height:44px;gap:8px}
   .lesson-shell .rhythm-controls>.rhythm-clap{width:52px;height:52px;font-size:28px}
   .lesson-shell.rhythm-lesson .lesson-scene .rhythm-score,.lesson-shell.rhythm-lesson .lesson-scene .rhythm-tree{height:var(--scene-h)}
   .lesson-shell .lesson-status{margin:2px 0 0!important;font-size:12px}
@@ -182,10 +182,27 @@
 @media(max-width:760px){
   html body .lesson-shell.lesson-shell .lesson-scene{flex:1 1 0;height:auto;min-height:0;justify-content:center}
 }
-/* Phones: in scenes with a staff plus a keyboard or buttons (Accidentals, Key signatures, Rests), the staff drawing
-   shrinks to the room left (it scales evenly), so nothing overlaps Cookie's bubble. */
+/* Phones, every lesson: when a staff and its controls (answer buttons, a keyboard, a slider, Clear) need more height than
+   the scene has, the staff drawing shrinks (it scales evenly, never grows) and the controls keep their size, so nothing
+   slides under Cookie's bubble. Scenes that already fit are unchanged. */
 @media(max-width:760px){
-  html body .lesson-shell .lesson-scene>:is(.acc-scene,.rests-scene){flex:1 1 0;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%}
-  html body .lesson-shell .lesson-scene>:is(.acc-scene,.rests-scene)>svg.engraved-row{flex:1 1 0;min-height:70px;height:auto!important;max-height:100%;width:100%}
-  html body .lesson-shell .lesson-scene>:is(.acc-scene,.rests-scene)>:not(svg){flex:none}
+  html body .lesson-shell .lesson-scene>:not(svg){flex:0 1 auto;min-height:0}
+  html body .lesson-shell .lesson-scene>:not(svg):not(:has(svg)){flex:none}
+  html body .lesson-shell .lesson-scene>:not(svg):has(>svg){display:flex;flex-direction:column;align-items:center}
+  html body .lesson-shell .lesson-scene>:not(svg):has(>svg)>:not(svg){flex:none}
+  html body .lesson-shell.lesson-shell .lesson-scene>svg,html body .lesson-shell.lesson-shell .lesson-scene>*>svg{flex:0 1 auto;min-height:80px;width:100%}
+}
+/* Phones: in scenes with a staff plus a keyboard or buttons (Accidentals, Key signatures, Rests, the lesson 7 rhythm
+   practice), the staff drawing grows into the room left and shrinks when there is less, so nothing overlaps Cookie's bubble. */
+@media(max-width:760px){
+  html body .lesson-shell .lesson-scene>:is(.acc-scene,.rests-scene,.dt-practice){flex:1 1 0;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%}
+  html body .lesson-shell .lesson-scene>:is(.acc-scene,.rests-scene,.dt-practice)>svg.engraved-row{flex:1 1 0;min-height:70px;height:auto!important;max-height:100%;width:100%}
+  html body .lesson-shell .lesson-scene>:is(.acc-scene,.rests-scene,.dt-practice)>:not(svg){flex:none}
+  /* Lesson 7 wraps its practice in .dt-scene-content: the wrapper passes the room on. */
+  html body .lesson-shell .lesson-scene>.dt-scene-content:has(>.dt-practice){flex:1 1 0;min-height:0;display:flex;flex-direction:column}
+  html body .lesson-shell .lesson-scene>.dt-scene-content>.dt-practice{flex:1 1 0;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%}
+  html body .lesson-shell .lesson-scene>.dt-scene-content>.dt-practice>svg.engraved-row{flex:1 1 0;min-height:70px;height:auto!important;max-height:100%;width:100%}
+  html body .lesson-shell .lesson-scene>.dt-scene-content>.dt-practice>:not(svg){flex:none}
+  /* The rhythm practice has the most controls under its staff, so its staff may get a little smaller than the others. */
+  html body .lesson-shell .lesson-scene :is(.dt-scene-content>.dt-practice,.dt-practice)>svg.engraved-row{min-height:60px}
 }

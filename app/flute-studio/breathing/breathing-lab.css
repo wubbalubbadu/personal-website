@@ -1,121 +1,114 @@
-.breathing-lab{height:100dvh;box-sizing:border-box;padding:86px 28px 24px;color:#292a33;background:white;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Arial,sans-serif;display:flex;flex-direction:column;gap:20px}.bl-header{display:flex;justify-content:space-between;align-items:center;flex-shrink:0}.bl-header a{color:#71747e;font-size:13px;text-decoration:none}.bl-header h1{font-size:36px;letter-spacing:-.04em;margin:6px 0 0;font-weight:780}.bl-workspace{display:grid;grid-template-columns:190px minmax(260px,1fr) 280px;gap:16px;flex:1;min-height:0}.breathing-lab button,.breathing-lab input{font:inherit}.breathing-lab button{cursor:pointer;border:0}.breathing-lab button:focus-visible,.breathing-lab input:focus-visible,.breathing-lab summary:focus-visible{outline:2px solid #678956;outline-offset:3px}.bl-exercises{display:flex;flex-direction:column;gap:10px;overflow-y:auto}.bl-exercises button{display:flex;align-items:center;gap:12px;text-align:left;padding:18px 12px;background:#f6f7f5;border-radius:18px;color:#292a33}.bl-exercises button[aria-pressed=true]{background:#e7eee3;color:#40553d}.bl-exercises button>span{font-size:28px;width:30px;text-align:center}.bl-exercises strong{font-size:14px;display:block}.bl-exercises small{font-size:12px;color:#71747e;display:block;margin-top:6px}.bl-stage{background:#f1f5f6;border-radius:24px;display:flex;flex-direction:column;min-height:0;overflow:hidden}.bl-scene{position:relative;flex:1;min-height:120px;display:grid;place-items:center}.bl-illustration{width:100%;height:100%;position:absolute;inset:0}.bl-body{position:absolute;inset:0}.bl-body canvas{display:block}.bl-cue{font-size:16px;text-align:center;margin:12px 16px 20px;min-height:22px;color:#53656a}.bl-visuals{display:flex;justify-content:center;gap:8px;padding:0 12px 16px}.bl-visuals button{border-radius:13px;padding:10px 12px;background:transparent;color:#71747e;font-size:12px;display:flex;align-items:center;gap:6px}.bl-visuals button[aria-pressed=true]{background:white;color:#40553d;box-shadow:0 4px 16px #292a3309}.bl-visuals span{font-size:20px}.bl-controls{border-radius:24px;background:#fff;box-shadow:0 10px 30px #292a3310;padding:22px;display:flex;flex-direction:column;gap:12px;overflow-y:auto}.bl-controls h2{font-size:20px;letter-spacing:-.02em;margin:0}.bl-controls p{font-size:14px;line-height:1.4;color:#71747e;margin:8px 0 0}.bl-ring{width:100%;max-height:230px;flex:1;min-height:140px;overflow:visible}.bl-phase{font:600 18px -apple-system,BlinkMacSystemFont,Arial;fill:#71747e}.bl-count{font:740 36px -apple-system,BlinkMacSystemFont,Arial;fill:#292a33}.bl-total{font-size:18px;fill:#71747e}.bl-durations{display:flex;gap:12px}.bl-durations label{display:flex;flex:1;flex-direction:column;gap:6px;font-size:13px;color:#71747e}.bl-durations input,.bl-hold input{width:100%;box-sizing:border-box;background:#f1f1f4;border:0;border-radius:12px;padding:8px 12px;font-size:20px;color:#292a33}.bl-hold{font-size:12px;color:#71747e}.bl-hold summary{cursor:pointer}.bl-hold label{display:flex;gap:12px;align-items:center;margin-top:8px}.bl-hold input{width:80px;font-size:14px}.bl-metronome{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:8px}.bl-metronome label{display:flex;align-items:baseline;gap:5px;font-size:20px}.bl-metronome input{width:60px;border:0;background:transparent;font-size:24px;color:#40553d}.bl-metronome small{font-size:11px;color:#71747e}.bl-metronome button{background:none;color:#71747e;font-size:12px;padding:8px}.bl-start{padding:14px;background:#e7eee3;color:#40553d;border-radius:13px;font-weight:680}.bl-edit{position:relative;font-size:13px;color:#71747e}.bl-edit summary{cursor:pointer;padding:12px;background:#f1f1f4;border-radius:12px}.bl-edit>div{position:absolute;right:0;top:46px;z-index:90;background:white;box-shadow:0 10px 30px #292a3320;border-radius:18px;padding:18px;width:280px;display:grid;gap:12px}.bl-edit label{display:grid;gap:5px}.bl-edit input{border:0;background:#f1f1f4;padding:10px;border-radius:12px;width:100%;box-sizing:border-box}.bl-edit small{line-height:1.4;font-size:11px}.bl-large-ring{width:75%;max-width:420px}.bl-large-ring .bl-ring{max-height:none}.bl-loading{color:#71747e;font-size:14px}
-@media(max-height:760px) and (min-width:761px){.breathing-lab{padding-top:78px;gap:12px}.bl-header h1{font-size:24px}.bl-controls{padding:16px;gap:8px}.bl-ring{max-height:180px;min-height:110px}.bl-exercises button{padding:13px 10px}}
-@media(max-width:1000px){.bl-workspace{grid-template-columns:150px minmax(220px,1fr) 240px;gap:10px}.breathing-lab{padding-left:16px;padding-right:16px}.bl-controls{padding:16px}}
-@media(max-width:760px){.breathing-lab{height:auto;min-height:100dvh;padding:80px 14px 100px}.bl-header h1{font-size:28px}.bl-workspace{grid-template-columns:minmax(0,1fr) 200px;grid-template-rows:auto 430px}.bl-exercises{grid-column:1/-1;flex-direction:row;overflow-x:auto}.bl-exercises button{flex:0 0 145px;padding:12px}.bl-stage{min-width:0}.bl-controls{gap:8px;padding:12px}.bl-controls h2{font-size:16px}.bl-controls p{font-size:12px}.bl-ring{min-height:90px}.bl-visuals{flex-wrap:wrap;gap:0;padding:6px}.bl-visuals button{padding:8px;font-size:11px}.bl-cue{font-size:14px}.bl-metronome{flex-wrap:wrap}.bl-edit>div{width:250px}}
-@media(max-width:440px){.bl-workspace{grid-template-columns:1fr;grid-template-rows:auto 300px auto}.bl-controls{display:grid;grid-template-columns:1fr 1fr;align-items:center}.bl-controls>.bl-ring{grid-row:1/4;grid-column:1;min-height:170px}.bl-controls>div:first-child{grid-column:1/-1}.bl-start{grid-column:1/-1}.bl-stage{min-height:280px}}
-
-/* Keep the exercise controls above the floating practice-tool launcher. */
-.breathing-lab{padding-bottom:90px}
-.bl-metronome label,.bl-metronome input,.bl-metronome small,.bl-metronome button{font-size:14px}
-.bl-metronome label{gap:4px}.bl-metronome input{width:48px}
-.bl-visuals{flex-wrap:wrap;gap:2px}.bl-visuals button{padding:8px}
-.bl-sequence{min-height:0;overflow:auto;flex:1}
-.bl-sequence header{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:#71747e;margin-bottom:8px}
-.bl-sequence header small{font-size:11px}
-.bl-step{display:grid;grid-template-columns:44px 1fr;align-items:center;gap:8px;padding:7px 5px;border-radius:8px}
-.bl-step[aria-current=step]{background:#f1f5ef}
-.bl-step b{font-size:12px;font-weight:550;color:#53656a}
-.bl-step-dots{display:flex;gap:5px;flex-wrap:wrap}
-.bl-dot-group{display:flex;gap:3px;flex-wrap:wrap}
-.bl-dot-group i{display:block;width:5px;height:5px;border-radius:50%;background:#87b4c8;opacity:.28}
-.bl-dot-group.exhale i{background:#ca9295}.bl-dot-group.hold i{background:#cab994}
-.bl-dot-group i.lit,.bl-dot-group i.current{opacity:1}
-.bl-dot-group i.current{box-shadow:0 0 0 2px #40553d40;transform:scale(1.25)}
-.bl-current{font-size:14px;color:#40553d}
-@media(max-width:440px){.bl-sequence,.bl-current{grid-column:1/-1}.bl-sequence{max-height:220px}}
-
-/* Phone: the stage sat in a fixed 300px row, shorter than the ring, the cue
-   and the view buttons together, so they drew over each other. It takes its
-   natural height now: the ring at a set size, then the cue, then the views.
-   The page itself scrolls (see studio-shell.css). */
-@media(max-width:760px){
-  .bl-workspace{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto auto auto!important;flex:none}
-  .bl-stage{min-height:0!important;overflow:visible}
-  .bl-scene{flex:none;height:250px;min-height:0}
-  .bl-scene .bl-ring{max-height:240px}
-  .bl-cue{margin:6px 16px 10px}
-  .bl-visuals{padding:0 8px 12px}
-  .bl-header{padding-top:0}
-}
-
-/* Current studio look (replacing the green boxes): the title where every
-   other page has it, grey pills with the selected one dark, one compact
-   controls card, and a single dark Start. */
-.breathing-lab{padding:64px 24px 24px}
+/* Breathing Lab. Rewritten October 19, 2026 from several stacked override layers into one file.
+   Desktop and iPad: patterns | stage with its view switch under it | controls. Phone: one screen, no scrolling:
+   pattern chips, the stage (it takes whatever height is left), the view switch, then the controls card. */
+.breathing-lab{height:100dvh;box-sizing:border-box;padding:64px 24px 24px;color:#292a33;background:#fff;display:flex;flex-direction:column}
+.breathing-lab button{font:inherit}
 .bl-header,.bl-workspace{width:min(1120px,100%);margin-inline:auto}
-.bl-header{padding:50px 4px 20px}
-.bl-header h1{margin:0;font-size:42px;line-height:1.04;font-weight:760;letter-spacing:-.04em}
+.bl-header{padding:50px 4px 20px;flex-shrink:0}
+.bl-header h1{margin:0;font-size:42px;line-height:1.04;font-weight:780;letter-spacing:-.04em}
+.bl-workspace{display:grid;grid-template-columns:190px minmax(260px,1fr) 280px;gap:16px;flex:1;min-height:0;max-height:680px}
 
-.bl-exercises button{border:0!important;background:#f4f4f5!important;box-shadow:none!important;color:#45464f}
-.bl-exercises button strong{color:#292a33;font-weight:650}
-.bl-exercises button small{color:#85868e}
-.bl-exercises button[aria-pressed=true]{background:#292a33!important}
+/* Patterns: filter chips. Grey, the chosen one dark (the one place dark fills are allowed). */
+.bl-exercises{display:flex;flex-direction:column;gap:10px;overflow-y:auto;scrollbar-width:none}
+.bl-exercises::-webkit-scrollbar{display:none}
+.bl-exercises button{display:block;text-align:left;padding:16px 14px;border:0;border-radius:18px;background:#f4f4f5;color:#45464f}
+.bl-exercises strong{display:block;font-size:14px;font-weight:600;color:#292a33}
+.bl-exercises small{display:block;margin-top:6px;font-size:12px;color:#85868e}
+.bl-exercises button[aria-pressed=true]{background:#292a33}
 .bl-exercises button[aria-pressed=true] strong{color:#fff}
 .bl-exercises button[aria-pressed=true] small{color:#c9cad0}
 
-.bl-visuals button{background:transparent;color:#6f7178}
-.bl-visuals button[aria-pressed=true]{background:#fff;color:#292a33;box-shadow:0 1px 3px rgba(41,42,51,.1)}
+/* Stage and the view switch under it. The switch is the studio's .view-switch (studio-shared.css); only placed here. */
+.bl-stage-column{display:flex;flex-direction:column;align-items:center;gap:10px;min-width:0;min-height:0}
+.bl-stage{align-self:stretch;flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;border-radius:24px;background:#f1f5f6}
+.bl-scene{position:relative;flex:1;min-height:0;display:grid;place-items:center}
+.bl-illustration,.bl-body{position:absolute;inset:0;width:100%;height:100%}
+.bl-body canvas{display:block}
+.bl-body p,.bl-loading{margin:0;padding:16px;text-align:center;font-size:14px;color:#71747e}
+.bl-large-ring{width:min(75%,420px);height:100%;display:grid;place-items:center}
+.bl-ring{width:100%;max-height:100%;overflow:visible}
+.bl-phase{font:600 18px -apple-system,BlinkMacSystemFont,Arial,sans-serif;fill:#71747e}
+.bl-count{font:740 36px -apple-system,BlinkMacSystemFont,Arial,sans-serif;fill:#292a33;font-variant-numeric:tabular-nums}
+.bl-total{font-size:18px;fill:#71747e}
+.bl-cue{margin:10px 16px 18px;min-height:22px;text-align:center;font-size:16px;line-height:1.35;color:#53656a;animation:bl-cue-in .4s ease}
+@keyframes bl-cue-in{from{opacity:0}}
+.bl-visuals{flex:none;max-width:100%}
 
-.bl-controls{display:flex!important;flex-direction:column;gap:14px;padding:16px!important;border:1px solid #ececef!important;border-radius:20px!important;background:#fff!important;box-shadow:none!important}
-.bl-counts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.bl-count-step{display:grid;gap:5px;justify-items:center}
-.bl-count-step>span{font-size:12px;font-weight:600;color:#6f7178}
-.bl-stepper{display:inline-flex;align-items:center;justify-content:space-between;width:100%;height:36px;padding:0 3px;border-radius:11px;background:#f1f1f2}
-.bl-stepper button{width:28px;height:30px;border:0;border-radius:8px;background:transparent;color:#45464f;font:inherit;font-size:17px;cursor:pointer}
-.bl-stepper button:hover{background:#e4e4e7}
-.bl-stepper b{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;color:#292a33}
-.bl-stepper small{font-size:11px;font-weight:600;color:#85868e}
-.bl-play-row{display:flex;align-items:center;gap:8px}
-.bl-tempo{width:auto;flex:1 1 120px;min-width:100px;box-sizing:border-box}
-.bl-sound{width:36px;height:36px;flex:0 0 auto;border:0;border-radius:50%;background:#f1f1f2;color:#45464f;display:grid;place-items:center;cursor:pointer}
-.bl-sound svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-.bl-sound[aria-pressed=false]{color:#a3a5ab}
-.bl-start{flex:0 0 auto;min-width:56px;padding:0 12px!important;white-space:nowrap;height:40px!important;border:0!important;border-radius:12px!important;background:#e7eee3!important;color:#40553d!important;font-size:15px!important;font-weight:650!important;box-shadow:none!important}
-.bl-start:hover{background:#dce8d7!important}
+/* Controls card: white, hairline, no shadow. */
+.bl-controls{align-self:start;display:flex;flex-direction:column;gap:14px;padding:16px;border:1px solid #ececef;border-radius:20px;background:#fff;min-width:0}
+.bl-counts{display:grid;gap:6px}
+.bl-count-step{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.bl-count-step>span:first-child{font-size:13px;font-weight:600;color:#6f7178}
+/* The counts are the studio Stepper (components/Stepper.tsx); only its width is set here. */
+.bl-stepper{width:112px;flex:none}
+.bl-play-row{display:grid;gap:8px}
+/* The tempo pill in plain grey: the sound is a setting that is usually on, so the shared purple "metronome ticking"
+   would be lit all the time. On shows as a white circle behind the icon (the grey controls' own selected look). */
+.bl-play-row .tempo-pill{justify-content:space-between;width:100%;box-sizing:border-box;background:#f1f1f2;color:#45464f;box-shadow:none}
+.bl-play-row .tempo-pill .tempo-pill__sound{background:transparent;color:#9a9ca3}
+.bl-play-row .tempo-pill.is-sounding .tempo-pill__sound{background:#fff;color:#292a33;box-shadow:0 1px 2px rgba(41,42,51,.12)}
+.bl-play-row .tempo-pill :is(.tempo-pill__step,.tempo-pill__value input){color:#45464f}
+/* Start / Stop: the studio's plain grey action button, with its icon. */
+.bl-start{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:40px;padding:0 14px;border:0;border-radius:12px;background:#f1f1f2;color:#292a33;font-size:15px;font-weight:600;white-space:nowrap}
+.bl-start svg{width:18px;height:18px}
+@media(hover:hover){.bl-start:hover{background:#e8e8ea}}
+.bl-note{font-size:12px;color:#71747e}
 
-/* Phone: one screen, no scrolling. The tab bar says where you are, so no
-   title; the patterns are a single swipe row of names; the ring is a set
-   size; the controls card sits right under it. */
+/* The eight rounds of a changing pattern (Sequence.tsx), one row. */
+.bl-sequence{display:grid;grid-template-columns:auto 1fr;gap:6px;align-items:stretch}
+.bl-sequence__legend{display:grid;grid-template-rows:1fr 1fr 4px;font-size:11px;color:#85868e}
+.bl-sequence__legend span{display:flex;align-items:center;gap:4px}
+.bl-sequence__legend span::before{content:"";width:6px;height:6px;border-radius:50%;background:#87b4c8}
+.bl-sequence__legend .is-out::before{background:#ca9295}
+.bl-sequence ol{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:3px;margin:0;padding:0;list-style:none}
+.bl-sequence li{position:relative;display:grid;grid-template-rows:1fr 1fr 4px;justify-items:center;padding:4px 0 0;border-radius:8px;overflow:hidden}
+.bl-sequence li b{font-size:12px;font-weight:500;line-height:1.4;font-variant-numeric:tabular-nums;color:#45464f}
+.bl-sequence li b+b{color:#85868e}
+.bl-sequence li i{align-self:end;width:100%;height:3px;background:#c9cad0;transform-origin:left;transform:scaleX(0)}
+.bl-sequence li[aria-current=step]{background:#eee7f2}
+.bl-sequence li[aria-current=step] b{color:#79588e}
+.bl-sequence li[aria-current=step] i{background:#79588e}
+
+/* Short windows on desktop: a smaller title so the stage keeps its room. */
+@media(max-height:760px) and (min-width:761px){
+  .bl-header{padding:34px 4px 14px}
+  .bl-header h1{font-size:36px}
+  .bl-exercises button{padding:13px 12px}
+}
+/* Phone and iPad portrait: the controls card is wide and short, the three counts side by side, tempo and Start on one row. */
+@media(max-width:1000px){
+  .bl-counts{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .bl-count-step{flex-direction:column;align-items:stretch;gap:4px}
+  .bl-count-step>span:first-child{text-align:center;font-size:12px}
+  .bl-stepper{width:100%}
+  .bl-play-row{grid-template-columns:minmax(0,1fr) auto}
+}
+/* iPad portrait and small laptops: a third column would squeeze the stage and the eight rounds, so the controls sit
+   under the stage, as wide as it. */
+@media(max-width:1000px) and (min-width:761px){
+  .breathing-lab{padding-inline:20px}
+  .bl-workspace{grid-template-columns:170px minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;gap:12px;max-height:880px}
+  .bl-exercises{grid-row:1/3}
+  .bl-controls{grid-column:2;align-self:stretch}
+  /* A full-width tempo pill spread its − and + far from the number. */
+  .bl-play-row{grid-template-columns:240px auto;justify-content:space-between}
+}
+
+/* Phone: one screen. The tab bar says where you are, so no title. studio-shell.css fixes this page to 100dvh with
+   !important padding; the bottom padding is matched with !important here because the controls end the page. */
 @media(max-width:760px){
-  .studio-route .breathing-lab{padding-bottom:12px!important}
+  .studio-route .breathing-lab{padding-left:16px;padding-right:16px;padding-bottom:calc(12px + env(safe-area-inset-bottom))!important}
   .bl-header{display:none}
-  .bl-workspace{gap:10px!important}
-  .bl-exercises{gap:6px!important}
-  .bl-exercises button{flex:0 0 auto!important;padding:8px 14px!important;border-radius:999px!important}
-  .bl-exercises button small{display:none}
-  .bl-scene{height:210px}
-  .bl-scene .bl-ring{max-height:200px}
-  .bl-cue{margin:4px 12px 6px;font-size:13px}
-  .bl-visuals{padding:0 6px 8px;gap:2px}
-  .bl-visuals button{padding:6px 10px;font-size:12px}
-  .bl-controls{padding:12px!important;gap:10px}
+  .bl-workspace{display:flex;flex-direction:column;gap:10px;max-height:none}
+  .bl-exercises{flex:none;flex-direction:row;gap:6px;overflow-x:auto;margin-right:-16px;padding-right:16px}
+  .bl-exercises button{flex:0 0 auto;height:34px;display:inline-flex;align-items:center;padding:0 14px;border-radius:17px;background:#f1f1f4}
+  .bl-exercises strong{font-size:13px;color:#5a5c63}
+  .bl-exercises small{display:none}
+  .bl-stage-column{flex:1;min-height:0;gap:8px}
+  .bl-stage{min-height:200px}
+  .bl-cue{margin:4px 12px 10px;font-size:14px}
+  .bl-controls{align-self:stretch;flex:none;gap:10px;padding:12px}
+  .bl-play-row .tempo-pill .tempo-pill__value input{width:34px}
 }
-.bl-controls{align-self:start}
 
-/* October 2026: on desktop and iPad the three columns share one height instead of the middle one running to the
-   bottom of the window; the ring keeps a comfortable size. The tempo is the studio TempoPill (beat sound in it). */
-@media(min-width:761px){
-  .bl-workspace{flex:none;align-items:stretch}
-  .bl-scene{flex:1 0 auto;min-height:320px}
-  .bl-play-row{display:flex;align-items:center;gap:8px}
-  .bl-play-row .tempo-pill{flex:1 1 auto;justify-content:space-between}
-}
-.bl-play-row .tempo-pill{flex:1 1 auto;justify-content:space-between}
-
-/* Controls panel (Oct 16): it is narrow, so the counts are three rows (label left, stepper right) instead of three
-   steppers squeezed side by side; tempo and Start each get a full row. The tempo pill is plain grey here (beat sound is
-   a setting that stays on, so the shared "metronome on" blue and purple lit it all the time; on shows as a dark icon),
-   and Start is the studio's plain grey button, not green. */
-html body .bl-counts{grid-template-columns:1fr;gap:6px}
-html body .bl-count-step{display:flex;align-items:center;justify-content:space-between;gap:10px}
-html body .bl-count-step>span{font-size:13px;font-weight:600;color:#6f7178}
-html body .bl-count-step .bl-stepper{width:112px;flex:none}
-html body .bl-play-row{display:grid;grid-template-columns:1fr;gap:8px}
-html body .bl-play-row .tempo-pill{justify-content:space-between;width:100%;box-sizing:border-box;background:#f1f1f2;box-shadow:none}
-html body .bl-play-row .tempo-pill .tempo-pill__sound{background:transparent;color:#9a9ca3}
-/* Beat sound on: a white circle behind the metronome, the grey controls' own "selected" look (the trill chart's D/E
-   toggle); off: just the grey icon. */
-html body .bl-play-row .tempo-pill.is-sounding .tempo-pill__sound{background:#fff;color:#292a33;box-shadow:0 1px 2px rgba(41,42,51,.12)}
-html body .bl-play-row .tempo-pill :is(.tempo-pill__step,.tempo-pill__value input){color:#45464f}
-html body .bl-start.bl-start{width:100%;background:#f1f1f2!important;color:#292a33!important}
-@media(hover:hover){html body .bl-start.bl-start:hover{background:#e8e8ea!important}}
+@media(prefers-reduced-motion:reduce){.bl-cue{animation:none}}

@@ -11,8 +11,9 @@
  * Results are read relative to the player's own tuning: most flutes and
  * players sit a little sharp or flat overall, so the median of every note is
  * taken as "your tuning" and each note is shown against that. The raw values
- * against A = 440 are kept too.
+ * against the studio's A (440 unless the player picked another) are kept too.
  */
+import {referenceA} from "./toolSounds";
 
 const SHARPS=["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"];
 const FLATS=["C","D♭","D","E♭","E","F","G♭","G","A♭","A","B♭","B"];
@@ -45,14 +46,14 @@ export const GIVE_UP_MS=9000;
 /** Two readings of one note further apart than this ask for a third. */
 export const DISAGREE_CENTS=15;
 
-export const centsFrom=(hz:number,midi:number)=>1200*Math.log2(hz/(440*2**((midi-69)/12)));
+export const centsFrom=(hz:number,midi:number)=>1200*Math.log2(hz/(referenceA()*2**((midi-69)/12)));
 export function median(values:number[]){
   if(!values.length)return 0;
   const sorted=[...values].sort((a,b)=>a-b),mid=Math.floor(sorted.length/2);
   return sorted.length%2?sorted[mid]:(sorted[mid-1]+sorted[mid])/2;
 }
 
-/** Readings per note (cents against A = 440). */
+/** Readings per note (cents against the studio's A). */
 export type Readings=Record<number,number[]>;
 
 /** Notes with fewer than two readings, or two that disagree. */
@@ -67,8 +68,10 @@ export function needsAnotherGo(readings:Readings,low:number,high:number){
 
 export type TestResult={
   id:string;date:string;low:number;high:number;
-  /** Median cents of each note, against A = 440. */
+  /** Median cents of each note, against `a4`. */
   raw:Record<number,number>;
+  /** The A the test was measured against; tests from before calibration existed were all 440. */
+  a4?:number;
   /** Your tuning: the median of every note. */
   offset:number;
 };
@@ -77,7 +80,7 @@ export function buildResult(readings:Readings,low:number,high:number):TestResult
   const raw:Record<number,number>={};
   for(let midi=low;midi<=high;midi++){const r=readings[midi];if(r?.length)raw[midi]=Math.round(median(r))}
   const offset=Math.round(median(Object.values(raw)));
-  return {id:String(Date.now()),date:new Date().toISOString(),low,high,raw,offset};
+  return {id:String(Date.now()),date:new Date().toISOString(),low,high,raw,offset,a4:referenceA()};
 }
 
 /** The heat map's column names. */

@@ -63,6 +63,25 @@ export function Notehead({ x, y = HEAD_Y }: { x: number; y?: number }) {
   return <ellipse cx={x} cy={y} rx={HEAD_RX} ry={HEAD_RY} fill="currentColor" transform={`rotate(-21 ${x} ${y})`} />;
 }
 
+/** A half note's open head: the same tilted oval, with a narrower, more tilted hole (even-odd), so it reads on any fill. */
+export function HollowNotehead({ x, y = HEAD_Y }: { x: number; y?: number }) {
+  const rx = 0.42 * S, ry = 0.2 * S, turn = -14, rad = (turn * Math.PI) / 180, dx = rx * Math.cos(rad), dy = rx * Math.sin(rad);
+  const outer = `M ${x - HEAD_RX} ${y} a ${HEAD_RX} ${HEAD_RY} 0 1 0 ${2 * HEAD_RX} 0 a ${HEAD_RX} ${HEAD_RY} 0 1 0 ${-2 * HEAD_RX} 0 Z`;
+  const inner = `M ${x - dx} ${y - dy} a ${rx} ${ry} ${turn} 1 0 ${2 * dx} ${2 * dy} a ${rx} ${ry} ${turn} 1 0 ${-2 * dx} ${-2 * dy} Z`;
+  return <path d={outer + inner} fillRule="evenodd" fill="currentColor" transform={`rotate(-21 ${x} ${y})`} />;
+}
+
+/** A lone eighth's flag, hanging from the top of an up stem: swells out, then curls back in (SMuFL flag8thUp, simplified). */
+export function Flag({ x, top = BEAM_TOP }: { x: number; top?: number }) {
+  const sx = x + STEM_DX + STEM_WIDTH;
+  return (
+    <path
+      d={`M ${sx} ${top} C ${sx + 0.15 * S} ${top + 1.3 * S} ${sx + 1.7 * S} ${top + 1.6 * S} ${sx + 1.05 * S} ${top + 3.3 * S} C ${sx + 1.25 * S} ${top + 2.2 * S} ${sx + 0.45 * S} ${top + 1.75 * S} ${sx} ${top + 1.45 * S} Z`}
+      fill="currentColor"
+    />
+  );
+}
+
 export function Stem({ x, top = BEAM_TOP }: { x: number; top?: number }) {
   return <rect x={x + STEM_DX} y={top} width={STEM_WIDTH} height={HEAD_Y - top} fill="currentColor" />;
 }

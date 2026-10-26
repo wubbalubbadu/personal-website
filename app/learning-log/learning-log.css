@@ -855,7 +855,9 @@ body {
   display: block;
   border-radius: 8px;
   background: var(--panel);
-  touch-action: none;
+  /* Lets a swipe that starts on a drawing scroll the page on touch screens. The one canvas you drag on
+     (VqQuantize) sets touch-action: none itself. */
+  touch-action: pan-y;
 }
 .ll-widget__row {
   display: flex;
@@ -1028,5 +1030,144 @@ body {
   }
   .ll-formula__tex {
     font-size: 15px;
+  }
+
+  /* Top bar on a phone: the back link and the path share the first row on one line each (the chapter title
+     gives way with an ellipsis); Read / Slides and progress drop to a second row instead of being squeezed off.
+     Inside a chapter the path starts at the course (the unit name is already hidden, so is its slash). */
+  .ll-top {
+    flex-wrap: wrap;
+    row-gap: 8px;
+    column-gap: 12px;
+  }
+  .ll-back {
+    white-space: nowrap;
+  }
+  .ll-top__crumb {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .ll-top__crumb > * {
+    white-space: nowrap;
+    flex: none;
+  }
+  .ll-top__crumb > b {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+  .ll-top__crumb:has(.ll-top__unit) > .ll-crumb-btn:first-child,
+  .ll-top__crumb:has(.ll-top__unit) > .ll-crumb-btn:first-child + span,
+  .ll-top__crumb span:has(+ .ll-top__unit) {
+    display: none;
+  }
+  .ll-top:has(.ll-modes)::after {
+    content: "";
+    order: 2;
+    flex-basis: 100%;
+    height: 0;
+  }
+  .ll-top__spacer {
+    display: none;
+  }
+  .ll-top .ll-modes {
+    order: 3;
+  }
+  .ll-top .ll-note-src,
+  .ll-top .ll-progress-chip {
+    order: 4;
+    margin-left: auto;
+    align-self: center;
+  }
+
+  /* Phone pass (layout only). Figures are drawn about 700 units wide with 11-unit labels, which shrank to
+     5-7px on a phone. They keep a 600px minimum (labels about 9px) and scroll sideways inside the figure;
+     the caption stays the width of the page. */
+  .ll-figure {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
+  .ll-figure svg {
+    min-width: 600px;
+  }
+
+  /* Widget drawings: the fixed desktop height (set inline) left empty bands above and below once the drawing
+     shrank to the phone's width, and its labels shrank with it. Height follows the drawing; labels are drawn
+     larger so they land near 9-10px. A little less padding gives the drawing more width. */
+  .ll-widget {
+    padding: 12px;
+  }
+  .ll .ll-widget__canvas {
+    height: auto !important;
+    overflow: visible;
+  }
+  .ll-widget .ll-fig-label {
+    font-size: 16px;
+  }
+
+  /* Inline formulas may break between terms (KaTeX allows it) instead of pushing a line off screen, and a
+     list's single column never grows past the page. */
+  .ll-math-inline {
+    white-space: normal;
+  }
+  .ll-keypoints ul {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* A question is one paragraph: as a flex row each run of text or formula became its own column. */
+  .ll-qa__q {
+    display: block;
+    position: relative;
+    padding-left: 18px;
+  }
+  .ll-qa__q::before {
+    position: absolute;
+    left: 0;
+  }
+
+  /* Small text controls get a finger-sized tap area without moving anything. */
+  .ll-back,
+  .ll-crumb-btn,
+  .ll-log-back {
+    position: relative;
+  }
+  .ll-back::after,
+  .ll-crumb-btn::after,
+  .ll-log-back::after {
+    content: "";
+    position: absolute;
+    inset: -12px -6px;
+  }
+  .ll-aside__toggle {
+    padding: 10px 0;
+    margin: -10px 0;
+  }
+  .ll-qa__q {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+  .ll-qa__q::before {
+    top: 6px;
+  }
+  .ll-modes button {
+    padding: 10px 14px;
+  }
+  .ll-chip {
+    padding: 9px 12px;
+  }
+  .ll-widget input[type="range"] {
+    height: 28px;
+  }
+  .ll-seq-cell {
+    width: 28px;
+    height: 28px;
+  }
+  /* The piano roll's note names and time are sized inline for desktop. */
+  .ll-roll .ll-fig-label {
+    font-size: 16px !important;
+  }
+  /* A key point whose formula is longer than the screen scrolls on its own line instead of widening the page. */
+  .ll-keypoints li {
+    overflow-x: auto;
+    overflow-y: hidden;
   }
 }

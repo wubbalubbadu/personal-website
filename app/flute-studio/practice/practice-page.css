@@ -392,6 +392,7 @@
 .deadline-card__head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
 .deadline-card__name{padding:0;border:0;background:none;font:inherit;font-size:16px;font-weight:650;color:#292a33;text-align:left;cursor:pointer}
 .deadline-card__name:hover{color:#46633d}
+.deadline-card__end{display:inline-flex;align-items:baseline;gap:14px;flex:none}
 .deadline-card__when{flex:none;font-size:12.5px;font-weight:600;color:#765d31;background:#f3ead6;padding:3px 10px;border-radius:999px}
 .deadline-card__pieces{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0;padding:0;list-style:none}
 .deadline-card__pieces .tag-pill{height:28px;padding:0 12px;font-size:13px;text-decoration:none}
@@ -567,19 +568,8 @@
 .practice-page .working-card:has(.working-card__remove)>:is(a,span){padding-right:32px}
 .practice-page .working-card__remove{top:6px;right:4px;width:28px;height:28px}
 
-/* A piece you can open, inside a deadline: white with a hairline and its list's status dot (Working on, Want to
-   learn, Learned). Deliberately not a tag pill: tags describe, these go somewhere. */
-.piece-chip{display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 12px 0 10px;border-radius:999px;background:#fff;box-shadow:0 0 0 1px #e1e1e5;color:#292a33;font-size:13px;font-weight:500;text-decoration:none;white-space:nowrap}
-a.piece-chip:hover{box-shadow:0 0 0 1px #c9cbd1}
-.piece-chip .status-dot{width:7px;height:7px}
-.piece-chip .status-dot--none{background:transparent;box-shadow:inset 0 0 0 1.5px #c9cbd1}
+/* Piece chips moved to components/piece-chip.css (Home's Today card uses them too). */
 /* Tricky bits on My Studio: one card per piece, its bars listed inside. */
-.practice-page .tricky-group-card>div{display:block;height:100%;box-sizing:border-box;padding:11px 14px 10px;border-radius:14px;box-shadow:0 0 0 1px #e6e6ea}
-.practice-page .tricky-group-card b{display:block;font-size:15px;font-weight:600;color:#292a33;margin-bottom:4px}
-.practice-page .tricky-group-card ul{display:grid;gap:0;margin:0;padding:0;list-style:none}
-.practice-page .tricky-group-card a{display:block;padding:3px 0;font-size:13px;color:#45464f;text-decoration:none}
-.practice-page .tricky-group-card a:hover{color:#46633d}
-.practice-page .tricky-group-card a small{font-size:13px;color:#9a9ba2}
 .practice-page :is(#today,#coming-up,#working-on,#insights,[id^="shelf-"]){scroll-margin-top:76px}
 .practice-page .section-head__actions{display:inline-flex;gap:16px;align-items:baseline}
 
@@ -669,7 +659,6 @@ a.piece-chip:hover{box-shadow:0 0 0 1px #c9cbd1}
 }
 @media(max-width:600px){
   /* Tricky bits: white cards like the rest on the grey page (they were transparent with a hairline, blurring into it). */
-  html body .practice-page .tricky-group-card>div{background:#fff;box-shadow:none}
   /* Today's practice: the time and play button on the right of the title, one compact block. */
   html body .practice-page .practice-today__clock{display:grid!important;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;column-gap:10px;padding:16px 16px 14px!important;text-align:left}
   html body .practice-page .practice-today__clock>.practice-today__what{grid-column:1;min-width:0}
@@ -680,5 +669,39 @@ a.piece-chip:hover{box-shadow:0 0 0 1px #c9cbd1}
    as Library rows, at the card's top right. */
 .practice-page .working-card:has(.working-card__list)>:is(a,span.is-disabled){padding-right:60px}
 .practice-page .working-card__list{position:absolute;top:8px;right:8px}
+/* The button's wrapper is a span, so the card rule for .working-card>span (white, hairline, padding) caught it too. */
+.practice-page .working-card>.working-card__list{display:block;height:auto;padding:0;border-radius:0;background:none;box-shadow:none}
 .practice-page .working-card__list .status-button__trigger{width:32px;height:32px;padding:0;justify-content:center}
 .practice-page .working-card__list .status-button__trigger>span{display:none}
+
+/* Getting faster: what has sped up over the weeks (lib/tempoHistory.ts), a tiny line and first to latest tempo. */
+.getting-faster h2{margin:0 0 10px;font-size:16px;font-weight:600}
+.practice-page .getting-faster .section-head{align-items:center}
+.getting-faster ol{display:grid;gap:2px;margin:0;padding:0;list-style:none}
+.getting-faster li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid #f2f2f4}
+.getting-faster li:last-child{border-bottom:0}
+.getting-faster__title{min-width:0;font-size:15px;color:#292a33;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.getting-faster__title small{display:block;font-size:12px;color:#85868e}
+.getting-faster b{font-size:15px;font-weight:600;color:#2f5d99;font-variant-numeric:tabular-nums;white-space:nowrap}
+.getting-faster b span[aria-hidden]{font-weight:400;color:#85868e}
+@media(max-width:520px){.getting-faster .tempo-trend--small{width:64px}}
+
+/* Tricky bits in My Studio (PassagesList.tsx): one checklist across pieces, the Routine's rows (circle, words, trash),
+   on a white card. The piece's name over its bars and tempo; a small tempo line once there are two days of it. Done
+   passages fold under "Done", greyed and struck through like a ticked routine step. */
+.practice-page .passages__list{margin:0;padding:6px 8px;border-radius:18px;background:#fff;box-shadow:var(--studio-card-shadow,0 0 0 1px #ececef)}
+.practice-page .passages__list li{min-height:56px}
+.practice-page .passages__main{flex:1 1 auto;min-width:0;display:grid;gap:2px;padding:6px 0;color:inherit;text-decoration:none}
+.practice-page .passages__main b{font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.practice-page .passages__main small{font-size:13px;color:#85868e;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(hover:hover){.practice-page .passages__main:hover b{color:#46633d}}
+.practice-page .passages__trend{flex:0 0 auto;display:grid;place-items:center}
+.practice-page .passages__list li.done .passages__main b{color:#98999f;text-decoration:line-through}
+.practice-page .passages__list li.done .routine-list__check span{background:#ebebee;border-color:#ebebee;color:#45464f}
+.practice-page .passages__done{margin-top:12px}
+.practice-page .passages__done summary{width:max-content;padding:4px 0;font-size:13px;font-weight:600;color:#85868e;cursor:pointer}
+.practice-page .passages__done[open] summary{margin-bottom:8px}
+/* Touch has no hover: the trash stays visible there. */
+@media(hover:none){.practice-page .passages__list .routine-delete{opacity:1}}
+/* Trash asks once: armed, it turns red and stays shown until the second tap or a few seconds pass. */
+.practice-page .passages__list .routine-delete.is-armed{opacity:1;color:#c0392b}

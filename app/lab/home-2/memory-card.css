@@ -1,0 +1,283 @@
+/* Direction 2: memory card. The PS1 memory card manager as a link-in-bio:
+ * one save block per thing, icon, plain title, one line, last saved date.
+ * Pixel font only for the small system labels; everything you read is plain. */
+
+.mc {
+  --card-bg: linear-gradient(180deg, #ffe9f2 0%, #ffe2cf 100%);
+  --block: rgba(255, 255, 255, 0.78);
+  --block-on: #ffffff;
+  --cursor: #d6146f;
+  --sys: #7a4a64;
+  --bevel-hi: rgba(255, 255, 255, 0.9);
+  --bevel-lo: rgba(122, 74, 100, 0.25);
+  background: var(--card-bg);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .mc {
+    --card-bg: linear-gradient(180deg, #1a1030 0%, #2a1030 100%);
+    --block: rgba(255, 255, 255, 0.06);
+    --block-on: rgba(255, 255, 255, 0.12);
+    --cursor: #ff6eac;
+    --sys: #c9a6e8;
+    --bevel-hi: rgba(255, 255, 255, 0.14);
+    --bevel-lo: rgba(0, 0, 0, 0.4);
+  }
+}
+:root[data-theme="dark"] .mc {
+  --card-bg: linear-gradient(180deg, #1a1030 0%, #2a1030 100%);
+  --block: rgba(255, 255, 255, 0.06);
+  --block-on: rgba(255, 255, 255, 0.12);
+  --cursor: #ff6eac;
+  --sys: #c9a6e8;
+  --bevel-hi: rgba(255, 255, 255, 0.14);
+  --bevel-lo: rgba(0, 0, 0, 0.4);
+}
+
+.mc-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px 4px;
+  font-family: var(--font-pix);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--sys);
+}
+.mc-title {
+  color: var(--cursor);
+}
+.mc-slot {
+  margin-right: auto;
+  padding: 2px 7px;
+  border: 1px solid var(--bevel-lo);
+  border-radius: 4px;
+  font-size: 10px;
+}
+.mc-grid {
+  padding: 4px 16px 24px;
+}
+
+/* ---- owner panel ---- */
+.mc-owner {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.mc-owner h1 {
+  margin: 0 0 2px;
+  font-size: 23px;
+  font-weight: 500;
+}
+.mc-owner p {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.4;
+  color: var(--ink-70);
+}
+
+/* ---- save blocks ---- */
+.mc-saves {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 7px;
+}
+.mc-saves > li {
+  border-radius: 12px;
+  background: var(--block);
+  box-shadow: inset 1px 1px 0 var(--bevel-hi), inset -1px -1px 0 var(--bevel-lo);
+}
+.mc-saves > li.is-on {
+  background: var(--block-on);
+  box-shadow: 0 0 0 2px var(--cursor), inset 1px 1px 0 var(--bevel-hi);
+  animation: mc-cursor 1s steps(2, jump-none) infinite alternate;
+}
+@keyframes mc-cursor {
+  from { box-shadow: 0 0 0 2px var(--cursor), inset 1px 1px 0 var(--bevel-hi); }
+  to { box-shadow: 0 0 0 2px transparent, inset 1px 1px 0 var(--bevel-hi); }
+}
+.mc-save {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  gap: 11px;
+  align-items: center;
+  width: 100%;
+  min-height: 64px;
+  padding: 9px 11px;
+  border: 0;
+  background: none;
+  text-align: left;
+}
+.mc-save__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: #fff4ea;
+  box-shadow: inset 1px 1px 0 #fff, inset -2px -2px 0 rgba(122, 74, 100, 0.3);
+}
+.mc-save__icon svg {
+  width: 32px;
+  height: 32px;
+}
+.is-on .mc-save__icon svg {
+  animation: mc-icon 0.6s steps(2, jump-none) infinite alternate;
+}
+@keyframes mc-icon {
+  from { transform: translateY(0); }
+  to { transform: translateY(-2px); }
+}
+.mc-save__text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.mc-save__text b {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.mc-save__text span {
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--ink-70);
+}
+.mc-save__meta {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  font-family: var(--font-pix);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: var(--sys);
+}
+.mc-free {
+  margin: 10px 2px 0;
+  font-family: var(--font-pix);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--sys);
+  opacity: 0.8;
+}
+
+/* ---- detail ---- */
+.mc-detail {
+  padding: 0 14px 14px;
+}
+.mc-detail__more {
+  margin: 0 0 10px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--ink-70);
+}
+.mc-detail__go {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  border-radius: 999px;
+  background: var(--accent-wash);
+  color: var(--accent);
+  font-size: 15.5px;
+  font-weight: 500;
+}
+.mc-detail__go:hover,
+.mc-detail__go:active {
+  background: var(--accent);
+  color: var(--paper);
+}
+.mc-detail .lab-links a {
+  min-height: 44px;
+  align-items: center;
+}
+
+/* ---- tablets: the phone layout, as a centred column ---- */
+@media (min-width: 600px) and (max-width: 899px) {
+  .mc-top,
+  .mc-grid {
+    max-width: 620px;
+    margin: 0 auto;
+  }
+  .mc-grid {
+    padding-top: 24px;
+  }
+  .mc-owner {
+    grid-template-columns: 76px 1fr;
+  }
+  .mc-owner h1 {
+    font-size: 32px;
+  }
+  .mc-owner p {
+    font-size: 16px;
+  }
+}
+
+/* ---- wide: list left, the picked save right ---- */
+@media (min-width: 900px) {
+  .mc-top {
+    padding: 22px 40px 6px;
+  }
+  .mc-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 500px) minmax(0, 440px);
+    justify-content: center;
+    align-items: start;
+    gap: 40px;
+    padding: 4vh 40px 40px;
+  }
+  .mc-owner {
+    grid-template-columns: 76px 1fr;
+    margin-bottom: 20px;
+  }
+  .mc-owner h1 {
+    font-size: 32px;
+  }
+  .mc-owner p {
+    font-size: 16px;
+  }
+  .mc-right {
+    position: sticky;
+    top: 24px;
+  }
+  .mc-panel {
+    padding: 20px 20px 8px;
+    border-radius: 16px;
+    background: var(--block-on);
+    box-shadow: inset 1px 1px 0 var(--bevel-hi), inset -1px -1px 0 var(--bevel-lo);
+  }
+  .mc-panel__head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .mc-save__icon--big {
+    width: 64px;
+    height: 64px;
+  }
+  .mc-save__icon--big svg {
+    width: 48px;
+    height: 48px;
+  }
+  .mc-panel h2 {
+    margin: 0 0 2px;
+    font-size: 22px;
+    font-weight: 500;
+  }
+  .mc-panel__saved {
+    font-family: var(--font-pix);
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    color: var(--sys);
+  }
+  .mc-panel .mc-detail {
+    padding: 0;
+  }
+  .mc-panel .mc-detail__go {
+    margin-bottom: 12px;
+  }
+}

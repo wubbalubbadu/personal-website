@@ -185,3 +185,12 @@ html body .reader-workspace .pitch-row .pitch-start.is-on{color:#a8392f}
 html body .reader-workspace .pitch-row .pitch-start.is-on svg{transform:scale(calc(1 + var(--level,0) * .35));transition:transform .08s linear}
 /* The mic-blocked sentence is longer than the readout's width: let it wrap to two lines instead of cutting off. */
 .pitch-readout:has([role=alert]){white-space:normal;width:22em;line-height:1.3;font-style:normal}
+
+/* Compare with (Long tones): an earlier attempt drawn faint and grey behind today's coloured line, so today's always
+   reads first. The switch is the studio's view switch (studio-shared.css .view-switch), at the right of the graph's
+   header; the line it adds sits under each finished note's numbers. */
+.tone-plot-compare{fill:none;stroke:#7d8088;stroke-width:2.5;opacity:.3;vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round}
+.tone-graph-head:has(.tone-compare){flex-wrap:wrap;align-items:center;row-gap:6px}
+.tone-compare{display:flex;align-items:center;gap:8px;margin-left:auto}
+.tone-compare>span{font-size:12px;color:var(--tone-muted)}
+.tone-note-card small.tone-note-compare{color:#5a5c63}

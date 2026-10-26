@@ -295,9 +295,9 @@ export function AnnotationLayer({id,active,layoutReady,layoutVersion,toolbar,zh,
       <CloseButton className="markup-icon markup-close" label={zh?'关闭批注':'Close markup'} onClick={()=>{endEditing();onClose()}}/>
       {storageError&&<span role="status">{zh?'无法保存。请保持页面打开。':'Could not save. Keep this page open.'}</span>}
     </div>,toolbar)}
+    {clearArmed&&createPortal(<div className="drone-hint" role="status">{zh?'再点一次“清除”，删除本页所有批注':'Tap Clear again to remove every mark on this page'}</div>,document.body)}
     {/* A keyboard-enabled drawing application contains its own text editor. */}
     {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex */}
-    {clearArmed&&createPortal(<div className="drone-hint" role="status">{zh?'再点一次“清除”，删除本页所有批注':'Tap Clear again to remove every mark on this page'}</div>,document.body)}
     <div ref={layer} role="application" aria-label={zh?'乐谱批注':'Score annotations'} tabIndex={active?0:-1} className={`annotation-layer ${active?'is-active':''} ${only?'is-pencil-only':''} tool-${tool}`} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onDoubleClick={e=>{if(active&&tool==='select'){const mark=markAt(point(e),e.target);if(mark&&!isInk(mark))setEditing(mark.id)}}} onKeyDown={keys}>
       {/* Legacy ink is a local data URL, not a network image. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -106,3 +106,43 @@ test('routine and studio share scale tracking identities and range fallback',asy
   assert.notEqual(scaleTrackingId({...block,type:'natural'},'full',span,1),id);
   assert.notEqual(scaleTrackingId({...block,form:'thirds'},'full',span,1),id);
 });
+
+const name=n=>`${n.step}${n.alter===1?'#':n.alter===-1?'b':n.alter===2?'x':n.alter===-2?'bb':''}${n.octave}`;
+const keyOf=id=>majorKeys.find(key=>key.id===id);
+
+test('turns: 1 2 3 2 and 1 2 1 3 step through the scale and mirror on the way down',()=>{
+  const turn=scaleNotes(keyOf('C'),'one','major','scale','none','tonic',undefined,'turn').map(name);
+  assert.deepEqual(turn.slice(0,8),['C4','D4','E4','D4','D4','E4','F4','E4']);
+  assert.deepEqual(turn.slice(20,28),['A4','B4','C5','B4','C5','B4','A4','B4']);
+  const neighbor=scaleNotes(keyOf('C'),'one','major','scale','none','tonic',undefined,'neighbor').map(name);
+  assert.deepEqual(neighbor.slice(0,8),['C4','D4','C4','E4','D4','E4','D4','F4']);
+});
+
+test('on an arpeggio, the 1 2 3 2 turn is the piano exam broken chord',()=>{
+  const broken=scaleNotes(keyOf('C'),'one','major','arpeggio','hold','tonic',undefined,'turn').map(name);
+  assert.deepEqual(broken.slice(0,12),['C4','E4','G4','E4','E4','G4','C5','G4','G4','C5','E5','C5']);
+  assert.equal(broken.at(-1),'C4');
+});
+
+test('dominant and diminished sevenths of the key, spelled in thirds',()=>{
+  const dom=scaleNotes(keyOf('C'),'one','major','dominantSeventh','hold').map(name);
+  assert.deepEqual(dom,['G4','B4','D5','F5','G5','F5','D5','B4','G4']);
+  const dim=scaleNotes(keyOf('C'),'one','harmonic','diminishedSeventh','none').map(name);
+  assert.deepEqual(dim,['B4','D5','F5','Ab5','B5','Ab5','F5','D5']);
+  // F♯ major's dominant is C♯7 with E♯; B♭ minor's leading-tone seventh is A C E♭ G♭.
+  assert.deepEqual(scaleNotes(keyOf('Gb'),'one','major','dominantSeventh').slice(0,4).map(name),['Db5','F5','Ab5','Cb6']);
+  assert.deepEqual(scaleNotes(keyOf('Bb'),'one','natural','diminishedSeventh').slice(0,4).map(name),['A5','C6','Eb6','Gb6']);
+  // Two octaves never pass the flute's top.
+  for(const key of majorKeys)for(const form of ['dominantSeventh','diminishedSeventh'])
+    assert.ok(scaleNotes(key,'two','major',form).every(n=>n.midi<=98),`${key.id} ${form}`);
+});
+
+test('rhythms rotate across the book like articulations',()=>{
+  const blocks=['C','G','D'].map(id=>({key:keyOf(id),type:'major',form:'scale',label:id}));
+  const xml=scaleBookMusicXML(blocks,'one',false,undefined,['even','triplet']);
+  const parts=xml.split('<words font-weight="bold">').slice(1);
+  assert.equal(parts.length,3);
+  assert.ok(!parts[0].includes('<actual-notes>3</actual-notes>'));
+  assert.ok(parts[1].includes('<actual-notes>3</actual-notes>'));
+  assert.ok(!parts[2].includes('<actual-notes>3</actual-notes>'));
+});

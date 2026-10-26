@@ -16,7 +16,6 @@ export function Math({ tex, display = false }: { tex: string; display?: boolean 
   return (
     <span
       className={display ? "ll-math-block" : "ll-math-inline"}
-      // eslint-disable-next-line react/no-danger
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );

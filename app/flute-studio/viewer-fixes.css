@@ -149,6 +149,8 @@ html body :is(.reader-workspace,.reader-settings-panel) button:hover:where(:not(
 /* ScoreViewer's paperTop slot: the page's top-left corner, level with the title, where nothing is engraved. */
 .score-paper.engraved{position:relative}
 .score-paper-top{position:absolute;left:16px;top:16px;z-index:4}
+/* Beside the opening printed tempo instead (left/top set by printedTempoAnchor), in the marks layer over the engraving. */
+.score-marks .score-paper-top--beside-tempo{pointer-events:auto;white-space:nowrap}
 /* "Scales in this piece ›" in View settings: the studio's text link (green, 600, no underline, › to another page). */
 /* The byline under a score's title: composer · work, one font (the work line's serif grey), one line. */
 /* An older rule hides every p and span in the heading (!important), so this overrides it the same way. */

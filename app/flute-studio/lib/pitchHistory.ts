@@ -14,6 +14,8 @@ import { toneSummary, type ToneAttempt } from './toneSession';
 export type PitchRecord = { at: number; pitch: string; midi: number; ms: number; center: number; drift: number; exercise: string; first?: number };
 
 const KEY = 'cookie:pitch-history';
+/** For clearing one month from Sync devices (lib/historyMonths.ts). */
+export const PITCH_HISTORY_KEY = KEY;
 const LIMIT = 6000;
 export const PITCH_UPDATED = 'cookie:pitch-updated';
 /** Beyond this, a note reads as off. Same line the live grade uses. */
@@ -33,7 +35,9 @@ export function appendPitchHistory(records: PitchRecord[]) {
 }
 /** Clear only measured pitch history; practice time and saved tests stay intact. */
 export function clearPitchHistory(): boolean {
-  try { localStorage.removeItem(KEY); } catch { return false; }
+  // The saved traces (lib/pitchTraces.ts) are pitch history too. Named here rather than imported, so this file stays
+  // loadable on its own.
+  try { localStorage.removeItem(KEY); localStorage.removeItem('cookie:pitch-traces:v1'); } catch { return false; }
   window.dispatchEvent(new Event(PITCH_UPDATED));
   return true;
 }

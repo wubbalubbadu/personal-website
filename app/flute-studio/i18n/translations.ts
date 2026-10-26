@@ -7,7 +7,7 @@ function skill(id: string, title: string, description: string) {
 const en = {
   trickyBits: {
     title: "Tricky bits",
-    empty: "Nothing saved yet. Select a few bars in a piece and tap the bookmark.",
+    empty: "When a few bars give you trouble, select them in the score and tap the bookmark.",
     openPiece: "Open full piece",
     changeBars: "Change bars",
     remove: "Remove",
@@ -74,13 +74,13 @@ const en = {
   quickTools: {
     title: "Quick tools",
     tuner: "Tuner",
-    tunerDetail: "Check pitch",
+    tunerDetail: "",
     metronome: "Metronome",
-    metronomeDetail: "Set or tap tempo",
+    metronomeDetail: "",
     drone: "Drone",
-    droneDetail: "Hold reference pitches",
+    droneDetail: "",
     roadmap: "Technique roadmap",
-    roadmapDetail: "Every flute skill on one map, from air to extended techniques",
+    roadmapDetail: "Every flute skill on one map, and what each one builds on.",
     browseMusic: "Browse music",
     browseMusicDetail: "Scores that play back, with drones, a metronome and a pencil for markings",
     exercises: "Exercises",
@@ -88,7 +88,7 @@ const en = {
     scaleStudio: "Scale Studio",
     scaleStudioDetail: "Pick a key, a scale and a range, and it writes out the exercise with fingerings for every note.",
     embouchure: "Body & embouchure",
-    embouchureDetail: "A 3D cutaway of the lips, jaw and air, from low notes to high",
+    embouchureDetail: "A 3D look at posture, air and the lips, from low notes to high.",
     fingeringChart: "Fingering chart",
     fingeringChartDetail: "Standard flute fingerings",
     trillChart: "Trill chart",
@@ -288,11 +288,12 @@ const en = {
     musicalTermsTip: "Tap a marking for what it means",
     play: "Listen",
     stop: "Stop",
-    playTip: (measure: number | null) => measure ? `Plays from bar ${measure}. Tap the bar again to clear it.` : "Plays from where you last started, or the first bar on screen. Tap a bar to start there instead.",
+    playTip: (measure: number | null) => measure ? `Plays from bar ${measure}. Tap the bar again to clear it.` : "Plays from the purple line: where you last stopped or tapped a bar, or from the top.",
     tempoAria: "Tempo",
     bpm: "BPM",
     metronome: "Metronome",
     metronomeTip: "Steady click at the selected tempo",
+    suggestedTempo: (word: string) => `${word}. The score prints no number here, so this is a suggested speed. Change it any time.`,
     tapTempo: "Tap tempo",
     accentBeat1: "Accent beat 1",
     drone: "Drone",
@@ -406,7 +407,7 @@ const en = {
     markUnlearned: "Marked as known",
     close: "Close",
     regions: [
-      { id: "foundation", title: "Air & foundation", description: "How breath, balance, and embouchure create a steady flute sound.", tone: "sage", skills: [
+      { id: "foundation", title: "Air & foundation", description: "Breath, balance and embouchure working together for a steady sound.", tone: "sage", skills: [
         skill("balance-posture", "Balance and posture", "Comfortable alignment with as little extra tension as possible."),
         skill("breath-support", "Breathing and air support", "Full, quiet breaths, with the air kept moving through the phrase."),
         skill("centered-tone", "Centered tone", "A clear, stable note in the low and middle registers."),
@@ -414,21 +415,21 @@ const en = {
         skill("decrescendo-release", "Decrescendo and release", "Tapering a note without the pitch rising or the sound collapsing."),
         skill("register-connection", "Register connection", "Moving between low, middle, and high without forcing the sound."),
       ]},
-      { id: "expression", title: "Sound & expression", description: "Control pitch, dynamics, color, vibrato, and the direction of a phrase.", tone: "pink", skills: [
+      { id: "expression", title: "Sound & expression", description: "Shaping your sound: pitch, dynamics, color, vibrato and phrasing.", tone: "pink", skills: [
         skill("dynamic-control", "Dynamic control", "Changing volume while keeping tone and pitch stable."),
         skill("vibrato", "Vibrato", "Controlled air pulses, with speed and width varied for the phrase."),
         skill("intonation-awareness", "Intonation awareness", "Hearing pitch tendencies and adjusting with air, support, embouchure."),
         skill("tone-color", "Tone color", "Making the sound warmer, clearer, softer, or more focused on purpose."),
         skill("phrasing-breath", "Phrasing and breath planning", "Choosing phrase direction and breathing places before playing."),
       ]},
-      { id: "articulation", title: "Articulation", description: "Coordinate air, tongue, and fingers for clear and varied note shapes.", tone: "sand", skills: [
+      { id: "articulation", title: "Articulation", description: "How notes begin and end, with air, tongue and fingers together.", tone: "sand", skills: [
         skill("single-tonguing", "Single tonguing", "A light tongue at the start of a note while the air keeps moving."),
         skill("slurs-legato", "Slurs and legato", "Connecting notes without bumps, gaps, or unintended accents."),
         skill("staccato-detache", "Staccato and detaché", "Varying note length without stopping the air harshly."),
         skill("mixed-articulation", "Mixed articulation patterns", "Changing slur/tongue patterns at a steady tempo."),
         skill("double-triple-tonguing", "Double and triple tonguing", "Balancing front and back syllables at speed."),
       ]},
-      { id: "fingers", title: "Fingers & patterns", description: "Develop efficient finger motion through scales, trills, and recurring patterns.", tone: "blue", skills: [
+      { id: "fingers", title: "Fingers & patterns", description: "Scales, trills and patterns for nimble fingers.", tone: "blue", skills: [
         skill("finger-coordination", "Finger coordination", "Fingers close to the keys, related fingers moving together cleanly."),
         skill("finger-trills", "Finger trills", "Common trill fingerings, trilling without gripping the flute."),
         skill("major-scales", "Major scales", "One octave, two octaves, eventually the full practical range."),
@@ -437,14 +438,14 @@ const en = {
         skill("arpeggios", "Arpeggios", "Major, minor, and dominant-seventh patterns, by ear and by hand."),
         skill("scales-thirds", "Scales in thirds", "Interval patterns beyond stepwise scales."),
       ]},
-      { id: "reading", title: "Reading & musicianship", description: "Connect notation, rhythm, harmony, listening, and musical style.", tone: "lavender", skills: [
+      { id: "reading", title: "Reading & musicianship", description: "Rhythm, keys, harmony and listening.", tone: "lavender", skills: [
         skill("pulse-subdivisions", "Pulse and subdivisions", "A steady pulse through eighths, sixteenths, triplets, dotted rhythms."),
         skill("meter", "Meter", "Simple and compound meter, then mixed and changing meters."),
         skill("keys-accidentals", "Keys and accidentals", "Recognizing key signatures, responding accurately to accidentals."),
         skill("sight-reading", "Sight-reading", "Scanning key, meter, rhythm, range, and breaths before starting."),
         skill("trills-ornaments", "Trills and ornaments", "Grace notes, trills, mordents, and turns in musical context."),
       ]},
-      { id: "extended", title: "Extended techniques", description: "The contemporary sound world of the flute.", tone: "coral", skills: [
+      { id: "extended", title: "Extended techniques", description: "The unusual sounds of the modern flute.", tone: "coral", skills: [
         skill("harmonics", "Harmonics", "Overtones from a lower fingering, compared for color and pitch."),
         skill("flutter-tonguing", "Flutter tonguing", "Tongue-rolled or throat-produced flutter tonguing."),
         skill("air-sounds", "Air sounds", "Pitched and unpitched air sounds with controlled airflow."),
@@ -461,7 +462,7 @@ const en = {
 const zh: typeof en = {
   trickyBits: {
     title: "精练小节",
-    empty: "还没有保存。在乐谱里选几个小节，点书签即可。",
+    empty: "遇到难的小节，在乐谱里选中，点一下书签。",
     openPiece: "打开整首曲子",
     changeBars: "更改小节",
     remove: "移除",
@@ -530,13 +531,13 @@ const zh: typeof en = {
   quickTools: {
     title: "快捷工具",
     tuner: "调音器",
-    tunerDetail: "检查音准",
+    tunerDetail: "",
     metronome: "节拍器",
-    metronomeDetail: "设置或点按节奏",
+    metronomeDetail: "",
     drone: "持续音",
-    droneDetail: "保持参考音高",
+    droneDetail: "",
     roadmap: "技巧路线图",
-    roadmapDetail: "所有长笛技巧都在一张地图上，从气息到现代技巧",
+    roadmapDetail: "所有长笛技巧一张图，先学什么一目了然。",
     browseMusic: "浏览曲谱",
     browseMusicDetail: "能播放的乐谱，带持续音、节拍器和可以做标记的笔",
     exercises: "练习",
@@ -544,7 +545,7 @@ const zh: typeof en = {
     scaleStudio: "音阶工作室",
     scaleStudioDetail: "选一个调、一种音阶和音域，它就帮你把练习写出来，每个音都标好指法。",
     embouchure: "身体与吹口",
-    embouchureDetail: "嘴唇、下巴和气流的 3D 剖面图，从低音到高音",
+    embouchureDetail: "用 3D 模型看姿势、气息和嘴型。",
     fingeringChart: "指法表",
     fingeringChartDetail: "标准长笛指法",
     trillChart: "颤音表",
@@ -744,11 +745,12 @@ const zh: typeof en = {
     musicalTermsTip: "点击任意记号查看含义",
     play: "试听",
     stop: "停止",
-    playTip: (measure) => measure ? `从第 ${measure} 小节开始。再点一次这个小节就取消选择。` : "从上次开始的地方播放，或从屏幕上的第一个小节开始。点一个小节就从那里开始。",
+    playTip: (measure) => measure ? `从第 ${measure} 小节开始。再点一次这个小节就取消选择。` : "从紫色竖线处播放：也就是你上次停下或点过的小节，没有的话就从头开始。",
     tempoAria: "速度",
     bpm: "BPM",
     metronome: "节拍器",
     metronomeTip: "以所选速度稳定打点",
+    suggestedTempo: (word: string) => `${word}：这里谱上没有速度数字，这是建议的速度，可以随时修改。`,
     tapTempo: "点按定速",
     accentBeat1: "重音第一拍",
     drone: "持续音",
@@ -862,7 +864,7 @@ const zh: typeof en = {
     markUnlearned: "已标记为掌握",
     close: "关闭",
     regions: [
-      { id: "foundation", title: "气息与基础", description: "通过呼吸、平衡与口型建立稳定的长笛声音。", tone: "sage", skills: [
+      { id: "foundation", title: "气息与基础", description: "呼吸、平衡和口型配合，吹出稳定的声音。", tone: "sage", skills: [
         skill("balance-posture", "平衡与姿势", "保持舒适的身体协调，尽量减少多余紧张。"),
         skill("breath-support", "呼吸与气息支持", "充分而安静地吸气，让气息贯穿乐句。"),
         skill("centered-tone", "集中的音色", "在低音和中音区获得清晰稳定的声音。"),
@@ -870,21 +872,21 @@ const zh: typeof en = {
         skill("decrescendo-release", "渐弱与收音", "逐渐收音，同时避免音高上扬或声音塌陷。"),
         skill("register-connection", "音区连接", "自然连接低、中、高音区，避免用力挤压。"),
       ]},
-      { id: "expression", title: "音色与表达", description: "控制音准、力度、音色、颤音和乐句走向。", tone: "pink", skills: [
+      { id: "expression", title: "音色与表达", description: "音准、力度、音色、颤音和乐句。", tone: "pink", skills: [
         skill("dynamic-control", "力度控制", "改变音量，同时保持音色与音准稳定。"),
         skill("vibrato", "颤音", "控制气息脉动，并根据乐句调整速度与幅度。"),
         skill("intonation-awareness", "音准意识", "听辨音准倾向，运用气息、支持与口型调整。"),
         skill("tone-color", "音色变化", "有意识地改变声音的温暖度、清晰度与集中度。"),
         skill("phrasing-breath", "乐句与换气规划", "演奏前确定乐句走向和换气位置。"),
       ]},
-      { id: "articulation", title: "吐音", description: "协调气息、舌头和手指，清晰地演奏不同音型。", tone: "sand", skills: [
+      { id: "articulation", title: "吐音", description: "音的开头和结尾，气息、舌头和手指一起配合。", tone: "sand", skills: [
         skill("single-tonguing", "单吐", "以轻巧的舌头动作起音，同时保持气息流动。"),
         skill("slurs-legato", "连线与连奏", "平滑连接音符，避免断音、间隙和意外重音。"),
         skill("staccato-detache", "断奏与分奏", "改变音符长度，避免生硬地截断气息。"),
         skill("mixed-articulation", "混合吐音音型", "以稳定速度切换连奏和吐音音型。"),
         skill("double-triple-tonguing", "双吐与三吐", "在快速演奏中平衡前后吐音音节。"),
       ]},
-      { id: "fingers", title: "手指与音型", description: "通过音阶、颤音和常见音型训练高效的手指动作。", tone: "blue", skills: [
+      { id: "fingers", title: "手指与音型", description: "音阶、颤音和常见音型，练出灵活的手指。", tone: "blue", skills: [
         skill("finger-coordination", "手指协调", "手指贴近按键，协调相关手指的动作。"),
         skill("finger-trills", "手指颤音", "熟悉常用颤音指法，避免握紧长笛。"),
         skill("major-scales", "大调音阶", "从一个八度、两个八度逐渐扩展到常用音域。"),
@@ -893,14 +895,14 @@ const zh: typeof en = {
         skill("arpeggios", "琶音", "通过听觉和手指熟悉大调、小调和属七和弦音型。"),
         skill("scales-thirds", "三度音阶", "练习级进以外的音程音型。"),
       ]},
-      { id: "reading", title: "读谱与音乐素养", description: "联系记谱、节奏、和声、听觉和音乐风格。", tone: "lavender", skills: [
+      { id: "reading", title: "读谱与音乐素养", description: "节奏、调性、和声与聆听。", tone: "lavender", skills: [
         skill("pulse-subdivisions", "节拍与细分", "在八分、十六分、三连音和附点节奏中保持稳定节拍。"),
         skill("meter", "拍子", "掌握单拍子、复拍子以及混合与变拍子。"),
         skill("keys-accidentals", "调号与临时记号", "识别调号，准确响应临时升降记号。"),
         skill("sight-reading", "视奏", "开始前浏览调号、拍号、节奏、音域与换气位置。"),
         skill("trills-ornaments", "颤音与装饰音", "在音乐语境中演奏倚音、颤音、波音与回音。"),
       ]},
-      { id: "extended", title: "扩展技巧", description: "探索长笛的当代演奏技巧。", tone: "coral", skills: [
+      { id: "extended", title: "扩展技巧", description: "现代长笛的特殊音色。", tone: "coral", skills: [
         skill("harmonics", "泛音", "从低音指法吹出泛音，比较音色与音准。"),
         skill("flutter-tonguing", "花舌", "运用舌部或喉部振动产生花舌效果。"),
         skill("air-sounds", "气声", "控制气流，产生有音高或无音高的气声。"),

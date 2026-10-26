@@ -5,7 +5,9 @@ import {useEffect,useRef,useState} from "react";
 import {useLanguage} from "./i18n/LanguageContext";
 import {PracticeIcon} from "./components/PracticeIcon";
 import "./practice-recorder.css";
+import {RecordingPlayback} from "./components/RecordingPlayback";
 import {RecordingPanel} from "./components/RecordingPanel";
+import {announcePractising} from "./lib/readerActivity";
 
 /**
  * Record your practice, the way a phone does it: while recording there is
@@ -15,7 +17,7 @@ import {RecordingPanel} from "./components/RecordingPanel";
  */
 export default function PracticeRecorder(){
   const {t,lang}=useLanguage(),zh=lang==="zh";
-  const [recording,setRecording]=useState(false),[elapsed,setElapsed]=useState(0),[take,setTake]=useState<{url:string;type:string}|null>(null),[error,setError]=useState(0);
+  const [recording,setRecording]=useState(false),[elapsed,setElapsed]=useState(0),[take,setTake]=useState<{url:string;type:string;duration:number}|null>(null),[error,setError]=useState(0);
   const recordButton=useRef<HTMLButtonElement>(null);
   const errorTimer=useRef(0),recorder=useRef<MediaRecorder|null>(null),chunks=useRef<Blob[]>([]),stream=useRef<MediaStream|null>(null),started=useRef(0);
   useEffect(()=>()=>closeMic(stream.current),[]);
@@ -30,13 +32,14 @@ export default function PracticeRecorder(){
       next.ondataavailable=e=>{if(e.data.size)chunks.current.push(e.data)};
       next.onstop=()=>{
         const blob=new Blob(chunks.current,{type:next.mimeType});
-        setTake({url:URL.createObjectURL(blob),type:next.mimeType});
+        setTake({url:URL.createObjectURL(blob),type:next.mimeType,duration:(Date.now()-started.current)/1000});
         closeMic(media);
       };
       next.start();recorder.current=next;started.current=Date.now();setElapsed(0);setRecording(true);
+      announcePractising();
     }catch{closeMic(stream.current);stream.current=null;setError(n=>n+1);window.clearTimeout(errorTimer.current);errorTimer.current=window.setTimeout(()=>setError(0),2500)}
   }
-  function stop(){recorder.current?.stop();setRecording(false)}
+  function stop(){setElapsed(Math.floor((Date.now()-started.current)/1000));recorder.current?.stop();setRecording(false)}
   /** Saves the take as an audio file, named by the date and time it ended. */
   function save(){
     if(!take)return;
@@ -49,14 +52,12 @@ export default function PracticeRecorder(){
   }
   const time=`${Math.floor(elapsed/60)}:${String(elapsed%60).padStart(2,"0")}`;
   return <div className="score-recorder">
-    <button ref={recordButton} className={recording?"tool on record-button active has-tip":"tool record-button has-tip"} aria-pressed={recording} data-tip={recording?t.recorder.stopRecording:t.recorder.recordYourPractice} aria-label={recording?t.recorder.stopRecordingAt(time):t.recorder.recordYourPractice} onClick={recording?stop:start}>
-      {recording?<span className="record-stop" aria-hidden="true"/>:<PracticeIcon name="record"/>}{recording?time:t.recorder.record}
+    <button ref={recordButton} className={recording?"tool record-button active has-tip":"tool record-button has-tip"} aria-pressed={recording} data-tip={recording?t.recorder.stopRecording:t.recorder.recordYourPractice} aria-label={recording?t.recorder.stopRecordingAt(time):t.recorder.recordYourPractice} onClick={recording?stop:start}>
+      {recording?<span className="record-stop" aria-hidden="true"/>:<PracticeIcon name="record"/>}<span className="record-button__label">{recording?time:t.recorder.record}</span>
     </button>
     {take&&<RecordingPanel anchor={recordButton} role="dialog" label={zh?"保留这段录音？":"Keep this recording?"}>
       <header><span>{zh?"保留这段录音？":"Keep this recording?"}</span><small>{time}</small></header>
-      {/* Your own flute take, just recorded: there is no speech to caption. */}
-      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-      <audio controls src={take.url}/>
+      <RecordingPlayback key={take.url} src={take.url} duration={take.duration} zh={zh}/>
       <div className="recorder-actions">
         <button type="button" className="recorder-delete" onClick={()=>setTake(null)}>{zh?"删除":"Delete"}</button>
         <button type="button" className="recorder-save" onClick={save}>{zh?"存到设备":"Save to device"}</button>

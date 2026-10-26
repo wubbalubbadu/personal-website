@@ -27,3 +27,13 @@ export function CheckIcon(){
 export function ChevronIcon(){
   return <svg {...base} className="chevron-icon"><path d="M5.5 8 10 12.5 14.5 8"/></svg>;
 }
+
+/** Keep offline: an arrow into a circle (iOS's download-to-device), distinct from the PDF download's arrow-on-a-line. */
+export function OfflineIcon(){
+  return <svg {...base}><circle cx="10" cy="10" r="7.5"/><path d="M10 6.2v7M7.2 10.6 10 13.4l2.8-2.8"/></svg>;
+}
+
+/** Kept offline: the same circle with a tick. */
+export function OfflineKeptIcon(){
+  return <svg {...base}><circle cx="10" cy="10" r="7.5"/><path d="M6.8 10.3 9 12.5l4.3-4.6"/></svg>;
+}

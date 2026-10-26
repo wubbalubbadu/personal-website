@@ -19,11 +19,16 @@ import BackChevron from "./BackChevron";
 import {AnnotationLayer} from "./AnnotationLayer";
 import {ReaderPopover} from "./ReaderPopover";
 import {usePaperMagnify} from "./usePaperMagnify";
+import {rememberLeftOff} from "../lib/readerActivity";
 import "../reader-workspace.css";
 import "../music/excerpt-reader.css";
 
 /** Original printed pages share the studio's reader chrome and markup tools. */
-export default function FixedScoreViewer({item,onInteractive}:{item:MusicItem;onInteractive?:(passageId:string)=>void}){
+/**
+ * `passage` pins one passage and hides the tabs (a mock audition asks for that one). `back` replaces the Library back
+ * link, and `headerActions` sits after the list button, like ScoreViewer's.
+ */
+export default function FixedScoreViewer({item,onInteractive,passage:pinned,back,headerActions}:{item:MusicItem;onInteractive?:(passageId:string)=>void;passage?:string;back?:{href:string;label:string};headerActions?:React.ReactNode}){
   const {lang,t}=useLanguage(),zh=lang==="zh",excerpt=item.excerpt!;
   const {record}=useRecents('music');
   const {bpm,setBpm,metro,toggleMetro,initializeScore,setBeats}=usePracticeAudio();
@@ -35,15 +40,25 @@ export default function FixedScoreViewer({item,onInteractive}:{item:MusicItem;on
   const [showTempo,setShowTempo]=useExcerptTempoMark();
   // Several passages of one piece are tabs. First visit opens the first (most
   // asked) one, after that the one you last had open; ?passage= wins over both.
-  const passages=excerpt.passages??[{id:'main',label:excerpt.passage,zhLabel:excerpt.zhPassage,pages:excerpt.pages}];
+  const allPassages=excerpt.passages??[{id:'main',label:excerpt.passage,zhLabel:excerpt.zhPassage,pages:excerpt.pages}];
+  const passages=pinned?allPassages.filter(p=>p.id===pinned).concat(allPassages.some(p=>p.id===pinned)?[]:allPassages.slice(0,1)):allPassages;
   const tabKey=`cookie:excerpt-tab:${item.id}`;
   const [passageId,setPassageId]=useState(passages[0].id);
   useEffect(()=>{
     let saved:string|null=null;try{saved=localStorage.getItem(tabKey)}catch{/* First tab still works. */}
     const wanted=new URLSearchParams(window.location.search).get('passage')??saved;
-    if(wanted&&passages.some(p=>p.id===wanted))requestAnimationFrame(()=>setPassageId(wanted));
+    // ?page= (from Home's "Where you left off"): the printed page, counted from 1. One frame, so both land together.
+    const resume=Number(new URLSearchParams(window.location.search).get('page'));
+    requestAnimationFrame(()=>{
+      if(!pinned&&wanted&&passages.some(p=>p.id===wanted))setPassageId(wanted);
+      if(resume>1)setPage(resume-1);
+    });
   },[tabKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const passage=passages.find(p=>p.id===passageId)??passages[0],pages=passage.pages;
+  // Home's "Where you left off". Not during a mock audition (a pinned passage), which is not where you stopped reading.
+  useEffect(()=>{if(!pinned)rememberLeftOff({id:item.id,page:page+1,passage:passage.id})},[pinned,item.id,page,passage.id]);
+  // A remembered page past the end (the passage changed since) falls back to the first.
+  useEffect(()=>{if(page>=pages.length)requestAnimationFrame(()=>setPage(0))},[page,pages.length]);
   function choosePassage(id:string){reset();setPage(0);setError(false);setPassageId(id);try{localStorage.setItem(tabKey,id)}catch{/* Not remembered this visit. */}}
   // Long passages (several printed pages) open on the whole page, and on a wide
   // screen two pages sit side by side like a part on the stand. Both pages get
@@ -56,7 +71,7 @@ export default function FixedScoreViewer({item,onInteractive}:{item:MusicItem;on
   const pageKey=spread?`${item.id}:${passage.id}:spread:${page}`:passages.length>1?`${item.id}:${passage.id}:page:${page}`:`${item.id}:page:${page}`;
   const metroTaps=useRef<number[]>([]);
   function tapTempo(){const now=performance.now();metroTaps.current=[...metroTaps.current.filter(t=>now-t<3000),now].slice(-5);const taps=metroTaps.current;if(taps.length>1)setBpm(60000/((now-taps[0])/(taps.length-1)))}
-  const recordings=item.recordings??[],selected=recordings.find(r=>r.id===video);
+  const recordings=item.recordings??[];
   useEffect(()=>{record(item.id);initializeScore(item.pulsePerMeasure?`${item.id}:bar-pulse`:item.id,item.defaultTempo??60);if(item.pulsePerMeasure)setBeats(1)},[record,item.id]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(()=>{
     document.documentElement.classList.toggle('score-focus-mode',focus);
@@ -100,9 +115,10 @@ export default function FixedScoreViewer({item,onInteractive}:{item:MusicItem;on
   const original=pages[page];
   return <main ref={shell} className="app-shell reader-workspace restored-reader fixed-score-reader" data-annotating={annotating} data-listen={listen||undefined}>
     <section className="workspace">
-      <header className="topbar"><div><Link className="back has-tip" href="/flute-studio/music?tag=excerpt" aria-label={zh?'返回曲库':'Back to Library'}><BackChevron/></Link><strong>{item.title}</strong></div><div>
+      <header className="topbar"><div><Link className="back has-tip" href={back?.href??"/flute-studio/music?tag=excerpt"} aria-label={back?.label??(zh?'返回曲库':'Back to Library')}><BackChevron/></Link><strong>{item.title}</strong></div><div>
         <span className="topbar-toolbar-slot"/>
         <StatusButton id={item.id} zh={zh}/>
+        {headerActions}
         {onInteractive&&(passage.scorePath??(passages.length===1&&item.scorePath))&&<div className="reader-choice format-switch" role="group" aria-label={zh?'乐谱格式':'Score format'}><button aria-pressed={true}>PDF</button><button aria-pressed={false} onClick={()=>onInteractive(passage.id)}>XML</button></div>}
         <span className="topbar-spacer"/><PracticeClockButton/><div id="reader-tools-slot" className="topbar-tools-slot"/><AccountMenu/>
       </div></header>

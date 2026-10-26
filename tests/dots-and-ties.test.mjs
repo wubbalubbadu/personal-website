@@ -136,10 +136,11 @@ const source=compile(read('rhythm/useRhythmAudio.ts')).replace("'../articulation
 const {useRhythmAudio}=await import(url(source));
 test('actual audio scheduler makes one tied voice, keeps fractional excerpts alive and cancels stale completion',async()=>{
  const previous=Object.fromEntries(['AudioContext','AudioBuffer','requestAnimationFrame','cancelAnimationFrame'].map(k=>[k,globalThis[k]]));
- const starts=[],stops=[],tones=[];let frame,context;
+ const starts=[],stops=[],tones=[];let frame;
+ const clock={currentTime:0};
  class Buffer{copyToChannel(){}}
  class Context{
-  constructor(){context=this}currentTime=0;sampleRate=44100;state='running';destination={};resume(){return Promise.resolve()}
+  get currentTime(){return clock.currentTime}sampleRate=44100;state='running';destination={};resume(){return Promise.resolve()}
   createBuffer(){return new Buffer()}
   createBufferSource(){return {connect(){return this},disconnect(){},start(at){starts.push(at)},stop(at){stops.push(at)}}}
   createGain(){return {gain:{value:1,cancelScheduledValues(){},setValueAtTime(){},linearRampToValueAtTime(){}},connect(){return this},disconnect(){}}}
@@ -149,10 +150,10 @@ test('actual audio scheduler makes one tied voice, keeps fractional excerpts ali
   const audio=useRhythmAudio(),data=compileRhythm(SYNCOPATED);let ended=false;
   await audio.counted({values:data.notes.map(n=>n.v),timeline:data.timeline,ties:data.ties,speak:false,click:false,secondsPerQuarter:1,onEnd:()=>ended=true});
   assert.equal(tones.length,5);assert.equal(tones[1].d,1);assert.deepEqual(starts,[.06,.56,1.56,2.06,3.06]);
-  audio.stop();context.currentTime=5;frame();assert.equal(ended,false);assert.ok(stops.length>0);
+  audio.stop();clock.currentTime=5;frame();assert.equal(ended,false);assert.ok(stops.length>0);
   await audio.counted({values:[1/3],timeline:[{at:0,length:1/3,midi:65}],speak:false,click:false,secondsPerQuarter:1,onEnd:()=>ended=true});
-  context.currentTime=5.2;frame();assert.equal(ended,false);
-  context.currentTime=5.5;frame();assert.equal(ended,true);
+  clock.currentTime=5.2;frame();assert.equal(ended,false);
+  clock.currentTime=5.5;frame();assert.equal(ended,true);
  }finally{Object.assign(globalThis,previous);delete globalThis.__dotTones}
 });
 

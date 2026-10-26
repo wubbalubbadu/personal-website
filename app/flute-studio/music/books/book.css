@@ -42,3 +42,8 @@
   .exercise-hub__content:has(>.book-page__back)>.book-page__back{display:inline-flex;margin:16px 0 0 -10px!important}
   .exercise-hub__content:has(>.book-page__back)>.book-page__header{margin-top:8px}
 }
+
+/* The page arrows sat right after the title, so they jumped sideways from one exercise to the next as the titles
+   changed length. On the right, just before the clock and tools, they stay in one place. */
+.topbar .book-stepper{order:2}
+.topbar :is(.practice-clock-button,.topbar-tools-slot,.account-menu){order:3}

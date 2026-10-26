@@ -14,16 +14,16 @@
 /* Text action (COMPONENTS.md): a quiet word for housekeeping, like restoring defaults. No border, no fill, grey,
    darker on hover. Not for primary actions, not for links that go somewhere (those are green text links).
    Two classes, so it beats a page's generic "section button" rule without !important. */
-:is(.studio-route,.tp-tuner) .text-action{display:inline-flex;align-items:center;min-height:32px;padding:0 4px;border:0;border-radius:8px;background:transparent;box-shadow:none;font:inherit;font-size:14px;font-weight:500;color:#6f7178;cursor:pointer}
-:is(.studio-route,.tp-tuner) .text-action:hover{background:transparent;color:#292a33}
-:is(.studio-route,.tp-tuner) .text-action:focus-visible{outline:2px solid #b8bac2;outline-offset:2px}
+:is(.studio-route,.tp-tuner,.tools-panel) .text-action{display:inline-flex;align-items:center;min-height:32px;padding:0 4px;border:0;border-radius:8px;background:transparent;box-shadow:none;font:inherit;font-size:14px;font-weight:500;color:#6f7178;cursor:pointer}
+:is(.studio-route,.tp-tuner,.tools-panel) .text-action:hover{background:transparent;color:#292a33}
+:is(.studio-route,.tp-tuner,.tools-panel) .text-action:focus-visible{outline:2px solid #b8bac2;outline-offset:2px}
 
 /* View switch (COMPONENTS.md): two or three ways to show the same page (Cards / Continuous). A quiet grey track;
    the chosen one is white with a hairline, so "selected" reads without a dark fill. */
-.studio-route .view-switch{display:inline-flex;gap:2px;padding:3px;border-radius:999px;background:#f1f1f4}
-.studio-route .view-switch button{height:30px;padding:0 14px;border:0;border-radius:999px;background:transparent;font:inherit;font-size:13px;font-weight:500;color:#6f7178;cursor:pointer}
-.studio-route .view-switch button:hover{color:#292a33}
-.studio-route .view-switch button[aria-pressed="true"]{background:#fff;color:#292a33;box-shadow:0 0 0 1px #e1e1e5,0 1px 3px rgba(41,42,51,.06)}
+:is(.studio-route,.reader-settings-panel,.tools-panel) .view-switch{display:inline-flex;gap:2px;padding:3px;border-radius:999px;background:#f1f1f4}
+:is(.studio-route,.reader-settings-panel,.tools-panel) .view-switch button{height:30px;padding:0 14px;border:0;border-radius:999px;background:transparent;font:inherit;font-size:13px;font-weight:500;color:#6f7178;cursor:pointer}
+:is(.studio-route,.reader-settings-panel,.tools-panel) .view-switch button:hover{color:#292a33}
+:is(.studio-route,.reader-settings-panel,.tools-panel) .view-switch button[aria-pressed="true"]{background:#fff;color:#292a33;box-shadow:0 0 0 1px #e1e1e5,0 1px 3px rgba(41,42,51,.06)}
 
 /* Words for screen readers only (a label whose visible form is an icon). */
 .sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
@@ -31,3 +31,7 @@
 /* No grey flash on touch: iOS Safari tints whatever a finger lands on (even mid-scroll). Presses show through the
    studio's own states instead. */
 .studio-route,.studio-route *,.studio-navigation,.studio-navigation *{-webkit-tap-highlight-color:transparent}
+
+/* Card label (COMPONENTS.md): the small capitals label inside a card or panel ("WORKING ON"). Never a page or section
+   heading, which stay sentence case. */
+.studio-route .card-label{display:flex;align-items:center;gap:6px;margin:0;font-size:11px;font-weight:600;line-height:1.3;letter-spacing:.06em;text-transform:uppercase;color:#85868e}

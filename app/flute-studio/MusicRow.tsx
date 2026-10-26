@@ -4,6 +4,7 @@ import Link from "next/link";
 import {pieceTitle,type MusicItem} from "../../content/music-library";
 import type {ExerciseFocus} from "../../content/exercise-catalog";
 import {StatusButton} from "./components/StatusButton";
+import {OfflineBadge} from "./components/OfflineButton";
 import {useLanguage} from "./i18n/LanguageContext";
 import "./components/tag-pill.css";
 import {tagTone,BEGINNER_TONE,type TagTone} from "./lib/tagTone";
@@ -35,12 +36,10 @@ export default function MusicRow({item,tagLabel}:{item:MusicItem;tagLabel:(tag:s
     ...(item.beginner?[{label:zh?"入门":"Beginner",tone:BEGINNER_TONE}]:[]),
     ...item.tags.map(tag=>({label:tagLabel(tag),tone:tagTone(tag)})),
     ...(exercise?[{label:focusLabels[exercise.focus]}]:[]),
-    // A book's row says how many pieces are inside it.
-    ...(item.bookCount?[{label:zh?`${item.bookCount} 首`:`${item.bookCount} ${item.tags.some(tag=>/^exercises?$/i.test(tag))?"exercises":item.tags.some(tag=>/^etudes?$/i.test(tag))?"etudes":"pieces"}`}]:[]),
     ...(!item.viewerPath?[{label:t.exercises.comingSoon,tone:"soon" as const}]:[]),
   ];
   const content=<>
-    <span className="music-row__copy"><strong>{title}</strong>{detail&&<small>{detail}</small>}</span>
+    <span className="music-row__copy"><strong>{title}<OfflineBadge id={item.id} zh={zh}/></strong>{detail&&<small>{detail}</small>}</span>
     <span className="tag-pills">{pills.map(pill=><span key={pill.label} className="tag-pill" data-tone={pill.tone}>{pill.label}</span>)}</span>
   </>;
   return <article className="music-row">

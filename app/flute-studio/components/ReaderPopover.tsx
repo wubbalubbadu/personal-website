@@ -1,5 +1,5 @@
 "use client";
-import {useLayoutEffect,useRef,useState,type ReactNode} from "react";
+import {useCallback,useLayoutEffect,useRef,useState,type ReactNode} from "react";
 import {createPortal} from "react-dom";
 
 /** Shared button-anchored settings surface; edits do not dismiss the panel. */
@@ -7,22 +7,22 @@ export function ReaderPopover({label,trigger,children,className="",panelClassNam
   const panel=useRef<HTMLDivElement>(null),button=useRef<HTMLButtonElement>(null);
   const [uncontrolledOpen,setUncontrolledOpen]=useState(false),[placed,setPlaced]=useState(false),[position,setPosition]=useState({left:12,top:60,width:360});
   const open=controlledOpen??uncontrolledOpen;
-  const setOpen=(value:boolean|((previous:boolean)=>boolean))=>{
+  const setOpen=useCallback((value:boolean|((previous:boolean)=>boolean))=>{
     const next=typeof value==="function"?value(open):value;
     if(controlledOpen===undefined)setUncontrolledOpen(next);
     onOpenChange?.(next);
-  };
+  },[open,controlledOpen,onOpenChange]);
   // On a phone the panel is a bottom sheet (studio-shell.css): it slides
   // away rather than vanishing, and its grip can be dragged down to close
   // it, like the tools panel's sheet.
   const [closing,setClosing]=useState(false),[dragY,setDragY]=useState(0);
   const drag=useRef<{start:number;pointer:number}|null>(null);
   const isSheet=()=>typeof window!=="undefined"&&window.matchMedia("(max-width:760px)").matches;
-  const close=()=>{
+  const close=useCallback(()=>{
     if(!isSheet()){setOpen(false);return}
     setClosing(true);
     window.setTimeout(()=>{setClosing(false);setDragY(0);setOpen(false)},220);
-  };
+  },[setOpen]);
   const grip={
     onPointerDown:(event:React.PointerEvent<HTMLDivElement>)=>{drag.current={start:event.clientY,pointer:event.pointerId};event.currentTarget.setPointerCapture(event.pointerId)},
     onPointerMove:(event:React.PointerEvent<HTMLDivElement>)=>{if(drag.current)setDragY(Math.max(0,event.clientY-drag.current.start))},
@@ -65,6 +65,6 @@ export function ReaderPopover({label,trigger,children,className="",panelClassNam
     const resize=panel.current&&new ResizeObserver(place);
     if(panel.current&&resize)resize.observe(panel.current);
     return()=>{resize?.disconnect();document.removeEventListener("pointerdown",outside,true);document.removeEventListener("keydown",key);window.removeEventListener("resize",place)};
-  },[open]);
+  },[open,close]);
   return <span className="reader-popover-anchor"><button ref={button} type="button" className={className} aria-label={label} data-tip={label} aria-expanded={open} onClick={()=>open?close():setOpen(true)}>{trigger}</button>{open&&createPortal(<div ref={panel} role="dialog" aria-label={label} className={`reader-settings-panel ${panelClassName}${closing?" is-closing":""}${dragY&&!closing?" is-dragging":""}`} style={{...position,visibility:placed?"visible":"hidden",...(dragY?{transform:`translateY(${dragY}px)`}:{})}}><div className="reader-sheet-grip" aria-hidden="true" {...grip}><span/></div><div className="reader-panel-heading"><strong>{label}</strong></div>{children}</div>,document.fullscreenElement??document.body)}</span>;
 }

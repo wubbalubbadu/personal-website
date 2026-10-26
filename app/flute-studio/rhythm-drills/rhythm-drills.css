@@ -1,0 +1,45 @@
+/* Rhythm drills (RhythmGame): a practice game on the Learn tab. The staff and tap marks are lesson 7's (EngravedRow,
+   dots-and-ties.css), the pad is the close-up's RhythmTap pad (passage-guide.css); this file only lays them out. */
+.rd-game{width:min(100%,900px);margin:0 auto;padding:64px 24px 32px;display:flex;flex-direction:column;gap:14px;color:#292a33}
+.rd-game h1{margin:0;font-size:42px;font-weight:780;letter-spacing:-.035em}
+.rd-game--intro{gap:16px;max-width:640px}
+.rd-game__lead{margin:0;font-size:16px;line-height:1.5;color:#45464f}
+.rd-game__big{margin:8px 0 0;font-size:30px;font-weight:600;letter-spacing:-.035em}
+.rd-game__best{margin:0;font-size:14px;color:#85868e}
+.rd-game__actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;min-height:44px}
+.rd-game--intro .rd-game__actions{justify-content:flex-start}
+
+/* Plain grey action buttons (memory: no dark or green buttons), rounded square per DESIGN.md. */
+.rd-button{min-height:44px;padding:0 18px;border:0;border-radius:12px;background:#f1f1f2;color:#45464f;font:inherit;font-size:15px;font-weight:500;cursor:default}
+.rd-button:hover{background:#e8e8ea}
+
+/* Level, streak, tempo, lives: one quiet row above the staff. */
+.rd-game__stats{display:flex;align-items:center;gap:28px;padding-bottom:12px;border-bottom:1px solid #ececef}
+.rd-game__level{flex:1;min-width:0;display:flex;flex-direction:column}
+.rd-game__level b{font-size:22px;font-weight:600;letter-spacing:-.02em}
+.rd-game__level small,.rd-game__stat small{font-size:13px;color:#85868e}
+.rd-game__stat{display:flex;flex-direction:column;align-items:center}
+.rd-game__stat b{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.rd-game__lives{display:flex;gap:6px}
+.rd-game__lives i{width:12px;height:12px;border-radius:50%;box-shadow:inset 0 0 0 2px #d4d5da}
+.rd-game__lives i.is-left{background:#45464f;box-shadow:none}
+
+.rd-game__staff{width:100%}
+.rd-game__staff .engraved-row{height:clamp(200px,32vh,290px)}
+.rd-game__result{margin:0;min-height:48px;text-align:center;font-size:16px;line-height:1.4;color:#45464f}
+.rd-game__result.is-clean{color:#46633d;font-weight:600}
+.rd-game__result.is-off{color:#a35432}
+.rd-game__source{display:block;font-size:14px;font-weight:400;color:#71747e}
+.rd-game__count{display:flex;justify-content:center;min-height:16px}
+.rd-game__pad{height:120px;cursor:default}
+.rd-game__pad.is-live{border-color:#b8a9c9}
+
+@media(max-width:760px){
+  .rd-game{padding:64px 16px 24px;gap:10px}
+  .rd-game h1{font-size:30px}
+  .rd-game__stats{gap:16px;padding-bottom:8px}
+  .rd-game__level b,.rd-game__stat b{font-size:18px}
+  .rd-game__staff .engraved-row{height:clamp(150px,24vh,210px)}
+  .rd-game__result{min-height:44px;font-size:15px}
+  .rd-game__pad{height:110px}
+}

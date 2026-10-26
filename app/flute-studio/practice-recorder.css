@@ -4,3 +4,40 @@ html body .recorder-pop.recorder-pop--floating{position:fixed!important;left:var
 .recorder-pop--floating header{cursor:move;touch-action:none;user-select:none}
 html body .restored-reader .practice-bar .score-recorder>button.tool.record-button{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:2px!important;text-align:center!important}
 html body .restored-reader .practice-bar .record-button .record-stop{width:14px!important;height:14px!important;margin:0!important;flex:0 0 14px!important;align-self:center}
+
+/* Override legacy !important toolbar dimensions, mobile row layout and active tint.
+   Both states reserve the same tile, icon slot and tabular label line. */
+html:root body .restored-reader .practice-bar .score-recorder>button.tool.record-button.has-tip{
+  width:46px!important;min-width:46px!important;max-width:46px!important;flex:0 0 46px!important;
+  height:50px!important;padding:0!important;display:flex!important;flex-direction:column!important;
+  gap:2px!important;align-items:center!important;justify-content:center!important;
+}
+html:root body .restored-reader .practice-bar .score-recorder>button.tool.record-button.active{
+  background:#fbe9e5!important;color:#a64334!important;
+}
+html:root body .restored-reader .practice-bar .score-recorder>button.tool.record-button>svg,
+html:root body .restored-reader .practice-bar .score-recorder>button.tool.record-button>.record-stop{
+  width:20px!important;height:20px!important;flex:0 0 20px!important;margin:0!important;
+}
+html:root body .restored-reader .practice-bar .score-recorder>button.tool.record-button>.record-stop{
+  background:transparent;position:relative;
+}
+.record-button .record-stop::after{content:"";position:absolute;inset:3px;background:#c23a2d;border-radius:4px}
+html:root body .restored-reader .practice-bar .score-recorder>button.tool.record-button>.record-button__label{
+  display:block!important;margin:0!important;font-size:inherit!important;line-height:14px!important;
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.recording-playback{display:grid;grid-template-columns:44px minmax(0,1fr);align-items:center;gap:10px;margin:12px 0}
+.recording-playback .recording-playback__toggle{display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:12px;background:#f1f1f4;color:#45464f;cursor:pointer}
+.recording-playback__toggle svg{width:20px;height:20px}
+.recording-playback__timeline{min-width:0}
+.recording-playback input[type="range"]{display:block;appearance:none;-webkit-appearance:none;width:100%;height:28px;margin:0;background:transparent;cursor:pointer}
+.recording-playback input::-webkit-slider-runnable-track{height:4px;border-radius:999px;background:#dedfe3}
+.recording-playback input::-moz-range-track{height:4px;border-radius:999px;background:#dedfe3}
+.recording-playback input::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:16px;height:16px;margin-top:-6px;border:0;border-radius:50%;background:#678956}
+.recording-playback input::-moz-range-thumb{width:16px;height:16px;border:0;border-radius:50%;background:#678956}
+.recording-playback input:disabled{opacity:.45;cursor:default}
+.recording-playback__time{display:flex;justify-content:space-between;font-size:12px;line-height:16px;color:#71747e;font-variant-numeric:tabular-nums}
+.recording-playback :is(button,input):focus-visible{outline:2px solid #678956;outline-offset:3px}
+.recording-playback__error{grid-column:1/-1}
+@media(hover:hover){.recording-playback .recording-playback__toggle:hover{background:#e6e8eb}}

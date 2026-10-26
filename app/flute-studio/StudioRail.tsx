@@ -60,6 +60,8 @@ export function useRailOpen(){
 export function setRailOpen(open:boolean){
   try{localStorage.setItem(RAIL_KEY,open?"1":"0")}
   catch{/* Storage may be disabled; the rail still toggles for this page. */}
+  // The root layout's inline script sets this before the first paint, so a saved open rail never draws folded first.
+  document.documentElement.dataset.rail=open?"open":"folded";
   window.dispatchEvent(new Event(RAIL_EVENT));
 }
 
@@ -78,7 +80,8 @@ export default function StudioRail({destinations,open}:{destinations:RailDestina
 
   return <nav id="studio-rail" className="studio-rail" data-open={open?"":undefined} aria-label={zh?"工作室导航":"Studio sections"}>
     {destinations.map(destination=>{
-      const children=open?childrenOf(destination.key):[];
+      // Always drawn, hidden by CSS while folded, so an open rail can show before React reads the saved choice.
+      const children=childrenOf(destination.key);
       // Only the most specific place you are gets the highlight: inside a
       // lesson, the lesson is lit and Learn just stays bold, rather than two
       // stacked grey blocks.
@@ -107,10 +110,10 @@ export default function StudioRail({destinations,open}:{destinations:RailDestina
         <RailGlyph name="tools"/>
         <span>{t.nav.tools}</span>
       </Link>
-      {open&&<ul className="studio-rail__children">
+      <ul className="studio-rail__children">
         {(["tuner","metronome","drone"] as const).map(tool=><li key={tool}><button type="button" onClick={()=>openPracticeTool(tool)}>{t.quickTools[tool]}</button></li>)}
         <li><Link href="/flute-studio/tools/tendency" aria-current={pathname==="/flute-studio/tools/tendency"?"page":undefined} className={pathname==="/flute-studio/tools/tendency"?"is-current":undefined}>{zh?"音准倾向测试":"Pitch tendency test"}</Link></li>
-      </ul>}
+      </ul>
     </div>
   </nav>;
 }

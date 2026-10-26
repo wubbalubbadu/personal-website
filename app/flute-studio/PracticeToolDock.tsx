@@ -1,8 +1,10 @@
 "use client";
 
 import {CloseButton} from "./components/CloseButton";
+import {Stepper} from "./components/Stepper";
+import {PULSE_LIMITS,type PulseState} from "./lib/metronomeSetup";
 import { closeMic, openMic } from "./lib/audioSession";
-import { TEMPO_MIN, TEMPO_MAX, clampTempo } from "./lib/scoreTempo";
+import { TEMPO_MIN, TEMPO_MAX, clampTempo, liveTempo, LIVE_TEMPO_DELAY } from "./lib/scoreTempo";
 import { MicBlocked } from "./components/MicBlocked";
 import Link from "next/link";
 import { createPortal } from "react-dom";
@@ -21,11 +23,18 @@ import "./practice-tool-dock.css";
 import "./tools-panel.css";
 // The detector lives in lib/pitch.ts now — the tuner is one consumer of
 // it, not its owner.
-import {detectPitch, median} from "./lib/pitch";
-import {usePracticeAudio} from "./PracticeAudio";
+import {centsFromMidi, detectPitch, median, midiFromHz} from "./lib/pitch";
+import {prepareClickSounds} from "./components/clickSounds";
+import {bookClick,pitchFrequency,usePracticeAudio} from "./PracticeAudio";
+import {droneSamplesIfReady,droneVoice} from "./components/sampledDrone";
+import {A4_MAX,A4_MIN,setToolSounds,type AccentSound,type ClickSound,type DroneAdd,type DroneSound} from "./lib/toolSounds";
+import {useToolSounds} from "./lib/useToolSounds";
 import {FluteDiagram} from "./components/FluteDiagram";
 import {fluteFingerings, midiForPitch} from "../../content/fingerings/flute";
 import {StaffNote} from "./components/StaffNote";
+import {ChevronIcon} from "./components/HeaderIcons";
+import {ClickNoteIcon,SubdivisionIcon} from "./components/SubdivisionIcon";
+import {METERS,METER_STEPS,clicksOf,defaultMarks,groupingsFor,marksKey,marksOf,meterLabel,meterOf,nextMark,noteIn,notesFor,type BeatMark,type ClickNote,type Meter,type MetronomeSetup} from "./lib/metronomeSetup";
 
 type ToolKey = "tuner" | "metronome" | "drone" | "fingering";
 type PitchReading = {
@@ -36,6 +45,143 @@ type PitchReading = {
   midi: number;
 };
 
+
+const MORE_KEY = "cookie:metronome-more";
+/** The click note a meter is usually counted in: 6/8 in dotted quarters, 7/8 in eighths, 2/2 in halves. */
+function naturalNote(meter:Meter):ClickNote{
+  if(meter.groups)return meter.groups.every(g=>g===3)?"dotted":"eighth";
+  return meter.bottom===2?"half":"quarter";
+}
+const NOTE_NAMES:Record<ClickNote,[string,string]>={quarter:["Quarter note","四分音符"],eighth:["Eighth note","八分音符"],dotted:["Dotted quarter","附点四分音符"],half:["Half note","二分音符"]};
+const SUB_NAMES:Record<1|2|3|4,[string,string]>={1:["No subdivision","不细分"],2:["Two","二等分"],3:["Three","三等分"],4:["Four","四等分"]};
+const MARK_NAMES:Record<BeatMark,[string,string]>={accent:["accent","重音"],normal:["normal","普通"],silent:["silent","静音"]};
+const CLICK_SOUNDS:[ClickSound,string,string][]=[["beep","Beep","哔"],["woodblock","Woodblock","木鱼"],["tick","Tick","轻点"],["voice","Voice","数拍"]];
+const ACCENT_SOUNDS:[AccentSound,string,string][]=[["higher","Higher","更高"],["bell","Bell","铃声"],["louder","Louder","更响"]];
+const DRONE_SOUNDS:[DroneSound,string,string][]=[["sine","Sine","纯音"],["organ","Organ","管风琴"],["flute","Flute","长笛"],["cello","Cello","大提琴"]];
+const DRONE_ADDS:[DroneAdd,string,string][]=[["none","None","无"],["fifth","Fifth","五度"],["octave","Octave below","低八度"]];
+
+/** A "More" that remembers whether it was left open, like the metronome's. Client only: the panel never renders on the server. */
+function useMore(key:string):[boolean,()=>void]{
+  const [open,setOpen]=useState(()=>{try{return typeof window!=="undefined"&&localStorage.getItem(key)==="1"}catch{return false}});
+  return [open,()=>{const next=!open;setOpen(next);try{localStorage.setItem(key,next?"1":"0")}catch{/* fine */}}];
+}
+
+/** One row: a label and a View switch of words, the studio's way to pick one of a few (COMPONENTS.md). */
+function Choice<T extends string>({zh,label,value,options,onPick}:{zh:boolean;label:[string,string];value:T;options:[T,string,string][];onPick:(v:T)=>void}){
+  return <div className="tp-row">
+    <span className="tp-label">{label[zh?1:0]}</span>
+    <div className="view-switch" role="group" aria-label={label[zh?1:0]}>
+      {options.map(([id,en,cn])=><button key={id} type="button" aria-pressed={value===id} onClick={()=>onPick(id)}>{zh?cn:en}</button>)}
+    </div>
+  </div>;
+}
+
+/** A volume slider (0 to 1). */
+function Volume({zh,label,value,onChange}:{zh:boolean;label:[string,string];value:number;onChange:(v:number)=>void}){
+  return <label className="tp-row tp-volume">
+    <span className="tp-label">{label[zh?1:0]}</span>
+    <input type="range" min={0} max={1} step={0.05} value={value} onChange={e=>onChange(Number(e.target.value))}/>
+  </label>;
+}
+
+/**
+ * The metronome's "More": what the tempo counts, the meter and its grouping, subdivision ticks, and one dot per click
+ * to tap through normal, accent and silent. Changes reach the running click immediately (PracticeAudio).
+ */
+function MetronomeMore({zh,open,onToggle,setup,setSetup,beats,accent,setAccent,toolBeat,toolPulse,preview}:{zh:boolean;open:boolean;onToggle:()=>void;
+  /** Pulse training: where the bar sounding now sits in its round of click and silent bars. */
+  toolPulse:(()=>(PulseState&{silent:boolean})|null)|null;
+  setup:MetronomeSetup;setSetup:(next:MetronomeSetup)=>void;beats:number;accent:boolean;setAccent:(on:boolean)=>void;toolBeat:(()=>number|null)|null;
+  /** Plays a beat and an accent with the new sound, so a choice is heard even with the metronome stopped. */
+  preview:()=>void}){
+  const sounds=useToolSounds();
+  const meter=meterOf(setup,beats),note=noteIn(setup,meter),clicks=clicksOf(meter,note),marks=marksOf(setup,meter,note);
+  const key=marksKey(meter,note),custom=!!setup.marks[key],step=meterLabel(meter.id),groupings=groupingsFor(step);
+  // The dot for the click sounding now, read from the audio clock each frame (only while playing).
+  const [beatNow,setNow]=useState<number|null>(null),read=useRef(toolBeat);
+  useEffect(()=>{read.current=toolBeat});
+  const [pulseNow,setPulseNow]=useState<(PulseState&{silent:boolean})|null>(null),readPulse=useRef(toolPulse);
+  useEffect(()=>{readPulse.current=toolPulse});
+  const playing=!!toolBeat,pulse=playing&&setup.pulse.mode!=="off"?pulseNow:null;
+  // In a silent bar the dots don't show where you are: you keep the beat yourself and hear if you stayed with it.
+  const now=playing&&!pulse?.silent?beatNow:null;
+  // Opening More scrolls the panel (the phone sheet is short) so the new options are in view; not when the panel
+  // opens with More already open from last time.
+  const bodyRef=useRef<HTMLDivElement|null>(null),wasOpen=useRef(open);
+  useEffect(()=>{
+    if(open&&!wasOpen.current)bodyRef.current?.scrollIntoView({block:"nearest",behavior:"smooth"});
+    wasOpen.current=open;
+  },[open]);
+  useEffect(()=>{
+    if(!playing)return;
+    let frame=0;const tick=()=>{
+      const beat=read.current?.()??null;setNow(previous=>previous===beat?previous:beat);
+      const p=readPulse.current?.()??null;setPulseNow(previous=>previous?.round===p?.round&&previous?.index===p?.index?previous:p);
+      frame=requestAnimationFrame(tick)};
+    frame=requestAnimationFrame(tick);return()=>cancelAnimationFrame(frame);
+  },[playing]);
+  const mark=(i:number)=>{
+    const list=[...marks];list[i]=nextMark(list[i]);
+    // Asking for an accent means you want to hear it, so the simple Accent switch comes on.
+    if(list[i]==="accent"&&!accent)setAccent(true);
+    const same=list.every((m,j)=>m===defaultMarks(clicks)[j]),saved={...setup.marks};
+    if(same)delete saved[key];else saved[key]=list;
+    setSetup({...setup,marks:saved});
+  };
+  return <>
+      <div className="tp-metro__foot">
+      {/* One dot per click, a little gap where a group starts. Tap: normal → accent → silent. */}
+      <div className={pulse?.silent?"tp-beats is-silent":"tp-beats"} role="group" aria-label={zh?"每一拍":"Each beat"}>
+        {clicks.map((c,i)=>{const shown=marks[i]==="accent"&&!accent?"normal":marks[i];
+          return <button key={i} type="button" data-mark={shown} className={`${i===now?"is-now ":""}${i>0&&c.groupStart&&clicks.some((d,j)=>j>0&&!d.groupStart)?"is-group":""}`}
+            aria-label={zh?`第 ${i+1} 拍：${MARK_NAMES[shown][1]}`:`Beat ${i+1}: ${MARK_NAMES[shown][0]}`} onClick={()=>mark(i)}><i/></button>})}
+      </div>
+      {custom&&<div className="tp-row tp-beats__foot">
+        {custom&&<button type="button" className="text-action" onClick={()=>{const saved={...setup.marks};delete saved[key];setSetup({...setup,marks:saved})}}>{zh?"重置":"Reset"}</button>}
+      </div>}
+    <button type="button" className="text-action tp-more" aria-expanded={open} onClick={onToggle}>{zh?"更多":"More"}<ChevronIcon/></button>
+      </div>
+    {open&&<div className="tp-more__body" ref={bodyRef}>
+      {groupings.length>1&&<div className="tp-row">
+        <span className="tp-label">{zh?"分组":"Grouping"}</span>
+        <div className="view-switch" role="group" aria-label={zh?"分组":"Grouping"}>
+          {groupings.map(g=><button key={g.id} type="button" aria-pressed={g.id===meter.id} onClick={()=>setSetup({...setup,meter:g.id})}>{g.groups!.join("+")}</button>)}
+        </div>
+      </div>}
+      <div className="tp-row">
+        <span className="tp-label">{zh?"一拍":"Beat"}</span>
+        <div className="view-switch tp-glyphs" role="group" aria-label={zh?"速度按哪个音符":"What the tempo counts"}>
+          {notesFor(meter).map(n=><button key={n} type="button" aria-pressed={n===note} aria-label={NOTE_NAMES[n][zh?1:0]} onClick={()=>setSetup({...setup,note:n})}><ClickNoteIcon note={n}/></button>)}
+        </div>
+      </div>
+      <div className="tp-row">
+        <span className="tp-label">{zh?"细分":"Subdivide"}</span>
+        <div className="view-switch tp-glyphs" role="group" aria-label={zh?"细分":"Subdivide"}>
+          {([1,2,3,4] as const).map(n=><button key={n} type="button" aria-pressed={setup.sub===n} aria-label={SUB_NAMES[n][zh?1:0]} onClick={()=>setSetup({...setup,sub:n})}><SubdivisionIcon parts={n}/></button>)}
+        </div>
+      </div>
+      {/* Pulse training: Ghost (N bars of click, M silent, optionally growing) or Random gaps (1 to K silent bars). */}
+      <Choice zh={zh} label={["Pulse","稳拍练习"]} value={setup.pulse.mode} options={[["off","Off","关"],["ghost","Ghost","隐形"],["random","Random gaps","随机空拍"]]} onPick={mode=>setSetup({...setup,pulse:{...setup.pulse,mode}})}/>
+      {setup.pulse.mode!=="off"&&<>
+        <div className="tp-row"><span className="tp-label">{zh?"有声小节":"Click bars"}</span>
+          <Stepper size="small" value={setup.pulse.play} min={PULSE_LIMITS.play[0]} max={PULSE_LIMITS.play[1]} onChange={play=>setSetup({...setup,pulse:{...setup.pulse,play}})} label={zh?"有声小节":"Click bars"} decreaseLabel={zh?"少一小节":"One bar fewer"} increaseLabel={zh?"多一小节":"One bar more"}/></div>
+        {setup.pulse.mode==="ghost"?<>
+          <div className="tp-row"><span className="tp-label">{zh?"静音小节":"Silent bars"}</span>
+            <Stepper size="small" value={setup.pulse.rest} min={PULSE_LIMITS.rest[0]} max={PULSE_LIMITS.rest[1]} onChange={rest=>setSetup({...setup,pulse:{...setup.pulse,rest}})} label={zh?"静音小节":"Silent bars"} decreaseLabel={zh?"少一小节":"One bar fewer"} increaseLabel={zh?"多一小节":"One bar more"}/></div>
+          <Choice zh={zh} label={["Silence","静音"]} value={setup.pulse.grow?"grow":"same"} options={[["same","Same","不变"],["grow","Grows","每轮加长"]]} onPick={v=>setSetup({...setup,pulse:{...setup.pulse,grow:v==="grow"}})}/>
+        </>:<div className="tp-row"><span className="tp-label">{zh?"最多静音":"Gaps up to"}</span>
+          <Stepper size="small" value={setup.pulse.gaps} min={PULSE_LIMITS.gaps[0]} max={PULSE_LIMITS.gaps[1]} onChange={gaps=>setSetup({...setup,pulse:{...setup.pulse,gaps}})} label={zh?"最多静音小节":"Gaps up to"} decreaseLabel={zh?"少一小节":"One bar fewer"} increaseLabel={zh?"多一小节":"One bar more"}/></div>}
+        {/* The round as bar marks: filled = click, hollow = silent, outlined = the bar now. */}
+        {pulse&&<div className="tp-round" aria-hidden="true">{pulse.bars.map((silent,i)=><i key={i} className={`${silent?"is-silent":""}${i===pulse.index?" is-now":""}`}/>)}</div>}
+      </>}
+      {/* How it sounds: shared by every metronome and count-in in the studio (lib/toolSounds.ts). */}
+      <Choice zh={zh} label={["Sound","声音"]} value={sounds.click} options={CLICK_SOUNDS} onPick={click=>{setToolSounds({click});preview()}}/>
+      <Choice zh={zh} label={["Accent","重音"]} value={sounds.accent} options={ACCENT_SOUNDS} onPick={accentSound=>{setToolSounds({accent:accentSound});if(!accent)setAccent(true);preview()}}/>
+      <Volume zh={zh} label={["Beat volume","拍子音量"]} value={sounds.clickVolume} onChange={clickVolume=>setToolSounds({clickVolume})}/>
+      <Volume zh={zh} label={["Accent volume","重音音量"]} value={sounds.accentVolume} onChange={accentVolume=>setToolSounds({accentVolume})}/>
+    </div>}
+  </>;
+}
 
 const pitches = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"];
 
@@ -87,7 +233,7 @@ export default function PracticeToolDock() {
   const [requestedTool, setRequestedTool] = useState<ToolKey | null>(null);
   const [, setFocusedTool] = useState<ToolKey>("tuner");
 
-  const {bpm,setBpm,metro,toggleMetro,accent,setAccent,beats,setBeats,drones,toggleDrone:toggleSharedDrone,stopAllDrones,getAudio}=usePracticeAudio();
+  const {bpm,setBpm,metro,toggleToolMetro,accent,setAccent,beats,setBeats,drones,toggleDrone:toggleSharedDrone,stopAllDrones,getAudio,setup,setSetup,toolMode,toolBeat,toolPulse}=usePracticeAudio();
   // One panel now: the fingering lookup is the only other view, reached by
   // tapping the note the tuner shows.
   const [view,setView]=useState<"main"|"fingering">("main");
@@ -112,6 +258,28 @@ export default function PracticeToolDock() {
   const [lookupOctave, setLookupOctave] = useState(4);
 
   const [octave, setOctave] = useState(4);
+  const sounds=useToolSounds();
+  const [tunerMore,toggleTunerMore]=useMore("cookie:tuner-more");
+  const [droneMore,toggleDroneMore]=useMore("cookie:drone-more");
+  /** Hear a sound choice right away: one accent and one beat, unless the metronome is already playing it. */
+  const previewClick=async()=>{
+    if(metro)return;
+    const audio=getAudio();
+    await prepareClickSounds(audio);
+    const now=audio.currentTime+.05,gap=Math.min(.5,60/bpm);
+    bookClick(audio,now,true,1,gap);bookClick(audio,now+gap,false,2,gap);
+  };
+  /** Hear a drone voice: a short A in the panel's octave, unless notes are already holding (they switch by themselves). */
+  const previewDrone=()=>{
+    if(drones.length)return;
+    const audio=getAudio(),at=audio.currentTime+.03,samples=droneSamplesIfReady(audio);
+    if(!samples)return;
+    const {source,gain}=droneVoice(audio,samples,pitchFrequency("A",octave),at,.32);
+    gain.gain.setTargetAtTime(.0001,at+.9,.06);source.stop(at+1.3);
+  };
+  // The metronome's extra options stay folded unless you opened them last time.
+  // Read on the client only: the panel is never rendered on the server.
+  const [more, setMore] = useState(()=>{try{return typeof window!=="undefined"&&localStorage.getItem(MORE_KEY)==="1"}catch{return false}});
 
 
 
@@ -156,7 +324,10 @@ export default function PracticeToolDock() {
    */
   const getContext = () => getAudio();
 
+  const micRequest=useRef(0),disconnectMic=useRef<(()=>void)|null>(null);
   const stopListening = () => {
+    micRequest.current++;
+    disconnectMic.current?.();disconnectMic.current=null;
     closeMic(stream.current);
     stream.current = null;
     if (frame.current !== null) cancelAnimationFrame(frame.current);
@@ -167,6 +338,7 @@ export default function PracticeToolDock() {
   };
 
   useEffect(() => () => {
+    micRequest.current++;disconnectMic.current?.();
     closeMic(stream.current);
     if (frame.current !== null) cancelAnimationFrame(frame.current);
     /* The context is shared now, so it is not ours to close. */
@@ -224,10 +396,8 @@ export default function PracticeToolDock() {
 
 
   const tuner = async () => {
-    if (listening) {
-      stopListening();
-      return;
-    }
+    if(stream.current)return;
+    const request=++micRequest.current;
     setMicProblem(null);
     if (!navigator.mediaDevices?.getUserMedia) {
       setMicProblem("unavailable");
@@ -236,9 +406,11 @@ export default function PracticeToolDock() {
 
     try {
       const media = await openMic();
+      if(request!==micRequest.current){closeMic(media);return}
       stream.current = media;
       const context = getContext();
       await context.resume();
+      if(request!==micRequest.current){closeMic(media);return}
       const source = context.createMediaStreamSource(media);
       const highPass = context.createBiquadFilter();
       const analyser = context.createAnalyser();
@@ -252,6 +424,7 @@ export default function PracticeToolDock() {
       const sink = context.createGain();
       sink.gain.value = 0;
       source.connect(highPass).connect(analyser).connect(sink).connect(context.destination);
+      disconnectMic.current=()=>{source.disconnect();highPass.disconnect();analyser.disconnect();sink.disconnect()};
 
       candidateMidi.current = null;
       candidateCount.current = 0;
@@ -259,7 +432,7 @@ export default function PracticeToolDock() {
       lastSignal.current = 0;
       setListening(true);
       setSignalActive(false);
-      setTunerMessage(t.toolDock.listeningForNote);
+      setTunerMessage(zh?"听音中…":"Listening…");
 
       const loop = (timestamp: number) => {
         if (timestamp - lastAnalysis.current >= 42) {
@@ -268,7 +441,7 @@ export default function PracticeToolDock() {
           const estimate = detectPitch(data, context.sampleRate);
 
           if (estimate) {
-            const midi = Math.round(69 + 12 * Math.log2(estimate.hz / 440));
+            const midi = midiFromHz(estimate.hz);
             if (candidateMidi.current === midi) candidateCount.current += 1;
             else {
               candidateMidi.current = midi;
@@ -285,8 +458,7 @@ export default function PracticeToolDock() {
                 : filteredHz;
               smoothedHz.current = stabilizedHz;
               stableMidi.current = midi;
-              const target = 440 * 2 ** ((midi - 69) / 12);
-              const cents = Math.max(-50, Math.min(50, 1200 * Math.log2(stabilizedHz / target)));
+              const cents = Math.max(-50, Math.min(50, centsFromMidi(stabilizedHz, midi)));
               setReading({
                 name: pitches[(midi + 120) % 12],
                 octave: Math.floor(midi / 12) - 1,
@@ -300,7 +472,7 @@ export default function PracticeToolDock() {
             }
           } else if (lastSignal.current && performance.now() - lastSignal.current > 1050) {
             setSignalActive(false);
-            setTunerMessage(t.toolDock.playClearer);
+            setTunerMessage(zh?"请吹奏一个音":"Play a note");
             candidateMidi.current = null;
             candidateCount.current = 0;
             pitchHistory.current = [];
@@ -310,11 +482,22 @@ export default function PracticeToolDock() {
       };
       frame.current = requestAnimationFrame(loop);
     } catch {
+      if(request!==micRequest.current)return;
+      closeMic(stream.current);stream.current=null;
+      disconnectMic.current?.();disconnectMic.current=null;
       setListening(false);
       setSignalActive(false);
       setMicProblem("blocked");
     }
   };
+
+  // Follow panel visibility. A late permission response cannot revive a closed tuner.
+  const tunerActions=useRef({start:tuner,stop:stopListening});
+  useEffect(()=>{tunerActions.current={start:tuner,stop:stopListening}});
+  useEffect(()=>{
+    if(open&&view==="main")void tunerActions.current.start();
+    return()=>tunerActions.current.stop();
+  },[open,view]);
 
   useEffect(() => {
     if (!open) return;
@@ -436,29 +619,35 @@ export default function PracticeToolDock() {
                 }} aria-label={zh?`${reading.name}${reading.octave} 的指法`:`Fingering for ${reading.name}${reading.octave}`}>
                   <b>{reading.name}</b><sup>{reading.octave}</sup>
                 </button>
-                <button type="button" className={`tp-listen ${listening?"is-on":""}`} onClick={tuner} aria-pressed={listening}>
-                  <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5"/><path d="M3 8a5 5 0 0 0 10 0M8 13v2"/></svg>
-                  {listening?(zh?"停止":"Stop"):(zh?"听音":"Listen")}
-                </button>
+
               </div>
               <div className="tp-meter" style={rulerStyle}>
                 <div className="tp-meter__track"><span className="tp-meter__band"/><i className="tp-meter__center"/><em className="tp-meter__needle"/></div>
                 {/* The reading rides under the needle, so the eye stays on one spot. */}
-                <span className="tp-meter__cents">{signalActive?`${reading.cents>0?"+":""}${Math.round(reading.cents)}¢`:listening?tunerMessage:(zh?"点“听音”开始":"Tap Listen to start")}</span>
+                <span className="tp-meter__cents">{signalActive?`${reading.cents>0?"+":""}${Math.round(reading.cents)}¢`:listening?tunerMessage:""}</span>
               </div>
-              {micProblem&&<p className="tp-mic-note"><MicBlocked zh={zh} unavailable={micProblem==="unavailable"}/></p>}
+              {micProblem&&<p className="tp-mic-note"><MicBlocked zh={zh} unavailable={micProblem==="unavailable"}/><button type="button" className="text-action" onClick={tuner}>{zh?"重试":"Retry"}</button></p>}
+              <div className="tp-row tp-tuner__foot">
+                <button type="button" className="text-action tp-more" aria-expanded={tunerMore} onClick={toggleTunerMore}>{zh?"更多":"More"}<ChevronIcon/></button>
+                {/* Tuned to something other than 440: say so, so a reading is never a surprise. */}
+                {!tunerMore&&sounds.a4!==440&&<span className="tp-hint">A = {sounds.a4}</span>}
+              </div>
+              {tunerMore&&<div className="tp-more__body">
+                <div className="tp-row">
+                  <span className="tp-label">{zh?"标准音":"Tune to"}</span>
+                  <Stepper size="small" tone="text" value={sounds.a4} min={A4_MIN} max={A4_MAX} onChange={a4=>setToolSounds({a4})} display={`A = ${sounds.a4}`}
+                    valueText={zh?`A 等于 ${sounds.a4} 赫兹`:`A equals ${sounds.a4} hertz`} label={zh?"标准音 A":"Concert A"} decreaseLabel={zh?"降低 1 赫兹":"Down 1 hertz"} increaseLabel={zh?"升高 1 赫兹":"Up 1 hertz"}/>
+                </div>
+              </div>}
             </section>
 
             {/* Drones: tap a note to hold it, tap again to stop; several can
                 sound at once. The note the tuner hears is outlined. */}
             <section ref={droneSection} className="tp-drones" tabIndex={-1}>
               <div className="tp-row">
-                <span className="tp-label">{zh?"持续音":"Drone"}{drones.length>0&&<button type="button" className="tp-stop" onClick={stopAllDrones}>{zh?"全部停止":"Stop"}</button>}</span>
-                <div className="tp-stepper tp-stepper--small">
-                  <button type="button" aria-label={t.toolDock.lowerOctave} onClick={()=>setOctave(Math.max(3,octave-1))}>−</button>
-                  <span>{zh?`第 ${octave} 八度`:`Octave ${octave}`}</span>
-                  <button type="button" aria-label={t.toolDock.higherOctave} onClick={()=>setOctave(Math.min(6,octave+1))}>+</button>
-                </div>
+                <span className="tp-label">{zh?"持续音":"Drone"}</span>
+                <Stepper size="small" tone="text" value={octave} min={3} max={6} onChange={setOctave} display={zh?`第 ${octave} 八度`:`Octave ${octave}`}
+                  label={zh?"持续音八度":"Drone octave"} decreaseLabel={t.toolDock.lowerOctave} increaseLabel={t.toolDock.higherOctave}/>
               </div>
               <div className="tp-notes">
                 {pitches.map(pitch=>{
@@ -466,21 +655,44 @@ export default function PracticeToolDock() {
                   return <button key={pitch} type="button" aria-pressed={on} className={`${on?"is-on ":""}${heard?`is-heard is-${tunerTone}`:""}`} onClick={()=>toggleSharedDrone(pitch,octave)}>{pitch}</button>;
                 })}
               </div>
+              {drones.length>0&&<div className="tp-drone-active" role="group" aria-label={zh?"正在播放的持续音":"Active drone pitches"}>
+                {drones.map(note=><button key={note} type="button" className="tp-chip is-on" aria-label={zh?`停止 ${note}`:`Stop ${note}`}
+                  onClick={()=>toggleSharedDrone(note.slice(0,-1),Number(note.slice(-1)))}>{note}<span aria-hidden="true"> ×</span></button>)}
+              </div>}
+              <div className="tp-row tp-drone__foot">
+                {drones.length>0&&<button type="button" className="text-action" onClick={stopAllDrones}>{zh?"全部停止":"Stop all"}</button>}
+              <button type="button" className="text-action tp-more" aria-expanded={droneMore} onClick={toggleDroneMore}>{zh?"更多":"More"}<ChevronIcon/></button>
+              </div>
+              {droneMore&&<div className="tp-more__body">
+                <Choice zh={zh} label={["Sound","音色"]} value={sounds.drone} options={DRONE_SOUNDS} onPick={drone=>{setToolSounds({drone});previewDrone()}}/>
+                <Choice zh={zh} label={["Add","加音"]} value={sounds.droneAdd} options={DRONE_ADDS} onPick={droneAdd=>{setToolSounds({droneAdd});previewDrone()}}/>
+              </div>}
             </section>
 
             {/* Metronome. */}
             <section ref={metroSection} className="tp-metro" tabIndex={-1}>
-              <button type="button" className={`tp-play ${metro?"is-on":""}`} onClick={toggleMetro} aria-label={metro?t.toolDock.stopMetronome:t.toolDock.startMetronome} aria-pressed={metro}>
+              <button type="button" className={`tp-play ${metro?"is-on":""}`} onClick={toggleToolMetro} aria-label={metro?t.toolDock.stopMetronome:t.toolDock.startMetronome} aria-pressed={metro}>
                 {metro?<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1.5"/></svg>:<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.5v9l7.5-4.5z"/></svg>}
               </button>
-              <div className="tp-stepper">
-                <button type="button" aria-label={t.toolDock.decreaseTempo} onClick={()=>setBpm(Math.max(TEMPO_MIN,bpm-1))}>−</button>
-                <b>{bpm}</b>
-                <button type="button" aria-label={t.toolDock.increaseTempo} onClick={()=>setBpm(Math.min(TEMPO_MAX,bpm+1))}>+</button>
-              </div>
+              <Stepper className="tp-tempo" editable liveValue={liveTempo} inputDelay={LIVE_TEMPO_DELAY} value={bpm} min={TEMPO_MIN} max={TEMPO_MAX} onChange={setBpm} valueText={zh?`每分钟 ${bpm} 拍`:`${bpm} BPM`}
+                label={zh?"节拍器速度":"Metronome tempo"} decreaseLabel={t.toolDock.decreaseTempo} increaseLabel={t.toolDock.increaseTempo}/>
               <button type="button" className="tp-chip" onClick={tapTempo}>{zh?"点拍":"Tap"}</button>
-              <button type="button" className="tp-chip" onClick={()=>setBeats(beats>=6?2:beats===4?6:beats+1)} aria-label={zh?`每小节 ${beats} 拍`:`${beats} beats a bar`}>{zh?`${beats} 拍`:`${beats} beats`}</button>
+              <span className="tp-meter-select">
+                <select className="tp-chip" aria-label={zh?"拍号":"Meter"} value={meterLabel(meterOf(setup,beats).id)} onChange={e=>{
+                  const target=METERS.find(m=>meterLabel(m.id)===e.target.value)!;
+                  const current=meterOf(setup,beats),note=noteIn(setup,current);
+                  const family=(m:Meter)=>m.groups?m.groups.every(g=>g===3)?"compound":"odd":String(m.bottom);
+                  const plain=target.bottom===4;
+                  if(plain)setBeats(target.top);
+                  setSetup({...setup,meter:plain?null:target.id,note:family(target)===family(current)&&notesFor(target).includes(note)?note:naturalNote(target)});
+                }}>
+                  {METER_STEPS.map(meter=><option key={meter} value={meter}>{meter}</option>)}
+                </select>
+                <ChevronIcon/>
+              </span>
               <button type="button" className={`tp-chip ${accent?"is-on":""}`} aria-pressed={accent} onClick={()=>setAccent(!accent)}>{zh?"重音":"Accent"}</button>
+              <MetronomeMore zh={zh} open={more} onToggle={()=>{const next=!more;setMore(next);try{localStorage.setItem(MORE_KEY,next?"1":"0")}catch{/* fine */}}}
+                setup={setup} setSetup={setSetup} beats={beats} accent={accent} setAccent={setAccent} toolBeat={toolMode?toolBeat:null} toolPulse={toolMode?toolPulse:null} preview={previewClick}/>
             </section>
           </div>:<div className="tools-panel__body">
             {/* Fingering lookup: the standard fingering for any note, with
@@ -498,11 +710,8 @@ export default function PracticeToolDock() {
                 {lookupNames.map(name=><button key={name} type="button" className={name===lookupName?"is-on":""} aria-pressed={name===lookupName} onClick={()=>setLookupName(name)}>{name}</button>)}
               </div>
               <div className="tp-row tp-row--center">
-                <div className="tp-stepper tp-stepper--small">
-                  <button type="button" aria-label={t.toolDock.lowerOctave} disabled={activeOctave<=lookupOctaves[0]} onClick={()=>setLookupOctave(Math.max(lookupOctaves[0],activeOctave-1))}>−</button>
-                  <span>{zh?`第 ${activeOctave} 八度`:`Octave ${activeOctave}`}</span>
-                  <button type="button" aria-label={t.toolDock.higherOctave} disabled={activeOctave>=lookupOctaves[lookupOctaves.length-1]} onClick={()=>setLookupOctave(Math.min(lookupOctaves[lookupOctaves.length-1],activeOctave+1))}>+</button>
-                </div>
+                <Stepper size="small" tone="text" value={activeOctave} min={lookupOctaves[0]} max={lookupOctaves[lookupOctaves.length-1]} onChange={setLookupOctave}
+                  display={zh?`第 ${activeOctave} 八度`:`Octave ${activeOctave}`} label={zh?"指法八度":"Fingering octave"} decreaseLabel={t.toolDock.lowerOctave} increaseLabel={t.toolDock.higherOctave}/>
               </div>
             </section>
           </div>}

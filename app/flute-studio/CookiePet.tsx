@@ -1,6 +1,7 @@
 "use client";
 
 import {CloseButton} from "./components/CloseButton";
+import {Stepper} from "./components/Stepper";
 import {createPortal} from "react-dom";
 import {usePathname} from "next/navigation";
 import {PointerEvent,useEffect,useLayoutEffect,useRef,useState} from "react";
@@ -85,9 +86,9 @@ export default function CookiePet(){
       </header>
       <div className="cookie-pomodoro-clock">{formatClock(remaining)}</div>
       {canEditDuration&&<div className="cookie-pomodoro-duration">
-        <button type="button" aria-label={t.pomodoro.decreaseFocus} onClick={()=>adjustFocusMinutes(-5)} disabled={focusMinutes<=minFocusMinutes}>−</button>
-        <span>{focusMinutes} min</span>
-        <button type="button" aria-label={t.pomodoro.increaseFocus} onClick={()=>adjustFocusMinutes(5)} disabled={focusMinutes>=maxFocusMinutes}>+</button>
+        <Stepper size="small" tone="text" value={focusMinutes} min={minFocusMinutes} max={maxFocusMinutes} onStep={d=>adjustFocusMinutes(5*d)}
+          display={`${focusMinutes} min`} valueText={`${focusMinutes} min`} label={t.pomodoro.title}
+          decreaseLabel={t.pomodoro.decreaseFocus} increaseLabel={t.pomodoro.increaseFocus}/>
       </div>}
       <div className="cookie-pomodoro-actions">
         <button type="button" className="cookie-pomodoro-reset has-tip" data-tip={t.pomodoro.reset} aria-label={t.pomodoro.reset} onClick={reset}>

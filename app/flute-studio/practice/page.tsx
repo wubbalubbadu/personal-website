@@ -2,23 +2,28 @@
 import {usePrivateMusic} from "../lib/privateMusic";
 
 import Link from "next/link";
-import {useEffect,useState,type ReactNode} from "react";
+import {useEffect,useState} from "react";
 import {flushSync} from "react-dom";
 import {useLanguage} from "../i18n/LanguageContext";
-import {useTrickyBits} from "../lib/trickyBits";
+import {activeBits,useTrickyBits} from "../lib/trickyBits";
+import {PassagesList} from "./PassagesList";
 import {readSessions,type PracticeSession} from "../practice-data";
 import {useRecents} from "../lib/storage";
 import {useStatusEntries,STATUS_LABELS,STATUS_TONES} from "../lib/musicStatus";
 import {readScaleSets,scaleSetsEvent,type ScaleSet} from "../exercises/scales/saved-sets";
 import {daysUntil,useDeadlines,type Deadline} from "../lib/deadlines";
+import {mockPool} from "../lib/mockAuditions";
 import {hasTag,pieceTitle} from "../../../content/music-library";
 import {tagTone} from "../lib/tagTone";
 import {DeadlineDialog} from "./DeadlineDialog";
 import {repDay,repTotals,repsOnDay,useRepLog} from "../lib/repLog";
+import {gettingFaster,useTempoHistory} from "../lib/tempoHistory";
+import {TempoTrend,shortDay} from "../components/TempoTrend";
 import "../components/status-button.css";
 import {StatusButton} from "../components/StatusButton";
 import "../components/tag-pill.css";
-import {musicLibrary as publicMusic,libraryShelf as publicShelf} from "../../../content/music-library";
+import "../components/piece-chip.css";
+import {musicLibrary as publicMusic,libraryShelf as publicShelf,musicBooks} from "../../../content/music-library";
 import {exerciseCatalog} from "../../../content/exercise-catalog";
 import {PracticeCalendar} from "../PracticeCalendar";
 import {PitchTendencies} from "./PitchTendencies";
@@ -145,23 +150,19 @@ export default function PracticePage(){
     return zh?`${Math.round(days/7)} 周前练过`:`Practised ${Math.round(days/7)} weeks ago`;
   };
   const workingRows=listItems.filter(row=>row.entry.status==="working");
-  // Tricky bits by piece, pieces in the order you first saved a bit from them, bars in order inside each.
-  const trickyGroups=[...trickyBits.reduce((map,bit)=>map.set(bit.pieceId,[...(map.get(bit.pieceId)??[]),bit]),new Map<string,typeof trickyBits>())]
-    .map(([pieceId,bits])=>[pieceId,[...bits].sort((a,b)=>a.from-b.from)] as const)
-    .sort((a,b)=>Math.min(...a[1].map(bit=>bit.addedAt))-Math.min(...b[1].map(bit=>bit.addedAt)));
-  /** A shelf under Working on, with its own heading. Only there when it has something in it; the quieter ones fold. */
+  // A passage's piece, by name (a book's number with its book), or a plain note while private music is locked.
+  const passageTitle=(bit:{pieceId:string})=>{
+    const item=musicLibrary.find(entry=>entry.id===bit.pieceId);
+    if(!item)return privateMusic.unlocked||privateMusic.loading?bit.pieceId:(zh?"私人乐谱（未解锁）":"Private piece (locked)");
+    const book=item.book?musicBooks.find(entry=>entry.id===item.book!.id):undefined;
+    return book?`${book.title} ${item.title}`:pieceTitle(item,zh);
+  };
+  const activeTricky=activeBits(trickyBits);
   /** The fold button that is a shelf's heading: its name, its count, a chevron. */
   /** A section's heading: its name and how many are in it. */
   const shelfHeading=(label:string,count:number,id?:string)=><h2 className="home-preview__group shelf__title" id={id}>{label}<small>{count}</small></h2>;
   /** A section's way out to its full page, beside the heading (the heading itself folds, so it can't be the link). */
   const sectionLink=(href:string,label:string)=><Link className="section-head__action" href={href}>{label}</Link>;
-  const shelf=(key:string,label:string,count:number,cards:ReactNode[],link?:ReactNode)=>{
-    if(!count)return null;
-    return <section id={`shelf-${key}`} className="shelf" key={key} aria-label={label}>
-      <div className="section-head">{shelfHeading(label,count)}<span className="section-head__actions">{moreToggle(key,count)}{link}</span></div>
-      <ul className="working__grid">{firstRow(key,cards as ReactNode[])}</ul>
-    </section>;
-  };
   // The three reference lists as stacks; one opens at a time. The browser animates the change (view transitions) where
   // it can: the top card glides into the grid and the rest fan out; elsewhere it simply switches.
   const stackLists=[
@@ -195,7 +196,11 @@ export default function PracticePage(){
   const deadlineCard=(deadline:Deadline)=><article className="deadline-card" key={deadline.id}>
     <div className="deadline-card__head">
       <button type="button" className="deadline-card__name" onClick={()=>setEditing(deadline)} aria-label={zh?`编辑 ${deadline.name}`:`Edit ${deadline.name}`}>{deadline.name}</button>
-      <span className="deadline-card__when">{whenLabel(deadline.date)}</span>
+      <span className="deadline-card__end">
+        {/* A mock audition needs at least two excerpts to draw from, and only makes sense before the day. */}
+        {daysUntil(deadline.date,now)>=0&&mockPool(deadline.pieces,musicLibrary).length>1&&<Link className="section-head__action" href={`/flute-studio/practice/mock?deadline=${encodeURIComponent(deadline.id)}`}>{zh?"模拟考试":"Mock audition"}</Link>}
+        <span className="deadline-card__when">{whenLabel(deadline.date)}</span>
+      </span>
     </div>
     {deadline.pieces.length>0&&<ul className="deadline-card__pieces">
       {deadline.pieces.map(id=>{const item=byId.get(id);return item&&<li key={id}>
@@ -231,6 +236,8 @@ export default function PracticePage(){
   const dayMinutes=Math.round(daySessions.reduce((sum,session)=>sum+session.durationSeconds,0)/60);
   // Repetitions you counted (Scale Studio, tricky bits): that day's, and every day added up.
   const repLog=useRepLog();
+  // Tempos that have gone up over a week or more (lib/tempoHistory.ts), biggest gain first.
+  const allFaster=gettingFaster(useTempoHistory()),faster=showAll.faster?allFaster:allFaster.slice(0,ROW);
   const dayReps=shownDay?repsOnDay(repLog,repDay(new Date(shownDay).getTime())):[];
   const allTallies=repTotals(repLog),mostPractised=showAll.tallies?allTallies:allTallies.slice(0,ROW);
   // Where your time goes, from every logged session: by kind of practice. Free practice on the clock, and anything
@@ -277,11 +284,10 @@ export default function PracticePage(){
       </section>}
       {restoring&&<p className="practice-card__empty">{zh?"正在恢复曲目…":"Restoring your music…"}</p>}
       {/* Tricky bits stay open (they are practice); the lists fold, each only there when it has something in it. */}
-      {shelf("tricky",t.trickyBits.title,trickyBits.length,trickyGroups.map(([pieceId,bits])=><li key={pieceId} className="working-card tricky-group-card">
-        <div><b>{musicLibrary.find(entry=>entry.id===pieceId)?.title??(privateMusic.unlocked||privateMusic.loading?pieceId:(zh?"私人乐谱（未解锁）":"Private piece (locked)"))}</b>
-          <ul>{bits.map(bit=><li key={bit.id}><Link href={`/flute-studio/tricky-bits?open=${encodeURIComponent(bit.id)}`}>{t.trickyBits.bars} {bit.label}{bit.tempos.length?<small> · {Math.max(...bit.tempos)}</small>:null}</Link></li>)}</ul>
-        </div>
-      </li>),sectionLink("/flute-studio/tricky-bits",zh?"打开难点练习":"Open Tricky bits"))}
+      {/* Tricky bits: the hard passages you are working on, one list across your pieces, done ones folded away. */}
+      <PassagesList bits={trickyBits} titleOf={passageTitle} zh={zh} labels={{bars:t.trickyBits.bars}}
+        heading={shelfHeading(t.trickyBits.title,activeTricky.length)} firstRow={rows=>firstRow("tricky",rows)}
+        actions={<>{moreToggle("tricky",activeTricky.length)}{activeTricky.length>0&&sectionLink("/flute-studio/tricky-bits",zh?"一段段练":"Practise them in turn")}</>}/>
       {/* The lists you look things up in, as three stacks in one row (like Dock stacks): the top card shows, the
           title opens the full list, and tapping the stack fans its cards out below. */}
       {stackLists.some(list=>list.items.length)&&<>
@@ -335,7 +341,7 @@ export default function PracticePage(){
         </section>
       </section>
       {/* Like a year-in-music list: what you have repeated most, all days added up. Only once there is something to show. */}
-      {(timeByKind.length>0||allTallies.length>0)&&<div className="insight-cards">
+      {(timeByKind.length>0||allTallies.length>0||allFaster.length>0)&&<div className="insight-cards">
       {timeByKind.length>0&&<section className="practice-card time-split" aria-labelledby="time-split-title">
         <h2 id="time-split-title">{zh?"时间都花在哪":"Where your time goes"}</h2>
         <div className="time-split__bar" role="img" aria-label={timeByKind.map(kind=>`${zh?kind.zh:kind.en} ${Math.round(kind.seconds/totalSeconds*100)}%`).join(", ")}>
@@ -347,6 +353,15 @@ export default function PracticePage(){
       {mostPractised.length>0&&<section className="practice-card most-practised" aria-labelledby="most-practised-title">
         <div className="section-head"><h2 id="most-practised-title">{zh?"练得最多":"Most practised"}</h2>{moreToggle("tallies",allTallies.length)}</div>
         <ol>{mostPractised.map((row,i)=><li key={row.key}><span className="most-practised__rank">{i+1}</span><span className="most-practised__title">{row.title}</span><b>{row.total}<small>{zh?" 次":row.total===1?" time":" times"}</small></b></li>)}</ol>
+      </section>}
+      {/* Tempos recorded by themselves (reps counted, or playing along) that have climbed over at least a week. */}
+      {faster.length>0&&<section className="practice-card getting-faster" aria-labelledby="getting-faster-title">
+        <div className="section-head"><h2 id="getting-faster-title">{zh?"越练越快":"Getting faster"}</h2>{moreToggle("faster",allFaster.length)}</div>
+        <ol>{faster.map(row=><li key={row.key}>
+          <span className="getting-faster__title">{row.title}<small>{zh?`${shortDay(row.since,zh)} 起`:`since ${shortDay(row.since,zh)}`}</small></span>
+          <TempoTrend points={row.points} zh={zh} small/>
+          <b>{row.from}<span aria-hidden="true"> → </span><span className="sr-only">{zh?" 到 ":" to "}</span>{row.to}</b>
+        </li>)}</ol>
       </section>}
       </div>}
       <PitchTendencies zh={zh}/>

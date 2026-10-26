@@ -2,15 +2,15 @@
 
 import {PracticeIcon} from "../components/PracticeIcon";
 import Link from "next/link";
-import {useEffect,useState} from "react";
 import {exerciseCatalog,type ExerciseEntry} from "../../../content/exercise-catalog";
-import {deleteScaleSet,describeSet,readScaleSets,scaleSetsEvent,type ScaleSet} from "./scales/saved-sets";
+import {deleteSaved,useSavedExercises} from "../lib/savedExercises";
+import {canOpen,describeSaved,savedHref} from "./saved-kinds";
 import {useLanguage} from "../i18n/LanguageContext";
 import ScaleStudioPreview from "../ScaleStudioPreview";
 import LongTonePreview from "../LongTonePreview";
 import BreathingPreview from "../BreathingPreview";
 import TallySticks from "../components/TallySticks";
-import {useTrickyBits} from "../lib/trickyBits";
+import {activeBits,useTrickyBits} from "../lib/trickyBits";
 import "../tricky-bits/tricky-bits.css";
 import "../home-preview-cards.css";
 import "../components/preview-grid.css";
@@ -40,17 +40,12 @@ function Preview({id,zh}:{id:string;zh:boolean}){
 }
 
 export default function ExercisesHub(){
-  const {t,lang}=useLanguage(),zh=lang==="zh",{bits}=useTrickyBits();
-  // Sets saved in Scale Studio. Read after hydration — they live in
-  // localStorage, which the server render has no view of.
-  const [sets,setSets]=useState<ScaleSet[]>([]);
-  useEffect(()=>{
-    const sync=()=>setSets(readScaleSets());
-    sync();
-    window.addEventListener(scaleSetsEvent,sync);
-    window.addEventListener("storage",sync);
-    return()=>{window.removeEventListener(scaleSetsEvent,sync);window.removeEventListener("storage",sync)};
-  },[]);
+  const {t,lang}=useLanguage(),zh=lang==="zh",bits=activeBits(useTrickyBits().bits);
+  // Your saved exercises (Scale Studio sets today). They live in this browser's storage, which the server render
+  // cannot read, so everything under the title waits for them (`ready`): the list and Cookie's starter offer used to
+  // appear a moment after the cards and push them down.
+  const {items,ready}=useSavedExercises();
+  const sets=items.filter(canOpen);
 
   const titleOf=(entry:ExerciseEntry)=>zh?entry.zhTitle:entry.title;
   const detailOf=(entry:ExerciseEntry)=>zh?entry.zhDetail:entry.detail;
@@ -60,6 +55,9 @@ export default function ExercisesHub(){
     <div className="exercise-hub__content">
       <header className="exercise-hub__header" data-tab-title><div><h1>{t.exercises.title}</h1></div></header>
 
+      <div className="exercise-hub__body" data-ready={ready}>
+      {/* No saved sets yet: Cookie suggests a first routine in their place. */}
+
       {/* Your own saved sets first: what you built on purpose is more likely
           to be what you came back for than the general tools below. */}
       {sets.length>0&&<section className="exercise-hub__section exercise-hub__section--saved" aria-labelledby="exercise-hub-sets">
@@ -68,10 +66,10 @@ export default function ExercisesHub(){
           {/* A saved set is already saved, so its control is "forget it",
               not a star. */}
           {sets.map(set=><article key={set.id} className="exercise-hub__row exercise-hub__row--available exercise-hub__row--tagged">
-            <Link className="exercise-hub__row-main" href={`/flute-studio/exercises/scales?set=${encodeURIComponent(set.id)}`}>
-              <span className="exercise-hub__copy"><strong>{set.name}</strong><small>{describeSet(set.config,zh)}</small></span>
+            <Link className="exercise-hub__row-main" href={savedHref(set)!}>
+              <span className="exercise-hub__copy"><strong>{set.name}</strong><small>{describeSaved(set,zh)}</small></span>
             </Link>
-            <button type="button" className="exercise-hub__remove" aria-label={t.exercises.removeSet(set.name)} onClick={()=>deleteScaleSet(set.id)}><PracticeIcon name="delete"/></button>
+            <button type="button" className="exercise-hub__remove" aria-label={t.exercises.removeSet(set.name)} onClick={()=>deleteSaved(set.id)}><PracticeIcon name="delete"/></button>
           </article>)}
         </div>
       </section>}
@@ -93,9 +91,10 @@ export default function ExercisesHub(){
             </div>
           </div>
           <div className="preview-card__copy"><b>{t.trickyBits.title}</b>
-            <small>{bits.length?(zh?`${bits.length} 个保存的段落`:`${bits.length} saved ${bits.length===1?"passage":"passages"}`):(zh?"在乐谱里选几个小节保存，在这里反复练。":"Save a few bars from a piece, then practise them here.")}</small></div>
+            <small>{bits.length?(zh?`${bits.length} 个保存的段落`:`${bits.length} saved ${bits.length===1?"passage":"passages"}`):(zh?"把难的小节存下来，在这里反复练。":"Save hard bars from any piece and practise them here.")}</small></div>
         </Link>
       </section>
+      </div>
 
     </div>
   </main>;

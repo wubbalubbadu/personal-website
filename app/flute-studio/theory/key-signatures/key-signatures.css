@@ -37,3 +37,6 @@
 .lesson-shell .ks-signs button{min-width:64px;display:grid;place-items:center}
 
 @media(prefers-reduced-motion:reduce){.ks-slot rect,.ks-order b.is-new,.ks-sign-letter{animation:none}.ks-fly,.ks-ring{animation:none;opacity:0}}
+/* Phones: the slot beside the clef is tiny on screen; a wider invisible area takes the tap (KeySignaturesLesson). */
+.ks-slot rect.ks-slot__hit{display:none;fill:transparent;stroke:none;animation:none}
+@media(max-width:760px){.ks-slot rect.ks-slot__hit{display:inline}}

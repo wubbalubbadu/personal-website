@@ -162,36 +162,31 @@ export function createBreathingModel(){
   // Only the flat arrow face billboards; its heading is the projected motion.
   const anchors=[[-1.22,.70,.32],[1.22,.70,.32],[-.36,diaphragmY,.30],[.36,diaphragmY,.30],[-.50,-1.48,.51+.20*displayedBelly],[.50,-1.48,.51+.20*displayedBelly],[-.65,.25,-.68*(1+.05*p.ribs)],[.65,.25,-.68*(1+.05*p.ribs)],[-1.22,-.25,0],[1.22,-.25,0]];
   const outward=[[-.95,.12,.30],[.95,.12,.30],[0,-1,0],[0,-1,0],[-.30,0,.95],[.30,0,.95],[-.25,0,-1],[.25,0,-1],[-1,0,0],[1,0,0]];
+  // Exhale mirrors inhale: the same ten arrows, same size and place, covering the same stretch, pointing back the
+  // other way (inward, and up for the diaphragm). Only the colour (blue to red) and the heading change. While the ribs
+  // are still meant to stay open (early exhale) their arrows fade rather than shrink or vanish.
+  const length=.43*.8*.8;
   arrows.forEach((a,i)=>{
-   const extra=i>=10;
-   const lane=extra?2+(i%2):i;
-   const ribCue=lane<2||lane>=6;
-   const diaphragmCue=lane===2||lane===3;
-   const holding=(ribCue||diaphragmCue)&&!inhale;
-   // Early-exhale arrows indicate maintained width, not inward collapse.
-   const cueDirection=ribCue||diaphragmCue?1:dir;
-   const normal=new THREE.Vector3(...outward[lane] as [number,number,number]).normalize();
-   const direction=normal.clone().multiplyScalar(cueDirection);
-   a.visible=!extra||!inhale;
-   a.position.set(...anchors[lane] as [number,number,number]);
-   if(extra)a.position.x+=(i<12?-.17:.17);
-   const offset=cueDirection>0?.10:.48;
-   a.position.addScaledVector(normal,offset).addScaledVector(toward,.10);
+   if(i>=10){a.visible=false;return;}
+   a.visible=true;
+   const ribCue=i<2||i>=6;
+   const holding=ribCue&&!inhale&&v>.5;
+   const normal=new THREE.Vector3(...outward[i] as [number,number,number]).normalize();
+   const direction=normal.clone().multiplyScalar(dir);
+   a.position.set(...anchors[i] as [number,number,number]);
+   // Outward arrows start .10 out; inward ones end .18 out, so their wider head stays clear of the body.
+   a.position.addScaledVector(normal,dir>0?.10:.18+length).addScaledVector(toward,.10);
    let dx=direction.dot(right),dy=direction.dot(up);
    // A near head-on cue uses a small outward fan instead of becoming a dot.
-   if(Math.hypot(dx,dy)<.18){dx=(lane%2===0?-1:1)*cueDirection*.25;dy=0;}
+   if(Math.hypot(dx,dy)<.18){dx=(i%2===0?-1:1)*dir*.25;dy=0;}
    const angle=Math.atan2(-dx,dy);
    a.quaternion.copy(rotation).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),angle));
-   // One anchored arrow per location: gently grow the shaft, never recycle
-   // travelling arrowheads or stack multiple cues on the same path.
-   const extension=holding?.8:.8+.10*Math.sin(time*1.8);
-   const size=holding?.45:1;
-   a.scale.set(.8*size,extension*size,.8*size);
-   const amount=inhale?0:1;
-   (a.material as THREE.MeshBasicMaterial).color.copy(blue).lerp(red,amount);
+   a.scale.set(.8,.8+.06*Math.sin(time*1.8),.8);
+   const mat=a.material as THREE.MeshBasicMaterial;
+   mat.color.copy(blue).lerp(red,inhale?0:1);
+   mat.opacity=holding?.35:.95;
    a.userData.holding=holding;
-   a.userData.direction=cueDirection;
-   (a.material as THREE.MeshBasicMaterial).opacity=.85;
+   a.userData.direction=dir;
   });
   root.updateMatrixWorld(true);
  }

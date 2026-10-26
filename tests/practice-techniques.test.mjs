@@ -5,7 +5,7 @@ import ts from 'typescript';
 
 const compile=source=>ts.transpile(source,{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022});
 const source=fs.readFileSync(new URL('../app/flute-studio/components/practiceTechniques.ts',import.meta.url),'utf8');
-const {dottedGroups,repeatedPairsGroups,slidingGroupsGroups,techniquesFor,tupletGroups,randomGroupSizes,fermataPicks,splitPatterns,pitchSequence,notesToMusicXML,dotted}=await import(`data:text/javascript;base64,${Buffer.from(compile(source)).toString('base64')}`);
+const {dottedGroups,repeatedPairsGroups,slidingGroupsGroups,pausedGroupsGroups,techniquesFor,tupletGroups,randomGroupSizes,fermataPicks,splitPatterns,pitchSequence,notesToMusicXML,dotted}=await import(`data:text/javascript;base64,${Buffer.from(compile(source)).toString('base64')}`);
 
 const PC={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
 const note=(name,i)=>{const m=name.match(/^([A-G])([♯♭]?)(\d)$/),alter=m[2]==='♯'?1:m[2]==='♭'?-1:0;return {step:m[1],alter,octave:+m[3],midi:(+m[3]+1)*12+PC[m[1]]+alter,beatIndex:i}};
@@ -28,6 +28,14 @@ test('pairs are repeated, and shifted pairs start one note later',()=>{
 test('sliding groups overlap by all but one note and skip short runs',()=>{
   assert.deepEqual(pitchSequence(slidingGroupsGroups([run('A4','B4','C5','D5','E5')],3)),['A4','B4','C5','B4','C5','D5','C5','D5','E5']);
   assert.deepEqual(slidingGroupsGroups([run('A4','B4','C5')],4),[]);
+});
+
+test('groups of 3 or 4 keep the pitches, with a one-unit stop between groups but not after a run',()=>{
+  const r=[run('C5','D5','E5','F5','G5','A5','B5')];
+  assert.deepEqual(pitchSequence(pausedGroupsGroups(r,3)),['C5','D5','E5','F5','G5','A5','B5']);
+  assert.deepEqual(pausedGroupsGroups(r,3).map(g=>g.map(p=>p.rest?'r':p.units)),[[1,1,1,'r'],[1,1,1,'r'],[1]]);
+  assert.deepEqual(pausedGroupsGroups(r,4).map(g=>g.map(p=>p.rest?'r':p.units)),[[1,1,1,1,'r'],[1,1,1]]);
+  assert.match(notesToMusicXML(pausedGroupsGroups(r,4)),/<note><rest\/><duration>1<\/duration><type>16th<\/type><\/note>/);
 });
 
 test('no technique crosses a rest: runs stay separate',()=>{

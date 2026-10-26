@@ -1,0 +1,20 @@
+/* Keep offline (components/OfflineButton.tsx). The header button takes the reader's icon-button look from
+   studio-shell.css; kept is the studio's purple "on" tint, saving turns the circle into a slow dashed spinner. */
+.offline-button[aria-pressed="true"],.offline-label[aria-pressed="true"]{color:#79588e}
+.offline-button:disabled{opacity:1}
+.offline-button[aria-pressed="false"]:disabled{opacity:.45}
+:is(.offline-button,.offline-label)[aria-busy="true"] circle{stroke-dasharray:4 3;transform-origin:10px 10px;animation:offline-spin 1.4s linear infinite}
+@keyframes offline-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){:is(.offline-button,.offline-label)[aria-busy="true"] circle{animation:none}}
+
+/* The word version (a book's page): the studio's plain grey action button, purple tint once kept. */
+.offline-label{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px 0 11px;border:0;border-radius:10px;background:#f1f1f2;color:#45464f;font:600 13px/1 inherit;white-space:nowrap}
+.offline-label svg{width:18px;height:18px;flex:0 0 auto}
+.offline-label[aria-pressed="true"]{background:#f1e5f5;color:#6d4585}
+.offline-label:disabled{opacity:.55}
+.offline-label[aria-pressed="true"]:disabled{opacity:1}
+@media(hover:hover){.offline-label:hover:not(:disabled){background:#e8e8ea}.offline-label[aria-pressed="true"]:hover:not(:disabled){background:#ead8f0}}
+
+/* Library row: a small grey tick-in-a-circle after the title. */
+.offline-badge{display:inline-flex;vertical-align:-2px;margin-left:6px;color:#85868e}
+.offline-badge svg{width:15px;height:15px}

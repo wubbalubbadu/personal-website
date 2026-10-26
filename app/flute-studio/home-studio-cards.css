@@ -21,3 +21,28 @@
 .studio-card__week small{font-size:10.5px;color:#9a9ba2}
 .studio-card .studio-card__stage{align-items:stretch;justify-items:stretch;place-items:initial;text-align:left}
 .preview-card.studio-card .studio-card__stage{padding:18px 20px}
+
+/* Today (HomeTodayCard.tsx): a white panel two cards wide, one labelled row per thing to pick up. Not a link itself
+   (each row is), so it does not lift. Rows are label | what | action; on a phone the label sits above. */
+.studio-band:not(:has(.today-card,.studio-card)){display:none}
+.studio-cards .today-card{grid-column:span 2;display:flex;flex-direction:column;gap:6px;padding:18px 20px 12px;border-radius:18px;background:#fff;box-shadow:var(--studio-card-shadow);color:#292a33}
+.today-card__title{margin:0;font-size:16px;font-weight:600;letter-spacing:-.01em}
+.today-card__rows{display:grid;margin:0;padding:0;list-style:none}
+.today-card__rows>li{display:grid;grid-template-columns:152px minmax(0,1fr) auto;align-items:center;gap:4px 14px;min-height:52px;padding:6px 0;border-top:1px solid #f0f0f2}
+.today-card__rows>li:first-child{border-top:0}
+.today-card__main{display:grid;gap:2px;min-width:0;text-decoration:none;color:inherit}
+.today-card__main b{font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.today-card__main small{font-size:13px;color:#85868e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(hover:hover){.today-card__main:hover b{color:#46633d}}
+.today-card__action{display:inline-flex;align-items:center;height:32px;padding:0 14px;border-radius:10px;background:#f1f1f2;color:#45464f;font-size:13px;font-weight:600;text-decoration:none}
+@media(hover:hover){.today-card__action:hover{background:#e8e8ea}}
+.today-card__rows .tag-pill{justify-self:end}
+.today-card__chips{grid-column:2/-1;display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-width:0}
+.today-card__chips .piece-chip{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.today-card__more{font-size:13px;font-weight:600;color:#46633d;text-decoration:none}
+@media(max-width:760px){
+  .studio-cards .today-card{grid-column:auto;padding:16px 16px 10px}
+  .today-card__rows>li{grid-template-columns:minmax(0,1fr) auto;padding:10px 0}
+  .today-card__rows>li>.card-label{grid-column:1/-1}
+  .today-card__chips{grid-column:1/-1}
+}

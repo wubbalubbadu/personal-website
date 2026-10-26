@@ -3,7 +3,7 @@ import ExercisesHub from "./ExercisesHub";
 
 export const metadata:Metadata={
   title:"Exercises | Cookie Flute Studio",
-  description:"Focused flute exercises for scales, tone, and finger coordination.",
+  description:"Scales, long tones and breathing for flute, plus the hard bars you saved.",
 };
 
 export default function ExercisesPage(){

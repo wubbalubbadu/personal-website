@@ -26,11 +26,13 @@ export default function UploadedMusicPage(){
   const [showTempo,setShowTempo]=useExcerptTempoMark();
   const {bpm,setBpm,metro,toggleMetro}=usePracticeAudio();
   const item=musicLibrary.find(entry=>entry.id===params.id);
-  // Arriving from Tricky bits: bars to select, which saved bit it was, and whether the bars are being changed.
-  const [deepLink,setDeepLink]=useState<{bars?:{from:number;to:number};open?:string;change?:string}|null>(null);
+  // Arriving from Tricky bits (its page, or the list in My Studio): bars to select, which saved bit it was, whether the
+  // bars are being changed, whether to open the close-up on them, and which page back returns to.
+  const [deepLink,setDeepLink]=useState<{bars?:{from:number;to:number};open?:string;change?:string;closeup?:boolean;back:"tricky-bits"|"studio"}|null>(null);
   useEffect(()=>{
     const query=new URLSearchParams(window.location.search),match=query.get("bars")?.match(/^(\d+)-(\d+)$/);
-    const next=query.get("from")==="tricky-bits"?{bars:match?{from:+match[1],to:+match[2]}:undefined,open:query.get("open")??undefined,change:query.get("change")??undefined}:null;
+    const from=query.get("from");
+    const next=from==="tricky-bits"||from==="studio"?{bars:match?{from:+match[1],to:+match[2]}:undefined,open:query.get("open")??undefined,change:query.get("change")??undefined,closeup:query.get("closeup")==="1",back:from as "tricky-bits"|"studio"}:null;
     requestAnimationFrame(()=>setDeepLink(next));
   },[params.id]);
   // A numbered piece in a book: back goes to the book, and the header steps
@@ -59,15 +61,18 @@ export default function UploadedMusicPage(){
     sempreStaccatoFromMeasure:item.sempreStaccatoFromMeasure,
     pulsePerMeasure:item.pulsePerMeasure,
     smartDrone:item.smartDrone,
+    transposable:true,
     ...(item.accompanimentKind?{accompaniment:{asset:item.fullScorePath??xmlPath,readingPartId:item.readingPartId??"P1",kind:item.accompanimentKind}}:{}),
     id:xmlId!,
-    backHref:deepLink?`/flute-studio/tricky-bits${deepLink.open?`?open=${encodeURIComponent(deepLink.open)}`:""}`:book?bookPath(book.id):"/flute-studio/music",
-    ...(deepLink?.bars?{initialBars:deepLink.bars}:{}),
+    // Per piece, shared by its passages.
+    backHref:deepLink?.back==="studio"?"/flute-studio/practice#shelf-tricky":deepLink?`/flute-studio/tricky-bits${deepLink.open?`?open=${encodeURIComponent(deepLink.open)}`:""}`:book?bookPath(book.id):"/flute-studio/music",
+    ...(deepLink?.bars?{initialBars:deepLink.bars,...(deepLink.closeup?{initialCloseup:true}:{})}:{}),
     ...(deepLink?.change?{changeBit:deepLink.change}:{}),
     // A book goes on your lists as a whole, from any of its numbers.
-    ...(deepLink?{backLabel:zh?"精练小节":"Tricky bits",backName:zh?"精练小节":"Tricky bits"}:book?{backLabel:book.title,backName:book.composer.split(" ").pop(),listId:book.id}:{}),
+    ...(deepLink?.back==="studio"?{backLabel:zh?"我的工作室":"My Studio",backName:zh?"我的工作室":"My Studio"}:deepLink?{backLabel:zh?"精练小节":"Tricky bits",backName:zh?"精练小节":"Tricky bits"}:book?{backLabel:book.title,backName:book.composer.split(" ").pop(),listId:book.id}:{}),
     ...(item.pdfPath?{pdfPath:item.pdfPath}:{}),
     ...(item.defaultTempo?{defaultTempo:item.defaultTempo}:{}),
+    ...(item.excerpt&&interactive?{tempoHistoryKey:`excerpt:${item.id}:${interactive}`}:{}),
     ...(composerInfo(item.composer)||item.about?{story:{composer:composerInfo(item.composer),year:item.year,about:item.about,tempoHint:zh?item.excerpt?.zhTempoHint??item.excerpt?.tempoHint:item.excerpt?.tempoHint}}:{}),
   };
   const stepper=book&&item.book?<span className="book-stepper">

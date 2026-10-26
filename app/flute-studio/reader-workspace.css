@@ -1015,7 +1015,6 @@ html body .reader-settings-panel .reader-text-action:hover,html body .reader-set
 .practice-bar svg[data-icon="markup"]{transform:scale(1.06)}
 .practice-bar svg[data-icon="play"]{transform:scale(1.1)}
 .practice-bar svg[data-icon="record"]{transform:scale(1.3)}
-.practice-bar svg[data-icon="metronome"]{transform:scale(1.12)}
 .practice-bar svg[data-icon="gear"]{transform:scale(.89)}
 .practice-bar svg[data-icon="fullscreen"]{transform:scale(1.06)}
 
@@ -1057,3 +1056,43 @@ html body .reader-settings-panel .reader-settings-reset.reader-settings-reset{pa
 /* The count-in stays in view: pinned just under the toolbar like the notice pill (--reader-notice-top, measured by
    ScoreViewer), not at the top of the music, where it scrolled away with the score. */
 html body .score-count-in.score-count-in:not(.rhythm-tap__count){position:fixed;top:var(--reader-notice-top,164px);left:50%;transform:translateX(-50%);z-index:410}
+/* Resume following (useScoreFollow.tsx): a soft pill in the notice spot under the toolbar, shown while you browse away
+   from the playing line during Listen. The arrow points at the playing line. */
+.follow-resume{position:fixed;z-index:405;left:50%;top:var(--reader-notice-top,164px);transform:translateX(-50%);padding:3px;border-radius:999px;border:var(--pill-border);background:var(--pill-bg);box-shadow:var(--pill-shadow);animation:follow-resume-in .18s ease both}
+html body .follow-resume button{display:inline-flex;align-items:center;gap:6px;height:34px;min-height:0;padding:0 14px 0 10px;border:0;border-radius:999px;background:transparent;color:#292a33;font:inherit;font-size:14px;font-weight:500;white-space:nowrap;cursor:default}
+html body .follow-resume button:hover{background:#f1f1f4}
+.follow-resume svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.follow-resume svg[data-direction="up"]{transform:rotate(180deg)}
+@keyframes follow-resume-in{from{opacity:0;transform:translate(-50%,-4px)}to{opacity:1;transform:translate(-50%,0)}}
+@media(prefers-reduced-motion:reduce){.follow-resume{animation:none}}
+/* Key (View settings): the piece's key between two half-step arrows, the move spelled out under it. */
+.reader-key__stepper{display:flex;align-items:center;gap:6px;margin:6px 0 8px}
+html body .reader-settings-panel .reader-key__stepper button{display:grid;place-items:center;width:34px;height:34px;min-height:0;padding:0;border:0;border-radius:999px;background:transparent;color:#292a33}
+html body .reader-settings-panel .reader-key__stepper button:hover:not(:disabled){background:#f1f1f4}
+html body .reader-settings-panel .reader-key__stepper button:disabled{opacity:.35}
+.reader-key__stepper svg{width:18px;height:18px}
+.reader-key__stepper>span{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;text-align:center}
+.reader-key__stepper strong{font-size:15px;font-weight:600;color:#292a33}
+.reader-key__stepper small{font-size:12.5px;color:#71747e}
+.reader-key .reader-setting-note .reader-text-action{display:inline;color:#46633d!important;font-weight:600}
+/* "· transposed up a whole step" after the composer, the byline's own grey serif, so a moved key is never forgotten. */
+html body .workspace .custom-score-heading .score-byline .score-transposed{display:inline!important;margin:0!important;padding:0!important;font:inherit!important;color:inherit!important}
+/* Now playing: the bar under the cursor, in the selection's purple (the selection hides while playing). */
+html body .osmd-score .now-playing-bar{fill:rgba(109,69,133,.16)!important}
+/* Stopped: the playhead parked where Play will start (the last bar you tapped or where you stopped). */
+.playback-cursor.playback-cursor--parked{opacity:1;background:rgba(109,69,133,.4)}
+/* Note names under the staff (scoreLabels.ts, place "below"): small plain grey-green text in one lane, no pill. */
+html body .osmd-score .note-pill--below{transform:translate(-50%,0);background:transparent;border:0;padding:0;font:400 11px/1.2 Arial,sans-serif;color:#4f7a63}
+/* The note-name options under "Show on the page", shown only while names or solfège are on. */
+.reader-name-style{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+
+/* Inside a reader popover (the tempo ladder), a generic panel button style painted TempoPill's − and + white at rest.
+   Keep the pill's own look: transparent at rest, its blue on hover. */
+html:root body .reader-settings-panel .tempo-pill :is(.tempo-pill__step,.tempo-pill__sound):not(:hover){background:transparent!important;box-shadow:none!important}
+html:root body .reader-settings-panel .tempo-pill.is-sounding .tempo-pill__sound{background:#79588e!important;color:#fff!important}
+
+/* The piano card's play button while the samples load: a small ring in place of the triangle, so nothing shifts. */
+.reader-play-start.is-loading{cursor:progress}
+.reader-play-spinner{display:block;width:16px;height:16px;border:2px solid #d9dadf;border-top-color:#6f7178;border-radius:50%;animation:reader-play-spin .7s linear infinite}
+@keyframes reader-play-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.reader-play-spinner{animation:none;border-top-color:#d9dadf}}

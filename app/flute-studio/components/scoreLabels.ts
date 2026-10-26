@@ -27,9 +27,21 @@ export type NoteLabelOptions={
   beatStarts:Set<number>;
   /** Redo only bars from here on; earlier labels are left alone. */
   fromMeasure?:number;
+  /** "above": a pill over each note (the default). "below": small plain labels in one lane under the staff. */
+  place?:"above"|"below";
+  /** "ledger": only notes on ledger lines (A5 and up, C4 and down, as written), for high etudes. */
+  only?:"all"|"ledger";
 };
 
+/** A written pitch ("A♭5") on ledger lines of the treble staff: A5 or higher, C4 or lower. */
+export function onLedgerLines(written:string){
+  const match=written.match(/^([A-G])[^\d-]*(-?\d+)$/);if(!match)return false;
+  const position="CDEFGAB".indexOf(match[1])+7*Number(match[2]);
+  return position>=5+7*5||position<=7*4;
+}
+
 const FONT="400 12px Arial";
+const BELOW_FONT="400 11px Arial";
 const GAP=4;
 const widthCache=new Map<string,number>();
 let measureContext:CanvasRenderingContext2D|null|undefined;
@@ -92,14 +104,63 @@ export function placeNoteLabels(root:HTMLElement,options:NoteLabelOptions){
     const index=Number(node.dataset.event),event=options.events[index];
     // Grace notes, rests and the second half of a tie carry no label of their own.
     if(!event?.p||event.d===0||event.tied)return [];
+    if(options.only==="ledger"&&!onLedgerLines(options.displayPitches?.[index]??event.p))return [];
     const head=node.querySelector(".vf-notehead");if(!head)return [];
     return [{node,index,head:read(head)}];
   });
+  const below=options.place==="below";
+  // Under the staff: one lane per line of music, just below its lowest staff line or lowest note, whichever is
+  // lower, so the labels read as a row instead of hopping around. Dynamics and hairpins there push a label down.
+  const lane=new Map<number,number>();
+  if(below){
+    root.querySelectorAll(".vf-text,[class*='hairpin'],[class*='crescendo']").forEach(part=>{const box=read(part);if(box.bottom>=firstTop)add(box)});
+    const staffBottom=new Map<Element,{top:number;bottom:number}>();
+    const staffOf=(bar:Element)=>{
+      let known=staffBottom.get(bar);if(known)return known;
+      const lines=[...bar.children].filter(child=>child instanceof SVGPathElement&&!child.getAttribute("class")).map(read).filter(box=>box.bottom-box.top<2&&box.right-box.left>20);
+      const box=lines.length?{top:Math.min(...lines.map(b=>b.top)),bottom:Math.max(...lines.map(b=>b.bottom))}:read(bar);
+      known={top:box.top,bottom:box.bottom};staffBottom.set(bar,known);return known;
+    };
+    for(const item of measured){
+      const bar=item.node.closest(".vf-measure");if(!bar)continue;
+      const staff=staffOf(bar),key=Math.round(staff.top/8);
+      lane.set(key,Math.max(lane.get(key)??0,staff.bottom,item.head.bottom));
+    }
+    for(const item of measured){const bar=item.node.closest(".vf-measure");(item as {lane?:number}).lane=bar?lane.get(Math.round(staffOf(bar).top/8)):undefined}
+  }
   const placed:Placed[]=[],fragment=document.createDocumentFragment(),height=17;
-  for(const {node,index,head} of measured){
+  for(const entry of measured){
+    const {node,index,head}=entry;
     const written=options.displayPitches?.[index]??options.events[index].p!,letter=written.replace(/\d/,"");
     const text=options.kind==="solfege"?solfege(letter):letter;
-    const centre=(head.left+head.right)/2,half=(textWidth(text)+10)/2;
+    const centre=(head.left+head.right)/2;
+    if(below){
+      // Top of the label; it moves down past anything in its way.
+      const half=(textWidth(text,BELOW_FONT)+4)/2,tall=13;
+      let y=((entry as {lane?:number}).lane??head.bottom)+GAP;
+      for(let tries=0;tries<6;tries++){
+        let drop=-Infinity;
+        for(let column=Math.floor((centre-half)/COLUMN);column<=Math.floor((centre+half)/COLUMN);column++){
+          for(const box of grid.get(column)??[])if(box.right>centre-half&&box.left<centre+half&&box.top<y+tall&&box.bottom>y)drop=Math.max(drop,box.bottom);
+        }
+        if(drop===-Infinity)break;
+        y=drop+2;
+      }
+      const label=document.createElement("span");
+      label.className=`practice-overlay note-pill note-pill--below ${options.kind==="solfege"?"solfege-marker":"note-name-marker"}`;
+      label.textContent=text;label.dataset.measure=node.dataset.measure??"0";
+      label.style.left=`${centre}px`;label.style.top=`${y}px`;
+      const placedItem:Placed={el:label,left:centre-half,right:centre+half,top:y,bottom:y+tall,beat:options.beatStarts.has(index)};
+      for(let k=placed.length-1;k>=Math.max(0,placed.length-14);k--){
+        const other=placed[k],across=Math.min(placedItem.right,other.right)-Math.max(placedItem.left,other.left),down=Math.min(placedItem.bottom,other.bottom)-Math.max(placedItem.top,other.top);
+        if(across<=0||down<=0)continue;
+        if(across*down<.5*(placedItem.right-placedItem.left)*tall)continue;
+        (placedItem.beat&&!other.beat?other:placedItem).el.classList.add("is-covered");
+      }
+      placed.push(placedItem);fragment.appendChild(label);
+      continue;
+    }
+    const half=(textWidth(text)+10)/2;
     let y=head.top-GAP;
     // Lift above whatever the pill would sit on (a few tries, then leave it).
     for(let tries=0;tries<10;tries++){

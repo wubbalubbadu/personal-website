@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import {useMemo,useState} from 'react';
+import {useEffect,useMemo,useState} from 'react';
 import {useSearchParams} from 'next/navigation';
 import {ScaleTemposPanel} from '../../components/ScaleTemposPanel';
 import {SCALE_TEMPO_KEY,scaleTrackingId,scaleTrackedTempo} from '../scales/scale-tracking';
@@ -11,15 +11,22 @@ import {ScoreViewer} from '../../components/ScoreViewer';
 import {PracticeIcon} from '../../components/PracticeIcon';
 import BackChevron from '../../components/BackChevron';
 import {useLanguage} from '../../i18n/LanguageContext';
+import {StatusButton} from '../../components/StatusButton';
+import {recordOpened,useBookProgress} from '../../lib/bookProgress';
 import {routine,routineXML,routineBlocks,routineSpan,type RoutineExercise} from './routine';
 import '../exercises.css';
 import '../../music/books/book.css';
+import '../../components/tag-pill.css';
+import {usePracticeTempoMarks} from "../../lib/practiceTempoMarks";
 
 const home='/flute-studio/music/cookie-scales';
+/** The routine's id in the Music Library: Want to learn and Last opened belong to the whole book, like Reichert's. */
+const bookId='cookie-scales';
 const href=(id:string)=>`${home}?exercise=${id}`;
 function RoutineReader({exercise,zh}:{exercise:RoutineExercise;zh:boolean}){
   const index=routine.indexOf(exercise),previous=routine[index-1],next=routine[index+1];
-  const [showTempos,setShowTempos]=useState(true);
+  useEffect(()=>{recordOpened(bookId,index+1)},[index]);
+  const [showTempos,setShowTempos]=usePracticeTempoMarks();
   const [tempos,setTempos]=useState<Record<string,number>>(()=>{
     try{
       const shared=JSON.parse(localStorage.getItem(SCALE_TEMPO_KEY)??'{}');
@@ -83,7 +90,7 @@ function RoutineReader({exercise,zh}:{exercise:RoutineExercise;zh:boolean}){
         if(running||!context.controls.metronome)context.controls.toggleMetronome();
       }}
     />:undefined}
-    config={{id:`cookie-routine-${exercise.id}`,title:zh?exercise.zh:exercise.title,composer:'',asset:xml,defaultTempo:60,backHref:home,backLabel:zh?'Cookie 的音阶练习':'Cookie’s Scale Routine'}} headerActions={()=><span className="book-stepper">
+    config={{id:`cookie-routine-${exercise.id}`,hideListStatus:true,title:zh?exercise.zh:exercise.title,composer:'',asset:xml,defaultTempo:60,backHref:home,backLabel:zh?'Cookie 的音阶练习':'Cookie’s Scale Routine'}} headerActions={()=><span className="book-stepper">
     {previous?<Link className="book-stepper__arrow" href={href(previous.id)} aria-label={zh?'上一个练习':'Previous exercise'}><PracticeIcon name="previous"/></Link>:<span className="book-stepper__arrow is-off" aria-hidden="true"><PracticeIcon name="previous"/></span>}
     <span className="book-stepper__label">{index+1} / {routine.length}</span>
     {next?<Link className="book-stepper__arrow" href={href(next.id)} aria-label={zh?'下一个练习':'Next exercise'}><PracticeIcon name="next"/></Link>:<span className="book-stepper__arrow is-off" aria-hidden="true"><PracticeIcon name="next"/></span>}
@@ -92,11 +99,14 @@ function RoutineReader({exercise,zh}:{exercise:RoutineExercise;zh:boolean}){
 export default function CookieScaleRoutine(){
   const params=useSearchParams(),{lang}=useLanguage(),zh=lang==='zh';
   const exercise=routine.find(e=>e.id===params.get('exercise'));
+  const progress=useBookProgress(bookId);
   if(exercise)return <RoutineReader key={exercise.id} exercise={exercise} zh={zh}/>;
   return <main className="exercise-hub"><div className="exercise-hub__content">
     <Link className="book-page__back" href="/flute-studio/music?tag=exercise" aria-label={zh?'返回音乐库':'Back to Music Library'}><BackChevron/></Link>
     <header className="exercise-hub__header book-page__header"><div><h1>{zh?'Cookie 的音阶练习':'Cookie’s Scale Routine'}</h1></div>
+      {/* For the whole book, as on Reichert's page. No "done" count: a scale is never finished. */}
+      <div className="book-page__actions"><StatusButton id={bookId} zh={zh}/></div>
     </header>
-    <section className="book-page__list" aria-label={zh?'练习目录':'Routine exercises'}>{routine.map((e,i)=><article key={e.id} className="book-row"><Link className="book-row__main" href={href(e.id)}><span className="book-row__copy"><strong>{i+1}. {zh?e.zh:e.title}</strong></span></Link></article>)}</section>
+    <section className="book-page__list" aria-label={zh?'练习目录':'Routine exercises'}>{routine.map((e,i)=><article key={e.id} className="book-row"><Link className="book-row__main" href={href(e.id)}><span className="book-row__copy"><strong>{i+1}. {zh?e.zh:e.title}</strong></span>{progress.last===i+1&&<span className="tag-pill" data-tone="sage">{zh?'上次练到这里':'Last opened'}</span>}</Link></article>)}</section>
   </div></main>;
 }

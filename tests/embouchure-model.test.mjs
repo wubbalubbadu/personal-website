@@ -11,6 +11,7 @@ const asModule = source => `data:text/javascript;base64,${Buffer.from(source).to
 const poses = asModule(sourceUrl('../app/flute-studio/embouchure/poses.ts'));
 const source = sourceUrl('../app/flute-studio/embouchure/model.ts')
   .replace("'three'", JSON.stringify(import.meta.resolve('three')))
+  .replace(/(['"])(three(?:\/[^'"]+)?)\1/g, (_match, _quote, specifier) => JSON.stringify(import.meta.resolve(specifier)))
   .replace("'./poses'", JSON.stringify(poses));
 const {createModel} = await import(asModule(source));
 

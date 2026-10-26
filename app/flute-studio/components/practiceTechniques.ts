@@ -4,7 +4,8 @@
 export type PracticeNote={step:string;alter:number;octave:number;midi:number;tupletSize?:number;beatIndex:number;/** Number of the written bar the note sits in. */measure?:number};
 /** Consecutive pitched attacks. A rest ends a run, and no exercise crosses one. */
 export type Run=PracticeNote[];
-export type Placed={n:PracticeNote;units:number};
+/** A note on the grid. `rest` writes a rest of that length instead (it keeps `n` only to know which bar it falls in). */
+export type Placed={n:PracticeNote;units:number;rest?:boolean};
 export type Group=Placed[];
 
 const STEP_PC:Record<string,number>={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
@@ -50,6 +51,40 @@ export function slidingGroupsGroups(runs:Run[],size:3|4):Group[]{
   return runs.flatMap(run=>Array.from({length:Math.max(0,run.length-size+1)},(_,i)=>place(run.slice(i,i+size),1)));
 }
 
+/**
+ * Each run cut into groups of `size` with a short stop (one grid unit of rest) between groups: A B C · D E F · G.
+ * The last group of a run may be shorter, and no stop is added after it (the run ends there anyway).
+ */
+export function pausedGroupsGroups(runs:Run[],size:3|4):Group[]{
+  return runs.flatMap(run=>{const out:Group[]=[];
+    for(let i=0;i<run.length;i+=size){const chunk=run.slice(i,i+size),group=place(chunk,1);
+      if(i+size<run.length)group.push({n:chunk[chunk.length-1],units:1,rest:true});
+      out.push(group)}
+    return out;});
+}
+
+/**
+ * Whether the selection is one even stream of notes, which is what the rhythm drills (dotted, pairs, groups) rewrite.
+ * Tied notes or notes of different lengths would make a drill change what is written, so those get a reason instead.
+ * Rests are allowed: they only split the notes into runs, and no drill crosses one. `perQuarter` is how many of the
+ * written notes fit in a quarter, so a drill written in sixteenths can be played at the same note speed.
+ */
+export type PassageShape={kind:'uniform';perQuarter:number}|{kind:'tied'}|{kind:'uneven'}|{kind:'empty'};
+export function passageShape(xml:string):PassageShape{
+  const doc=new DOMParser().parseFromString(xml,'application/xml');let divisions=1,length:number|null=null,uneven=false;
+  for(const measure of Array.from(doc.querySelectorAll('part > measure'))){
+    for(const child of Array.from(measure.children)){
+      if(child.tagName==='attributes'){const d=Number(child.querySelector('divisions')?.textContent);if(d>0)divisions=d;continue}
+      if(child.tagName!=='note'||child.querySelector('grace')||child.querySelector('chord')||child.querySelector('rest'))continue;
+      if(child.querySelector('tie, tied'))return {kind:'tied'};
+      const quarters=Number(child.querySelector('duration')?.textContent)/divisions;
+      if(!(quarters>0))continue;
+      if(length===null)length=quarters;else if(Math.abs(quarters-length)>length*.02)uneven=true;
+    }
+  }
+  return length===null?{kind:'empty'}:uneven?{kind:'uneven'}:{kind:'uniform',perQuarter:1/length};
+}
+
 /** Which of `count` attacks get a fermata: about one in seven, at least one, never two in a row, different for every seed. */
 export function fermataPicks(count:number,seed:number):number[]{
   if(count<1)return [];
@@ -76,16 +111,23 @@ export function addFermatas(xml:string,seed:number){
 }
 
 /** Pitch sequence of groups, for tests. */
-export const pitchSequence=(groups:Group[])=>groups.flatMap(g=>g.map(p=>`${noteName(p.n)}`));
+export const pitchSequence=(groups:Group[])=>groups.flatMap(g=>g.filter(p=>!p.rest).map(p=>`${noteName(p.n)}`));
 
 const TYPES:Record<number,[string,boolean]>={1:['16th',false],2:['eighth',false],3:['eighth',true],4:['quarter',false],6:['quarter',true],8:['half',false],12:['half',true],16:['whole',false]};
-const noteXml=(p:Placed)=>{const [type,dot]=TYPES[p.units]??TYPES[4];
-  return `<note><pitch><step>${p.n.step}</step>${p.n.alter?`<alter>${p.n.alter}</alter>`:''}<octave>${p.n.octave}</octave></pitch><duration>${p.units}</duration><type>${type}</type>${dot?'<dot/>':''}</note>`};
+const noteXml=(p:Placed,beam='')=>{const [type,dot]=TYPES[p.units]??TYPES[4];
+  if(p.rest)return `<note><rest/><duration>${p.units}</duration><type>${type}</type>${dot?'<dot/>':''}</note>`;
+  return `<note><pitch><step>${p.n.step}</step>${p.n.alter?`<alter>${p.n.alter}</alter>`:''}<octave>${p.n.octave}</octave></pitch><duration>${p.units}</duration><type>${type}</type>${dot?'<dot/>':''}${beam}</note>`};
+/** One beam over each group's sixteenths, so a group reads as one gesture even where it crosses a beat (auto-beaming splits it at the beat). */
+function groupXml(g:Group,beamed:boolean){
+  const notes=g.filter(p=>!p.rest&&p.units===1);if(!beamed||notes.length<2)return g.map(p=>noteXml(p)).join('');
+  return g.map(p=>{const i=notes.indexOf(p);if(i<0)return noteXml(p);const edge=i===0?'begin':i===notes.length-1?'end':'continue';
+    return noteXml(p,`<beam number="1">${edge}</beam><beam number="2">${edge}</beam>`)}).join('');
+}
 
 
 /** Write groups as MusicXML, one bar per written bar of the source (a group belongs to the bar its first note came from). Each bar's meter just
  *  adds up its notes and is meant to be hidden when drawn, so a practice grid never claims to be the piece's time signature. */
-export function notesToMusicXML(groups:Group[],key='<key><fifths>0</fifths></key>',clef='<clef><sign>G</sign><line>2</line></clef>'){
+export function notesToMusicXML(groups:Group[],key='<key><fifths>0</fifths></key>',clef='<clef><sign>G</sign><line>2</line></clef>',beamed=false){
   const size=(g:Group)=>g.reduce((s,p)=>s+p.units,0),bars:{number:number;groups:Group[]}[]=[];
   groups.forEach((g,i)=>{const m=g[0]?.n.measure??i,last=bars[bars.length-1];
     if(last&&last.number===m)last.groups.push(g);else bars.push({number:m,groups:[g]})});
@@ -93,12 +135,13 @@ export function notesToMusicXML(groups:Group[],key='<key><fifths>0</fifths></key
   return `<?xml version="1.0" encoding="UTF-8"?><score-partwise version="3.1"><part-list><score-part id="P1"><part-name/></score-part></part-list><part id="P1">${bars.map((bar,i)=>{
     const units=bar.groups.reduce((s,g)=>s+size(g),0),time=units%4===0?`<time><beats>${units/4}</beats><beat-type>4</beat-type></time>`:`<time><beats>${units}</beats><beat-type>16</beat-type></time>`;
     const changed=time!==previous;previous=time;
-    return `<measure number="${i+1}">${i===0?`<attributes><divisions>4</divisions>${key}${time}${clef}</attributes>`:changed?`<attributes>${time}</attributes>`:''}${bar.groups.map(g=>g.map(noteXml).join('')).join('')}</measure>`}).join('')}</part></score-partwise>`;
+    return `<measure number="${i+1}">${i===0?`<attributes><divisions>4</divisions>${key}${time}${clef}</attributes>`:changed?`<attributes>${time}</attributes>`:''}${bar.groups.map(g=>groupXml(g,beamed)).join('')}</measure>`}).join('')}</part></score-partwise>`;
 }
 
 type Ctx={key?:string;clef?:string};
 export const dotted=(runs:Run[],mode:'longShort'|'shortLong',c:Ctx={})=>notesToMusicXML(dottedGroups(runs,mode),c.key,c.clef);
 export const repeatedPairs=(runs:Run[],shifted:boolean,c:Ctx={})=>notesToMusicXML(repeatedPairsGroups(runs,shifted),c.key,c.clef);
+export const pausedGroups=(runs:Run[],size:3|4,c:Ctx={})=>notesToMusicXML(pausedGroupsGroups(runs,size),c.key,c.clef,true);
 export const slidingGroups=(runs:Run[],size:3|4,c:Ctx={})=>notesToMusicXML(slidingGroupsGroups(runs,size),c.key,c.clef);
 
 /** Ways to split a group of `size` notes into two or three beats-of-feel. */

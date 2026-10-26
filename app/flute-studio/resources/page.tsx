@@ -3,6 +3,7 @@
 import Link from "next/link";
 import {LEARN_PAGES} from "../learn-pages";
 import {TheoryPreview,EmbouchurePreview,FingeringPreview,TrillPreview,RoadmapPreview} from "../LearnPreviews";
+import RhythmDrillsPreview from "../rhythm-drills/RhythmDrillsPreview";
 import "../home-preview-cards.css";
 import "../components/preview-grid.css";
 import {useLanguage} from "../i18n/LanguageContext";
@@ -29,6 +30,7 @@ export default function ResourcesHub() {
   const preview=(key:string)=>{
     switch(key){
       case "theory": return <TheoryPreview zh={zh}/>;
+      case "rhythm-drills": return <RhythmDrillsPreview/>;
       case "fingerings": return <FingeringPreview/>;
       case "trills": return <TrillPreview/>;
       case "embouchure": return <EmbouchurePreview/>;

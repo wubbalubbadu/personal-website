@@ -7,9 +7,12 @@ import {ScoreViewer} from "../../components/ScoreViewer";
 import {ChevronIcon,DownloadIcon} from "../../components/HeaderIcons";
 import {ReaderPopover} from "../../components/ReaderPopover";
 import {KeySelection} from "../../components/KeySelection";
+import {usePracticeTempoMarks} from "../../lib/practiceTempoMarks";
 import {PracticeIcon,SpectrumDef} from "../../components/PracticeIcon";
-import {useCallback,useEffect,useRef,useState} from "react";
+import {useEffect,useRef,useState} from "react";
 import {useLanguage} from "../../i18n/LanguageContext";
+import {usePracticeAudio} from "../../PracticeAudio";
+import {PRACTISING_EVENT} from "../../lib/readerActivity";
 
 import {groupsApply,scaleGroupings,type ScaleGroupSize,keySignatureNotes,DEFAULT_SCALE_SPAN,SCALE_HIGHEST_MIDI,SCALE_LOWEST_MIDI,SCALE_OCTAVES,SCALE_PITCH_CLASSES,midiForNote,octaveOfMidi,pitchClassOfMidi,scaleNoteName,type ScaleSpan,keyForType,majorKeys,ranges,scaleBookMusicXML,scaleForms,scaleNotes,scaleTypes,typeById,type MajorKey,type ScaleBlock,type ScaleEnding,type ScaleFormId,type ScaleRange,type ScaleStart,type ScaleTypeId} from "./scale-score";
 
@@ -17,7 +20,7 @@ import {groupsApply,scaleGroupings,type ScaleGroupSize,keySignatureNotes,DEFAULT
 const titleCase=(text:string)=>text.replace(/\b[a-z]/g,letter=>letter.toUpperCase());
 const keyLabelFor=(key:MajorKey,typeId:ScaleTypeId)=>keyForType(key,typeById(typeId)).label;
 import {type ArticulationGroup,type ArticulationMode,type ArticulationPresetId,type ArticulationSelection,type RhythmChoice,type SyllableScheme,articulationPresetIds,articulationPresetSelection,defaultArticulationSelection,resolveArticulationPattern,resolveArticulation,resolveRhythm,resolveSyllable,selectionsEqual,isMixedArticulation,marksStaccato} from "../../components/notePatterns";
-import {deleteScaleSet,describeSet,typeWordFor,findScaleSet,readScaleSets,saveScaleSet,scaleSetsEvent,type ScaleSet,type ScaleSetConfig} from "./saved-sets";
+import {markSetPlayed,deleteScaleSet,describeSet,typeWordFor,findScaleSet,readScaleSets,saveScaleSet,scaleSetsEvent,type ScaleSet,type ScaleSetConfig} from "./saved-sets";
 import {AugmentationDot,Beam,BeamHook,GlyphSvg,NOTE_SPACING,Notehead,Slur,Staccato,Stem,SyllableText,Tenuto,TupletNumber,centeredStart} from "./notationGlyphs";
 import "./scale-book.css";
 
@@ -106,6 +109,8 @@ const articulationLabels:Record<ArticulationPresetId,{en:string;zh:string}>={
 };
 const modeLabels:Record<ArticulationMode,{en:string;zh:string}>={slur:{en:"Slur",zh:"连音"},tongue:{en:"Tongue",zh:"吐音"},staccato:{en:"Staccato",zh:"断音"},tenuto:{en:"Tenuto",zh:"保持音"}};
 const rhythmChoices:RhythmChoice[]=["even","dottedLongShort","dottedShortLong","triplet"];
+/** A saved rhythm rotation: a non-empty list of known rhythms. */
+const isRhythmList=(value:unknown):value is RhythmChoice[]=>Array.isArray(value)&&value.length>0&&value.every(v=>rhythmChoices.includes(v));
 const rhythmLabels:Record<RhythmChoice,{en:string;zh:string}>={even:{en:"Even",zh:"均分"},dottedLongShort:{en:"Dotted, long–short",zh:"附点（长–短）"},dottedShortLong:{en:"Dotted, short–long",zh:"附点（短–长）"},triplet:{en:"Triplet",zh:"三连音"}};
 
 // Double/triple tonguing are practice techniques for articulating a fast
@@ -247,11 +252,28 @@ function RhythmIcon({choice}:{choice:RhythmChoice}){
  * section tabs you swipe along, and only the chosen section below them,
  * the way photo editing on a phone lays out its tools.
  */
+// Grouped the way a flutist decides: which scale, what exercise, how far, how to play it, how the page reads.
 const PHONE_SECTIONS:{id:string;en:string;zh:string}[]=[
-  {id:"presets",en:"Sets",zh:"组合"},{id:"type",en:"Type",zh:"类型"},{id:"form",en:"Form",zh:"形式"},{id:"keys",en:"Keys",zh:"调性"},
-  {id:"range",en:"Range",zh:"音域"},{id:"order",en:"Layout",zh:"编排"},{id:"articulation",en:"Articulation",zh:"演奏法"},
-  {id:"rhythm",en:"Rhythm",zh:"节奏"},
+  {id:"presets",en:"Sets",zh:"组合"},{id:"scale",en:"Scale",zh:"音阶"},{id:"form",en:"Form",zh:"形式"},
+  {id:"range",en:"Range",zh:"音域"},{id:"playing",en:"Style",zh:"风格"},{id:"page",en:"Page",zh:"页面"},
 ];
+/** The section that holds each group a breadcrumb can open (a group not listed is its own section). */
+const SECTION_OF:Record<string,string>={type:"scale",keys:"scale"};
+
+/** One labelled group of options inside a section. `id` lets a breadcrumb scroll to it. */
+function OptionGroup({id,label,children}:{id?:string;label?:string;children:React.ReactNode}){
+  return <div className="scale-book__group" data-scale-group={id}>
+    {label&&<p className="scale-book__group-label">{label}</p>}
+    {children}
+  </div>;
+}
+
+/** Pick one of two or three: the studio's view switch, stretched to the panel. */
+function OptionSwitch<T extends string|number|boolean>({label,value,options,onChange}:{label:string;value:T;options:readonly (readonly [T,string])[];onChange:(next:T)=>void}){
+  return <div className="view-switch scale-book__switch" role="group" aria-label={label}>
+    {options.map(([option,text])=><button type="button" key={String(option)} aria-pressed={value===option} onClick={()=>onChange(option)}>{text}</button>)}
+  </div>;
+}
 
 /**
  * A plain div/button accordion, not native <details>/<summary> — native
@@ -326,7 +348,13 @@ export default function ScaleStudio(){
   // currently toggled into the rotation — so turning it off and back on
   // (or just closing and reopening Customize) doesn't lose what was built.
   const [customDraft,setCustomDraft]=useState<ArticulationGroup[]>([{size:4,mode:"tongue"}]);
-  const [rhythm,setRhythm]=useState<RhythmChoice>("even");
+  // Rhythms rotate across keys like articulations: block i takes rhythms[i % length]. `rhythm` is the first, which is
+  // what a set stores for readers that predate the rotation.
+  const [rhythms,setRhythms]=useState<RhythmChoice[]>(["even"]);
+  const rhythm=rhythms[0]??"even";
+  const setRhythm=(choice:RhythmChoice)=>setRhythms([choice]);
+  /** Tapping a rhythm adds it to the rotation or takes it out, in tap order; the last one always stays. */
+  const toggleRhythm=(choice:RhythmChoice)=>setRhythms(list=>list.includes(choice)?(list.length>1?list.filter(r=>r!==choice):list):[...list,choice]);
   /** Straight, or broken into overlapping groups of 3 or 4 (scale and arpeggio forms). */
   const [groupSize,setGroupSize]=useState<ScaleGroupSize>(1);
   // Which per-key tempo field is mid-edit, holding its raw text so a
@@ -344,16 +372,19 @@ export default function ScaleStudio(){
   // level up, not on the DOM node that gets thrown away.
   // Sections open and close independently — picking keys while the scale
   // type list is open should not shut the list you were just using.
-  const [openSections,setOpenSections]=useState<string[]>(["type"]);
+  const [openSections,setOpenSections]=useState<string[]>(["scale"]);
   function toggleSection(id:string){setOpenSections(current=>current.includes(id)?current.filter(s=>s!==id):[...current,id])}
   // The one section a phone shows (see PHONE_SECTIONS); it is kept open so its body renders.
-  const [phoneSection,setPhoneSection]=useState("type");
+  const [phoneSection,setPhoneSection]=useState("scale");
   function showPhoneSection(id:string){setPhoneSection(id);setOpenSections(current=>current.includes(id)?current:[...current,id])}
   // The header breadcrumb doubles as navigation: each segment opens
   // Customize scales on the section that controls it.
   const [customizeOpen,setCustomizeOpen]=useState(false);
   const [customizeFocus,setCustomizeFocus]=useState<{section:string}|null>(null);
-  function openCustomize(section:string){setCustomizeFocus({section});setPhoneSection(section);setOpenSections(current=>current.includes(section)?current:[...current,section]);setCustomizeOpen(true)}
+  function openCustomize(group:string){
+    const section=SECTION_OF[group]??group;
+    setCustomizeFocus({section:group});setPhoneSection(section);setOpenSections(current=>current.includes(section)?current:[...current,section]);setCustomizeOpen(true);
+  }
   useEffect(()=>{
     if(!customizeOpen||!customizeFocus)return;
     let group:HTMLElement|null=null;
@@ -374,7 +405,8 @@ export default function ScaleStudio(){
   const [tempos,setTempos]=useState<Record<string,number>>({});
   // Whether practice tempos are written onto the music next to each
   // exercise, rather than only living in the Tempos list.
-  const [tempoMarks,setTempoMarks]=useState(false);
+  // One switch with the excerpts' practice tempo (lib/practiceTempoMarks), no longer part of this page's setup.
+  const [tempoMarks,setTempoMarks]=usePracticeTempoMarks();
   const [loaded,setLoaded]=useState(false);
   // Opened with ?back= (Home, My Studio, or a piece's close-up): Back returns there, by name.
   const [backTo,setBackTo]=useState<{href:string;label:string}|null>(null);
@@ -404,11 +436,10 @@ export default function ScaleStudio(){
   const rangeKey=range==="custom"?`custom-${Math.min(customSpan.low,customSpan.high)}-${Math.max(customSpan.low,customSpan.high)}`:range;
   const blockTempoId=(block:ScaleBlock,range:ScaleRange)=>scaleTrackingId(block,range,customSpan,groupSize);
   const tempoForBlock=(block:ScaleBlock,at:ScaleRange,store:Record<string,number>)=>scaleTrackedTempo(block,at,customSpan,groupSize,store);
-  const saveTempo=useCallback((bpm:number)=>{if(!activeBlock)return;setTempos(prev=>prev[activeBlock]===bpm?prev:{...prev,[activeBlock]:bpm})},[activeBlock]);
 
   /** Everything a saved set restores. Mirrors ScaleSetConfig field for field. */
   function currentConfig():ScaleSetConfig{
-    return {range,order,bySignature,types,forms,grouping,ending,newLines,keys,articulationRotation,rhythm,scaleStart,groupSize,...(range==="custom"?{customSpan}:{})};
+    return {range,order,bySignature,types,forms,grouping,ending,newLines,keys,articulationRotation,rhythm,...(rhythms.length>1?{rhythms}:{}),scaleStart,groupSize,...(range==="custom"?{customSpan}:{})};
   }
   function applyConfig(config:ScaleSetConfig){
     if(ranges.some(r=>r.id===config.range))setRange(config.range);
@@ -428,6 +459,7 @@ export default function ScaleStudio(){
     if(savedForms.length)setForms(savedForms);
     if(isValidRotation(config.articulationRotation))setArticulationRotation(config.articulationRotation);
     if(config.rhythm==="even"||config.rhythm==="dottedLongShort"||config.rhythm==="dottedShortLong"||config.rhythm==="triplet")setRhythm(config.rhythm);
+    if(isRhythmList(config.rhythms))setRhythms(config.rhythms);
     setGroupSize(scaleGroupings.find(g=>g.size===config.groupSize)?.size??1);
   }
   /** A preset only names the scales; it leaves articulation and rhythm alone. */
@@ -448,13 +480,24 @@ export default function ScaleStudio(){
     const now=currentConfig();
     return config.range===now.range&&(config.scaleStart??"tonic")===now.scaleStart&&(config.groupSize??1)===now.groupSize
       &&(now.range!=="custom"||(config.customSpan?.low===now.customSpan?.low&&config.customSpan?.high===now.customSpan?.high))
-      &&config.order===now.order&&!!config.bySignature===now.bySignature&&config.grouping===now.grouping&&config.ending===now.ending&&config.newLines===now.newLines&&config.rhythm===now.rhythm
+      &&config.order===now.order&&!!config.bySignature===now.bySignature&&config.grouping===now.grouping&&config.ending===now.ending&&config.newLines===now.newLines&&JSON.stringify(config.rhythms??[config.rhythm])===JSON.stringify(now.rhythms??[now.rhythm])
       &&sameList(config.types,now.types)&&sameList(config.forms,now.forms)&&sameList(config.keys,now.keys)
       &&JSON.stringify(config.articulationRotation??[])===JSON.stringify(now.articulationRotation??[]);
   }
   const savedMatch=sets.find(set=>configMatches(set.config))??null;
+  // Home's warm-up rotation: the set on the page counts as played when Listen, Record or the metronome runs, not when
+  // it is merely opened. A set you have since changed is not the set any more.
+  const {metro}=usePracticeAudio();
+  const playedSet=activeSet&&configMatches(activeSet.config)?activeSet.id:null;
+  useEffect(()=>{
+    if(!playedSet)return;
+    if(metro)markSetPlayed(playedSet);
+    const played=()=>markSetPlayed(playedSet);
+    window.addEventListener(PRACTISING_EVENT,played);
+    return()=>window.removeEventListener(PRACTISING_EVENT,played);
+  },[playedSet,metro]);
   function toggleSaved(){
-    if(savedMatch){deleteScaleSet(savedMatch.id);if(activeSet?.id===savedMatch.id)setActiveSet(null);return}
+    if(savedMatch){forgetSet(savedMatch);return}
     // Saved straight away under a name taken from the settings; the Sets
     // tab then opens with that name, so renaming is there if wanted but
     // never a step you have to take.
@@ -462,6 +505,14 @@ export default function ScaleStudio(){
     openCustomize("presets");
   }
   /** A separate set under a name of its own (the suggested one, numbered if it is taken). */
+  /** Deleting a set: if it is the one open here, the name field goes back to the suggestion rather than keeping a name nothing has. */
+  function forgetSet(set:ScaleSet){
+    deleteScaleSet(set.id);
+    if(activeSet?.id===set.id||setName.trim().toLowerCase()===set.name.toLowerCase()){setActiveSet(null);setSetName("")}
+    setJustSaved("");
+  }
+  // What is on screen is already a saved set, under the name in the field (or no name typed): nothing to save.
+  const alreadySaved=!!savedMatch&&(!setName.trim()||setName.trim().toLowerCase()===savedMatch.name.toLowerCase());
   function saveAsNew(){
     const taken=new Set(sets.map(set=>set.name.toLowerCase()));
     const base=suggestedSetName;let name=base;
@@ -499,7 +550,7 @@ export default function ScaleStudio(){
       if(savedForms.length)setForms(savedForms);
       if(isValidRotation(pref?.articulationRotation))setArticulationRotation(pref.articulationRotation);
       if(pref?.rhythm==="even"||pref?.rhythm==="dottedLongShort"||pref?.rhythm==="dottedShortLong"||pref?.rhythm==="triplet")setRhythm(pref.rhythm);
-      if(typeof pref?.tempoMarks==="boolean")setTempoMarks(pref.tempoMarks);
+      if(isRhythmList(pref?.rhythms))setRhythms(pref.rhythms);
       const saved=JSON.parse(localStorage.getItem(tempoKey)||"{}");
       if(saved&&typeof saved==="object")setTempos(Object.fromEntries(Object.entries(saved)
         .filter(([id,n])=>id.startsWith("scale-book:")&&typeof n==="number"&&Number.isFinite(n)&&n>=40&&n<=220)
@@ -542,7 +593,8 @@ export default function ScaleStudio(){
     setLoaded(true);
   },[]);
   useEffect(()=>{
-    const sync=()=>setSets(readScaleSets());
+    // A set deleted elsewhere (the Exercises hub, another tab) stops being the one open here, and its name goes with it.
+    const sync=()=>{const all=readScaleSets();setSets(all);setActiveSet(open=>{if(open&&!all.some(set=>set.id===open.id)){setSetName("");return null}return open})};
     window.addEventListener(scaleSetsEvent,sync);
     window.addEventListener("storage",sync);
     return()=>{window.removeEventListener(scaleSetsEvent,sync);window.removeEventListener("storage",sync)};
@@ -550,11 +602,10 @@ export default function ScaleStudio(){
   // Changing the keys or types yourself leaves the piece's list for the usual every-key-by-every-type one.
   useEffect(()=>{
     const base=pairsBase.current;if(!pairs||!base)return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if([...keys].sort().join()!==base.keys||[...types].sort().join()!==base.types){setPairs(null);pairsBase.current=null}
   },[keys,types,pairs]);
   // A piece's own scales are a visit, not your Scale Studio setup: they are not saved over your preferences.
-  useEffect(()=>{if(loaded&&!pairs)try{localStorage.setItem(preferenceKey,JSON.stringify({range,customSpan,scaleStart,groupSize,keys,newLines,order,bySignature,grouping,ending,types,forms,articulationRotation,rhythm,tempoMarks}));}catch{/* Storage may be disabled. */}},[range,customSpan,scaleStart,groupSize,keys,newLines,order,grouping,ending,types,forms,articulationRotation,rhythm,tempoMarks,loaded,pairs]);
+  useEffect(()=>{if(loaded&&!pairs)try{localStorage.setItem(preferenceKey,JSON.stringify({range,customSpan,scaleStart,groupSize,keys,newLines,order,bySignature,grouping,ending,types,forms,articulationRotation,rhythm,rhythms}));}catch{/* Storage may be disabled. */}},[range,customSpan,scaleStart,groupSize,keys,newLines,order,bySignature,grouping,ending,types,forms,articulationRotation,rhythm,rhythms,loaded,pairs]);
   useEffect(()=>{if(loaded)try{localStorage.setItem(tempoKey,JSON.stringify(tempos));}catch{/* Storage may be disabled. */}},[tempos,loaded]);
 
   const chosenRange=ranges.find(r=>r.id===range)!;
@@ -585,6 +636,10 @@ export default function ScaleStudio(){
     return pairs?all.filter(block=>pairs.includes(`${block.key.id}:${block.type}:${block.form}`)):all;
   };
   const blocks:ScaleBlock[]=buildBlocks();
+  // Until a pill is used, the transport's tempo is the first exercise's (the score opens at its tempo, not 60).
+  const tempoTarget=activeBlock||(blocks[0]?blockTempoId(blocks[0],range):"");
+  // ScoreViewer reports changed BPM only; this callback need not retain its identity.
+  const saveTempo=(bpm:number)=>{if(!tempoTarget)return;setTempos(prev=>prev[tempoTarget]===bpm?prev:{...prev,[tempoTarget]:bpm})};
   // Must pass `scaleStart` too: the practice overlays (note names,
   // accidentals, syllables) index straight into this array, so if it is
   // built from a different path than the engraved music they describe the
@@ -631,12 +686,12 @@ export default function ScaleStudio(){
   const formWord=soleForm?(soleForm.id==="scale"?(zh?"音阶":"scales"):(zh?soleForm.zh:soleForm.label.toLowerCase().replace(/([^s])$/,"$1s"))):(zh?"多种形式":"mixed forms");
   const typeWord=typeWordFor(chosenTypes,zh);
   // A broken pattern is part of what the book is, so it goes in the title.
-  const patternWord=groupSize>1&&forms.some(groupsApply)?scaleGroupings.find(g=>g.size===groupSize)!:null;
-  const bookTitle=(zh?`${typeWord}${formWord}`:titleCase(`${typeWord} ${formWord}`))+(patternWord?(zh?`（${patternWord.zh}）`:` in ${groupSize}s`):"");
+  const patternWord=groupSize!==1&&forms.some(groupsApply)?scaleGroupings.find(g=>g.size===groupSize)!:null;
+  const bookTitle=(zh?`${typeWord}${formWord}`:titleCase(`${typeWord} ${formWord}`))+(patternWord?(zh?`（${patternWord.zhTitle}）`:` ${patternWord.title}`):"");
   // The same title built in English, for the PDF.
   const englishFormWord=soleForm?(soleForm.id==="scale"?"scales":soleForm.label.toLowerCase().replace(/([^s])$/,"$1s")):"mixed forms";
   const englishTypeWord=typeWordFor(chosenTypes,false);
-  const englishTitle=titleCase(`${englishTypeWord} ${englishFormWord}`)+(patternWord?` in ${groupSize}s`:"");
+  const englishTitle=titleCase(`${englishTypeWord} ${englishFormWord}`)+(patternWord?` ${patternWord.title}`:"");
   // What the name field offers when you have not typed one: the same
   // phrase the book is titled with, plus how many keys it covers, so an
   // unnamed save still reads as something ("Major scales · 12 keys")
@@ -690,7 +745,10 @@ export default function ScaleStudio(){
 
   if(!loaded)return null;
   return <div className="scale-reader">
-    <ScoreViewer unmetered onTempoChange={saveTempo} clockTarget={activeSet?{title:activeSet.name,ref:`scale-set:${activeSet.id}`,itemType:"exercise"}:undefined}
+    {/* Pencil marks, pins, drone mode and reading aids are kept per saved set. Per scale is not clean: they sit on the
+        book's bars, which move whenever a scale is added or removed. An unsaved setup keeps them under its own
+        generated id, so they are never drawn over different music. */}
+    <ScoreViewer unmetered storageId={activeSet?`scale-set:${activeSet.id}`:undefined} onTempoChange={saveTempo} clockTarget={activeSet?{title:activeSet.name,ref:`scale-set:${activeSet.id}`,itemType:"exercise"}:undefined}
       /* Scales are runs of sixteenths, so they want to sit closer together
          than the exercise-book default assumes — that default is set for
          held notes. Tighter spacing also lets most scales finish on one
@@ -699,55 +757,61 @@ export default function ScaleStudio(){
       defaultNoteSpacing={0.55} extraSystemSpacing={tempoMarks?3:0} practiceTempo={{value:tempoMarks,onChange:setTempoMarks}}
       save={{saved:!!savedMatch,onToggle:toggleSaved,label:zh?"保存为我的组合":"Save as a set",savedLabel:zh?"已保存为组合，点按移除":"Saved as a set. Tap to remove"}}
       headerActions={reader=><button type="button" className="icon-btn has-tip" disabled={reader.exporting} data-tip={reader.exporting?(zh?"正在生成 PDF…":"Making the PDF\u2026"):(zh?"下载 PDF":"Download PDF")} aria-label={reader.exporting?(zh?"正在生成 PDF…":"Making the PDF\u2026"):(zh?"下载 PDF":"Download PDF")} onClick={()=>reader.download()}>{reader.exporting?"\u22ef":<DownloadIcon/>}</button>}
-      scoreMarks={tempoMarks?context=><ScaleTempoMarks root={context.root} version={context.version} zh={zh} marks={blocks.map(block=>{const id=blockTempoId(block,range);return {id,label:block.label,tempo:tempoForBlock(block,range,tempos),rep:{key:id,title:block.label,kind:"scale" as const}}})} onChange={(id,next)=>{setActiveBlock(id);setTempos(prev=>({...prev,[id]:next}));context.controls.setTempo(next)}} soundingId={context.controls.metronome?activeBlock||null:null} onSound={(id,tempo)=>{const running=context.controls.metronome&&activeBlock===id;setActiveBlock(id);context.controls.setTempo(tempo);if(running||!context.controls.metronome)context.controls.toggleMetronome()}}/>:undefined} printConfig={zh?{title:englishTitle,asset:scaleBookMusicXML(buildBlocks(true),range,newLines,articulationRotation.map(e=>e.articulation),rhythm,ending,scaleStart,customSpan,groupSize)}:undefined} lineBreak={{value:newLines,onChange:setNewLines}} config={{title:bookTitle,composer:"",smartDroneCountInBeats:4,smartDrone:blocks.map((block,index)=>{const tonic=keyForType(block.key,typeById(block.type));const written=blockNotes(block).find(note=>note.midi%12===tonic.pc);return {measure:1,event:blockEventStarts[index],pitch:tonic.label[0].toUpperCase()+tonic.label.slice(1)+String(written?.octave??4),...(written?{displayPitch:`${written.step}${accidentalGlyph(written.alter)}${written.octave}`}:{})}}),asset:scaleBookMusicXML(blocks,range,newLines,articulationRotation.map(e=>e.articulation),rhythm,ending,scaleStart,customSpan,groupSize),displayPitches,noteKeySignatures,syllables,id:`scale-book-${rangeKey}-${grouping}-${ending}-${scaleStart}-${groupSize>1?`in${groupSize}-`:""}${types.join("+")}-${forms.join("+")}-${selected.map(k=>k.id).join("-")}`,backHref:backTo?.href??"/flute-studio/exercises",...(backTo?{backLabel:backTo.label}:{}),defaultTempo:(activeBlock?tempos[activeBlock]:undefined)??60}}
+      scoreMarks={tempoMarks?context=><ScaleTempoMarks root={context.root} version={context.version} zh={zh} marks={blocks.map(block=>{const id=blockTempoId(block,range);return {id,label:block.label,tempo:tempoForBlock(block,range,tempos),rep:{key:id,title:block.label,kind:"scale" as const}}})} onChange={(id,next)=>{setActiveBlock(id);setTempos(prev=>({...prev,[id]:next}));context.controls.setTempo(next)}} soundingId={context.controls.metronome?activeBlock||null:null} onSound={(id,tempo)=>{const running=context.controls.metronome&&activeBlock===id;setActiveBlock(id);context.controls.setTempo(tempo);if(running||!context.controls.metronome)context.controls.toggleMetronome()}}/>:undefined} printConfig={zh?{title:englishTitle,asset:scaleBookMusicXML(buildBlocks(true),range,newLines,articulationRotation.map(e=>e.articulation),rhythms,ending,scaleStart,customSpan,groupSize)}:undefined} lineBreak={{value:newLines,onChange:setNewLines}} config={{title:bookTitle,composer:"",smartDroneCountInBeats:4,smartDrone:blocks.map((block,index)=>{const tonic=keyForType(block.key,typeById(block.type));const written=blockNotes(block).find(note=>note.midi%12===tonic.pc);return {measure:1,event:blockEventStarts[index],pitch:tonic.label[0].toUpperCase()+tonic.label.slice(1)+String(written?.octave??4),...(written?{displayPitch:`${written.step}${accidentalGlyph(written.alter)}${written.octave}`}:{})}}),asset:scaleBookMusicXML(blocks,range,newLines,articulationRotation.map(e=>e.articulation),rhythms,ending,scaleStart,customSpan,groupSize),displayPitches,noteKeySignatures,syllables,id:`scale-book-${rangeKey}-${grouping}-${ending}-${scaleStart}-${groupSize!==1?`in${groupSize}-`:""}${types.join("+")}-${forms.join("+")}-${selected.map(k=>k.id).join("-")}`,backHref:backTo?.href??"/flute-studio/exercises",...(backTo?{backLabel:backTo.label}:{}),defaultTempo:activeBlock&&tempos[activeBlock]?tempos[activeBlock]:blocks[0]?tempoForBlock(blocks[0],range,tempos):60,rememberTempo:false}}
       toolbar={<div className="scale-book__chapter-inline"><button type="button" className="scale-book__crumb has-tip" data-tip={zh?"换成小调、半音阶、全音阶或各种调式":"Change to minor, chromatic, whole tone or a mode"} onClick={()=>openCustomize("type")}>{typeWord}</button><button type="button" className="scale-book__crumb has-tip" data-tip={zh?"音阶，或改成琶音、三度、八度等练法":"Play the scale, or switch to arpeggios, thirds, octaves and more"} onClick={()=>openCustomize("form")}>{formWord}</button><span aria-hidden="true">·</span><button type="button" className="scale-book__crumb has-tip" data-tip={zh?"改成一个八度，或自己设定从哪个音到哪个音":"Change to one octave, or set your own lowest and highest note"} onClick={()=>openCustomize("range")}>{zh?chosenRange.zh:chosenRange.label}</button><span aria-hidden="true">·</span><button type="button" className="scale-book__crumb has-tip" data-tip={zh?"选择要练哪些调":"Choose which keys to practice"} onClick={()=>openCustomize("keys")}>{selected.length} {zh?"个调性":selected.length===1?"key":"keys"}</button></div>}
       settings={reader=><>
 
     <ReaderPopover open={customizeOpen} onOpenChange={setCustomizeOpen} label={zh?"自定义音阶":"Customize scales"} trigger={<><SpectrumDef id="studio-spectrum"/><PracticeIcon name="settings" gradient="studio-spectrum"/><span className="scale-book__scales-label">{zh?"音阶":"Scales"}</span></>} className="tool has-tip scale-book__scales-trigger">
-      <div className="scale-book__panel-body">
+      <div className="scale-book__panel-body scale-panel">
         <div className="scale-book__phone-tabs" role="tablist" aria-label={zh?"设置分类":"Settings sections"}>
           {PHONE_SECTIONS.map(section=><button type="button" role="tab" key={section.id} aria-selected={phoneSection===section.id} onClick={()=>showPhoneSection(section.id)}>{zh?section.zh:section.en}</button>)}
         </div>
         <AccordionSection id="presets" phoneActive={phoneSection==="presets"} title={zh?"预设与我的组合":"Presets & saved sets"} openSections={openSections} onToggle={toggleSection}>
-          <p className="scale-book__field-label">{zh?"从预设开始":"Start from a preset"}</p>
-          <div className="scale-book__ranges" role="group" aria-label={zh?"预设":"Presets"}>{presetList.map(preset=><button type="button" key={preset.id} className={presetActive(preset)?"scale-book__chip selected":"scale-book__chip"} aria-pressed={presetActive(preset)} onClick={()=>applyPreset(preset)}>{zh?preset.zh:preset.en}</button>)}</div>
-          <p className="scale-book__field-label">{zh?"我保存的组合":"My saved sets"}</p>
+          <OptionGroup label={zh?"从预设开始":"Start from a preset"}>
+            <div className="scale-book__options" role="group" aria-label={zh?"预设":"Presets"}>{presetList.map(preset=><button type="button" key={preset.id} className={presetActive(preset)?"scale-book__chip selected":"scale-book__chip"} aria-pressed={presetActive(preset)} onClick={()=>applyPreset(preset)}>{zh?preset.zh:preset.en}</button>)}</div>
+          </OptionGroup>
+          <OptionGroup label={zh?"我保存的组合":"My saved sets"}>
           {sets.length
             ?<ul className="scale-book__sets">{sets.map(set=><li key={set.id} className={activeSet?.id===set.id&&configMatches(set.config)?"scale-book__set is-active":"scale-book__set"}>
               <button type="button" className="scale-book__set-open" onClick={()=>{applyConfig(set.config);setActiveSet(set);setSetName(set.name)}}>
                 <b>{set.name}</b><small>{describeSet(set.config,zh)}</small>
               </button>
-              <button type="button" className="scale-book__set-delete" aria-label={zh?`删除 ${set.name}`:`Delete ${set.name}`} onClick={()=>{deleteScaleSet(set.id);if(activeSet?.id===set.id)setActiveSet(null)}}><PracticeIcon name="delete"/></button>
+              <button type="button" className="scale-book__set-delete" aria-label={zh?`删除 ${set.name}`:`Delete ${set.name}`} onClick={()=>forgetSet(set)}><PracticeIcon name="delete"/></button>
             </li>)}</ul>
             :<p className="scale-book__sets-empty">{zh?"还没有保存的组合。点顶部的 +，就能保存现在这组音阶，它会出现在练习页面。":"No saved sets yet. Tap + at the top to save the scales on screen. Saved sets also show on the Exercises page."}</p>}
+          </OptionGroup>
           {/* Saving sits with the saved sets it adds to. */}
           <div className="scale-book__save">
             <label className="scale-book__save-field">
               <span>{zh?"组合名称":"Set name"}</span>
               <input value={setName} placeholder={suggestedSetName} aria-label={zh?"组合名称":"Set name"} onChange={e=>setSetName(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();commitSave()}}}/>
             </label>
-            <button type="button" className="scale-book__save-button" onClick={commitSave}>{activeSet&&activeSet.name===setName.trim()?(zh?"更新":"Update"):(zh?"保存":"Save")}</button>
+            <button type="button" className="scale-book__save-button" disabled={alreadySaved} onClick={commitSave}>{alreadySaved?(zh?"已保存":"Saved"):activeSet&&activeSet.name===setName.trim()?(zh?"更新":"Update"):(zh?"保存":"Save")}</button>
             {/* Update overwrites the set you opened; once the settings have moved away from it, Save new keeps both. */}
             {activeSet&&activeSet.name===setName.trim()&&!configMatches(activeSet.config)&&<button type="button" className="scale-book__save-button scale-book__save-new" onClick={saveAsNew}>{zh?"另存":"Save new"}</button>}
           </div>
-          {justSaved&&<p className="scale-book__save-note" role="status">{zh?`已保存“${justSaved}”，可在练习页面找到。`:`Saved as \u201c${justSaved}\u201d. It is on the Exercises page, and you can rename it here.`}</p>}
+          {/* The setup on screen is one you saved (opened from it, or changed back to it): say which, so Save is not a guess. */}
+          {!justSaved&&alreadySaved&&savedMatch&&<p className="scale-book__save-note">{zh?`这组设置已保存为“${savedMatch.name}”。`:`This setup is saved as \u201c${savedMatch.name}\u201d.`}</p>}
+          {justSaved&&<p className="scale-book__save-note" role="status">{zh?`已保存“${justSaved}”，可在练习页面找到。`:`Saved as “${justSaved}”. It is on the Exercises page, and you can rename it here.`}</p>}
         </AccordionSection>
-        <AccordionSection id="type" phoneActive={phoneSection==="type"} title={zh?"音阶类型":"Scale type"} openSections={openSections} onToggle={toggleSection}>
-          <div className="scale-book__ranges" role="group" aria-label={zh?"音阶类型":"Scale type"}>{scaleTypes.slice(0,8).map(t=><button type="button" key={t.id} className={types.includes(t.id)?"scale-book__chip selected":"scale-book__chip"} aria-pressed={types.includes(t.id)} onClick={()=>toggleFrom(types,t.id,setTypes)}>{zh?t.zh:t.label}</button>)}</div>
-          <button type="button" className="scale-book__others-toggle" aria-expanded={otherTypesOpen} onClick={()=>setOtherTypesOpen(open=>!open)}>{zh?"其他":"Others"}{types.some(id=>scaleTypes.slice(8).some(type=>type.id===id))&&<span>{types.filter(id=>scaleTypes.slice(8).some(type=>type.id===id)).length}</span>}<ChevronIcon/></button>
-          {otherTypesOpen&&<><div className="scale-book__ranges scale-book__other-types" role="group" aria-label={zh?"其他音阶类型":"Other scale types"}>{scaleTypes.slice(8).map(t=><button type="button" key={t.id} className={types.includes(t.id)?"scale-book__chip selected":"scale-book__chip"} aria-pressed={types.includes(t.id)} onClick={()=>toggleFrom(types,t.id,setTypes)}>{zh?t.zh:t.label}</button>)}</div></>}
+        <AccordionSection id="scale" phoneActive={phoneSection==="scale"} title={zh?"音阶":"Scale"} openSections={openSections} onToggle={toggleSection}>
+          <OptionGroup id="type" label={zh?"类型":"Type"}>
+            <div className="scale-book__options" role="group" aria-label={zh?"音阶类型":"Scale type"}>{scaleTypes.slice(0,8).map(t=><button type="button" key={t.id} className={types.includes(t.id)?"scale-book__chip selected":"scale-book__chip"} aria-pressed={types.includes(t.id)} onClick={()=>toggleFrom(types,t.id,setTypes)}>{zh?t.zh:t.label}</button>)}</div>
+            <button type="button" className="scale-book__others-toggle" aria-expanded={otherTypesOpen} onClick={()=>setOtherTypesOpen(open=>!open)}>{zh?"其他":"Others"}{types.some(id=>scaleTypes.slice(8).some(type=>type.id===id))&&<span>{types.filter(id=>scaleTypes.slice(8).some(type=>type.id===id)).length}</span>}<ChevronIcon/></button>
+            {otherTypesOpen&&<div className="scale-book__options" role="group" aria-label={zh?"其他音阶类型":"Other scale types"}>{scaleTypes.slice(8).map(t=><button type="button" key={t.id} className={types.includes(t.id)?"scale-book__chip selected":"scale-book__chip"} aria-pressed={types.includes(t.id)} onClick={()=>toggleFrom(types,t.id,setTypes)}>{zh?t.zh:t.label}</button>)}</div>}
+          </OptionGroup>
+          <OptionGroup id="keys" label={zh?"调性":"Keys"}>
+            <KeySelection options={majorKeys} selected={keys} onChange={setKeys} zh={zh}/>
+          </OptionGroup>
         </AccordionSection>
         <AccordionSection id="form" phoneActive={phoneSection==="form"} title={zh?"练习形式":"Form"} openSections={openSections} onToggle={toggleSection}>
-          <div className="scale-book__ranges" role="group" aria-label={zh?"练习形式":"Form"}>{scaleForms.map(f=><button type="button" key={f.id} className={forms.includes(f.id)?"scale-book__chip selected":"scale-book__chip"} aria-pressed={forms.includes(f.id)} onClick={()=>toggleFrom(forms,f.id,setForms)}>{zh?f.zh:f.label}</button>)}</div>
-          <p className="scale-book__field-label">{zh?"音型":"Pattern"}</p>
-          <div className="scale-book__ranges" role="group" aria-label={zh?"音型":"Pattern"}>{scaleGroupings.map(g=><button type="button" key={g.size} className={groupSize===g.size?"scale-book__chip selected":"scale-book__chip"} aria-pressed={groupSize===g.size} onClick={()=>setGroupSize(g.size)}>{zh?g.zh:g.label}</button>)}</div>
-          {groupSize>1&&!forms.some(groupsApply)&&<p className="scale-book__rotation-hint">{zh?"音型只用于音阶和琶音":"Patterns apply to scales and arpeggios"}</p>}
-</AccordionSection>
-        <AccordionSection id="keys" phoneActive={phoneSection==="keys"} title={zh?"调性":"Keys"} openSections={openSections} onToggle={toggleSection}>
-          <KeySelection options={majorKeys} selected={keys} onChange={setKeys} zh={zh}/>
+          <OptionGroup>
+            <div className="scale-book__options" role="group" aria-label={zh?"练习形式":"Form"}>{scaleForms.map(f=><button type="button" key={f.id} className={forms.includes(f.id)?"scale-book__chip selected":"scale-book__chip"} aria-pressed={forms.includes(f.id)} onClick={()=>toggleFrom(forms,f.id,setForms)}>{zh?f.zh:f.label}</button>)}</div>
+          </OptionGroup>
         </AccordionSection>
         <AccordionSection id="range" phoneActive={phoneSection==="range"} title={zh?"音域":"Range"} openSections={openSections} onToggle={toggleSection}>
-          <div className="scale-book__ranges" role="group" aria-label={zh?"音域":"Range"}>{ranges.map(r=><button type="button" key={r.id} className={range===r.id?"scale-book__chip selected":"scale-book__chip"} aria-pressed={range===r.id} onClick={()=>changeRange(r.id)}>{zh?r.zh:r.label}{"notes" in r&&<small>{r.notes}</small>}</button>)}</div>
+          <OptionGroup>
+          <div className="scale-book__options scale-book__options--wide" role="group" aria-label={zh?"音域":"Range"}>{ranges.map(r=><button type="button" key={r.id} className={range===r.id?"scale-book__chip selected":"scale-book__chip"} aria-pressed={range===r.id} onClick={()=>changeRange(r.id)}>{zh?r.zh:r.label}</button>)}</div>
           {range==="custom"&&<div className="scale-book__note-pickers">
             {([["low",zh?"最低音":"Lowest"],["high",zh?"最高音":"Highest"]] as ["low"|"high",string][]).map(([edge,label])=>{
               const value=customSpan[edge],isOpen=editingEdge===edge;
@@ -777,23 +841,25 @@ export default function ScaleStudio(){
               </div>;
             })}
           </div>}
+          </OptionGroup>
+          <OptionGroup label={zh?"起始音":"Starts on"}>
+            <OptionSwitch label={zh?"起始音":"Starts on"} value={scaleStart} onChange={setScaleStart} options={[["tonic",zh?"主音":"The tonic"],["lowest",zh?"最低音":"The lowest note"]] as const}/>
+          </OptionGroup>
+          <OptionGroup label={zh?"结尾":"Ending"}>
+            <OptionSwitch label={zh?"结尾":"Ending"} value={ending} onChange={setEnding} options={[["none",zh?"直接反复":"Straight"],["hold",zh?"主音延长":"Hold the tonic"]] as const}/>
+          </OptionGroup>
         </AccordionSection>
-        <AccordionSection id="order" phoneActive={phoneSection==="order"} title={zh?"编排":"Layout"} openSections={openSections} onToggle={toggleSection}>
-          <p className="scale-book__field-label">{zh?"排列方式":"Arrange by"}</p>
-          <div className="scale-book__ranges scale-book__ranges--three" role="group" aria-label={zh?"排列方式":"Arrange by"}>{([["type",zh?"音阶类型":"Scale type"],["tonic",zh?"同主音":"Same tonic"],["signature",zh?"调号":"Key signature"]] as const).map(([value,label])=>{
-            const current=bySignature?"signature":grouping==="key"?"tonic":"type";
-            return <button type="button" key={value} className={current===value?"scale-book__chip selected":"scale-book__chip"} aria-pressed={current===value} onClick={()=>{setBySignature(value==="signature");if(value!=="signature")setGrouping(value==="tonic"?"key":"type")}}>{label}</button>})}</div>
-          <><p className="scale-book__field-label">{zh?"调性顺序":"Key order"}</p>
-          <div className="scale-book__ranges" role="group" aria-label={zh?"调性顺序":"Key order"}>{[["chromatic",zh?"半音顺序":"Chromatic"],["fifths",zh?"五度圈":"Circle of fifths"]].map(([value,label])=><button type="button" key={value} className={order===value?"scale-book__chip selected":"scale-book__chip"} aria-pressed={order===value} onClick={()=>setOrder(value)}>{label}</button>)}</div></>
-          <p className="scale-book__field-label">{zh?"换行":"Line breaks"}</p>
-          <div className="scale-book__ranges" role="group" aria-label={zh?"换行":"Line breaks"}>{([[false,zh?"接续上一个":"Continue"],[true,zh?"另起一行":"New line"]] as [boolean,string][]).map(([value,label])=><button type="button" key={String(value)} className={newLines===value?"scale-book__chip selected":"scale-book__chip"} aria-pressed={newLines===value} onClick={()=>setNewLines(value)}>{label}</button>)}</div>
-
-                  <p className="scale-book__field-label">{zh?"起始音":"Starts on"}</p>
-          <div className="scale-book__ranges" role="group" aria-label={zh?"起始音":"Starts on"}>{([["tonic",zh?"主音":"The tonic"],["lowest",zh?"最低音":"The lowest note"]] as [ScaleStart,string][]).map(([value,label])=><button type="button" key={value} className={scaleStart===value?"scale-book__chip selected":"scale-book__chip"} aria-pressed={scaleStart===value} onClick={()=>setScaleStart(value)}>{label}</button>)}</div>
-          <p className="scale-book__field-label">{zh?"结尾":"Ending"}</p>
-          <div className="scale-book__ranges" role="group" aria-label={zh?"结尾":"Ending"}>{([["none",zh?"直接反复":"Straight"],["hold",zh?"主音延长":"Hold the tonic"]] as [ScaleEnding,string][]).map(([value,label])=><button type="button" key={value} className={ending===value?"scale-book__chip selected":"scale-book__chip"} aria-pressed={ending===value} onClick={()=>setEnding(value)}>{label}</button>)}</div>
-        </AccordionSection>
-        <AccordionSection id="articulation" phoneActive={phoneSection==="articulation"} title={zh?"演奏法":"Articulation"} openSections={openSections} onToggle={toggleSection}>
+        <AccordionSection id="playing" phoneActive={phoneSection==="playing"} title={zh?"风格":"Style"} openSections={openSections} onToggle={toggleSection}>
+          <OptionGroup label={zh?"音型":"Pattern"}>
+            <div className="scale-book__options" role="group" aria-label={zh?"音型":"Pattern"}>{scaleGroupings.map(g=><button type="button" key={g.size} className={groupSize===g.size?"scale-book__chip selected":"scale-book__chip"} aria-pressed={groupSize===g.size} onClick={()=>setGroupSize(g.size)}>{zh?g.zh:g.label}</button>)}</div>
+            {groupSize==="turn"&&forms.includes("arpeggio")&&<p className="scale-book__rotation-hint">{zh?"琶音上即为钢琴考级的分解和弦：1 3 5 3":"On arpeggios this is the piano exam broken chord, 1 3 5 3"}</p>}
+            {groupSize!==1&&!forms.some(groupsApply)&&<p className="scale-book__rotation-hint">{zh?"音型只用于音阶和琶音":"Patterns apply to scales and arpeggios"}</p>}
+          </OptionGroup>
+          <OptionGroup label={zh?"节奏型":"Rhythm"}>
+            {rhythms.length>1&&<p className="scale-book__rotation-hint">{zh?"按顺序轮流分配给每个调性":"Cycles across keys in the order selected"}</p>}
+            <div className="scale-book__preset-grid scale-book__preset-grid--four">{rhythmChoices.map(value=><button key={value} type="button" className={rhythms.includes(value)?"scale-book__preset selected":"scale-book__preset"} aria-pressed={rhythms.includes(value)} aria-label={zh?rhythmLabels[value].zh:rhythmLabels[value].en} onClick={()=>toggleRhythm(value)}><RhythmIcon choice={value}/></button>)}</div>
+          </OptionGroup>
+          <OptionGroup label={zh?"演奏法":"Articulation"}>
           {articulationRotation.length>1&&<p className="scale-book__rotation-hint">{zh?"按顺序轮流分配给每个调性":"Cycles across keys in the order selected"}</p>}
           <div className="scale-book__preset-grid">
             {articulationPresetIds.map(id=>{
@@ -816,12 +882,21 @@ export default function ScaleStudio(){
             </div>)}
             <button type="button" className="scale-book__add-group" onClick={()=>editCustomGroups(groups=>[...groups,{size:4,mode:"tongue"}])}>{zh?"+ 添加一组":"+ Add group"}</button>
           </div>}
+          </OptionGroup>
         </AccordionSection>
-        <AccordionSection id="rhythm" phoneActive={phoneSection==="rhythm"} title={zh?"节奏型":"Rhythm"} openSections={openSections} onToggle={toggleSection}>
-          <div className="scale-book__preset-grid">{rhythmChoices.map(value=><button key={value} type="button" className={rhythm===value?"scale-book__preset selected":"scale-book__preset"} aria-label={zh?rhythmLabels[value].zh:rhythmLabels[value].en} onClick={()=>setRhythm(value)}><RhythmIcon choice={value}/></button>)}</div>
+        <AccordionSection id="page" phoneActive={phoneSection==="page"} title={zh?"页面编排":"Page layout"} openSections={openSections} onToggle={toggleSection}>
+          <OptionGroup label={zh?"排列方式":"Arrange by"}>
+            <OptionSwitch label={zh?"排列方式":"Arrange by"} value={bySignature?"signature":grouping==="key"?"tonic":"type"} onChange={value=>{setBySignature(value==="signature");if(value!=="signature")setGrouping(value==="tonic"?"key":"type")}} options={[["type",zh?"音阶类型":"Scale type"],["tonic",zh?"同主音":"Same tonic"],["signature",zh?"调号":"Key signature"]] as const}/>
+          </OptionGroup>
+          <OptionGroup label={zh?"调性顺序":"Key order"}>
+            <OptionSwitch label={zh?"调性顺序":"Key order"} value={order} onChange={setOrder} options={[["chromatic",zh?"半音顺序":"Chromatic"],["fifths",zh?"五度圈":"Circle of fifths"]] as const}/>
+          </OptionGroup>
+          <OptionGroup label={zh?"换行":"Line breaks"}>
+            <OptionSwitch label={zh?"换行":"Line breaks"} value={newLines} onChange={setNewLines} options={[[false,zh?"接续上一个":"Continue"],[true,zh?"另起一行":"New line"]] as const}/>
+          </OptionGroup>
         </AccordionSection>
       </div>
-      <button className="reader-settings-reset" onClick={()=>{setActiveSet(null);setSetName("");setKeys(allKeys);setRange("two");setOrder("chromatic");setBySignature(false);setGrouping("type");setEnding("hold");setTypes(["major"]);setForms(["scale"]);setNewLines(false);setArticulationRotation([]);setCustomDraft([{size:4,mode:"tongue"}]);setRhythm("even");setGroupSize(1)}}>{zh?"恢复默认":"Restore defaults"}</button>
+      <button className="reader-settings-reset" onClick={()=>{setActiveSet(null);setSetName("");setJustSaved("");setScaleStart("tonic");setCustomSpan(DEFAULT_SCALE_SPAN);setKeys(allKeys);setRange("two");setOrder("chromatic");setBySignature(false);setGrouping("type");setEnding("hold");setTypes(["major"]);setForms(["scale"]);setNewLines(false);setArticulationRotation([]);setCustomDraft([{size:4,mode:"tongue"}]);setRhythm("even");setGroupSize(1)}}>{zh?"恢复默认":"Restore defaults"}</button>
     </ReaderPopover>
     {/* Tempos is its own button rather than the last section of Customize
         scales. A tempo is something you reach for mid-practice, between

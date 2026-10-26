@@ -1,0 +1,60 @@
+/* Mock audition (practice/mock): setup, the "next up" screen between excerpts, the end list. Cards are the deadline
+   cards (practice-page.css), choices the view switch, back link the book page's. */
+.mock-page .exercise-hub__content{max-width:760px}
+.mock-page .book-page__header>div{display:block}
+.mock-meta{margin:6px 0 0;font-size:14px;color:#85868e}
+.mock-earlier .shelf__title small{margin-left:8px;font-size:15px;font-weight:500;color:#9a9ba2;letter-spacing:0}
+.mock-settings{display:grid;gap:12px;margin:0 0 20px}
+.mock-setting{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+.mock-setting>span{min-width:140px;font-size:14px;font-weight:500;color:#45464f}
+.mock-card .deadline-card__head{align-items:center}
+.mock-card__title{margin:0;font-size:16px;font-weight:600;color:#292a33}
+.mock-card__when{font-size:13px;color:#85868e;font-variant-numeric:tabular-nums}
+.mock-card__delete{display:grid;place-items:center;width:30px;height:30px;padding:0;border:0;border-radius:8px;background:none;color:#9a9ca3;cursor:pointer}
+.mock-card__delete:hover{color:#292a33}
+
+/* The running order: numbered like an audition list. */
+.mock-order{display:grid;margin:10px 0 0;padding:0;list-style:none}
+.mock-order li{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:10px;align-items:baseline;padding:9px 0;border-top:1px solid #f0f0f2}
+.mock-order li:first-child{border-top:0}
+.mock-order__number{font-size:14px;font-weight:500;color:#85868e;font-variant-numeric:tabular-nums}
+.mock-order__name{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;min-width:0}
+.mock-order__name b{font-size:15px;font-weight:600;color:#292a33}
+.mock-order__name span{font-size:14px;color:#45464f}
+.mock-order__name small{font-size:13px;color:#85868e}
+.mock-order__name em{flex-basis:100%;font-size:13px;font-style:normal;color:#6f7178}
+.mock-order__time{font-size:13px;color:#85868e;font-variant-numeric:tabular-nums}
+.mock-order li[data-state="done"]{opacity:.45}
+.mock-order li[data-state="now"] .mock-order__number{color:#6d4585}
+.mock-order li[data-state="skipped"]{opacity:.45}
+.mock-note{flex-basis:100%;height:34px;margin-top:6px;padding:0 10px;border:1px solid #e6e6ea;border-radius:10px;background:#fff;font:inherit;font-size:14px;color:#292a33}
+.mock-note::placeholder{color:#a3a5ac}
+.mock-note:focus{outline:none;border-color:#c9cbd1}
+
+/* Actions: the plain grey button (no dark or green fills). */
+.mock-actions{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin:4px 0 28px}
+.mock-button{height:40px;padding:0 20px;border:0;border-radius:12px;background:#f1f1f2;color:#45464f;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.mock-button:hover{background:#e8e8ea}
+.mock-button:disabled{opacity:.45;cursor:default}
+.mock-take{margin-top:14px;padding-top:14px;border-top:1px solid #f0f0f2}
+.mock-take .recorder-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+.mock-take .recorder-note{display:block;margin-top:8px;font-size:12px;color:#85868e}
+.mock-earlier .mock-order li{padding:7px 0}
+
+/* Between excerpts: a quiet full screen, the studio nav and tools out of the way. */
+body:has(.mock-stage) .studio-navigation,.studio-route:has(.mock-stage)~.dock-launcher{display:none}
+.mock-stage{display:grid;place-items:center;min-height:100vh;padding:40px 16px;background:#fff}
+.mock-stage__inner{display:grid;justify-items:center;gap:10px;width:min(520px,100%);text-align:center}
+.mock-stage__eyebrow{margin:0;font-size:13px;font-weight:500;color:#85868e;font-variant-numeric:tabular-nums}
+.mock-stage h1{margin:0;font-size:36px;font-weight:700;letter-spacing:-.03em;line-height:1.1;color:#292a33}
+.mock-stage__passage{margin:0;font-size:16px;color:#45464f}
+.mock-stage__count{margin:14px 0 6px;font-size:54px;font-weight:450;letter-spacing:-.04em;line-height:1;color:#292a33;font-variant-numeric:tabular-nums}
+.mock-stage .mock-order{width:100%;margin:18px 0 4px;text-align:left}
+
+/* Playing: the reader's own Record gives way to the run's, shown in the stepper with its time. */
+.mock-run .score-recorder{display:none}
+.mock-stepper .mock-stepper__next{padding:0;border:0;background:none;cursor:pointer}
+@media (hover:hover) and (pointer:fine){.mock-stepper .mock-stepper__next:hover{background:#e7e7ea;color:#292a33}}
+.mock-stepper__rec{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 8px;border:0;border-radius:8px;background:none;color:#a64334;font:inherit;font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;cursor:pointer}
+.mock-stepper__rec i{width:8px;height:8px;border-radius:50%;background:#c23a2d;animation:practicePulse 1s infinite}
+@media(max-width:560px){.mock-setting>span{min-width:0;flex-basis:100%}.mock-stage h1{font-size:28px}}

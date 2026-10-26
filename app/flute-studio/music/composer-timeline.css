@@ -1,0 +1,62 @@
+/* Composer timeline (ComposerTimeline.tsx), the Library's second view. Period bands use the roadmap tints (tag pills),
+   links are the studio's green text links with no underline, and the composer card is the shared Dialog. */
+.composer-timeline__intro{margin:4px 4px 18px;color:#6d6f76;font-size:15px;line-height:1.5}
+.composer-timeline__note{margin:16px 4px 0;color:#85868e;font-size:13px;line-height:1.45}
+
+/* Phones scroll the timeline sideways inside its own box; the page itself never scrolls sideways. */
+.composer-timeline__scroll{overflow-x:auto;overflow-y:hidden;border-radius:20px;background:#fff;box-shadow:0 10px 30px rgba(41,42,51,.08);-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.composer-timeline__canvas{position:relative;min-width:680px;padding:44px 0 34px}
+
+.composer-timeline__bands{position:absolute;inset:0}
+.composer-timeline__band{position:absolute;top:0;bottom:0;border-left:1px solid rgba(41,42,51,.06)}
+.composer-timeline__band span{position:absolute;top:14px;left:10px;font-size:12px;font-weight:600;white-space:nowrap}
+.composer-timeline__band[data-tone="sand"]{background:#f3ead680}.composer-timeline__band[data-tone="sand"] span{color:#765d31}
+.composer-timeline__band[data-tone="sage"]{background:#e4ecdf80}.composer-timeline__band[data-tone="sage"] span{color:#46633d}
+.composer-timeline__band[data-tone="pink"]{background:#f1e4ef80}.composer-timeline__band[data-tone="pink"] span{color:#7c4f78}
+.composer-timeline__band[data-tone="blue"]{background:#e2eaf180}.composer-timeline__band[data-tone="blue"] span{color:#4b6378}
+.composer-timeline__band[data-tone="lavender"]{background:#e9e5f180}.composer-timeline__band[data-tone="lavender"] span{color:#62567a}
+
+.composer-timeline__rows{position:relative;list-style:none;margin:0;padding:0 16px}
+.composer-timeline__row{padding:10px 0 6px}
+.composer-timeline__who{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;max-width:max-content}
+/* The composer's name opens their card: a plain button that reads as a name, no underline. */
+.composer-timeline__name{padding:0;border:0;background:transparent;font:inherit;font-size:15px;font-weight:600;color:#292a33;cursor:pointer}
+.composer-timeline__name:hover{color:#46633d}
+.composer-timeline__name:focus-visible{outline:2px solid #b8bac2;outline-offset:2px;border-radius:4px}
+.composer-timeline__life{font-size:13px;color:#85868e;font-variant-numeric:tabular-nums}
+.composer-timeline__extra{font-size:13px;font-weight:600;color:#46633d;text-decoration:none}
+
+.composer-timeline__track{position:relative;height:calc(22px + var(--lanes,1) * 22px);margin-top:6px}
+.composer-timeline__bar{position:absolute;top:6px;height:6px;border-radius:3px}
+.composer-timeline__bar[data-tone="sand"]{background:#dcc9a0}
+.composer-timeline__bar[data-tone="sage"]{background:#b9cdaf}
+.composer-timeline__bar[data-tone="pink"]{background:#dcbfd8}
+.composer-timeline__bar[data-tone="blue"]{background:#b7c8d8}
+.composer-timeline__bar[data-tone="lavender"]{background:#c9c0db}
+.composer-timeline__dot{position:absolute;top:2px;width:14px;height:14px;margin-left:-7px;box-sizing:border-box;border-radius:50%;background:#fff;border:3px solid #46633d}
+.composer-timeline__dot[data-tone="sand"]{border-color:#765d31}
+.composer-timeline__dot[data-tone="pink"]{border-color:#7c4f78}
+.composer-timeline__dot[data-tone="blue"]{border-color:#4b6378}
+.composer-timeline__dot[data-tone="lavender"]{border-color:#62567a}
+.composer-timeline__piece{position:absolute;margin-left:-2px;white-space:nowrap;font-size:13px;line-height:20px;color:#46633d;text-decoration:none}
+.composer-timeline__piece.is-flipped{transform:translateX(calc(-100% + 4px));margin-left:0}
+.composer-timeline__piece b{font-weight:600}
+.composer-timeline__piece small{font-size:12px;color:#85868e;font-variant-numeric:tabular-nums}
+.composer-timeline__piece.is-disabled,.composer-timeline__extra.is-disabled{color:#9a9ba2}
+.composer-timeline__piece:hover b,.composer-timeline__extra:hover{color:#2f4a29}
+
+.composer-timeline__axis{position:absolute;left:0;right:0;bottom:10px;height:16px}
+.composer-timeline__axis span{position:absolute;transform:translateX(-50%);font-size:11px;color:#9a9ba2;font-variant-numeric:tabular-nums}
+.composer-timeline__axis span:first-child{transform:none;margin-left:6px}
+.composer-timeline__axis span:last-child{transform:translateX(-100%);margin-left:-6px}
+
+/* The composer card in the shared Dialog. */
+.composer-card__facts{margin:-8px 0 12px;font-size:13px;color:#85868e}
+.composer-card__bio{margin:0 0 18px;font-size:15px;line-height:1.55;color:#3c3d45}
+.composer-card h3{margin:0 0 8px;font-size:14px;font-weight:600;color:#292a33}
+.composer-card ul{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.composer-card li a{font-size:15px;font-weight:600;color:#46633d;text-decoration:none}
+.composer-card li small{font-size:13px;color:#85868e}
+.composer-card li p{margin:4px 0 0;font-size:14px;line-height:1.5;color:#5d5f66}
+
+

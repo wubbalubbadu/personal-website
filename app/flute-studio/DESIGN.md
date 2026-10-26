@@ -24,9 +24,11 @@ inconsistent, it's because it *isn't* using these values. Check here first.
 | Canvas | `#fff` | Page background (was `#f5f5f7` — dropped so it doesn't fight card shadows or the header) |
 | Card | `#ffffff` | Surface background |
 | Border | none | Cards don't use borders anymore — separation comes from shadow only (`0 10px 30px rgba(41,42,51,.08)` resting). Watch for `ios-theme.css`, a legacy layer that still has `!important` padding/background rules for `.studio-main`/`.library-main`/`.scale-main` — new page-level CSS has to mark its own rule `!important` too or it silently loses. |
-| Accent | `#678956` | Primary green — links, active states, icons |
+| Accent | `#678956` | Green: links and finished things (ticked steps, correct answers). Not for selected states since October 8 |
 | Accent (dark) | `#46633d` / `#40553d` | Accent text on tinted surfaces |
-| Accent (tint) | `#e4ecdf` / `#e7eee3` / `#e5ece1` | Soft button/badge fills |
+| Accent (tint) | `#e4ecdf` / `#e7eee3` / `#e5ece1` | Badge fills and "done" states. Retired for buttons on October 16 (see Buttons) |
+| Selected (purple) | `#eee7f2` / `#79588e`; on a control `#f1e5f5` / `#6d4585` | What is chosen or happening now: a selected option, the playing note, the current round, a ticking metronome |
+| Action grey | `#f1f1f2` / `#45464f`, hover `#e8e8ea` | Plain action buttons and steppers (see Buttons) |
 | Pink | `#f49fff` | Secondary accent (pet, drone, a few icons) |
 | Pink (pale) | `#fce7fd` | Pink tint fills |
 
@@ -115,22 +117,27 @@ check `ios-theme.css` first — it's the usual cause (see Border note above).
 
 ## Buttons
 
-Two flavors, and only two:
-
-**Soft tint (the default — used for almost everything):**
+**Plain grey action (the default since October 16, 2026):** Start, Stop, Save, Add, Play scale, Keep offline.
 ```css
-background: #e7eee3;
-color: #40553d;
-border: 1px solid #d7e1d2;
-border-radius: 12–13px;
-font-size: 12–14px;
-font-weight: 680;
+background: #f1f1f2;
+color: #45464f;          /* #292a33 for the one main action on a panel, e.g. Breathing Lab's Start */
+border: 0;
+border-radius: 10px to 12px;
+height: 34px to 40px;        /* 44px where it is the whole screen's action (rhythm drills) */
+font-size: 13px to 15px;
+font-weight: 600;
 ```
-Hover: `background: #dce8d7; transform: translateY(-1px);`
+Hover: `background: #e8e8ea` (hover-capable pointers only). An icon in front is 18px (PracticeIcon). Once a toggle
+is on (kept offline), it takes the selected purple tint `#f1e5f5` / `#6d4585`. No dark fills, no green fills.
+There is no shared class yet; copies live in `.emb-action`, `.bl-start`, `.rd-button`, `.mock-button`,
+`.offline-label` and `.starter-routine__add` (COMPONENTS.md "Not reused yet").
 
-This is what "Tap tempo," "Start metronome," "Play A4" actually are —
-*not* solid green. Solid green (`.primary-tool-button`'s base rule) exists
-in the CSS but is overridden everywhere it's used. Don't reach for it.
+**Soft tint (retired):** the green `#e7eee3` / `#40553d` button was the default until October 16 and still appears in
+older corners (close-up Rhythm Start / Try again). Convert it to plain grey when touched.
+
+**Steppers** (− value +): the shared `Stepper` (`components/Stepper.tsx`), on action grey `#f1f1f2`, signs
+`#45464f`, hover `#e4e4e7`. Medium 36px tall (value 16 / 600 tabular), small 28px (value 14 / 600, or 12 / 600 grey
+for a worded value such as "Octave 4"). Signs answer to a 44px square on touch screens.
 
 **Filter/category tabs — one recipe everywhere (Library, Exercises, and the
 practice-tools dock all use this exact pattern):**
@@ -148,8 +155,8 @@ background: #292a33;
 color: #fff;
 ```
 This dark active state is specific to tab/chip *selection* — it's not the
-general "active state" color for buttons in general (those stay soft-tint
-green, see above). Don't use `#292a33` on anything that isn't a selected
+general "active state" color for buttons in general (those use the purple
+selected tint, see Color). Don't use `#292a33` on anything that isn't a selected
 tab/chip.
 
 **Icon buttons (star, download, share, more-actions, back-arrow):**
@@ -175,9 +182,9 @@ icon button otherwise.
   Mark Up toolbar's close (`.markup-close` in reader-workspace.css): a plain × (1.7 stroke, round caps), no fill,
   no border, no circle behind it, dark (`#111`), and **no hover background or colour change**.
 - **Taking something away uses the trash icon** (`PracticeIcon name="delete"`), never ×: removing a step, a session,
-  a piece from a list, a piece from a deadline. Grey (`#9a9ca3`), no fill; on hover only the colour changes, to red
-  (`#a5372f`). On rows and cards it can be hidden until hover, but it must always be visible on touch
-  (`@media(hover:none)`).
+  a piece from a list, a piece from a deadline. Grey (`#9a9ca3`), no fill; on hover only the colour changes, to ink
+  (`#292a33`, since October 16). Red (`#a5372f`) is only for the armed second tap ("Tap again to delete"). On rows
+  and cards it can be hidden until hover, but it must always be visible on touch (`@media(hover:none)`).
 - Never a filled grey or tinted circle behind either icon, and never an × that removes data.
 
 ## Cards & Rows

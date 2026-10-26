@@ -14,11 +14,13 @@
  * drawings already there.
  */
 
+import {pruneCleared} from "./historyMonths";
+import {isDeviceOnly} from "./settingsRegistry";
+
 const TAG="CFS1.";
 
-/** Keys that describe this screen rather than you: they stay on each device. */
-const DEVICE_ONLY=[/^cookie:private-music-code$/,/^cookie:rail-open$/,/^cookie:pet-position$/,/^cookie:reader-view:/,/^cookie:pencil-only:/,/^cookie:backup:/];
-const isStudioKey=(key:string)=>key.startsWith("cookie")&&!DEVICE_ONLY.some(rule=>rule.test(key));
+/** Keys that describe this screen or a running clock rather than you stay on each device (lib/settingsRegistry.ts). */
+const isStudioKey=(key:string)=>key.startsWith("cookie")&&!isDeviceOnly(key);
 /** Pencil ink is stored as drawn strokes and is by far the biggest thing kept. */
 export const isDrawing=(key:string)=>key.endsWith(":ink")||/:annotations:v2$/.test(key);
 
@@ -111,18 +113,22 @@ export async function decode(input:string):Promise<Snapshot|DecodeError>{
 
 export function apply(snapshot:Snapshot){
   for(const [key,value] of Object.entries(snapshot.data))localStorage.setItem(key,merge(localStorage.getItem(key),value,key));
+  // Months cleared on either device stay cleared: combining lists would otherwise bring them back.
+  pruneCleared();
 }
 
 /**
  * One stored value, from this device (`here`) and from the code (`arriving`).
  *
  * - Lists of records or ids (practice sessions, pitch history, saved music,
- *   saved scale sets) are combined, so practice done on either device is
- *   kept. The same record on both sides keeps the newer copy. Legacy lists
+ *   saved exercises and older saved scale sets, deadlines, mock audition runs) are combined, so
+ *   practice done on either device is kept. The same record on both sides keeps the newer copy. Legacy lists
  *   do not carry deletion history.
  * - Objects (book progress and tempos) merge field by field.
  * - Tricky-bit tempos combine; goals and steps take the code value. Tallies
  *   keep the higher count, avoiding inflation on repeated imports.
+ * - Tempo history keeps, for each thing and day, the higher tempo.
+ * - Pitch traces combine per note, then keep five: the steadiest and the newest.
  * - Current annotations merge by mark ID and edit/deletion timestamp.
  * - A music list status (Want to learn, Working on, Learned) keeps whichever
  *   was set last, on either device, including a timestamped removal.
@@ -161,6 +167,25 @@ export function merge(here:string|null,arriving:string,key=""){
       }
       return JSON.stringify([...bits.values()]);
     }
+    // Tempo history: per thing, per day, the higher tempo (a day practised on both devices keeps its best).
+    if(key==="cookie:tempo-history:v1"&&isObject(old)&&isObject(next)){
+      const lines:Record<string,unknown>={...old};
+      for(const [id,line] of Object.entries(next)){
+        const mine=old[id];if(!isObject(line))continue;
+        if(!isObject(mine)){lines[id]=line;continue}
+        const days:Record<string,number>={...(isObject(mine.days)?mine.days as Record<string,number>:{})};
+        for(const [day,bpm] of Object.entries(isObject(line.days)?line.days:{}))days[day]=Math.max(Number(days[day])||0,Number(bpm)||0);
+        lines[id]={...mine,...line,days};
+      }
+      return JSON.stringify(lines);
+    }
+    // Pitch traces: per note, combined like any list of records, then trimmed back to five (the steadiest plus
+    // the newest), the same rule lib/pitchTraces.ts applies when it saves. Inlined so this file stays importable alone.
+    if(key==="cookie:pitch-traces:v1"&&isObject(old)&&isObject(next)){
+      const notes=combine(old,next) as Record<string,unknown>;
+      for(const [midi,list] of Object.entries(notes))if(Array.isArray(list))notes[midi]=trimTraces(list.filter(isObject));
+      return JSON.stringify(notes);
+    }
     if(key==="cookie:tricky-bits:tallies:v1"&&isObject(old)&&isObject(next)){
       const tallies={...old};
       for(const [id,count] of Object.entries(next))tallies[id]=Math.max(Number(old[id])||0,Number(count)||0);
@@ -186,6 +211,13 @@ function newest(here:unknown,arriving:unknown){
 }
 
 const isObject=(value:unknown):value is Record<string,unknown>=>typeof value==="object"&&value!==null&&!Array.isArray(value);
+const TRACES_PER_NOTE=5;
+function trimTraces(list:Record<string,unknown>[]){
+  const at=(t:Record<string,unknown>)=>Number(t.at)||0,wobble=(t:Record<string,unknown>)=>Number(t.wobble)||0;
+  if(list.length<=TRACES_PER_NOTE)return [...list].sort((a,b)=>at(a)-at(b));
+  const steadiest=list.reduce((best,t)=>wobble(t)<wobble(best)||(wobble(t)===wobble(best)&&at(t)>at(best))?t:best);
+  return [steadiest,...list.filter(t=>t!==steadiest).sort((a,b)=>at(b)-at(a)).slice(0,TRACES_PER_NOTE-1)].sort((a,b)=>at(a)-at(b));
+}
 /** Lists worth combining hold records or ids (names, or numbers like a book's pieces); a list of true/false is positional (ticks on a checklist). */
 const isCollection=(list:unknown[])=>list.every(item=>typeof item==="string"||typeof item==="number"||isObject(item));
 const identity=(item:unknown)=>isObject(item)&&typeof item.id==="string"?`id:${item.id}`:JSON.stringify(item);
@@ -230,10 +262,10 @@ function combine(here:unknown,arriving:unknown):unknown{
  * lands in the first group whose rule matches; anything unmatched is a setting.
  */
 const GROUPS:{id:string;en:string;zh:string;match:RegExp}[]=[
-  {id:"saved",en:"Your lists and saved sets",zh:"你的列表和保存的组合",match:/-favorites$|^cookie:music-status|^cookie:scale-book:sets/},
+  {id:"saved",en:"Your lists and saved sets",zh:"你的列表和保存的组合",match:/-favorites$|^cookie:music-status|^cookie:scale-book:sets|^cookie:saved-exercises/},
   {id:"scales",en:"Scale Studio setup and tempos",zh:"音阶练习设置和速度",match:/^cookie:scale-book:(preferences|tempos)|^cookie:long-tones|^cookie:reichert:tempos|^cookie:score-tempo/},
   {id:"practice",en:"Practice history, routine and timer",zh:"练习记录、日程和计时",match:/^cookie:practice-|^cookie:pomodoro|^cookie:tricky-bits/},
-  {id:"pitch",en:"Pitch history and pitch tests",zh:"音准记录和音准测试",match:/^cookie:pitch-history|^cookie:tendency-tests/},
+  {id:"pitch",en:"Pitch history and pitch tests",zh:"音准记录和音准测试",match:/^cookie:pitch-(history|traces)|^cookie:tendency-tests/},
   {id:"progress",en:"Lessons, books and roadmap",zh:"课程、练习曲集和路线图进度",match:/theory|^cookie:book-progress|^cookie:roadmap/},
   {id:"drawings",en:"Pencil drawings",zh:"铅笔标注",match:/:ink$|:annotations:v2$/},
   {id:"marks",en:"Notes and marks on scores",zh:"谱子上的笔记和记号",match:/:annotations|:notes$/},
@@ -257,11 +289,12 @@ export type StorageRow={id:string;label:string;keys:string[];chars:number};
 /**
  * What this browser is holding, in the same groups a transfer code uses, plus the pencil drawings split by the score
  * or page they belong to (so one piece's markup can go without the rest). `chars` counts stored text, about bytes.
+ * Offline music has its own card (it is files, not stored text), so its list is left out here.
  */
 export function storageReport(zh:boolean,titleFor:(scoreId:string)=>string){
   const groups=new Map<string,StorageRow>(),pieces=new Map<string,StorageRow>();
   const names=[...GROUPS,{id:"settings",en:"Settings",zh:"设置"}];
-  let keys:string[]=[];try{keys=Object.keys(localStorage).filter(key=>key.startsWith("cookie"))}catch{/* storage blocked */}
+  let keys:string[]=[];try{keys=Object.keys(localStorage).filter(key=>key.startsWith("cookie")&&!key.startsWith("cookie:offline-music"))}catch{/* storage blocked */}
   for(const key of keys){
     let value="";try{value=localStorage.getItem(key)??""}catch{/* unreadable */}
     const chars=key.length+value.length,id=GROUPS.find(group=>group.match.test(key))?.id??"settings",name=names.find(group=>group.id===id)!;

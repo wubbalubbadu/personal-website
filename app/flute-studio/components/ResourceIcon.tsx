@@ -25,9 +25,12 @@ export type ResourceIconName =
   | "tuner"
   | "metronome"
   | "drone"
-  | "theory";
+  | "theory"
+  | "rhythm";
 
 const paths: Record<ResourceIconName, React.ReactNode> = {
+  // Rhythm drills: two beamed eighth notes, a beat split in two.
+  rhythm: <><ellipse cx="7" cy="17.5" rx="2.6" ry="2" fill="currentColor" stroke="none"/><ellipse cx="17" cy="15.5" rx="2.6" ry="2" fill="currentColor" stroke="none"/><path d="M9.5 17.3V6.5l10-2v10.8"/></>,
   theory: <><path d="M3 6h18M3 10h18M3 14h18M3 18h18" opacity=".45"/><ellipse cx="12" cy="14" rx="3" ry="2" fill="currentColor" stroke="none"/><path d="M15 14V4"/></>,
   // The instrument itself: a tube with keys, two of them pressed. This is
   // what a fingering chart is a picture of.

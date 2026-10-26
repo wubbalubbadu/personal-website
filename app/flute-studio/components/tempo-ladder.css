@@ -1,0 +1,47 @@
+/* Tempo ladder (TempoLadder.tsx): the setup panel inside a ReaderPopover, and the card pinned over the passage.
+   One type size in the setup: 14 / 600 for labels, numbers (small Stepper) and the step choices (DESIGN.md button label). */
+.tempo-ladder-setup{display:grid;gap:10px;padding:2px 0 0}
+.tempo-ladder-setup__row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:32px;font-size:14px;font-weight:600;color:#45464f}
+.tempo-ladder-setup__row .stepper{width:116px}
+.tempo-ladder-setup__steps{display:flex;gap:4px}
+/* Same plain grey as the Stepper; the chosen step takes the selected purple (DESIGN.md). */
+.tempo-ladder-setup .tempo-ladder-setup__steps button{min-width:44px;height:28px;padding:0 8px;border:0;border-radius:10px;background:#f1f1f2;color:#45464f;font:inherit;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+@media(hover:hover){.tempo-ladder-setup .tempo-ladder-setup__steps button:hover{background:#e8e8ea}}
+.tempo-ladder-setup .tempo-ladder-setup__steps button[aria-pressed="true"]{background:#f1e5f5;color:#6d4585}
+.tempo-ladder-setup__actions{display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-top:4px}
+.tempo-ladder-setup__note{font-size:13px;color:#85868e}
+/* The plain grey action button (DESIGN.md "Buttons"), dark text as the panel's one main action. */
+.tempo-ladder-setup .tempo-ladder__start{height:36px;padding:0 18px;border:0;border-radius:10px;background:#f1f1f2;color:#292a33;font:inherit;font-size:14px;font-weight:600}
+@media(hover:hover){.tempo-ladder-setup .tempo-ladder__start:hover:not(:disabled){background:#e8e8ea}}
+.tempo-ladder-setup .tempo-ladder__start:disabled{opacity:.45}
+
+/* The card: soft-pill look (white, hairline, small shadow), in the marks layer over the passage. Drag by any empty part. */
+.tempo-ladder{position:absolute;transform:translateY(-100%);pointer-events:auto;width:280px;max-width:calc(100% - 8px);box-sizing:border-box;padding:14px 20px 8px;border-radius:18px;background:#fff;border:1px solid #d4d5da;box-shadow:0 3px 10px rgba(41,42,51,.08);color:#45464f;touch-action:none;-webkit-user-select:none;user-select:none}
+.tempo-ladder.is-dragging{box-shadow:0 8px 24px rgba(41,42,51,.16)}
+.tempo-ladder__grip{position:absolute;left:50%;top:6px;width:28px;height:4px;margin-left:-14px;border-radius:999px;background:rgb(41 42 51 / 18%)}
+.tempo-ladder__close{position:absolute;top:2px;right:2px}
+.tempo-ladder__line{position:relative;height:48px;margin:0 8px}
+.tempo-ladder__track,.tempo-ladder__done{position:absolute;left:0;bottom:7px;height:4px;border-radius:2px}
+.tempo-ladder__track{right:0;background:#e8f0fb}
+.tempo-ladder__done{background:#6a8ec0}
+/* Stops are buttons: tap one to go straight to that tempo. */
+.tempo-ladder__stop{position:absolute;bottom:3px;width:12px;height:12px;margin-left:-6px;padding:0;border:2px solid #c9dcf4;border-radius:50%;background:#fff}
+.tempo-ladder__stop.is-passed{border-color:#6a8ec0}
+@media(hover:hover){.tempo-ladder__stop:hover{border-color:#2f5d99}}
+.tempo-ladder__here{position:absolute;bottom:15px;display:flex;flex-direction:column;align-items:center;gap:1px;transform:translateX(-50%);pointer-events:none;transition:left .25s ease}
+.tempo-ladder__here b{font-size:14px;font-weight:600;line-height:1;color:#2f5d99;font-variant-numeric:tabular-nums}
+.tempo-ladder__cookie{display:block}
+.tempo-ladder__ends{display:flex;justify-content:space-between;margin:4px 0 8px;font-size:13px;color:#85868e;font-variant-numeric:tabular-nums}
+.tempo-ladder__target{font-weight:600;color:#2f5d99}
+.tempo-ladder__target.is-reached{color:#46633d}
+/* Step back, the tally, step up: one centred row under the line. */
+.tempo-ladder__controls{display:flex;align-items:center;justify-content:center;gap:8px;padding-top:8px;border-top:1px solid #f2f2f4}
+.tempo-ladder__icon{width:32px;height:32px;display:grid;place-items:center;border:0;border-radius:50%;background:transparent;color:#45464f;padding:0}
+@media(hover:hover){.tempo-ladder__icon:hover:not(:disabled){background:#f1f1f4}}
+.tempo-ladder__icon:disabled{opacity:.3}
+.tempo-ladder__icon svg{width:18px;height:18px}
+@media(prefers-reduced-motion:reduce){.tempo-ladder__here{transition:none}}
+/* Phone panels give every button 44px of height; the step choices keep the Stepper's 28px and, like its signs, answer
+   to a taller invisible target instead. */
+html body .reader-settings-panel .tempo-ladder-setup .tempo-ladder-setup__steps button{position:relative;height:28px!important;min-height:0!important}
+@media(pointer:coarse){.tempo-ladder-setup .tempo-ladder-setup__steps button::after{content:"";position:absolute;left:0;right:0;top:-8px;bottom:-8px}}

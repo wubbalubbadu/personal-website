@@ -24,5 +24,5 @@ export default function BodyView({fullness,inhale,time,mode,running,hold}:{mode:
   let frame=0,opening=0,last=performance.now();const draw=()=>{const s=state.current,now=performance.now(),dt=Math.min((now-last)/1000,.05);last=now;opening=THREE.MathUtils.damp(opening,s.inhale||s.hold?1:0,6,dt);body?.update(s.fullness,s.time,s.inhale,camera);mouth?.update(59,s.time,s.running&&!s.hold,opening,s.inhale);controls.update();renderer.render(scene,camera);frame=requestAnimationFrame(draw)};draw();
   return()=>{cancelAnimationFrame(frame);resize.disconnect();controls.dispose();scene.traverse(o=>{if(o instanceof THREE.Mesh||o instanceof THREE.Line){o.geometry.dispose();(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.dispose())}});renderer.dispose();renderer.domElement.remove()};
  },[mode]);
- return <div className="bl-body" ref={host} role="img" aria-label={zh?"与练习同步的呼吸模型":"Breathing model synchronized to the exercise"}>{failed&&<p>{zh?"三维模型不可用，请选择花朵与气流球或呼吸环。":"3D unavailable. Choose Flower & balls or Cycle."}</p>}</div>;
+ return <div className="bl-body" ref={host} role="img" aria-label={zh?"与练习同步的呼吸模型":"Breathing model synchronized to the exercise"}>{failed&&<p>{zh?"三维模型不可用，请选择花朵或呼吸环。":"3D unavailable. Choose Flower or Cycle."}</p>}</div>;
 }

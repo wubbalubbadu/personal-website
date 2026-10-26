@@ -42,8 +42,8 @@ export function ScoreTempoMarks({root,version,marks,onChange,onSound,soundingId,
       // Sat beside the name to begin with, which put it right where a high
       // note's ledger lines reach up. Its own lane directly above the name
       // is the one band in a block that nothing engraved occupies.
-      // With a rep pill beside it the pair is ~170px wide: near the right edge, slide it back so it stays on the page.
-      const room=mark.rep?172:84;
+      // With a rep pill beside it (and the tempo pill's trend button) the pair is up to ~190px wide: near the right edge, slide it back so it stays on the page.
+      const room=mark.rep?192:84;
       placed.push({id:mark.id,x:Math.max(0,Math.min(rect.left-rootBox.left,rootBox.width-room)),y:rect.top-rootBox.top-3});
     }
     setSpots({version,placed});
@@ -56,7 +56,7 @@ export function ScoreTempoMarks({root,version,marks,onChange,onSound,soundingId,
     if(!mark)return null;
     // The same action as the metronome button on this exercise's Tempos row: take the tempo from here, and click.
     return <span key={spot.id} className="score-tempo-mark" style={{left:spot.x,top:spot.y}}>
-      <TempoPill label={mark.label} tempo={mark.tempo} sounding={soundingId===spot.id} onSound={()=>onSound(spot.id,mark.tempo)} onChange={value=>onChange(spot.id,value)}/>
+      <TempoPill label={mark.label} tempo={mark.tempo} sounding={soundingId===spot.id} onSound={()=>onSound(spot.id,mark.tempo)} onChange={value=>onChange(spot.id,value)} history={mark.rep?.key}/>
       {mark.rep&&<RepPill item={mark.rep} tempo={mark.tempo} zh={zh}/>}
     </span>;
   })}</>;

@@ -35,7 +35,7 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "(function(){try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t;}}catch(e){}})();",
+              "(function(){try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t;}document.documentElement.dataset.rail=localStorage.getItem('cookie:rail-open')==='1'?'open':'folded';}catch(e){}})();",
           }}
         />
         {children}

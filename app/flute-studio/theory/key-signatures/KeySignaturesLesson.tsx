@@ -123,6 +123,8 @@ export default function KeySignaturesLesson(){
       {!placed&&<g className="ks-slot" role="button" tabIndex={0} aria-label={tr('The space beside the clef','谱号旁边的空位')} onClick={place}
         onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();place()}}}>
         <rect x={layout.keyX-9} y={noteY(9)-6} width={KEY_STRIDE+18} height={noteY(-1)-noteY(9)+12} rx="10"/>
+        {/* Phones only (CSS): a wider, invisible tap area over the clef and time signature, which do nothing here. */}
+        <rect className="ks-slot__hit" x={layout.keyX-60} y={noteY(9)-6} width={KEY_STRIDE+120} height={noteY(-1)-noteY(9)+12}/>
       </g>}
       {/* The written sharps fly from their notes into the signature, then the signature's sign drops in where they meet. */}
       {placed&&ONCE.map((x,i)=>x.acc&&<g key={`fly-${i}`} className="ks-fly" style={{'--dx':`${layout.keyX-(layout.xs[i]-35)}px`,'--dy':`${noteY(8)-noteY(x.p)}px`,animationDelay:`${i*.02}s`} as CSSProperties}>

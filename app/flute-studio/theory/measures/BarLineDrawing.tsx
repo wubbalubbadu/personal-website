@@ -1,6 +1,7 @@
 'use client';
 import {useRef,useState,type PointerEvent} from 'react';
-import EngravedRow,{layoutRow,type RowNote,type Meter} from '../EngravedRow';
+import EngravedRow,{layoutRow,phoneRowRight,type RowNote,type Meter} from '../EngravedRow';
+import {usePhoneNotation} from '../usePhoneNotation';
 import {noteY} from '../model';
 import {measureTotals,beamGroups} from './rhythms';
 
@@ -16,8 +17,9 @@ export default function BarLineDrawing({notes,meter,bars,onToggle,locked=false,z
   const [stroke,setStroke]=useState<{x:number;y:number}[]>([]);
   const start=useRef<{x:number;y:number}|null>(null);
   const {totals}=measureTotals(notes,bars);
-  // The same layout EngravedRow draws with, so strokes and taps map onto the notes exactly.
-  const layout=layoutRow(notes,{bars,even:true,clef:false,meter});
+  // The same layout EngravedRow draws with (including its narrower phone width), so strokes and taps map onto the notes exactly.
+  const phone=usePhoneNotation();
+  const layout=layoutRow(notes,{bars,even:true,clef:false,meter,right:phone?phoneRowRight(notes,false,meter):860});
 
   function local(e:PointerEvent<SVGRectElement>){
     const svg=e.currentTarget.ownerSVGElement!;

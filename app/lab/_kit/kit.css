@@ -1,0 +1,251 @@
+/* Shared base for the landing prototypes in app/lab. Tokens are scoped to .lab
+ * so nothing here touches the live home page's :root palette. Values are the
+ * same dopamine palette as app/personal-home.css. */
+
+/* globals.css pins html/body to overflow:hidden for the studio shell. */
+html:has(.lab),
+body:has(.lab) {
+  overflow: auto;
+  height: auto;
+  min-height: 100%;
+}
+
+.lab {
+  --ground: #f7f1e6;
+  --paper: #fffcf6;
+  --panel: #fef4e9;
+  --ink: #241220;
+  --ink-70: rgba(36, 18, 32, 0.7);
+  --ink-50: rgba(36, 18, 32, 0.5);
+  --rule: rgba(36, 18, 32, 0.12);
+  --accent: #d6146f;
+  --accent-wash: rgba(214, 20, 111, 0.1);
+  --accent-2: #e8600c;
+  --font-ui: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-pix: "Silkscreen", "Space Grotesk", ui-monospace, monospace;
+
+
+  min-height: 100dvh;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .lab {
+    --ground: #150d13;
+    --paper: #1f1420;
+    --panel: #2a1a2c;
+    --ink: #f7eef2;
+    --ink-70: rgba(247, 238, 242, 0.7);
+    --ink-50: rgba(247, 238, 242, 0.5);
+    --rule: rgba(247, 238, 242, 0.14);
+    --accent: #ff6eac;
+    --accent-wash: rgba(255, 110, 172, 0.16);
+    --accent-2: #ff9d4d;
+  }
+}
+:root[data-theme="dark"] .lab {
+  --ground: #150d13;
+  --paper: #1f1420;
+  --panel: #2a1a2c;
+  --ink: #f7eef2;
+  --ink-70: rgba(247, 238, 242, 0.7);
+  --ink-50: rgba(247, 238, 242, 0.5);
+  --rule: rgba(247, 238, 242, 0.14);
+  --accent: #ff6eac;
+  --accent-wash: rgba(255, 110, 172, 0.16);
+  --accent-2: #ff9d4d;
+}
+
+.lab a {
+  color: inherit;
+  text-decoration: none;
+}
+.lab button {
+  font: inherit;
+  color: inherit;
+  cursor: default;
+}
+.lab :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* theme toggle: soft round pill, icon only */
+.lab-theme {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  font-size: 15px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+}
+.lab-theme:hover {
+  background: var(--accent-wash);
+}
+
+/* ---- mascot slot ---- */
+.mascot-slot {
+  position: relative;
+  flex: none;
+}
+.mascot-slot .ps1m {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* The mascot's own bubble is sized for big demos (90% of the slot);
+ * small slots here need a wider one, anchored to the side with room. */
+.mascot-slot .ps1m-bubble {
+  max-width: 210px;
+}
+.mascot-slot--bubble-left .ps1m-bubble {
+  left: 0;
+  transform: none;
+}
+.mascot-slot--bubble-left .ps1m-bubble::after {
+  left: 22px;
+}
+.mascot-slot--bubble-right .ps1m-bubble {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+.mascot-slot--bubble-right .ps1m-bubble::after {
+  left: auto;
+  right: 22px;
+}
+
+/* ---- sheets (native <dialog>) ---- */
+.lab-sheet {
+  width: min(460px, calc(100vw - 32px));
+  max-height: min(78dvh, 640px);
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: 18px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  box-shadow: 0 30px 80px -30px rgba(36, 18, 32, 0.45);
+}
+.lab-sheet::backdrop {
+  background: rgba(36, 18, 32, 0.28);
+}
+.lab-sheet__inner {
+  padding: 18px 20px 22px;
+}
+.lab-sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.lab-sheet__head h2 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 500;
+}
+.lab-sheet__close {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: none;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--ink-70);
+}
+.lab-sheet__note {
+  margin: 0 0 10px;
+  color: var(--ink-70);
+  font-size: 15px;
+}
+.lab-links,
+.lab-projects {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.lab-links a {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 2px;
+  border-bottom: 1px solid var(--rule);
+  font-size: 16px;
+}
+.lab-links li:last-child a {
+  border-bottom: 0;
+}
+.lab-links a span {
+  color: var(--accent);
+  font-weight: 500;
+}
+.lab-links a:hover span {
+  color: var(--accent-2);
+}
+.lab-links small,
+.lab-projects small {
+  color: var(--ink-50);
+  font-size: 13px;
+}
+.lab-projects li {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.lab-projects li:last-child {
+  border-bottom: 0;
+}
+.lab-projects__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.lab-projects__top a,
+.lab-projects__top b {
+  font-size: 16px;
+  font-weight: 500;
+}
+.lab-projects__top a {
+  color: var(--accent);
+}
+.lab-projects__top a::after {
+  content: " ›";
+}
+.lab-projects p {
+  margin: 4px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink-70);
+}
+.lab-projects__audio {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+.lab-projects__audio label {
+  display: grid;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--ink-50);
+}
+.lab-projects__audio audio {
+  width: 100%;
+  height: 32px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lab *,
+  .lab *::before,
+  .lab *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

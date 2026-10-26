@@ -2,8 +2,8 @@
 import {useRouter} from 'next/navigation';
 import {useEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode} from 'react';
 import {useLanguage} from '../../i18n/LanguageContext';
-import TrebleClef from '../TrebleClef';
-import {pitchAt, readSaved, SAVE_KEY, noteY, positionAt, ledgerLines} from '../model';
+import EngravedRow from '../EngravedRow';
+import {pitchAt, readSaved, SAVE_KEY, noteY, positionAt} from '../model';
 import RhythmNote, {STEM_HEIGHT, STEM_X} from './RhythmNote';
 import DurationTree from './DurationTree';
 import NoteBuilder from './NoteBuilder';
@@ -18,6 +18,8 @@ import '../theory.css';
 import './rhythm.css';
 
 const BEAT=650;
+/** G4, the second line: where notes sit when only their length matters. */
+const STAFF_G=2;
 const HOLD_VALUES:NoteValue[] = [1, 2, 4];
 const INTRO_RHYTHMS:NoteValue[][] = [[1,1,1,1],[.5,.5,2,1],[2,1,.5,.5],[.5,2,.5,1],[1,.5,2,.5]];
 // Four-beat rhythms to clap back, easiest tier first; each round picks one from the next tier.
@@ -69,8 +71,8 @@ export default function RhythmLesson() {
   if(id==='hold')notes=[target];
   if(id==='tap')notes=tapPattern;
   if(id==='melody')notes=melody;
-  const xs=notes.map((_,i)=>phone?(notes.length===1?270:id==='beams'?220+i*100:id==='shapes'?65+i*95:160+i*300/(notes.length-1)):(notes.length===1?390:id==='beams'?330+i*120:id==='shapes'?115+i*135:205+i*420/(notes.length-1)));
-  const ys=notes.map((_,i)=>id==='rhythm'||id==='melody'?noteY(positions[i]):id==='shapes'?190:176);
+  // Note shapes are spaced by hand (off the staff); every staff step takes its spacing from EngravedRow.
+  const xs=notes.map((_,i)=>phone?65+i*95:115+i*135),ys=notes.map(()=>190);
   const pitches=id==='rhythm'||id==='melody'?positions.map(p=>pitchAt(p).midi):notes.map(()=>67);
 
   function cancelHold(){holdStart.current=null;if(holdTimeout.current)clearTimeout(holdTimeout.current);setHolding(false);audio.stop()}
@@ -168,26 +170,48 @@ export default function RhythmLesson() {
   const tone=correct||(id==='build'&&drawn)?'correct':(id==='hold'||id==='tap')&&feedback&&!correct?'wrong':null;
   const visual=id==='values'?<DurationTree depth={depth} selected={treeRow} active={audio.active} onSelect={row=>{setTreeRow(row);void audio.play(Array(2**row).fill(VALUES[row]))}} zh={zh}/>
     :id==='build'?<NoteBuilder stage={built} drawn={drawn} labels={buildLabels} zh={zh} onDrawn={()=>setDrawn(true)}/>
-    :<svg className={`rhythm-score ${id==='shapes'?'rhythm-shapes':''}`} viewBox={id==='shapes'?`0 0 ${width} 310`:`0 40 ${width} 245`} preserveAspectRatio="xMidYMid meet" aria-label={notes.map(nameOf).join(', ')}>
-      {id!=='shapes'&&<>{[0,1,2,3,4].map(i=><line key={i} x1="55" x2={width-25} y1={104+i*24} y2={104+i*24} stroke="#555" strokeWidth="1"/>)}<TrebleClef/></>}
-      {notes.map((value,i)=><g key={`${step}-${i}`} transform={`translate(${xs[i]} ${ys[i]})`} className={`rhythm-note ${audio.active===i||(id==='tap'&&i<taps.length&&!correct)?'is-playing':''} ${id==='melody'?'is-draggable':''}`}>
-        {id==='melody'&&selected===i&&<circle cx="0" cy="0" r="24" fill="#dbac65" fillOpacity=".16"/>}
-        {(id==='rhythm'||id==='melody')&&ledgerLines(positions[i]).map(p=><line key={p} x1="-23" x2="23" y1={noteY(p)-ys[i]} y2={noteY(p)-ys[i]} stroke="currentColor" strokeWidth="1.5"/>)}
-        <RhythmNote value={value} down={id!=='shapes'&&ys[i]<=152} beamed={id==='beams'&&beams>0} focus={id==='shapes'&&shape===i?(i>=3?'flag':i===1?'stem':'head'):''}/>
-        <g role="button" tabIndex={0} aria-label={`${nameOf(value)} ${i+1}${id==='melody'?`, ${pitchAt(positions[i]).name}${pitchAt(positions[i]).octave}`:''}`} aria-pressed={id==='melody'?selected===i:undefined}
-          onPointerDown={e=>{if(id!=='melody')return;e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);setSelected(i);dragged.current=i;audio.stop()}}
-          onPointerMove={e=>{if(id!=='melody'||dragged.current!==i)return;const p=positionAt(svgPoint(e).y);setPositions(old=>old.map((v,n)=>n===i?p:v))}}
-          onPointerUp={()=>{if(id==='melody'&&dragged.current!==null){dragged.current=null;void audio.play([melody[i]],[pitchAt(positions[i]).midi],i,false)}}} onPointerCancel={()=>{dragged.current=null}}
-          onClick={()=>{if(id==='shapes'){setShape(i);void audio.play([value],[67],i)}else if(id!=='melody')void audio.play([value],[pitches[i]],i,id!=='rhythm')}}
-          onKeyDown={e=>{if(id==='melody'&&(e.key==='ArrowUp'||e.key==='ArrowDown')){e.preventDefault();setSelected(i);const nextP=positionAt(noteY(positions[i]+(e.key==='ArrowUp'?1:-1)));setPositions(old=>old.map((p,n)=>n===i?nextP:p));void audio.play([melody[i]],[pitchAt(nextP).midi],i,false)}else if(e.key==='Enter'||e.key===' '){e.preventDefault();if(id==='melody')setSelected(i);else if(id==='shapes'){setShape(i);void audio.play([value],[67],i)}else void audio.play([value],[pitches[i]],i,id!=='rhythm')}}}>
-          <rect x="-30" y={ys[i]<=152&&id!=='shapes'?-24:-96} width="70" height="125" fill="transparent"/>
+    :id==='shapes'?<svg className="rhythm-score rhythm-shapes" viewBox={`0 0 ${width} 310`} preserveAspectRatio="xMidYMid meet" aria-label={notes.map(nameOf).join(', ')}>
+      {/* Note shapes are shown on their own, off the staff, so each part can be lit and named. */}
+      {notes.map((value,i)=><g key={`${step}-${i}`} transform={`translate(${xs[i]} ${ys[i]})`} className="rhythm-note">
+        <RhythmNote value={value} focus={shape===i?(i>=3?'flag':i===1?'stem':'head'):''}/>
+        <g role="button" tabIndex={0} aria-label={`${nameOf(value)} ${i+1}`} onClick={()=>{setShape(i);void audio.play([value],[67],i)}}
+          onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setShape(i);void audio.play([value],[67],i)}}}>
+          <rect x="-30" y="-96" width="70" height="125" fill="transparent"/>
         </g>
-        {id==='shapes'&&<text x="0" y="60" textAnchor="middle">{labels[i]}</text>}
+        <text x="0" y="60" textAnchor="middle">{labels[i]}</text>
       </g>)}
-      {id==='rhythm'&&notes.map((value,i)=>{const start=notes.slice(0,i).reduce((a,b)=>a+b,0)*BEAT/1000;const amount=Math.max(0,Math.min(1,(audio.elapsed-start)/(value*BEAT/1000)));return <g key={`duration-${i}`} aria-hidden="true"><rect x={xs[i]-16} y="254" width={value*40} height="9" rx="3" fill="#ded7ca"/>{audio.active===i&&<rect x={xs[i]-16} y="254" width={value*40*amount} height="9" rx="3" fill="#b9362e"/>}</g>})}
-      {id==='beams'&&Array.from({length:beams},(_,b)=><path key={b} d={`M${xs[0]+STEM_X} ${176-STEM_HEIGHT+b*13}H${xs[1]+STEM_X}`} stroke="currentColor" strokeWidth="7"/>)}
-      {id==='beams'&&!joined&&<g><path d={`M${xs[0]+STEM_X} ${176-STEM_HEIGHT+beams*13}H${xs[1]+STEM_X}`} stroke="#bd837e" strokeDasharray="4 8"/>{drawing!==null&&<path d={`M${xs[0]+STEM_X} ${176-STEM_HEIGHT+beams*13}H${drawing}`} stroke="#b9362e" strokeWidth="6"/>}<rect role="button" tabIndex={0} aria-label={tr('Draw the beam (or press Enter)','画出符杠（或按回车）')} x={xs[0]-15} y={176-STEM_HEIGHT+beams*13-20} width={xs[1]-xs[0]+50} height="48" fill="transparent" className="rhythm-draw" onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();joinBeam()}}} onPointerDown={e=>{const x=svgPoint(e).x;if(Math.abs(x-xs[0]-STEM_X)<45){e.currentTarget.setPointerCapture(e.pointerId);beamEnd.current=x;setDrawing(x)}}} onPointerMove={e=>{if(beamEnd.current===null)return;beamEnd.current=Math.min(xs[1]+STEM_X,svgPoint(e).x);setDrawing(beamEnd.current)}} onPointerUp={()=>{if(beamEnd.current!==null&&beamEnd.current>=xs[1]-20)joinBeam();beamEnd.current=null;setDrawing(null)}} onPointerCancel={()=>{beamEnd.current=null;setDrawing(null)}}/></g>}
-    </svg>;
+    </svg>
+    // Every staff step is drawn by EngravedRow, like the other lessons. Lesson 2 comes before measures, so no bar lines.
+    // A sixteenth pair with one of its two beams drawn so far shows as beamed eighths: one beam, no flags.
+    :<EngravedRow key={`${id}-${beamRound}`} className="rhythm-score" interactive finalBar={false} narrow={id==='beams'} right={id==='hold'?300:undefined} label={notes.map(nameOf).join(', ')}
+      notes={notes.map((value,i)=>({v:id==='beams'&&beams>0&&beams<requiredBeams?.5:value,p:id==='rhythm'||id==='melody'?positions[i]:STAFF_G}))}
+      beams={id==='beams'&&beams>0?[[0,1]]:[]}
+      active={id==='tap'&&!correct?notes.map((_,i)=>i).filter(i=>i<taps.length||audio.active===i):audio.active}>
+      {layout=><>
+        {notes.map((value,i)=>{const p=id==='rhythm'||id==='melody'?positions[i]:STAFF_G,y=noteY(p);return <g key={`${step}-${i}`} transform={`translate(${layout.xs[i]} ${y})`} className={`rhythm-note ${id==='melody'?'is-draggable':''}`}>
+          {id==='melody'&&selected===i&&<circle cx="0" cy="0" r="24" fill="#dbac65" fillOpacity=".16"/>}
+          <g role="button" tabIndex={0} aria-label={`${nameOf(value)} ${i+1}${id==='melody'?`, ${pitchAt(positions[i]).name}${pitchAt(positions[i]).octave}`:''}`} aria-pressed={id==='melody'?selected===i:undefined}
+            onPointerDown={e=>{if(id!=='melody')return;e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);setSelected(i);dragged.current=i;audio.stop()}}
+            onPointerMove={e=>{if(id!=='melody'||dragged.current!==i)return;const next=positionAt(svgPoint(e).y);setPositions(old=>old.map((v,n)=>n===i?next:v))}}
+            onPointerUp={()=>{if(id==='melody'&&dragged.current!==null){dragged.current=null;void audio.play([melody[i]],[pitchAt(positions[i]).midi],i,false)}}} onPointerCancel={()=>{dragged.current=null}}
+            onClick={()=>{if(id!=='melody')void audio.play([value],[pitches[i]],i,id!=='rhythm')}}
+            onKeyDown={e=>{if(id==='melody'&&(e.key==='ArrowUp'||e.key==='ArrowDown')){e.preventDefault();setSelected(i);const nextP=positionAt(noteY(positions[i]+(e.key==='ArrowUp'?1:-1)));setPositions(old=>old.map((v,n)=>n===i?nextP:v));void audio.play([melody[i]],[pitchAt(nextP).midi],i,false)}else if(e.key==='Enter'||e.key===' '){e.preventDefault();if(id==='melody')setSelected(i);else void audio.play([value],[pitches[i]],i,id!=='rhythm')}}}>
+            <rect x="-30" y={p>=4?-24:-96} width="70" height="125" fill="transparent"/>
+          </g>
+        </g>})}
+        {id==='rhythm'&&notes.map((value,i)=>{const start=notes.slice(0,i).reduce((a,b)=>a+b,0)*BEAT/1000;const amount=Math.max(0,Math.min(1,(audio.elapsed-start)/(value*BEAT/1000)));return <g key={`duration-${i}`} aria-hidden="true"><rect x={layout.xs[i]-16} y="254" width={value*40} height="9" rx="3" fill="#ded7ca"/>{audio.active===i&&<rect x={layout.xs[i]-16} y="254" width={value*40*amount} height="9" rx="3" fill="#b9362e"/>}</g>})}
+        {/* Drawing a beam: a guide from stem top to stem top, one beam at a time (EngravedRow draws the ones already joined). */}
+        {id==='beams'&&!joined&&(()=>{const x0=layout.xs[0]+STEM_X,x1=layout.xs[1]+STEM_X,y=noteY(STAFF_G)-STEM_HEIGHT+beams*13;return <g>
+          <path d={`M${x0} ${y}H${x1}`} stroke="#bd837e" strokeDasharray="4 8"/>
+          {drawing!==null&&<path d={`M${x0} ${y}H${drawing}`} stroke="#b9362e" strokeWidth="6"/>}
+          <rect role="button" tabIndex={0} aria-label={tr('Draw the beam (or press Enter)','画出符杠（或按回车）')} x={layout.xs[0]-15} y={y-20} width={layout.xs[1]-layout.xs[0]+50} height="48" fill="transparent" className="rhythm-draw"
+            onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();joinBeam()}}}
+            onPointerDown={e=>{const x=svgPoint(e).x;if(Math.abs(x-x0)<45){e.currentTarget.setPointerCapture(e.pointerId);beamEnd.current=x;setDrawing(x)}}}
+            onPointerMove={e=>{if(beamEnd.current===null)return;beamEnd.current=Math.min(x1,svgPoint(e).x);setDrawing(beamEnd.current)}}
+            onPointerUp={()=>{if(beamEnd.current!==null&&beamEnd.current>=layout.xs[1]-20)joinBeam();beamEnd.current=null;setDrawing(null)}} onPointerCancel={()=>{beamEnd.current=null;setDrawing(null)}}/>
+        </g>})()}
+      </>}
+    </EngravedRow>;
 
   return <LessonFrame className="rhythm-lesson" title={tr('Rhythm: note lengths','节奏：音符的时值')} zh={zh} steps={names} current={step} onJump={navigate}
     heading={names[step]} narration={narration} fadeNarration message={message} tone={tone} next={next} progress={progress}

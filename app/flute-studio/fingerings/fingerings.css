@@ -1,130 +1,98 @@
-/* The fingering chart page. Follows the Exercises hub's page frame so the
-   studio's tool pages share one shape. */
+/* The fingering chart, and the frame the trill chart shares with it (trills.css adds only what is trill-specific).
 
-.fingering-chart{height:100vh;height:100dvh;min-height:0;overflow-y:auto;scrollbar-gutter:stable;background:#fff;color:#292a33;padding:64px 24px 120px;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",Inter,Arial,sans-serif}
-.fingering-chart__content{width:min(980px,100%);margin:0 auto}
-.fingering-chart__header{padding:50px 4px 26px}
-.fingering-chart__header>p:first-child{margin:0 0 8px;color:#678956;font-size:12px;font-weight:720;letter-spacing:.08em;text-transform:uppercase}
+   Phone first: one note, large and centred (staff with ‹ › either side, the name, the fingering), then the octave
+   switch and that octave's notes, all in one screen. iPad puts the staff beside the name; desktop puts the fingering
+   on the same row too. No cards: the music sits on the white page with a hairline above the picker. */
+
+.fingering-chart{height:100vh;height:100dvh;min-height:0;overflow-y:auto;scrollbar-gutter:stable;background:#fff;color:#292a33;padding:64px 24px 24px;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",Inter,Arial,sans-serif}
+.fingering-chart__content{width:min(1120px,100%);margin:0 auto}
+.fingering-chart__header{padding:50px 4px 18px}
 .fingering-chart__header h1{margin:0;font-size:42px;line-height:1.04;font-weight:760;letter-spacing:-.04em}
-.fingering-chart__intro{max-width:680px;margin:16px 0 0;color:#6d6f76;font-size:16px;line-height:1.55}
+.fingering-chart sub{font-size:.62em;font-weight:500;color:#85868e;margin-left:1px;vertical-align:-.2em;line-height:0}
 
-/* The selected note: stave, name and diagram on one row, so what you read
-   and what you play stay in the same glance. */
-.fingering-chart__now{
-  display:grid;
-  grid-template-columns:auto minmax(150px,1fr) minmax(0,2.1fr);
-  align-items:center;
-  gap:20px;
-  padding:22px 24px;
-  border-radius:22px;
-  background:#fff;
-  box-shadow:0 10px 30px rgba(41,42,51,.08);
-}
-.fingering-chart__stave{flex:0 0 auto;width:190px;color:#292a33}
-.fingering-chart__detail{min-width:0}
-.fingering-chart__detail h2{margin:0;font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1.1}
-.fingering-chart__detail h2 sub{font-size:15px;font-weight:500;color:#85868e;margin-left:1px}
-.fingering-chart__variants{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-.fingering-chart__variants button{border:0;border-radius:11px;background:#f1f1f4;color:#292a33;padding:6px 11px;font:600 12px/1 inherit;cursor:pointer;transition:background-color .16s ease,color .16s ease}
-.fingering-chart__variants button:hover{background:#e6e6ea}
-.fingering-chart__variants button.selected{background:#40553d;color:#fff}
-.fingering-chart__use{margin:10px 0 0;font-size:13px;line-height:1.5;color:#6d6f76}
-.fingering-chart__requires{margin:6px 0 0;font-size:12px;font-weight:600;color:#7a5340}
-.fingering-chart__diagram{min-width:0;color:#2f3a2c;--flute-key-ground:#fff}
+/* The note being shown. */
+.chart-now{display:grid;grid-template-columns:minmax(0,1fr);justify-items:center;text-align:center;gap:4px;padding-bottom:14px;border-bottom:1px solid #ececef}
+.chart-now__music{display:flex;align-items:center;justify-content:center;gap:6px}
+.chart-now__detail{min-width:0}
+.chart-now__detail h2{margin:0;font-size:30px;line-height:1.15;font-weight:700;letter-spacing:-.03em}
+.chart-now__use{max-width:460px;margin:8px auto 0;font-size:13px;line-height:1.5;color:#6d6f76}
+.chart-now__requires{margin:6px 0 0;font-size:12px;font-weight:600;color:#7a5340}
+.chart-now__diagram{width:100%;max-width:560px;margin-top:6px;color:#2f3a2c;--flute-key-ground:#fff}
+.chart-now__diagram :is(circle,ellipse,rect,path){transition:fill .18s ease,stroke .18s ease}
+/* Text link (COMPONENTS): green, 600, no underline. */
+.chart-now__sibling{margin-top:4px;color:#46633d;font-size:13px;font-weight:600;text-decoration:none}
+.chart-now__sibling sub{color:inherit;opacity:.75}
 
-/* One block per acoustic register — the third octave in particular uses
-   different fingerings entirely, so the grouping is information, not just
-   tidying. */
-.fingering-chart__register{margin-top:28px}
-.fingering-chart__register h3{margin:0 0 10px 4px;font-size:12px;font-weight:720;letter-spacing:.08em;text-transform:uppercase;color:#8a8c93}
-.fingering-chart__notes{display:flex;flex-wrap:wrap;gap:6px}
-.fingering-chart__notes button{min-width:52px;border:0;border-radius:12px;background:#f1f1f4;color:#292a33;padding:9px 11px;font:650 14px/1 inherit;cursor:pointer;transition:background-color .16s ease,color .16s ease}
-.fingering-chart__notes button sub{font-size:10px;font-weight:500;color:#8a8c93;margin-left:1px}
-.fingering-chart__notes button:hover{background:#e4ece0}
-.fingering-chart__notes button.selected{background:#40553d;color:#fff}
-.fingering-chart__notes button.selected sub{color:#cfdcc9}
-.fingering-chart__notes button:focus-visible{outline:3px solid rgba(103,137,86,.35);outline-offset:2px}
+/* The staff. EngravedNote's drawing has empty room above the clef and below the low notes, and grows taller for
+   high notes (--staff-extra, set per octave by staffBoxStyle). The box keeps only the part with music in it and
+   holds the drawing by its bottom edge, so the staff lines stay put while the arrows step through an octave.
+   Units are the drawing's own (--staff-vb wide); measured over every note: music spans y 59 to 141 + extra.
+   The box is at most --staff-max-w wide and --staff-max-h tall, so a high octave's ledger lines draw the staff a
+   little narrower instead of pushing the page into a scroll. */
+.chart-staff{--staff-max-w:230px;--staff-max-h:160px;--staff-vb:170;--staff-cut:20;--staff-keep:92;--staff-w:min(var(--staff-max-w),calc(var(--staff-max-h) * var(--staff-vb) / (var(--staff-keep) + var(--staff-extra,0))));flex:0 0 auto;display:flex;align-items:flex-end;width:var(--staff-w);height:calc(var(--staff-w) * (var(--staff-keep) + var(--staff-extra,0)) / var(--staff-vb));color:#292a33}
+.chart-staff>div{flex:0 0 auto;width:100%;margin-bottom:calc(var(--staff-w) * var(--staff-cut) / var(--staff-vb) * -1)}
 
-.fingering-chart__note{margin:34px 4px 0;font-size:12.5px;line-height:1.6;color:#8a8c93;max-width:680px}
+/* ‹ › either side of the staff: icon buttons (DESIGN), no fill until hovered. */
+.chart-step{display:grid;place-items:center;width:40px;height:40px;padding:0;border:0;border-radius:999px;background:transparent;color:#686a72}
+.chart-step svg{width:22px;height:22px}
+.chart-step--previous svg{transform:rotate(90deg)}
+.chart-step--next svg{transform:rotate(-90deg)}
+.chart-step:disabled{opacity:.25}
+@media(hover:hover){.chart-step:hover:not(:disabled){background:#f1f1f4;color:#292a33}}
 
-@media(max-width:820px){
-  .fingering-chart__now{grid-template-columns:auto minmax(0,1fr);gap:16px}
-  .fingering-chart__diagram{grid-column:1/-1}
-}
-@media(max-width:560px){
-  .fingering-chart{padding:0 16px calc(96px + env(safe-area-inset-bottom))}
-  .fingering-chart__header{padding:42px 4px 22px}
-  .fingering-chart__header h1{font-size:36px}
-  .fingering-chart__now{grid-template-columns:minmax(0,1fr);padding:18px 16px}
-  .fingering-chart__stave{width:170px}
-}
+/* Choose one: alternate fingerings and the notes. Capsules (DESIGN "which shape"), plain until chosen, then the
+   studio's purple "on" tint. */
+.chart-choices{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin-top:8px}
+:is(.chart-choices,.note-picker__notes) button{height:34px;padding:0 12px;border:0;border-radius:999px;background:transparent;color:#45464f;font:600 14px/1 inherit;white-space:nowrap;transition:background-color .16s ease,color .16s ease}
+.chart-choices button{height:30px;font-size:13px;box-shadow:inset 0 0 0 1px #e6e6ea}
+@media(hover:hover){:is(.chart-choices,.note-picker__notes) button:hover{background:#f1f1f4}}
+:is(.chart-choices,.note-picker__notes) button[aria-pressed="true"]{background:#f1e5f5;color:#6d4585;box-shadow:none}
+.note-picker__notes button[aria-pressed="true"] sub{color:#9a7aae}
+:is(.chart-choices,.note-picker__notes) button:focus-visible,.chart-step:focus-visible{outline:3px solid rgba(121,88,142,.3);outline-offset:2px}
 
-.fingering-chart__sibling{display:inline-block;margin-top:18px;color:#40553d;font-size:14px;font-weight:600;text-underline-offset:4px}
+/* Octave switch and notes. */
+.note-picker{display:grid;gap:10px;margin-top:14px}
+/* The View switch (studio-shared.css), stretched to the width on phones. Three classes to outrank its own rule. */
+.studio-route .note-picker .note-picker__octaves{display:flex;width:100%}
+.studio-route .note-picker .note-picker__octaves button{flex:1 1 0;min-width:0;padding:0 6px}
+.note-picker__notes{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px}
+.note-picker__notes button{padding:0}
 
-/* Phone: less scrolling. The page opens on the fingering itself (the tab bar
-   already says Learn, and a phone has no room for a title and a paragraph),
-   the current-note card is compact (stave and name on one line, the diagram
-   under them), and the note picker is tighter. Shared by the trill chart,
-   which uses the same page frame. */
+.chart-footnote{margin:14px 4px 0;font-size:12.5px;line-height:1.6;color:#8a8c93;max-width:680px}
+
+/* Phones: the tab bar already says Learn, so no title; the page fits one screen. */
 @media(max-width:760px){
+  .fingering-chart{padding:0 16px 16px}
   .studio-route .fingering-chart__header{display:none}
-  .fingering-chart__now{padding:12px 14px!important;gap:6px 12px!important;border-radius:18px}
-  .fingering-chart__stave svg{max-height:88px;width:auto}
-  .fingering-chart__detail h2{font-size:24px}
-  .fingering-chart__diagram{max-height:84px}
-  .fingering-chart__register{margin-top:16px}
-  .fingering-chart__register h3{margin-bottom:6px}
-  .fingering-chart__notes{gap:5px}
-  /* Every note button the same width, six to a row; a short last row stays
-     short instead of stretching its buttons (B₆ and C₇ were twice as wide). */
-  .fingering-chart__notes button{min-width:0;flex:0 0 calc((100% - 25px)/6);padding:8px 0}
-  .fingering-chart__note{margin-top:20px}
 }
 
-/* Octave dropdown: phones only (wider screens list every octave). */
-.fingering-chart__octaves{display:none}
-/* Phone, one screen: the current note on a light grey card (not white on white) with the stave and the name side by
-   side, centred, and the fingering full width under them; then octave tabs (View settings' equal-column choice) and
-   only that octave's notes. */
-@media(max-width:760px){
-  html body .fingering-chart__now{grid-template-columns:auto auto!important;justify-content:center;align-items:center;gap:4px 14px!important;padding:12px 14px 14px!important;background:#f6f6f8;box-shadow:none}
-  html body .fingering-chart__stave{width:150px}
-  html body .fingering-chart__stave svg{width:100%;height:auto;max-height:none}
-  html body .fingering-chart__detail{text-align:left}
-  html body .fingering-chart__diagram{grid-column:1/-1;width:100%;max-height:none;--flute-key-ground:#f6f6f8}
-  /* Customize scales' octave dropdown (.scale-book__octave), at a phone tap size. */
-  .fingering-chart__octaves{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:14px 2px 10px;font-size:12.5px;color:#71747e}
-  .fingering-chart__octaves select{font:inherit;font-size:14px;min-height:36px;padding:5px 8px;border:1px solid var(--line,#dedfd9);border-radius:8px;background:#fff;color:#292a33}
-  .fingering-chart__register:not([data-active]){display:none}
-  .fingering-chart__register{margin-top:0!important}
-  .fingering-chart__register h3{display:none}
-}
-/* Phones: no 96px of empty room under the charts (it made both pages scroll even when everything fit). */
-@media(max-width:760px){html body .fingering-chart{padding-bottom:calc(16px + env(safe-area-inset-bottom))!important}}
-
-/* Selected note or fingering: the studio's purple "on" tint, not the old dark green (all sizes). */
-html body :is(.fingering-chart__notes,.fingering-chart__variants) button.selected{background:#f1e5f5;color:#6d4585}
-html body .fingering-chart__notes button.selected sub{color:#9a7aae}
-/* Smooth note changes: the staff drawing grows taller for high notes (ledger lines), which resized the whole card on
-   every pick. It now sits at the bottom of a box with one fixed height, and the fingering's keys fade between notes. */
-.fingering-chart__stave{height:210px;display:flex;align-items:flex-end}
-.fingering-chart__stave>*{width:100%}
-.fingering-chart__diagram :is(circle,ellipse,rect,path){transition:fill .18s ease,stroke .18s ease}
-@media(max-width:760px){html body .fingering-chart__stave{height:150px}html body .fingering-chart__stave svg{max-height:150px}}
-/* Desktop and iPad: fits a laptop window (Oct 16). Less room above the title and under the page, a smaller staff
-   box, tighter octave blocks and note buttons, and a wider content column so the first octave is one row. */
+/* iPad and up: staff and name side by side, centred, the fingering large under them; the picker centred below. */
 @media(min-width:761px){
-  html body .fingering-chart{padding-bottom:24px}
-  .fingering-chart__content{width:min(1120px,100%)}
-  .fingering-chart__intro{margin-top:8px;font-size:14px}
-  .fingering-chart__sibling{margin-top:8px}
-  html body .fingering-chart__now{padding:12px 22px}
-  html body .fingering-chart__stave{height:150px}
-  html body .fingering-chart__stave svg{height:auto;max-height:150px;width:auto}
-  .fingering-chart__diagram{max-height:120px}
-  html body .fingering-chart__register{margin-top:14px}
-  .fingering-chart__register h3{margin-bottom:6px}
-  .fingering-chart__notes{gap:5px}
-  .fingering-chart__notes button{padding:7px 9px;min-width:46px}
-  .fingering-chart__note{margin-top:14px}
+  .chart-now{grid-template-columns:auto minmax(0,max-content);justify-content:center;justify-items:start;text-align:left;column-gap:28px;row-gap:8px;align-items:center;padding-bottom:18px}
+  .chart-now__music{gap:2px}
+  .chart-staff{--staff-max-w:250px;--staff-max-h:200px}
+  .chart-now__detail{max-width:400px}
+  .chart-now__detail h2{font-size:34px}
+  .chart-choices{justify-content:flex-start}
+  .chart-now__use{margin-left:0}
+  .chart-now__diagram{grid-column:1/-1;justify-self:center;width:620px;max-width:100%}
+  .chart-now .chart-now__sibling{grid-column:1/-1;justify-self:center}
+  .note-picker{justify-items:center;margin-top:18px}
+  .studio-route .note-picker .note-picker__octaves{display:inline-flex;width:auto}
+  .studio-route .note-picker .note-picker__octaves button{flex:0 0 auto;padding:0 16px}
+  .note-picker__notes{display:flex;flex-wrap:wrap;justify-content:center}
+  .note-picker__notes button{min-width:50px;padding:0 10px}
+  .chart-footnote{margin-left:auto;margin-right:auto;text-align:center}
+}
+
+/* Desktop with room to spare: more air between the note, the fingering and the picker. Gated on height too, so a
+   short laptop window keeps the one-screen fit. */
+@media(min-width:1100px) and (min-height:760px){
+  .fingering-chart__header{padding-bottom:30px}
+  .chart-now{row-gap:16px;padding-bottom:32px}
+  .chart-now__diagram{margin-top:14px}
+  .chart-now .chart-now__sibling{margin-top:10px}
+  .note-picker{gap:16px;margin-top:30px}
+  .note-picker__notes{gap:6px}
+  .chart-footnote{margin-top:24px}
 }

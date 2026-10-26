@@ -21,11 +21,11 @@ export default function ToolCards(){
   return <section className="home-preview preview-grid" aria-label={zh?"工具":"Tools"}>
     {TOOLS.map(tool=><button key={tool} type="button" className={`preview-card preview-card--${tool}`} onClick={()=>openPracticeTool(tool)}>
       <div className="preview-card__stage">{preview[tool]}</div>
-      <div className="preview-card__copy"><b>{t.quickTools[tool]}</b><small>{t.quickTools[`${tool}Detail` as const]}</small></div>
+      <div className="preview-card__copy"><b>{t.quickTools[tool]}</b>{/* Tuner, metronome and drone explain themselves: a subtitle only if one is written. */}{t.quickTools[`${tool}Detail` as const]&&<small>{t.quickTools[`${tool}Detail` as const]}</small>}</div>
     </button>)}
     <Link className="preview-card preview-card--tendency" href="/flute-studio/tools/tendency">
       <div className="preview-card__stage"><TendencyPreview/></div>
-      <div className="preview-card__copy"><b>{zh?"音准倾向测试":"Pitch tendency test"}</b><small>{zh?"吹一遍半音阶，看看哪些音偏高或偏低。":"Play the chromatic scale and see which notes run sharp or flat."}</small></div>
+      <div className="preview-card__copy"><b>{zh?"音准倾向测试":"Pitch tendency test"}</b><small>{zh?"找出你容易吹高或吹低的音。":"Find which notes you tend to play sharp or flat."}</small></div>
     </Link>
   </section>;
 }

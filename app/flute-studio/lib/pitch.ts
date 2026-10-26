@@ -10,6 +10,7 @@
  * makes it testable against a synthesised buffer, which the version
  * embedded in the dock never was.
  */
+import { referenceA } from "./toolSounds";
 
 /**
  * A flute clears this comfortably at ordinary device distance; room noise
@@ -98,11 +99,11 @@ export function detectPitch(buffer: Float32Array, sampleRate: number, minimumRms
   return hz >= MIN_HZ && hz <= MAX_HZ ? { hz, rms, clarity } : null;
 }
 
-/** Nearest equal-tempered MIDI number for a frequency, at A440. */
-export const midiFromHz = (hz: number) => Math.round(69 + 12 * Math.log2(hz / 440));
+/** Nearest equal-tempered MIDI number for a frequency, at the studio's A (440 unless the player chose another). */
+export const midiFromHz = (hz: number) => Math.round(69 + 12 * Math.log2(hz / referenceA()));
 
-/** Exact frequency of a MIDI number, at A440. */
-export const hzFromMidi = (midi: number) => 440 * 2 ** ((midi - 69) / 12);
+/** Exact frequency of a MIDI number, at the studio's A. */
+export const hzFromMidi = (midi: number) => referenceA() * 2 ** ((midi - 69) / 12);
 
 /** How far a frequency sits from a MIDI number, in cents (±50 within a semitone). */
 export const centsFromMidi = (hz: number, midi: number) => 1200 * Math.log2(hz / hzFromMidi(midi));

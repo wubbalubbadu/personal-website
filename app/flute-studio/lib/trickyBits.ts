@@ -17,6 +17,8 @@ export type TrickyBit={
   label:string;addedAt:number;
   /** Tempos you have worked at, in the order added (no duplicates). */
   tempos:number[];goal?:number;step?:number;
+  /** When you marked it done. A done bit leaves your active list for the folded Done group; it is kept, not deleted. */
+  done?:number;
 };
 
 export const BITS_KEY="cookie:tricky-bits:v1",TALLIES_KEY="cookie:tricky-bits:tallies:v1",CHANGED="cookie:tricky-bits";
@@ -81,6 +83,19 @@ export function moveBit(id:string,range:{from:number;to:number;label:string}){
   for(const [tempo,count] of Object.entries(from))into[tempo]=(into[tempo]??0)+count;
   if(reps[id]){delete reps[id];reps[nextId]=into;write(REPS_KEY,reps)}
 }
+
+/** Marks a bit done (it moves to Done) or puts it back on your active list. */
+export const setBitDone=(id:string,done:boolean)=>updateBit(id,bit=>{const next={...bit};if(done)next.done=Date.now();else delete next.done;return next});
+/** The bits you are still working on (not marked done). */
+export const activeBits=(bits:TrickyBit[])=>bits.filter(bit=>!bit.done);
+/** The tempo-history and rep key for a bit (lib/tempoHistory.ts, lib/repLog.ts). */
+export const bitHistoryKey=(bit:Pick<TrickyBit,"id">)=>`tricky:${bit.id}`;
+/**
+ * Opens the piece at the bit's bars, selected, with the close-up open. `back` is where the reader's back arrow goes:
+ * the Tricky bits page (the default) or My Studio.
+ */
+export const bitHref=(bit:TrickyBit,{back="tricky-bits",change=false,closeup=true}:{back?:"tricky-bits"|"studio";change?:boolean;closeup?:boolean}={})=>
+  `/flute-studio/music/${bit.pieceId}?bars=${bit.from}-${bit.to}&from=${back}&open=${encodeURIComponent(bit.id)}${closeup&&!change?"&closeup=1":""}${change?`&change=${encodeURIComponent(bit.id)}`:""}`;
 
 export const addTempo=(id:string,tempo:number)=>updateBit(id,bit=>bit.tempos.includes(tempo)||tempo<20||tempo>300?bit:{...bit,tempos:[...bit.tempos,tempo]});
 export const removeTempo=(id:string,tempo:number)=>updateBit(id,bit=>({...bit,tempos:bit.tempos.filter(value=>value!==tempo)}));

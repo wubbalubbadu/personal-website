@@ -225,6 +225,22 @@
     "defaultTempo": 135
   },
   {
+    "id": "hekuto-pascal-fish-in-the-pool",
+    "title": "Fish in the Pool",
+    "composer": "Hekuto Pascal",
+    "status": "published",
+    "scorePath": "/music/hekuto-pascal-fish-in-the-pool/score.musicxml",
+    "fullScorePath": "/music/hekuto-pascal-fish-in-the-pool/full-score.musicxml",
+    "readingPartId": "P1",
+    "partCount": 1,
+    "viewerPath": "/flute-studio/music/hekuto-pascal-fish-in-the-pool",
+    "tags": [
+      "Pop"
+    ],
+    "beginner": true,
+    "defaultTempo": 66
+  },
+  {
     "id": "nikolai-rimsky-korsakov-flight-of-the-bumble-bee",
     "title": "Flight of the Bumble Bee",
     "composer": "Nikolai Rimsky-Korsakov",
@@ -1652,5 +1668,20 @@
     "tags": [
       "Pop"
     ]
+  },
+  {
+    "id": "shinji-orito",
+    "title": "鳥の詩",
+    "composer": "Shinji Orito",
+    "status": "published",
+    "scorePath": "/music/shinji-orito/score.musicxml",
+    "fullScorePath": "/music/shinji-orito/full-score.musicxml",
+    "readingPartId": "P1",
+    "partCount": 1,
+    "viewerPath": "/flute-studio/music/shinji-orito",
+    "tags": [
+      "Pop"
+    ],
+    "defaultTempo": 96
   }
 ]

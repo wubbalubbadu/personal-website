@@ -148,11 +148,15 @@
      same width, and only the most specific current place is highlighted
      (.is-current); its parent tab just stays bold (.is-active). Weights:
      500 at rest, 650 for where you are, parents and children alike. */
-  .studio-rail[data-open]{--rail-w:236px;padding:10px 12px 24px}
-  .studio-rail[data-open] .studio-rail__item{height:42px;padding:0 12px;flex-direction:row;justify-content:flex-start;gap:18px;font-size:14px;font-weight:500;color:#45464f}
-  .studio-rail[data-open] .studio-rail__item.is-active{color:#292a33;font-weight:650}
-  .studio-rail[data-open] .studio-rail__item.is-current{background:#f0f1ee}
+  :is(.studio-rail[data-open],html[data-rail="open"] .studio-rail){--rail-w:236px;padding:10px 12px 24px}
+  :is(.studio-rail[data-open],html[data-rail="open"] .studio-rail) .studio-rail__item{height:42px;padding:0 12px;flex-direction:row;justify-content:flex-start;gap:18px;font-size:14px;font-weight:500;color:#45464f}
+  :is(.studio-rail[data-open],html[data-rail="open"] .studio-rail) .studio-rail__item.is-active{color:#292a33;font-weight:650}
+  :is(.studio-rail[data-open],html[data-rail="open"] .studio-rail) .studio-rail__item.is-current{background:#f0f1ee}
   .studio-rail__children{list-style:none;margin:0 0 8px;padding:0;display:grid;gap:0}
+  /* The lists are always in the page; folded hides them. html[data-rail] is set before the first paint from the saved
+     choice (root layout script), so a rail saved open draws open from the start instead of folding then opening. */
+  .studio-rail:not([data-open]) .studio-rail__children{display:none}
+  html[data-rail="open"] .studio-rail .studio-rail__children{display:grid}
   /* Tools sit apart from the places, since they open over the page. */
   .studio-rail__group--tools{margin-top:6px;padding-top:6px;border-top:1px solid #ececef}
   button.studio-rail__item,.studio-rail__children button{border:0;background:transparent;font-family:inherit;cursor:pointer;width:100%;text-align:left}
@@ -168,7 +172,7 @@
 
   /* Pages start to the right of the rail. */
   body:has(.studio-rail) .studio-route{padding-left:76px}
-  body:has(.studio-rail[data-open]) .studio-route{padding-left:236px}
+  body:has(.studio-rail[data-open]) .studio-route,html[data-rail="open"] body:has(.studio-rail) .studio-route{padding-left:236px}
   /* Inside a score (and in focus mode) all studio navigation steps aside. */
   body:has(.restored-reader) .studio-rail,html.score-focus-mode .studio-rail{display:none}
   /* !important because :has() takes its argument's specificity, so the

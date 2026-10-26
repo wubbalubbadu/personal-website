@@ -2,6 +2,7 @@
 
 import {useSyncExternalStore} from "react";
 import {bumpTally} from "./tallyLog";
+import {recordTempo} from "./tempoHistory";
 
 /**
  * Every repetition you count, by day: {"2026-10-08": {"scale:c-major-thirds": {title, reps: {"72": 3}}}}.
@@ -29,6 +30,8 @@ export function logRep(item:RepItem,tempo:number,delta:number,day=repDay()){
   page[item.key]={title:item.title,kind:item.kind??entry.kind,reps};log[day]=page;
   try{localStorage.setItem(REP_LOG_KEY,JSON.stringify(log))}catch{/* storage may be disabled */}
   window.dispatchEvent(new Event(CHANGED));
+  // A counted rep is practice at that tempo: it goes on the tempo-over-weeks line too.
+  if(delta>0)recordTempo(item,tempo,day);
 }
 
 const subscribe=(onChange:()=>void)=>{

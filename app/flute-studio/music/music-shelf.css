@@ -1,0 +1,76 @@
+/* The Library's Shelf view (MusicShelf.tsx): your three lists as columns. Columns are the light grey My Studio uses
+   behind white cards on phones (#f5f5f7); cards are the item card (.working-card in practice/practice-page.css:
+   white, radius 18, 1px #ececef ring, no lift). */
+.music-shelf{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start;margin-bottom:40px}
+.music-shelf__column{min-width:0;padding:12px;border-radius:20px;background:#f5f5f7;transition:background-color .15s,box-shadow .15s}
+.music-shelf__head{display:flex;align-items:center;gap:8px;margin:2px 4px 12px;font-size:15px;font-weight:600;color:#292a33;letter-spacing:0}
+.music-shelf__head>span{margin-left:auto;font-size:14px;font-weight:400;color:#85868e;font-variant-numeric:tabular-nums}
+.music-shelf__cards{display:grid;gap:8px}
+.music-shelf__hint{margin:0 0 14px;font-size:14px;color:#85868e}
+
+.music-shelf__card{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;border-radius:18px;background:#fff;box-shadow:0 0 0 1px #ececef;transition:box-shadow .15s,opacity .15s}
+@media (hover:hover){.music-shelf__card:has(.music-shelf__main:hover){box-shadow:0 0 0 1px #d9d9de,0 4px 14px rgba(0,0,0,.05)}}
+.music-shelf__main{min-width:0;display:flex;flex-direction:column;gap:2px;padding:13px 4px 13px 15px;color:inherit;text-decoration:none}
+.music-shelf__main b{font-size:15px;font-weight:600;line-height:1.3;color:#292a33}
+.music-shelf__main small{font-size:13px;color:#85868e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.music-shelf__meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-top:6px}
+.music-shelf__meta:empty{display:none}
+.music-shelf__card>.status-button{margin:7px 7px 0 0}
+/* On a card the column already names the list, so the button is its dot alone (like phone Library rows). */
+.music-shelf__card .status-button__trigger[data-status]{width:34px;padding:0;justify-content:center}
+.music-shelf__card .status-button__trigger[data-status]>span{display:none}
+
+/* The kind of music: the tag's dot and its word (dots as in the Library's tag chips). */
+.music-shelf__kind{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#6f7178}
+.music-shelf__kind>i{width:7px;height:7px;border-radius:50%;background:#b9bac0}
+.music-shelf__kind[data-tone="sage"]>i{background:#6c8f5f}
+.music-shelf__kind[data-tone="sand"]>i{background:#b08a45}
+.music-shelf__kind[data-tone="blue"]>i{background:#6f8aa3}
+.music-shelf__kind[data-tone="pink"]>i{background:#a9739f}
+.music-shelf__kind[data-tone="lavender"]>i{background:#8a7aa8}
+.music-shelf__kind[data-tone="coral"]>i{background:#b47a63}
+
+/* A book's progress: numbers you marked done. Green = done. */
+.music-shelf__book{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:#6f7178;font-variant-numeric:tabular-nums}
+.music-shelf__bar{width:48px;height:4px;border-radius:999px;background:#e6e6ea;overflow:hidden}
+.music-shelf__bar>i{display:block;height:100%;border-radius:inherit;background:#6c8f5f}
+
+/* An empty column: a quiet outline, no words. It is also where a dragged card lands. */
+.music-shelf__empty{height:76px;border-radius:18px;box-shadow:inset 0 0 0 1.5px #e4e4e8}
+
+/* Dragging (wide screens): the card being moved fades, the column under it takes the purple "selected" tint. */
+.music-shelf__card[draggable="true"]{cursor:grab}
+.music-shelf__card.is-dragging{opacity:.4}
+.music-shelf__column.is-over{background:#f1e5f5;box-shadow:inset 0 0 0 1.5px #e0cdea}
+.music-shelf__column.is-over .music-shelf__empty{box-shadow:inset 0 0 0 1.5px #d7c1e3}
+
+/* Arriving on a list: the card settles in. Arriving on Learned: a sage wash and ring, and a tick that pops. */
+.music-shelf__card.is-arrived{animation:shelf-in .32s cubic-bezier(.2,.8,.3,1)}
+.music-shelf__card.is-learned-now{animation:shelf-in .32s cubic-bezier(.2,.8,.3,1),shelf-learned 1.3s ease-out}
+.music-shelf__tick{position:absolute;top:-7px;left:-7px;width:22px;height:22px;pointer-events:none;animation:shelf-tick 1.6s ease-out forwards}
+.music-shelf__tick circle{fill:#6c8f5f}
+.music-shelf__tick path{fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:16;stroke-dashoffset:16;animation:shelf-tick-draw .3s .18s ease-out forwards}
+.music-shelf__head>span{display:inline-block}
+.music-shelf__column[data-status="learned"] .music-shelf__head>span{animation:shelf-count .34s ease-out}
+.music-shelf__column.is-focus{animation:shelf-focus 1.6s ease-out}
+@keyframes shelf-in{from{opacity:0;transform:translateY(8px) scale(.98)}}
+@keyframes shelf-learned{
+  0%{background:#eef4ea;box-shadow:0 0 0 1px #c9d9c1,0 0 0 0 rgba(108,143,95,.32)}
+  45%{background:#f4f8f1;box-shadow:0 0 0 1px #c9d9c1,0 0 0 9px rgba(108,143,95,0)}
+  100%{background:#fff;box-shadow:0 0 0 1px #ececef,0 0 0 0 rgba(108,143,95,0)}
+}
+@keyframes shelf-tick{0%{transform:scale(0)}18%{transform:scale(1.18)}30%{transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:scale(1)}}
+@keyframes shelf-tick-draw{to{stroke-dashoffset:0}}
+@keyframes shelf-count{40%{transform:scale(1.35);color:#46633d}}
+@keyframes shelf-focus{0%,40%{box-shadow:inset 0 0 0 1.5px #d4d5da}100%{box-shadow:inset 0 0 0 1.5px transparent}}
+@media(prefers-reduced-motion:reduce){
+  .music-shelf__card.is-arrived,.music-shelf__card.is-learned-now,.music-shelf__column.is-focus,.music-shelf__head>span{animation:none!important}
+  .music-shelf__tick{display:none}
+}
+
+/* Phone and narrow iPad: one column at a time, swiped sideways, the next one peeking in at the edge. */
+@media(max-width:700px){
+  .music-shelf{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;margin:0 -16px 32px;padding:0 16px;scroll-padding:0 16px;overscroll-behavior-x:contain}
+  .music-shelf::-webkit-scrollbar{display:none}
+  .music-shelf__column{flex:0 0 84%;scroll-snap-align:start}
+}

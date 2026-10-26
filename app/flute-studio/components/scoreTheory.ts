@@ -1,4 +1,5 @@
 import musicTerms from "../../../content/music-terms.json";
+import {withWordTempos,type TempoSection} from "../lib/scoreTempo";
 /**
  * What the "Musical terms" layer says about a score, worked out from the
  * score itself.
@@ -39,7 +40,7 @@ export type ScoreFacts={
    * (1.5 for that dotted quarter), so quarter/beat is the number on the page
    * and the reader's tempo can show it. Playback converts back.
    */
-  tempos:{measure:number;quarter:number;beat:number}[];
+  tempos:TempoSection[];
   /** Gradual tempo changes (accel., rit., rall.), where they run and toward what. */
   ramps:TempoRamp[];
 };
@@ -143,12 +144,18 @@ export function beamGroups(measure:Element,beats:number,beatType:number,division
   return split.reduce((a,b)=>a+b,0)===beats?split:undefined;
 }
 
-export function readScoreFacts(xml:string):ScoreFacts{
+/**
+ * `openingTempo`: the catalog's starting number for the piece, in the opening beat. When the score opens with a tempo
+ * word and no number, it stands in for the word's table speed (TEMPO-RULE.md), so sections after it scale from it.
+ */
+export function readScoreFacts(xml:string,options:{openingTempo?:number}={}):ScoreFacts{
   const doc=new DOMParser().parseFromString(xml,"application/xml");
   const part=doc.querySelector("part");
   const measures:MeasureFacts[]=[];
   const metronomes:MetronomeFacts[]=[];
-  const tempos:{measure:number;quarter:number;beat:number}[]=[];
+  const tempos:TempoSection[]=[];
+  /** Per bar, for tempo words: what the bar says, its beat in quarter notes, and whether it prints or sounds a number. */
+  const tempoBars:{words:string;beat:number;numbered:boolean}[]=[];
   let current:MeasureFacts={fifths:0,mode:null,beats:4,beatType:4,symbol:null,number:"1",pitches:[],keyWritten:false};
   let lastPitch:string|null=null,divisions=1;
   part?.querySelectorAll(":scope > measure").forEach(measure=>{
@@ -176,6 +183,10 @@ export function readScoreFacts(xml:string):ScoreFacts{
     measures.push(current);
     const sounded=Number(measure.querySelector("sound[tempo]")?.getAttribute("tempo"));
     if(sounded>0&&sounded!==tempos.at(-1)?.quarter)tempos.push({measure:measures.length,quarter:sounded,beat:1});
+    // The beat the reader's metronome clicks (rhythmGrid meterGrid): the beat-type note, three of them in 6/8, 9/8, 12/8.
+    const compound=current.beats%3===0&&current.beats>3&&current.beatType>=8;
+    tempoBars.push({words:[...measure.querySelectorAll("direction words")].map(node=>node.textContent?.trim()??"").filter(Boolean).join(" "),
+      beat:4/current.beatType*(compound?3:1),numbered:sounded>0||[...measure.querySelectorAll("direction metronome per-minute")].some(node=>Number(node.textContent)>0)});
     measure.querySelectorAll("direction metronome").forEach(mark=>{
       const perMinute=Number(mark.querySelector("per-minute")?.textContent);
       if(!(perMinute>0))return;
@@ -198,7 +209,8 @@ export function readScoreFacts(xml:string):ScoreFacts{
     else if(meter&&meter.beats%3===0&&meter.beats>3&&meter.beatType===8)tempo.beat=1.5;
     else if(meter&&(meter.symbol==="cut"||(meter.beats===2&&meter.beatType===2)))tempo.beat=2;
   });
-  return {measures,metronomes,lastPitch,tempoWordsWithMetronome,tempos,ramps:readRamps(doc,tempos)};
+  const sections=withWordTempos(tempos,tempoBars,options.openingTempo);
+  return {measures,metronomes,lastPitch,tempoWordsWithMetronome,tempos:sections,ramps:readRamps(doc,sections)};
 }
 
 /* ------------------------------------------------------------ keys */
@@ -245,17 +257,17 @@ export function keySignatureFromFifths(fifths:number,mode:string|null,lastPitch:
   const [major,minor]=(flats?FLAT_KEYS:SHARP_KEYS)[count];
   const every=count?`Every ${listNotes(altered)} is ${flats?"flattened":"sharpened"} for the rest of the line, unless an accidental changes one.`
     :"No note is sharped or flatted unless an accidental says so.";
-  const everyZh=count?`调号中的 ${altered.join("、")} 在后续各小节及各八度均有效，遇到临时记号时按临时记号演奏。`:"调号没有升降记号；遇到临时记号时按临时记号演奏。";
+  const everyZh=count?`调号里的 ${altered.join("、")} 从这里一直有效，每个八度都算；遇到临时记号，就按临时记号来。`:"调号里没有升降号；遇到临时记号，就按临时记号来。";
   if(mode==="major")return {title:localized({en:`Key signature: ${major} major`,zh:`调号：${major} 大调`},zh),text:localized({en:every,zh:everyZh},zh)};
   if(mode==="minor"){
     const seventh=raisedSeventh(minor,altered);
     const written=upcoming.some(measure=>measure.pitches.includes(seventh.written));
-    return {title:localized({en:`Key signature: ${minor} minor`,zh:`调号：${minor} 小调`},zh),text:localized({en:written?`${every} Watch for ${seventh.spelled}: minor keys raise the 7th note with an accidental, and the signature does not show it.`:every,zh:everyZh+(written?` 留意 ${seventh.spelled}：这里用临时记号升高小调的第七级音，调号本身不包含这一变化。`:"")},zh)};
+    return {title:localized({en:`Key signature: ${minor} minor`,zh:`调号：${minor} 小调`},zh),text:localized({en:written?`${every} Watch for ${seventh.spelled}: minor keys raise the 7th note with an accidental, and the signature does not show it.`:every,zh:everyZh+(written?` 留意 ${seventh.spelled}：小调常用临时记号把第七级音升高，调号里看不出来。`:"")},zh)};
   }
   const hint=lastPitch===major?` The music ends on ${major}, which points to ${major} major.`
     :lastPitch===minor?` The music ends on ${minor}, which points to ${minor} minor.`:"";
-  const hintZh=lastPitch===major?` 乐曲结束在 ${major}，提示可能是 ${major} 大调。`:lastPitch===minor?` 乐曲结束在 ${minor}，提示可能是 ${minor} 小调。`:"";
-  return {title:localized({en:"Key signature",zh:"调号"},zh),text:localized({en:`${major} major or ${minor} minor: the signature is the same for both.${hint} ${every}`,zh:`${major} 大调或 ${minor} 小调，两者的调号相同。${hintZh} ${everyZh}`},zh)};
+  const hintZh=lastPitch===major?` 曲子结束在 ${major} 上，所以多半是 ${major} 大调。`:lastPitch===minor?` 曲子结束在 ${minor} 上，所以多半是 ${minor} 小调。`:"";
+  return {title:localized({en:"Key signature",zh:"调号"},zh),text:localized({en:`${major} major or ${minor} minor: the signature is the same for both.${hint} ${every}`,zh:`可能是 ${major} 大调，也可能是 ${minor} 小调：这两个调的调号一样。${hintZh} ${everyZh}`},zh)};
 }
 
 /**
@@ -266,14 +278,14 @@ export function keySignatureFromFifths(fifths:number,mode:string|null,lastPitch:
  */
 export function keySignatureFromNotes(raw:string[],zh=false){
   const altered=[...new Set(raw)];
-  if(!altered.length)return localized({en:"None, so C major or A minor. No note is sharped or flatted unless an accidental says so.",zh:"没有升降记号，可能是 C 大调或 A 小调；遇到临时记号时按临时记号演奏。"},zh);
+  if(!altered.length)return localized({en:"None, so C major or A minor. No note is sharped or flatted unless an accidental says so.",zh:"没有升降号，可能是 C 大调或 A 小调。遇到临时记号，就按临时记号来。"},zh);
   const flats=altered.some(note=>note.includes("♭"));
   const order=flats?FLAT_ORDER:SHARP_ORDER;
   const sorted=[...altered].sort((a,b)=>order.indexOf(a)-order.indexOf(b));
   const canonical=sorted.every((note,index)=>note===order[index]);
-  if(!canonical)return localized({en:`Every ${listNotes(sorted)} is ${flats?"flattened":"sharpened"} here, unless an accidental changes one.`,zh:`这里的 ${sorted.join("、")} 按所列升降记号演奏，临时记号可改变这些音。`},zh);
+  if(!canonical)return localized({en:`Every ${listNotes(sorted)} is ${flats?"flattened":"sharpened"} here, unless an accidental changes one.`,zh:`这里每个 ${sorted.join("、")} 都要${flats?"降":"升"}半音，除非临时记号改了它。`},zh);
   const pair=(flats?FLAT_KEYS:SHARP_KEYS)[sorted.length];
-  return localized({en:`${pair[0]} major or ${pair[1]} minor. Every ${listNotes(sorted)} is ${flats?"flattened":"sharpened"} for the rest of the line, unless an accidental changes one.`,zh:`${pair[0]} 大调或 ${pair[1]} 小调。调号中的 ${sorted.join("、")} 在后续各小节及各八度均有效，临时记号可改变这些音。`},zh);
+  return localized({en:`${pair[0]} major or ${pair[1]} minor. Every ${listNotes(sorted)} is ${flats?"flattened":"sharpened"} for the rest of the line, unless an accidental changes one.`,zh:`${pair[0]} 大调或 ${pair[1]} 小调。之后每个 ${sorted.join("、")} 都要${flats?"降":"升"}半音，每个八度都算，除非临时记号改了它。`},zh);
 }
 
 /* ------------------------------------------------------------ meter */
@@ -293,14 +305,14 @@ export function timeSignatureText({beats,beatType,symbol}:MeasureFacts,zh=false)
   const fraction=`${beats}/${beatType}`;
   const title=localized({en:`Time signature: ${fraction}`,zh:`拍号：${fraction}`},zh);
   if(symbol==="cut"||(beats===2&&beatType===2))return {title:symbol==="cut"?localized({en:"Cut time (2/2)",zh:"二二拍（2/2）"},zh):title,
-    text:localized({en:"Two beats in each measure, and the half note gets the beat. The bar holds the same notes as 4/4, but you count and feel it in 2: one beat per half note.",zh:"每小节两拍，以二分音符为一拍。每小节的总时值与 4/4 相同，但按两拍来数和感受。"},zh)};
+    text:localized({en:"Two beats in each measure, and the half note gets the beat. The bar holds the same notes as 4/4, but you count and feel it in 2: one beat per half note.",zh:"每小节两拍，二分音符算一拍。一小节装的音和 4/4 一样多，只是按两拍来数、来感觉。"},zh)};
   if(symbol==="common"||(beats===4&&beatType===4))return {title:symbol==="common"?localized({en:"Common time (4/4)",zh:"四四拍（4/4）"},zh):title,
-    text:localized({en:"Four beats in each measure, and the quarter note gets the beat.",zh:"每小节四拍，以四分音符为一拍。"},zh)};
+    text:localized({en:"Four beats in each measure, and the quarter note gets the beat.",zh:"每小节四拍，四分音符算一拍。"},zh)};
   if(beats%3===0&&beats>3&&beatType>=8){
     const felt=beats/3,dotted=valueName(beatType/2);
-    return {title,text:localized({en:`${beats} ${valueName(beatType)} notes in each measure, grouped in threes, so you feel ${felt} beats of a dotted ${dotted} each.`,zh:`每小节有 ${beats} 个${valueNameZh(beatType)}的时值，三个一组，按 ${felt} 拍来感受，每拍为一个附点${valueNameZh(beatType/2)}。`},zh)};
+    return {title,text:localized({en:`${beats} ${valueName(beatType)} notes in each measure, grouped in threes, so you feel ${felt} beats of a dotted ${dotted} each.`,zh:`每小节有 ${beats} 个${valueNameZh(beatType)}，三个一组，所以感觉上是 ${felt} 拍，每拍是一个附点${valueNameZh(beatType/2)}。`},zh)};
   }
-  return {title,text:localized({en:`${beats===1?"One beat":`${beats} beats`} in each measure, and the ${valueName(beatType)} note gets the beat.`,zh:`每小节 ${beats} 拍，以${valueNameZh(beatType)}为一拍。`},zh)};
+  return {title,text:localized({en:`${beats===1?"One beat":`${beats} beats`} in each measure, and the ${valueName(beatType)} note gets the beat.`,zh:`每小节 ${beats} 拍，${valueNameZh(beatType)}算一拍。`},zh)};
 }
 
 /* ------------------------------------------------------------ tempo */
@@ -315,7 +327,7 @@ function unitsPerFeltBeat(unit:string,dotted:boolean,{beats,beatType,symbol}:Mea
 
 export function metronomeText(mark:MetronomeFacts|undefined,meter:MeasureFacts|undefined,fallback:string,zh=false){
   const title=localized({en:"Metronome mark",zh:"节拍器速度标记"},zh);
-  if(!mark)return {title,text:localized({en:`${fallback.trim().replace(/^=\s*/,"")} beats per minute. Set the metronome to this number to hear the intended speed.`,zh:`每分钟 ${fallback.trim().replace(/^=\s*/,"")} 拍。将节拍器设为这个数值，即可听到所标示的速度。`},zh)};
+  if(!mark)return {title,text:localized({en:`${fallback.trim().replace(/^=\s*/,"")} beats per minute. Set the metronome to this number to hear the intended speed.`,zh:`每分钟 ${fallback.trim().replace(/^=\s*/,"")} 拍。把节拍器调到这个数，就能听到谱上要的速度。`},zh)};
   const unit=`${mark.dotted?"dotted ":""}${mark.unit==="16th"?"sixteenth":mark.unit}`;
   let text=localized({en:`${mark.perMinute} ${unit} notes per minute.`,zh:`每分钟 ${mark.perMinute} 个${mark.dotted?"附点":""}${unitZh(mark.unit)}。`},zh);
   if(meter){
@@ -323,10 +335,10 @@ export function metronomeText(mark:MetronomeFacts|undefined,meter:MeasureFacts|u
     // Only when it comes out whole: "72 beats" is useful, "48.67" is not.
     if(ratio>1&&Number.isInteger(mark.perMinute/ratio)){
       const feltBeat=meter.symbol==="cut"||(meter.beats===2&&meter.beatType===2)?"half note":`dotted ${valueName(meter.beatType/2)}`;
-      text+=localized({en:` In ${meter.symbol==="cut"?"cut time":`${meter.beats}/${meter.beatType}`} the ${feltBeat} is the beat, so you feel ${mark.perMinute/ratio} beats per minute.`,zh:` 在 ${meter.beats}/${meter.beatType} 中，以${meter.symbol==="cut"||(meter.beats===2&&meter.beatType===2)?"二分音符":`附点${valueNameZh(meter.beatType/2)}`}为一拍，因此按每分钟 ${mark.perMinute/ratio} 拍来感受。`},zh);
+      text+=localized({en:` In ${meter.symbol==="cut"?"cut time":`${meter.beats}/${meter.beatType}`} the ${feltBeat} is the beat, so you feel ${mark.perMinute/ratio} beats per minute.`,zh:` 在 ${meter.beats}/${meter.beatType} 里，${meter.symbol==="cut"||(meter.beats===2&&meter.beatType===2)?"二分音符":`附点${valueNameZh(meter.beatType/2)}`}算一拍，所以感觉上是每分钟 ${mark.perMinute/ratio} 拍。`},zh);
     }
   }
-  if(mark.parentheses)text+=localized({en:" The parentheses mean it is a suggested speed, often added by an editor.",zh:" 括号表示建议速度，通常由编者添加。"},zh);
+  if(mark.parentheses)text+=localized({en:" The parentheses mean it is a suggested speed, often added by an editor.",zh:" 加了括号，说明这是建议的速度，多半是编者加的。"},zh);
   return {title,text};
 }
 
@@ -422,7 +434,7 @@ export function directionRuns(raw:string):{text:string;style:"tempo"|"expression
 export function performanceTermText(raw:string,written?:MetronomeFacts,zh=false){
   const {words,found}=findTerms(raw);
   if(!found.length||found.every(({phrase})=>CONNECTIVES.has(phrase)))return null;
-  const lines=found.map(({phrase,term})=>`${DYNAMICS.has(phrase)?phrase:capitalize(phrase)}: ${localized({en:term.meaning,zh:term.zh??term.meaning},zh)}${zh?"。":"."}`);
+  const lines=found.map(({phrase,term})=>`${DYNAMICS.has(phrase)?phrase:capitalize(phrase)}${zh?"：":": "}${localized({en:term.meaning,zh:term.zh??term.meaning},zh)}${zh?"。":"."}`);
   const tempo=found.find(({term})=>term.bpm);
   if(tempo){
     const [low,high]=tempo.term.bpm!;
@@ -433,11 +445,11 @@ export function performanceTermText(raw:string,written?:MetronomeFacts,zh=false)
     const own=tempo.phrase.split(" "),very=words.some(word=>["assai","molto","très","sehr"].includes(word)&&!own.includes(word)),gentler=words.includes("poco")||words.includes("troppo");
     const pace=low>=120?"fast":high<=80?"slow":"moderate";
     const lean=very?(pace==="fast"?" Toward the faster end, since it says very.":pace==="slow"?" Toward the slower end, since it says very.":" Very moderate means calmer, so toward the slower end."):gentler?" Toward the middle, since it asks for restraint.":"";
-    const leanZh=very?(pace==="fast"?" 因为标有“很”，可偏向较快的一端。":pace==="slow"?" 因为标有“很”，可偏向较慢的一端。":" “很从容”意味着更平静，可偏向较慢的一端。"):gentler?" 因为要求节制，可偏向范围中间。":"";
-    lines.push(localized({en:`${capitalize(tempo.phrase)} is usually about ${low} to ${high} beats per minute.${lean}`,zh:`${capitalize(tempo.phrase)} 通常约为每分钟 ${low} 至 ${high} 拍。${leanZh}`},zh));
+    const leanZh=very?(pace==="fast"?" 写了“很”，可以往快的那头靠。":pace==="slow"?" 写了“很”，可以往慢的那头靠。":" “很从容”是更安静的意思，可以往慢的那头靠。"):gentler?" 这里要求有节制，取中间的速度就好。":"";
+    lines.push(localized({en:`${capitalize(tempo.phrase)} is usually about ${low} to ${high} beats per minute.${lean}`,zh:`${capitalize(tempo.phrase)} 一般是每分钟 ${low} 到 ${high} 拍左右。${leanZh}`},zh));
     if(written){
       const where=written.perMinute<low?", slower than usual":written.perMinute>high?", faster than usual":", inside that range";
-      lines.push(localized({en:`This score asks for ${written.perMinute} ${written.dotted?"dotted ":""}${written.unit==="16th"?"sixteenth":written.unit} notes per minute${where}.`,zh:`本谱要求每分钟 ${written.perMinute} 个${written.dotted?"附点":""}${unitZh(written.unit)}，${written.perMinute<low?"比通常更慢":written.perMinute>high?"比通常更快":"在通常范围内"}。`},zh));
+      lines.push(localized({en:`This score asks for ${written.perMinute} ${written.dotted?"dotted ":""}${written.unit==="16th"?"sixteenth":written.unit} notes per minute${where}.`,zh:`这首谱子写的是每分钟 ${written.perMinute} 个${written.dotted?"附点":""}${unitZh(written.unit)}，${written.perMinute<low?"比一般慢":written.perMinute>high?"比一般快":"在一般范围内"}。`},zh));
     }
   }
   return {title:raw.trim(),text:lines.join(" ")};
@@ -581,4 +593,49 @@ export function hideStackedMetronomeMarks(root:ParentNode){
     const stacked=kept.some(other=>Math.abs(other.x-box.x)<box.height*.6&&Math.abs(other.y-box.y)<box.height*.6);
     if(stacked)mark.style.visibility="hidden";else kept.push(box);
   });
+}
+
+/**
+ * Where a control `width` × `height` goes beside the score's opening printed tempo (a ♩ = n mark and/or tempo words
+ * above the first line), in `root`'s own layout pixels (.osmd-score, the frame the marks layer uses). To its right,
+ * vertically centred on it; above it, left-aligned, when the right side runs out of room. Null when the first line
+ * prints no tempo, so the host keeps its fallback spot.
+ *
+ * Measured with getCTM (SVG user units to the svg's own CSS pixels) plus the svg's HTML offsets, never with
+ * getBoundingClientRect: the reader's Magnify is CSS zoom, which scales HTML rects and SVG rects differently, while
+ * these two stay in the unzoomed frame that left/top inside the zoomed paper are written in.
+ */
+export function printedTempoAnchor(root:HTMLElement,width:number,height:number):{x:number;y:number}|null{
+  const svg=root.querySelector("svg");if(!svg)return null;
+  // The svg's corner in root's frame: its wrapper's offsets (an svg has no offsetLeft of its own).
+  let left=0,top=0;
+  for(let element:HTMLElement|null=svg.parentElement;element&&element!==root&&root.contains(element);element=element.offsetParent as HTMLElement|null){left+=element.offsetLeft;top+=element.offsetTop}
+  const boxOf=(node:SVGGraphicsElement)=>{
+    const matrix=node.getCTM(),box=node.getBBox();if(!matrix||!box.width)return null;
+    const a=new DOMPoint(box.x,box.y).matrixTransform(matrix),b=new DOMPoint(box.x+box.width,box.y+box.height).matrixTransform(matrix);
+    return {left:Math.min(a.x,b.x),right:Math.max(a.x,b.x),top:Math.min(a.y,b.y),bottom:Math.max(a.y,b.y)};
+  };
+  // The first line's staff, to keep only markings printed above it.
+  const firstBar=svg.querySelector<SVGGElement>(".vf-measure"),staff=firstBar?boxOf(firstBar):null;if(!staff)return null;
+  const candidates=[
+    ...[...svg.querySelectorAll<SVGGElement>(".vf-stavetempo")].filter(mark=>mark.style.visibility!=="hidden"),
+    ...[...svg.querySelectorAll<SVGTextElement>(".vf-text:not(.measure-number) text")].filter(text=>directionStyle(text.textContent?.trim()??"")==="tempo"),
+  ].map(boxOf).filter((box):box is NonNullable<typeof box>=>!!box&&box.bottom<=staff.top+(staff.bottom-staff.top)*.5&&box.top>=staff.top-120);
+  if(!candidates.length)return null;
+  // The opening marking: the leftmost, plus whatever sits on its line right after it (words, then the tucked ♩ = n).
+  candidates.sort((a,b)=>a.left-b.left);
+  const mark={...candidates[0]};
+  for(const box of candidates.slice(1))if(box.left-mark.right<24&&box.top<mark.bottom&&box.bottom>mark.top){mark.right=Math.max(mark.right,box.right);mark.top=Math.min(mark.top,box.top);mark.bottom=Math.max(mark.bottom,box.bottom)}
+  const gap=8,room=root.clientWidth-4;
+  const beside=left+mark.right+gap+width<=room;
+  const x=beside?mark.right+gap:Math.max(0,Math.min(mark.left,room-left-width));
+  let y=beside?(mark.top+mark.bottom)/2-height/2:mark.top-height-4;
+  // Lift it clear of whatever the first line draws under it (high notes, slurs, words): the engraving stays readable.
+  const under=[...svg.querySelectorAll<SVGGraphicsElement>(".vf-stavenote, .vf-curve, .vf-text text, .vf-tuplet, .vf-stavetempo")]
+    .map(boxOf).filter((box):box is NonNullable<typeof box>=>!!box&&box.right>x&&box.left<x+width&&box.bottom>y&&box.top<staff.bottom&&box.top>staff.top-160);
+  if(under.length)y=Math.min(y,Math.min(...under.map(box=>box.top))-height-3);
+  // It may rise into the blank space between the title block and the first line, never into the title block.
+  const heading=root.parentElement?.querySelector<HTMLElement>(":scope > .custom-score-heading");
+  const floor=heading&&heading.offsetParent===root.offsetParent?Math.min(0,heading.offsetTop+heading.offsetHeight+4-root.offsetTop):0;
+  return {x:left+x,y:Math.max(floor,top+y)};
 }

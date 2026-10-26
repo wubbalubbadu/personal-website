@@ -212,3 +212,44 @@
 }
 .scale-book__others-toggle .chevron-icon{flex:none;width:18px;height:18px;transition:transform .15s}
 .scale-book__others-toggle[aria-expanded="true"] .chevron-icon{transform:rotate(180deg)}
+
+/* Customize scales, grouped (October 2026). Six sections the way a flutist decides (Sets, Scale, Form, Range, How to
+   play, Page), each with small card labels over its groups. One type scale at every width: tabs and section titles
+   14, option chips 13, labels 11 capitals, so a chosen option is never bigger than the tab it sits under. Choose-one
+   pairs and trios use the shared .view-switch; choose-many stay chips. Scoped to .scale-panel because Long Tone
+   Studio and the exercise books reuse the scale-book__ class names.
+   The !important flags below only match older !important layers in studio-shell.css and reader-workspace.css. */
+html:root body .reader-settings-panel .scale-panel .scale-book__section-body.scale-book__section-body{display:flex!important;flex-direction:column;align-items:stretch;gap:18px}
+html:root body .reader-settings-panel .scale-panel .scale-book__group{display:flex;flex-direction:column;gap:8px;min-width:0}
+html:root body .reader-settings-panel .scale-panel .scale-book__group[data-scale-group]{margin:0 -6px;padding:4px 6px}
+html:root body .reader-settings-panel .scale-panel .scale-book__group-label{margin:0;font-size:11px;font-weight:600;line-height:1.3;letter-spacing:.06em;text-transform:uppercase;color:#85868e}
+html:root body .reader-settings-panel .scale-panel .scale-book__options{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));grid-auto-rows:1fr;gap:5px;margin:0}
+html:root body .reader-settings-panel .scale-panel .scale-book__options--wide{grid-template-columns:repeat(auto-fill,minmax(136px,1fr))}
+html:root body .reader-settings-panel .scale-panel .scale-book__keys{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;margin:0}
+html:root body .reader-settings-panel .scale-panel :is(.scale-book__options,.scale-book__keys,.scale-book__note-grid) .scale-book__chip.scale-book__chip{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;width:auto!important;min-width:0!important;height:auto!important;min-height:34px!important;
+  padding:6px 2px!important;border-radius:10px!important;font-size:13px!important;font-weight:500!important;line-height:1.2;text-align:center;white-space:normal}
+html:root body .reader-settings-panel .scale-panel .scale-book__chip small{display:block;margin-top:1px;font-size:11px;font-weight:400;opacity:.75}
+html:root body .reader-settings-panel .scale-panel .scale-book__key-actions{margin:-2px 0 0!important}
+html:root body .reader-settings-panel .scale-panel .scale-book__key-actions button{height:28px!important;font-size:13px!important}
+html:root body .reader-settings-panel .scale-panel .scale-book__others-toggle{margin:0;padding:4px 2px;font-size:13px}
+html:root body .reader-settings-panel .scale-panel .scale-book__rotation-hint{margin:0}
+html:root body .reader-settings-panel .scale-panel .scale-book__preset-grid{margin:0}
+/* The view switch, stretched so its choices split the panel's width evenly. */
+html:root body .reader-settings-panel .scale-panel .scale-book__switch{display:flex;width:100%;box-sizing:border-box}
+html:root body .reader-settings-panel .scale-panel .scale-book__switch button{flex:1 1 0;min-width:0;height:30px!important;min-height:0!important;margin:0!important;padding:0 8px!important;border:0!important;border-radius:999px!important;background:transparent!important;color:#6f7178!important;font-size:13px!important;font-weight:500!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:none!important}
+html:root body .reader-settings-panel .scale-panel .scale-book__switch button:hover{color:#292a33!important}
+html:root body .reader-settings-panel .scale-panel .scale-book__switch button[aria-pressed="true"]{background:#fff!important;color:#292a33!important;box-shadow:0 0 0 1px #e1e1e5,0 1px 3px rgba(41,42,51,.06)!important}
+@media(max-width:760px){
+  /* Six tabs fit a phone, so they share the width instead of scrolling under a fade. */
+  html:root body .reader-settings-panel .scale-panel .scale-book__phone-tabs.scale-book__phone-tabs{-webkit-mask-image:none;mask-image:none}
+  html:root body .reader-settings-panel .scale-panel .scale-book__phone-tabs.scale-book__phone-tabs button{flex:1 0 auto;padding:0 6px!important}
+  html:root body .reader-settings-panel .scale-panel .scale-book__phone-tabs.scale-book__phone-tabs button::after{left:6px;right:6px}
+}
+/* The four rhythms sit on one row instead of three and an orphan. */
+html:root body .reader-settings-panel .scale-panel .scale-book__preset-grid--four.scale-book__preset-grid--four{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+@media(min-width:761px){
+  /* The desktop and iPad popover is narrower than a phone sheet: two options a row, as before. */
+  html:root body .reader-settings-panel .scale-panel .scale-book__options{grid-template-columns:repeat(2,minmax(0,1fr))}
+  html:root body .reader-settings-panel .scale-panel :is(.scale-book__options,.scale-book__keys,.scale-book__note-grid) .scale-book__chip.scale-book__chip{padding:6px 8px!important}
+}

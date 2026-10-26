@@ -147,3 +147,19 @@
 .lesson-shell .lesson-tools .lesson-playback-button{display:inline-grid;place-items:center}
 .lesson-playback-button>span{grid-area:1/1}
 .lesson-shell .rhythm-demo-tools button[aria-pressed]{min-width:76px}
+/* Phones: Count me in and Hear it sit beside the tap spot instead of under it (as on wider screens), so the staff keeps
+   some height and the buttons stay above Cookie's bubble. */
+@media(max-width:760px){
+  .dt-lesson .dt-practice-controls{display:grid;grid-template-columns:auto auto;grid-template-areas:"pulse pulse" "spot tools";justify-content:center;align-items:center;column-gap:10px;row-gap:2px}
+  .dt-lesson .dt-practice-controls .count-in-pulse{grid-area:pulse;justify-self:center;min-height:0;padding:4px 12px}
+  .dt-lesson .dt-practice-controls .dt-tap-spot{grid-area:spot;width:auto}
+  .dt-lesson .dt-practice-controls .lesson-tools{grid-area:tools;flex-direction:column;gap:4px}
+}
+/* Phones: answers and Next each get a row of their own (side by side, the reserved Next label squeezed the answers into a
+   column that overflowed the bubble), and a bubble holding answers may grow past its fixed height; the scene gives way. */
+@media(max-width:600px){
+  .dt-lesson .lesson-bubble:has(.measures-choices) .lesson-actions{grid-template-columns:1fr}
+  .dt-lesson .lesson-bubble:has(.measures-choices) .measures-choices{grid-column:1;justify-self:center;flex-wrap:nowrap}
+  .dt-lesson .lesson-bubble:has(.measures-choices) .lesson-action-slot{grid-column:1;justify-self:end}
+  .lesson-shell.dt-lesson .lesson-talk:has(.measures-choices),.lesson-shell.dt-lesson .lesson-talk:has(.measures-choices) #lesson-companion,.lesson-shell.dt-lesson .lesson-bubble:has(.measures-choices){height:auto}
+}

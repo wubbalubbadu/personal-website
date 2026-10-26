@@ -35,23 +35,23 @@ export default function HomePreviewCards(){
       <div className="preview-card__stage">
         <ScaleStudioPreview zh={lang==="zh"}/>
       </div>
-      <div className="preview-card__copy"><b>{t.quickTools.scaleStudio}</b><small>{lang==="zh"?"任何调、任何音域、任何演奏法、任何练习型。做出你自己的音阶书，还会记住你的速度。":"Any key, any range, any articulation, any pattern. Build your own scale book, and it remembers your tempos."}</small></div>
+      <div className="preview-card__copy"><b>{t.quickTools.scaleStudio}</b><small>{lang==="zh"?"不用照着音阶书练，音阶随你搭配。":"Unlike a printed scale book, build any scale any way you like."}</small></div>
     </Link>
     <Link className="preview-card preview-card--tones" href="/flute-studio/exercises/long-tones" onPointerEnter={warmScoreReader} onFocus={warmScoreReader}>
       <div className="preview-card__stage">
         <LongTonePreview zh={lang==="zh"}/>
       </div>
-      <div className="preview-card__copy"><b>{lang==="zh"?"长音":"Long tones"}</b><small>{lang==="zh"?"实时音准检测：吹着长音就能看到每个音准不准，哪里往下掉。":"Real-time pitch detection: see each note\u2019s tuning while you hold it, and where it sags."}</small></div>
+      <div className="preview-card__copy"><b>{lang==="zh"?"长音":"Long tones"}</b><small>{lang==="zh"?"实时看音准，记录你的音准倾向。":"We track your pitch and record your tendencies."}</small></div>
     </Link>
     <Link className="preview-card preview-card--music" href="/flute-studio/music">
       <div className="preview-card__stage">
         <MusicPreview zh={lang==="zh"}/>
       </div>
-      <div className="preview-card__copy"><b>{t.quickTools.browseMusic}</b><small>{lang==="zh"?"会动的乐谱，不只是 PDF，练习工具和智能显示都已内置。":"Interactive scores, not PDFs, with practice tools and smart displays built in."}</small></div>
+      <div className="preview-card__copy"><b>{t.quickTools.browseMusic}</b><small>{lang==="zh"?"用互动乐谱和各种小工具学曲子。":"Learn music with interactive sheet music and all kinds of tools."}</small></div>
     </Link>
     <Link className="preview-card preview-card--breathing" href="/flute-studio/breathing">
       <div className="preview-card__stage"><BreathingPreview zh={lang==="zh"}/></div>
-      <div className="preview-card__copy"><b>{lang==="zh"?"呼吸实验室":"Breathing Lab"}</b><small>{lang==="zh"?"跟着引导呼吸，速度由你来定。":"Breathe along with the guide at a pace you set."}</small></div>
+      <div className="preview-card__copy"><b>{lang==="zh"?"呼吸实验室":"Breathing Lab"}</b><small>{lang==="zh"?"跟着引导练呼吸，快慢自己定。":"Guided breathing at a pace you set."}</small></div>
     </Link>
     </section>
 
@@ -60,15 +60,15 @@ export default function HomePreviewCards(){
     <section className="preview-grid" aria-label={lang==="zh"?"学习":"Learn"}>
     <Link className="preview-card preview-card--theory" href="/flute-studio/theory">
       <div className="preview-card__stage"><TheoryPreview zh={lang==="zh"}/></div>
-      <div className="preview-card__copy"><b>{lang==="zh"?"乐理课":"Theory lessons"}</b><small>{lang==="zh"?"像小游戏一样的互动乐理课。":"Hands-on theory lessons that play like little games."}</small></div>
+      <div className="preview-card__copy"><b>{lang==="zh"?"乐理课":"Theory lessons"}</b><small>{lang==="zh"?"通过小游戏学看五线谱。":"Learn to read staff music through little games."}</small></div>
     </Link>
     <Link className="preview-card preview-card--fingerings" href="/flute-studio/fingerings">
       <div className="preview-card__stage"><FingeringPreview/></div>
-      <div className="preview-card__copy"><b>{lang==="zh"?"指法表":"Fingering chart"}</b><small>{lang==="zh"?"从低音 B 到最高音，每个音都有替代指法。":"Every note from low B to the top, with alternate fingerings."}</small></div>
+      <div className="preview-card__copy"><b>{lang==="zh"?"指法表":"Fingering chart"}</b><small>{lang==="zh"?"全音域指法，附替代指法。":"Every fingering from low B up, with alternates."}</small></div>
     </Link>
     <Link className="preview-card preview-card--trills" href="/flute-studio/trills">
       <div className="preview-card__stage"><TrillPreview/></div>
-      <div className="preview-card__copy"><b>{lang==="zh"?"颤音指法表":"Trill chart"}</b><small>{lang==="zh"?"四个八度的颤音指法。":"Four octaves of trill fingerings."}</small></div>
+      <div className="preview-card__copy"><b>{lang==="zh"?"颤音指法表":"Trill chart"}</b><small>{lang==="zh"?"四个八度的颤音指法，标出要动的键。":"Trill fingerings for four octaves, with the moving keys shown."}</small></div>
     </Link>
     <Link className="preview-card preview-card--embouchure" href="/flute-studio/embouchure">
       <div className="preview-card__stage"><EmbouchurePreview/></div>

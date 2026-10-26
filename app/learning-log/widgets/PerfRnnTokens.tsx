@@ -85,7 +85,7 @@ export default function PerfRnnTokens() {
         ))}
       </div>
 
-      <svg className="ll-widget__canvas" viewBox={`0 0 ${W} ${ROWS.length * ROW_H + 24}`} style={{ height: ROWS.length * ROW_H + 24, marginTop: 8 }} xmlns="http://www.w3.org/2000/svg">
+      <svg className="ll-widget__canvas ll-roll" viewBox={`0 0 ${W} ${ROWS.length * ROW_H + 24}`} style={{ height: ROWS.length * ROW_H + 24, marginTop: 8 }} xmlns="http://www.w3.org/2000/svg">
         {ROWS.map((r, i) => (
           <g key={r}>
             <text x={8} y={16 + i * ROW_H + ROW_H / 2} className="ll-fig-label" style={{ fontSize: 10 }}>{r}</text>

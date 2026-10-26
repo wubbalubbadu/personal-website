@@ -1,5 +1,5 @@
 import type {ReactNode} from "react";
-export type PracticeIconName = "delete" | "loop" | "zoom" | "plus" | "piano" | "metronome" | "tuner" | "mic" | "drone" | "markup" | "fullscreen" | "exitFullscreen" | "close" | "previous" | "next" | "settings" | "gear" | "view" | "bookmark" | "bookmarkFilled" | "more" | "tap" | "record" | "play" | "pause" | "stop" | "undo" | "redo" | "saved" | "aids" | "tempo" | "print" | "top" | "highlighter" | "arrow" | "eraser" | "text" | "sticky" | "select" | "noteNames" | "beatSticks" | "sharp" | "fingeringKeys" | "termF" | "scale";
+export type PracticeIconName = "delete" | "loop" | "zoom" | "plus" | "piano" | "metronome" | "tuner" | "mic" | "drone" | "markup" | "fullscreen" | "exitFullscreen" | "close" | "previous" | "next" | "settings" | "gear" | "view" | "bookmark" | "bookmarkFilled" | "more" | "tap" | "record" | "play" | "pause" | "stop" | "undo" | "redo" | "saved" | "aids" | "tempo" | "print" | "top" | "highlighter" | "arrow" | "eraser" | "text" | "sticky" | "select" | "noteNames" | "beatSticks" | "sharp" | "fingeringKeys" | "termF" | "scale" | "ladder";
 const paths:Record<PracticeIconName,ReactNode>={
   delete:<><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6M14 11v6"/></>,
   loop:<path d="M17 3l4 4-4 4M3 11V9a2 2 0 0 1 2-2h16M7 21l-4-4 4-4M21 13v2a2 2 0 0 1-2 2H3"/>,
@@ -51,6 +51,8 @@ const paths:Record<PracticeIconName,ReactNode>={
   // button, and two metronomes in one toolbar would read as one control
   // drawn twice. This one is "how fast", not "click along".
   tempo:<><path d="M5.3 19.5a9 9 0 1 1 13.4 0"/><path d="m12 13.5 4-4.2"/><circle cx="12" cy="13.5" r="1.5" fill="currentColor" stroke="none"/></>,
+  // Stairs going up to the right: a tempo ladder, a little faster each pass.
+  ladder:<path d="M3 20h4.5v-4.5H12V11h4.5V6.5H21"/>,
   print:<><path d="M7 9V4h10v5"/><path d="M7 18H5.5A1.5 1.5 0 0 1 4 16.5v-5A1.5 1.5 0 0 1 5.5 10h13a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 1-1.5 1.5H17"/><path d="M7 14h10v6H7Z"/></>,
 };
 /**

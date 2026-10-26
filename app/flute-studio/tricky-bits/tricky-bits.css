@@ -119,3 +119,15 @@ html body .tricky-dialog__panel .practice-notation__music,html body .tricky-dial
 .tricky-body.is-waiting{visibility:hidden}
 .tricky-body{animation:tricky-body-in .18s ease}
 @keyframes tricky-body-in{from{opacity:0}to{opacity:1}}
+
+/* Done passages (marked done in My Studio or a card's menu): folded at the bottom, quiet rows with a way back and trash. */
+.tricky-done{margin-top:28px}
+.tricky-done summary{width:max-content;padding:4px 0;font-size:13px;font-weight:600;color:#85868e;cursor:pointer}
+.tricky-done ul{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:2px}
+.tricky-done li{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 6px;border-radius:12px}
+.tricky-done li>a{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#6f7178;text-decoration:none;font-size:14px}
+.tricky-done li>a b{font-weight:600}
+.tricky-done li>a small{font-size:13px;color:#9a9ba2}
+.tricky-done__delete{flex:0 0 auto;display:grid;place-items:center;width:32px;height:32px;padding:0;border:0;border-radius:10px;background:transparent;color:#85868e;cursor:pointer}
+.tricky-done__delete:hover{color:#292a33}
+.tricky-done__delete.is-armed{color:#c0392b}

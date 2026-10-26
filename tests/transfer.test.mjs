@@ -4,7 +4,12 @@ import fs from 'node:fs';
 import ts from 'typescript';
 
 const compile=source=>ts.transpile(source,{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022});
-const source=fs.readFileSync(new URL('../app/flute-studio/lib/transfer.ts',import.meta.url),'utf8');
+// transfer.ts imports historyMonths for pruneCleared after an import; a data: module cannot resolve it, and these
+// tests do not cover cleared months, so it is stubbed.
+const source=fs.readFileSync(new URL('../app/flute-studio/lib/transfer.ts',import.meta.url),'utf8')
+  .replace(/^import \{pruneCleared\} from "\.\/historyMonths";$/m,'const pruneCleared=()=>{};')
+  // The registry has no imports of its own, so it is loaded as its own data: module.
+  .replace(/"\.\/settingsRegistry"/,()=>{const registry=fs.readFileSync(new URL('../app/flute-studio/lib/settingsRegistry.ts',import.meta.url),'utf8');return JSON.stringify(`data:text/javascript;base64,${Buffer.from(compile(registry)).toString('base64')}`)});
 
 /** A localStorage for each simulated device; transfer.ts reads the global, so swap it per step. */
 const makeStore=(initial={})=>{
@@ -55,6 +60,17 @@ test('practice sessions from both devices are kept, in time order',()=>{
 test('book progress and a tick list behave as before',()=>{
   assert.deepEqual(JSON.parse(merge('{"kohler":[1,2]}','{"kohler":[2,3]}','cookie:book-progress:v1')).kohler.sort(),[1,2,3]);
   assert.deepEqual(JSON.parse(merge('[true,false,false]','[false,true,false]','cookie:practice-plan')),[false,true,false]);
+});
+
+test('saved exercises combine by id across kinds, the newer copy winning, like the old sets list',()=>{
+  const item=(id,kind,name,savedAt)=>({id,kind,name,savedAt,config:{keys:['C']}});
+  const here=JSON.stringify([item('1','scales','Monday','2026-10-01T10:00:00Z'),item('2','long-tones','Low notes','2026-10-02T10:00:00Z')]);
+  const arriving=JSON.stringify([item('1','scales','Monday (edited)','2026-10-03T10:00:00Z'),item('3','scales','Relatives','2026-10-03T11:00:00Z')]);
+  const merged=JSON.parse(merge(here,arriving,'cookie:saved-exercises:v1'));
+  assert.deepEqual(merged.map(entry=>entry.id).sort(),['1','2','3']);
+  assert.equal(merged.find(entry=>entry.id==='1').name,'Monday (edited)');
+  assert.equal(merged.find(entry=>entry.id==='2').kind,'long-tones');
+  assert.ok(describe({at:'',data:{'cookie:saved-exercises:v1':'[]'}},false).includes('Your lists and saved sets'));
 });
 
 test('what a code holds is listed in the words the studio uses, Scale Studio setup included',()=>{
@@ -152,3 +168,10 @@ test('markup merges independent marks and honors newer edits and erasures',()=>{
    const incoming=await decode(await encode({at:new Date().toISOString(),data:{'cookie:private-music-code':'test-secret'}}));
    assert.equal(incoming.data['cookie:private-music-code'],undefined);
  });
+
+test('panel states, reader sizes and a running clock stay on the device; your settings travel',()=>{
+  const store=makeStore({'cookie:practice-live':'{"startedAt":1}','cookie:metronome-more':'1','cookie:tricky-bits:view':'continuous','cookie:closeup-mode':'pitch','cookie:excerpt-tab:x':'b','cookie:reader-view:screen:v1':'{}',
+    'cookie:language':'zh','cookie:practice-tempo-marks':'0','cookie:reader-click-subdivision':'2','cookie:reading-aids:v1':'{}','cookie:practice-pending':'[]'});
+  const keys=Object.keys(withStore(store,()=>collect(false)).data).sort();
+  assert.deepEqual(keys,['cookie:language','cookie:practice-pending','cookie:practice-tempo-marks','cookie:reader-click-subdivision','cookie:reading-aids:v1']);
+});

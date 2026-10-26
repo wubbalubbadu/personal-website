@@ -65,7 +65,8 @@ const tones=[],starts=[];
 const reactStub=url(`export const useRef=x=>({current:x});export const useState=x=>[x,()=>{}];export const useCallback=x=>x;export const useEffect=()=>{};`);
 const toneStub=url(`export function toneSamples(f,d,s){globalThis.__restTestTones.push({f,d});return new Float32Array(4)}`);
 const sampleStub=url(`export const metronomeSamples=()=>new Float32Array(2);export const clapSamples=()=>new Float32Array(3);`);
-const audioSource=compile(read('rhythm/useRhythmAudio.ts')).replace("'react'",`'${reactStub}'`).replace("'../toneSamples'",`'${toneStub}'`).replace("'./rhythmModel'",`'${rhythmURL}'`).replace("'./metronomeSamples'",`'${sampleStub}'`);
+const articulationURL=url(compile(read('articulation/articulationAudio.ts')));
+const audioSource=compile(read('rhythm/useRhythmAudio.ts')).replace("'../articulation/articulationAudio'",JSON.stringify(articulationURL)).replace("'react'",`'${reactStub}'`).replace("'../toneSamples'",`'${toneStub}'`).replace("'./rhythmModel'",`'${rhythmURL}'`).replace("'./metronomeSamples'",`'${sampleStub}'`);
 const {useRhythmAudio}=await import(url(audioSource));
 test('play and counted schedule silence without voices, while preserving later note times',async()=>{
  const previous={AudioContext:globalThis.AudioContext,AudioBuffer:globalThis.AudioBuffer,requestAnimationFrame:globalThis.requestAnimationFrame,cancelAnimationFrame:globalThis.cancelAnimationFrame};

@@ -1,0 +1,372 @@
+/* Direction 1: cat host. Phone first: who she is and where to go are plain
+ * readable blocks on the first screen; the cat and its dialogue box sit
+ * beside and below them as an optional extra. */
+
+.ch {
+  overflow-x: clip;
+  --box: #fff6e6;
+  --box-ink: #4a3324;
+  --tag: #ff9d4d;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .ch {
+    --box: #2f2232;
+    --box-ink: #f7eef2;
+    --tag: #ff8a3d;
+  }
+}
+:root[data-theme="dark"] .ch {
+  --box: #2f2232;
+  --box-ink: #f7eef2;
+  --tag: #ff8a3d;
+}
+
+.ch-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px 0;
+}
+.ch-name {
+  font-family: var(--font-pix);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+}
+.ch-grid {
+  padding: 4px 16px 28px;
+}
+
+/* ---- the info: readable without tapping anything ---- */
+/* Phone: the portrait handheld stands beside the greeting; the wide one
+ * sits under it, full width. */
+.ch-hero {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  align-items: center;
+}
+.ch--gb .ch-hero {
+  grid-template-columns: 1fr auto;
+}
+.ch--psp .ch-info > .hh {
+  margin: 14px auto 0;
+}
+.ch-hero h1 {
+  margin: 0 0 6px;
+  font-size: 27px;
+  line-height: 1.1;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.ch-who {
+  margin: 0;
+  font-size: 15.5px;
+  line-height: 1.45;
+  color: var(--ink-70);
+}
+.ch-h2 {
+  margin: 14px 0 6px;
+  font-family: var(--font-pix);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-50);
+}
+.ch-now {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.ch-row {
+  display: grid;
+  grid-template-columns: 40px 1fr 16px;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 58px;
+  padding: 8px 12px;
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  background: var(--paper);
+  text-align: left;
+}
+.ch-row:hover,
+.ch-row:active {
+  background: var(--accent-wash);
+}
+.ch-row__icon,
+.ch-pill__icon {
+  background: #fff4ea;
+  border-radius: 10px;
+  padding: 5px;
+  box-shadow: inset 0 0 0 1px rgba(43, 20, 32, 0.12);
+}
+.ch-row__icon {
+  width: 40px;
+  height: 40px;
+}
+.ch-row__text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.ch-row__text b {
+  font-size: 16.5px;
+  font-weight: 500;
+  color: var(--accent);
+}
+.ch-row__text span {
+  font-size: 13.5px;
+  line-height: 1.35;
+  color: var(--ink-70);
+}
+.ch-row__go {
+  font-size: 20px;
+  color: var(--ink-50);
+}
+.ch-more {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 6px;
+}
+.ch-pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--paper);
+  font-size: 15.5px;
+  font-weight: 500;
+  color: var(--accent);
+}
+.ch-pill:hover,
+.ch-pill:active {
+  background: var(--accent-wash);
+}
+.ch-pill__icon {
+  width: 26px;
+  height: 26px;
+  padding: 3px;
+  border-radius: 7px;
+}
+
+/* ---- the cat's dialogue box, Animal Crossing style ---- */
+.ch-talk {
+  margin-top: 22px;
+  scroll-margin: 16px;
+}
+.ch-box {
+  position: relative;
+  min-height: 112px;
+  padding: 24px 22px 26px;
+  border-radius: 34px 30px 36px 28px / 30px 34px 28px 36px;
+  background: var(--box);
+  color: var(--box-ink);
+  box-shadow: 0 3px 0 rgba(74, 51, 36, 0.12);
+}
+.ch-box__name {
+  position: absolute;
+  top: -12px;
+  left: 22px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--tag);
+  color: #fff;
+  font-family: var(--font-pix);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  transform: rotate(-3deg);
+}
+/* speaker: sits on the box's top edge, opposite the name tag */
+.ch-box__voice {
+  position: absolute;
+  top: -22px;
+  right: 16px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--box-ink);
+}
+.ch-box__voice::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 999px;
+  background: var(--box);
+  box-shadow: 0 0 0 1.5px var(--rule);
+}
+.ch-box__voice svg {
+  position: relative;
+  opacity: 0.6;
+}
+.ch-box__voice.is-on {
+  color: var(--tag);
+}
+.ch-box__voice.is-on svg {
+  opacity: 1;
+}
+.ch-box__text p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.55;
+}
+.ch-box__text a,
+.ch-box__inlink {
+  color: var(--accent);
+  font-weight: 500;
+}
+.ch-box__inlink {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 500;
+}
+.ch-box__links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+.ch-box__links a {
+  display: block;
+  padding: 8px 0;
+  font-size: 15.5px;
+}
+.ch-box__next {
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  width: 44px;
+  height: 30px;
+  margin-left: -22px;
+  border: 0;
+  background: none;
+  color: var(--tag);
+  font-size: 13px;
+  animation: ch-nudge 0.9s steps(2, jump-none) infinite alternate;
+}
+@keyframes ch-nudge {
+  from { transform: translateY(0); }
+  to { transform: translateY(3px); }
+}
+.ch-choices {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  justify-items: end;
+}
+.ch-choice {
+  min-height: 44px;
+  padding: 8px 16px 8px 14px;
+  border: 1.5px solid var(--box);
+  border-radius: 999px;
+  background: var(--paper);
+  font-size: 15px;
+  text-align: right;
+}
+.ch-choice::before {
+  content: "▸ ";
+  color: var(--tag);
+}
+.ch-choice:hover,
+.ch-choice:active {
+  background: var(--box);
+}
+.ch-choice--go {
+  background: var(--accent-wash);
+  color: var(--accent);
+  font-weight: 500;
+  border-color: transparent;
+}
+
+/* ---- tablets: the phone layout, as a centred column ---- */
+@media (min-width: 600px) and (max-width: 899px) {
+  .ch-top,
+  .ch-grid {
+    max-width: 620px;
+    margin: 0 auto;
+  }
+  .ch-grid {
+    padding-top: 24px;
+  }
+  .ch-hero {
+    gap: 12px;
+  }
+  .ch-hero h1 {
+    font-size: 36px;
+  }
+  .ch-who {
+    font-size: 17px;
+  }
+}
+
+/* ---- wide screens: info left, cat and dialogue right ---- */
+@media (min-width: 900px) {
+  .ch-top {
+    padding: 22px 40px 0;
+  }
+  .ch-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 520px) minmax(0, 420px);
+    justify-content: center;
+    align-items: center;
+    gap: 64px;
+    min-height: calc(100dvh - 80px);
+    padding: 16px 40px 40px;
+  }
+  .ch--psp .ch-grid {
+    grid-template-columns: minmax(0, 480px) minmax(0, 480px);
+    gap: 56px;
+  }
+  .ch-hero {
+    grid-template-columns: 1fr;
+  }
+  .ch-hero h1 {
+    font-size: 44px;
+    margin-bottom: 10px;
+  }
+  .ch-who {
+    font-size: 18px;
+  }
+  .ch-h2 {
+    margin-top: 28px;
+  }
+  .ch-side {
+    display: grid;
+    justify-items: center;
+  }
+  .ch-side .hh {
+    margin: 0 auto 26px;
+  }
+  /* the dialogue comes out of the handheld: a tail pointing up at it */
+  .ch-side .ch-box::after {
+    content: "";
+    position: absolute;
+    top: -9px;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    background: var(--box);
+    transform: translateX(-50%) rotate(45deg);
+  }
+  .ch-talk {
+    width: 100%;
+    margin-top: 0;
+  }
+}

@@ -26,6 +26,19 @@ export function breathAt(beats:number,s:Settings){
  return {...c,round,phase,progress,beat:Math.min(duration,Math.floor(elapsed)+1),cycle:remaining/(c.inhale+c.hold+c.exhale),fullness:phase==='Inhale'?progress:phase==='Hold'?1:1-progress};
 }
 
+// A pattern that changes its counts runs as one sequence of eight rounds, then ends; even breathing has no end.
+export const ROUNDS=8;
+export function sequenceBeats(s:Settings){
+ if(s.pattern==='even')return Infinity;
+ return Array.from({length:ROUNDS},(_,i)=>{const c=counts(s,i);return c.inhale+c.hold+c.exhale}).reduce((a,b)=>a+b,0);
+}
+// Where the phase after `beats` begins, and which phase it is. Drives the inhale/exhale sound cues.
+export function nextPhase(beats:number,s:Settings){
+ const now=breathAt(beats,s),duration=now.phase==='Inhale'?now.inhale:now.phase==='Hold'?now.hold:now.exhale;
+ const at=beats+(1-now.progress)*duration;
+ return {at,phase:breathAt(at+1e-6,s).phase};
+}
+
 // Spoken-style cues for each phase. Shared with the home page's Breathing Lab card.
 export const cueBank={
  Inhale:['Make space. Let air in.','Relax the back of your throat.','Imagine sniffing a flower.','Release your belly.','Feel expansion around your lower ribs.','Imagine the breath filling low, around your rib cage.','Jaw releases. Throat opens.','Listen to your breath.'],

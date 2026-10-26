@@ -1,0 +1,47 @@
+.lab-index {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 64px 16px;
+}
+.lab-index__eyebrow {
+  font-family: var(--font-pix);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin: 0;
+}
+.lab-index h1 {
+  font-size: 30px;
+  font-weight: 500;
+  margin: 8px 0 4px;
+}
+.lab-index__note {
+  color: var(--ink-70);
+  margin: 0 0 28px;
+}
+.lab-index ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+.lab-index a {
+  display: grid;
+  gap: 4px;
+  padding: 16px 18px;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--paper);
+}
+.lab-index a:hover {
+  background: var(--accent-wash);
+}
+.lab-index b {
+  font-weight: 500;
+  color: var(--accent);
+}
+.lab-index span {
+  color: var(--ink-70);
+  font-size: 15px;
+}

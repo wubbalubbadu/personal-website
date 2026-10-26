@@ -5,8 +5,8 @@ import {StaffNote as SharedStaffNote} from '../components/StaffNote';
 
 // The drawing itself now lives in components/StaffNote so the fingering
 // chart can share it; this keeps the embouchure page's own call signature
-// and its note naming.
-export default function StaffNote({midi}: {midi: number}) {
+// and its note naming. Drawn small: it sits beside the note's name.
+export default function StaffNote({midi,width=108}: {midi: number; width?: number}) {
   const {lang}=useLanguage();
-  return <SharedStaffNote midi={midi} steady label={lang==="zh"?`高音谱表上的 ${noteName(midi)}`:`${noteName(midi)} on treble staff`}/>;
+  return <SharedStaffNote midi={midi} width={width} steady label={lang==="zh"?`高音谱表上的 ${noteName(midi)}`:`${noteName(midi)} on treble staff`}/>;
 }

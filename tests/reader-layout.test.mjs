@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {notationScale,pageOffsets,pageAt,tabletReader,initialReaderLayout} from '../app/flute-studio/components/readerLayout.ts';
+import {notationScale,pageOffsets,pageAt,stablePageHeight,tabletReader,initialReaderLayout} from '../app/flute-studio/components/readerLayout.ts';
 test('first page includes title and page breaks consider system bottoms',()=>{
   assert.deepEqual(pageOffsets([{top:120,bottom:240},{top:380,bottom:520},{top:650,bottom:780}],600,400),[0,400]);
 });
@@ -28,4 +28,19 @@ test('iPads start with Fit window and retain an explicit tablet layout choice',(
 test('desktop starts with two pages and preserves a saved choice',()=>{
   assert.equal(initialReaderLayout(false),'spread');
   assert.equal(initialReaderLayout(false,'900'),'900');
+});
+
+test('page height holds steady through a tucking header or Safari toolbar, and re-cuts on rotation',()=>{
+  let h=stablePageHeight(null,375,518);
+  assert.deepEqual(h,{width:375,height:518});
+  assert.equal(stablePageHeight(h,375,562),h);          // header tucked: +44
+  assert.equal(stablePageHeight(h,375,598),h);          // toolbar hidden too: +80
+  assert.deepEqual(stablePageHeight(h,375,451),{width:375,height:451}); // shorter: always taken
+  assert.deepEqual(stablePageHeight(h,375,700),{width:375,height:700}); // full screen
+  assert.deepEqual(stablePageHeight(h,667,300),{width:667,height:300}); // rotated
+});
+
+test('scrolled to the bottom is the last page, even when its start lies past the scroll limit',()=>{
+  assert.equal(pageAt([0,336,600],480,480),2);
+  assert.equal(pageAt([0,336,600],400),1);
 });

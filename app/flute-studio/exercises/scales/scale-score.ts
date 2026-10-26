@@ -145,6 +145,10 @@ export const scaleForms=[
   {id:"sixths",label:"Sixths",zh:"六度"},
   {id:"sevenths",label:"Sevenths",zh:"七度"},
   {id:"octaves",label:"Octaves",zh:"八度"},
+  // The two seventh chords every exam and scale book adds to the arpeggios. Built from the key rather than the type:
+  // the dominant seventh stands on the fifth (G B D F in C), the diminished seventh on the leading tone (B D F A♭).
+  {id:"dominantSeventh",label:"Dominant 7th",zh:"属七和弦"},
+  {id:"diminishedSeventh",label:"Diminished 7th",zh:"减七和弦"},
 ] as const;
 export type ScaleFormId=typeof scaleForms[number]["id"];
 /** The forms that pair each degree with one a fixed distance above it. */
@@ -160,11 +164,26 @@ const isIntervalForm=(form:ScaleFormId):form is IntervalFormId=>(intervalForms a
  * already pairs, so grouping them would only blur the interval.
  */
 export const scaleGroupings=[
-  {size:1,label:"Straight",zh:"直接"},
-  {size:3,label:"Groups of 3",zh:"三音一组"},
-  {size:4,label:"Groups of 4",zh:"四音一组"},
+  {size:1,label:"Straight",zh:"直接",title:"",zhTitle:""},
+  {size:3,label:"Groups of 3",zh:"三音一组",title:"in 3s",zhTitle:"三音一组"},
+  {size:4,label:"Groups of 4",zh:"四音一组",title:"in 4s",zhTitle:"四音一组"},
+  // Turns, from violin and piano practice: each group steps up and turns back (1 2 3 2, 2 3 4 3 …) or leans on the
+  // note below the next step (1 2 1 3, 2 3 2 4 …). On an arpeggio the same shape walks chord tones, so 1 2 3 2 is the
+  // piano exam broken chord, do mi sol mi.
+  {size:"turn",label:"Turn 1 2 3 2",zh:"回音 1 2 3 2",title:"in turns 1 2 3 2",zhTitle:"回音 1 2 3 2"},
+  {size:"neighbor",label:"Turn 1 2 1 3",zh:"回音 1 2 1 3",title:"in turns 1 2 1 3",zhTitle:"回音 1 2 1 3"},
 ] as const;
+/** The pattern a walk is played in. Kept under its old name (and saved field `groupSize`) so saved sets still load. */
 export type ScaleGroupSize=typeof scaleGroupings[number]["size"];
+/** Offsets each turn group takes from its starting note, one group per note of the walk. */
+const TURN_SHAPES:Record<"turn"|"neighbor",readonly number[]>={turn:[0,1,2,1],neighbor:[0,1,0,2]};
+/** Groups following one shape along a walk, stopping where the shape would run off its end. */
+function shaped(seg:number[],shape:readonly number[]):number[]{
+  const reach=Math.max(...shape),out:number[]=[];
+  if(seg.length<=reach)return seg;
+  for(let i=0;i+reach<seg.length;i++)out.push(...shape.map(offset=>seg[i+offset]));
+  return out;
+}
 export const groupsApply=(form:ScaleFormId)=>form==="scale"||form==="arpeggio";
 /** Overlapping runs of `size` along one direction of the walk. */
 function windows(seg:number[],size:number):number[]{
@@ -349,7 +368,31 @@ export function scaleNotes(key:MajorKey,range:ScaleRange,typeId:ScaleTypeId="maj
   // minor differs between the two, but the flag has to travel per note
   // because one exercise contains both directions.
   const path:{degree:number;up:boolean}[]=[];
-  if(groups>1&&groupsApply(form)){
+  if(form==="dominantSeventh"||form==="diminishedSeventh")return seventhNotes(spelled,form,range,ending,span);
+  if(typeof groups==="string"&&groupsApply(form)){
+    // Turns. A scale turns along each direction of its walk on its own; an arpeggio climbs from chord tones inside
+    // the span (like the groups below) and comes down from where it reached, turning the other way.
+    if(form==="arpeggio"){
+      const chord=type.chord as readonly number[],shape=TURN_SHAPES[groups],reach=Math.max(...shape);
+      const tones:number[]=[];
+      for(let d=low;tones.length<200&&d<=Math.min(ceiling,high+card*2);d++)if(chord.includes(((d%card)+card)%card))tones.push(d);
+      const starts=tones.filter(d=>d<high).length;
+      const climb:number[]=[];
+      for(let i=0;i<starts&&i+reach<tones.length;i++)climb.push(...shape.map(offset=>tones[i+offset]));
+      const top=Math.max(...climb),fall=tones.filter(d=>d<=top).reverse();
+      const descent:number[]=[];
+      for(let i=0;i+reach<fall.length&&fall[i]>low;i++)descent.push(...shape.map(offset=>fall[i+offset]));
+      climb.forEach(degree=>path.push({degree,up:true}));
+      descent.forEach(degree=>path.push({degree,up:false}));
+    }else{
+      const walk=Array.from({length:high-low+1},(_,i)=>low+i);
+      const opening=start==="tonic"?Math.max(low,0):low;
+      const segments:[number[],boolean][]=opening>low
+        ?[[walk.filter(d=>d>=opening),true],[[...walk].reverse(),false],[walk.filter(d=>d<=opening),true]]
+        :[[walk,true],[[...walk].reverse(),false]];
+      for(const [seg,up] of segments)shaped(seg,TURN_SHAPES[groups]).forEach(degree=>path.push({degree,up}));
+    }
+  }else if(typeof groups==="number"&&groups>1&&groupsApply(form)){
     // The same walks as below, cut into overlapping groups one direction
     // at a time. Each direction is grouped on its own so no group turns
     // around halfway; the note at each turn is the last of one group and
@@ -418,6 +461,46 @@ export function scaleNotes(key:MajorKey,range:ScaleRange,typeId:ScaleTypeId="maj
 }
 
 /**
+ * A seventh chord of the key, up and back over the range. The dominant seventh stands on the fifth degree with a
+ * major third and a minor seventh (G B D F in C major and in C minor alike: the leading tone is raised, as in harmonic
+ * minor); the diminished seventh stands on the leading tone in stacked minor thirds (B D F A♭). Each tone is spelled
+ * a third above the last, against the key's own signature, so accidentals come out as a theory book writes them.
+ * The octave ranges start on the chord's root within the octave above the tonic, dropping an octave if two octaves
+ * would pass the flute's top; the instrument ranges take every chord tone inside them, starting on the lowest root.
+ */
+function seventhNotes(key:SpelledKey,form:"dominantSeventh"|"diminishedSeventh",range:ScaleRange,ending:ScaleEnding,span:ScaleSpan):ScaleNote[]{
+  const dominant=form==="dominantSeventh";
+  const rootPc=(key.pc+(dominant?7:11))%12,rootLetter=(key.step+(dominant?4:6))%7;
+  const intervals=dominant?[0,4,7,10]:[0,3,6,9];
+  const spellTone=(midi:number,letter:number):ScaleNote=>{
+    const step=letter%7,octave=Math.round((midi-naturals[step])/12)-1;
+    return {step:letters[step],alter:midi-(12*(octave+1)+naturals[step]),octave,midi};
+  };
+  const tonesFrom=(rootMidi:number,top:number)=>{
+    const out:ScaleNote[]=[];
+    for(let o=0;;o++)for(let i=0;i<4;i++){const midi=rootMidi+12*o+intervals[i];if(midi>top)return out;out.push(spellTone(midi,rootLetter+2*i))}
+  };
+  let tones:ScaleNote[];
+  if(range==="one"||range==="two"){
+    let root=60+key.pc+((rootPc-key.pc+12)%12);
+    const octaves=range==="one"?1:2;
+    if(root+12*octaves>SCALE_HIGHEST_MIDI)root-=12;
+    tones=tonesFrom(root,root+12*octaves);
+  }else{
+    const min=range==="custom"?Math.min(span.low,span.high):range==="full"?SCALE_LOWEST_MIDI:60;
+    const max=range==="custom"?Math.max(span.low,span.high):range==="full"?SCALE_HIGHEST_MIDI:96;
+    let root=rootPc;while(root<min)root+=12;
+    tones=tonesFrom(root,max);
+  }
+  if(!tones.length)return [];
+  // Up and back down, the top tone once; the closing root is left to the repeat or to the held ending.
+  const notes=[...tones,...tones.slice(0,-1).reverse()];
+  notes.pop();
+  if(ending==="hold")notes.push(tones[0]);
+  return notes;
+}
+
+/**
  * Notes are grouped into beat-sized chunks first (for beaming/tuplet
  * brackets), then two beat-chunks make one invisible measure — for the
  * default "even" rhythm a beat is 4 sixteenths, so this reproduces the
@@ -447,6 +530,13 @@ export function scaleMusicXML(key:MajorKey,range:ScaleRange,articulationSelectio
   const mixedArticulation=isMixedArticulation(pattern);
   const perQuarter=divisionsPerQuarter(rhythm);
   const beats=beatChunks(runLength,perQuarter,durations);
+  // The bar lines are invisible, so the engraver's "an accidental lasts until the bar line" is invisible too: melodic
+  // minor's B♭ coming down, in a new hidden bar after the B♮ going up, printed no ♭ (the key signature covers it) and
+  // read as B♮. So any note that changes a letter's alteration from the last time that letter sounded in the same
+  // octave states its accidental outright, wherever the hidden bar lines fall. Scale Studio and the scale book share it.
+  const accidentalNames:Record<number,string>={[-2]:"flat-flat",[-1]:"flat",0:"natural",1:"sharp",2:"double-sharp"};
+  const lastAlter=new Map<string,number>();
+  const statedAccidental=notes.map(n=>{const id=`${n.step}${n.octave}`,before=lastAlter.get(id);lastAlter.set(id,n.alter);return before!==undefined&&before!==n.alter?accidentalNames[n.alter]??"":""});
   const measures:string[]=[];
   // Invisible measures let the engraver wrap naturally on narrow tablets.
   for(let m=0;m*2<beats.length;m++){
@@ -476,7 +566,7 @@ export function scaleMusicXML(key:MajorKey,range:ScaleRange,articulationSelectio
         // object" on triplet/dotted rhythms.
         const beamLevels=d.type==="16th"?2:1;
         const beamXml=beam?Array.from({length:beamLevels},(_,level)=>`<beam number="${level+1}">${beam}</beam>`).join(""):"";
-        return `<note><pitch><step>${n.step}</step><alter>${n.alter}</alter><octave>${n.octave}</octave></pitch><duration>${d.divisions}</duration>${"<dot/>".repeat(d.dots)}<type>${d.type}</type>${timeMod}${beamXml}${notations.length?`<notations>${notations.join("")}</notations>`:""}</note>`;
+        return `<note><pitch><step>${n.step}</step><alter>${n.alter}</alter><octave>${n.octave}</octave></pitch><duration>${d.divisions}</duration>${"<dot/>".repeat(d.dots)}<type>${d.type}</type>${statedAccidental[noteIndex]?`<accidental>${statedAccidental[noteIndex]}</accidental>`:""}${timeMod}${beamXml}${notations.length?`<notations>${notations.join("")}</notations>`:""}</note>`;
       }).join("");
     }).join("");
     const end=m*2+2>=beats.length&&!held;
@@ -493,18 +583,20 @@ export function scaleMusicXML(key:MajorKey,range:ScaleRange,articulationSelectio
 
 /**
  * A single score keeps the reader's playback, overlays and markup available.
- * `articulations` cycles by key index (key 3 gets articulations[2 %
+ * `articulations` (and `rhythm`, when it is a list) cycle by key index (key 3 gets articulations[2 %
  * length]) rather than one pattern for the whole book — lets a teacher
  * assign a rotation like "all staccato, all tongued, slur 2 tongue 2" across
  * consecutive keys instead of repeating the same articulation everywhere.
  */
 export type ScaleBlock={key:MajorKey;type:ScaleTypeId;form:ScaleFormId;label:string};
-export function scaleBookMusicXML(blocks:readonly ScaleBlock[],range:ScaleRange,newLines=false,articulations:ArticulationSelection[]=[defaultArticulationSelection],rhythm:RhythmChoice="even",ending:ScaleEnding="none",start:ScaleStart="tonic",span:ScaleSpan=DEFAULT_SCALE_SPAN,groups:ScaleGroupSize=1):string{
+export function scaleBookMusicXML(blocks:readonly ScaleBlock[],range:ScaleRange,newLines=false,articulations:ArticulationSelection[]=[defaultArticulationSelection],rhythm:RhythmChoice|readonly RhythmChoice[]="even",ending:ScaleEnding="none",start:ScaleStart="tonic",span:ScaleSpan=DEFAULT_SCALE_SPAN,groups:ScaleGroupSize=1):string{
   let number=0;
   const measures=blocks.map((block,keyIndex)=>{
     const key=block.key;
     const articulationSelection=articulations[keyIndex%articulations.length]??defaultArticulationSelection;
-    const part=scaleMusicXML(key,range,articulationSelection,rhythm,block.type,block.form,ending,start,span,groups).match(/<part id="P1">([\s\S]*)<\/part>/)![1];
+    // Rhythms rotate across the book the same way: block i takes rhythms[i % length].
+    const blockRhythm=typeof rhythm==="string"?rhythm:rhythm[keyIndex%rhythm.length]??"even";
+    const part=scaleMusicXML(key,range,articulationSelection,blockRhythm,block.type,block.form,ending,start,span,groups).match(/<part id="P1">([\s\S]*)<\/part>/)![1];
     const first=number===0;
     return part.replace(/<measure number="\d+" implicit="yes">/g,()=>`<measure number="${++number}" implicit="yes">`)
       .replace(/<clef>.*?<\/clef>/,first?"<clef><sign>G</sign><line>2</line></clef>":"")

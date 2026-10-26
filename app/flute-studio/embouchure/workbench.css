@@ -1,277 +1,195 @@
-/* Simulation — matches the rest of the studio's visual language directly
-   (same values as practice-tool-dock.css) rather than
-   the newer token system, so it doesn't stick out as the one page that looks
-   different. The page header is <StudioPage>; the viewport / panel frame is
-   <Workbench> (components/workbench.css) — these rules restyle that frame for
-   this page and style what lives inside it. */
+/* Body & embouchure. The page header is <StudioPage>; the viewport / panel frame is <Workbench>
+   (components/workbench.css). These rules restyle that frame for this page and style what lives inside it.
+   Rewritten October 19, 2026 from the layered overrides that had built up here. Values come from DESIGN.md and
+   COMPONENTS.md; each control names the studio element it copies. No !important except where an older layer
+   (studio-page / ios-theme / viewer-fixes) has to be beaten, and those are marked. */
 
-.emb {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+/* ---------- Page frame: the workbench fills the window under the title, so the page does not scroll. ---------- */
+html body .studio-page:has(.emb) { padding-bottom: 24px; } /* studio-page.css gives every page 96px under it */
+
+/* ---------- Embouchure / Breathing: the Library's filter chips (music/library.css .library-chips). ---------- */
+.emb-views { display: flex; gap: 6px; margin: 0 0 16px; }
+.emb .emb-views button {
+  height: 32px; padding: 0 13px; border: 0; border-radius: 999px;
+  background: #f1f1f2; color: #5f6169;
+  font: inherit; font-size: 13px; font-weight: 500;
 }
+.emb .emb-views button[aria-pressed="true"] { background: #292a33; color: #fff; }
+@media (hover: hover) { .emb .emb-views button:not([aria-pressed="true"]):hover { background: #e6e6ea; } }
 
-/* Give the shared Workbench frame real padding and this page's own radius/shadow. */
+/* ---------- The frame: an item card (COMPONENTS.md "Item card": white, 1px #e6e6ea, radius 18). ---------- */
 .emb .workbench__surface {
-  border: 1px solid #e1e2df;
-  border-radius: 20px;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
-  overflow: hidden;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  border: 1px solid #e6e6ea; border-radius: 18px; box-shadow: none; overflow: hidden;
 }
+.emb .workbench__viewport { background: #f5f5f7; }
 .emb .workbench__panel {
-  padding: 24px 24px 28px;
-  gap: 18px;
-  border-left: 1px solid #e1e2df;
+  gap: 0; padding: 4px 20px 8px;
+  border-left: 1px solid #e6e6ea;
+  font-size: 14px; color: #292a33;
 }
 
-/* Real page-level gutters — was sitting flush against the browser edge. */
-.studio-page:has(.emb) {
-  height: 100dvh;
-  min-height: 0;
-  overflow-y: auto;
-  padding-left: 40px;
-  padding-right: 40px;
-}
-@media (max-width: 760px) {
-  .studio-page:has(.emb) {
-    padding-left: 20px;
-    padding-right: 20px;
-  }
-}
+/* ---------- 3D view ---------- */
+.emb-canvas { height: clamp(320px, calc(100dvh - 290px), 600px); touch-action: pan-y; outline: none; }
+.emb-canvas canvas { display: block; }
+.emb-canvas[data-active="true"] { touch-action: none; }
+.emb-canvas:focus-visible { box-shadow: inset 0 0 0 2px #b8bac2; }
+.workbench__viewport:has(.breath-canvas) { display: flex; }
+.breath-canvas { position: relative; flex: 1; height: auto; min-height: clamp(320px, calc(100dvh - 290px), 600px); }
+.breath-canvas canvas { position: absolute; inset: 0; }
+.emb-error { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; padding: 24px; text-align: center; color: #71747e; font-size: 14px; }
 
-/* Exact values from practice-tool-dock.css's .dock-tool > button override —
-   the soft-tint pill, not the solid-green .primary-tool-button base rule. */
-.emb button {
-  cursor: pointer;
-  border: 1px solid #d7e1d2;
-  padding: 9px 14px;
-  border-radius: 12px;
-  background: #e7eee3;
-  color: #40553d;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 680;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  transition: background-color 0.16s ease, transform 0.16s ease;
-}
-.emb button:hover {
-  background: #dce8d7;
-  transform: translateY(-1px);
-}
-.emb button:focus-visible,
-.emb input:focus-visible {
-  outline: 3px solid rgba(103, 137, 86, 0.4);
-  outline-offset: 3px;
-}
-
-.emb-canvas {
-  height: 510px;
-  touch-action: pan-y;
-}
-.emb-canvas canvas {
-  display: block;
-}
-
-.emb-viewport-top {
-  position: absolute;
-  left: 24px;
-  right: 24px;
-  top: 20px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.emb-note {
-  font-size: 48px;
-  line-height: 1;
-  font-weight: 760;
-  letter-spacing: -0.045em;
-  color: #292a33;
-}
-
-/* StaffNote's viewBox is a fixed 170x175 — its rendered height never
-   changes, so this just needs to match, not compensate for anything. */
-.emb-staff {
-  height: 175px;
-  overflow: visible;
-}
-
-/* Plain text — no tinted box, matches how the dock labels things. */
-.emb-cue {
-  align-self: stretch;
-  margin: 0;
-  color: #292a33;
-  font-size: 14px;
-  line-height: 1.55;
-}
-
-.emb .emb-play {
-  align-self: stretch;
-  min-height: 39px;
-  margin-top: auto;
-  border-radius: 13px;
-}
-
-/* One line, one pointer that carries its own label — sits right under the staff. */
-.emb-range {
-  align-self: stretch;
-  width: 100%;
-}
-.emb-range-track {
-  position: relative;
-  padding-top: 4px;
-  margin-bottom: 26px;
-}
-/* Same as the dock's own tempo slider — native control, accent-color only. */
-.emb-range-track input[type="range"] {
-  display: block;
-  width: 100%;
-  height: 20px;
-  margin: 0;
-  accent-color: #678956;
-  cursor: pointer;
-}
-.emb-range-pointer {
-  position: absolute;
-  top: 100%;
-  transform: translateX(-50%);
-  margin-top: 8px;
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: #678956;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
+/* Words over the 3D view: a hint and Reset view on top, the colour key at the bottom. They never take clicks
+   away from the model except the Reset button itself. */
+.emb-overlay {
+  position: absolute; left: 16px; right: 16px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
   pointer-events: none;
 }
-.emb-range-ends {
-  display: flex;
-  justify-content: space-between;
-  font-size: 11px;
-  font-weight: 600;
-  color: #85868e;
+.emb-overlay--top { top: 10px; }
+.emb-overlay--bottom { bottom: 12px; justify-content: flex-start; }
+.emb-overlay button { pointer-events: auto; }
+.emb-hint { font-size: 13px; color: #85868e; }
+/* Reset view is the studio's text action (studio-shared.css .text-action), at 13px to sit beside the hint. */
+.emb .emb-overlay .text-action { font-size: 13px; }
+.emb-air-key { gap: 14px; font-size: 12px; color: #71747e; }
+.emb-air-key span { display: inline-flex; align-items: center; gap: 6px; }
+.emb-air-key i { width: 10px; height: 10px; border-radius: 50%; }
+/* The model's own colours: model.ts air (warm #e6a15c to cool #4e9fe2), Breathing's ring (blue release, rose engage). */
+.emb-air-key i[data-air="slow"] { background: #e6a15c; }
+.emb-air-key i[data-air="fast"] { background: #4e9fe2; }
+.emb-air-key i[data-tone="release"] { background: #87b4c8; }
+.emb-air-key i[data-tone="engage"] { background: #ca9295; }
+
+/* ---------- Panel blocks: label, content, a hairline between blocks. ---------- */
+.emb-block { display: flex; flex-direction: column; gap: 10px; width: 100%; padding: 16px 0; }
+.emb-block + .emb-block { border-top: 1px solid #ececef; }
+/* COMPONENTS.md "Card label". */
+.emb-label { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #85868e; }
+
+/* Register: one of three, like the fingering chart's note buttons (fingerings.css .fingering-chart__notes): grey
+   rounded squares, the chosen one in the studio's purple "on" tint, the range as the small grey sub line. */
+.emb-registers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.emb .emb-registers button {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  min-height: 48px; padding: 7px 4px; border: 0; border-radius: 12px;
+  background: #f1f1f4; color: #292a33;
+  font: inherit; font-size: 14px; font-weight: 600; line-height: 1.1;
+  transition: background-color .16s ease, color .16s ease;
+}
+.emb .emb-registers button small { font-size: 11px; font-weight: 500; color: #85868e; white-space: nowrap; }
+.emb .emb-registers button[aria-pressed="true"] { background: #f1e5f5; color: #6d4585; }
+.emb .emb-registers button[aria-pressed="true"] small { color: #9a7aae; }
+@media (hover: hover) { .emb .emb-registers button:not([aria-pressed="true"]):hover { background: #e6e6ea; } }
+
+/* Note: the staff, its name, and Play scale on one row; the slider under them. */
+.emb-note-row { display: flex; align-items: center; gap: 12px; }
+.emb-staff { flex: none; width: 108px; color: #292a33; }
+.emb-note { flex: 1; margin: 0; font-size: 32px; font-weight: 700; line-height: 1; letter-spacing: -.03em; color: #292a33; font-variant-numeric: tabular-nums; }
+/* Play / Pause: the studio's plain grey action button (memory "no black buttons"): a rounded square, not a capsule. */
+.emb .emb-action {
+  flex: none; display: inline-flex; align-items: center; gap: 5px;
+  height: 34px; padding: 0 12px 0 8px; border: 0; border-radius: 10px;
+  background: #f1f1f2; color: #45464f;
+  font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap;
+}
+.emb .emb-action svg { width: 18px; height: 18px; }
+@media (hover: hover) { .emb .emb-action:hover { background: #e8e8ea; } }
+.emb-range { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 500; color: #85868e; }
+.emb-range input[type="range"] { flex: 1; min-width: 0; height: 24px; margin: 0; accent-color: #6d4585; }
+
+/* What changes: one line per part, its name in a fixed column. */
+.emb-parts { display: flex; flex-direction: column; margin: 0; }
+.emb-parts div { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 10px; align-items: baseline; padding: 6px 0; }
+.emb-parts dt { font-size: 14px; font-weight: 600; color: #292a33; }
+.emb-parts dd { margin: 0; font-size: 14px; line-height: 1.4; color: #71747e; }
+.emb-stack { display: grid; }
+.emb-stack > span { grid-area: 1 / 1; visibility: hidden; }
+.emb-stack > span[data-on] { visibility: visible; }
+.emb-caption { margin: 0; font-size: 14px; line-height: 1.5; color: #292a33; }
+
+/* Breathing's circle: drag the purple dot round the breath. */
+.breath-cycle-block { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.breath-cycle-block .emb-label { align-self: flex-start; }
+.breath-cycle { width: 100%; max-width: 400px; margin: auto; aspect-ratio: 268 / 160; touch-action: none; user-select: none; -webkit-user-select: none; border-radius: 12px; }
+.breath-cycle svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.breath-cycle text { font-family: inherit; font-size: 10px; fill: #71747e; }
+.breath-cycle:focus-visible { outline: 2px solid #b8bac2; outline-offset: 2px; }
+
+.emb button:focus-visible, .emb input:focus-visible { outline: 2px solid #b8bac2; outline-offset: 2px; }
+
+/* ---------- Short windows on desktop and iPad: a tighter Breathing panel so it still fits. ---------- */
+@media (min-width: 761px) and (max-height: 860px) {
+  .emb .workbench__panel:has(.breath-cycle) .emb-block { padding: 12px 0; }
+  .emb .workbench__panel:has(.breath-cycle) .breath-cycle { max-width: 320px; }
 }
 
-@media (max-width: 760px) {
-  .emb-canvas {
-    height: 380px;
-  }
-  .emb-note {
-    font-size: 40px;
-  }
+/* ---------- iPad portrait: a narrower panel so the model keeps room. ---------- */
+@media (min-width: 761px) and (max-width: 1024px) {
+  .emb .workbench__surface { grid-template-columns: minmax(0, 1fr) 320px; }
+}
+
+/* ---------- iPad portrait: the model full width on top, the panel under it in two columns (register and note on
+   the left, what changes on the right), so the model is not squeezed into a tall narrow strip. ---------- */
+@media (min-width: 761px) and (max-width: 1024px) and (orientation: portrait) {
+  .emb .workbench__surface { grid-template-columns: 1fr; }
   .emb .workbench__panel {
-    padding: 18px;
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 28px; align-items: start;
+    padding: 4px 24px 8px; border-left: 0; border-top: 1px solid #e6e6ea;
   }
+  .emb .emb-block--side { grid-column: 2; grid-row: 1 / span 2; border-top: 0; }
+  .emb-canvas { height: clamp(320px, calc(100dvh - 620px), 560px); }
+  .breath-canvas { min-height: clamp(320px, calc(100dvh - 620px), 560px); }
 }
 
-.emb-canvas[data-active="true"] { touch-action: none; outline: 1px solid #dedfd9; outline-offset: -1px; }
-
-.body-model-nav { display:flex; gap:8px; margin:0 0 18px; }
-.emb .body-model-nav button { background:transparent; border-color:transparent; color:#71766f; font-size:14px; }
-.emb .body-model-nav button[aria-pressed="true"] { background:#e7eee3; border-color:#d7e1d2; color:#40553d; }
-.workbench__viewport:has(.breath-canvas) { display:flex; background:#f1f5f6; }
-.breath-canvas { position:relative; flex:1; height:auto; min-height:580px; }
-.breath-canvas canvas { position:absolute; inset:0; }
-.breath-title { margin:0; font-size:28px; letter-spacing:-.035em; color:#292a33; }
-.breath-parts { width:100%; margin:8px 0; }
-.breath-parts div { padding:12px 0; border-bottom:1px solid #e7e8e4; }
-.breath-parts dt { font-size:13px; font-weight:650; color:#363b37; }
-.breath-parts dd { margin:5px 0 0; color:#747b76; font-size:12px; }
-.breath-legend { display:flex; flex-wrap:wrap; gap:15px; color:#626b68; font-size:12px; }
-.breath-legend span { display:flex; align-items:center; gap:6px; }
-.breath-legend i { width:10px; height:10px; border-radius:50%; background:#87b4c8; }
-.breath-legend span:last-child i { background:#cf8185; }
-.breath-timeline { width:100%; font-size:12px; color:#626b68; margin-top:8px; }
-.breath-timeline input { display:block; width:100%; margin:12px 0 0; accent-color:#678956; }
-.breath-timing { display:flex; justify-content:space-between; width:100%; font-size:11px; color:#747b76; margin-top:-10px; }
-@media(max-width:760px){ .breath-canvas { min-height:460px; } }
-
-.breath-cycle { width:100%; max-width:260px; align-self:center; aspect-ratio:220/160; touch-action:none; cursor:pointer; }
-.breath-cycle svg { display:block; width:100%; height:100%; }
-.breath-cycle text { font:11px sans-serif; fill:#626b68; }
-.breath-cycle:focus-visible { outline:2px solid #678956; border-radius:12px; }
-
-/* Current studio look (the green boxes were the old UI): grey pills, the
-   selected view dark like the Library's chips, a quiet Reset view, and one
-   dark button for the main action. */
-.emb button{border:0;background:#f1f1f2;color:#45464f;font-weight:600}
-.emb button:hover{background:#e8e8ea}
-.emb .body-model-nav{gap:6px}
-.emb .body-model-nav button{height:34px;padding:0 14px;border-radius:999px;background:#f1f1f2;color:#45464f;font-size:13px}
-.emb .body-model-nav button[aria-pressed="true"]{background:#292a33;color:#fff}
-.emb .emb-play{background:#e7eee3;color:#40553d}
-.emb .emb-play:hover{background:#dce8d7}
-
-/* Redesign (Oct 16): one 16px rhythm down the panel. The note and Play scale share the top row; the staff is smaller;
-   the range is one line with its ends beside it (no floating name bubble: the heading already says the note); the tip
-   carries the card label (COMPONENTS.md "Card label"); nothing is pinned to the panel's bottom with empty space above. */
-.emb .workbench__panel{gap:16px;padding:22px 22px 24px}
-.emb-head{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%}
-.emb-note{font-size:32px;font-weight:700;letter-spacing:-.03em}
-.emb .emb-head .emb-play{align-self:center;margin:0;min-height:34px;height:34px;padding:0 14px;border-radius:999px;font-size:13px;font-weight:600;white-space:nowrap}
-.emb-staff{height:auto;width:100%;display:flex;justify-content:center}
-.emb-staff svg{width:auto;height:140px;max-width:100%}
-.emb-range{display:flex;align-items:center;gap:10px;width:100%;font-size:12px;font-weight:600;color:#85868e}
-.emb-range input[type="range"]{flex:1;min-width:0;height:20px;margin:0;accent-color:#678956;cursor:pointer}
-.emb-cue{width:100%;padding-top:14px;border-top:1px solid #ececef}
-.emb-cue p{margin:6px 0 0;font-size:15px;line-height:1.5;color:#292a33}
-.emb-label{display:block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#85868e}
-/* Breathing's panel in the same sizes. */
-.breath-title{font-size:24px;font-weight:700;letter-spacing:-.03em}
-.breath-parts{margin:0}
-.breath-parts div{padding:10px 0;border-bottom-color:#ececef}
-.breath-parts dt{font-size:14px;font-weight:600;color:#292a33}
-.breath-parts dd{margin-top:3px;font-size:13px;line-height:1.45;color:#6d6f76}
-.breath-legend{font-size:12px;color:#6d6f76}
-/* Phones: a shorter 3D view so the note, staff, range and tip are on screen with it. */
-@media(max-width:760px){
-  .emb-canvas{height:300px}
-  .emb .workbench__panel{padding:16px;gap:14px}
-  .emb-note{font-size:28px}
-  .emb-staff svg{height:110px}
-  .breath-canvas{min-height:340px}
+/* ---------- Phones: no page title (the Learn tab says where you are, as on the fingering chart); the model on top,
+   the panel under it, and the model takes the height that is left. ---------- */
+@media (max-width: 760px) {
+  /* studio-page.css draws the title on every page; hidden here only. */
+  html body .studio-page:has(.emb) .studio-page__head { display: none; }
+  html body .studio-page:has(.emb) { padding-top: 12px; }
+  .emb-views { margin-bottom: 12px; }
+  .emb .workbench__surface { grid-template-columns: 1fr; }
+  .emb .workbench__panel { padding: 0 16px 4px; border-left: 0; border-top: 1px solid #e6e6ea; }
+  .emb-canvas { height: clamp(200px, calc(100dvh - 560px), 340px); }
+  .emb-canvas.breath-canvas { height: auto; min-height: clamp(160px, calc(100dvh - 580px), 320px); }
+  .emb-block { padding: 12px 0; gap: 8px; }
+  .emb-staff { width: 80px; }
+  .emb-note { font-size: 28px; }
+  .emb-parts div { grid-template-columns: 92px minmax(0, 1fr); padding: 4px 0; }
+  .emb-overlay { left: 12px; right: 12px; }
+  .emb-overlay--top { top: 6px; }
+  .emb-overlay--bottom { bottom: 8px; }
+  .breath-cycle { max-width: 190px; }
+  /* The ring's labels scale with the drawing: larger units here so they still read at about 12px. */
+  .breath-cycle text { font-size: 16px; }
+  .emb .workbench__panel:has(.breath-cycle) .emb-block { padding: 10px 0; }
 }
 
-/* Buttons here are the studio's plain grey, not the old soft green (Play scale, Play breath / Pause). */
-html body .emb .emb-play{background:#f1f1f2;color:#45464f}
-@media(hover:hover){html body .emb .emb-play:hover{background:#e8e8ea}}
-/* Sized to the window: the 3D views take the height left under the page title, so the page does not scroll when the
-   window is tall enough (the panel still sets a minimum). */
-.emb-canvas{height:clamp(300px,calc(100dvh - 300px),560px)}
-.breath-canvas{min-height:clamp(320px,calc(100dvh - 300px),580px)}
-/* Desktop and iPad: a tighter Breathing panel and a little more room under the title, so neither view scrolls on an
-   800px-tall window. */
-.emb-canvas{height:clamp(300px,calc(100dvh - 340px),560px)}
-.breath-canvas{min-height:clamp(320px,calc(100dvh - 340px),580px)}
-.emb .workbench__panel:has(.breath-cycle){gap:10px}
-.breath-parts div{padding:7px 0}
-.breath-cycle{max-width:220px}
-/* Phones: no page title (the Learn tab says where you are, as on the fingering chart); the 3D view takes what is
-   left after the panel, so the page fits without scrolling. */
-@media(max-width:760px){
-  html body .studio-page:has(.emb) .studio-page__head,html body .studio-page:has(.emb)>header{display:none}
-  html body .studio-page:has(.emb){padding-top:10px}
-  .emb .body-model-nav{margin-bottom:10px}
-  html body .emb-canvas{height:clamp(200px,calc(100dvh - 520px),340px)}
-  html body .breath-canvas{min-height:clamp(180px,calc(100dvh - 640px),300px)}
-  .breath-cycle{max-width:180px}
-  .breath-parts dd{display:none}
+/* ---------- Short phones (iPhone SE, 667px tall): a slightly shorter model, tighter blocks and a smaller staff, so
+   the whole page still fits without scrolling. ---------- */
+@media (max-width: 760px) and (max-height: 720px) {
+  .emb-views { margin-bottom: 8px; }
+  .emb-canvas { height: clamp(165px, calc(100dvh - 500px), 340px); }
+  .emb-canvas.breath-canvas { min-height: clamp(150px, calc(100dvh - 540px), 320px); }
+  .emb-block { padding: 10px 0; }
+  .emb-staff { width: 70px; }
+  .emb .workbench__panel:has(.breath-cycle) .emb-block { padding: 8px 0; }
+  .breath-cycle { max-width: 150px; }
+  .breath-cycle text { font-size: 19px; }
 }
-/* Breathing's guidance sentence is the panel's plain text, not the embouchure's labelled tip block. */
-.emb .breath-title{margin:0}
-.emb .workbench__panel:has(.breath-cycle) p.emb-cue{padding-top:0;border-top:0;margin:0;font-size:14px;line-height:1.5}
-/* No 96px of empty room under the workbench (it alone made Breathing scroll on an 800px window). */
-html body .studio-page:has(.emb){padding-bottom:24px}
 
-/* "Restore default view" is the studio's text action (14px, 500, grey); this page's general button rule had made it
-   12px/600 in a grey pill. */
-html body .emb .emb-viewport-top .text-action{min-height:32px;padding:0 4px;border:0;background:transparent;font-size:13px;font-weight:500;color:#6f7178}
-@media(hover:hover){html body .emb .emb-viewport-top .text-action:hover{background:transparent;color:#292a33;transform:none}}
-/* Breathing: fewer lines. Each body part is one line (name · what it does); the circle sits centred in the room left
-   in the panel, its legend right under it. */
-.emb .breath-parts div{display:grid;grid-template-columns:96px minmax(0,1fr);align-items:baseline;gap:10px}
-.emb .breath-parts dd{margin:0}
-.emb .workbench__panel:has(.breath-cycle) .breath-cycle{margin:auto 0;align-self:center}
-.emb .workbench__panel:has(.breath-cycle) .breath-legend{order:10;justify-content:center;width:100%}
+/* ---------- Touch screens: every control gets a 44px tall hit area without changing how it looks (an invisible
+   layer centred on it). The note slider is simply made taller; its track stays centred. ---------- */
+@media (pointer: coarse) {
+  .emb .emb-views button, .emb .emb-action, .emb .emb-overlay .text-action { position: relative; }
+  .emb .emb-views button::after, .emb .emb-action::after, .emb .emb-overlay .text-action::after {
+    content: ""; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: 44px; transform: translate(-50%, -50%);
+  }
+  .emb-range input[type="range"] { height: 44px; }
+  .emb-range { margin: -10px 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .emb .emb-registers button { transition: none; }
+}

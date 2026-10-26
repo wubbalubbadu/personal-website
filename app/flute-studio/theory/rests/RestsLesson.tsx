@@ -76,6 +76,7 @@ export default function RestsLesson(){
         <text x={l.xs[b]} y="250" className="rests-count">{b+1}</text>
         {running&&beat===b&&<circle key={`beat-${audio.beat}-${b}`} className="rests-pulse" cx={l.xs[b]} cy="275" r="7"/>}
       </g>)}
+      {stage===0&&<rect className="rests-touch" x={l.xs[1]-50} y="80" width="100" height="150" aria-hidden="true" onClick={replace}/>}
       {stage===0?<rect className="rests-hit is-inviting" x={l.xs[1]-32} y="92" width="64" height="125" rx="12" role="button" tabIndex={0} aria-label={tr('Make beat 2 silent','让第 2 拍安静')} onClick={replace} onKeyDown={e=>keyAction(e,replace)}/>:<text className="rests-caption" x={l.xs[1]} y="314">{labelFor(1)}</text>}
       {tapMarks.map((at,i)=><circle key={i} cx={l.beatX(Math.max(0,Math.min(4,at)))} cy="85" r="6" className={`rests-tap${tapResult==='correct'?' is-right':''}`}/>)}
     </>,4,stage===1?[1]:[]);
@@ -132,6 +133,7 @@ export default function RestsLesson(){
       <EngravedRow clef={false} notes={notes} meter={{top:4,bottom:4}} hidden={passed?[]:[r.gap]} right={RIGHT} viewBox={FRAME} interactive active={audio.active} appear={passed?[r.gap]:[]} label={names[step]}>{l=>{
         const x=l.xs[r.gap];
         return <>
+          {!passed&&<rect className="rests-touch" x={x-50} y="80" width="100" height="150" aria-hidden="true" onClick={()=>{if(choice!==null)submit(choice)}}/>}
           {!passed&&<rect className={`rests-hit rests-gap${choice!==null?' is-selected':''}`} x={x-35} y="95" width="70" height="119" rx="12" role="button" tabIndex={0} aria-label={tr('Place the selected rest in the gap','把选中的休止符放进空缺')} onClick={()=>{if(choice!==null)submit(choice)}} onKeyDown={e=>keyAction(e,()=>{if(choice!==null)submit(choice)})}/>}
           {hint&&notes.map((n,i)=><text key={i} className="rests-caption" x={l.xs[i]} y="243">{n.v} {tr('beat','拍')}</text>)}
           {wrong!==null&&<g>

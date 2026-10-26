@@ -1,0 +1,200 @@
+/* Direction 3: staff of notes. One line of music; each note is a labelled
+ * link that plays a soft flute note. Under it, a concert-program list with
+ * one plain line per place, so nothing depends on reading notation. */
+
+.sn-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px 0;
+}
+.sn-name {
+  font-family: var(--font-pix);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+}
+.sn-body {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 4px 16px 28px;
+}
+.sn-hero {
+  display: grid;
+  grid-template-columns: 1fr 72px;
+  gap: 8px;
+  align-items: center;
+}
+.sn-hero h1 {
+  margin: 0 0 4px;
+  font-size: 27px;
+  font-weight: 500;
+}
+.sn-who {
+  margin: 0;
+  font-size: 15.5px;
+  line-height: 1.45;
+  color: var(--ink-70);
+}
+.sn-h2 {
+  margin: 14px 0 0;
+  font-family: var(--font-pix);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-50);
+}
+
+/* ---- the staff ---- */
+.sn-staff {
+  position: relative;
+  height: 158px;
+}
+.sn-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.sn-lines line {
+  stroke: var(--ink-50);
+  stroke-width: 1;
+}
+.sn-lines .sn-bar {
+  stroke-width: 2;
+}
+.sn-clef {
+  position: absolute;
+  left: 0;
+  top: 14px;
+  font-family: "Bravura", "Noto Music", "Apple Symbols", "Segoe UI Symbol", serif;
+  font-size: 70px;
+  line-height: 1;
+  color: var(--ink-70);
+}
+.sn-note {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--x);
+  width: 64px;
+  margin-left: -32px;
+  border-radius: 14px;
+}
+.sn-note:hover,
+.sn-note:active {
+  background: var(--accent-wash);
+}
+.sn-glyph {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--y) - 40px);
+  width: 24px;
+  height: 80px;
+  margin-left: -12px;
+  overflow: visible;
+}
+.sn-head {
+  fill: var(--accent);
+}
+.sn-stem,
+.sn-ledger {
+  stroke: var(--accent);
+  stroke-width: 1.8;
+}
+.sn-ledger {
+  stroke: var(--ink-50);
+  stroke-width: 1;
+}
+.sn-note:hover .sn-glyph,
+.sn-note:focus-visible .sn-glyph {
+  animation: sn-bounce 0.45s steps(4, jump-none);
+}
+@keyframes sn-bounce {
+  0% { transform: translateY(0); }
+  40% { transform: translateY(-6px) rotate(-6deg); }
+  100% { transform: translateY(0); }
+}
+.sn-label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 108px;
+  text-align: center;
+  font-size: 12.5px;
+  line-height: 1.2;
+  font-weight: 500;
+  color: var(--accent);
+}
+
+.sn-hint {
+  margin: 2px 0 6px;
+  font-size: 12.5px;
+  color: var(--ink-50);
+}
+
+/* ---- the program ---- */
+.sn-program {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--rule);
+}
+.sn-item {
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  align-items: baseline;
+  min-height: 44px;
+  padding: 9px 2px;
+  border-bottom: 1px solid var(--rule);
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--ink-70);
+}
+.sn-item i {
+  font-family: Georgia, "Times New Roman", serif;
+  color: var(--accent-2);
+}
+.sn-item b {
+  font-weight: 500;
+  color: var(--ink);
+}
+.sn-item:hover b {
+  color: var(--accent);
+}
+
+@media (min-width: 760px) {
+  .sn-top {
+    padding: 22px 40px 0;
+  }
+  .sn-body {
+    padding-top: 6vh;
+  }
+  .sn-hero {
+    grid-template-columns: 1fr 120px;
+  }
+  .sn-hero h1 {
+    font-size: 44px;
+  }
+  .sn-who {
+    font-size: 18px;
+  }
+  .sn-h2 {
+    margin-top: 28px;
+  }
+  .sn-staff {
+    height: 170px;
+  }
+  .sn-label {
+    font-size: 14px;
+  }
+  .sn-note {
+    width: 100px;
+    margin-left: -50px;
+  }
+  .sn-item {
+    font-size: 15px;
+  }
+}

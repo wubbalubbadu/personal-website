@@ -1,0 +1,21 @@
+/* The one number stepper (Stepper.tsx). Values from the controls it replaced: the plain grey #f1f1f2 of the studio's
+   action buttons, #45464f signs, a #e4e4e7 hover, 12px corners (10px small). Medium is 36px tall (Breathing Lab,
+   tendency test, the tools panel's tempo); small is 28px for option rows (octave, meter, focus minutes).
+   Two-class selectors, so a page's own `button` or `>span` rules can't reach inside. */
+.stepper{display:inline-flex;align-items:center;justify-content:space-between;gap:2px;height:36px;padding:0 3px;box-sizing:border-box;border-radius:12px;background:#f1f1f2;color:#292a33;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.stepper .stepper__button{position:relative;flex:none;display:grid;place-items:center;width:30px;height:30px;padding:0;border:0;border-radius:9px;background:transparent;color:#45464f;font:inherit;font-size:17px;font-weight:400;line-height:1;touch-action:manipulation}
+.stepper .stepper__button:disabled{opacity:.35}
+@media(hover:hover){.stepper .stepper__button:hover:not(:disabled){background:#e4e4e7}}
+.stepper .stepper__value{flex:1;color:#292a33;min-width:2.2em;padding:0 2px;text-align:center;font-size:16px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;border-radius:6px}
+.stepper__value:focus{outline:none}
+.stepper__value:focus-visible{box-shadow:0 0 0 2px rgba(103,137,86,.32)}
+.stepper .stepper__input{width:3ch;box-sizing:content-box;font-family:inherit;line-height:inherit;border:0;background:transparent;appearance:textfield;-moz-appearance:textfield;-webkit-user-select:text;user-select:text}
+.stepper__input::-webkit-inner-spin-button,.stepper__input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+/* A worded value ("Octave 4", "25 min"): small and grey, like a label. */
+.stepper.stepper--text .stepper__value{padding:0 4px;font-size:12px;font-weight:600;color:#6f7178}
+.stepper--small{height:28px;border-radius:10px}
+.stepper.stepper--small .stepper__button{width:24px;height:24px;border-radius:8px;font-size:15px}
+.stepper.stepper--small .stepper__value{font-size:14px}
+.stepper.stepper--small.stepper--text .stepper__value{font-size:12px}
+/* Touch screens: each sign keeps its look but answers to a 44px square around it. */
+@media(pointer:coarse){.stepper .stepper__button::after{content:"";position:absolute;left:50%;top:50%;width:44px;height:44px;transform:translate(-50%,-50%)}}

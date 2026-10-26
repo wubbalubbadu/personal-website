@@ -1,0 +1,7 @@
+/* Rhythm drills card on Learn (RhythmDrillsPreview): a drill's staff with taps landing under the notes, on a loop. */
+.preview-card--rhythm-drills .preview-card__stage{background:var(--tint-pink)}
+.rd-preview{width:min(88%,330px)}
+.rd-preview .engraved-row{animation:none}
+.rd-preview__tap{animation:rd-preview-tap 4.2s ease infinite both}
+@keyframes rd-preview-tap{0%{opacity:0}4%,82%{opacity:1}92%,100%{opacity:0}}
+@media(prefers-reduced-motion:reduce){.rd-preview__tap{animation:none}}

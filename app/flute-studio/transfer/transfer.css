@@ -44,3 +44,9 @@
 .storage-row__delete svg{width:18px;height:18px}
 @media(hover:hover){.storage-row__delete:hover{color:#292a33}}
 .storage-row__delete.is-armed{color:#a5372f}
+.storage-row>.storage-row__months{flex:none;gap:4px}
+.storage-row__months .chevron-icon{width:16px;height:16px;transition:transform .15s}
+.storage-row__months[aria-expanded="true"] .chevron-icon{transform:rotate(180deg)}
+.storage-row__confirm{margin:-4px 0 10px;font-size:13px;color:#a5372f}
+.storage-row>span{flex:1;min-width:0}
+.storage-row__months,.storage-row__delete span{white-space:nowrap}

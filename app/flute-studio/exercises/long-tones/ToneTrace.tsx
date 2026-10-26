@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import { traceY } from '../../lib/toneTrace';
 import { centsFromMidi } from '../../lib/pitch';
 import { toneFinding, toneSummary, type ToneAttempt } from '../../lib/toneSession';
+import type { PitchTrace } from '../../lib/pitchTraces';
 
 const W = 1000, H = 200;
 /** Horizontal room per second: condensed enough that ~15s fit in the panel. Longer takes scroll; they never squeeze. */
@@ -35,7 +36,13 @@ const endOf = (a: ToneAttempt) => a.endedAt ?? a.frames.at(-1)?.at ?? a.startedA
  * against its own written pitch. Labels are HTML over the plot, not SVG
  * text, because the plot stretches to fit and would stretch the letters.
  */
-export function ToneTrace({attempts, selectedId=null, onSelect, zh=false}: {attempts: ToneAttempt[]; selectedId?: number|null; onSelect?: (attemptId: number) => void; zh?: boolean}) {
+/**
+ * An earlier attempt to lay behind today's (Long tones' Compare with): for each note, which saved trace to draw
+ * faintly, and the one line to show under it once the note is finished.
+ */
+export type ToneCompare = { trace: (attempt: ToneAttempt) => PitchTrace | undefined; line: (attempt: ToneAttempt) => string | null };
+
+export function ToneTrace({attempts, selectedId=null, onSelect, zh=false, compare}: {attempts: ToneAttempt[]; selectedId?: number|null; onSelect?: (attemptId: number) => void; zh?: boolean; compare?: ToneCompare}) {
   const scroll = useRef<HTMLDivElement>(null);
   const first = attempts[0]?.startedAt ?? 0;
   const played = attempts.length ? endOf(attempts.at(-1)!) - first : 0;
@@ -68,6 +75,20 @@ export function ToneTrace({attempts, selectedId=null, onSelect, zh=false}: {atte
             <rect x="0" y={traceY(10)} width={W} height={traceY(-10) - traceY(10)} className="tone-plot-band"/>
             {GRID.map(c => <line key={c} x1="0" x2={W} y1={traceY(c)} y2={traceY(c)} className={c === 0 ? 'tone-plot-zero' : 'tone-plot-grid'}/>)}
             {segments.slice(1).map(({a, start}) => <line key={a.id} x1={start * W / 100} x2={start * W / 100} y1="0" y2={H} className="tone-plot-divider"/>)}
+            {compare && attempts.map((a, i) => {
+              // The earlier trace starts where today's note started, at the same time scale, and stops where the next
+              // note begins (the newest note may run on into the empty room ahead: where you were last time).
+              const t = compare.trace(a);
+              if (!t) return null;
+              const limit = i < attempts.length - 1 ? attempts[i + 1].startedAt : first + total;
+              const runs: string[][] = [[]];
+              t.c.forEach((c, k) => {
+                const at = a.startedAt + k * t.step + t.step / 2;
+                if (c === null || at > limit) { if (runs.at(-1)!.length) runs.push([]); return; }
+                runs.at(-1)!.push(`${(pct(at) * W / 100).toFixed(2)},${traceY(c).toFixed(2)}`);
+              });
+              return runs.filter(r => r.length > 1).map((r, k) => <path key={`c${a.id}-${k}`} d={'M' + r.join(' L')} className="tone-plot-compare"/>);
+            })}
             {(() => {
               // One continuous trace across the whole group. Each note is still
               // measured against its own written pitch; the messy instants at a
@@ -117,6 +138,7 @@ export function ToneTrace({attempts, selectedId=null, onSelect, zh=false}: {atte
         <span className="tone-note-card-head"><b>{a.target.pitch}</b><span>{(s.duration / 1000).toFixed(1)}s</span></span>
         <strong>{f.text}</strong>
         {s.reliable && <small>{zh ? '中心' : 'Center'} {signed(s.center)}¢ · {zh ? '结尾' : 'Ending'} {signed(s.drift)}¢</small>}
+        {compare && a.endedAt !== null && (() => { const line = compare.line(a); return line && <small className="tone-note-compare">{line}</small>; })()}
       </button>;
     })}</div>
   </section>;

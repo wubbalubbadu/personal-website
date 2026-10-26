@@ -5,7 +5,10 @@ import {useLanguage} from "../i18n/LanguageContext";
 import {apply,collect,decode,describe,drawingSize,encode,markBackedUp,removeStored,storageReport,type DecodeError,type Snapshot} from "../lib/transfer";
 import {musicLibrary} from "../../../content/music-library";
 import {PracticeIcon} from "../components/PracticeIcon";
+import {ChevronIcon} from "../components/HeaderIcons";
+import {clearHistoryMonth,historyMonths,type HistoryKind,type HistoryMonth} from "../lib/historyMonths";
 import "../practice/practice-page.css";
+import OfflineMusicCard from "./OfflineMusicCard";
 import "./transfer.css";
 
 const noSubscribe=()=>()=>{};
@@ -133,6 +136,7 @@ export default function TransferPage(){
         </section>
 
         <StoredOnDevice zh={zh}/>
+        <OfflineMusicCard zh={zh}/>
       </div>
     </div>
   </main>;
@@ -148,21 +152,45 @@ function scoreTitle(scoreId:string,zh:boolean){
 /**
  * Stored on this device: every kind of saved data with its size, and pencil drawings piece by piece, each with a
  * trash button (COMPONENTS.md Trash) that asks once ("Tap again to delete") before deleting from this device only.
+ * Practice history and pitch history also open into months, so one month can go without the rest; the second tap
+ * says exactly what that month holds.
  */
 function StoredOnDevice({zh}:{zh:boolean}){
-  const [version,setVersion]=useState(0),[armed,setArmed]=useState<string|null>(null);
+  const [version,setVersion]=useState(0),[armed,setArmed]=useState<string|null>(null),[open,setOpen]=useState<string|null>(null);
   const [report,setReport]=useState<ReturnType<typeof storageReport>|null>(null);
   // localStorage is only readable after hydration; re-read after every delete.
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(()=>setReport(storageReport(zh,id=>scoreTitle(id,zh))),[zh,version]);
-  useEffect(()=>{if(!armed)return;const timer=window.setTimeout(()=>setArmed(null),3000);return()=>window.clearTimeout(timer)},[armed]);
+  // A month's second tap comes after reading what it holds, so it waits longer.
+  useEffect(()=>{if(!armed)return;const timer=window.setTimeout(()=>setArmed(null),/^(practice|pitch):/.test(armed)?6000:3000);return()=>window.clearTimeout(timer)},[armed]);
   if(!report)return null;
+  const monthName=(month:string)=>{const [y,m]=month.split("-").map(Number);return new Date(y,m-1,1).toLocaleDateString(zh?"zh-CN":undefined,{year:"numeric",month:"long"})};
+  /** What a month holds, in words: the row's meta line, and (with the month) the confirmation. */
+  const holds=(row:HistoryMonth)=>[
+    row.sessions&&(zh?`${row.sessions} 次练习`:`${row.sessions} ${row.sessions===1?"session":"sessions"}`),
+    row.reps&&(zh?`${row.repDays} 天的重复次数`:`${row.repDays} ${row.repDays===1?"day":"days"} of repetitions`),
+    row.notes&&(zh?`${row.notes} 个测过的音`:`${row.notes} measured ${row.notes===1?"note":"notes"}`),
+  ].filter(Boolean).join(zh?"、":", ");
+  // Only the two kinds of dated history open into months; each opens when it has at least one month in it.
+  const hasMonths=(kind:HistoryKind)=>historyMonths(kind).length>0;
+  const monthList=(kind:HistoryKind,rows:HistoryMonth[])=><ul className="storage-list storage-list--pieces" id={`months-${kind}`}>{rows.map(row=>{
+    const id=`${kind}:${row.month}`,name=monthName(row.month),what=holds(row);
+    return <li key={id}>
+      <div className="storage-row"><span><b>{name}</b><small>{what}</small></span>
+        <button type="button" className={armed===id?"storage-row__delete is-armed":"storage-row__delete"} aria-label={armed===id?(zh?`再点一次删除${name}的 ${what}`:`Tap again to delete ${what} from ${name}`):(zh?`删除${name}`:`Delete ${name}`)}
+          onClick={()=>{if(armed!==id){setArmed(id);return}clearHistoryMonth(kind,row.month);setArmed(null);setVersion(v=>v+1)}}>{armed===id&&<span>{zh?"再点一次删除":"Tap again to delete"}</span>}<PracticeIcon name="delete"/></button>
+      </div>
+      {armed===id&&<p className="storage-row__confirm" role="status">{zh?`将从这台设备删除${name}的 ${what}。其他内容都不受影响。`:`Deletes ${what} from ${name} on this device. Nothing else changes.`}</p>}
+    </li>})}</ul>;
   const trash=(id:string,label:string,keys:string[])=><button type="button" className={armed===id?"storage-row__delete is-armed":"storage-row__delete"} aria-label={armed===id?(zh?`再点一次删除 ${label}`:`Tap again to delete ${label}`):(zh?`删除 ${label}`:`Delete ${label}`)} onClick={()=>{if(armed!==id){setArmed(id);return}removeStored(keys);setArmed(null);setVersion(v=>v+1)}}>{armed===id&&<span>{zh?"再点一次删除":"Tap again to delete"}</span>}<PracticeIcon name="delete"/></button>;
   return <section className="practice-card transfer-card storage-card" aria-labelledby="stored-title">
     <h2 id="stored-title">{zh?"这台设备上保存的内容":"Stored on this device"}</h2>
     <p className="transfer-card__hint">{zh?"删除只影响这台设备。想保留的话，先用上面的方法发送一份。":"Deleting only affects this device. To keep a copy, send it first with the card above."}</p>
     {report.groups.length?<ul className="storage-list">{report.groups.map(group=><li key={group.id}>
-      <div className="storage-row"><span><b>{group.label}</b><small>{kb(group.chars)}</small></span>{trash(group.id,group.label,group.keys)}</div>
+      <div className="storage-row"><span><b>{group.label}</b><small>{kb(group.chars)}</small></span>
+        {(group.id==="practice"||group.id==="pitch")&&hasMonths(group.id)&&<button type="button" className="text-action storage-row__months" aria-expanded={open===group.id} aria-controls={`months-${group.id}`} onClick={()=>{setOpen(open===group.id?null:group.id);setArmed(null)}}>{zh?"按月":"By month"}<ChevronIcon/></button>}
+        {trash(group.id,group.label,group.keys)}</div>
+      {(group.id==="practice"||group.id==="pitch")&&open===group.id&&monthList(group.id,historyMonths(group.id))}
       {group.id==="drawings"&&report.drawings.length>1&&<ul className="storage-list storage-list--pieces">{report.drawings.map(piece=><li key={piece.id}><div className="storage-row"><span><b>{piece.label}</b><small>{kb(piece.chars)}</small></span>{trash(piece.id,piece.label,piece.keys)}</div></li>)}</ul>}
     </li>)}</ul>:<p className="transfer-card__hint">{zh?"这台设备上还没有保存任何内容。":"Nothing is stored on this device yet."}</p>}
   </section>;

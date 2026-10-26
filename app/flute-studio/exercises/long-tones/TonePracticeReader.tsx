@@ -4,9 +4,11 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, type ComponentProps } from 'react';
 import { ScoreViewer } from '../../components/ScoreViewer';
 import { useToneSession } from '../../lib/useToneSession';
+import type { ToneAttempt } from '../../lib/toneSession';
 import { type ToneBlock, type TonePattern } from './long-tone-score';
 import { appendPitchHistory, recordsFromAttempts, sessionReport, HOLD_GOAL_MS, type PitchReport } from '../../lib/pitchHistory';
-import { ToneTrace } from './ToneTrace';
+import { ToneTrace, type ToneCompare } from './ToneTrace';
+import { readAllTraces, saveTrace, removeTraces, traceFromAttempt, pickTrace, compareLine, wobbleOf, type CompareMode, type PitchTrace } from '../../lib/pitchTraces';
 import { ToneMarks, PitchMic } from './ToneMarks';
 import { ToneNotation } from './ToneNotation';
 import { FluteDiagram } from '../../components/FluteDiagram';
@@ -36,6 +38,39 @@ export function TonePracticeReader({groups:providedGroups,pattern,zh,...reader}:
   // replaces it (see ToneSession), so there is only ever one take to show.
   const take=all.filter(a=>a.target.group===group).sort((a,b)=>a.target.id-b.target.id);
   const highlighted=review===null?null:take.find(a=>a.target.id===review)?.id??null;
+  // Compare with: each finished, reliable note is saved as a compact trace as soon as it ends (so a repeat already has
+  // something to compare against), and an earlier one can be drawn behind today's. The choice is remembered.
+  const [compareMode,setCompareMode]=useState<CompareMode>(()=>{try{const m=localStorage.getItem(COMPARE_KEY);return m==='off'||m==='best'?m:'last'}catch{return 'last'}});
+  const [traces,setTraces]=useState<Record<string,PitchTrace[]>>(()=>typeof window==='undefined'?{}:readAllTraces());
+  // This session's attempts that became traces: attempt id to its trace (null when the note was too short or patchy
+  // to keep), so a note never compares with itself and Clear can take them back out.
+  const ownTraces=useRef(new Map<number,PitchTrace|null>()),wobbles=useRef(new Map<number,number|null>());
+  useEffect(()=>{
+    let changed=false;
+    for(const a of session.attempts){
+      if(ownTraces.current.has(a.id))continue;
+      const trace=traceFromAttempt(a);
+      ownTraces.current.set(a.id,trace);
+      if(trace){saveTrace(a.target.midi,trace);changed=true}
+    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the saved traces live in localStorage; this mirrors them
+    if(changed)setTraces(readAllTraces());
+  },[session.attempts]);
+  const chooseCompare=(mode:CompareMode)=>{setCompareMode(mode);try{localStorage.setItem(COMPARE_KEY,mode)}catch{/* the choice just isn't remembered */}};
+  /** Earlier traces only: anything saved after this note was played is not "last time" for it. */
+  const earlierFor=(a:ToneAttempt)=>{
+    const own=ownTraces.current.get(a.id),list=traces[a.target.midi]??[];
+    return pickTrace(own?list.filter(t=>t.at<own.at):list,compareMode,own?.id);
+  };
+  const compare:ToneCompare|undefined=compareMode==='off'?undefined:{
+    trace:earlierFor,
+    line:a=>{
+      const then=earlierFor(a);if(!then)return null;
+      if(!wobbles.current.has(a.id))wobbles.current.set(a.id,wobbleOf(a));
+      const now=wobbles.current.get(a.id);
+      return now==null?null:compareLine(now,then,compareMode,zh);
+    },
+  };
   // Clearing cannot be undone, so it takes a second tap rather than a dialog.
   useEffect(()=>{if(!confirmClear)return;const timer=setTimeout(()=>setConfirmClear(false),3000);return()=>clearTimeout(timer)},[confirmClear]);
   const select=(event:number)=>{
@@ -72,6 +107,7 @@ export function TonePracticeReader({groups:providedGroups,pattern,zh,...reader}:
     if(!confirmClear){setConfirmClear(true);return}
     // Clear throws this take away before it reaches your history.
     session.clear();saved.current.clear();setReview(null);setConfirmClear(false);
+    removeTraces([...ownTraces.current.values()].flatMap(t=>t?[t.id]:[]));ownTraces.current.clear();wobbles.current.clear();setTraces(readAllTraces());
   };
   const pitchButton=<button className={`tool has-tip pitch-mode-trigger ${enabled?'on':''}`} aria-pressed={enabled} data-tip={zh?'检查每个音的音准':'Check the pitch of each note you play'} onClick={()=>{if(enabled)closeMode();else{setEnabled(true);setReport(null);if(targets.length)void session.start()}}}><SpectrumDef id="pitch-spectrum" stops={COOL_STOPS}/><PracticeIcon name="tuner" gradient="pitch-spectrum"/><span className="pitch-mode-label">{zh?'音准':'Pitch'}</span></button>;
   const pitchRow=enabled&&<div className="pitch-row markup-row"><div className="pitch-row-surface markup-row-surface annotation-toolbar" role="toolbar" aria-label={zh?'音准工具':'Pitch tools'}>
@@ -88,8 +124,11 @@ export function TonePracticeReader({groups:providedGroups,pattern,zh,...reader}:
   const graph=<div className="tone-graph">
     <header className="tone-graph-head">
       <strong>{zh?`第 ${group+1} 组`:`Group ${group+1}`}</strong><span>{groupLine}</span>
+      <div className="tone-compare"><span id="tone-compare-label">{zh?'对比':'Compare with'}</span>
+        <div className="view-switch" role="group" aria-labelledby="tone-compare-label">{COMPARE_MODES.map(m=><button key={m.id} type="button" aria-pressed={compareMode===m.id} onClick={()=>chooseCompare(m.id)}>{zh?m.zh:m.en}</button>)}</div>
+      </div>
     </header>
-    <ToneTrace attempts={take} selectedId={highlighted} onSelect={id=>{const a=take.find(x=>x.id===id);if(a)setReview(a.target.id)}} zh={zh}/>
+    <ToneTrace attempts={take} selectedId={highlighted} onSelect={id=>{const a=take.find(x=>x.id===id);if(a)setReview(a.target.id)}} zh={zh} compare={compare}/>
   </div>;
   const shownNote=targets[review??session.cursor];
   const entry=shownNote?fingeringsForMidi(shownNote.midi):null;
@@ -119,6 +158,9 @@ export function TonePracticeReader({groups:providedGroups,pattern,zh,...reader}:
       scoreMarks={enabled?context=><ToneMarks {...context} active={session.cursor} cursorAfter={session.cursorAfter} live={session.live} attempts={session.attempts} running={running} onSelect={select} zh={zh}/>:undefined}/>
   </div>;
 }
+
+const COMPARE_KEY='cookie:pitch-compare';
+const COMPARE_MODES:{id:CompareMode;en:string;zh:string}[]=[{id:'off',en:'Off',zh:'关'},{id:'last',en:'Last time',zh:'上次'},{id:'best',en:'Steadiest',zh:'最稳的一次'}];
 
 /** Cooler sweep than Tones' warm one: Pitch is the "listening" tool, Tones the "choosing" one. */
 const COOL_STOPS=['#5fb3b3','#5b9bd5','#7c83db','#9a7fd1','#5fb3b3'];

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import {MicBlocked} from "../../components/MicBlocked";
+import {Stepper} from "../../components/Stepper";
 import {useEffect,useRef,useState,useSyncExternalStore} from "react";
 import {usePitchStream} from "../../lib/usePitchStream";
 import {useLanguage} from "../../i18n/LanguageContext";
@@ -129,8 +130,8 @@ export default function TendencyTest(){
           reach={[LOWEST,HIGHEST]} slots={2}
           onDrag={(which,midi)=>which===0?setRange([Math.max(LOWEST,Math.min(midi,high-MIN_SPAN)),high]):setRange([low,Math.min(HIGHEST,Math.max(midi,low+MIN_SPAN))])}/>
         <div className="tendency__range">
-          <RangeStepper label={zh?"最低":"Lowest"} value={low} onChange={v=>setRange([Math.max(LOWEST,Math.min(v,high-MIN_SPAN)),high])}/>
-          <RangeStepper label={zh?"最高":"Highest"} value={high} onChange={v=>setRange([low,Math.min(HIGHEST,Math.max(v,low+MIN_SPAN))])}/>
+          <RangeStepper label={zh?"最低":"Lowest"} value={low} min={LOWEST} max={high-MIN_SPAN} onChange={v=>setRange([Math.max(LOWEST,Math.min(v,high-MIN_SPAN)),high])}/>
+          <RangeStepper label={zh?"最高":"Highest"} value={high} min={low+MIN_SPAN} max={HIGHEST} onChange={v=>setRange([low,Math.min(HIGHEST,Math.max(v,low+MIN_SPAN))])}/>
         </div>
         <button type="button" className="tendency__primary" onClick={()=>void startListening()}>{zh?"开始":"Start"}</button>
         {/* One way back to the usual range, and only once it has been changed. */}
@@ -177,7 +178,7 @@ export default function TendencyTest(){
         <div className="tendency__summary">{summary(result,zh).map(line=><p key={line}>{line}</p>)}</div>
         <div className="tendency__switch" role="group">
           <button type="button" aria-pressed={relative} onClick={()=>setRelative(true)}>{zh?"相对你的调音":"Relative to your tuning"}</button>
-          <button type="button" aria-pressed={!relative} onClick={()=>setRelative(false)}>{zh?"相对 A = 440":"Against A = 440"}</button>
+          <button type="button" aria-pressed={!relative} onClick={()=>setRelative(false)}>{zh?`相对 A = ${result.a4??440}`:`Against A = ${result.a4??440}`}</button>
         </div>
         <HeatMap result={result} relative={relative} zh={zh}/>
         <div className="tendency__actions">
@@ -189,10 +190,11 @@ export default function TendencyTest(){
   </main>;
 }
 
-function RangeStepper({label,value,onChange}:{label:string;value:number;onChange:(v:number)=>void}){
+function RangeStepper({label,value,min,max,onChange}:{label:string;value:number;min:number;max:number;onChange:(v:number)=>void}){
   return <div className="tendency__stepper">
-    <span>{label}</span>
-    <div><button type="button" aria-label={`${label} lower`} onClick={()=>onChange(value-1)}>−</button><b>{spell(value)}</b><button type="button" aria-label={`${label} higher`} onClick={()=>onChange(value+1)}>+</button></div>
+    <span aria-hidden="true">{label}</span>
+    <Stepper className="tendency__step" value={value} min={min} max={max} onChange={onChange} display={spell(value)} valueText={spell(value)}
+      label={label} decreaseLabel={`${label} lower`} increaseLabel={`${label} higher`}/>
   </div>;
 }
 

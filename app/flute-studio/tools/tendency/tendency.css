@@ -10,11 +10,9 @@
 
 .tendency__range{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 .tendency__stepper{display:grid;gap:5px;justify-items:center}
-.tendency__stepper>span{font-size:12px;font-weight:600;color:#6f7178}
-.tendency__stepper>div{display:inline-flex;align-items:center;gap:2px;height:40px;padding:0 4px;border-radius:12px;background:#f1f1f2}
-.tendency__stepper button{width:32px;height:32px;border:0;border-radius:9px;background:transparent;color:#45464f;font:inherit;font-size:18px;cursor:pointer}
-.tendency__stepper button:hover{background:#e4e4e7}
-.tendency__stepper b{width:58px;font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.tendency__stepper>span:first-child{font-size:12px;font-weight:600;color:#6f7178}
+/* The note steppers are the studio Stepper; the value keeps room for "C#7" so the pill never changes width. */
+.tendency__step .stepper__value{width:58px;flex:none}
 /* Steady controls: no hover lift or press shrink on this page's buttons. */
 .tendency button,.tendency a{transform:none!important}
 .tendency__presets,.tendency__switch{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}

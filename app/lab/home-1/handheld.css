@@ -1,0 +1,328 @@
+/* The cat's handheld. A deliberate object on the page: a little game device
+ * with soft plastic shading, not a framed window. Two bodies share the
+ * screen, D-pad and LCD text: .hh--psp (wide) and .hh--gb (portrait). */
+
+.hh {
+  --dev-body: #f3c3d4;
+  --dev-hi: #fde3ec;
+  --dev-lo: #e2a3bb;
+  --dev-ink: #8a4062;
+  --dev-bezel: #1d1720;
+  --dev-pad: #2d2630;
+  --dev-pad-hi: #463c4a;
+  position: relative;
+  width: var(--w);
+  max-width: 100%;
+  background: linear-gradient(170deg, var(--dev-hi) 0%, var(--dev-body) 38%, var(--dev-lo) 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -4px 0 rgba(0, 0, 0, 0.1),
+    0 22px 36px -22px rgba(40, 10, 30, 0.45);
+  color: var(--dev-ink);
+}
+.hh--gb {
+  --dev-body: #e6e0d2;
+  --dev-hi: #f4f0e7;
+  --dev-lo: #cfc7b4;
+  --dev-ink: #3d3a6a;
+  --dev-bezel: #5b566c;
+  --dev-ab: #b8326b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .hh {
+    --dev-body: #3b2739;
+    --dev-hi: #553852;
+    --dev-lo: #241722;
+    --dev-ink: #f0b6cd;
+    --dev-pad: #17121a;
+    --dev-pad-hi: #2c242e;
+  }
+  :root:not([data-theme="light"]) .hh--gb {
+    --dev-body: #36323f;
+    --dev-hi: #48434f;
+    --dev-lo: #24212b;
+    --dev-ink: #c5bce6;
+    --dev-bezel: #1f1b25;
+    --dev-ab: #ff6eac;
+  }
+}
+:root[data-theme="dark"] .hh {
+  --dev-body: #3b2739;
+  --dev-hi: #553852;
+  --dev-lo: #241722;
+  --dev-ink: #f0b6cd;
+  --dev-pad: #17121a;
+  --dev-pad-hi: #2c242e;
+}
+:root[data-theme="dark"] .hh--gb {
+  --dev-body: #36323f;
+  --dev-hi: #48434f;
+  --dev-lo: #24212b;
+  --dev-ink: #c5bce6;
+  --dev-bezel: #1f1b25;
+  --dev-ab: #ff6eac;
+}
+
+.hh button {
+  position: relative;
+  padding: 0;
+  border: 0;
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+/* Small controls get a finger-sized hit area without looking bigger. */
+.hh button::before {
+  content: "";
+  position: absolute;
+  inset: -9px;
+}
+
+/* ---- screen, shared ---- */
+.hh-bezel {
+  padding: 6px;
+  border-radius: 9px;
+  background: var(--dev-bezel);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+.hh-screen {
+  position: relative;
+  overflow: hidden;
+  border-radius: 3px;
+  background: #0d0b10;
+}
+.hh--psp .hh-screen {
+  aspect-ratio: 16 / 9;
+}
+.hh--gb .hh-screen {
+  aspect-ratio: 10 / 9;
+}
+/* a little glass sheen across the screen */
+.hh-screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(125deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 38%);
+}
+.hh-lcd {
+  position: absolute;
+  z-index: 2;
+  left: 6px;
+  top: 5px;
+  pointer-events: none;
+  font-family: var(--font-pix);
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  color: #fff;
+  text-shadow: 1px 1px 0 #000, -1px 0 0 #000, 0 -1px 0 #000;
+}
+.hh-brand {
+  font-family: var(--font-pix);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  color: var(--dev-ink);
+  opacity: 0.85;
+}
+
+/* ---- D-pad, shared ---- */
+.hh-dpad {
+  --s: 54px;
+  width: var(--s);
+  height: var(--s);
+  display: grid;
+  grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.25));
+}
+.hh-dpad > * {
+  background: var(--dev-pad);
+}
+.hh-dpad__up { grid-area: 1 / 2; border-radius: 4px 4px 0 0; }
+.hh-dpad__down { grid-area: 3 / 2; border-radius: 0 0 4px 4px; }
+.hh-dpad__left { grid-area: 2 / 1; border-radius: 4px 0 0 4px; }
+.hh-dpad__right { grid-area: 2 / 3; border-radius: 0 4px 4px 0; }
+.hh-dpad__hub { grid-area: 2 / 2; }
+.hh-dpad button:hover,
+.hh-dpad button:active {
+  background: var(--dev-pad-hi);
+}
+.hh-dpad button:active {
+  transform: translateY(1px);
+}
+/* little arrows */
+.hh-dpad__left::after,
+.hh-dpad__right::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border: 4px solid transparent;
+  transform: translate(-50%, -50%);
+}
+.hh-dpad__left::after { border-right-color: rgba(255, 255, 255, 0.35); margin-left: -2px; }
+.hh-dpad__right::after { border-left-color: rgba(255, 255, 255, 0.35); margin-left: 2px; }
+
+/* ---- the wide one ---- */
+.hh--psp {
+  --w: 300px;
+  aspect-ratio: 2.25;
+  display: grid;
+  grid-template-columns: 22% 56% 22%;
+  align-items: center;
+  border-radius: 20% / 46%;
+}
+.hh-middle {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  padding-top: 9px;
+}
+.hh-middle .hh-bezel {
+  width: 100%;
+}
+.hh-side {
+  display: grid;
+  place-items: center;
+}
+.hh-face {
+  --f: 62px;
+  position: relative;
+  width: var(--f);
+  height: var(--f);
+}
+.hh .hh-face__btn {
+  position: absolute;
+  width: 36%;
+  height: 36%;
+  border-radius: 50%;
+  background: var(--dev-pad);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
+  font-size: 11px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+}
+.hh-face__btn--top { top: 0; left: 32%; color: #6bdcae; }
+.hh-face__btn--right { top: 32%; right: 0; color: #ff8080; }
+.hh-face__btn--bottom { bottom: 0; left: 32%; color: #86b8ff; }
+.hh-face__btn--left { top: 32%; left: 0; color: #ffa3d8; }
+.hh-face__btn:hover {
+  background: var(--dev-pad-hi);
+}
+.hh-face__btn[aria-pressed="true"] {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 0 0 2px var(--dev-hi);
+}
+.hh-speaker {
+  position: absolute;
+  bottom: 13%;
+  width: 7%;
+  height: 7%;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.28) 1.2px, transparent 1.6px) 0 0 / 5px 5px;
+  opacity: 0.7;
+}
+.hh-speaker--left { left: 11%; }
+.hh-speaker--right { right: 11%; }
+
+/* ---- the portrait one ---- */
+.hh--gb {
+  --w: 140px;
+  aspect-ratio: 0.6;
+  display: flex;
+  flex-direction: column;
+  padding: 8% 7% 0;
+  border-radius: 7% 7% 28% 7% / 4% 4% 17% 4%;
+}
+.hh-gb__top {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+}
+.hh--gb .hh-bezel {
+  width: 100%;
+  padding: 11% 9% 9%;
+  border-radius: 6% 6% 20% 6% / 6% 6% 20% 6%;
+}
+.hh-led {
+  position: absolute;
+  z-index: 1;
+  left: 3%;
+  top: 24%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ff4d6d;
+  box-shadow: 0 0 6px #ff4d6d;
+}
+.hh--gb .hh-brand {
+  justify-self: start;
+  font-style: italic;
+  font-size: 8px;
+  letter-spacing: 0.14em;
+}
+.hh-gb__controls {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2% 18%;
+}
+.hh--gb .hh-dpad {
+  --s: 40px;
+}
+.hh-ab {
+  display: flex;
+  gap: 6px;
+  transform: rotate(-24deg);
+}
+.hh-ab__btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--dev-ab);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
+  color: rgba(255, 255, 255, 0.7);
+  font-family: var(--font-pix);
+  font-size: 8px;
+}
+.hh-ab__btn--a {
+  margin-top: -12px;
+}
+.hh-ab__btn:active {
+  transform: translateY(1px);
+}
+.hh-grille {
+  position: absolute;
+  right: 9%;
+  bottom: 5%;
+  width: 22%;
+  height: 9%;
+  transform: rotate(-30deg);
+  background: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.22) 0 2px, transparent 2px 6px);
+  border-radius: 2px;
+  opacity: 0.7;
+}
+
+/* ---- sizes ---- */
+@media (min-width: 600px) {
+  .hh--psp { --w: 460px; }
+  .hh--gb { --w: 190px; }
+  .hh-lcd { font-size: 9px; }
+  .hh--gb .hh-dpad { --s: 52px; }
+  .hh-ab__btn { width: 32px; height: 32px; font-size: 9px; }
+}
+@media (min-width: 900px) {
+  .hh--psp { --w: 480px; }
+  .hh--gb { --w: 220px; }
+  .hh-lcd { font-size: 10px; left: 8px; top: 7px; }
+  .hh-dpad { --s: 64px; }
+  .hh-face { --f: 74px; }
+  .hh-face__btn { font-size: 13px; }
+  .hh--gb .hh-dpad { --s: 62px; }
+  .hh-ab__btn { width: 40px; height: 40px; font-size: 10px; }
+  .hh-brand { font-size: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hh button:active { transform: none; }
+}
