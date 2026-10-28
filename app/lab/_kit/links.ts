@@ -92,7 +92,7 @@ export const FLUTE_LINKS: LinkItem[] = [
     sub: "小红书",
     href: "https://www.xiaohongshu.com/user/profile/5ff14b680000000001005c3f?xsec_token=AB_QdIGvTodBcRypHv1TDc158LFVM3a2yqUAjKjgVLHvU%3D&xsec_source=pc_search",
   },
-  { label: "Music résumé", sub: "PDF", href: "/haylie-wu-music-resume.pdf" },
+  // The music résumé is deliberately not linked: Haylie doesn't want it online.
 ];
 
 export const CONTACT_LINKS: LinkItem[] = [
@@ -113,6 +113,9 @@ export type ProjectRow = {
   year: string;
   status: string;
   line: string;
+  /** The longer description from projects.ts, for places with room to read it. */
+  detail: string;
+  image?: string;
   href?: string;
   audio?: { label: string; src: string }[];
 };
@@ -123,6 +126,9 @@ export const PROJECT_ROWS: ProjectRow[] = projects.map((p) => ({
   year: p.year.replace("–", " to "),
   status: p.status,
   line: PROJECT_LINES[p.slug] ?? p.blurb,
+  // Some details in projects.ts still use dashes; never show one.
+  detail: p.detail.split("\n\n")[0].replace(/\s*[—–]\s*/g, ", "),
+  image: p.image,
   href: p.externalHref ?? p.links?.[0]?.href,
   audio: p.audio ?? p.items?.flatMap((i) => i.audio ?? []),
 }));

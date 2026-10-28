@@ -300,7 +300,7 @@ export function sheetTexture() {
 }
 
 /** Small sprite glyphs: music note, Z, sparkle, crumb. Transparent background. */
-export function glyphTexture(kind: "note" | "z" | "sparkle" | "crumb") {
+export function glyphTexture(kind: "note" | "z" | "sparkle" | "crumb" | "heart") {
   return pixelTexture(
     paint(8, 8, (g) => {
       if (kind === "note") {
@@ -316,6 +316,14 @@ export function glyphTexture(kind: "note" | "z" | "sparkle" | "crumb") {
         px(g, "#5b6bbf", 3, 4);
         px(g, "#5b6bbf", 2, 5);
         px(g, "#5b6bbf", 1, 6, 6, 1);
+      } else if (kind === "heart") {
+        px(g, "#ff6fa3", 1, 1, 2, 1);
+        px(g, "#ff6fa3", 5, 1, 2, 1);
+        px(g, "#ff6fa3", 0, 2, 8, 2);
+        px(g, "#ff6fa3", 1, 4, 6, 1);
+        px(g, "#ff6fa3", 2, 5, 4, 1);
+        px(g, "#ff6fa3", 3, 6, 2, 1);
+        px(g, "#ffffff", 1, 2);
       } else if (kind === "sparkle") {
         px(g, "#ffe27a", 3, 0, 2, 8);
         px(g, "#ffe27a", 0, 3, 8, 2);
@@ -324,6 +332,105 @@ export function glyphTexture(kind: "note" | "z" | "sparkle" | "crumb") {
         px(g, PALETTE.bake, 2, 2, 4, 4);
         px(g, PALETTE.chip, 3, 3, 2, 2);
       }
+    }),
+  );
+}
+
+// ---------------------------------------------------------------- studio props
+// The desk-and-wall set on the lab's Cat host page. Same 16-ish texel tiles.
+
+/** A diploma: cream paper, a heading line, text lines and a red seal. */
+export function diplomaTexture() {
+  return pixelTexture(
+    paint(24, 18, (g) => {
+      px(g, "#fbf3dc", 0, 0, 24, 18);
+      px(g, "#e9dcb8", 0, 0, 24, 1);
+      px(g, "#e9dcb8", 0, 17, 24, 1);
+      px(g, "#5b4a3a", 6, 3, 12, 2);
+      for (const y of [7, 9, 11]) px(g, "#b6a688", 4, y, 16, 1);
+      blob(g, "#c8314a", 18, 14, 2.2);
+      px(g, "#f2c94c", 18, 14);
+    }),
+  );
+}
+
+/** A résumé page: a name bar and short lines. */
+export function resumeTexture() {
+  return pixelTexture(
+    paint(16, 22, (g) => {
+      px(g, "#ffffff", 0, 0, 16, 22);
+      px(g, "#2b2d3a", 2, 2, 9, 2);
+      px(g, "#e0457b", 2, 5, 5, 1);
+      for (let y = 8; y < 20; y += 2) px(g, "#a9adbb", 2, y, y % 4 === 0 ? 12 : 9, 1);
+    }),
+  );
+}
+
+/** A little social icon tile: a coloured square and a simple white mark. */
+export function socialTexture(kind: "tiktok" | "douyin" | "rednote" | "youtube") {
+  return pixelTexture(
+    paint(12, 12, (g) => {
+      const bg = kind === "youtube" ? "#e33b3b" : kind === "rednote" ? "#ff2e4d" : "#16161c";
+      px(g, bg, 0, 0, 12, 12);
+      if (kind === "youtube") {
+        px(g, "#ffffff", 4, 3, 1, 6);
+        px(g, "#ffffff", 5, 4, 1, 4);
+        px(g, "#ffffff", 6, 5, 1, 2);
+      } else if (kind === "rednote") {
+        px(g, "#ffffff", 3, 3, 6, 1);
+        px(g, "#ffffff", 3, 5, 6, 1);
+        px(g, "#ffffff", 3, 7, 4, 1);
+      } else {
+        // a note-like hook, with a cyan/pink offset for Douyin
+        if (kind === "douyin") {
+          px(g, "#2fe6e0", 5, 2, 1, 7);
+          px(g, "#2fe6e0", 3, 7, 2, 2);
+        }
+        px(g, kind === "douyin" ? "#ff3d77" : "#ffffff", 6, 2, 1, 7);
+        px(g, kind === "douyin" ? "#ff3d77" : "#ffffff", 7, 2, 2, 1);
+        px(g, kind === "douyin" ? "#ff3d77" : "#ffffff", 4, 7, 2, 2);
+      }
+    }),
+  );
+}
+
+/** The laptop's screen: a pastel desktop with a few app icons. */
+export function laptopScreenTexture() {
+  return pixelTexture(
+    paint(20, 13, (g) => {
+      px(g, "#ffd3e2", 0, 0, 20, 13);
+      px(g, "#ffe9f0", 0, 0, 20, 2);
+      const icons = ["#e0457b", "#f2a33a", "#5b8def", "#57b77a"];
+      icons.forEach((c, i) => px(g, c, 2 + i * 4, 4, 3, 3));
+      px(g, "#9b6bd6", 2, 8, 3, 3);
+    }),
+  );
+}
+
+/** A closed book: coloured cover with a lighter spine band. */
+export function bookTexture() {
+  return pixelTexture(
+    paint(8, 8, (g) => {
+      px(g, "#3f7fb8", 0, 0, 8, 8);
+      px(g, "#5f9bd0", 0, 0, 2, 8);
+      px(g, "#fff3d6", 3, 2, 4, 1);
+    }),
+  );
+}
+
+/** An envelope with a heart seal. */
+export function envelopeTexture() {
+  return pixelTexture(
+    paint(16, 11, (g) => {
+      px(g, "#fffaf0", 0, 0, 16, 11);
+      for (let i = 0; i < 6; i++) {
+        px(g, "#e3d8c4", i + 1, i, 1, 1);
+        px(g, "#e3d8c4", 14 - i, i, 1, 1);
+      }
+      px(g, "#e0457b", 7, 5, 1, 1);
+      px(g, "#e0457b", 9, 5, 1, 1);
+      px(g, "#e0457b", 7, 6, 3, 1);
+      px(g, "#e0457b", 8, 7, 1, 1);
     }),
   );
 }

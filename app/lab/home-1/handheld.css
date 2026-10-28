@@ -1,6 +1,10 @@
-/* The cat's handheld. A deliberate object on the page: a little game device
- * with soft plastic shading, not a framed window. Two bodies share the
- * screen, D-pad and LCD text: .hh--psp (wide) and .hh--gb (portrait). */
+/* The cat's handheld, the page's centrepiece. A deliberate object with soft
+ * plastic shading. Its screen carries the scene, Haylie's dialogue box and
+ * the game menu. Layouts:
+ *   stacked  screen on top, controls under it (the GB always; the PSP on phones)
+ *   side     the PSP from 760px: D-pad | screen | face buttons
+ * The PSP switches by media query, so the server-rendered page is already right.
+ */
 
 .hh {
   --dev-body: #f3c3d4;
@@ -10,14 +14,24 @@
   --dev-bezel: #1d1720;
   --dev-pad: #2d2630;
   --dev-pad-hi: #463c4a;
+  --dev-ab: #b8326b;
+  /* the screen's own palette: a game UI, the same in light and dark */
+  --scr-bg: #141826;
+  --scr-ink: #f4f1ff;
+  --scr-hi: #ffd25a;
+  --box: #fff8ea;
+  --box-ink: #3a2a20;
+  --tag: #ff9d4d;
+
   position: relative;
-  width: var(--w);
-  max-width: 100%;
+  display: grid;
+  width: min(var(--w), 100%);
+  min-width: 0;
   background: linear-gradient(170deg, var(--dev-hi) 0%, var(--dev-body) 38%, var(--dev-lo) 100%);
   box-shadow:
     inset 0 2px 0 rgba(255, 255, 255, 0.55),
     inset 0 -4px 0 rgba(0, 0, 0, 0.1),
-    0 22px 36px -22px rgba(40, 10, 30, 0.45);
+    0 26px 44px -26px rgba(40, 10, 30, 0.5);
   color: var(--dev-ink);
 }
 .hh--gb {
@@ -26,7 +40,6 @@
   --dev-lo: #cfc7b4;
   --dev-ink: #3d3a6a;
   --dev-bezel: #5b566c;
-  --dev-ab: #b8326b;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .hh {
@@ -36,6 +49,7 @@
     --dev-ink: #f0b6cd;
     --dev-pad: #17121a;
     --dev-pad-hi: #2c242e;
+    --dev-ab: #ff6eac;
   }
   :root:not([data-theme="light"]) .hh--gb {
     --dev-body: #36323f;
@@ -43,7 +57,6 @@
     --dev-lo: #24212b;
     --dev-ink: #c5bce6;
     --dev-bezel: #1f1b25;
-    --dev-ab: #ff6eac;
   }
 }
 :root[data-theme="dark"] .hh {
@@ -53,6 +66,7 @@
   --dev-ink: #f0b6cd;
   --dev-pad: #17121a;
   --dev-pad-hi: #2c242e;
+  --dev-ab: #ff6eac;
 }
 :root[data-theme="dark"] .hh--gb {
   --dev-body: #36323f;
@@ -60,269 +74,478 @@
   --dev-lo: #24212b;
   --dev-ink: #c5bce6;
   --dev-bezel: #1f1b25;
-  --dev-ab: #ff6eac;
 }
 
 .hh button {
   position: relative;
   padding: 0;
   border: 0;
+  background: none;
   font: inherit;
+  color: inherit;
   -webkit-tap-highlight-color: transparent;
 }
-/* Small controls get a finger-sized hit area without looking bigger. */
-.hh button::before {
-  content: "";
-  position: absolute;
-  inset: -9px;
-}
 
-/* ---- screen, shared ---- */
+/* ---- body layouts ---- */
+.hh--stacked,
+.hh--psp {
+  --w: 440px;
+  grid-template-areas:
+    "top top top"
+    "left mid right";
+  grid-template-columns: 1fr auto 1fr;
+  row-gap: 12px;
+  padding: 14px 14px 18px;
+  border-radius: 30px;
+}
+.hh--gb.hh--stacked {
+  border-radius: 20px 20px 70px 20px;
+  padding-bottom: 26px;
+}
+@media (min-width: 760px) {
+  .hh--psp {
+    --w: 1040px;
+    grid-template-areas:
+      "left top right"
+      "left mid right";
+    grid-template-columns: 17% 1fr 17%;
+    row-gap: 8px;
+    padding: 26px 0 16px;
+    border-radius: 150px / 50%;
+  }
+  .hh--psp .hh-screen {
+    aspect-ratio: 16 / 9;
+  }
+}
+.hh-top {
+  grid-area: top;
+  position: relative;
+}
+.hh-ctl {
+  display: grid;
+  place-items: center;
+}
+.hh-ctl--left { grid-area: left; }
+.hh-ctl--mid { grid-area: mid; gap: 6px; }
+.hh-ctl--right { grid-area: right; }
+
+/* ---- screen ---- */
 .hh-bezel {
-  padding: 6px;
-  border-radius: 9px;
+  padding: 7px;
+  border-radius: 12px;
   background: var(--dev-bezel);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
+.hh--gb .hh-bezel {
+  padding: 16px 12px 12px;
+  border-radius: 10px 10px 34px 10px;
+}
+.hh-led {
+  position: absolute;
+  z-index: 1;
+  left: 3px;
+  top: 40px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff4d6d;
+  box-shadow: 0 0 6px #ff4d6d;
+}
+/* The screen is the scene; everything else floats over it. */
 .hh-screen {
   position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
   overflow: hidden;
-  border-radius: 3px;
+  border-radius: 4px;
   background: #0d0b10;
+  color: var(--scr-ink);
 }
-.hh--psp .hh-screen {
-  aspect-ratio: 16 / 9;
+.hh-scene {
+  position: absolute;
+  inset: 0;
 }
-.hh--gb .hh-screen {
-  aspect-ratio: 10 / 9;
-}
-/* a little glass sheen across the screen */
-.hh-screen::after {
+/* a little glass sheen */
+.hh-scene::after {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(125deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 38%);
-}
-.hh-lcd {
-  position: absolute;
-  z-index: 2;
-  left: 6px;
-  top: 5px;
-  pointer-events: none;
-  font-family: var(--font-pix);
-  font-size: 8px;
-  letter-spacing: 0.06em;
-  color: #fff;
-  text-shadow: 1px 1px 0 #000, -1px 0 0 #000, 0 -1px 0 #000;
-}
-.hh-brand {
-  font-family: var(--font-pix);
-  font-size: 9px;
-  letter-spacing: 0.22em;
-  color: var(--dev-ink);
-  opacity: 0.85;
+  background: linear-gradient(125deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 40%);
 }
 
-/* ---- D-pad, shared ---- */
+/* the room switch and the cookie counter: small pixel tags on the screen */
+/* a little wooden sign: the way to the other room */
+/* the way out: a pixel arrow off the table's edge, bobbing the way it goes */
+.hh .hh-exit {
+  position: absolute;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  background: none;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.3));
+}
+/* bottom right, clear of the letter and the cookies */
+.hh .hh-exit--down {
+  right: 10px;
+  bottom: 2px;
+  animation: hh-bob-down 1.2s steps(2, jump-none) infinite;
+}
+.hh .hh-exit--up {
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: hh-bob-up 1.2s steps(2, jump-none) infinite;
+}
+.hh .hh-exit--up svg {
+  transform: rotate(180deg);
+}
+.hh .hh-exit:hover svg path:last-child {
+  fill: #ffd25a;
+}
+.hh .hh-exit::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+}
+@keyframes hh-bob-down {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(2px); }
+}
+@keyframes hh-bob-up {
+  0%, 100% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, -2px); }
+}
+/* the snack counter: a pixel cookie and how many */
+.hh-count {
+  position: absolute;
+  z-index: 3;
+  right: 8px;
+  top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px 3px 5px;
+  border-radius: 999px;
+  background: rgba(255, 248, 234, 0.94);
+  color: #3a2a20;
+  box-shadow: 0 0 0 2px #3a2a20;
+  font-family: var(--font-pix);
+  font-size: 10px;
+}
+
+/* the name of what is hovered or picked, hanging over it */
+.hh-tag {
+  position: absolute;
+  z-index: 3;
+  transform: translate(-50%, calc(-100% - 22px));
+  padding: 4px 8px 3px;
+  border-radius: 4px;
+  background: #fff8ea;
+  color: #3a2a20;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
+  font-family: var(--font-pix);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.hh-tag::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: -4px;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  background: #fff8ea;
+  transform: rotate(45deg);
+}
+
+/* ---- inspecting: a pixel graphic of the thing, over the zoomed-in screen ---- */
+.hh-art {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(20, 24, 38, 0.22);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  animation: hh-fade-in 200ms steps(3, jump-none);
+}
+@keyframes hh-fade-in {
+  from { opacity: 0; }
+}
+.art-frame {
+  position: relative;
+  height: 94%;
+  aspect-ratio: 4 / 3;
+  max-width: 96%;
+}
+.art-frame .art {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+}
+.hh .art-hit {
+  position: absolute;
+  background: none;
+  border-radius: 4px;
+}
+.hh .art-hit:focus-visible {
+  outline: 2px solid #ffd25a;
+}
+.art {
+  width: min(76%, calc(76% * 4 / 3));
+  max-height: 78%;
+  aspect-ratio: 4 / 3;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  filter: drop-shadow(3px 4px 0 rgba(0, 0, 0, 0.35));
+}
+
+/* ---- the laptop's desktop, over the scene ---- */
+.hh-desktop {
+  position: absolute;
+  z-index: 3;
+  left: 8px;
+  right: 8px;
+  top: 8px;
+  bottom: 8px;
+  animation: hh-fade-in 200ms steps(3, jump-none);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #ffd3e2;
+  color: #3a2a20;
+  box-shadow: 0 0 0 2px #2b2d3a, 0 4px 0 rgba(0, 0, 0, 0.35);
+}
+.hh-desktop__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  background: #fff0f5;
+  font-family: var(--font-pix);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+}
+.hh .hh-desktop__bar button {
+  width: 28px;
+  height: 22px;
+  font-family: var(--font-ui);
+  font-size: 18px;
+  line-height: 1;
+}
+.hh-desktop__apps {
+  list-style: none;
+  margin: 0;
+  padding: 8px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  align-content: center;
+  overflow: hidden;
+}
+.hh .hh-desktop__app {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  width: 100%;
+  min-height: 56px;
+  padding: 6px 2px;
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.15;
+  text-align: center;
+}
+.hh .hh-desktop__app:hover { background: rgba(255, 255, 255, 0.5); }
+.hh .hh-desktop__app[data-cursor] { box-shadow: inset 0 0 0 2px #c2185b; }
+.hh .hh-desktop__app[aria-pressed="true"] { background: #fff; }
+.hh-desktop__icon {
+  width: 26px;
+  height: 26px;
+}
+/* ---- D-pad ---- */
 .hh-dpad {
-  --s: 54px;
+  --s: 60px;
   width: var(--s);
   height: var(--s);
   display: grid;
   grid-template: repeat(3, 1fr) / repeat(3, 1fr);
   filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.25));
 }
-.hh-dpad > * {
-  background: var(--dev-pad);
-}
+.hh .hh-dpad > * { background: var(--dev-pad); }
 .hh-dpad__up { grid-area: 1 / 2; border-radius: 4px 4px 0 0; }
 .hh-dpad__down { grid-area: 3 / 2; border-radius: 0 0 4px 4px; }
 .hh-dpad__left { grid-area: 2 / 1; border-radius: 4px 0 0 4px; }
 .hh-dpad__right { grid-area: 2 / 3; border-radius: 0 4px 4px 0; }
 .hh-dpad__hub { grid-area: 2 / 2; }
-.hh-dpad button:hover,
-.hh-dpad button:active {
-  background: var(--dev-pad-hi);
+.hh-dpad button::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
 }
-.hh-dpad button:active {
-  transform: translateY(1px);
-}
-/* little arrows */
-.hh-dpad__left::after,
-.hh-dpad__right::after {
+.hh .hh-dpad button:hover,
+.hh .hh-dpad button:active { background: var(--dev-pad-hi); }
+.hh-dpad button:active { transform: translateY(1px); }
+.hh-dpad button::after {
   content: "";
   position: absolute;
   top: 50%;
   left: 50%;
+  transform: translateX(-50%);
   border: 4px solid transparent;
   transform: translate(-50%, -50%);
 }
+.hh-dpad__up::after { border-bottom-color: rgba(255, 255, 255, 0.35); margin-top: -2px; }
+.hh-dpad__down::after { border-top-color: rgba(255, 255, 255, 0.35); margin-top: 2px; }
 .hh-dpad__left::after { border-right-color: rgba(255, 255, 255, 0.35); margin-left: -2px; }
 .hh-dpad__right::after { border-left-color: rgba(255, 255, 255, 0.35); margin-left: 2px; }
 
-/* ---- the wide one ---- */
-.hh--psp {
-  --w: 300px;
-  aspect-ratio: 2.25;
-  display: grid;
-  grid-template-columns: 22% 56% 22%;
+/* ---- sound waves out of the speaker while the cat talks ---- */
+.hh-waves {
+  display: flex;
+  gap: 3px;
+  height: 14px;
   align-items: center;
-  border-radius: 20% / 46%;
+  opacity: 0;
+  transition: opacity 150ms;
 }
-.hh-middle {
+.hh-waves i {
+  width: 3px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--dev-ink);
+}
+.hh.is-talking .hh-waves {
+  opacity: 0.8;
+}
+.hh.is-talking .hh-waves i {
+  animation: hh-wave 0.5s steps(3, jump-none) infinite alternate;
+}
+.hh.is-talking .hh-waves i:nth-child(2) { animation-delay: 0.15s; }
+.hh.is-talking .hh-waves i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes hh-wave {
+  from { height: 4px; }
+  to { height: 14px; }
+}
+/* printed labels under the buttons, like a real console */
+.hh-print {
+  font-family: var(--font-pix);
+  font-size: 7.5px;
+  letter-spacing: 0.08em;
+  color: var(--dev-ink);
+  opacity: 0.85;
+}
+.hh-face .hh-print {
+  position: absolute;
+  white-space: nowrap;
+}
+.hh-print--x { left: 50%; bottom: -16px; transform: translateX(-50%); }
+.hh-print--o { left: 100%; top: 50%; margin-left: 4px; transform: translateY(-50%); }
+.hh-print--t { left: 50%; top: -14px; transform: translateX(-50%); }
+.hh-print--s { right: 100%; top: 50%; margin-right: 4px; transform: translateY(-50%); }
+.hh-ab__key {
   display: grid;
   justify-items: center;
-  gap: 5px;
-  padding-top: 9px;
+  gap: 4px;
 }
-.hh-middle .hh-bezel {
-  width: 100%;
-}
-.hh-side {
-  display: grid;
-  place-items: center;
-}
+.hh-ab__key--a { margin-top: -16px; }
+
+/* ---- face buttons (wide) and A / B (portrait) ---- */
 .hh-face {
-  --f: 62px;
+  --f: 70px;
   position: relative;
   width: var(--f);
   height: var(--f);
 }
 .hh .hh-face__btn {
   position: absolute;
+  color: inherit;
   width: 36%;
   height: 36%;
   border-radius: 50%;
   background: var(--dev-pad);
   box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1;
   display: grid;
   place-items: center;
 }
-.hh-face__btn--top { top: 0; left: 32%; color: #6bdcae; }
-.hh-face__btn--right { top: 32%; right: 0; color: #ff8080; }
-.hh-face__btn--bottom { bottom: 0; left: 32%; color: #86b8ff; }
-.hh-face__btn--left { top: 32%; left: 0; color: #ffa3d8; }
-.hh-face__btn:hover {
-  background: var(--dev-pad-hi);
+.hh .hh-face__btn::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
 }
-.hh-face__btn[aria-pressed="true"] {
-  transform: translateY(1px);
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 0 0 2px var(--dev-hi);
+.hh .hh-face__btn--top { top: 0; left: 32%; color: #6bdcae; }
+.hh .hh-face__btn--right { top: 32%; right: 0; color: #ff8080; }
+.hh .hh-face__btn--bottom { bottom: 0; left: 32%; color: #86b8ff; }
+.hh .hh-face__btn--left { top: 32%; left: 0; color: #ffa3d8; }
+.hh .hh-face__btn:hover { background: var(--dev-pad-hi); }
+.hh .hh-face__btn:active { transform: translateY(1px); }
+.hh-ab {
+  display: flex;
+  gap: 10px;
+  transform: rotate(-24deg);
 }
+.hh .hh-ab__btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--dev-ab);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.3);
+  color: rgba(255, 255, 255, 0.75);
+  font-family: var(--font-pix);
+  font-size: 10px;
+}
+.hh .hh-ab__btn:active { transform: translateY(1px); }
+
+/* ---- decoration ---- */
 .hh-speaker {
   position: absolute;
-  bottom: 13%;
-  width: 7%;
-  height: 7%;
+  bottom: 14%;
+  width: 5%;
+  height: 9%;
   background: radial-gradient(circle, rgba(0, 0, 0, 0.28) 1.2px, transparent 1.6px) 0 0 / 5px 5px;
   opacity: 0.7;
 }
-.hh-speaker--left { left: 11%; }
-.hh-speaker--right { right: 11%; }
-
-/* ---- the portrait one ---- */
-.hh--gb {
-  --w: 140px;
-  aspect-ratio: 0.6;
-  display: flex;
-  flex-direction: column;
-  padding: 8% 7% 0;
-  border-radius: 7% 7% 28% 7% / 4% 4% 17% 4%;
-}
-.hh-gb__top {
-  position: relative;
-  display: grid;
-  justify-items: center;
-  gap: 4px;
-}
-.hh--gb .hh-bezel {
-  width: 100%;
-  padding: 11% 9% 9%;
-  border-radius: 6% 6% 20% 6% / 6% 6% 20% 6%;
-}
-.hh-led {
-  position: absolute;
-  z-index: 1;
-  left: 3%;
-  top: 24%;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #ff4d6d;
-  box-shadow: 0 0 6px #ff4d6d;
-}
-.hh--gb .hh-brand {
-  justify-self: start;
-  font-style: italic;
-  font-size: 8px;
-  letter-spacing: 0.14em;
-}
-.hh-gb__controls {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 2% 18%;
-}
-.hh--gb .hh-dpad {
-  --s: 40px;
-}
-.hh-ab {
-  display: flex;
-  gap: 6px;
-  transform: rotate(-24deg);
-}
-.hh-ab__btn {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--dev-ab);
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
-  color: rgba(255, 255, 255, 0.7);
-  font-family: var(--font-pix);
-  font-size: 8px;
-}
-.hh-ab__btn--a {
-  margin-top: -12px;
-}
-.hh-ab__btn:active {
-  transform: translateY(1px);
+.hh-speaker--left { left: 7%; }
+.hh-speaker--right { right: 7%; }
+.hh--stacked .hh-speaker,
+.hh--psp .hh-speaker { display: none; }
+@media (min-width: 760px) {
+  .hh--psp .hh-speaker { display: block; }
 }
 .hh-grille {
   position: absolute;
-  right: 9%;
-  bottom: 5%;
-  width: 22%;
-  height: 9%;
+  right: 6%;
+  bottom: 3%;
+  width: 16%;
+  height: 7%;
   transform: rotate(-30deg);
   background: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.22) 0 2px, transparent 2px 6px);
   border-radius: 2px;
   opacity: 0.7;
 }
 
-/* ---- sizes ---- */
-@media (min-width: 600px) {
-  .hh--psp { --w: 460px; }
-  .hh--gb { --w: 190px; }
-  .hh-lcd { font-size: 9px; }
-  .hh--gb .hh-dpad { --s: 52px; }
-  .hh-ab__btn { width: 32px; height: 32px; font-size: 9px; }
-}
-@media (min-width: 900px) {
-  .hh--psp { --w: 480px; }
-  .hh--gb { --w: 220px; }
-  .hh-lcd { font-size: 10px; left: 8px; top: 7px; }
-  .hh-dpad { --s: 64px; }
-  .hh-face { --f: 74px; }
-  .hh-face__btn { font-size: 13px; }
-  .hh--gb .hh-dpad { --s: 62px; }
-  .hh-ab__btn { width: 40px; height: 40px; font-size: 10px; }
-  .hh-brand { font-size: 10px; }
+/* ---- bigger screens ---- */
+@media (min-width: 760px) {
+  .hh--gb.hh--stacked { --w: 430px; }
+  .hh-desktop { left: 12px; right: 12px; top: 12px; bottom: 12px; }
+  .hh-face { --f: 84px; }
+  .hh .hh-face__btn { font-size: 14px; }
+  .hh-dpad { --s: 70px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .hh .hh-exit { animation: none; }
   .hh button:active { transform: none; }
+  .hh.is-talking .hh-waves i { animation: none; }
+  .hh-art, .hh-desktop { animation: none; }
 }

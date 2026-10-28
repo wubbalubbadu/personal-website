@@ -1,18 +1,20 @@
 import "@fontsource/space-grotesk/400.css";
 import "@fontsource/space-grotesk/500.css";
+import "@fontsource/space-grotesk/600.css";
 import "@fontsource/silkscreen/400.css";
-import "./personal-home.css";
-import ChatPanel from "./ChatPanel";
+import CatHost from "./lab/home-1/CatHost";
 
+/* The home page is Cat host: the handheld with the cat's studio. The old chat
+   home (ChatPanel) is kept in the repo, unused, so it's easy to bring back. */
 export default function Home() {
   return (
-    <main className="home-stage">
-      <ChatPanel />
+    <>
+      <CatHost />
       <noscript>
-        <div className="home-noscript">
+        <div style={{ maxWidth: 520, margin: "24px auto", padding: "0 16px", lineHeight: 1.6 }}>
           <p>
-            Haylie Wu — software developer. Computer science at Northwestern; master&rsquo;s in flute at New England
-            Conservatory.
+            Haylie Wu, flutist and software engineer. Computer science and flute at Northwestern; master&rsquo;s in
+            flute performance at New England Conservatory.
           </p>
           <ul>
             <li>
@@ -30,6 +32,6 @@ export default function Home() {
           </ul>
         </div>
       </noscript>
-    </main>
+    </>
   );
 }

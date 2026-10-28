@@ -11,15 +11,20 @@ import {
 } from "./ps1Material";
 import {
   PALETTE,
+  bookTexture,
   bowlTexture,
   cookieTexture,
+  diplomaTexture,
+  envelopeTexture,
+  laptopScreenTexture,
+  resumeTexture,
+  socialTexture,
   drawFace,
   faceCanvas,
   fluteTexture,
   glyphTexture,
   pixelTexture,
   roundRugTexture,
-  rugTexture,
   sheetTexture,
   wallTexture,
   wallpaperTexture,
@@ -30,7 +35,7 @@ import {
 
 export type MascotCharacter = "cookie" | "cat";
 export type MascotMood = "idle" | "eat" | "flute" | "sleep";
-export type MascotScene = "none" | "desk" | "float" | "room";
+export type MascotScene = "none" | "desk" | "float" | "room" | "studio";
 export type MascotEffects = {
   /** Vertex snap step in internal pixels; 0 turns the wobble off. */
   snap: number;
@@ -63,9 +68,37 @@ type SceneSetup = {
   shadow: boolean;
   floating: boolean;
   backdrop?: THREE.ShaderMaterial;
+  /** Things you can pick in this set (only "studio" has any). */
+  hotspots?: HotspotDef[];
+  /** The set has its own cookies (plate, jar), so the eating pose doesn't bring the bowl. */
+  ownSnack?: boolean;
+  /** Widen the default view so this many world units always fit across, even on a narrow screen. */
+  fitWidth?: number;
+  /** And so this many fit top to bottom in the part of the screen the page leaves clear. */
+  fitHeight?: number;
 };
 
-type Glyph = "note" | "z" | "sparkle" | "crumb";
+/** One pickable thing in a set: its group (glows and hops) and the point labels hang from. */
+type HotspotDef = {
+  id: string;
+  group: THREE.Group;
+  anchor: THREE.Vector3;
+  /** Where inspecting looks instead of the thing itself (the flute: at the cat playing it). */
+  inspectAt?: THREE.Vector3;
+  inspectDist?: number;
+};
+type Hotspot = HotspotDef & {
+  baseY: number;
+  baseRotZ: number;
+  mats: { m: THREE.ShaderMaterial; base: THREE.Vector3 }[];
+  sparkle: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
+};
+
+export type Outfit = "cap" | "glasses" | "apron";
+type Glyph = "note" | "z" | "sparkle" | "crumb" | "heart";
+/** The ways the cat answers a pet, picked at random (never the same twice running). */
+type Reaction = "hop" | "purr" | "tilt" | "stretch" | "dance" | "startle";
+const REACTIONS: Record<Reaction, number> = { hop: 1.1, purr: 2.0, tilt: 1.4, stretch: 1.5, dance: 1.7, startle: 0.9 };
 
 const ARM_LEN = 0.34;
 const COOKIE_EXTENT = 1.12;
@@ -123,6 +156,7 @@ export class MascotEngine {
   private acc = 0;
   private time = 0;
   private reactAt = -10;
+  private reaction: Reaction = "hop";
   private nextBlink = 2;
   private blinkUntil = 0;
   private spawnClock = 0;
@@ -131,6 +165,36 @@ export class MascotEngine {
   private look = new THREE.Vector2();
   private lookTarget = new THREE.Vector2();
   private pose = { y: 0, rx: 0, ry: 0, rz: 0, sy: 1 };
+  // studio: pickable things, the selection and a camera that follows it
+  private hotspots: Hotspot[] = [];
+  private selected: string | null = null;
+  /** The thing under the pointer: it wiggles a little. */
+  private hovered: string | null = null;
+  /** The PS1 wobble as set; switched off while inspecting up close, where it reads as shaky. */
+  private baseFx = { snap: 2, affine: true };
+  private applyWobble() {
+    const calm = this.close;
+    this.globals.uSnap.value = calm ? 0 : this.baseFx.snap;
+    this.globals.uAffine.value = calm || !this.baseFx.affine ? 0 : 1;
+  }
+  /** Dress-up for the cat: a graduation cap for school talk, glasses at the
+   *  laptop, an apron for cookies. Each is hidden until switched on. */
+  private outfit: Record<Outfit, { obj: THREE.Object3D | null; on: boolean }> = {
+    cap: { obj: null, on: false },
+    glasses: { obj: null, on: false },
+    apron: { obj: null, on: false },
+  };
+  /** Inspecting: the camera moves right up to the selected thing. */
+  private close = false;
+  private lookLock = false;
+  private camPos = new THREE.Vector3();
+  private camTarget = new THREE.Vector3();
+  private camFov = 36;
+  private goalPos = new THREE.Vector3();
+  private goalTarget = new THREE.Vector3();
+  private goalFov = 36;
+  /** Share of the screen (from the bottom) covered by the page's own UI; the view slides up out of its way. */
+  private reserve = 0;
   private statsMs = 0;
   private statsFrames = 0;
   private statsT = 0;
@@ -151,6 +215,7 @@ export class MascotEngine {
       z: this.track(glyphTexture("z")),
       sparkle: this.track(glyphTexture("sparkle")),
       crumb: this.track(glyphTexture("crumb")),
+      heart: this.track(glyphTexture("heart")),
     };
     this.fluteTex = this.track(fluteTexture());
     this.buildShared();
@@ -325,6 +390,38 @@ export class MascotEngine {
     wg.setAttribute("normal", new THREE.Float32BufferAttribute(pts.map((_, i) => (i % 3 === 2 ? 1 : 0)), 3));
     wg.setAttribute("uv", new THREE.Float32BufferAttribute(new Array((pts.length / 3) * 2).fill(0), 2));
     head.add(new THREE.LineSegments(wg, this.mat({ color: "#8f8a99", lit: false })));
+    // Mortarboard, hidden until wear("cap", true).
+    const cap = new THREE.Group();
+    const capMat = this.mat({ color: "#2b2d3a" });
+    const board = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.06, 0.95), capMat);
+    board.rotation.y = Math.PI / 4;
+    board.position.y = 0.14;
+    const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.4, 0.2, 8), capMat);
+    const button = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.04, 0.08), this.mat({ color: "#f2c94c" }));
+    button.position.y = 0.19;
+    const tassel = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.34, 0.04), this.mat({ color: "#f2c94c" }));
+    tassel.position.set(0.5, -0.02, 0.2);
+    cap.add(crown, board, button, tassel);
+    cap.position.set(0, 0.66, -0.04);
+    cap.rotation.z = -0.12;
+    head.add(cap);
+    this.outfit.cap.obj = cap;
+
+    // Round reading glasses, for the laptop.
+    const glasses = new THREE.Group();
+    const frame = this.mat({ color: "#2b2d3a" });
+    for (const s of [-1, 1]) {
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.025, 4, 10), frame);
+      rim.position.set(s * 0.26, 0, 0);
+      rim.rotation.y = s * 0.18;
+      glasses.add(rim);
+    }
+    const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.03, 0.03), frame);
+    bridge.position.y = 0.03;
+    glasses.add(bridge);
+    glasses.position.set(0, 0.04, 0.74);
+    head.add(glasses);
+    this.outfit.glasses.obj = glasses;
     group.add(head);
 
     // Collar with a tiny cookie charm, so she belongs to the cookie world.
@@ -336,6 +433,26 @@ export class MascotEngine {
     charm.rotation.x = Math.PI / 2;
     charm.position.set(0, -0.56, 0.37);
     group.add(charm);
+
+    // A little apron for cookie time: a curved bib with a pink pocket and neck strap.
+    const apron = new THREE.Group();
+    const bib = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.45, 0.47, 0.42, 8, 1, true, -0.75, 1.5),
+      this.mat({ color: "#fff4f7", side: THREE.DoubleSide }),
+    );
+    bib.position.y = -0.74;
+    const pocket = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.12, 0.03), this.mat({ color: "#f2a7b8" }));
+    pocket.position.set(0, -0.8, 0.46);
+    const strap = new THREE.Mesh(new THREE.TorusGeometry(0.38, 0.03, 4, 10), this.mat({ color: "#f2a7b8" }));
+    strap.rotation.x = Math.PI / 2;
+    strap.position.y = -0.53;
+    apron.add(bib, pocket, strap);
+    group.add(apron);
+    this.outfit.apron.obj = apron;
+    for (const k of Object.keys(this.outfit) as Outfit[]) {
+      const o = this.outfit[k].obj;
+      if (o) o.visible = this.outfit[k].on;
+    }
 
     const tail = new THREE.Group();
     tail.position.set(0.28, -0.88, -0.25);
@@ -449,11 +566,22 @@ export class MascotEngine {
     this.setup = this.buildSet(name);
     this.setGroup = this.setup.group;
     this.scene.add(this.setGroup);
-    const { camPos, camTarget, fov, rootPos, rootRotY, clear, shadow } = this.setup;
-    this.camera.position.set(...camPos);
-    this.camera.fov = fov;
-    this.camera.lookAt(...camTarget);
-    this.camera.updateProjectionMatrix();
+    const { rootPos, rootRotY, clear, shadow } = this.setup;
+    this.hotspots = (this.setup.hotspots ?? []).map((h) => {
+      const mats: Hotspot["mats"] = [];
+      h.group.traverse((o) => {
+        const m = (o as THREE.Mesh).material as THREE.ShaderMaterial | undefined;
+        if (m?.uniforms?.uColor) mats.push({ m, base: (m.uniforms.uColor.value as THREE.Vector3).clone() });
+      });
+      const sparkle = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.22), this.mat({ map: this.glyphs.sparkle, lit: false }));
+      sparkle.position.copy(h.anchor).add(new THREE.Vector3(0.28, 0.32, 0.12));
+      this.setGroup!.add(sparkle);
+      return { ...h, baseY: h.group.position.y, baseRotZ: h.group.rotation.z, mats, sparkle };
+    });
+    this.selected = null;
+    this.hovered = null;
+    this.lookLock = false;
+    this.aimCamera(true);
     this.root.position.set(...rootPos);
     this.root.rotation.y = rootRotY;
     this.shadow.visible = shadow;
@@ -518,7 +646,144 @@ export class MascotEngine {
       return { ...base, camPos: [0.25, 2.3, 5.3], camTarget: [0.1, 0.85, 0], fov: 36, clear: "#a7cde6" };
     }
 
+    if (name === "studio") {
+      const hotspots: HotspotDef[] = [];
+      const spot = (
+        id: string,
+        group: THREE.Group,
+        anchor: [number, number, number],
+        inspect?: { at: [number, number, number]; dist: number },
+      ) => {
+        hotspots.push({
+          id,
+          group,
+          anchor: new THREE.Vector3(...anchor),
+          inspectAt: inspect ? new THREE.Vector3(...inspect.at) : undefined,
+          inspectDist: inspect?.dist,
+        });
+      };
+      const wall = new THREE.Mesh(new THREE.PlaneGeometry(14, 8), this.mat({ map: tex(wallTexture("#cfe7f6", "#a7cde6")), lit: false }));
+      wall.position.set(0, 2.6, -2.2);
+      const desk = new THREE.Mesh(new THREE.BoxGeometry(9, 0.3, 3.8), this.mat({ map: tex(woodTexture()), repeat: [3, 1.5] }));
+      desk.position.set(0, -0.15, 0.1);
+      const frameMat = this.mat({ color: "#6b4a33" });
+
+      // Wall: the diploma, the résumé, a row of social tiles.
+      const diploma = new THREE.Group();
+      const dFrame = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.0, 0.06), frameMat);
+      const dPaper = new THREE.Mesh(new THREE.PlaneGeometry(1.14, 0.84), this.mat({ map: tex(diplomaTexture()) }));
+      dPaper.position.z = 0.07;
+      diploma.add(dFrame, dPaper);
+      diploma.position.set(-2.1, 3.0, -2.15);
+      spot("diploma", diploma, [-2.1, 3.0, -2.1]);
+
+      const resume = new THREE.Group();
+      const rPaper = new THREE.Mesh(new THREE.PlaneGeometry(0.78, 1.06), this.mat({ map: tex(resumeTexture()) }));
+      rPaper.rotation.z = -0.05;
+      const pin = new THREE.Mesh(new THREE.SphereGeometry(0.06, 5, 4), this.mat({ color: "#e0457b" }));
+      pin.position.set(0, 0.45, 0.03);
+      resume.add(rPaper, pin);
+      resume.position.set(0.95, 3.05, -2.17);
+      spot("resume", resume, [0.95, 3.05, -2.1]);
+
+      const socials = new THREE.Group();
+      (["tiktok", "douyin", "rednote", "youtube"] as const).forEach((k, i) => {
+        const tile = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.05), this.mat({ map: tex(socialTexture(k)) }));
+        tile.position.set(i * 0.52, (i % 2) * 0.12, 0);
+        tile.rotation.z = (i % 2 ? 1 : -1) * 0.06;
+        socials.add(tile);
+      });
+      socials.position.set(1.95, 2.7, -2.15);
+      spot("socials", socials, [2.73, 2.78, -2.1]);
+
+      // Desk: laptop and book, the iPad with music on it, the flute, a letter.
+      const laptop = new THREE.Group();
+      const metal = this.mat({ color: "#c9ccd6" });
+      const lBase = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.06, 0.95), metal);
+      lBase.position.y = 0.03;
+      const lid = new THREE.Group();
+      const lShell = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.92, 0.05), metal);
+      lShell.position.y = 0.46;
+      const lScreen = new THREE.Mesh(new THREE.PlaneGeometry(1.28, 0.8), this.mat({ map: tex(laptopScreenTexture()), lit: false }));
+      lScreen.position.set(0, 0.46, 0.07);
+      lid.add(lShell, lScreen);
+      lid.position.set(0, 0.06, -0.47);
+      lid.rotation.x = -0.22;
+      const book = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.14, 0.95), this.mat({ map: tex(bookTexture()) }));
+      book.position.set(1.0, 0.07, 0.15);
+      book.rotation.y = 0.25;
+      laptop.add(lBase, lid, book);
+      laptop.position.set(-2.6, 0, 0.0);
+      laptop.rotation.y = 0.35;
+      spot("laptop", laptop, [-2.55, 0.75, -0.05]);
+
+      const ipad = new THREE.Group();
+      const slab = new THREE.Mesh(new THREE.BoxGeometry(0.95, 1.25, 0.04), this.mat({ color: "#2b2d3a" }));
+      const music = new THREE.Mesh(new THREE.PlaneGeometry(0.85, 1.13), this.mat({ map: tex(sheetTexture()), lit: false }));
+      // Well clear of the slab: the PS1 vertex snap makes close layers fight.
+      music.position.z = 0.07;
+      const tab = new THREE.Group();
+      tab.add(slab, music);
+      tab.position.y = 0.62;
+      tab.rotation.x = -0.3;
+      const wedge = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.4), this.mat({ color: "#e8c3d2" }));
+      wedge.position.set(0, 0.06, -0.12);
+      ipad.add(wedge, tab);
+      ipad.position.set(1.75, 0, -0.35);
+      ipad.rotation.y = -0.3;
+      spot("ipad", ipad, [1.75, 0.95, -0.3]);
+
+      const flute = new THREE.Group();
+      const tube = new THREE.CylinderGeometry(0.06, 0.06, 2.6, 7);
+      tube.rotateZ(Math.PI / 2);
+      const body = new THREE.Mesh(tube, this.mat({ map: this.fluteTex }));
+      const lip = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.05, 0.12), this.mat({ color: "#eef1f5" }));
+      lip.position.set(-1.05, 0.06, 0);
+      flute.add(body, lip);
+      flute.position.set(0.6, 0.07, 0.85);
+      flute.rotation.y = 0.12;
+      // Inspecting the flute: the cat picks it up, so look at the cat playing.
+      spot("flute", flute, [0.6, 0.2, 0.85], { at: [0.2, 1.45, 0.2], dist: 4.6 });
+
+      const letter = new THREE.Group();
+      const env = new THREE.Mesh(new THREE.PlaneGeometry(0.74, 0.5), this.mat({ map: tex(envelopeTexture()) }));
+      env.rotation.set(-Math.PI / 2, 0, 0.25);
+      env.position.y = 0.012;
+      letter.add(env);
+      letter.position.set(-1.75, 0, 1.3);
+      spot("letter", letter, [-1.75, 0.12, 1.3]);
+
+      // A plate of cookies: inspecting it, the cat has one.
+      const plate = new THREE.Group();
+      const dish = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.42, 0.05, 10), this.mat({ color: "#fffaf0" }));
+      dish.position.y = 0.03;
+      plate.add(dish);
+      [[-0.12, 0.08, 0.05], [0.14, 0.08, -0.06], [0.0, 0.14, 0.02]].forEach(([x, y, z], i) => {
+        const c = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.05, 9), this.mat({ map: this.cookieTex }));
+        c.position.set(x, y, z);
+        c.rotation.set(i === 2 ? 0.2 : 0, i * 0.7, i === 2 ? -0.15 : 0);
+        plate.add(c);
+      });
+      plate.position.set(2.45, 0, 0.95);
+      spot("cookies", plate, [2.45, 0.22, 0.95], { at: [0.2, 1.3, 0.2], dist: 4.6 });
+
+      group.add(wall, desk, diploma, resume, socials, laptop, ipad, flute, letter, plate);
+      return {
+        ...base,
+        camPos: [0, 2.9, 7.0],
+        camTarget: [0, 1.4, -0.2],
+        fov: 40,
+        ownSnack: true,
+        fitWidth: 7.2,
+        fitHeight: 4.5,
+        clear: "#a7cde6",
+        hotspots: hotspots.sort((a, b) => a.anchor.x - b.anchor.x),
+      };
+    }
+
     if (name === "room") {
+      const hotspots: HotspotDef[] = [];
+      const atCat = { inspectAt: new THREE.Vector3(0, 1.3, 0), inspectDist: 4.8 };
       const floor = new THREE.Mesh(new THREE.PlaneGeometry(7, 7), this.mat({ map: tex(woodTexture(9, "#c48a55", "#a8703f", "#d49b66")), repeat: [3, 3] }));
       floor.rotation.x = -Math.PI / 2;
       floor.position.set(0, 0, 0);
@@ -561,11 +826,59 @@ export class MascotEngine {
       });
       plant.add(pot);
       plant.position.set(-2.7, 0, -0.4);
-      // A little cookie jar on the floor.
-      const jar = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.55, 8), this.mat({ map: tex(rugTexture("#8fc7e6", "#7ab6d9")) }));
-      jar.position.set(1.9, 0.28, -2.6);
-      group.add(floor, back, left, win, rug, stand, plant, jar);
-      return { ...base, camPos: [2.9, 3.3, 6.0], camTarget: [-0.2, 0.95, -0.4], fov: 40, rootPos: [0, 0, 0], rootRotY: 0.3, clear: "#f3d9cf" };
+      // A little cookie jar on the floor: a round cream pot, pink lid, a cookie
+      // for a knob and one on the front as a label, so it can't pass for a bin.
+      const jar = new THREE.Group();
+      const jarPot = new THREE.Mesh(
+        new THREE.LatheGeometry(
+          [[0, 0], [0.26, 0], [0.34, 0.1], [0.36, 0.3], [0.32, 0.46], [0.22, 0.52], [0.22, 0.56]].map(([x, y]) => new THREE.Vector2(x, y)),
+          9,
+        ),
+        this.mat({ color: "#fff1dc" }),
+      );
+      const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.27, 0.1, 9), this.mat({ color: "#f3a6c3" }));
+      lid.position.y = 0.6;
+      const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.05, 9), this.mat({ map: this.cookieTex }));
+      knob.position.y = 0.68;
+      const label = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.03, 9), this.mat({ map: this.cookieTex }));
+      label.rotation.x = Math.PI / 2;
+      label.position.set(0, 0.29, 0.36);
+      jar.add(jarPot, lid, knob, label);
+      jar.position.set(1.9, 0, -2.6);
+      // A round cushion for naps.
+      const cushion = new THREE.Group();
+      const pad = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.86, 0.26, 10), this.mat({ color: "#f3a6c3" }));
+      pad.position.y = 0.13;
+      const top = new THREE.Mesh(new THREE.CircleGeometry(0.62, 10), this.mat({ color: "#ffd1e2" }));
+      top.rotation.x = -Math.PI / 2;
+      top.position.y = 0.265;
+      cushion.add(pad, top);
+      cushion.position.set(1.85, 0, 1.0);
+      // Wrap the loose pieces so each can glow and hop as one thing.
+      const winGroup = new THREE.Group();
+      winGroup.add(win);
+      const jarGroup = new THREE.Group();
+      jarGroup.add(jar);
+      hotspots.push(
+        { id: "stand", group: stand, anchor: new THREE.Vector3(-1.25, 1.7, 1.0), ...atCat },
+        { id: "window", group: winGroup, anchor: new THREE.Vector3(0.6, 2.3, -3.4) },
+        { id: "jar", group: jarGroup, anchor: new THREE.Vector3(1.9, 0.78, -2.6), ...atCat },
+        { id: "cushion", group: cushion, anchor: new THREE.Vector3(1.85, 0.35, 1.0), ...atCat },
+      );
+      group.add(floor, back, left, winGroup, rug, stand, plant, jarGroup, cushion);
+      return {
+        ...base,
+        camPos: [2.9, 3.3, 6.0],
+        camTarget: [-0.2, 0.95, -0.4],
+        fov: 40,
+        ownSnack: true,
+        fitWidth: 6.4,
+        fitHeight: 4.2,
+        rootPos: [0, 0, 0],
+        rootRotY: 0.3,
+        clear: "#f3d9cf",
+        hotspots: hotspots.sort((a, b) => a.anchor.x - b.anchor.x),
+      };
     }
 
     return base;
@@ -578,8 +891,8 @@ export class MascotEngine {
   }
 
   setEffects(e: MascotEffects) {
-    this.globals.uSnap.value = e.snap;
-    this.globals.uAffine.value = e.affine ? 1 : 0;
+    this.baseFx = { snap: e.snap, affine: e.affine };
+    this.applyWobble();
     this.globals.uDither.value = e.dither ? 1 : 0;
     this.globals.uLevels.value = Math.pow(2, Math.max(1, Math.min(8, e.colorBits))) - 1;
     this.requestRender();
@@ -589,8 +902,160 @@ export class MascotEngine {
     this.renderer.setSize(w, h, false);
     this.globals.uRes.value.set(w, h);
     this.camera.aspect = w / h;
-    this.camera.updateProjectionMatrix();
+    this.aimCamera(true);
     this.requestRender();
+  }
+
+  // ---------------------------------------------------------------- picking (studio)
+  /** The pickable things in the current set, in left-to-right order. */
+  hotspotIds() {
+    return this.hotspots.map((h) => h.id);
+  }
+
+  /** Highlight one thing (or none): it hops, the camera eases toward it and the cat looks at it.
+   * `close` moves the camera right up to it, for inspecting. */
+  select(id: string | null, close = false) {
+    this.selected = this.hotspots.some((h) => h.id === id) ? id : null;
+    this.close = close && this.selected !== null;
+    this.applyWobble();
+    const h = this.hotspots.find((x) => x.id === this.selected);
+    if (h) {
+      const head = this.root.position.clone().add(new THREE.Vector3(0, 1.9, 0));
+      const d = h.anchor.clone().sub(head);
+      this.lookTarget.set(Math.max(-1, Math.min(1, d.x / 2)), Math.max(-1, Math.min(1, d.y / 1.4)));
+      this.lookLock = true;
+    } else {
+      this.lookLock = false;
+      this.lookTarget.set(0, 0);
+    }
+    this.aimCamera(this.still);
+    this.requestRender();
+  }
+
+  /** Put one piece of dress-up on or take it off (cat only). */
+  wear(item: Outfit, on: boolean) {
+    const o = this.outfit[item];
+    o.on = on;
+    if (o.obj) o.obj.visible = on;
+    this.requestRender();
+  }
+
+  /** Put the graduation cap on or take it off (cat only). */
+  setCap(on: boolean) {
+    this.wear("cap", on);
+  }
+
+  /** Keep the bottom share `r` (0..0.7) of the screen clear: e.g. a dialogue box drawn over it. */
+  setReserve(r: number) {
+    const next = Math.max(0, Math.min(0.7, r));
+    if (Math.abs(next - this.reserve) < 0.01) return;
+    this.reserve = next;
+    // A layout change, not a camera move: jump there rather than glide.
+    this.aimCamera(true);
+    this.requestRender();
+  }
+
+  /** The thing under the pointer (or none): it gives a small wiggle. */
+  hover(id: string | null) {
+    this.hovered = this.hotspots.some((h) => h.id === id) ? id : null;
+    this.requestRender();
+  }
+
+  /** Where a thing sits on screen right now, 0..1 from the top left. */
+  anchor(id: string) {
+    const h = this.hotspots.find((x) => x.id === id);
+    if (!h) return null;
+    this.camera.updateMatrixWorld();
+    const v = h.anchor.clone().project(this.camera);
+    return { x: (v.x + 1) / 2, y: (1 - v.y) / 2 };
+  }
+
+  /** True when a tap (0..1 from the top left) lands on the character itself. */
+  hitCharacter(x: number, y: number) {
+    this.camera.updateMatrixWorld();
+    const ray = new THREE.Raycaster();
+    ray.setFromCamera(new THREE.Vector2(x * 2 - 1, 1 - y * 2), this.camera);
+    // Raycasting ignores `visible`, so skip anything inside a hidden group too
+    // (the flute she holds is hidden when she isn't playing).
+    const shown = (o: THREE.Object3D | null): boolean => !o || (o.visible && shown(o.parent));
+    // Only solid parts: the whiskers are lines, and a ray "hits" a line anywhere
+    // within a whole unit of it, which reached the iPad next to her.
+    return ray
+      .intersectObjects([this.hop, this.char.feet], true)
+      .some((h) => (h.object as THREE.Mesh).isMesh && shown(h.object));
+  }
+
+  /** Which thing is nearest a tap (0..1 from the top left), forgiving for small props. */
+  pick(x: number, y: number) {
+    let best: string | null = null;
+    let bestD = 0.15;
+    for (const h of this.hotspots) {
+      const a = this.anchor(h.id);
+      if (!a) continue;
+      const d = Math.hypot((a.x - x) * this.camera.aspect, a.y - y);
+      if (d < bestD) {
+        bestD = d;
+        best = h.id;
+      }
+    }
+    return best;
+  }
+
+  /** Sets where the camera is heading: the set's own view, or a closer look at the selection. */
+  private aimCamera(snap: boolean) {
+    if (!this.setup) return;
+    const basePos = new THREE.Vector3(...this.setup.camPos);
+    const baseTarget = new THREE.Vector3(...this.setup.camTarget);
+    const fit = (width: number, dist: number) =>
+      THREE.MathUtils.radToDeg(2 * Math.atan(width / 2 / dist / Math.max(0.2, this.camera.aspect)));
+    const h = this.hotspots.find((x) => x.id === this.selected);
+    if (h && this.close) {
+      // Inspecting: straight at the thing, close enough to fill the view.
+      const at = h.inspectAt ?? h.anchor;
+      const dist = h.inspectDist ?? 3.2;
+      const dir = basePos.clone().sub(at).normalize();
+      this.goalTarget.copy(at);
+      this.goalPos.copy(at).addScaledVector(dir, dist);
+      this.goalFov = Math.max(30, fit(dist * 0.88, dist));
+    } else if (h) {
+      // A closer look that keeps the cat in it: lean toward the thing, but
+      // aim no lower than the cat's chest and stay a little back from the wall.
+      const focus = new THREE.Vector3(h.anchor.x * 0.75, Math.max(h.anchor.y, 1.15), Math.max(h.anchor.z, -1.6) * 0.6);
+      const dir = basePos.clone().sub(focus).normalize();
+      this.goalTarget.copy(focus);
+      this.goalPos.copy(focus).addScaledVector(dir, 5.6);
+      this.goalFov = Math.max(this.setup.fov, fit(4.8, 5.6));
+    } else {
+      this.goalPos.copy(basePos);
+      this.goalTarget.copy(baseTarget);
+      const fw = this.setup.fitWidth;
+      const fh = this.setup.fitHeight;
+      const dist = basePos.distanceTo(baseTarget);
+      const tall = fh ? THREE.MathUtils.radToDeg(2 * Math.atan(fh / (1 - this.reserve) / 2 / dist)) : 0;
+      this.goalFov = Math.max(this.setup.fov, fw ? fit(fw, dist) : 0, tall);
+    }
+    // Slide the whole view down (camera and target together) so the content
+    // rises into the part of the screen the page leaves clear.
+    if (this.reserve > 0) {
+      const dist = this.goalPos.distanceTo(this.goalTarget);
+      const visible = 2 * dist * Math.tan(THREE.MathUtils.degToRad(this.goalFov) / 2);
+      const down = new THREE.Vector3(0, -(this.reserve * visible) / 2, 0);
+      this.goalPos.add(down);
+      this.goalTarget.add(down);
+    }
+    if (snap) {
+      this.camPos.copy(this.goalPos);
+      this.camTarget.copy(this.goalTarget);
+      this.camFov = this.goalFov;
+    }
+    this.placeCamera();
+  }
+
+  private placeCamera() {
+    this.camera.position.copy(this.camPos);
+    this.camera.fov = this.camFov;
+    this.camera.lookAt(this.camTarget);
+    this.camera.updateProjectionMatrix();
   }
 
   setFps(fps: number) {
@@ -599,6 +1064,7 @@ export class MascotEngine {
 
   /** Pointer position in canvas-relative units, -1..1 (null when it leaves). */
   setPointer(x: number | null, y = 0) {
+    if (this.lookLock) return;
     if (x === null) this.lookTarget.set(0, 0);
     else this.lookTarget.set(Math.max(-1, Math.min(1, x)), Math.max(-1, Math.min(1, y)));
     if (this.still) {
@@ -607,7 +1073,7 @@ export class MascotEngine {
     }
   }
 
-  /** The click reaction: a hop and a wave (or, with reduced motion, a smile). */
+  /** The click reaction: a random little bit (or, with reduced motion, a smile). */
   react() {
     if (this.still) {
       this.stillOverride = this.mood === "sleep" ? "surprised" : "happy";
@@ -618,9 +1084,16 @@ export class MascotEngine {
       }, 1400);
       return;
     }
+    // Asleep, a pet startles her; with her paws busy (eating, playing) she just hops.
+    // Otherwise it's anything but the last one.
+    const pool = (Object.keys(REACTIONS) as Reaction[]).filter((r) => r !== this.reaction);
+    this.reaction =
+      this.mood === "sleep" ? "startle" : this.mood !== "idle" ? "hop" : pool[Math.floor(Math.random() * pool.length)];
     this.reactAt = this.time;
     const above = this.body.localToWorld(new THREE.Vector3(0, 1.05, 0.2));
-    for (let i = 0; i < 4; i++) this.spawn("sparkle", 0.9, above);
+    const glyph: Glyph = this.reaction === "purr" ? "heart" : this.reaction === "dance" ? "note" : "sparkle";
+    const count = this.reaction === "startle" ? 2 : 4;
+    for (let i = 0; i < count; i++) this.spawn(glyph, this.reaction === "purr" ? 1.6 : 0.9, above);
   }
 
   setStill(still: boolean) {
@@ -747,10 +1220,10 @@ export class MascotEngine {
     const lookAmt = this.mood === "idle" ? 1 : this.mood === "sleep" ? 0 : 0.35;
     const lx = this.look.x * lookAmt, ly = this.look.y * lookAmt;
 
-    const react = still ? 1 : (t - this.reactAt) / 1.1;
+    const react = still ? 1 : (t - this.reactAt) / REACTIONS[this.reaction];
     const reacting = react >= 0 && react < 1;
 
-    let y = Math.sin(t * 2.4) * 0.035;
+    let y = Math.sin(t * 2.4) * 0.026;
     let rx = -ly * 0.32;
     let ry = lx * 0.55;
     let rz = -lx * 0.14 + Math.sin(t * 1.15) * 0.035;
@@ -830,16 +1303,69 @@ export class MascotEngine {
     this.root.position.y = this.setup.rootPos[1] + floatY;
     if (this.setup.floating) ry += Math.sin(t * 0.6) * 0.5;
 
-    // Click: hop with squash on landing, wave the right arm, big smile.
+    // A pet: one of a few little bits, each over `react` going 0 to 1.
     if (reacting && !still) {
-      const hop = react < 0.5 ? Math.sin((react / 0.5) * Math.PI) : 0;
-      y += hop * 0.42;
-      hopLift = hop * 0.42;
-      if (react < 0.08) sy *= 1 - (0.08 - react) * 1.6;
-      else if (react > 0.5 && react < 0.62) sy *= 1 - Math.sin(((react - 0.5) / 0.12) * Math.PI) * 0.12;
-      if (this.mood !== "eat") handR = sR.clone().add(new THREE.Vector3(0.3 + Math.sin(t * 15) * 0.12, 0.42, 0.15));
-      face = this.mood === "sleep" ? "surprised" : "happy";
-      rz += Math.sin(react * Math.PI) * 0.1;
+      const up = (h: number) => sR.clone().add(new THREE.Vector3(0.18, h, 0.15));
+      const upL = (h: number) => sL.clone().add(new THREE.Vector3(-0.18, h, 0.15));
+      const bell = Math.sin(react * Math.PI);
+      switch (this.reaction) {
+        case "hop": {
+          // Hop with squash on landing, wave the right arm, big smile.
+          const hop = react < 0.5 ? Math.sin((react / 0.5) * Math.PI) : 0;
+          y += hop * 0.42;
+          hopLift = hop * 0.42;
+          if (react < 0.08) sy *= 1 - (0.08 - react) * 1.6;
+          else if (react > 0.5 && react < 0.62) sy *= 1 - Math.sin(((react - 0.5) / 0.12) * Math.PI) * 0.12;
+          if (this.mood === "idle") handR = sR.clone().add(new THREE.Vector3(0.3 + Math.sin(t * 15) * 0.12, 0.42, 0.15));
+          face = "happy";
+          rz += bell * 0.1;
+          break;
+        }
+        case "purr":
+          // Eyes shut, leans into the hand, rocks side to side; hearts float up.
+          face = "content";
+          rz += Math.sin(react * Math.PI * 4) * 0.12 * bell;
+          rx += 0.12 * bell;
+          y += Math.abs(Math.sin(t * 30)) * 0.012 * bell;
+          handL = sL.clone().add(new THREE.Vector3(0.1, -0.38, 0.32));
+          handR = sR.clone().add(new THREE.Vector3(-0.1, -0.38, 0.32));
+          break;
+        case "tilt":
+          // A curious head tilt, one paw up by her cheek.
+          face = react > 0.2 && react < 0.8 ? "happy" : "open";
+          rz += 0.22 * smooth(Math.min(1, react * 3)) * (react > 0.75 ? 1 - (react - 0.75) * 4 : 1);
+          handL = upL(0.18 * bell);
+          break;
+        case "stretch":
+          // Paws up, reach tall, then settle.
+          sy *= 1 + bell * 0.22;
+          y += bell * 0.08;
+          handL = upL(0.55 * bell + (1 - bell) * -0.26);
+          handR = up(0.55 * bell + (1 - bell) * -0.26);
+          face = bell > 0.5 ? "content" : "open";
+          break;
+        case "dance": {
+          // A wiggle to music only she can hear; arms take turns.
+          const beat = Math.sin(react * Math.PI * 6);
+          rz += beat * 0.16;
+          y += Math.abs(beat) * 0.1;
+          hopLift = Math.abs(beat) * 0.05;
+          handL = upL(beat > 0 ? 0.45 : 0);
+          handR = up(beat > 0 ? 0 : 0.45);
+          face = "happy";
+          break;
+        }
+        case "startle":
+          // Jumps, wide-eyed, then shakes it off.
+          y += (react < 0.35 ? Math.sin((react / 0.35) * Math.PI) : 0) * 0.3;
+          hopLift = y > 0 ? Math.min(0.3, y) : 0;
+          rx -= 0.18 * bell;
+          if (react > 0.55) rz += Math.sin(t * 40) * 0.06 * (1 - react);
+          handL = upL(0.3 * bell);
+          handR = up(0.3 * bell);
+          face = react < 0.7 ? "surprised" : "happy";
+          break;
+      }
     }
 
     // Blink every few seconds, but not when the eyes are already closed.
@@ -882,10 +1408,34 @@ export class MascotEngine {
     }
     if (crumbs) for (let i = 0; i < 3; i++) this.spawn("crumb", 0.7, this.body.localToWorld(this.char.mouth.clone().add(new THREE.Vector3(0, -0.1, 0.1))));
     this.char.flute.visible = this.mood === "flute";
-    this.bowl.visible = this.mood === "eat";
+    this.bowl.visible = this.mood === "eat" && !this.setup.ownSnack;
 
     const lift = Math.max(0, P.y);
     this.shadow.scale.set(1 - lift * 0.5, 0.7 - lift * 0.35, 1);
+
+    // Camera eases toward its goal; hotspots glow, the selected one hops.
+    const kc = still ? 1 : 1 - Math.exp(-dt * 4);
+    this.camPos.lerp(this.goalPos, kc);
+    this.camTarget.lerp(this.goalTarget, kc);
+    this.camFov += (this.goalFov - this.camFov) * kc;
+    this.placeCamera();
+    this.hotspots.forEach((h, i) => {
+      const on = h.id === this.selected;
+      const hov = h.id === this.hovered && !on && !this.close;
+      const pulse = still ? 0.5 : 0.5 + 0.5 * Math.sin(t * 2.2 + i * 1.3);
+      const glow = on ? 1.28 : hov ? 1.24 : 1 + 0.14 * pulse;
+      for (const { m, base } of h.mats) (m.uniforms.uColor.value as THREE.Vector3).copy(base).multiplyScalar(glow);
+      // Hops while picked; holds still once you are up close inspecting it.
+      h.group.position.y =
+        h.baseY + (still ? 0 : on && !this.close ? Math.abs(Math.sin(t * 5)) * 0.055 : hov ? Math.abs(Math.sin(t * 8)) * 0.035 : 0);
+      // Hovered: a quick little tilt back and forth, like it noticed you.
+      h.group.rotation.z = h.baseRotZ + (hov && !still ? Math.sin(t * 13) * 0.04 : 0);
+      // The cat picks the desk flute up to play it.
+      if (h.id === "flute") h.group.visible = this.mood !== "flute";
+      h.sparkle.quaternion.copy(this.camera.quaternion);
+      h.sparkle.scale.setScalar(on ? 1.3 : 0.55 + 0.45 * pulse);
+      h.sparkle.material.uniforms.uOpacity.value = on ? 1 : 0.35 + 0.65 * pulse;
+    });
 
     if (this.setup.backdrop) this.setup.backdrop.uniforms.uTime.value = t;
     if (!still) this.updateParticles(dt);

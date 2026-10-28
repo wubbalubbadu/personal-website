@@ -1,6 +1,6 @@
 "use client";
 
-import { PS1Mascot, type MascotCharacter, type MascotMood, type MascotScene } from "../../components/ps1-mascot";
+import { PS1Mascot, type MascotCharacter, type MascotEngine, type MascotMood, type MascotScene } from "../../components/ps1-mascot";
 
 /**
  * <MascotSlot/>: the PS1 mascot (app/components/ps1-mascot) sized for the lab
@@ -22,6 +22,7 @@ export default function MascotSlot({
   scene = "none",
   lines = [],
   onClick,
+  onEngine,
   className = "",
   label,
 }: {
@@ -39,6 +40,8 @@ export default function MascotSlot({
   /** Lines the mascot says in its own bubble when tapped. Empty stays quiet. */
   lines?: string[];
   onClick?: () => void;
+  /** The engine once built, for pages that drive a set (the studio's picking and camera). */
+  onEngine?: (engine: MascotEngine | null) => void;
   className?: string;
   label?: string;
 }) {
@@ -63,6 +66,7 @@ export default function MascotSlot({
         lines={lines}
         bubble="above"
         onClick={onClick}
+        onEngine={onEngine}
         label={label}
       />
     </div>

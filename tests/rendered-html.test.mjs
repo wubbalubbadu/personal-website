@@ -18,7 +18,7 @@ test("portfolio serves meaningful HTML before JavaScript loads", async () => {
   const html = await response.text();
 
   assert.match(html, /Haylie Wu/);
-  assert.match(html, /software developer/i);
+  assert.match(html, /software (developer|engineer)/i);
   assert.match(html, /<noscript>/);
   assert.match(html, /haylie-wu-resume\.pdf/);
   assert.match(html, /mailto:hayliewu0709@gmail\.com/);

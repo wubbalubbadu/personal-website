@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from "re
 import { playStep, timeline, unlockAudio, VOICES, type Voice } from "./animalese";
 import type { MascotCharacter, MascotEffects, MascotEngine, MascotMood, MascotScene } from "./engine";
 
-export type { MascotCharacter, MascotEffects, MascotMood, MascotScene, Voice };
+export type { MascotCharacter, MascotEffects, MascotEngine, MascotMood, MascotScene, Voice };
 
 export const DEFAULT_LINES: Record<MascotCharacter, string[]> = {
   cookie: [
@@ -60,6 +60,8 @@ export type PS1MascotProps = {
   still?: boolean;
   /** Average render ms and real fps, reported once a second. */
   onStats?: (ms: number, fps: number) => void;
+  /** The engine once it is built (null when it goes away), for pages that drive a set directly. */
+  onEngine?: (engine: MascotEngine | null) => void;
   label?: string;
   className?: string;
   style?: CSSProperties;
@@ -83,6 +85,7 @@ export default function PS1Mascot({
   fps = 30,
   still = false,
   onStats,
+  onEngine,
   label,
   className,
   style,
@@ -139,6 +142,9 @@ export default function PS1Mascot({
       cancelled = true;
       engine?.dispose();
       engineRef.current = null;
+      // A remount (hot reload) builds a fresh engine with no scene or character;
+      // flipping `ready` makes every setter below run again for it.
+      setReady(false);
     };
   }, []);
 
@@ -156,6 +162,15 @@ export default function PS1Mascot({
   useEffect(() => {
     engineRef.current?.setScene(scene);
   }, [ready, scene]);
+  const onEngineRef = useRef(onEngine);
+  useEffect(() => {
+    onEngineRef.current = onEngine;
+  }, [onEngine]);
+  useEffect(() => {
+    if (!ready) return;
+    onEngineRef.current?.(engineRef.current);
+    return () => onEngineRef.current?.(null);
+  }, [ready]);
   useEffect(() => {
     engineRef.current?.setCharacter(character);
   }, [ready, character]);

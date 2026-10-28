@@ -2,7 +2,7 @@ import type { Place } from "./links";
 
 /* 12x12 pixel icons, one per place, in the spirit of PS1 save icons.
  * Each row is 12 characters; "." is empty. */
-const PALETTE: Record<string, string> = {
+export const PALETTE: Record<string, string> = {
   k: "#2b1420",
   w: "#ffffff",
   b: "#e8a85e",
@@ -13,7 +13,7 @@ const PALETTE: Record<string, string> = {
   s: "#cfc6d6",
 };
 
-const ICONS: Record<Place["id"], string[]> = {
+export const ICONS: Record<Place["id"], string[]> = {
   studio: [
     "....kkkk....",
     "..kkbbbbkk..",
