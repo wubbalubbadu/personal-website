@@ -94,6 +94,10 @@ export function Console({
               className="hh-scene"
               onPointerUp={(e) => {
                 if (e.pointerType === "mouse" && e.button !== 0) return;
+                // A click focuses the cat's own button, and Enter would then pet her
+                // instead of inspecting; let go of it (Tab still reaches it).
+                const f = document.activeElement;
+                if (f instanceof HTMLElement && e.currentTarget.contains(f)) f.blur();
                 onSceneTap(...at(e));
               }}
               onPointerMove={(e) => {

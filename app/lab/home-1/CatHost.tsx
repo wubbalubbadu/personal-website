@@ -9,7 +9,7 @@ import { CONTACT_LINKS, COPY, FLUTE_LINKS, opensNewTab, PROJECT_ROWS, type LinkI
 import { playFlute } from "../_kit/fluteTone";
 import { useMedia, usePrefersReducedMotion } from "../_kit/hooks";
 import { INTENTS, type AnswerNode, type RichSeg } from "../../lib/answers";
-import { playStep, timeline, unlockAudio, VOICES, type MascotEngine, type MascotMood } from "../../components/ps1-mascot";
+import { playStep, timeline, unlockAudio, VOICES, type MascotEngine, type MascotMood, type Outfit } from "../../components/ps1-mascot";
 import { Console, type Device, type Pad } from "./Handheld";
 import ItemArt, { LaptopArt, type ArtId } from "./ItemArt";
 
@@ -28,7 +28,7 @@ import ItemArt, { LaptopArt, type ArtId } from "./ItemArt";
 type ItemId =
   | "diploma" | "resume" | "socials" | "laptop" | "letter" | "flute" | "ipad" | "cookies"
   // the living room
-  | "stand" | "window" | "jar" | "cushion";
+  | "closet" | "stand" | "window" | "jar" | "cushion";
 
 type Item = {
   name: string;
@@ -46,6 +46,8 @@ type Item = {
   mood?: MascotMood;
   /** A snack: the cat eats one, the counter goes up, it says one of SNACK_LINES. */
   snack?: boolean;
+  /** The dress-up closet: each inspect puts on the next of LOOKS. */
+  closet?: boolean;
   /** Inspecting runs this whole conversation from app/lib/answers.ts instead of `body`. */
   topic?: "flute" | "background" | "projects";
 };
@@ -95,6 +97,7 @@ const ITEMS: Record<ItemId, Item> = {
   // The fun things: no links, the cat just does something. Drafts for Haylie.
   cookies: { name: "Cookies", react: "", body: "", snack: true, mood: "eat" },
   jar: { name: "Cookie jar", react: "", body: "", snack: true, mood: "eat" },
+  closet: { name: "Closet", react: "", body: "", closet: true },
   cushion: { name: "Cushion", react: "", body: "Five more minutes.", mood: "sleep" },
   stand: { name: "Music stand", react: "", body: "Long tones first. Always.", plays: true },
   window: { name: "Window", react: "", body: "Good light for practising." },
@@ -190,11 +193,23 @@ const SNACK_MILESTONES: Record<number, string[]> = {
   20: ["Twenty?!", "You're a bad influence.", "Thank you."],
 };
 
+/** The closet's looks, in turn, and what she says in each. Drafts for Haylie. */
+const LOOKS: { wear: Outfit[]; line: string }[] = [
+  { wear: ["beret"], line: "A beret! Very artist. I'd paint you something, but my paws only know scales." },
+  { wear: ["bow"], line: "My recital bow. Please hold your applause until the end of the piece." },
+  { wear: ["glasses"], line: "Reading glasses. I look like I know what a Fourier transform is. I do, a little." },
+  { wear: ["cap"], line: "The graduation cap again. I earned it, I'm wearing it." },
+  { wear: ["apron"], line: "Apron on. Baker by day, flutist by night." },
+  { wear: ["beret", "bow", "glasses", "apron"], line: "Everything at once. This is called fashion." },
+  { wear: [], line: "Just me. Honestly, still the best look." },
+];
+const DRESS_UP: Outfit[] = ["bow", "beret"];
+
 /** Up looks at the wall, down at the desk; left and right move along a row. */
 const WALL: ItemId[] = ["diploma", "resume", "socials"];
 const DESK: ItemId[] = ["laptop", "letter", "flute", "ipad", "cookies"];
 /** The living room, one row, left to right. */
-const ROOM: ItemId[] = ["stand", "window", "cushion", "jar"];
+const ROOM: ItemId[] = ["closet", "stand", "window", "cushion", "jar"];
 type Place = "studio" | "room";
 
 /** The laptop's desktop: every project, Cookie Flute Studio included. */
@@ -458,11 +473,12 @@ function CatHostInner({ device }: { device: Device }) {
   const lastRef = useRef<ItemId | null>(null);
   const [appIndex, setAppIndex] = useState(0);
   const [cardShown, setCardShown] = useState(false);
-  /* One visit in five, and at night, she's napping when you arrive; a pet wakes her. */
+  /* Late at night (the visitor's own clock, 11pm to 6am) she's napping when you
+     arrive; a pet wakes her. */
   const [mood, setMood] = useState<MascotMood>(() => {
     if (typeof window === "undefined") return "idle";
     const hour = new Date().getHours();
-    return hour >= 22 || hour < 6 || Math.random() < 0.2 ? "sleep" : "idle";
+    return hour >= 23 || hour < 6 ? "sleep" : "idle";
   });
   /* Desk and wall, or the living room. */
   const [place, setPlace] = useState<Place>("studio");
@@ -470,6 +486,9 @@ function CatHostInner({ device }: { device: Device }) {
   const [eaten, setEaten] = useState(0);
   const [snackLines, setSnackLines] = useState(SNACK_LINES[0]);
   const eatenRef = useRef(0);
+  /* Which of LOOKS she has on from the closet (-1: nothing). She keeps it on in the studio too. */
+  const [look, setLook] = useState(-1);
+  const lookRef = useRef(-1);
   const [page, setPage] = useState(0);
   /* Everything shows at once until something is typed: the hello reads on first paint. */
   const [n, setN] = useState(Infinity);
@@ -490,9 +509,10 @@ function CatHostInner({ device }: { device: Device }) {
     if (mode === "desktop" && item) return [{ kind: "text", value: DESKTOP_LINE }];
     // A cookie's lines read as one little speech, not a click per sentence.
     if (mode === "item" && item?.snack) return [{ kind: "text", value: snackLines.join(" ") }];
+    if (mode === "item" && item?.closet) return [{ kind: "text", value: LOOKS[Math.max(0, look)].line }];
     if (mode === "item" && item) return item.topic ? answerPages(item.topic) : [{ kind: "text", value: item.body }];
     return [{ kind: "text", value: INTRO }];
-  }, [mode, topic, item, app, snackLines, question]);
+  }, [mode, topic, item, app, snackLines, look, question]);
   const node = pages[Math.min(page, pages.length - 1)];
   const text = fix(nodeText(node));
   const done = n >= text.length;
@@ -540,18 +560,22 @@ function CatHostInner({ device }: { device: Device }) {
   /* Dress-up: on as soon as you hover or pick the thing, so you see it before the
      camera zooms in (and away from her). */
   const near = (...ids: ItemId[]) => ids.some((id) => id === selected || id === hovered);
-  const capOn = (mode === "topic" && Boolean(focus?.cap)) || near("diploma");
+  const wearing = look >= 0 ? LOOKS[look].wear : [];
+  const capOn = (mode === "topic" && Boolean(focus?.cap)) || near("diploma") || wearing.includes("cap");
   useEffect(() => {
     if (ready) engineRef.current?.setCap(capOn);
   }, [ready, capOn]);
-  /* Glasses on at the laptop, an apron for cookies. */
-  const glassesOn = mode === "desktop" || mode === "app" || focus?.item === "laptop" || near("laptop");
-  const apronOn = mood === "eat" || near("cookies", "jar");
+  /* Glasses on at the laptop, an apron for cookies, plus whatever the closet put on. */
+  const glassesOn = mode === "desktop" || mode === "app" || focus?.item === "laptop" || near("laptop") || wearing.includes("glasses");
+  const apronOn = mood === "eat" || near("cookies", "jar") || wearing.includes("apron");
   useEffect(() => {
     if (!ready) return;
     engineRef.current?.wear("glasses", glassesOn);
     engineRef.current?.wear("apron", apronOn);
-  }, [ready, glassesOn, apronOn]);
+    const extra = look >= 0 ? LOOKS[look].wear : [];
+    // The graduation cap sits where the beret does, so the cap wins while it's on.
+    for (const o of DRESS_UP) engineRef.current?.wear(o, extra.includes(o) && !(o === "beret" && capOn));
+  }, [ready, glassesOn, apronOn, look, capOn]);
   const focusMood = mode === "topic" ? focus?.mood : undefined;
 
   const hideCard = useCallback(() => {
@@ -589,6 +613,12 @@ function CatHostInner({ device }: { device: Device }) {
         eatenRef.current += 1;
         setEaten(eatenRef.current);
         setSnackLines(lines);
+      }
+      if (it.closet) {
+        const next = (lookRef.current + 1) % LOOKS.length;
+        lookRef.current = next;
+        setLook(next);
+        line = LOOKS[next].line;
       }
       typeOut(line);
       // Let the camera arrive, then show the graphic (or the laptop's desktop).
@@ -644,24 +674,29 @@ function CatHostInner({ device }: { device: Device }) {
   /* RPG choices: the questions, in their own little window under the dialogue. */
   /* Inspecting something that has its own questions (the flute, the laptop, the iPad). */
   const holding = (mode === "item" || mode === "desktop") && Boolean(questions);
-  const showChoices = done && last && (mode === "intro" || mode === "topic" || holding);
+  /* At the closet the one choice is the next outfit. */
+  const dressing = mode === "item" && selected === "closet";
+  const showChoices = done && last && (mode === "intro" || mode === "topic" || holding || dressing);
   /* Each choice is a question about the thing in hand, or one of the hello's topics. */
   type Option = { key: string; label: string; topic?: Topic };
   const options = useMemo<Option[]>(
     () =>
-      holding && questions
+      dressing
+        ? [{ key: "look", label: "Try another look?" }]
+        : holding && questions
         ? Object.entries(questions)
             .filter(([k]) => k !== asked)
             .map(([k, q]) => ({ key: k, label: q.ask }))
         : TOPICS.filter((t) => !(mode === "topic" && t === topic)).map((t) => ({ key: t, label: TOPIC_ASK[t], topic: t })),
-    [holding, questions, asked, mode, topic],
+    [dressing, holding, questions, asked, mode, topic],
   );
   const choose = useCallback(
     (o: Option) => {
-      if (o.topic) ask(o.topic);
+      if (o.key === "look" && dressing) inspect("closet");
+      else if (o.topic) ask(o.topic);
       else if (questions?.[o.key]) askAbout(o.key, questions[o.key]);
     },
-    [ask, askAbout, questions],
+    [ask, askAbout, questions, dressing, inspect],
   );
   /* The button and links under the answer: the flute question's, or the item's. */
   const extras = question ?? (mode === "item" ? item : null);
@@ -682,13 +717,13 @@ function CatHostInner({ device }: { device: Device }) {
     }
     if (mode === "intro" || mode === "topic") pick(DESK[0]);
     else if (mode === "browse" && selected) inspect(selected);
-    else if (mode === "item" && questions && !asked && options[cursor]) choose(options[cursor]);
+    else if (mode === "item" && ((questions && !asked) || dressing) && options[cursor]) choose(options[cursor]);
     else if (mode === "item" && extras) {
       if (extras.open) goTo(extras.open.href);
       else if (extras.links?.[0]) goTo(extras.links[0].href);
     } else if (mode === "desktop") showApp(appIndex);
     else if (mode === "app") goTo(app.href);
-  }, [done, last, page, pages, mode, selected, extras, questions, asked, options, cursor, choose, app, appIndex, pick, inspect, showApp, goTo, typeOut]);
+  }, [done, last, page, pages, mode, selected, extras, questions, asked, dressing, options, cursor, choose, app, appIndex, pick, inspect, showApp, goTo, typeOut]);
 
   const b = useCallback(() => {
     if (mode === "app") setMode("desktop");

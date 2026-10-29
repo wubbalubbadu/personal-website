@@ -94,7 +94,7 @@ type Hotspot = HotspotDef & {
   sparkle: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
 };
 
-export type Outfit = "cap" | "glasses" | "apron";
+export type Outfit = "cap" | "glasses" | "apron" | "bow" | "beret";
 type Glyph = "note" | "z" | "sparkle" | "crumb" | "heart";
 /** The ways the cat answers a pet, picked at random (never the same twice running). */
 type Reaction = "hop" | "purr" | "tilt" | "stretch" | "dance" | "startle";
@@ -178,11 +178,14 @@ export class MascotEngine {
     this.globals.uAffine.value = calm || !this.baseFx.affine ? 0 : 1;
   }
   /** Dress-up for the cat: a graduation cap for school talk, glasses at the
-   *  laptop, an apron for cookies. Each is hidden until switched on. */
+   *  laptop, an apron for cookies, and a bow and a beret from the living-room
+   *  closet. Each is hidden until switched on. */
   private outfit: Record<Outfit, { obj: THREE.Object3D | null; on: boolean }> = {
     cap: { obj: null, on: false },
     glasses: { obj: null, on: false },
     apron: { obj: null, on: false },
+    bow: { obj: null, on: false },
+    beret: { obj: null, on: false },
   };
   /** Inspecting: the camera moves right up to the selected thing. */
   private close = false;
@@ -422,6 +425,33 @@ export class MascotEngine {
     glasses.position.set(0, 0.04, 0.74);
     head.add(glasses);
     this.outfit.glasses.obj = glasses;
+
+    // From the closet: a pink bow at the foot of her left ear (the side she shows when she turns to the closet)...
+    const bow = new THREE.Group();
+    const ribbon = this.mat({ color: "#e7708f" });
+    for (const s of [-1, 1]) {
+      const loop = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.24, 4), ribbon);
+      loop.rotation.z = s * Math.PI / 2;
+      loop.position.x = s * 0.12;
+      bow.add(loop);
+    }
+    bow.add(new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.08), this.mat({ color: "#f3a6c3" })));
+    bow.position.set(-0.52, 0.56, 0.3);
+    bow.rotation.z = 0.4;
+    head.add(bow);
+    this.outfit.bow.obj = bow;
+    // ...and a red painter's beret, slouched to one side with her ears poking through.
+    const beret = new THREE.Group();
+    const felt = this.mat({ color: "#c8414b" });
+    const puff = new THREE.Mesh(new THREE.SphereGeometry(0.56, 9, 4), felt);
+    puff.scale.set(1, 0.3, 1);
+    const stalk = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, 0.1, 4), felt);
+    stalk.position.y = 0.19;
+    beret.add(puff, stalk);
+    beret.position.set(0.1, 0.6, -0.05);
+    beret.rotation.z = -0.22;
+    head.add(beret);
+    this.outfit.beret.obj = beret;
     group.add(head);
 
     // Collar with a tiny cookie charm, so she belongs to the cookie world.
@@ -825,7 +855,7 @@ export class MascotEngine {
         plant.add(leaf);
       });
       plant.add(pot);
-      plant.position.set(-2.7, 0, -0.4);
+      plant.position.set(-2.8, 0, -2.9);
       // A little cookie jar on the floor: a round cream pot, pink lid, a cookie
       // for a knob and one on the front as a label, so it can't pass for a bin.
       const jar = new THREE.Group();
@@ -854,18 +884,55 @@ export class MascotEngine {
       top.position.y = 0.265;
       cushion.add(pad, top);
       cushion.position.set(1.85, 0, 1.0);
+      // A wardrobe against the left wall (on the back wall the cat hides it), one
+      // door ajar on a few hanging clothes: the dress-up corner.
+      const closet = new THREE.Group();
+      const woodMat = this.mat({ color: "#f6e3cf" });
+      const trim = this.mat({ color: "#e7a0b4" });
+      const carcass = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.9, 0.6), woodMat);
+      carcass.position.y = 1.0;
+      const crownTop = new THREE.Mesh(new THREE.BoxGeometry(1.32, 0.1, 0.68), trim);
+      crownTop.position.y = 2.0;
+      const plinth = new THREE.Mesh(new THREE.BoxGeometry(1.26, 0.1, 0.64), trim);
+      plinth.position.y = 0.05;
+      const inside = new THREE.Mesh(new THREE.PlaneGeometry(0.54, 1.7), this.mat({ color: "#a8735a" }));
+      inside.position.set(0.29, 1.0, 0.305);
+      ["#c8414b", "#8fb4e3", "#f2c94c"].forEach((c, i) => {
+        const coat = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.8, 0.3), this.mat({ color: c }));
+        coat.position.set(0.15 + i * 0.16, 1.4, 0.16);
+        closet.add(coat);
+      });
+      // The near door is shut; the far one swings open, so it doesn't hide the clothes.
+      const shut = new THREE.Mesh(new THREE.BoxGeometry(0.56, 1.7, 0.04), this.mat({ color: "#fff4ea" }));
+      shut.position.set(-0.29, 1.0, 0.32);
+      const hinge = new THREE.Group();
+      hinge.position.set(0.58, 1.0, 0.32);
+      hinge.rotation.y = 1.1;
+      const swung = new THREE.Mesh(new THREE.BoxGeometry(0.56, 1.7, 0.04), this.mat({ color: "#fff4ea" }));
+      swung.position.x = -0.28;
+      hinge.add(swung);
+      const brass = this.mat({ color: "#f2c94c" });
+      const knobShut = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.06), brass);
+      knobShut.position.set(-0.07, 1.0, 0.36);
+      const knobOpen = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.06), brass);
+      knobOpen.position.set(-0.5, 0, 0.04);
+      hinge.add(knobOpen);
+      closet.add(carcass, crownTop, plinth, inside, shut, hinge, knobShut);
+      closet.position.set(-3.15, 0, -1.0);
+      closet.rotation.y = Math.PI / 2;
       // Wrap the loose pieces so each can glow and hop as one thing.
       const winGroup = new THREE.Group();
       winGroup.add(win);
       const jarGroup = new THREE.Group();
       jarGroup.add(jar);
       hotspots.push(
+        { id: "closet", group: closet, anchor: new THREE.Vector3(-3.15, 2.1, -1.0), ...atCat },
         { id: "stand", group: stand, anchor: new THREE.Vector3(-1.25, 1.7, 1.0), ...atCat },
         { id: "window", group: winGroup, anchor: new THREE.Vector3(0.6, 2.3, -3.4) },
         { id: "jar", group: jarGroup, anchor: new THREE.Vector3(1.9, 0.78, -2.6), ...atCat },
         { id: "cushion", group: cushion, anchor: new THREE.Vector3(1.85, 0.35, 1.0), ...atCat },
       );
-      group.add(floor, back, left, winGroup, rug, stand, plant, jarGroup, cushion);
+      group.add(floor, back, left, winGroup, rug, closet, stand, plant, jarGroup, cushion);
       return {
         ...base,
         camPos: [2.9, 3.3, 6.0],

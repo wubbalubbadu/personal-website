@@ -1,0 +1,60 @@
+/* Home as a tool. White panels with a hairline (the quiet-card look she
+   liked), the studio's system font, grey action pills, green text links.
+   Section heading 20/650, panel title 20/700, row title 16/600, meta 13/400. */
+.ht{color:#292a33;padding-bottom:72px}
+.ht a{text-decoration:none}
+
+.ht-lab{display:flex;gap:16px;align-items:center;font-size:12px;color:#85868e;margin-bottom:18px}
+.ht-lab span{margin-right:auto}
+.ht-lab a{color:#46633d;font-weight:600}
+
+.ht-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.ht-tools button{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 18px 0 14px;border:0;border-radius:999px;background:#f1f1f2;color:#45464f;font:inherit;font-size:14px;font-weight:600}
+.ht-tools button:hover{background:#e8e8ea}
+.ht-tools button svg{width:20px;height:20px}
+.ht-tools__test{margin-left:auto;font-size:14px;font-weight:600;color:#46633d}
+
+.ht-feature{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:20px;align-items:stretch}
+.ht-panel{border:1px solid #e4e4e7;border-radius:18px;background:#fff;padding:20px 22px 22px;min-width:0;display:flex;flex-direction:column}
+.ht-panel header{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.ht-panel h2{margin:0;font-size:20px;font-weight:700;letter-spacing:-.02em}
+.ht-panel header a{font-size:14px;font-weight:600;color:#46633d}
+
+.ht-scales__demo{height:200px;display:flex;align-items:center;justify-content:center;overflow:hidden;margin:6px 0 4px}
+.ht-scales__demo>*{width:100%}
+.ht-label{margin:8px 0 10px;font-size:13px;color:#85868e}
+.ht-chips,.ht-shelves{display:flex;flex-wrap:wrap;gap:8px}
+.ht-chips a{padding:8px 14px;border-radius:999px;background:#f1f1f2;color:#45464f;font-size:14px;font-weight:600}
+.ht-chips a:hover{background:#e8e8ea}
+
+.ht-find.library-find{flex:none;margin:16px 0 12px;height:40px}
+.ht-shelves a{font-size:13px;font-weight:600;color:#45464f;padding:4px 10px;border-radius:999px;border:1px solid #e4e4e7}
+.ht-shelves a:hover{background:#f6f6f7}
+.ht-results{margin-top:10px;display:flex;flex-direction:column;min-height:0}
+.ht-results .music-row{padding-left:0;padding-right:0;grid-template-columns:minmax(0,1fr) auto}
+/* The panel is narrow: title, composer and your list only; tags live in the Library. */
+.ht-results .tag-pills{display:none}
+.ht-empty{margin:18px 0 0;font-size:14px;color:#85868e}
+
+.ht-lists{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 40px;margin-top:40px}
+.ht-section{margin:0 0 6px;font-size:20px;font-weight:650;letter-spacing:-.02em}
+.ht-list{list-style:none;margin:0;padding:0}
+.ht-list a{display:flex;align-items:center;gap:14px;padding:12px 8px;margin:0 -8px;border-radius:12px;color:#292a33}
+.ht-list a:hover{background:#f6f6f7}
+.ht-list__icon{flex:none;width:40px;height:40px;border-radius:12px;background:#f1f1f2;color:#45464f;display:grid;place-items:center}
+.ht-list__icon svg{width:22px;height:22px}
+.ht-list b{display:block;font-size:16px;font-weight:600}
+.ht-list small{display:block;font-size:13px;color:#85868e;margin-top:2px}
+
+@media(max-width:900px){
+  .ht-feature,.ht-lists{grid-template-columns:1fr}
+}
+@media(max-width:760px){
+  .ht{padding-bottom:56px}
+  .ht-tools{gap:6px}
+  .ht-tools button{height:40px;padding:0 14px 0 11px}
+  .ht-tools__test{margin-left:0;width:100%;padding-top:4px}
+  .ht-panel{padding:16px}
+  .ht-scales__demo{height:172px}
+  .ht-lists{margin-top:28px}
+}

@@ -41,41 +41,6 @@
   --dev-ink: #3d3a6a;
   --dev-bezel: #5b566c;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .hh {
-    --dev-body: #3b2739;
-    --dev-hi: #553852;
-    --dev-lo: #241722;
-    --dev-ink: #f0b6cd;
-    --dev-pad: #17121a;
-    --dev-pad-hi: #2c242e;
-    --dev-ab: #ff6eac;
-  }
-  :root:not([data-theme="light"]) .hh--gb {
-    --dev-body: #36323f;
-    --dev-hi: #48434f;
-    --dev-lo: #24212b;
-    --dev-ink: #c5bce6;
-    --dev-bezel: #1f1b25;
-  }
-}
-:root[data-theme="dark"] .hh {
-  --dev-body: #3b2739;
-  --dev-hi: #553852;
-  --dev-lo: #241722;
-  --dev-ink: #f0b6cd;
-  --dev-pad: #17121a;
-  --dev-pad-hi: #2c242e;
-  --dev-ab: #ff6eac;
-}
-:root[data-theme="dark"] .hh--gb {
-  --dev-body: #36323f;
-  --dev-hi: #48434f;
-  --dev-lo: #24212b;
-  --dev-ink: #c5bce6;
-  --dev-bezel: #1f1b25;
-}
-
 .hh button {
   position: relative;
   padding: 0;

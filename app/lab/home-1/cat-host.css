@@ -6,6 +6,38 @@
   overflow-x: clip;
 }
 
+/* No dark mode here: the page keeps the light colours whatever the system or
+   saved theme says (kit.css darkens .lab, so this undoes it for this page). */
+.lab.ch,
+:root[data-theme="dark"] .lab.ch {
+  color-scheme: light;
+  --ground: #f7f1e6;
+  --paper: #fffcf6;
+  --panel: #fef4e9;
+  --ink: #241220;
+  --ink-70: rgba(36, 18, 32, 0.7);
+  --ink-50: rgba(36, 18, 32, 0.5);
+  --rule: rgba(36, 18, 32, 0.12);
+  --accent: #d6146f;
+  --accent-wash: rgba(214, 20, 111, 0.1);
+  --accent-2: #e8600c;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .lab.ch {
+    color-scheme: light;
+    --ground: #f7f1e6;
+    --paper: #fffcf6;
+    --panel: #fef4e9;
+    --ink: #241220;
+    --ink-70: rgba(36, 18, 32, 0.7);
+    --ink-50: rgba(36, 18, 32, 0.5);
+    --rule: rgba(36, 18, 32, 0.12);
+    --accent: #d6146f;
+    --accent-wash: rgba(214, 20, 111, 0.1);
+    --accent-2: #e8600c;
+  }
+}
+
 .ch-stage {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
