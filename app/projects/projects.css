@@ -1,0 +1,327 @@
+/* /projects: dressed like the home page's speech bubbles (app/lab/home-1/cat-host.css):
+ * cream ground, warm cards with uneven corners and a soft bottom shadow, small
+ * pixel tags, pink pills. Light only, like the home page. */
+
+.lab.pjx,
+:root[data-theme="dark"] .lab.pjx {
+  color-scheme: light;
+  --ground: #f7f1e6;
+  --ink: #241220;
+  --ink-70: rgba(36, 18, 32, 0.7);
+  --ink-50: rgba(36, 18, 32, 0.5);
+  --box: #fff8ea;
+  --box-ink: #3a2a20;
+  --line: rgba(58, 42, 32, 0.14);
+  --tag: #ff9d4d;
+  --pink: #ffe0ec;
+  --rasp: #c2185b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .lab.pjx {
+    color-scheme: light;
+    --ground: #f7f1e6;
+    --ink: #241220;
+    --ink-70: rgba(36, 18, 32, 0.7);
+    --ink-50: rgba(36, 18, 32, 0.5);
+  }
+}
+
+/* The cream runs edge to edge; only the content is centred. */
+.pjx {
+  line-height: 1.55;
+}
+.pjx__inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 24px 32px 56px;
+}
+
+.pjx__home {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--pink);
+  color: var(--rasp);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.pjx__home:hover {
+  background: var(--rasp);
+  color: #fff;
+}
+
+.pjx__title {
+  margin: 18px 0 0;
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.pjx__list {
+  display: grid;
+  gap: 34px;
+  margin: 28px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ---- a project: one bubble ---- */
+.pjx__card {
+  position: relative;
+  padding: 26px 26px 24px;
+  border-radius: 18px 16px 20px 14px / 16px 18px 14px 20px;
+  background: var(--box);
+  color: var(--box-ink);
+  box-shadow: 0 3px 0 rgba(58, 42, 32, 0.18);
+  scroll-margin-top: 20px;
+}
+.pjx__card:nth-child(even) {
+  border-radius: 16px 18px 14px 20px / 18px 16px 20px 14px;
+}
+.pjx__tag {
+  position: absolute;
+  top: -10px;
+  left: 18px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--tag);
+  color: #fff;
+  font-family: var(--font-pix);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  transform: rotate(-3deg);
+}
+.pjx__card:nth-child(even) .pjx__tag {
+  transform: rotate(2deg);
+}
+
+.pjx__card h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.pjx__lead {
+  margin: 8px 0 0;
+}
+.pjx__card h3 {
+  margin: 16px 0 4px;
+  font-family: var(--font-pix);
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--rasp);
+}
+.pjx__card ul {
+  margin: 0;
+  padding-left: 20px;
+  list-style: disc;
+}
+.pjx__card ul li + li {
+  margin-top: 3px;
+}
+
+.pjx__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 16px 0 0;
+}
+.pjx__links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--pink);
+  color: var(--rasp);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.pjx__links a:hover {
+  background: var(--rasp);
+  color: #fff;
+}
+
+
+/* ---- pictures ---- */
+.pjx__shot {
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+.pjx__shot img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+}
+/* A picture that's already a composition (SKUY's phone mock-up): show all of it. */
+.pjx__shot--contain {
+  background: #d1cdce;
+}
+.pjx__shot--contain img {
+  object-fit: contain;
+  object-position: center;
+}
+
+/* ---- Cookie: tabs under the pitch switch the screen and its bullets ---- */
+.pjx__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 16px;
+}
+.pjx__tabs button {
+  min-height: 32px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(58, 42, 32, 0.06);
+  color: var(--ink-70);
+  font: inherit;
+  font-size: 13.5px;
+  cursor: default;
+}
+.pjx__tabs button:hover {
+  background: rgba(58, 42, 32, 0.1);
+}
+.pjx__tabs button[aria-pressed="true"] {
+  background: var(--pink);
+  color: var(--rasp);
+  font-weight: 600;
+}
+.pjx__panels {
+  display: grid;
+  margin-top: 12px;
+}
+.pjx__card .pjx__points {
+  grid-area: 1 / 1;
+  margin: 0;
+}
+.pjx__points[data-on="false"] {
+  visibility: hidden;
+}
+
+/* ---- the others: picture or audio on the left, text on the right ---- */
+.pjx__media {
+  margin-bottom: 18px;
+}
+.pjx__audio {
+  display: grid;
+  gap: 22px;
+}
+.pjx__track {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.pjx__play {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  padding: 0 0 0 2px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--pink);
+  color: var(--rasp);
+  cursor: default;
+}
+.pjx__play:hover {
+  background: var(--rasp);
+  color: #fff;
+}
+.pjx__track-body {
+  flex: 1;
+  min-width: 0;
+}
+.pjx__track-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-weight: 600;
+}
+.pjx__time {
+  color: var(--ink-50);
+  font-size: 13px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+.pjx__bar {
+  position: relative;
+  height: 14px;
+  margin-top: 2px;
+}
+.pjx__bar::before,
+.pjx__bar i {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 6px;
+  height: 3px;
+  border-radius: 2px;
+}
+.pjx__bar::before {
+  right: 0;
+  background: var(--line);
+}
+.pjx__bar i {
+  background: var(--rasp);
+}
+.pjx__audio audio {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .pjx__card--plain {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 32px;
+    align-items: center;
+  }
+  .pjx__media {
+    margin-bottom: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .pjx__inner {
+    padding: 20px 16px 40px;
+  }
+  .pjx__card {
+    padding: 22px 16px 18px;
+  }
+}
+
+/* A cut-out picture (SKUY's phones) sits straight on the card, no frame, about as tall as the screenshots. */
+.pjx__cutout {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: 320px;
+  margin: 0 auto;
+}
+
+
+/* Screenshots on the plain cards float like SKUY's phones: no frame, a soft shadow, a little tilt. */
+.pjx__card--plain .pjx__shot {
+  max-width: 480px;
+  margin: 0 auto;
+  border: 0;
+  border-radius: 10px;
+  box-shadow: 0 18px 36px -14px rgba(58, 42, 32, 0.35), 0 2px 6px rgba(58, 42, 32, 0.08);
+  transform: rotate(-1.5deg);
+}
+.pjx__card--plain:nth-child(even) .pjx__shot {
+  transform: rotate(1.5deg);
+}

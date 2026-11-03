@@ -1,0 +1,71 @@
+.drops {
+  --drops-night: #0f1a1f;
+  --drops-ink: #dfe8e2;
+  --drops-soft: #8fa39a;
+  --drops-pill: rgba(223, 232, 226, 0.1);
+  --drops-pill-on: rgba(223, 232, 226, 0.22);
+
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--drops-night);
+  color: var(--drops-ink);
+  font-family: "Space Grotesk", system-ui, sans-serif;
+}
+
+.drops__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.drops__bar {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  gap: 8px;
+}
+
+.drops__bar button {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 16px;
+  background: var(--drops-pill);
+  color: var(--drops-ink);
+  font: inherit;
+  font-size: 14px;
+  cursor: default;
+}
+
+.drops__bar button:hover,
+.drops__bar button[aria-pressed="true"] {
+  background: var(--drops-pill-on);
+}
+
+.drops__numbers {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  border-collapse: collapse;
+  color: var(--drops-soft);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.drops__numbers th {
+  font-weight: 500;
+  text-align: right;
+  padding: 2px 8px;
+}
+
+.drops__numbers td {
+  text-align: right;
+  padding: 2px 8px;
+}
+
+.drops__numbers th:first-child,
+.drops__numbers td:first-child {
+  text-align: left;
+}

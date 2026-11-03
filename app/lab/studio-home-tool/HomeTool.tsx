@@ -17,15 +17,6 @@ import "./home-tool.css";
  * one-tap starts, and the Library with a working search. Everything else is
  * a quiet list, because the tabs already hold the full catalogue.
  */
-const QUICK_SCALES=[
-  {label:"C major",key:"C",type:"major"},
-  {label:"G major",key:"G",type:"major"},
-  {label:"F major",key:"F",type:"major"},
-  {label:"D harmonic minor",key:"D",type:"harmonic"},
-  {label:"Chromatic",key:"C",type:"chromatic"},
-];
-const scaleHref=(key:string,type:string)=>`/flute-studio/exercises/scales?key=${key}&type=${type}&back=/flute-studio`;
-const SHELVES=[["Beginner","?shelf=beginner"],["Classical","?tag=classical"],["Etudes","?tag=etude"],["Excerpts","?tag=excerpt"]];
 const PICKS=["johann-sebastian-bach-badinerie","christoph-willibald-gluck-dance-of-the-blessed-spirits","traditional-amazing-grace"];
 const EXERCISES=[
   {title:"Long tones",meta:"Hold a note and watch your pitch",href:"/flute-studio/exercises/long-tones",icon:"tuner" as const},
@@ -60,10 +51,9 @@ export default function HomeTool(){
 
     <div className="ht-feature">
       <section className="ht-panel ht-scales" aria-labelledby="ht-scales-title">
-        <header><h2 id="ht-scales-title">Scale Studio</h2><Link href="/flute-studio/exercises/scales?back=/flute-studio">Build your own</Link></header>
-        <div className="ht-scales__demo" aria-hidden="true"><ScaleStudioPreview zh={false}/></div>
-        <p className="ht-label">Start with</p>
-        <div className="ht-chips">{QUICK_SCALES.map(s=><Link key={s.label} href={scaleHref(s.key,s.type)}>{s.label}</Link>)}</div>
+        <header><h2 id="ht-scales-title">Scale Studio</h2><Link href="/flute-studio/exercises/scales?back=/flute-studio">Open</Link></header>
+        {/* The demo itself is the way in. */}
+        <Link className="ht-scales__demo" href="/flute-studio/exercises/scales?back=/flute-studio" aria-label="Open Scale Studio"><ScaleStudioPreview zh={false}/></Link>
       </section>
 
       <section className="ht-panel ht-library" aria-labelledby="ht-library-title">
@@ -72,7 +62,6 @@ export default function HomeTool(){
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
           <input type="search" placeholder="Find a piece or composer" value={query} onChange={e=>setQuery(e.target.value)} aria-label="Find a piece or composer"/>
         </label>
-        <div className="ht-shelves">{SHELVES.map(([name,q])=><Link key={name} href={`/flute-studio/music${q}`}>{name}</Link>)}</div>
         <div className="ht-results">
           {results.length?results.map(item=><MusicRow key={item!.id} item={item!} tagLabel={tagLabel}/>):<p className="ht-empty">Nothing by that name yet.</p>}
         </div>
@@ -82,11 +71,11 @@ export default function HomeTool(){
     <div className="ht-lists">
       <section aria-labelledby="ht-ex-title">
         <h2 id="ht-ex-title" className="ht-section">More exercises</h2>
-        <ul className="ht-list">{EXERCISES.map(e=><li key={e.title}><Link href={e.href}><span className="ht-list__icon"><PracticeIcon name={e.icon}/></span><span><b>{e.title}</b><small>{e.meta}</small></span></Link></li>)}</ul>
+        <ul className="ht-list">{EXERCISES.map(e=><li key={e.title}><Link href={e.href}><span className="ht-list__icon"><PracticeIcon name={e.icon}/></span><b>{e.title}</b></Link></li>)}</ul>
       </section>
       <section aria-labelledby="ht-learn-title">
         <h2 id="ht-learn-title" className="ht-section">Learn and look up</h2>
-        <ul className="ht-list">{LEARN.map(l=><li key={l.title}><Link href={l.href}><span className="ht-list__icon"><ResourceIcon name={l.icon}/></span><span><b>{l.title}</b><small>{l.meta}</small></span></Link></li>)}</ul>
+        <ul className="ht-list">{LEARN.map(l=><li key={l.title}><Link href={l.href}><span className="ht-list__icon"><ResourceIcon name={l.icon}/></span><b>{l.title}</b></Link></li>)}</ul>
       </section>
     </div>
   </div></section></main>;

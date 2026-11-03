@@ -14,10 +14,13 @@ export function breathPose(fullness:number,inhale=true){
 export function createBreathingModel(){
  const root=new THREE.Group();root.name='Breathing anatomy';
  const blue=new THREE.Color('#3999bd'),red=new THREE.Color('#d74b57');
- const material=(color:string,opacity=1)=>new THREE.MeshStandardMaterial({color,roughness:.65,metalness:0,transparent:false,alphaHash:opacity<1,opacity,depthWrite:true,side:THREE.DoubleSide});
+ const tones=new THREE.DataTexture(new Uint8Array([185,230,255]),3,1,THREE.RedFormat);
+ tones.minFilter=tones.magFilter=THREE.NearestFilter;tones.needsUpdate=true;
+ root.userData.dispose=()=>tones.dispose();
+ const material=(color:string,opacity=1)=>new THREE.MeshToonMaterial({color,gradientMap:tones,transparent:false,alphaHash:opacity<1,opacity,depthWrite:true,side:THREE.DoubleSide});
  // A diagram palette, not an anatomy one (bone-white ribs and flesh lungs read as a skeleton): ribs in the skin's warm
  // tone, lungs a soft air blue, the diaphragm a light rose.
- const bone=material('#ecd9cf'),lungMat=material('#b9d3e2',.5),diaphMat=material('#d39bb0');
+ const bone=material('#c9ab9c'),lungMat=material('#b9d3e2',.5),diaphMat=material('#d39bb0');
  // Only the two separated lung shells blend; opaque tissue writes depth normally.
  lungMat.alphaHash=false;lungMat.transparent=true;lungMat.depthWrite=false;lungMat.side=THREE.FrontSide;
  const ribPivots:{group:THREE.Group,side:number}[]=[];
@@ -149,7 +152,7 @@ export function createBreathingModel(){
   bp.needsUpdate=true;belly.mesh.geometry.computeVertexNormals();
   // Preserve the tissue's base color. Emissive shading adds an activity cue
   // without extra transparent shells or camera-dependent blending order.
-  const activity=(mat:THREE.MeshStandardMaterial,amount:number)=>{
+  const activity=(mat:THREE.MeshToonMaterial,amount:number)=>{
    mat.emissive.copy(blue).lerp(red,amount);mat.emissiveIntensity=.70;
   };
   bellyGlow.color.value.copy(blue).lerp(red,p.abdomen);bellyGlow.strength.value=1.15;activity(diaphMat,p.diaphragm);

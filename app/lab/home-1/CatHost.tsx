@@ -9,6 +9,7 @@ import { CONTACT_LINKS, COPY, FLUTE_LINKS, opensNewTab, PROJECT_ROWS, type LinkI
 import { playFlute } from "../_kit/fluteTone";
 import { useMedia, usePrefersReducedMotion } from "../_kit/hooks";
 import { INTENTS, type AnswerNode, type RichSeg } from "../../lib/answers";
+import { getProject } from "../../lib/projects";
 import { playStep, timeline, unlockAudio, VOICES, type MascotEngine, type MascotMood, type Outfit } from "../../components/ps1-mascot";
 import { Console, type Device, type Pad } from "./Handheld";
 import ItemArt, { LaptopArt, type ArtId } from "./ItemArt";
@@ -26,7 +27,7 @@ import ItemArt, { LaptopArt, type ArtId } from "./ItemArt";
 /* ---- what's in the room ---- */
 
 type ItemId =
-  | "diploma" | "resume" | "socials" | "laptop" | "letter" | "flute" | "ipad" | "cookies"
+  | "diploma" | "resume" | "socials" | "laptop" | "book" | "letter" | "flute" | "ipad" | "cookies"
   // the living room
   | "closet" | "stand" | "window" | "jar" | "cushion";
 
@@ -75,6 +76,13 @@ const ITEMS: Record<ItemId, Item> = {
     react: "My projects live in here.",
     body: "",
     desktop: true,
+  },
+  // The Learning Log has its own book on the desk, and stays on the laptop too.
+  book: {
+    name: "Learning Log",
+    react: "My study notes!",
+    body: getProject("learning-log")?.preview ?? "",
+    open: { label: "Open the Learning Log", href: "/learning-log" },
   },
   letter: {
     name: "Letter",
@@ -207,7 +215,7 @@ const DRESS_UP: Outfit[] = ["bow", "beret"];
 
 /** Up looks at the wall, down at the desk; left and right move along a row. */
 const WALL: ItemId[] = ["diploma", "resume", "socials"];
-const DESK: ItemId[] = ["laptop", "letter", "flute", "ipad", "cookies"];
+const DESK: ItemId[] = ["laptop", "book", "letter", "flute", "ipad", "cookies"];
 /** The living room, one row, left to right. */
 const ROOM: ItemId[] = ["closet", "stand", "window", "cushion", "jar"];
 type Place = "studio" | "room";
@@ -335,7 +343,11 @@ type Mode = "intro" | "browse" | "topic" | "item" | "desktop" | "app";
 /* Who she is first (flutist and software engineer), then what she does, then the schools. */
 const INTRO =
   "Hi, I'm Haylie Wu! I'm a flutist and software engineer. I perform, teach, and build software for musicians. I studied computer science and flute at Northwestern, and I'm completing my master's in flute performance at New England Conservatory.";
-const DESKTOP_LINE = "My projects live in here. Tap one to open it, or ask me something.";
+const DESKTOP_LINE =
+  "Six things I've built live in here: my flute practice app, my Learning Log, two apps from college, my music production, and my OpenMusic patches. Tap one for the short version. The full details are on my projects page.";
+/** Each app's bubble is a preview; /projects has the whole write-up. */
+const appLine = (p: ProjectRow) => `The short version: ${p.preview}`;
+const detailsHref = (p: ProjectRow) => `/projects#${p.slug}`;
 /** A short tune for when the cat picks up the flute. */
 const TUNE = [587.33, 659.25, 739.99, 783.99, 880, 783.99];
 /** How long the camera takes to move in before the item card slides up. */
@@ -503,8 +515,7 @@ function CatHostInner({ device }: { device: Device }) {
   /* What the bubble says, a page at a time. */
   const pages = useMemo<AnswerNode[]>(() => {
     if (mode === "topic") return answerPages(topic);
-    // Projects with a link get their one line; the rest get their real description, paged.
-    if (mode === "app") return paginate([{ kind: "text", value: app.href ? app.line : app.detail }]);
+    if (mode === "app") return paginate([{ kind: "text", value: appLine(app) }]);
     if ((mode === "item" || mode === "desktop") && question) return paginate([{ kind: "text", value: question.say }]);
     if (mode === "desktop" && item) return [{ kind: "text", value: DESKTOP_LINE }];
     // A cookie's lines read as one little speech, not a click per sentence.
@@ -656,7 +667,7 @@ function CatHostInner({ device }: { device: Device }) {
       setAppIndex(i);
       setMode("app");
       setPage(0);
-      const first = paginate([{ kind: "text", value: APPS[i].href ? APPS[i].line : APPS[i].detail }])[0];
+      const first = paginate([{ kind: "text", value: appLine(APPS[i]) }])[0];
       typeOut(fix(nodeText(first)));
     },
     [typeOut],
@@ -722,7 +733,7 @@ function CatHostInner({ device }: { device: Device }) {
       if (extras.open) goTo(extras.open.href);
       else if (extras.links?.[0]) goTo(extras.links[0].href);
     } else if (mode === "desktop") showApp(appIndex);
-    else if (mode === "app") goTo(app.href);
+    else if (mode === "app") goTo(app.href ?? detailsHref(app));
   }, [done, last, page, pages, mode, selected, extras, questions, asked, dressing, options, cursor, choose, app, appIndex, pick, inspect, showApp, goTo, typeOut]);
 
   const b = useCallback(() => {
@@ -978,12 +989,24 @@ function CatHostInner({ device }: { device: Device }) {
             </button>
           ) : null}
           {done && last && extras?.links ? <LinkPills links={extras.links} /> : null}
-          {done && last && mode === "app" && app.href ? (
-            <button type="button" className="ch-bubble__go" onClick={() => goTo(app.href)}>
-              Open {app.name} ›
+          {done && last && mode === "app" && app.audio?.length ? <Tracks tracks={app.audio} /> : null}
+          {done && last && mode === "app" ? (
+            <div className="ch-bubble__actions">
+              {app.href ? (
+                <button type="button" className="ch-bubble__go" onClick={() => goTo(app.href)}>
+                  Open {app.name} ›
+                </button>
+              ) : null}
+              <button type="button" className="ch-bubble__go" onClick={() => goTo(detailsHref(app))}>
+                Full details ›
+              </button>
+            </div>
+          ) : null}
+          {done && last && mode === "desktop" && !question ? (
+            <button type="button" className="ch-bubble__go" onClick={() => goTo("/projects")}>
+              See all projects ›
             </button>
           ) : null}
-          {done && last && mode === "app" && app.audio?.length ? <Tracks tracks={app.audio} /> : null}
           {done && !last ? (
             <button type="button" className="ch-bubble__next" onClick={a} aria-label="Next">
               ▼

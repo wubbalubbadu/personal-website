@@ -10,8 +10,8 @@
 .rd-game--intro .rd-game__actions{justify-content:flex-start}
 
 /* Plain grey action buttons (memory: no dark or green buttons), rounded square per DESIGN.md. */
-.rd-button{min-height:44px;padding:0 18px;border:0;border-radius:12px;background:#f1f1f2;color:#45464f;font:inherit;font-size:15px;font-weight:500;cursor:default}
-.rd-button:hover{background:#e8e8ea}
+
+
 
 /* Level, streak, tempo, lives: one quiet row above the staff. */
 .rd-game__stats{display:flex;align-items:center;gap:28px;padding-bottom:12px;border-bottom:1px solid #ececef}

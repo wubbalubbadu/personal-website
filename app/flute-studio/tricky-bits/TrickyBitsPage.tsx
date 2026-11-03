@@ -1,4 +1,5 @@
 "use client";
+import {ItemCard} from "../components/ItemCard";
 import Link from "next/link";
 import {useRouter,useSearchParams} from "next/navigation";
 import {Suspense,useEffect,useMemo,useRef,useState} from "react";
@@ -102,7 +103,7 @@ function Page(){
             <div className="tricky-grid">
               {list.map(bit=>{
                 const piece=describe(bit),tempos=[...bit.tempos].sort((a,b)=>a-b),count=totalReps(reps[bit.id]);
-                return <article key={bit.id} className="tricky-card">
+                return <ItemCard as="article" key={bit.id} className="tricky-card">
                   <button type="button" className="tricky-card__open" onClick={()=>setOpenId(bit.id)} aria-label={`${first.title}, ${text.bars} ${bit.label}`}>
                     <div className="tricky-card__bars">{text.bars} {bit.label}</div>
                     {piece.scorePath
@@ -120,7 +121,7 @@ function Page(){
                     <button type="button" role="menuitem" onClick={()=>{setBitDone(bit.id,true);setMenu(null)}}>{zh?"练好了":"Mark done"}</button>
                     <button type="button" role="menuitem" onClick={()=>{removeBit(bit.id);setMenu(null)}}>{text.remove}</button>
                   </div>}
-                </article>;
+                </ItemCard>;
               })}
             </div>}
           </section>;

@@ -39,7 +39,7 @@ export default function OfflineMusicCard({zh}:{zh:boolean}){
     {support==="dev"&&<p className="transfer-card__hint">{zh?"离线保存只在正式网站上可用。":"Offline copies work on the published site."}</p>}
     {support==="yes"&&!online&&<p className="transfer-card__hint">{zh?"现在没有联网：可以移除，保存新的乐谱要等联网。":"You're offline. You can remove music now; keeping more waits for Wi-Fi."}</p>}
     {support==="yes"&&online&&working.length>0&&<div className="transfer-card__actions">
-      <button type="button" className="offline-label" disabled={saving} aria-busy={saving||undefined} onClick={keepWorking}>
+      <button type="button" className="offline-label action-button action-button--inherit-type" disabled={saving} aria-busy={saving||undefined} onClick={keepWorking}>
         {zh?`离线保存“正在练”（${working.length} 首）`:`Keep Working on offline (${working.length} ${working.length===1?"piece":"pieces"})`}
       </button>
     </div>}

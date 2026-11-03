@@ -20,7 +20,7 @@
 .ht-panel h2{margin:0;font-size:20px;font-weight:700;letter-spacing:-.02em}
 .ht-panel header a{font-size:14px;font-weight:600;color:#46633d}
 
-.ht-scales__demo{height:200px;display:flex;align-items:center;justify-content:center;overflow:hidden;margin:6px 0 4px}
+.ht-scales__demo{flex:1;min-height:200px;display:flex;align-items:center;justify-content:center;overflow:hidden;margin:6px 0 4px}
 .ht-scales__demo>*{width:100%}
 .ht-label{margin:8px 0 10px;font-size:13px;color:#85868e}
 .ht-chips,.ht-shelves{display:flex;flex-wrap:wrap;gap:8px}
@@ -39,11 +39,11 @@
 .ht-lists{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 40px;margin-top:40px}
 .ht-section{margin:0 0 6px;font-size:20px;font-weight:650;letter-spacing:-.02em}
 .ht-list{list-style:none;margin:0;padding:0}
-.ht-list a{display:flex;align-items:center;gap:14px;padding:12px 8px;margin:0 -8px;border-radius:12px;color:#292a33}
+.ht-list a{display:flex;align-items:center;gap:12px;padding:7px 8px;margin:0 -8px;border-radius:12px;color:#292a33}
 .ht-list a:hover{background:#f6f6f7}
-.ht-list__icon{flex:none;width:40px;height:40px;border-radius:12px;background:#f1f1f2;color:#45464f;display:grid;place-items:center}
-.ht-list__icon svg{width:22px;height:22px}
-.ht-list b{display:block;font-size:16px;font-weight:600}
+.ht-list__icon{flex:none;width:32px;height:32px;border-radius:10px;background:#f1f1f2;color:#45464f;display:grid;place-items:center}
+.ht-list__icon svg{width:18px;height:18px}
+.ht-list b{font-size:15px;font-weight:500}
 .ht-list small{display:block;font-size:13px;color:#85868e;margin-top:2px}
 
 @media(max-width:900px){

@@ -162,7 +162,7 @@ export default function MockAuditionPage(){
         {name.passage&&<p className="mock-stage__passage">{name.passage}</p>}
         <p className="mock-stage__count" aria-label={zh?`还有 ${phase.left} 秒`:`${phase.left} seconds`}>{phase.left}</p>
         {/* eslint-disable-next-line jsx-a11y/no-autofocus */}
-        <button type="button" className="mock-button" autoFocus onClick={()=>setPhase({step:"play",index:phase.index,since:Date.now()})}>{text.ready}</button>
+        <button type="button" className="mock-button action-button" autoFocus onClick={()=>setPhase({step:"play",index:phase.index,since:Date.now()})}>{text.ready}</button>
         {runningOrder(run.items,phase.index)}
         {recording.blocked&&<p className="mock-meta" role="status">{micBlockedText(zh)}</p>}
         <button type="button" className="text-action" onClick={()=>{store({...run,endedAt:Date.now()});recording.stop();setPhase({step:"end"})}}>{text.stop}</button>
@@ -202,7 +202,7 @@ export default function MockAuditionPage(){
         </div>}
       </section>
       <div className="mock-actions">
-        <button type="button" className="mock-button" onClick={()=>{recording.discard();setRun(null);setOrder(drawExcerpts(pool,count));setPhase({step:"setup"})}} disabled={!pool.length}>{text.again}</button>
+        <button type="button" className="mock-button action-button" onClick={()=>{recording.discard();setRun(null);setOrder(drawExcerpts(pool,count));setPhase({step:"setup"})}} disabled={!pool.length}>{text.again}</button>
         <Link className="text-action" href="/flute-studio/practice">{text.back}</Link>
       </div>
     </div></main>;
@@ -231,7 +231,7 @@ export default function MockAuditionPage(){
       {runningOrder(order)}
     </section>
     {recording.blocked&&<p className="mock-meta" role="status">{micBlockedText(zh)}</p>}
-    <div className="mock-actions"><button type="button" className="mock-button" onClick={begin} disabled={!order.length}>{text.start}</button></div>
+    <div className="mock-actions"><button type="button" className="mock-button action-button" onClick={begin} disabled={!order.length}>{text.start}</button></div>
     {earlier.length>0&&<section className="mock-earlier" aria-labelledby="mock-earlier-title">
       <h2 className="home-preview__group shelf__title" id="mock-earlier-title">{text.earlier}<small>{earlier.length}</small></h2>
       {earlier.map(past=>{const played=past.items.filter(item=>item.seconds!==undefined);return <article className="deadline-card mock-card" key={past.id}>

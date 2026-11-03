@@ -1,5 +1,6 @@
 "use client";
 
+import {ItemCard} from "../components/ItemCard";
 import {PracticeIcon} from "../components/PracticeIcon";
 import Link from "next/link";
 import {exerciseCatalog,type ExerciseEntry} from "../../../content/exercise-catalog";
@@ -85,10 +86,10 @@ export default function ExercisesHub(){
             exercise catalog (which also fills the Library), since it is your own bars rather than an exercise. */}
         <Link href="/flute-studio/tricky-bits" className="preview-card preview-card--tricky">
           <div className="preview-card__stage" aria-hidden="true">
-            <div className="tricky-preview-card">
+            <ItemCard className="tricky-preview-card">
               <span className="tricky-preview-card__bars">{zh?"第 12–16 小节":"Bars 12–16"}</span>
               <TallySticks count={7}/>
-            </div>
+            </ItemCard>
           </div>
           <div className="preview-card__copy"><b>{t.trickyBits.title}</b>
             <small>{bits.length?(zh?`${bits.length} 个保存的段落`:`${bits.length} saved ${bits.length===1?"passage":"passages"}`):(zh?"把难的小节存下来，在这里反复练。":"Save hard bars from any piece and practise them here.")}</small></div>

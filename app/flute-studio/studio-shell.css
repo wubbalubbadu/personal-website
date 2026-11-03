@@ -74,7 +74,6 @@
   body .restored-reader .practice-bar .transport>button:not(.reader-tap){order:2}
   body .restored-reader .practice-bar .tempo-group{order:4}
   body .restored-reader .practice-bar .tempo-group>.tool{font-size:0!important;min-width:0!important}
-  body .restored-reader .practice-bar .tempo-group>.tool svg{width:20px;height:20px}
   body .restored-reader .practice-bar .reader-tap{order:5}
   body .restored-reader .practice-bar .transport-menu{order:6}
   body .restored-reader .practice-bar .reader-popover-anchor{order:8}
@@ -295,10 +294,6 @@ html body .reader-settings-panel .scale-book__set.is-active .scale-book__set-ope
 @media(max-width:760px){
   html body .restored-reader .practice-bar .reader-pages>button,
   html body .restored-reader .practice-bar .reader-pages>button:not(.tool){height:36px!important;min-height:0!important;flex-basis:36px!important;width:36px!important;min-width:0!important}
-}
-@media(max-width:760px){
-  html body .restored-reader .practice-bar .tempo-group>.tool{background:transparent!important}
-  /* The list button in the reader bar: a plain icon like its neighbours. */
 }
 /* Narrow phones: Drone drops its word so the metronome keeps its room. */
 @media(max-width:400px){

@@ -351,3 +351,13 @@
     padding: 3vh 40px 48px;
   }
 }
+/* A project's actions side by side (open it, read its full details); they wrap on a phone. */
+.ch-bubble__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.ch-bubble__actions .ch-bubble__go {
+  margin-top: 0;
+}

@@ -19,8 +19,8 @@ export default function Breathing(){
   renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));renderer.setClearColor('#f5f5f7');container.appendChild(renderer.domElement);
   renderer.domElement.setAttribute('aria-label',(zh?"有控制地呼吸时的肋骨、肺、横膈膜与腹壁":"Ribs, lungs, diaphragm and abdominal wall during a controlled breath"));
   renderer.domElement.setAttribute('role','img');
-  const scene=new THREE.Scene();scene.add(new THREE.HemisphereLight('#ffffff','#8d7477',2.5));
-  const light=new THREE.DirectionalLight('#fff8ec',3);light.position.set(-3,5,7);scene.add(light);
+  const scene=new THREE.Scene();scene.add(new THREE.HemisphereLight('#ffffff','#8d7477',1.85));
+  const light=new THREE.DirectionalLight('#fff8ec',2.35);light.position.set(-3,5,7);scene.add(light);
   const camera=new THREE.PerspectiveCamera(35,1,.1,50);camera.position.set(3.0,1.8,11.4);
   const controls=new OrbitControls(camera,renderer.domElement);controls.target.set(0,.08,0);controls.enablePan=false;controls.enableDamping=true;controls.minDistance=7;controls.maxDistance=14;controls.minAzimuthAngle=-Math.PI/2;controls.maxAzimuthAngle=Math.PI/2;controls.minPolarAngle=1.05;controls.maxPolarAngle=1.75;controls.enabled=false;renderer.domElement.style.touchAction='pan-y';
   controls.listenToKeyEvents(container);
@@ -46,7 +46,7 @@ export default function Breathing(){
    }
    controls.update();model.update(phaseRef.current,elapsed,inhaling.current,camera);renderer.render(scene,camera);frame=requestAnimationFrame(tick);
   };frame=requestAnimationFrame(tick);
-  return()=>{cancelAnimationFrame(frame);resize.disconnect();controls.dispose();document.removeEventListener('pointerdown',pointer,true);document.removeEventListener('focusin',focus);document.removeEventListener('keydown',escape);scene.traverse(o=>{if(o instanceof THREE.Mesh||o instanceof THREE.Line){o.geometry.dispose();(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.dispose());}});renderer.dispose();renderer.domElement.remove();};
+  return()=>{cancelAnimationFrame(frame);resize.disconnect();controls.dispose();model.root.userData.dispose?.();document.removeEventListener('pointerdown',pointer,true);document.removeEventListener('focusin',focus);document.removeEventListener('keydown',escape);scene.traverse(o=>{if(o instanceof THREE.Mesh||o instanceof THREE.Line){o.geometry.dispose();(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.dispose());}});renderer.dispose();renderer.domElement.remove();};
  },[zh]);
  const pose=breathPose(phase,inhale);
  const toggle=()=>{running.current=!running.current;setPlaying(running.current);};
@@ -72,7 +72,7 @@ export default function Breathing(){
   <section className="emb-block">
    <div className="emb-note-row breath-head">
     <h2 className="emb-note">{pose.inhale?(zh?"吸气":"Inhale"):(zh?"呼气":"Exhale")}</h2>
-    <button type="button" className="emb-action" onClick={toggle}><PracticeIcon name={playing?'pause':'play'}/>{playing?(zh?"暂停":"Pause"):(zh?"播放":"Play")}</button>
+    <button type="button" className="emb-action action-button action-button--compact" onClick={toggle}><PracticeIcon name={playing?'pause':'play'}/>{playing?(zh?"暂停":"Pause"):(zh?"播放":"Play")}</button>
    </div>
    <Stack className="emb-caption" texts={captions} active={moment}/>
   </section>

@@ -5,7 +5,7 @@
 .stepper{display:inline-flex;align-items:center;justify-content:space-between;gap:2px;height:36px;padding:0 3px;box-sizing:border-box;border-radius:12px;background:#f1f1f2;color:#292a33;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .stepper .stepper__button{position:relative;flex:none;display:grid;place-items:center;width:30px;height:30px;padding:0;border:0;border-radius:9px;background:transparent;color:#45464f;font:inherit;font-size:17px;font-weight:400;line-height:1;touch-action:manipulation}
 .stepper .stepper__button:disabled{opacity:.35}
-@media(hover:hover){.stepper .stepper__button:hover:not(:disabled){background:#e4e4e7}}
+@media(hover:hover){.stepper .stepper__button:hover:not(:disabled){color:#292a33}}
 .stepper .stepper__value{flex:1;color:#292a33;min-width:2.2em;padding:0 2px;text-align:center;font-size:16px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;border-radius:6px}
 .stepper__value:focus{outline:none}
 .stepper__value:focus-visible{box-shadow:0 0 0 2px rgba(103,137,86,.32)}

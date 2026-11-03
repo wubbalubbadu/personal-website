@@ -113,6 +113,8 @@ export type ProjectRow = {
   year: string;
   status: string;
   line: string;
+  /** What the laptop bubble says, from projects.ts. */
+  preview: string;
   /** The longer description from projects.ts, for places with room to read it. */
   detail: string;
   image?: string;
@@ -126,6 +128,7 @@ export const PROJECT_ROWS: ProjectRow[] = projects.map((p) => ({
   year: p.year.replace("–", " to "),
   status: p.status,
   line: PROJECT_LINES[p.slug] ?? p.blurb,
+  preview: p.preview ?? PROJECT_LINES[p.slug] ?? p.blurb,
   // Some details in projects.ts still use dashes; never show one.
   detail: p.detail.split("\n\n")[0].replace(/\s*[—–]\s*/g, ", "),
   image: p.image,

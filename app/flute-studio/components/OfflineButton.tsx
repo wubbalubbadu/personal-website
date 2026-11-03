@@ -52,7 +52,7 @@ export function OfflineButton({id,zh,variant="icon"}:{id:string;zh:boolean;varia
   const toggle=()=>{if(kept)void removeOffline([id]);else void keepOffline(id,privateMusic.items)};
   const icon=kept?<OfflineKeptIcon/>:<OfflineIcon/>;
 
-  if(variant==="label")return <button type="button" className="offline-label" aria-pressed={!!kept} aria-busy={saving||undefined} disabled={disabled} title={tip} onClick={toggle}>
+  if(variant==="label")return <button type="button" className="offline-label action-button action-button--inherit-type" aria-pressed={!!kept} aria-busy={saving||undefined} disabled={disabled} title={tip} onClick={toggle}>
     {icon}<span>{saving?(zh?"正在保存":"Saving"):kept?(zh?"已离线保存":"Kept offline"):(zh?"离线保存":"Keep offline")}</span>
   </button>;
   return <button type="button" className="icon-btn has-tip offline-button" aria-pressed={!!kept} aria-busy={saving||undefined} disabled={disabled} data-tip={tip} aria-label={tip} onClick={toggle}>{icon}</button>;

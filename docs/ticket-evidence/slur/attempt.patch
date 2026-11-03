@@ -1,0 +1,41 @@
+diff --git a/app/flute-studio/components/slurClearance.ts b/app/flute-studio/components/slurClearance.ts
+index a51c249..dc1ebf1 100644
+--- a/app/flute-studio/components/slurClearance.ts
++++ b/app/flute-studio/components/slurClearance.ts
+@@ -37,7 +37,7 @@ export function liftCollidingSlurs(root: Element): number {
+     svg.querySelectorAll<SVGPathElement>("g.vf-curve > path").forEach(path => {
+       // Only this line of music: a slur's group sits inside its system's group.
+       const system = path.closest(".staffline") ?? svg;
+-      const box = (e: SVGGraphicsElement) => { const b = e.getBBox(); return { x: b.x + b.width / 2, top: b.y, bottom: b.y + b.height }; };
++      const box = (e: SVGGraphicsElement) => { const b = e.getBBox(); return { x: b.x + b.width / 2, left: b.x, right: b.x + b.width, top: b.y, bottom: b.y + b.height }; };
+       const noteheads = [...system.querySelectorAll<SVGGraphicsElement>(".vf-notehead")].map(box);
+       const obstacles = [...noteheads, ...[...system.querySelectorAll<SVGGraphicsElement>(".vf-stem")].map(box)];
+       const d = path.getAttribute("d") ?? "";
+@@ -75,7 +75,26 @@ export function liftCollidingSlurs(root: Element): number {
+         if (overlap > .5 && r > .05) need = Math.max(need, overlap / r);
+       }
+       if (!need) return;
+-      const shift = Math.min(need, cap) * (up ? -1 : 1);
++      let shift = Math.min(need, cap) * (up ? -1 : 1);
++      // A clipped correction can still intersect a high note. Extend only that
++      // capped arc, after checking the band itself, so already-clear arcs keep
++      // exactly the same path. Keep a finite bound for malformed geometry.
++      if (need > cap) {
++        const outer = inner === near ? far : near;
++        let collision = false, fullNeed = need;
++        for (const note of obstacles) {
++          if (note.x < x0 + 14 || note.x > x3 - 14) continue;
++          for (const x of [note.left, note.x, note.right]) {
++            if (x <= x0 + 14 || x >= x3 - 14) continue;
++            const t = paramAt(inner, x), r = reach(t);
++            const edge = point(inner, t).y, y = edge + shift * r;
++            const outside = point(outer, paramAt(outer, x)).y + shift * r;
++            if (Math.max(y, outside) >= note.top && Math.min(y, outside) <= note.bottom) collision = true;
++            if (r > .05) fullNeed = Math.max(fullNeed, (up ? edge - (note.top - space) : note.bottom + space - edge) / r);
++          }
++        }
++        if (collision) shift = Math.min(fullNeed, 2 * cap) * (up ? -1 : 1);
++      }
+       // y of: control points of both edges, plus the start (1, 15) or end (7, 9) when it is free.
+       const moved = [3, 5, 11, 13, ...(freeStart ? [1, 15] : []), ...(freeEnd ? [7, 9] : [])];
+       moved.forEach(i => { n[i] += shift; });

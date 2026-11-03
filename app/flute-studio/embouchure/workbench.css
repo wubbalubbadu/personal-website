@@ -87,14 +87,9 @@ html body .studio-page:has(.emb) { padding-bottom: 24px; } /* studio-page.css gi
 .emb-staff { flex: none; width: 108px; color: #292a33; }
 .emb-note { flex: 1; margin: 0; font-size: 32px; font-weight: 700; line-height: 1; letter-spacing: -.03em; color: #292a33; font-variant-numeric: tabular-nums; }
 /* Play / Pause: the studio's plain grey action button (memory "no black buttons"): a rounded square, not a capsule. */
-.emb .emb-action {
-  flex: none; display: inline-flex; align-items: center; gap: 5px;
-  height: 34px; padding: 0 12px 0 8px; border: 0; border-radius: 10px;
-  background: #f1f1f2; color: #45464f;
-  font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap;
-}
-.emb .emb-action svg { width: 18px; height: 18px; }
-@media (hover: hover) { .emb .emb-action:hover { background: #e8e8ea; } }
+.emb .emb-action{flex:none;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+
+
 .emb-range { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 500; color: #85868e; }
 .emb-range input[type="range"] { flex: 1; min-width: 0; height: 24px; margin: 0; accent-color: #6d4585; }
 

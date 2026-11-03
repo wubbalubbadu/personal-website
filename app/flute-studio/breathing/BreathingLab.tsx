@@ -108,7 +108,7 @@ export default function BreathingLab(){
      {/* The studio's tempo pill: its metronome button turns the sound cues on or off, the number is the beat in bpm. */}
      <TempoPill size="large" label={zh?"呼吸速度":"Breathing tempo"} tempo={bpm} sounding={sound} onSound={()=>setSound(!sound)}
        onChange={value=>{stop();setBpm(Math.max(40,Math.min(120,value)))}}/>
-     <button type="button" className="bl-start" aria-pressed={playing} onClick={()=>void start()}><PracticeIcon name={playing?'stop':'play'}/>{playing?(zh?'停止':'Stop'):(zh?'开始':'Start')}</button>
+     <button type="button" className="bl-start action-button" aria-pressed={playing} onClick={()=>void start()}><PracticeIcon name={playing?'stop':'play'}/>{playing?(zh?'停止':'Stop'):(zh?'开始':'Start')}</button>
     </div>
     {audioError&&<small className="bl-note" role="status">{zh?"声音不可用，呼吸动画仍可使用。":"Sound unavailable. The visual timer still works."}</small>}
    </aside>

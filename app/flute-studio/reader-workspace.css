@@ -845,7 +845,6 @@ html.score-focus-mode .restored-reader[data-dock] .workspace{grid-template-areas
   .restored-reader .practice-bar .transport-menu{order:0}
   .restored-reader .practice-bar .tool{min-width:44px!important;min-height:44px!important;height:44px!important;padding:2px!important;font-size:10px!important;gap:0}
   .restored-reader .practice-bar .tempo-group{gap:0;flex:none}
-  .restored-reader .practice-bar .tempo-group>.tool{min-width:62px!important}
   .restored-reader .practice-bar .tempo{padding:0!important;gap:0!important;height:44px;min-width:0}
   .restored-reader .practice-bar .tempo-step{min-width:44px!important;width:44px;min-height:44px!important;height:44px}
   .restored-reader .practice-bar .tempo input{width:44px!important;min-width:0!important;height:44px;font-size:16px!important;padding:0!important}
@@ -1085,11 +1084,6 @@ html body .osmd-score .now-playing-bar{fill:rgba(109,69,133,.16)!important}
 html body .osmd-score .note-pill--below{transform:translate(-50%,0);background:transparent;border:0;padding:0;font:400 11px/1.2 Arial,sans-serif;color:#4f7a63}
 /* The note-name options under "Show on the page", shown only while names or solfège are on. */
 .reader-name-style{display:flex;flex-direction:column;gap:6px;margin-top:8px}
-
-/* Inside a reader popover (the tempo ladder), a generic panel button style painted TempoPill's − and + white at rest.
-   Keep the pill's own look: transparent at rest, its blue on hover. */
-html:root body .reader-settings-panel .tempo-pill :is(.tempo-pill__step,.tempo-pill__sound):not(:hover){background:transparent!important;box-shadow:none!important}
-html:root body .reader-settings-panel .tempo-pill.is-sounding .tempo-pill__sound{background:#79588e!important;color:#fff!important}
 
 /* The piano card's play button while the samples load: a small ring in place of the triangle, so nothing shifts. */
 .reader-play-start.is-loading{cursor:progress}

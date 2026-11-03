@@ -8,12 +8,12 @@
 @media(prefers-reduced-motion:reduce){:is(.offline-button,.offline-label)[aria-busy="true"] circle{animation:none}}
 
 /* The word version (a book's page): the studio's plain grey action button, purple tint once kept. */
-.offline-label{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px 0 11px;border:0;border-radius:10px;background:#f1f1f2;color:#45464f;font:600 13px/1 inherit;white-space:nowrap}
+.offline-label{--action-height:36px;--action-padding:0 14px 0 11px;--action-radius:10px;--action-cursor:default;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .offline-label svg{width:18px;height:18px;flex:0 0 auto}
 .offline-label[aria-pressed="true"]{background:#f1e5f5;color:#6d4585}
 .offline-label:disabled{opacity:.55}
 .offline-label[aria-pressed="true"]:disabled{opacity:1}
-@media(hover:hover){.offline-label:hover:not(:disabled){background:#e8e8ea}.offline-label[aria-pressed="true"]:hover:not(:disabled){background:#ead8f0}}
+@media(hover:hover){.offline-label[aria-pressed="true"]:hover:not(:disabled){background:#ead8f0}}
 
 /* Library row: a small grey tick-in-a-circle after the title. */
 .offline-badge{display:inline-flex;vertical-align:-2px;margin-left:6px;color:#85868e}

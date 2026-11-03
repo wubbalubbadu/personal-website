@@ -141,8 +141,8 @@ export default function RhythmGame(){
       </>:<p className="rd-game__lead">{tr('Read the rhythm, then tap each note after the count-in. Two clean rhythms in a row take you up a level and a little faster. A miss costs one of your three lives. Some rhythms come from pieces in the Library.','先读节奏，数拍后在每个音开始时点一下。连续两次全对升一级，速度也会稍微加快。错一次扣一条命，一共三条。有些节奏来自曲库里的乐曲。')}</p>}
       {best.level>0&&<p className="rd-game__best">{tr(`Your best: level ${best.level}, ${best.streak} in a row`,`你的最佳：第 ${best.level} 级，连续 ${best.streak} 个`)}</p>}
       <div className="rd-game__actions">
-        <button className="rd-button" onClick={()=>begin(1)}>{over?tr('Play again','再玩一次'):tr('Start','开始')}</button>
-        {startAt>1&&<button className="rd-button" onClick={()=>begin(startAt)}>{tr(`Start at level ${startAt}`,`从第 ${startAt} 级开始`)}</button>}
+        <button className="rd-button action-button action-button--large" onClick={()=>begin(1)}>{over?tr('Play again','再玩一次'):tr('Start','开始')}</button>
+        {startAt>1&&<button className="rd-button action-button action-button--large" onClick={()=>begin(startAt)}>{tr(`Start at level ${startAt}`,`从第 ${startAt} 级开始`)}</button>}
       </div>
     </main>;
   }
@@ -196,11 +196,11 @@ export default function RhythmGame(){
     </div>
 
     <div className="rd-game__actions">
-      {phase==='ready'&&<button className="rd-button" onPointerUp={e=>e.currentTarget.blur()} onClick={play}>{tr('Count me in','数拍开始')}</button>}
-      {phase==='run'&&<button className="rd-button" onPointerUp={e=>e.currentTarget.blur()} onClick={()=>{audio.stop();setMarks([]);setPhase('ready')}}>{tr('Stop','停止')}</button>}
+      {phase==='ready'&&<button className="rd-button action-button action-button--large" onPointerUp={e=>e.currentTarget.blur()} onClick={play}>{tr('Count me in','数拍开始')}</button>}
+      {phase==='run'&&<button className="rd-button action-button action-button--large" onPointerUp={e=>e.currentTarget.blur()} onClick={()=>{audio.stop();setMarks([]);setPhase('ready')}}>{tr('Stop','停止')}</button>}
       {phase==='result'&&<>
-        <button className="rd-button" onPointerUp={e=>e.currentTarget.blur()} onClick={proceed}>{lives<=0?tr('See your run','看结果'):tr('Next rhythm','下一个节奏')}</button>
-        <button className="rd-button" onPointerUp={e=>e.currentTarget.blur()} onClick={hear}>{audio.elapsed>=0?tr('Stop','停止'):tr('Hear it','听一遍')}</button>
+        <button className="rd-button action-button action-button--large" onPointerUp={e=>e.currentTarget.blur()} onClick={proceed}>{lives<=0?tr('See your run','看结果'):tr('Next rhythm','下一个节奏')}</button>
+        <button className="rd-button action-button action-button--large" onPointerUp={e=>e.currentTarget.blur()} onClick={hear}>{audio.elapsed>=0?tr('Stop','停止'):tr('Hear it','听一遍')}</button>
       </>}
     </div>
   </main>;

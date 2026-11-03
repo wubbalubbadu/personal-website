@@ -10,6 +10,16 @@ export type Project = {
   /** Detail body. Blank lines (`\n\n`) split it into paragraphs. */
   detail: string;
   image?: string;
+  /** Why I built it, in a few sentences: the paragraph under the name on /projects. */
+  pitch?: string;
+  /** Screens on /projects, one per feature: `caption` names it, `short` is the line beside the
+   *  screen, `point` the full description shown under it. */
+  /** /projects feature tabs: each a core area with its screen. The project image is the screen shown first. */
+  gallery?: { caption: string; src: string; points: string[] }[];
+  /** How /projects frames the image: "cover" crops to fill (default), "contain" shows all of it. */
+  imageFit?: "cover" | "contain";
+  /** /projects only: a transparent picture shown on the card itself, with no frame (SKUY's phones). */
+  cutout?: string;
   links?: { label: string; href: string }[];
   /** Inline audio players shown in the detail view. */
   audio?: { label: string; src: string }[];
@@ -23,6 +33,12 @@ export type Project = {
   }[];
   /** If set, selecting this project navigates here instead of opening a detail view. */
   externalHref?: string;
+  /** Two or three plain sentences: the home page's laptop bubble and the lead line on /projects. */
+  preview?: string;
+  /** /projects bullets: what it does for the person using it. */
+  does?: string[];
+  /** /projects bullets: the stack and how it works. */
+  how?: string[];
 };
 
 export const projects: Project[] = [
@@ -46,7 +62,54 @@ slug: "cookie-flute-studio",
       "A practice studio for flutists where the sheet music is generated, not stored — scales, long tones and fingering charts computed from a model and engraved in the browser.",
     detail:
       "Most practice apps ship sheet music as files. This one mostly doesn't have any. A scale, a long-tone exercise and a fingering chart are all the same kind of object — a rule about pitch — so the studio stores the rule and emits MusicXML on demand, then engraves it client-side with OpenSheetMusicDisplay. Changing the articulation pattern or the range re-generates the score rather than swapping a picture of one.\n\nThat decision is what makes the rest possible: every exercise is parameterised, nothing goes stale, and the same engine renders a twelve-key scale book, Moyse's De la sonorité and a four-octave trill chart. The work is mostly in the places where a general-purpose engraver and a practice tool disagree — pagination, enharmonic spelling, and what to do when a student's range doesn't match the book's.\n\nBuilt as a single Next.js app in TypeScript, deployed on Cloudflare Workers, fully bilingual (English/中文). Notation by OpenSheetMusicDisplay over VexFlow; audio, tuning and playback on the Web Audio API; the anatomy views in three.js.\n\nNext: score-following. The pitch tracker currently powers a standalone tuner; the work in progress is matching that live estimate against the engraved score note by note, so intonation feedback lands on the passage you actually played rather than as one number at the end — and an insights layer that aggregates it across sessions to surface the bars you keep missing.",
+    image: "/projects/flute-studio.jpg",
+    gallery: [
+      {
+        caption: "Music reader",
+        src: "/projects/studio-view.jpg",
+        points: [
+          "Change the layout instead of living with a bad page turn.",
+          "Transpose, and show accidentals, rhythm, musical terms or fingerings on the score.",
+          "Your markings follow your layout.",
+          "Play along with playback, or accompaniment on some pieces.",
+          "A metronome that follows the music's tempo changes, and a smart drone that holds each bar's longest note.",
+        ],
+      },
+      {
+        caption: "Practice tools",
+        src: "/projects/studio-zoom.jpg",
+        points: [
+          "Zoom into any bars and it writes technical exercises from your passage.",
+          "It finds the scale the passage is built on.",
+          "Play, and each note shows how sharp or flat you were right away.",
+          "It learns your pitch tendencies over time.",
+          "Scale books for any scale, key, range and articulation.",
+        ],
+      },
+      {
+        caption: "Learn",
+        src: "/projects/studio-embouchure.jpg",
+        points: [
+          "Short theory lessons you hear first, then try yourself.",
+          "Fingering and trill charts for every note, up to the altissimo.",
+          "A 3D embouchure model that shows how air, lips and jaw change by register.",
+        ],
+      },
+      {
+        caption: "Planning",
+        src: "/projects/studio-studio.jpg",
+        points: [
+          "Save tricky passages in one place and tally your repetitions.",
+          "Plan your shelf and your audition list, then run mock auditions.",
+          "Your practice history stays on your device, and a sync code moves it to your phone, iPad or computer.",
+        ],
+      },
+    ],
     links: [{ label: "Open Cookie Flute Studio", href: "/flute-studio" }],
+    preview:
+      "Cookie Flute Studio makes sheet music something you work with: reshape the page, tap a note for its fingering, see your pitch on every note as you play, and build a scale book for exactly what you need.",
+    pitch:
+      "I want sheet music to mean more than notes on a page. You should be able to change how it's laid out, transpose it, see what every marking means, zoom into a passage and turn it into a technical exercise, and understand the key it's in. Everything else in the studio, from fingerings to pitch tracking, works on the music in front of you.",
     items: [
       {
         name: "A scale as data, not a file",
@@ -97,7 +160,61 @@ slug: "cookie-flute-studio",
     blurb: "My class notes, rebuilt as an interactive textbook you can read or click through.",
     detail:
       "An experiment in what a textbook can be. I take lecture notes from a course and rebuild them as a two-mode guide — a flowing reader and a keyboard-driven slide deck over the same content model — with collapsible asides, self-check quizzes, and localStorage progress. The first entry is a CMU deep-learning-for-music course: digital-audio fundamentals with hand-built Web Audio demos (sampling and aliasing, additive synthesis, a live spectrogram), then the theory of latent generative models.",
+    image: "/projects/learning-log.jpg",
     externalHref: "/learning-log",
+    preview:
+      "Learning Log is my course notes rebuilt as an interactive textbook, with demos you can hear. The first course is CMU's deep learning for music.",
+    does: [
+      "Read it as a page or click through it as slides, with quizzes and saved progress.",
+      "18 hand-built Web Audio and SVG demos: hear aliasing, build a sound from sine waves, watch a live spectrogram.",
+    ],
+  },
+  {
+    slug: "skuy",
+    name: "SKUY",
+    size: "standard",
+    status: "Archived",
+    year: "2022–2024",
+    role: "Lead backend engineer",
+    tech: ["React Native", "Flask", "PostgreSQL", "Firebase"],
+    blurb: "A mobile community and news app built around Northwestern student life.",
+    detail:
+      "Lead backend engineer on a student startup of about 15 engineers. I built APIs for communities and posts, scraping pipelines that fed a news feed for 1,000+ users, cut initial load about 35% with pagination and lazy loading, and ran a PostgreSQL to Firebase migration. I also owned deployment and onboarding.",
+    image: "/projects/skuy.jpg",
+    imageFit: "contain",
+    cutout: "/projects/skuy-phones.png",
+    preview:
+      "SKUY was a community and news app for Northwestern students, built by a startup team of about 15 engineers. I led the backend: the APIs, the scraping pipelines that fed the news feed for 1,000+ users, and a move from PostgreSQL to Firebase.",
+    does: [
+      "Community spaces and posts for student groups.",
+      "A campus news feed, filled automatically, read by 1,000+ users.",
+    ],
+    how: [
+      "React Native app with a Flask API, on PostgreSQL and later Firebase.",
+      "I built the community and post APIs and the scraping pipelines behind the feed.",
+      "Cut first load by about 35% with pagination and lazy loading.",
+      "Ran the PostgreSQL to Firebase migration, and owned deployment and onboarding for new engineers.",
+    ],
+  },
+  {
+    slug: "market",
+    name: "Market",
+    size: "standard",
+    status: "Archived",
+    year: "2023",
+    role: "Full-stack, with Julia Chu",
+    tech: ["React", "Node.js", "PostgreSQL"],
+    blurb: "A secondhand marketplace for Northwestern students.",
+    detail:
+      "A marketplace for Northwestern students to buy, sell, and request secondhand items. We worked across the whole thing: listings, search, accounts, image uploads, authentication, and the API behind them.",
+    image: "/projects/market.jpg",
+    preview:
+      "Market was a secondhand marketplace for Northwestern students to buy, sell and request things. I worked across the whole stack: listings, search, accounts, image uploads and the API.",
+    does: [
+      "Students list things with photos, search what's for sale, and post requests for things they need.",
+      "Accounts with sign in, so every listing and request belongs to a person.",
+    ],
+    how: ["React front end, Node.js API, PostgreSQL database.", "Image uploads and authentication built into the same API."],
   },
   {
     slug: "music-playground",
@@ -106,9 +223,20 @@ slug: "cookie-flute-studio",
     status: "Active",
     year: "2025",
     role: "Solo",
-    tech: ["Logic Pro", "EastWest", "Web Audio"],
+    tech: ["Logic Pro", "EastWest"],
     blurb: "Smaller music tools and sound experiments, with more to come.",
     detail: "A place for smaller music-related things I build or make.",
+    preview:
+      "This folder is my music production. Right now it's two orchestral mock-ups, a Chopin piece and Stravinsky's Octet, made in Logic Pro from sampled instruments and mixed to sound like a recording. Press play below.",
+    does: [
+      "Two orchestral mock-ups you can play here: Chopin, and Stravinsky's Octet.",
+      "Each one is a full ensemble played by sampled instruments, not a recording of live players.",
+    ],
+    how: [
+      "Sequenced and mixed in Logic Pro.",
+      "Instruments from EastWest sample libraries.",
+      "Mixed so the result reads as a recording rather than MIDI playback.",
+    ],
     items: [
       {
         name: "Orchestral mock-ups",
@@ -123,30 +251,28 @@ slug: "cookie-flute-studio",
     ],
   },
   {
-    slug: "market",
-    name: "Market",
-    size: "standard",
-    status: "Archived",
-    year: "2023",
-    role: "Full-stack, with Julia Chu",
-    tech: ["React", "Node.js", "PostgreSQL"],
-    blurb: "A secondhand marketplace for Northwestern students.",
-    detail:
-      "A marketplace for Northwestern students to buy, sell, and request secondhand items. We worked across the whole thing: listings, search, accounts, image uploads, authentication, and the API behind them.",
-    image: "/portfolio/market.png",
-  },
-  {
-    slug: "skuy",
-    name: "SKUY",
-    size: "standard",
-    status: "Archived",
-    year: "2022–2024",
-    role: "Lead backend engineer",
-    tech: ["React Native", "Flask", "PostgreSQL", "Firebase"],
-    blurb: "A mobile community and news app built around Northwestern student life.",
-    detail:
-      "Lead backend engineer on a student startup of about 15 engineers. I built APIs for communities and posts, scraping pipelines that fed a news feed for 1,000+ users, cut initial load about 35% with pagination and lazy loading, and ran a PostgreSQL to Firebase migration. I also owned deployment and onboarding.",
-    image: "/portfolio/skuy.png",
+    slug: "openmusic",
+    name: "OpenMusic",
+    size: "small",
+    status: "Active",
+    year: "2026",
+    role: "Solo",
+    tech: ["OpenMusic"],
+    blurb: "Composing with patches in OpenMusic, a visual programming language for music.",
+    detail: "Composing with patches in OpenMusic, a visual programming language for music.",
+    image: "/projects/om-patch.jpg",
+    imageFit: "contain",
+    preview:
+      "OpenMusic is a visual programming language for composers. I use it to build musical material with patches, transform it, and export it as MIDI.",
+    does: [
+      "Composing with patches: chords written in midicents, shifted in frequency, moved step by step from one to the next and rounded to quarter tones.",
+      "Exporting the result as MIDI to bring into a score or a DAW.",
+    ],
+    how: [
+      "Pitch-class set work: searching a hexachord for invariance, rotating the Sacher hexachord, and chord multiplication.",
+      "Spectral work: building harmonic spectra and shifting their frequencies.",
+      "OpenMusic's list tools (loops, mapping, interpolation, rounding) turn the rules into notes.",
+    ],
   },
 ];
 

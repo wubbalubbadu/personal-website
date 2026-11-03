@@ -33,8 +33,8 @@
 
 /* Actions: the plain grey button (no dark or green fills). */
 .mock-actions{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin:4px 0 28px}
-.mock-button{height:40px;padding:0 20px;border:0;border-radius:12px;background:#f1f1f2;color:#45464f;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
-.mock-button:hover{background:#e8e8ea}
+
+
 .mock-button:disabled{opacity:.45;cursor:default}
 .mock-take{margin-top:14px;padding-top:14px;border-top:1px solid #f0f0f2}
 .mock-take .recorder-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}

@@ -1,4 +1,5 @@
 "use client";
+import {ItemCard} from "../components/ItemCard";
 import {usePrivateMusic} from "../lib/privateMusic";
 
 import Link from "next/link";
@@ -223,12 +224,12 @@ export default function PracticePage(){
         {kind&&<span className="tag-pill" data-tone={tagTone(kind)}>{zh?KIND_LABELS[kind].zh:KIND_LABELS[kind].en}</span>}
         {forDeadline&&<span className="tag-pill" data-tone="sand">{forDeadline.name}</span>}
       </span>}</>;
-    return <li key={item.id} className="working-card">
-      {item.viewerPath?<Link href={item.viewerPath}>{body}</Link>:<span className="is-disabled">{body}</span>}
+    return <ItemCard as="li" key={item.id} className="working-card">
+      {item.viewerPath?<Link className="item-card__body" href={item.viewerPath}>{body}</Link>:<span className="item-card__body is-disabled">{body}</span>}
       {/* The Library's list button, not a trash can: taking a piece off a list deletes nothing, and the same menu
           can move it to Learned. */}
       <span className="working-card__list"><StatusButton id={item.id} zh={zh} compact/></span>
-    </li>;
+    </ItemCard>;
   };
   // The day picked on the calendar (today until you pick another) and what was practised then.
   const shownDay=day??(now?today:null);
@@ -301,9 +302,9 @@ export default function PracticePage(){
             </button>
           </section>;
         })}</div>
-        {openStackList&&<ul className="working__grid list-stack__open" id="list-stack-open">{openStackList.items.map(item=><li key={item.id} className="working-card" style={{viewTransitionName:cardName(openStackList.key,item.id)}}>
-          {item.viewerPath?<Link href={item.viewerPath}><b>{item.title}</b><small>{item.composer}</small></Link>:<span className="is-disabled"><b>{item.title}</b><small>{item.composer}</small></span>}
-        </li>)}</ul>}
+        {openStackList&&<ul className="working__grid list-stack__open" id="list-stack-open">{openStackList.items.map(item=><ItemCard as="li" key={item.id} className="working-card" style={{viewTransitionName:cardName(openStackList.key,item.id)}}>
+          {item.viewerPath?<Link className="item-card__body" href={item.viewerPath}><b>{item.title}</b><small>{item.composer}</small></Link>:<span className="item-card__body is-disabled"><b>{item.title}</b><small>{item.composer}</small></span>}
+        </ItemCard>)}</ul>}
       </>}
 
       <h2 className="home-preview__group" id="insights">{zh?"练习洞察":"Practice insights"}</h2>

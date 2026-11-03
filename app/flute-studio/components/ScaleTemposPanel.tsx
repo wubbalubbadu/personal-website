@@ -1,5 +1,5 @@
 "use client";
-import {useState} from "react";
+import {Stepper} from "./Stepper";
 import {ReaderPopover} from "./ReaderPopover";
 import {PracticeIcon} from "./PracticeIcon";
 import type {ReaderControls} from "./ScoreViewer";
@@ -11,7 +11,6 @@ export function ScaleTemposPanel({rows,reader,activeBlock,onActive,onTempo,tempo
  reader:ReaderControls;activeBlock:string|null;onActive:(id:string)=>void;
  onTempo:(id:string,tempo:number)=>void;tempoMarks:boolean;onTempoMarks:(value:boolean)=>void;zh?:boolean;
 }){
- const [tempoDraft,setTempoDraft]=useState<{id:string;value:string}|null>(null);
  return (
     <ReaderPopover label={zh?"练习速度":"Tempos"} trigger={<><PracticeIcon name="tempo"/>{zh?"速度":"Tempos"}</>} className="tool has-tip">
       <div className="scale-book__tempo-list">{rows.map((row,index)=>{
@@ -30,7 +29,7 @@ export function ScaleTemposPanel({rows,reader,activeBlock,onActive,onTempo,tempo
           // thing that counts, or the row you started from stays lit for
           // the rest of the book.
           const sounding=reader.playing&&(reader.playingEvent!==null?reader.playingEvent>=eventStart&&reader.playingEvent<blockEnd:reader.playingFrom===eventStart);
-          return <div className="scale-reader__tempo" key={id}><span className="scale-book__tempo-label"><b>{name}</b></span><div className="scale-book__metronome"><button disabled={tempo<=TEMPO_MIN} aria-label={`${name}: decrease tempo by 5`} onClick={()=>setTempo(tempo-5)}>−</button><label className="scale-book__tempo-field"><input type="number" min={TEMPO_MIN} max={TEMPO_MAX} aria-label={`${name}: tempo in BPM`} value={tempoDraft?.id===id?tempoDraft.value:tempo} onChange={e=>setTempoDraft({id,value:e.target.value})} onFocus={()=>onActive(id)} onBlur={()=>{if(tempoDraft?.id!==id)return;const next=Number(tempoDraft.value);const valid=Number.isFinite(next)&&tempoDraft.value.trim()!=="";setTempoDraft(null);if(valid)setTempo(Math.max(TEMPO_MIN,Math.min(TEMPO_MAX,Math.round(next))))}} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/></label><button disabled={tempo>=TEMPO_MAX} aria-label={`${name}: increase tempo by 5`} onClick={()=>setTempo(tempo+5)}>+</button><button className={sounding?"scale-book__row-tool on":"scale-book__row-tool"} aria-label={sounding?`${name}: stop playing`:`${name}: play from here`} aria-pressed={sounding} onClick={()=>{setTempo(tempo);reader.playFromEvent(eventStart)}}><PracticeIcon name={sounding?"stop":"play"}/></button><button className={running?"scale-book__row-tool on":"scale-book__row-tool"} aria-label={running?`${name}: stop metronome`:`${name}: start metronome`} aria-pressed={running} onClick={()=>{setTempo(tempo);if(running||!reader.metronome)reader.toggleMetronome()}}><PracticeIcon name="metronome"/></button></div></div>;
+          return <div className="scale-reader__tempo" key={id}><span className="scale-book__tempo-label"><b>{name}</b></span><div className="scale-book__metronome"><span onFocusCapture={()=>onActive(id)}><Stepper value={tempo} min={TEMPO_MIN} max={TEMPO_MAX} step={5} size="small" editable onChange={next=>setTempo(Math.round(next))} label={`${name}: tempo in BPM`} decreaseLabel={`${name}: decrease tempo by 5`} increaseLabel={`${name}: increase tempo by 5`}/></span><button className={sounding?"scale-book__row-tool on":"scale-book__row-tool"} aria-label={sounding?`${name}: stop playing`:`${name}: play from here`} aria-pressed={sounding} onClick={()=>{setTempo(tempo);reader.playFromEvent(eventStart)}}><PracticeIcon name={sounding?"stop":"play"}/></button><button className={running?"scale-book__row-tool on":"scale-book__row-tool"} aria-label={running?`${name}: stop metronome`:`${name}: start metronome`} aria-pressed={running} onClick={()=>{setTempo(tempo);if(running||!reader.metronome)reader.toggleMetronome()}}><PracticeIcon name="metronome"/></button></div></div>;
       })}</div>
       {/* A quiet text action in the corner rather than a full-width chip:
           it is a view preference, not one of the tempos this panel is

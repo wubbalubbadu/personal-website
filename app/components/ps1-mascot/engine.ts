@@ -739,13 +739,18 @@ export class MascotEngine {
       lid.add(lShell, lScreen);
       lid.position.set(0, 0.06, -0.47);
       lid.rotation.x = -0.22;
-      const book = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.14, 0.95), this.mat({ map: tex(bookTexture()) }));
-      book.position.set(1.0, 0.07, 0.15);
-      book.rotation.y = 0.25;
-      laptop.add(lBase, lid, book);
+      laptop.add(lBase, lid);
       laptop.position.set(-2.6, 0, 0.0);
       laptop.rotation.y = 0.35;
       spot("laptop", laptop, [-2.55, 0.75, -0.05]);
+
+      // The book beside the laptop is the Learning Log, a thing of its own.
+      // Same spot as when it was part of the laptop group (laptop transform applied).
+      const book = new THREE.Group();
+      book.add(new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.14, 0.95), this.mat({ map: tex(bookTexture()) })));
+      book.position.set(-1.61, 0.07, -0.2);
+      book.rotation.y = 0.6;
+      spot("book", book, [-1.61, 0.2, -0.2]);
 
       const ipad = new THREE.Group();
       const slab = new THREE.Mesh(new THREE.BoxGeometry(0.95, 1.25, 0.04), this.mat({ color: "#2b2d3a" }));
@@ -797,7 +802,7 @@ export class MascotEngine {
       plate.position.set(2.45, 0, 0.95);
       spot("cookies", plate, [2.45, 0.22, 0.95], { at: [0.2, 1.3, 0.2], dist: 4.6 });
 
-      group.add(wall, desk, diploma, resume, socials, laptop, ipad, flute, letter, plate);
+      group.add(wall, desk, diploma, resume, socials, laptop, book, ipad, flute, letter, plate);
       return {
         ...base,
         camPos: [0, 2.9, 7.0],

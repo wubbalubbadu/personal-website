@@ -30,7 +30,6 @@
 .focus-card__primary:hover{background:#557747}
 .focus-card>small{display:block;margin-top:14px;font-size:12px;color:#85868e}
 
-
 .history-card{width:100%}
 .history-list{display:grid;gap:20px;margin-top:14px}
 .history-day header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:8px}
@@ -152,7 +151,6 @@
 .practice-page .calendar-grid__cell{width:100%}
 @media(max-width:1050px){.studio-data-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.studio-data-grid .stats-card{grid-column:1/-1}.studio-data-grid .stats-row{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:600px){.studio-data-grid{grid-template-columns:1fr}.studio-data-grid .stats-row{grid-template-columns:repeat(2,minmax(0,1fr))}}
-
 
 /* Shared card hierarchy: headings start on the same baseline; values occupy the body. */
 .practice-page .studio-data-grid .practice-card h2{margin:0;min-height:32px;display:flex;align-items:center;text-align:left}
@@ -422,12 +420,6 @@
 .working__edit{height:30px;padding:0 12px;border:0;border-radius:999px;background:none;color:#46633d;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
 .working__edit:hover,.working__edit[aria-pressed="true"]{background:#e4ecdf}
 .working__grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin:0;padding:0;list-style:none}
-.working-card{position:relative}
-.working-card>:is(a,span){display:flex;flex-direction:column;align-items:flex-start;gap:2px;height:100%;box-sizing:border-box;padding:14px 16px 15px;border-radius:18px;background:#fff;box-shadow:0 0 0 1px #ececef;color:inherit;text-decoration:none;transition:box-shadow .15s}
-.working-card>a:hover{box-shadow:0 0 0 1px #d9d9de,0 4px 14px rgba(0,0,0,.05)}
-.working-card>span.is-disabled{opacity:.5}
-.working-card b{font-size:15px;font-weight:650;line-height:1.3;color:#292a33}
-.working-card small{font-size:12.5px;color:#85868e}
 .working-card .working-card__meta{margin-top:6px;color:#6f7078}
 .working-card .tag-pill{margin-top:8px}
 .working-card__remove{position:absolute;top:8px;right:8px;display:grid;place-items:center;width:28px;height:28px;border:0;border-radius:999px;background:#f1f1f2;color:#5f6169;cursor:pointer}
@@ -446,7 +438,7 @@
 .studio-fold__list b{display:block;font-size:14px;font-weight:600;line-height:1.3}
 .studio-fold__list small{display:block;margin-top:2px;font-size:12.5px;color:#85868e}
 .studio-fold__more{display:inline-block;margin:0 6px 14px;color:#46633d;font-size:13px;font-weight:600;text-decoration:none}
-@media(max-width:560px){.working__grid{grid-template-columns:1fr 1fr;gap:8px}.working-card>:is(a,span){padding:12px 13px;border-radius:16px}.working-card b{font-size:14px}}
+@media(max-width:560px){.working__grid{grid-template-columns:1fr 1fr;gap:8px}}
 .working__grid.is-tidying .working-card>:is(a,span){padding-right:44px}
 
 /* Today's practice, October 2026: the clock is one strip across the top, the routine fills the width under it.
@@ -491,8 +483,7 @@
 .practice-page .shelf__title button i{align-self:center;width:8px;height:8px;margin-left:12px;border-right:2px solid #9a9ba2;border-bottom:2px solid #9a9ba2;transform:rotate(45deg) translateY(-3px);transition:transform .15s}
 .practice-page .shelf__title button[aria-expanded="true"] i{transform:rotate(225deg) translateY(-1px)}
 .practice-page .shelf__title button:not([aria-expanded="true"]){color:#6f7078}
-.practice-page .working-card>:is(a,span){border-radius:var(--studio-card-radius);box-shadow:var(--studio-card-shadow);transition:transform .18s ease,box-shadow .18s ease}
-.practice-page .working-card>a:hover,.practice-page .working-card>a:focus-visible{transform:translateY(-3px);box-shadow:var(--studio-card-hover-shadow)}
+
 .practice-page .working-card:has(.working-card__remove)>:is(a,span){padding-right:44px}
 .practice-page .working-card__remove{top:10px;right:8px;width:32px;height:32px;border-radius:10px;background:none;color:#9a9ca3;opacity:0;transition:opacity .12s ease}
 .practice-page .working-card:hover .working-card__remove,.practice-page .working-card__remove:focus-visible{opacity:1}
@@ -503,10 +494,7 @@
 /* Second pass after review: bordered white cards with no lift (a lift reads well only on tinted cards), fewer bold
    weights, a quieter clock number, and the routine's Open link. */
 .practice-page .shelf__title small{font-size:14px}
-.practice-page .working-card>:is(a,span){border-radius:18px;box-shadow:0 0 0 1px #e6e6ea;transform:none;transition:box-shadow .15s}
-.practice-page .working-card>a:hover,.practice-page .working-card>a:focus-visible{transform:none;box-shadow:0 0 0 1px #c9cbd1}
-.practice-page .working-card b{font-size:16px;font-weight:600}
-.practice-page .working-card small{font-size:13px}
+
 .practice-page .working-card__pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .practice-page .working-card__pills .tag-pill{margin:0}
 .practice-page .deadline-card__name{font-weight:600}
@@ -560,9 +548,7 @@
 
 /* Item cards, compact: narrower columns (more per row), less padding, the kind pill closer to the title. */
 .practice-page .working__grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}
-.practice-page .working-card>:is(a,span){padding:11px 14px 12px;border-radius:14px}
-.practice-page .working-card b{font-size:15px}
-.practice-page .working-card small{font-size:12.5px}
+
 .practice-page .working-card__pills{margin-top:6px}
 .practice-page .working-card__pills .tag-pill{height:20px;padding:0 7px;font-size:11.5px}
 .practice-page .working-card:has(.working-card__remove)>:is(a,span){padding-right:32px}
@@ -655,7 +641,7 @@
   html body .practice-page :is(.practice-card,.studio-status-grid,.studio-data-grid){box-shadow:none!important;border:0!important;background:#fff}
 }
 @media(max-width:600px){
-  html body .practice-page :is(.deadline-card,.list-stack__card,.working-card>a){box-shadow:none!important;border:0!important;background:#fff}
+  html body .practice-page :is(.deadline-card,.list-stack__card){box-shadow:none!important;border:0!important;background:#fff}
 }
 @media(max-width:600px){
   /* Tricky bits: white cards like the rest on the grey page (they were transparent with a hairline, blurring into it). */

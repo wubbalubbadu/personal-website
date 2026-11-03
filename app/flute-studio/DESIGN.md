@@ -129,14 +129,13 @@ font-weight: 600;
 ```
 Hover: `background: #e8e8ea` (hover-capable pointers only). An icon in front is 18px (PracticeIcon). Once a toggle
 is on (kept offline), it takes the selected purple tint `#f1e5f5` / `#6d4585`. No dark fills, no green fills.
-There is no shared class yet; copies live in `.emb-action`, `.bl-start`, `.rd-button`, `.mock-button`,
-`.offline-label` and `.starter-routine__add` (COMPONENTS.md "Not reused yet").
+Use `.action-button` in `studio-shared.css`, with compact or large size modifiers as needed. Page classes retain placement and selected/disabled behavior. The old starter-routine action no longer exists.
 
 **Soft tint (retired):** the green `#e7eee3` / `#40553d` button was the default until October 16 and still appears in
 older corners (close-up Rhythm Start / Try again). Convert it to plain grey when touched.
 
 **Steppers** (− value +): the shared `Stepper` (`components/Stepper.tsx`), on action grey `#f1f1f2`, signs
-`#45464f`, hover `#e4e4e7`. Medium 36px tall (value 16 / 600 tabular), small 28px (value 14 / 600, or 12 / 600 grey
+`#45464f`, hover ink `#292a33` with no separate fill. Medium 36px tall (value 16 / 600 tabular), small 28px (value 14 / 600, or 12 / 600 grey
 for a worded value such as "Octave 4"). Signs answer to a 44px square on touch screens.
 
 **Filter/category tabs — one recipe everywhere (Library, Exercises, and the

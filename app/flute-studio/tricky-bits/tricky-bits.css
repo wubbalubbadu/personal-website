@@ -5,9 +5,7 @@
 .tricky-group h2{margin:0 4px 12px;font-size:18px;font-weight:600;letter-spacing:-.01em;color:#292a33;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .tricky-group h2 small{font-size:14px;font-weight:400;color:#85868e}
 .tricky-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
-.tricky-card{position:relative;border:1px solid #e6e7e3;border-radius:16px;background:#fff;transition:box-shadow .16s ease}
-.tricky-card:hover{box-shadow:0 6px 20px rgba(41,42,51,.08)}
-.tricky-card__open{display:block;width:100%;padding:14px 16px 12px;border:0;border-radius:16px;background:transparent;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.tricky-card__open{display:block;width:100%;padding:14px 16px 12px;border:0;border-radius:inherit;background:transparent;text-align:left;font:inherit;color:inherit;cursor:pointer}
 .tricky-card__bars{font-size:14px;font-weight:600;color:#45464f;padding-right:36px}
 .tricky-card__note{margin:14px 0;font-size:13px;color:#85868e;min-height:60px}
 .tricky-card__meta{display:flex;justify-content:space-between;gap:8px;min-height:20px;margin-top:6px;font-size:13px;font-weight:500;color:#6f7178;font-variant-numeric:tabular-nums}

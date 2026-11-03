@@ -84,7 +84,7 @@ function Embouchure(){
     <div className="emb-note-row">
      <div className="emb-staff"><StaffNote midi={note}/></div>
      <strong className="emb-note">{noteName(note)}</strong>
-     <button type="button" className="emb-action" onClick={toggle}><PracticeIcon name={playing?'pause':'play'}/>{playing?(zh?"暂停":"Pause"):(zh?"播放音阶":"Play scale")}</button>
+     <button type="button" className="emb-action action-button action-button--compact" onClick={toggle}><PracticeIcon name={playing?'pause':'play'}/>{playing?(zh?"暂停":"Pause"):(zh?"播放音阶":"Play scale")}</button>
     </div>
     <div className="emb-range">
      <span>{noteName(MIN_NOTE)}</span>

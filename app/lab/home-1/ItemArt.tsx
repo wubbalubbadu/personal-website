@@ -280,6 +280,10 @@ const APP_ICONS: Record<string, string[]> = {
     "............", "....kkkk....", "...k....k...", "...k....k...", ".kkkkkkkkkk.", ".kyyyyyyyyk.",
     ".kyyyyyyyyk.", ".kyyyppyyyk.", ".kyyyppyyyk.", ".kyyyyyyyyk.", ".kkkkkkkkkk.", "............",
   ],
+  openmusic: [
+    "............", ".kkk........", ".kpk........", ".kkk........", "..k.........", "..kkkkk.....",
+    "......k.....", "......k.....", ".....kkk....", ".....kdk....", ".....kkk....", "............",
+  ],
   skuy: [
     "...kkkkkk...", "...kddddk...", "...kdwwdk...", "...kddddk...", "...kdwwdk...", "...kddddk...",
     "...kdwwdk...", "...kddddk...", "...kddddk...", "...kkwwkk...", "...kkkkkk...", "............",
@@ -293,6 +297,7 @@ const SHORT: Record<string, string> = {
   "music-playground": "MUSIC",
   market: "MARKET",
   skuy: "SKUY",
+  openmusic: "OM",
 };
 
 /* Layout on the 160x120 grid: a big lid (cat ears on top), the screen inside it,

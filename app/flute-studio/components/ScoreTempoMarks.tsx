@@ -50,13 +50,27 @@ export function ScoreTempoMarks({root,version,marks,onChange,onSound,soundingId,
     // marks is intentionally excluded — `signature` stands in for it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },[root,version,signature]);
+  // soundingId only says the metronome is on at that exercise's tempo; the
+  // toolbar's metronome button gets there too. A pill lights up only when it
+  // started the click itself (iPad, Oct 29: the toolbar lit the pill as well).
+  // Cleared when the metronome stops, so the toolbar can't relight it later.
+  const [owned,setOwned]=useState<string|null>(null);
+  const [lastSounding,setLastSounding]=useState(soundingId);
+  if(lastSounding!==soundingId){
+    setLastSounding(soundingId);
+    // A pill's own start arrives a render after the tap (null, then its id); only a change away from a sounding id ends ownership.
+    if(lastSounding!==null&&owned&&soundingId!==owned)setOwned(null);
+  }
   const byId=new Map(marks.map(m=>[m.id,m]));
   return <>{(spots.version===version?spots.placed:[]).map(spot=>{
     const mark=byId.get(spot.id);
     if(!mark)return null;
     // The same action as the metronome button on this exercise's Tempos row: take the tempo from here, and click.
     return <span key={spot.id} className="score-tempo-mark" style={{left:spot.x,top:spot.y}}>
-      <TempoPill label={mark.label} tempo={mark.tempo} sounding={soundingId===spot.id} onSound={()=>onSound(spot.id,mark.tempo)} onChange={value=>onChange(spot.id,value)} history={mark.rep?.key}/>
+      <TempoPill label={mark.label} tempo={mark.tempo} sounding={owned===spot.id} onSound={()=>{
+        // Already clicking at this tempo from the toolbar: take it over rather than stopping it.
+        if(soundingId===spot.id&&owned!==spot.id){setOwned(spot.id);onChange(spot.id,mark.tempo);return}
+        setOwned(soundingId===spot.id?null:spot.id);onSound(spot.id,mark.tempo)}} onChange={value=>onChange(spot.id,value)} history={mark.rep?.key}/>
       {mark.rep&&<RepPill item={mark.rep} tempo={mark.tempo} zh={zh}/>}
     </span>;
   })}</>;
