@@ -51,7 +51,7 @@ const answerText = (t: Topic) =>
   FIXES.reduce((s, [a, b]) => s.replace(a, b), INTENTS[t].answer.map(nodeText).filter(Boolean).join(" "));
 
 /** The competition footage the live site already features (FluteView). */
-export const CLIP_SRC = "https://www.youtube-nocookie.com/embed/ya3cFeMKD14?start=649&autoplay=1";
+export const CLIP_SRC = "https://www.youtube-nocookie.com/embed/ya3cFeMKD14?start=584&autoplay=1";
 
 type Choice = { label: string; act: () => void };
 /** What the dialogue is about right now. */

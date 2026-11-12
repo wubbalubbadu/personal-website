@@ -581,7 +581,7 @@ const RESUME_PAGE = "/lab/previews/resume-page.jpg";
 /** Paints the paper for `id` ("diploma" 570x420, "resume" 780x1060) onto `canvas`. */
 /** The letter, opened: the envelope's flap folded back and a note card out
  *  of it with the address on, so zooming in reads it to you. */
-function paintLetter(ctx: CanvasRenderingContext2D, w: number, h: number) {
+function paintLetter(ctx: CanvasRenderingContext2D, w: number, h: number, card: string) {
   // the envelope behind
   ctx.fillStyle = "#f3e6cf";
   ctx.fillRect(0, 0, w, h);
@@ -612,7 +612,7 @@ function paintLetter(ctx: CanvasRenderingContext2D, w: number, h: number) {
     ctx.fillText(s, w / 2, y);
   };
   const serif = "Georgia, 'Times New Roman', serif";
-  text("Write to me!", cy + ch * 0.26, `italic 40px ${serif}`, "#3a2a20");
+  text(card, cy + ch * 0.26, `italic 40px ${serif}`, "#3a2a20");
   text(COPY.email, cy + ch * 0.6, `600 30px ${serif}`, "#c4456f");
   // the envelope's front pocket over the card's bottom, with the heart seal
   ctx.fillStyle = "#f7ecd8";
@@ -637,7 +637,7 @@ function paintLetter(ctx: CanvasRenderingContext2D, w: number, h: number) {
   ctx.fill();
 }
 
-export async function paintPaper(canvas: HTMLCanvasElement, id: "diploma" | "resume" | "letter", stale?: () => boolean) {
+export async function paintPaper(canvas: HTMLCanvasElement, id: "diploma" | "resume" | "letter", stale?: () => boolean, card = "Write to me!") {
   const img = id === "resume" ? await loadShot(RESUME_PAGE) : null;
   if (stale?.()) return false;
   const ctx = canvas.getContext("2d");
@@ -655,7 +655,7 @@ export async function paintPaper(canvas: HTMLCanvasElement, id: "diploma" | "res
     return true;
   }
   if (id === "letter") {
-    paintLetter(ctx, w, h);
+    paintLetter(ctx, w, h, card);
     return true;
   }
   // the diploma: cream paper, a gold double rule, the degrees, a seal

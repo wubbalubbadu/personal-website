@@ -5,14 +5,16 @@ import "../_kit/kit.css";
 import "./cat-host.css";
 import "./handheld.css";
 import { SheetHost, useOpenSheet } from "../_kit/Sheets";
-import { opensNewTab, PROJECT_ROWS, type ProjectRow } from "../_kit/links";
+import { opensNewTab, type ProjectRow } from "../_kit/links";
 import { playFlute } from "../_kit/fluteTone";
 import { useMedia, usePrefersReducedMotion } from "../_kit/hooks";
-import { INTENTS, type AnswerNode, type RichSeg } from "../../lib/answers";
+import type { AnswerNode, RichSeg } from "../../lib/answers";
+import { useLang } from "../_kit/lang";
+import { copyFor, fix, nodeText, TOPICS, type Topic } from "./copy";
 import { playStep, timeline, unlockAudio, VOICES, type MascotEngine, type MascotMood, type Outfit } from "../../components/ps1-mascot";
 import { Console, type Device, type Pad } from "./Handheld";
 import { paintPaper, paintProjectScreen } from "./ItemArt";
-import { DESK, DESK_DOWN, DESK_UP, DESKTOP_LINE, ITEMS, LOOKS, QUESTIONS, ROOM, SNACK_LINES, SNACK_MILESTONES, TUNE, WALL, type ItemId, type Question } from "../_kit/studio";
+import { DESK, ROOM, TUNE, WALL, type ItemId, type Question } from "../_kit/studio";
 
 /*
  * Cat host: the page is the handheld, and its screen is the cat's studio.
@@ -32,36 +34,11 @@ const DRESS_UP: Outfit[] = ["bow", "beret"];
 
 type Place = "studio" | "room";
 
-/** The laptop browses the main projects, one at a time; the music and the
- *  OpenMusic patches live only on the projects page ("See all projects"). */
-const APPS: ProjectRow[] = PROJECT_ROWS.filter((p) => p.slug !== "music-playground" && p.slug !== "openmusic");
-
-/* ---- questions you can ask, answered from app/lib/answers.ts ---- */
-
-const TOPICS = ["background", "flute", "projects"] as const;
-type Topic = (typeof TOPICS)[number];
-/** How each question reads here. The background answer is all software, so it says so;
- *  otherwise someone curious about her flute background would pick it and be confused. */
-const TOPIC_ASK: Record<Topic, string> = {
-  background: "Tell me about your software background.",
-  flute: INTENTS.flute.ask,
-  projects: INTENTS.projects.ask,
-};
-
-/** The live answers point at a side panel this page doesn't have. */
-const FIXES: [string, string][] = [
-  [" The full list is on the right, open any of them.", ""],
-];
-const fix = (t: string) => FIXES.reduce((s, [a, b]) => s.replace(a, b), t);
-
 const INTENT_HREF: Record<string, string> = {
   resume: "/haylie-wu-resume.pdf",
   "learning-log": "/learning-log",
   "cookie-flute-studio": "/flute-studio",
 };
-
-const nodeText = (n: AnswerNode) =>
-  n.kind === "text" ? n.value : n.kind === "rich" ? n.segments.map((s) => s.text).join("") : "";
 
 /**
  * While the cat talks, it turns to what it's talking about: education looks at
@@ -70,59 +47,16 @@ const nodeText = (n: AnswerNode) =>
  */
 type Focus = { item: ItemId; cap?: boolean; mood?: MascotMood };
 const FOCUS_RULES: [RegExp, Focus][] = [
-  [/MathWorks|startup|NetLogo|Connected Learning|internship/i, { item: "resume" }],
-  [/degree|Northwestern|Conservatory|undergrad|master's/i, { item: "diploma", cap: true }],
-  [/MathWorks|startup|backend|résumé|NetLogo|research|internship|codebase|software|load time|migration/i, { item: "resume" }],
-  [/built|building|project|Cookie Flute Studio|Learning Log|marketplace|shipped/i, { item: "laptop" }],
-  [/flute|competition|followers|audience|repertoire|classical/i, { item: "flute", mood: "flute" }],
+  [/MathWorks|startup|NetLogo|Connected Learning|internship|创业|实习/i, { item: "resume" }],
+  [/degree|Northwestern|Conservatory|undergrad|master's|学位|西北大学|音乐学院|本科|硕士/i, { item: "diploma", cap: true }],
+  [/MathWorks|startup|backend|résumé|NetLogo|research|internship|codebase|software|load time|migration|后端|简历|研究|代码库|软件|加载|迁移/i, { item: "resume" }],
+  [/built|building|project|Cookie Flute Studio|Learning Log|marketplace|shipped|项目|长笛工作室|二手市场|全栈/i, { item: "laptop" }],
+  [/flute|competition|followers|audience|repertoire|classical|长笛|比赛|粉丝|观众|曲子|古典/i, { item: "flute", mood: "flute" }],
 ];
 function focusFor(text: string, topic: string): Focus | null {
   const rules = topic === "flute" ? [...FOCUS_RULES.slice(4), ...FOCUS_RULES.slice(0, 4)] : FOCUS_RULES;
   for (const [re, f] of rules) if (re.test(text)) return f;
   return null;
-}
-
-/** Long paragraphs split at sentences so each page fits the bubble. */
-const PAGE_CHARS = 330;
-/** A last page shorter than this joins the one before, so there's no lone sentence to click through. */
-const MIN_PAGE = 110;
-function paginate(nodes: AnswerNode[]): AnswerNode[] {
-  return nodes.flatMap((node) => {
-    if (node.kind !== "text" || fix(node.value).length <= PAGE_CHARS) return [node];
-    const sentences = fix(node.value).match(/[^.!?]+[.!?]+\s*/g) ?? [node.value];
-    const out: string[] = [];
-    for (const s of sentences) {
-      const prev = out[out.length - 1];
-      if (prev !== undefined && (prev + s).length <= PAGE_CHARS) out[out.length - 1] = prev + s;
-      else out.push(s);
-    }
-    const tail = out[out.length - 1];
-    if (out.length > 1 && tail.trim().length < MIN_PAGE) out[out.length - 2] += out.pop();
-    return out.map((value) => ({ kind: "text" as const, value: value.trim() }));
-  });
-}
-
-/** A scripted answer ready for the bubble: no link lists, no music résumé
- * (Haylie doesn't want it online), long paragraphs paged. */
-function answerPages(topic: "flute" | "background" | "projects"): AnswerNode[] {
-  const nodes = INTENTS[topic].answer
-    .filter((x) => x.kind !== "linkList")
-    .map((x) =>
-      x.kind === "rich" ? { ...x, segments: x.segments.filter((g) => !("href" in g && g.href.includes("music-resume"))) } : x,
-    );
-  return foldShort(paginate(nodes));
-}
-
-/** A short paragraph rides along with the page before it instead of getting a click of its own. */
-function foldShort(nodes: AnswerNode[]): AnswerNode[] {
-  const segs = (n: AnswerNode): RichSeg[] => (n.kind === "text" ? [{ text: n.value }] : n.kind === "rich" ? n.segments : []);
-  return nodes.reduce<AnswerNode[]>((out, node) => {
-    const prev = out[out.length - 1];
-    if (prev && nodeText(node).length < MIN_PAGE && nodeText(prev).length + nodeText(node).length <= PAGE_CHARS + MIN_PAGE) {
-      out[out.length - 1] = { kind: "rich", segments: [...segs(prev), { text: " " }, ...segs(node)] };
-    } else out.push(node);
-    return out;
-  }, []);
 }
 
 /** Shows the first `n` characters of a node, keeping links clickable once typed. */
@@ -169,11 +103,6 @@ function ButtonGuide({ hints, on }: { hints: GuideHint[]; on: boolean }) {
   );
 }
 
-/* Who she is first (flutist and software engineer), then what she does, then the schools. */
-const INTRO =
-  "Hi, I'm Haylie Wu! I'm a flutist and software engineer. I perform, teach, and build software for musicians. I studied computer science and flute at Northwestern, and I'm completing my master's in flute performance at New England Conservatory.";
-/** Each app's bubble is a preview; /projects has the whole write-up. */
-const appLine = (p: ProjectRow) => p.preview;
 const detailsHref = (p: ProjectRow) => `/projects#${p.slug}`;
 /** A short tune for when the cat picks up the flute. */
 /** How long the camera takes to move in before the item card slides up. */
@@ -252,6 +181,14 @@ function Tracks({ tracks }: { tracks: { label: string; src: string }[] }) {
 
 function CatHostInner({ device }: { device: Device }) {
   const reduced = usePrefersReducedMotion();
+  /* Chinese when the visitor's system is in Chinese (see _kit/lang.ts). */
+  const lang = useLang();
+  const C = useMemo(() => copyFor(lang), [lang]);
+  const APPS = C.apps;
+  // so the browser picks Chinese glyphs (and screen readers the right voice)
+  useEffect(() => {
+    document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+  }, [lang]);
   const wide = useMedia("(min-width: 760px) and (min-height: 560px) and (orientation: landscape)");
   // the console lies on a desk by default; ?flat shows the old upright one (false on the server, read once in the browser)
   const desk = useSyncExternalStore(
@@ -302,8 +239,6 @@ function CatHostInner({ device }: { device: Device }) {
   /* A tap on empty space while she's answering pulls the camera back out; the
      answer keeps going, she just stops turning to things until the next question. */
   const [unfocused, setUnfocused] = useState(false);
-  /* Where the D-pad was, so backing out to the whole room keeps your place. */
-  const lastRef = useRef<ItemId | null>(null);
   const [appIndex, setAppIndex] = useState(0);
   const [, setCardShown] = useState(false);
   const appIndexRef = useRef(0);
@@ -318,7 +253,7 @@ function CatHostInner({ device }: { device: Device }) {
   const [place, setPlace] = useState<Place>("studio");
   /* Cookies eaten this visit, and what the cat said about the last one. */
   const [eaten, setEaten] = useState(0);
-  const [snackLines, setSnackLines] = useState(SNACK_LINES[0]);
+  const [snackLines, setSnackLines] = useState(C.snackLines[0]);
   const eatenRef = useRef(0);
   /* Which of LOOKS she has on from the closet (-1: nothing). She keeps it on in the studio too. */
   const [look, setLook] = useState(-1);
@@ -329,23 +264,58 @@ function CatHostInner({ device }: { device: Device }) {
   const timers = useRef<number[]>([]);
   const cardTimer = useRef(0);
 
-  const item = selected ? ITEMS[selected] : null;
-  const questions = selected ? QUESTIONS[selected] : undefined;
+  const item = selected ? C.items[selected] : null;
+  const questions = selected ? C.questions[selected] : undefined;
   const question = asked && questions ? questions[asked] : null;
+  /* What plays on the console's screen for this question: its one video, or
+     one of its short videos ("Next video" steps along). */
+  const [clipIndex, setClipIndex] = useState(0);
+  const clips = question?.videos;
+  const clip = clips?.length ? clips[clipIndex % clips.length] : null;
+  const videoSrc = clip?.src ?? question?.video ?? null;
+  /* TikTok refuses some visitors ("embed request rejected": bots, some
+     browsers) and its player then shows a bare "Server error". Its player says
+     when it's ready; if that hasn't come 6 s in, a link out shows under it. */
+  const [readySrc, setReadySrc] = useState<string | null>(null);
+  const [slowSrc, setSlowSrc] = useState<string | null>(null);
+  useEffect(() => {
+    if (!clip) return;
+    const src = clip.src;
+    const onMessage = (e: MessageEvent) => {
+      if (e.origin !== "https://www.tiktok.com") return;
+      let d: unknown = e.data;
+      if (typeof d === "string") {
+        try {
+          d = JSON.parse(d);
+        } catch {
+          return;
+        }
+      }
+      const m = d as { "x-tiktok-player"?: boolean; type?: string } | null;
+      if (m?.["x-tiktok-player"] && (m.type === "onPlayerReady" || m.type === "onStateChange")) setReadySrc(src);
+    };
+    window.addEventListener("message", onMessage);
+    const slow = window.setTimeout(() => setSlowSrc(src), 6000);
+    return () => {
+      window.removeEventListener("message", onMessage);
+      window.clearTimeout(slow);
+    };
+  }, [clip]);
+  const clipStuck = Boolean(clip && slowSrc === clip.src && readySrc !== clip.src);
   const app = APPS[appIndex];
 
   /* What the bubble says, a page at a time. */
   const pages = useMemo<AnswerNode[]>(() => {
-    if (mode === "topic") return answerPages(topic);
-    if (mode === "app") return paginate([{ kind: "text", value: appLine(app) }]);
-    if ((mode === "item" || mode === "desktop") && question) return paginate([{ kind: "text", value: question.say }]);
-    if (mode === "desktop" && item) return [{ kind: "text", value: DESKTOP_LINE }];
+    if (mode === "topic") return C.answerPages(topic);
+    if (mode === "app") return C.paginate([{ kind: "text", value: app.preview }]);
+    if ((mode === "item" || mode === "desktop") && question) return C.paginate([{ kind: "text", value: question.say }]);
+    if (mode === "desktop" && item) return [{ kind: "text", value: C.desktopLine }];
     // A cookie's lines read as one little speech, not a click per sentence.
-    if (mode === "item" && item?.snack) return [{ kind: "text", value: snackLines.join(" ") }];
-    if (mode === "item" && item?.closet) return [{ kind: "text", value: LOOKS[Math.max(0, look)].line }];
-    if (mode === "item" && item) return item.topic ? answerPages(item.topic) : [{ kind: "text", value: item.body }];
-    return [{ kind: "text", value: INTRO }];
-  }, [mode, topic, item, app, snackLines, look, question]);
+    if (mode === "item" && item?.snack) return [{ kind: "text", value: C.join(snackLines) }];
+    if (mode === "item" && item?.closet) return [{ kind: "text", value: C.looks[Math.max(0, look)].line }];
+    if (mode === "item" && item) return item.topic ? C.answerPages(item.topic) : [{ kind: "text", value: item.body }];
+    return [{ kind: "text", value: C.intro }];
+  }, [mode, topic, item, app, snackLines, look, question, C]);
   const node = pages[Math.min(page, pages.length - 1)];
   const text = fix(nodeText(node));
   const done = n >= text.length;
@@ -365,7 +335,7 @@ function CatHostInner({ device }: { device: Device }) {
 
   /** Type a line out on the Animalese timeline, so letters and blips stay in step. */
   const typeOut = useCallback(
-    (value: string) => {
+    (value: string, quiet = false) => {
       stopTyping();
       if (reduced) {
         setN(Infinity);
@@ -375,7 +345,7 @@ function CatHostInner({ device }: { device: Device }) {
       timers.current = timeline(value, 1.7).map((st) =>
         window.setTimeout(() => {
           setN(st.index + 1);
-          if (soundRef.current) playStep(st, VOICES.cat);
+          if (soundRef.current && !quiet) playStep(st, VOICES.cat);
           // her mouth moves with each letter she says, sound on or off
           if (st.vowel) engineRef.current?.speak();
         }, 60 + st.at),
@@ -414,14 +384,14 @@ function CatHostInner({ device }: { device: Device }) {
         continue;
       }
       const c = (screenCanvas.current[id] ??= Object.assign(document.createElement("canvas"), { width: w, height: h }));
-      void paintPaper(c, id, () => stale).then((ok) => {
+      void paintPaper(c, id, () => stale, C.ui.letterCard).then((ok) => {
         if (ok && !stale) eng.setScreen(id, c);
       });
     }
     return () => {
       stale = true;
     };
-  }, [ready, onLaptop, appIndex, closeUp]);
+  }, [ready, onLaptop, appIndex, closeUp, APPS, C]);
 
   /* The engine follows: camera eases toward the pick (right up to it when inspecting). */
   const close = mode === "item" || mode === "desktop" || mode === "app";
@@ -434,7 +404,7 @@ function CatHostInner({ device }: { device: Device }) {
   /* Dress-up: on as soon as you hover or pick the thing, so you see it before the
      camera zooms in (and away from her). */
   const near = (...ids: ItemId[]) => ids.some((id) => id === selected || id === hovered);
-  const wearing = look >= 0 ? LOOKS[look].wear : [];
+  const wearing = look >= 0 ? C.looks[look].wear : [];
   const capOn = (mode === "topic" && Boolean(focus?.cap)) || near("diploma") || wearing.includes("cap");
   useEffect(() => {
     if (ready) engineRef.current?.setCap(capOn);
@@ -446,10 +416,10 @@ function CatHostInner({ device }: { device: Device }) {
     if (!ready) return;
     engineRef.current?.wear("glasses", glassesOn);
     engineRef.current?.wear("apron", apronOn);
-    const extra = look >= 0 ? LOOKS[look].wear : [];
+    const extra = look >= 0 ? C.looks[look].wear : [];
     // The graduation cap sits where the beret does, so the cap wins while it's on.
     for (const o of DRESS_UP) engineRef.current?.wear(o, extra.includes(o) && !(o === "beret" && capOn));
-  }, [ready, glassesOn, apronOn, look, capOn]);
+  }, [ready, glassesOn, apronOn, look, capOn, C.looks]);
   const focusMood = mode === "topic" ? focus?.mood : undefined;
 
   const hideCard = useCallback(() => {
@@ -461,7 +431,6 @@ function CatHostInner({ device }: { device: Device }) {
     hideCard();
     setMood("idle");
     setAsked(null);
-    if (id) lastRef.current = id;
     setSelected(id);
     setMode(id ? "browse" : "intro");
     setPage(0);
@@ -471,34 +440,33 @@ function CatHostInner({ device }: { device: Device }) {
 
   const inspect = useCallback(
     (id: ItemId) => {
-      const it = ITEMS[id];
+      const it = C.items[id];
       hideCard();
       setAsked(null);
-      lastRef.current = id;
       setSelected(id);
       setMode(it.desktop ? "app" : "item");
       setPage(0);
       setMood(it.mood ?? (it.plays ? "flute" : "idle"));
       if (it.plays && soundRef.current) TUNE.forEach((f, i) => window.setTimeout(() => playFlute(f, 0.28), 300 + i * 260));
-      let line = it.desktop ? fix(nodeText(paginate([{ kind: "text", value: appLine(APPS[appIndexRef.current]) }])[0])) : it.topic ? fix(nodeText(answerPages(it.topic)[0])) : it.body;
+      let line = it.desktop ? fix(nodeText(C.paginate([{ kind: "text", value: APPS[appIndexRef.current].preview }])[0])) : it.topic ? fix(nodeText(C.answerPages(it.topic)[0])) : it.body;
       if (it.snack) {
-        const lines = SNACK_MILESTONES[eatenRef.current + 1] ?? SNACK_LINES[eatenRef.current % SNACK_LINES.length];
-        line = lines.join(" ");
+        const lines = C.snackMilestones[eatenRef.current + 1] ?? C.snackLines[eatenRef.current % C.snackLines.length];
+        line = C.join(lines);
         eatenRef.current += 1;
         setEaten(eatenRef.current);
         setSnackLines(lines);
       }
       if (it.closet) {
-        const next = (lookRef.current + 1) % LOOKS.length;
+        const next = (lookRef.current + 1) % C.looks.length;
         lookRef.current = next;
         setLook(next);
-        line = LOOKS[next].line;
+        line = C.looks[next].line;
       }
       typeOut(line);
       // Let the camera arrive, then show the graphic (or the laptop's desktop).
       cardTimer.current = window.setTimeout(() => setCardShown(true), reduced ? 0 : ZOOM_MS);
     },
-    [typeOut, reduced, hideCard],
+    [typeOut, reduced, hideCard, APPS, C],
   );
 
   const ask = useCallback(
@@ -511,18 +479,19 @@ function CatHostInner({ device }: { device: Device }) {
       setMode("topic");
       setPage(0);
       setMood("idle");
-      typeOut(fix(nodeText(answerPages(t)[0])));
+      typeOut(fix(nodeText(C.answerPages(t)[0])));
     },
-    [typeOut, hideCard],
+    [typeOut, hideCard, C],
   );
 
   const askAbout = useCallback(
     (key: string, q: Question) => {
       setAsked(key);
       setPage(0);
-      typeOut(fix(nodeText(paginate([{ kind: "text", value: q.say }])[0])));
+      // no blips over a video: it has its own sound
+      typeOut(fix(nodeText(C.paginate([{ kind: "text", value: q.say }])[0])), Boolean(q.video || q.videos));
     },
-    [typeOut],
+    [typeOut, C],
   );
 
   const showApp = useCallback(
@@ -531,10 +500,10 @@ function CatHostInner({ device }: { device: Device }) {
       setAppIndex(i);
       setMode("app");
       setPage(0);
-      const first = paginate([{ kind: "text", value: appLine(APPS[i]) }])[0];
+      const first = C.paginate([{ kind: "text", value: APPS[i].preview }])[0];
       typeOut(fix(nodeText(first)));
     },
-    [typeOut],
+    [typeOut, APPS, C],
   );
 
   const goTo = useCallback(
@@ -593,29 +562,34 @@ function CatHostInner({ device }: { device: Device }) {
     if (atProject)
       return [
         // so the laptop never feels stuck on one project (the D-pad does this too)
-        { key: "next", label: "Next project" },
-        ...(app.href ? [{ key: "open", label: `Open ${app.name}`, main: true }] : []),
-        { key: "details", label: "Full details" },
-        { key: "all", label: "See all projects" },
+        { key: "next", label: C.ui.nextProject },
+        ...(app.href ? [{ key: "open", label: C.ui.open(app.name), main: true }] : []),
+        { key: "details", label: C.ui.details },
+        { key: "all", label: C.ui.allProjects },
       ];
-    if (dressing) return [{ key: "look", label: "Try another look?" }];
+    if (dressing) return [{ key: "look", label: C.ui.anotherLook }];
     const go: Option[] = [
       ...(extras?.open ? [{ key: "open", label: extras.open.label, href: extras.open.href, main: true }] : []),
       ...(extras?.links ?? []).map((l, i) => {
         const mail = l.href.startsWith("mailto:");
-        return { key: `link${i}`, label: mail ? "Email me" : l.label, href: l.href, main: mail && !extras?.open };
+        return { key: `link${i}`, label: mail ? C.ui.emailMe : l.label, href: l.href, main: mail && !extras?.open };
       }),
     ];
     if (holding && questions)
       return [
+        // a question that plays videos comes first and is the default: on the
+        // social media poster that's what you came for, not leaving for TikTok
+        ...Object.entries(questions)
+          .filter(([k, q]) => k !== asked && q.videos)
+          .map(([k, q]) => ({ key: k, label: q.ask, main: true })),
         ...go,
         ...Object.entries(questions)
-          .filter(([k]) => k !== asked)
+          .filter(([k, q]) => k !== asked && !q.videos)
           .map(([k, q]) => ({ key: k, label: q.ask })),
       ];
     if (mode === "item") return go;
-    return TOPICS.filter((t) => !(mode === "topic" && t === topic)).map((t) => ({ key: t, label: TOPIC_ASK[t], topic: t }));
-  }, [atProject, app, dressing, extras, holding, questions, asked, mode, topic]);
+    return TOPICS.filter((t) => !(mode === "topic" && t === topic)).map((t) => ({ key: t, label: C.topicAsk[t], topic: t }));
+  }, [atProject, app, dressing, extras, holding, questions, asked, mode, topic, C]);
   const showChoices =
     done && last && (mode === "intro" || mode === "topic" || holding || dressing || atProject || (mode === "item" && options.length > 0));
   const choose = useCallback(
@@ -629,7 +603,7 @@ function CatHostInner({ device }: { device: Device }) {
       else if (o.topic) ask(o.topic);
       else if (questions?.[o.key]) askAbout(o.key, questions[o.key]);
     },
-    [ask, askAbout, questions, dressing, inspect, atProject, app, dive, goTo, showApp],
+    [ask, askAbout, questions, dressing, inspect, atProject, app, dive, goTo, showApp, APPS.length],
   );
   const [choice, setChoice] = useState(0);
   const cursor = Math.min(choice, options.length - 1);
@@ -652,15 +626,19 @@ function CatHostInner({ device }: { device: Device }) {
     }
     if (!last) {
       setPage(page + 1);
-      typeOut(fix(nodeText(pages[page + 1])));
+      typeOut(fix(nodeText(pages[page + 1])), Boolean(videoSrc));
       return;
     }
-    if (mode === "intro" || mode === "topic") pick(DESK[0]);
+    // with questions up, ✕ asks the highlighted one (what the guide says it does)
+    if ((mode === "intro" || mode === "topic") && showChoices && options[cursor]) choose(options[cursor]);
+    else if (mode === "intro" || mode === "topic") pick(DESK[0]);
     else if (mode === "browse" && selected) inspect(selected);
+    // a video playing: ✕ stays out of it (tap a choice to leave for a link)
+    else if (mode === "item" && videoSrc) return;
     else if (mode === "item" && options[cursor]) choose(options[cursor]);
     else if (mode === "desktop") showApp(appIndex);
     else if (mode === "app" && options[cursor]) choose(options[cursor]);
-  }, [done, last, page, pages, mode, selected, options, cursor, choose, appIndex, pick, inspect, showApp, typeOut]);
+  }, [done, last, page, pages, mode, selected, options, cursor, choose, appIndex, pick, inspect, showApp, typeOut, videoSrc, showChoices]);
 
   const b = useCallback(() => {
     // Back zooms all the way out to the whole room (from a project on the
@@ -675,23 +653,39 @@ function CatHostInner({ device }: { device: Device }) {
         showApp((appIndexRef.current + d + APPS.length) % APPS.length);
         return;
       }
-      const at = selected ?? lastRef.current;
+      // watching her short videos: left and right go through them
+      if (mode === "item" && clips && clips.length > 1) {
+        setClipIndex((i) => (i + d + clips.length) % clips.length);
+        return;
+      }
+      // Nothing picked (the whole room, or after Back): always start from the cat,
+      // never from wherever you were before (her call: left must mean "the thing
+      // left of the cat" every time).
+      const at = selected;
       const row = place === "room" ? ROOM : at && WALL.includes(at) ? WALL : DESK;
       const i = at ? row.indexOf(at) : -1;
-      /* Nothing picked yet: start from the middle, where the cat is, so A takes the
-       * nearest thing on her left and D the nearest on her right. */
-      const mid = Math.floor(row.length / 2);
-      pick(i < 0 ? row[d < 0 ? mid - 1 : mid] : row[(i + d + row.length) % row.length]);
+      /* Nothing picked yet: start from the cat, so left takes the nearest thing on
+       * her left (the notebook) and right the nearest on her right (the flute). */
+      if (i < 0) {
+        if (place === "room") pick(row[Math.floor(row.length / 2) - (d < 0 ? 1 : 0)]);
+        else pick(d < 0 ? "book" : "flute");
+        return;
+      }
+      // the ends of a row are the ends: no wrapping round to the other side
+      const next = i + d;
+      if (next >= 0 && next < row.length) pick(row[next]);
     },
-    [mode, selected, pick, place, showApp],
+    [mode, selected, pick, place, showApp, APPS.length, clips],
   );
 
   const row = useCallback(
     (to: ItemId[]) => {
       if (mode === "desktop" || mode === "app") return;
-      const at = selected ?? lastRef.current;
-      const from = at && WALL.includes(at) ? WALL : DESK;
-      const i = at && from.includes(at) ? from.indexOf(at) : 0;
+      // from the cat (nothing picked): the middle of the row you're moving to
+      const at = selected;
+      if (!at) return pick(to[Math.floor(to.length / 2)]);
+      const from = WALL.includes(at) ? WALL : DESK;
+      const i = from.includes(at) ? from.indexOf(at) : 0;
       pick(to[Math.min(Math.round((i / Math.max(1, from.length - 1)) * (to.length - 1)), to.length - 1)]);
     },
     [mode, selected, pick],
@@ -701,7 +695,6 @@ function CatHostInner({ device }: { device: Device }) {
   const moveTo = useCallback(
     (to: Place) => {
       pick(null);
-      lastRef.current = null;
       setPlace(to);
     },
     [pick],
@@ -732,25 +725,20 @@ function CatHostInner({ device }: { device: Device }) {
     // the bubble comes on empty, then she says hello
     setN(0);
     window.clearTimeout(greetTimer.current);
-    greetTimer.current = window.setTimeout(() => typeOut(INTRO), 650);
-  }, [mode, typeOut, reduced]);
+    greetTimer.current = window.setTimeout(() => typeOut(C.intro), 650);
+  }, [mode, typeOut, reduced, C.intro]);
   useEffect(() => () => window.clearTimeout(greetTimer.current), []);
 
   const pad: Pad = {
-    // Up and down follow the desk's depth: wall, back of the desk, front of the
-    // desk (letter, flute), then the living room.
+    // Up and down go between rows: the wall, the desk, then the living room.
     up: () => {
       if (place === "room") return moveTo("studio");
-      const back = selected && DESK_UP[selected];
-      if (back) pick(back);
-      else row(WALL);
+      if (!selected || !WALL.includes(selected)) row(WALL);
     },
     down: () => {
       if (place === "room") return;
-      if (!selected || !DESK.includes(selected)) return row(DESK);
-      const front = DESK_DOWN[selected];
-      if (front) pick(front);
-      else moveTo("room");
+      if (!selected || WALL.includes(selected)) return row(DESK);
+      moveTo("room");
     },
     left: () => step(-1),
     right: () => step(1),
@@ -858,20 +846,54 @@ function CatHostInner({ device }: { device: Device }) {
   /* The button guide in the screen's corner (like a game's "✕ Select ○ Back"):
      only the buttons that do something right now. It fades in when they
      change and out again after a few seconds, so it never sits in the way. */
-  const guide: GuideHint[] = !booted
-    ? []
-    : !done
-      ? [["crs", "Skip"]]
-      : !last
-        ? [["crs", "Next"]]
-        : mode === "intro" || mode === "topic"
-          ? [["pad", "Look"], ["crs", "Select"], ["tri", "Pet"]]
-          : mode === "browse"
-            ? [["pad", "Move"], ["crs", "Open"], ["cir", "Back"]]
-            : mode === "item"
-              ? [["crs", "Choose"], ["cir", "Back"]]
-              : [["pad", "Browse"], ["crs", "Choose"], ["cir", "Back"]];
-  if (place === "room" && booted) guide.push(["sqr", "Desk"]);
+  /* Worked out from what each button really does right now (a()/b()/step()),
+     so a hint never promises something the button doesn't do. ✕ on a list of
+     choices takes the highlighted one, so its verb says where that goes: a
+     question is Ask, a PDF is Open PDF, mail is Email, another site is Visit,
+     a page on this site is Go. While a video plays ✕ does nothing (her call:
+     Back, and Next video for the short ones, are all you need there). */
+  const watching = mode === "item" && Boolean(videoSrc);
+  const verbFor = (o: Option): string => {
+    if (o.topic || questions?.[o.key]) return "Ask";
+    if (o.key === "next") return "Next project";
+    if (o.key === "look") return "Try it on";
+    if (o.key === "details") return "Details";
+    if (o.key === "all") return "All projects";
+    const href = o.href ?? (o.key === "open" ? app.href : undefined);
+    if (!href) return "Open";
+    if (href.startsWith("mailto:")) return "Email";
+    if (/\.pdf($|[?#])/i.test(href)) return "Open PDF";
+    if (/^https?:/.test(href)) return "Visit";
+    return "Go";
+  };
+  const chosen = showChoices && !watching ? options[cursor] : undefined;
+  const crsVerb = chosen ? verbFor(chosen) : null;
+  const guide: GuideHint[] = [];
+  if (booted) {
+    if (!done) guide.push(["crs", "Skip"]);
+    else if (!last) guide.push(["crs", "Next"]);
+    else if (mode === "intro" || mode === "topic") {
+      guide.push(["pad", "Look"]);
+      if (crsVerb) guide.push(["crs", crsVerb]);
+      guide.push(["tri", "Pet"]);
+      if (mode === "topic") guide.push(["cir", "Back"]);
+    } else if (mode === "browse") guide.push(["pad", "Move"], ["crs", "Zoom in"], ["cir", "Back"]);
+    else if (mode === "item") {
+      if (watching) {
+        if (clips && clips.length > 1) guide.push(["pad", "Next video"]);
+      } else {
+        guide.push(["pad", "Move"]);
+        if (crsVerb) guide.push(["crs", crsVerb]);
+      }
+      guide.push(["cir", "Back"]);
+    } else if (mode === "desktop") guide.push(["pad", "Browse"], ["crs", "Open"], ["cir", "Back"]);
+    else {
+      guide.push(["pad", "Browse"]);
+      if (crsVerb) guide.push(["crs", crsVerb]);
+      guide.push(["cir", "Back"]);
+    }
+    if (place === "room") guide.push(["sqr", "Desk"]);
+  }
   const guideKey = guide.map((g) => g.join(" ")).join(" · ");
   const [guideOn, setGuideOn] = useState(false);
   useEffect(() => {
@@ -887,9 +909,33 @@ function CatHostInner({ device }: { device: Device }) {
 
   const overlay = (
     <>
+      {/* A question with a video plays it right on the console's screen; Back closes it. */}
+      {videoSrc && question ? (
+        <iframe
+          key={`video:${videoSrc}`}
+          className="hh-video"
+          src={videoSrc}
+          title={clip?.title ?? question.ask}
+          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+          allowFullScreen
+        />
+      ) : null}
+      {clipStuck && clip?.href ? (
+        <a className="hh-clip-out" href={clip.href} target="_blank" rel="noreferrer">
+          {C.ui.watchOnTikTok}
+        </a>
+      ) : null}
+      {/* TikTok's player shows no numbers, so the console does (as of COUNTS_ON). */}
+      {clip ? (
+        <span key={`clip:${clip.src}`} className="hh-clip" aria-label={`${clip.title}: ${clip.likes} likes, ${clip.plays} plays`}>
+          <b>{clip.title}</b>
+          <span>♥ {C.count(clip.likes)}</span>
+          <span>▶ {C.count(clip.plays)}</span>
+        </span>
+      ) : null}
       {tagId ? (
         <span ref={tagRef} className="hh-tag" aria-hidden="true">
-          {ITEMS[tagId].name}
+          {C.items[tagId].name}
         </span>
       ) : null}
 
@@ -906,7 +952,8 @@ function CatHostInner({ device }: { device: Device }) {
           <ExitArrow />
         </button>
       ) : null}
-      {guide.length ? <ButtonGuide hints={guide} on={guideOn || close} /> : null}
+      {/* Leaning in on a thing (browse) counts as zoomed too: the way back stays shown. */}
+      {guide.length ? <ButtonGuide hints={guide.map(([k, v]) => [k, C.ui.guide[v] ?? v])} on={guideOn || close || mode === "browse"} /> : null}
       {eaten > 0 ? (
         <span className="hh-count" role="img" aria-label={`${eaten} cookies eaten`} title="Cookies the cat has eaten">
           <CookieIcon />×{eaten}
@@ -955,8 +1002,8 @@ function CatHostInner({ device }: { device: Device }) {
             className={`ch-bubble__voice${sound ? " is-on" : ""}`}
             onClick={toggleSound}
             aria-pressed={sound}
-            aria-label={sound ? "Mute the voice" : "Turn on the voice"}
-            title={sound ? "Mute the voice (M)" : "Turn on the voice (M)"}
+            aria-label={sound ? C.ui.mute : C.ui.unmute}
+            title={`${sound ? C.ui.mute : C.ui.unmute} (M)`}
           >
             <SpeakerIcon on={sound} />
           </button>
@@ -967,16 +1014,16 @@ function CatHostInner({ device }: { device: Device }) {
                 {app.name} <small>{`${app.year} · ${app.status}`}</small>
               </b>
             ) : null}
-            {mode === "intro" || mode === "browse" ? <h1>{INTRO.slice(0, n)}</h1> : <p><NodeBody node={node} n={n} /></p>}
+            {mode === "intro" || mode === "browse" ? <h1>{C.intro.slice(0, n)}</h1> : <p><NodeBody node={node} n={n} /></p>}
           </div>
           {done && last && mode === "app" && app.audio?.length ? <Tracks tracks={app.audio} /> : null}
           {done && last && mode === "desktop" && !question ? (
             <button type="button" className="ch-bubble__go" onClick={() => goTo("/projects")}>
-              See all projects ›
+              {C.ui.seeAll}
             </button>
           ) : null}
           {done && !last ? (
-            <button type="button" className="ch-bubble__next" onClick={a} aria-label="Next">
+            <button type="button" className="ch-bubble__next" onClick={a} aria-label={C.ui.next}>
               ▼
             </button>
           ) : null}
@@ -988,13 +1035,14 @@ function CatHostInner({ device }: { device: Device }) {
         {showChoices ? (
           <div className="ch-you">
             <span className="ch-you__name">YOU</span>
-            <div className={`ch-you__choices${options.length > 4 ? " is-many" : ""}`} role="group" aria-label="Ask me">
+            <div className={`ch-you__choices${options.length > 4 ? " is-many" : ""}`} role="group" aria-label={C.ui.askMe}>
               {options.map((o, i) => (
                 <button
                   type="button"
                   key={o.key}
                   className={o.main ? "is-main" : o.href ? "is-go" : undefined}
-                  data-cursor={cursor === i || undefined}
+                  // no highlight while a video plays: ✕ doesn't pick then
+                  data-cursor={(!watching && cursor === i) || undefined}
                   onPointerEnter={() => setChoice(i)}
                   onFocus={() => setChoice(i)}
                   onClick={() => choose(o)}
@@ -1008,11 +1056,11 @@ function CatHostInner({ device }: { device: Device }) {
         </div>
 
         {/* The same things as plain buttons, for screen readers and anyone who prefers a list. */}
-        <ul className="sr-only" aria-label="Things in the room">
+        <ul className="sr-only" aria-label={C.ui.things}>
           {(place === "room" ? ROOM : [...WALL, ...DESK]).map((id) => (
             <li key={id}>
               <button type="button" onClick={() => inspect(id)}>
-                {ITEMS[id].name}
+                {C.items[id].name}
               </button>
             </li>
           ))}

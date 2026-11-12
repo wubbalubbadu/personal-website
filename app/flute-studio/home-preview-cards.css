@@ -3,7 +3,7 @@
    Each card gets one on purpose so neighbours differ and the page repeats a small palette:
      Practice  scales slate · tones pink / music green · breathing sand
      Learn     theory sand · embouchure slate · roadmap pink / fingerings green · trills slate */
-.home-preview { --tint-green: #eef4ec; --tint-pink: #faf0f6; --tint-sand: #f7f1e6; --tint-slate: #edf1f5; }
+.home-preview, .studio-cards { --tint-green: #eef4ec; --tint-pink: #faf0f6; --tint-sand: #f7f1e6; --tint-slate: #edf1f5; }
 /* Bigger, border-free cards that replace the old Theory-lesson / Exercise-of-
    the-day pair — same general proportions, but each one previews real
    content instead of showing an icon. No border anywhere (the page is white
@@ -457,3 +457,227 @@
 .home-shelf__column li a:hover{background:#f8faf7}
 .home-shelf__column a:focus-visible{outline:2px solid #79588e;outline-offset:2px}
 .home-shelf__browse{font-size:13px;color:#79588e;text-decoration:none;margin-top:8px}
+
+/* Home only (.home-content is the home page's wrapper): smaller cards,
+   no subtitles, tools smallest, so Home scrolls far less. The Tools, Learn and
+   Exercises tab pages keep the sizes above. Nov 12.
+   Practice is .practice-tiles, below. */
+:is(.practice-tiles, .learn-tiles, .tool-tiles) .preview-card__copy small { display: none; }
+
+/* Home tiles (Nov 12): Practice, Learn and Tools share one look. The tint
+   fills the tile; the name is its own line at the top (never over the demo);
+   the demo fills the space under it. Radius 6, no shadow, no lift, no sand.
+   Practice demos are drawn at their 340 x 172 stage inside .practice-tile__fit
+   and scaled: --tile-fit follows the tile's width (container query), and
+   --demo-fit evens out demos that fill their stage differently.
+   Learn and Tools demos keep their tab-page size (128px stage). */
+.practice-tiles.home-preview-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+:is(.practice-tiles, .learn-tiles, .tool-tiles) .preview-card { position: relative; border-radius: 3px; box-shadow: none; }
+:is(.practice-tiles, .learn-tiles, .tool-tiles).home-preview-grid .preview-card,
+:is(.practice-tiles, .learn-tiles, .tool-tiles).preview-grid .preview-card { border-radius: 3px; }
+:is(.practice-tiles, .learn-tiles, .tool-tiles) .preview-card:hover,
+:is(.practice-tiles, .learn-tiles, .tool-tiles) .preview-card:focus-visible { transform: none; box-shadow: none; filter: brightness(0.98); }
+:is(.practice-tiles, .learn-tiles, .tool-tiles) .preview-card__copy { order: -1; padding: 10px 12px 0; background: var(--tile-tint); }
+/* preview-grid.css gives the copy 16px below; in a tile the demo sits right under the name. */
+:is(.practice-tiles, .learn-tiles, .tool-tiles):is(.preview-grid, .home-preview-grid) .preview-card__copy { padding: 10px 12px 0; }
+.learn-tiles .learn-demo { padding: 2px 12px; max-width: 300px; margin: 0 auto; }
+/* Learn demos grow with the tile; capped above so wide screens do not blow them up.
+   Their big note labels (C4, C5 to D5) were what made them look twice the size. */
+/* Learn tiles use the Tools style: one big label and one small graphic.
+   Fingering, Trill and Embouchure drop their staff; the note name sits beside
+   the flute diagram (or above the register cue and slider). Nov 12. */
+.learn-tiles :is(.finger-demo, .emb-demo) > svg { display: none; }
+.learn-tiles .finger-demo__side { flex: 1; max-width: 260px; flex-direction: row; align-items: center; gap: 14px; }
+.learn-tiles .finger-demo__side b, .learn-tiles .emb-demo__side b { flex: none; font-size: 24px; font-weight: 760; letter-spacing: -.03em; }
+.learn-tiles .finger-demo__side .flute-diagram { flex: 1; min-width: 0; }
+.learn-tiles .emb-demo__side { width: 100%; max-width: 220px; gap: 4px; }
+.learn-tiles .emb-demo__side p { display: none; }
+/* Theory and Rhythm drills are one drawing each: fit the whole drawing in the 80px stage instead of cropping it. */
+.learn-tiles :is(.theory-demo > svg, .rd-preview svg) { display: block; height: 74px; max-height: 74px; width: auto; max-width: 100%; margin: 0 auto; } /* just the note and the slider, no vowel cue */
+:is(.practice-tiles, .learn-tiles, .tool-tiles) .preview-card__copy b { font-size: 15px; }
+:is(.practice-tiles, .learn-tiles, .tool-tiles) .preview-card__copy small { display: none; }
+:is(.learn-tiles, .tool-tiles).preview-grid { gap: 10px; }
+.learn-tiles .preview-card__stage { height: 80px !important; } /* same as Tools */ /* !important: beats the phone stage height above */
+.tool-tiles .preview-card__stage { height: 80px !important; }
+
+/* The copy line takes the stage's tint so the tile reads as one block. */
+.preview-card--scales, .preview-card--trills, .preview-card--embouchure, .preview-card--tendency { --tile-tint: var(--tint-slate); }
+.preview-card--tones, .preview-card--roadmap, .preview-card--drone, .preview-card--rhythm-drills { --tile-tint: var(--tint-pink); }
+.preview-card--music, .preview-card--fingerings, .preview-card--tuner { --tile-tint: var(--tint-green); }
+.preview-card--breathing, .preview-card--theory, .preview-card--metronome { --tile-tint: #f2eef8; }
+:is(.practice-tiles, .learn-tiles, .tool-tiles) .preview-card { background: var(--tile-tint); }
+:is(.practice-tiles, .learn-tiles, .tool-tiles) .preview-card__stage { background: var(--tile-tint) !important; }
+
+/* Practice: one fixed size at every width, so the three rows always step
+   down: Practice stage 140, Learn 112, Tools 80. Demos are scaled by
+   --tile-fit, and --demo-fit evens out demos that fill their stage differently. */
+.practice-tiles .preview-card { container-type: inline-size; }
+.practice-tiles .preview-card__stage { position: relative; height: 140px !important; --tile-fit: 0.78; }
+.practice-tile__fit { position: absolute; left: 50%; top: 50%; width: 340px; height: 172px; transform: translate(-50%, -50%) scale(calc(var(--tile-fit) * var(--demo-fit, 1))); display: flex; align-items: center; justify-content: center; }
+.practice-tile__fit > * { width: 100%; height: 100%; }
+/* One notation size in every tile: staff lines about 8.5px apart at the usual
+   tile width (measured Nov 12). Scale Studio scales up to it; Long tones, a
+   graph rather than notation, is held a little smaller so it does not dominate. */
+.practice-tiles .preview-card--scales { --demo-fit: 1; }
+.practice-tiles .preview-card--tones { --demo-fit: 0.85; }
+/* Captions name the demo's mode; at tile size they are noise. */
+.practice-tile__fit .scale-preview__caption, .practice-tile__fit .music-demo__caption, .practice-tile__fit .breath-demo__caption, .practice-tile__fit .tone-preview__cards { display: none; }
+.practice-tile__fit .breath-demo__rounds, .practice-tile__fit .breath-demo__side { display: none; }
+/* The ring is capped at 84px in a narrow demo; in a tile it should stand as tall as the staff demos. */
+.practice-tile__fit .breath-demo__ring { height: 124px; max-height: 124px; }
+
+/* The Exercises page uses the Practice tiles too (preview-grid, not home-preview-grid). */
+.practice-tiles.preview-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+/* Exercises page: four across from 900px with a smaller demo, so tiles are not mostly empty. */
+.practice-tiles.preview-grid .preview-card__stage { height: 112px !important; --tile-fit: 0.6; }
+.preview-card--tricky { --tile-tint: var(--tint-green); } /* not pink: it sits under Long tones */
+.practice-tiles .preview-card--tricky .preview-card__stage { display: flex; align-items: center; justify-content: center; }
+@media (max-width: 760px) { .practice-tiles.preview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* iPad: Practice two by two so it stays the biggest row (four across made it smaller than Learn). */
+/* Tools: the demos were drawn for a 128px stage. Here they lose their side
+   padding and the tuner its number scale, and sit centred at one width. */
+.tool-tiles .tool-demo { padding: 4px 12px; max-width: 240px; margin: 0 auto; gap: 6px; }
+.tool-tiles .tuner-demo__read b, .tool-tiles .drone-demo b { font-size: 24px; }
+.tool-tiles .tuner-demo__scale { display: none; }
+.tool-tiles .tuner-demo__ruler { height: 14px; }
+.tool-tiles .drone-demo svg { height: 32px; }
+.tool-tiles .metronome-demo { gap: 8px; }
+.tool-tiles .tendency-demo__cells i { height: 26px; }
+
+/* One four-column grid for every row from iPad up (Nov 12: three across felt too wide).
+   Practice stays the tallest row; a narrow tile scales its demo down. */
+@media (min-width: 761px) { :is(.tool-tiles, .learn-tiles).preview-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@container (max-width: 300px) { .practice-tiles .preview-card__stage { --tile-fit: 0.62; } }
+@media (max-width: 760px) {
+  .practice-tiles.home-preview-grid, :is(.learn-tiles, .tool-tiles).preview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .practice-tiles .preview-card__stage { height: 104px !important; --tile-fit: 0.5; }
+  .learn-tiles .preview-card__stage { height: 72px !important; }
+  .tool-tiles .preview-card__stage { height: 72px !important; }
+}
+
+/* Browse music tile: piece chips (piece-chip.css) and a link to the Library. */
+.music-picks { display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 8px; padding: 0 16px; max-width: 420px; }
+.music-picks__all { align-self: center; padding: 0 4px; font-size: 13px; font-weight: 600; color: #46633d; text-decoration: none; }
+.practice-tiles .preview-card--music .preview-card__copy a { color: inherit; text-decoration: none; }
+/* The whole tile opens the Library: the title link stretches over the tile,
+   and the piece chips sit above it so they still open their own pieces. */
+.practice-tiles .preview-card--music .preview-card__copy { position: static; }
+.practice-tiles .preview-card--music .preview-card__copy a::after { content: ""; position: absolute; inset: 0; z-index: 1; }
+.practice-tiles .preview-card--music .music-picks { position: relative; z-index: 2; }
+.practice-tiles .preview-card--music:hover { filter: brightness(0.98); }
+.practice-tiles .preview-card--music .preview-card__copy a:hover { color: #46633d; }
+
+/* Piece chips on the Browse music tile: flat and square like the tiles, no outline. */
+.music-picks .piece-chip { height: 28px; padding: 0 10px; border-radius: 3px; box-shadow: none; background: rgba(255, 255, 255, 0.8); }
+.music-picks a.piece-chip:hover { box-shadow: none; background: #fff; }
+
+/* Theory tile (Nov 12): Tools-style, one big label and one still graphic. The staff keeps the 74px height every
+   Learn notation uses, so it reads at the same size as the scale and rhythm tiles. */
+.learn-tiles .theory-demo { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.learn-tiles .theory-demo > b { flex: none; font-size: 24px; font-weight: 760; letter-spacing: -.03em; }
+.learn-tiles .theory-demo > svg { width: auto; margin: 0; }
+.theory-demo__g { stroke: #46633d; stroke-width: 3; }
+
+/* Tricky bits tile on the Exercises page: the passage engraved, nothing else. */
+.practice-tiles .preview-card--tricky .tricky-preview { width: 100%; padding: 0 12px; box-sizing: border-box; }
+
+
+/* Tab pages (Exercises, Learn, Tools; all inside .exercise-hub) use the Home Practice tile at every size (Nov 12). */
+.exercise-hub :is(.practice-tiles, .learn-tiles, .tool-tiles).preview-grid .preview-card__stage { height: 140px !important; --tile-fit: 0.78; }
+@container (max-width: 300px) { .exercise-hub .practice-tiles.preview-grid .preview-card__stage { --tile-fit: 0.62; } }
+@media (max-width: 760px) {
+  .exercise-hub :is(.practice-tiles, .learn-tiles, .tool-tiles).preview-grid .preview-card__stage { height: 104px !important; --tile-fit: 0.5; }
+}
+
+/* Home Learn: names only, no demos (Nov 12: more moving demos under Practice were confusing). Five across. */
+.learn-tiles--names.preview-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.learn-tiles--names .preview-card { min-height: 64px; }
+.learn-tiles--names.preview-grid .preview-card__copy { padding: 12px; flex: 1; }
+@media (max-width: 760px) { .learn-tiles--names.preview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Breathing Lab tile: one breath as a thin curve, in the same box and padding as Long tones (Nov 12). */
+.breath-curve { width: 100%; height: 100%; padding: 14px 24px; box-sizing: border-box; display: flex; align-items: center; }
+.breath-curve svg { width: 100%; height: auto; overflow: visible; }
+.breath-curve__track { fill: none; stroke: #d9d3e6; stroke-width: 3; stroke-linecap: round; }
+.breath-curve__done { fill: none; stroke: #79588e; stroke-width: 3; stroke-linecap: round; }
+.breath-curve__dot { fill: #79588e; stroke: #fff; stroke-width: 2.5; }
+.breath-curve__split { stroke: #d9d3e6; stroke-width: 1.5; stroke-dasharray: 3 4; }
+.breath-curve__label { font: 500 19px var(--font, sans-serif); fill: #9a9ba2; text-anchor: middle; transition: fill .4s ease; }
+.breath-curve__label.is-on { fill: #62567a; font-weight: 600; }
+
+/* Browse music: All music is one more chip, same font as the titles, just quieter. */
+.music-picks a.piece-chip.music-picks__all { background: transparent; color: #46633d; font-weight: 500; }
+.music-picks a.piece-chip.music-picks__all:hover { background: rgba(255,255,255,.6); }
+
+/* Long tones: its labels were drawn at 13px and scaled to about 8px; drawn bigger so they land near 12px. */
+.practice-tile__fit .tone-preview__head { font-size: 18px; }
+
+/* Tools tiles: every demo is one line, centred at the same height, so the row lines up (Nov 12).
+   Tuner: ruler then cents, no note name. Metronome: lights then tempo. Tendency: cells only. */
+.tool-tiles .tool-demo { height: 100%; justify-content: center; }
+.tool-tiles .tuner-demo, .tool-tiles .metronome-demo { flex-direction: row; align-items: center; gap: 12px; }
+.tool-tiles .tuner-demo__ruler { flex: 1; height: 24px; }
+.tool-tiles .tuner-demo__read { order: 2; flex: none; min-width: 40px; justify-content: flex-end; }
+.tool-tiles .tuner-demo__read em { font-size: 15px; }
+.tool-tiles .metronome-demo p { font-size: 15px; white-space: nowrap; }
+.tool-tiles .tendency-demo__names { display: none; }
+.tool-tiles .tendency-demo__cells i { height: 24px; border-radius: 3px; }
+.tool-tiles .drone-demo svg { height: 24px; }
+
+/* Browse music: chips start under the name's left edge with some air, instead of a centred block crowding it. */
+.practice-tiles .preview-card--music .preview-card__stage { align-items: flex-start; }
+.music-picks { justify-content: flex-start; align-content: flex-start; max-width: none; padding: 14px 12px 0; gap: 6px; }
+
+/* Narrow Browse music tiles (iPad portrait, phones): two titles, so All music stays inside the tile. */
+
+@media (max-width: 760px) {
+  .music-picks { padding-top: 10px; }
+  .tool-tiles .metronome-demo { gap: 8px; }
+  .tool-tiles .metronome-demo__beats { gap: 8px; }
+  .tool-tiles .metronome-demo p { font-size: 13px; }
+}
+
+/* Narrow Browse music tiles (iPad portrait, phones): two titles, so All music stays inside the tile.
+   (A two-by-two grid with All music on its own line was tried Nov 12; she preferred this left-flowing one.) */
+@container (max-width: 220px) {
+  .music-picks .piece-chip:nth-child(3) { display: none; }
+}
+/* An older phone rule made the music stage 156px; tiles in a row share one height. */
+@media (max-width: 760px) { .practice-tiles.home-preview-grid .preview-card--music .preview-card__stage { height: 104px !important; } }
+
+/* Browse music (Nov 12): an engraved passage, like the Tricky bits tile; centred on its stage. */
+.practice-tiles .preview-card--music .preview-card__stage { display: flex; align-items: center; justify-content: center; }
+.practice-tiles .preview-card--music .tricky-preview { width: 100%; padding: 0 12px; box-sizing: border-box; }
+
+/* Ink (Nov 12): the Practice demos in black ink, same sizes and motion. Black lines, no colour, no white boxes.
+   Long tones and Breathing draw their line at one fixed stroke (non-scaling), so the two weigh the same. */
+.practice-tiles { --ink: #1c1c22; }
+.practice-tiles .scale-preview__staff { stroke: var(--ink); stroke-width: 1.4; }
+.practice-tiles .tone-preview svg { background: transparent; border-radius: 0; overflow: visible; }
+.practice-tiles .tone-preview__band, .practice-tiles .tone-preview__volume { display: none; }
+.practice-tiles .tone-preview__grid { stroke: var(--ink); stroke-dasharray: 2 5; opacity: .35; }
+.practice-tiles .tone-preview__zero { stroke: var(--ink); opacity: .8; }
+.practice-tiles .tone-preview__divider { stroke: var(--ink); opacity: .3; }
+.practice-tiles .tone-preview__line, .practice-tiles .tone-preview__line:is(.is-in, .is-near, .is-off) { stroke: var(--ink); stroke-width: 3; }
+.practice-tiles .tone-preview__labels b { color: rgba(28,28,34,.3); }
+.practice-tiles .tone-preview__labels b.is-on, .practice-tiles .tone-preview__live, .practice-tiles .tone-preview__live em { color: var(--ink) !important; }
+.practice-tiles :is(.breath-curve__track, .breath-curve__done) { stroke-width: 3; vector-effect: non-scaling-stroke; }
+.practice-tiles .breath-curve__track { stroke: rgba(28,28,34,.16); }
+.practice-tiles .breath-curve__done { stroke: var(--ink); }
+.practice-tiles .breath-curve__dot { fill: var(--ink); stroke: none; }
+.practice-tiles .breath-curve__split { stroke: rgba(28,28,34,.3); }
+.practice-tiles .breath-curve__label { fill: rgba(28,28,34,.4); }
+.practice-tiles .breath-curve__label.is-on { fill: var(--ink); }
+
+/* Scale Studio engraved like the OSMD passages beside it (Browse music, Tricky bits), measured Nov 12: same staff
+   space (about 6.2px at desktop, via --demo-fit), staff lines and stems at OSMD's weight, pure black, beams half a
+   staff space thick (ScaleStudioPreview). */
+.practice-tiles .preview-card--scales { --demo-fit: 0.91; }
+.practice-tiles .scale-preview svg { fill: #000; }
+.practice-tiles .scale-preview__staff { stroke: #000; stroke-width: 2.4; }
+.practice-tiles .scale-preview__stem { stroke: #000; stroke-width: 3.6; }
+
+/* Browse music: the lit notehead walks left to right (MusicSweep), in the reader's purple cursor colour. */
+.music-sweep { width: 100%; }
+.music-sweep .vf-notehead.is-lit path { fill: #79588e !important; stroke: #79588e !important; }
+.music-sweep .vf-notehead path { transition: fill .15s ease; }

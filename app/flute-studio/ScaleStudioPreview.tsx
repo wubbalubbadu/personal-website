@@ -16,6 +16,11 @@ import {majorKeys,scaleNotes,keyForType,typeById,type ScaleTypeId} from "./exerc
  * Nothing here runs the score engine. Notes come from the real scaleNotes(),
  * drawn with the engine's own glyphs in the theory lessons' staff coordinates,
  * so the card stays light. It plays on its own while on screen.
+ *
+ * `bar` (Home tiles) writes the octave as one 4/4 bar of eighths with a closing
+ * barline, at the same staff size and spacing as the Browse music demo. A full
+ * up-and-down scale was tried on Nov 12: at that staff size it is twice as
+ * wide as a tile, and shrinking it crushed the notes.
  */
 type Art="slur"|"pairs"|"staccato";
 const STATES:{key:string;type:ScaleTypeId;art:Art}[]=[
@@ -45,18 +50,18 @@ function layout(index:number,zh:boolean){
   return {...s,notes,fifths:spelled.fifths,scale,artLabel};
 }
 
-export default function ScaleStudioPreview({zh}:{zh:boolean}){
+export default function ScaleStudioPreview({zh,bar=false,still=false,start=0}:{zh:boolean;bar?:boolean;/** Never plays: one engraved frame (lab ink tiles). */still?:boolean;/** Which state to show first. */start?:number}){
   const root=useRef<HTMLDivElement>(null);
   const layouts=useMemo(()=>STATES.map((_,i)=>layout(i,zh)),[zh]);
-  const [index,setIndex]=useState(0),[from,setFrom]=useState(0),[t,setT]=useState(1),[run,setRun]=useState(0),[playing,setPlaying]=useState(false);
-  const current=useRef(0);
+  const [index,setIndex]=useState(start),[from,setFrom]=useState(start),[t,setT]=useState(1),[run,setRun]=useState(0),[playing,setPlaying]=useState(false);
+  const current=useRef(start);
 
   // Plays by itself, but only while on screen, and never with reduced motion.
   useEffect(()=>{
-    const el=root.current;if(!el||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+    const el=root.current;if(still||!el||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
     const observer=new IntersectionObserver(([entry])=>setPlaying(entry.isIntersecting),{threshold:.4});
     observer.observe(el);return()=>observer.disconnect();
-  },[]);
+  },[still]);
   useEffect(()=>{
     if(!playing)return;
     const timer=setInterval(()=>{const next=(current.current+1)%STATES.length;setFrom(current.current);current.current=next;setIndex(next);setT(0);setRun(r=>r+1)},STEP_MS);
@@ -77,21 +82,22 @@ export default function ScaleStudioPreview({zh}:{zh:boolean}){
   const changed=index===from?-1:now.key!==before.key||now.type!==before.type?0:1;
 
   // One beamed group of four sixteenths. High groups take stems down, as an engraver would.
-  function group(g:number){
-    const ids=[0,1,2,3].map(i=>i+g*4),down=ids.reduce((sum,i)=>sum+now.notes[i].p,0)/4>=4;
-    const sx=(i:number)=>xs[i]+(down?-STEM_X:STEM_X),x0=sx(ids[0]),x3=sx(ids[3]);
-    const slope=Math.max(-.16,Math.min(.16,(ys[ids[3]]-ys[ids[0]])/(x3-x0)))*.6;
+  // `bar` writes eighths (one beam); otherwise sixteenths (two).
+  function group(g:number,ids=[0,1,2,3].map(i=>i+g*4),beams=bar?[0]:[0,18]){
+    const down=ids.reduce((sum,i)=>sum+now.notes[i].p,0)/ids.length>=4,last=ids[ids.length-1];
+    const sx=(i:number)=>xs[i]+(down?-STEM_X:STEM_X),x0=sx(ids[0]),x3=sx(last);
+    const slope=Math.max(-.16,Math.min(.16,(ys[last]-ys[ids[0]])/(x3-x0)))*.6;
     const edge=down?Math.max(...ids.map(i=>ys[i]+STEM-slope*(sx(i)-x0))):Math.min(...ids.map(i=>ys[i]-STEM-slope*(sx(i)-x0)));
     const yAt=(x:number)=>edge+slope*(x-x0),dir=down?-1:1;
     const marks:React.ReactNode[]=[];
     const slur=(a:number,b:number)=>{const ya=ys[a]+dir*16,yb=ys[b]+dir*16,far=(down?Math.min(ya,yb):Math.max(ya,yb))+dir*18;
       marks.push(<path key={`s${a}`} className="scale-preview__fade" d={`M${xs[a]} ${ya}C${xs[a]+18} ${far} ${xs[b]-18} ${far} ${xs[b]} ${yb}C${xs[b]-18} ${far-dir*5} ${xs[a]+18} ${far-dir*5} ${xs[a]} ${ya}Z`}/>)};
-    if(now.art==="slur")slur(ids[0],ids[3]);
+    if(now.art==="slur")slur(ids[0],last);
     if(now.art==="pairs")slur(ids[0],ids[1]);
     if(now.art==="staccato")ids.forEach(i=>marks.push(<circle key={`d${i}`} className="scale-preview__fade" cx={xs[i]} cy={ys[i]+dir*22} r="3.6"/>));
     return <g key={g}>
       {ids.map(i=><line key={i} x1={sx(i)} x2={sx(i)} y1={ys[i]-dir*3} y2={yAt(sx(i))} className="scale-preview__stem"/>)}
-      {[0,13].map(off=>{const o=down?-off:off,h=down?-8:8;return <polygon key={off} points={`${x0-1},${yAt(x0)+o} ${x3+1},${yAt(x3)+o} ${x3+1},${yAt(x3)+o+h} ${x0-1},${yAt(x0)+o+h}`}/>})}
+      {beams.map(off=>{const o=down?-off:off,h=down?-12:12;return <polygon key={off} points={`${x0-1},${yAt(x0)+o} ${x3+1},${yAt(x3)+o} ${x3+1},${yAt(x3)+o+h} ${x0-1},${yAt(x0)+o+h}`}/>})}
       {marks}
     </g>;
   }
@@ -108,6 +114,7 @@ export default function ScaleStudioPreview({zh}:{zh:boolean}){
         <path d={HEAD.path} transform={`translate(${xs[i]-HEAD.width*.032} ${ys[i]}) scale(${G} ${-G})`}/>
       </g>)}
       {group(0)}{group(1)}
+      {bar&&<line x1="667" x2="667" y1={noteY(0)} y2={noteY(8)} className="scale-preview__staff"/>}
     </svg>
     <p className="scale-preview__caption">
       <span key={`a${index}`} className={changed===0?"is-changed":""}>{now.scale}</span>

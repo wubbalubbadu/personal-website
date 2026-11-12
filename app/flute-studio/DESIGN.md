@@ -52,7 +52,7 @@ Font family, everywhere: `-apple-system, BlinkMacSystemFont, "SF Pro Display",
 
 | Role | Size | Weight | Line-height | Letter-spacing | Where |
 |---|---|---|---|---|---|
-| Page title | 42px (36px ≤760px) | 780 | 1.04 | -0.04em | `<h1>` — "Library", "Exercises", the old home title |
+| Page title | 28px (since Nov 12; was 42px) | 700 | 1.15 | -0.02em | Every page `<h1>` ("Library", "Exercises", "Learn"). One shared rule at the end of `studio-shared.css` lists the page headers; add new ones there |
 | Big display number | 48–54px | 740–770 | ~1 | -0.035 to -0.055em | Tuner note, tempo number, selected pitch |
 | Section title | 24px | 700 | 1.15 | -0.025em | "Choose a focus", "Quick tools" |
 | Card/dashboard heading | 20px | 700 | 1.15 | -0.02em | Dashboard card titles (Practice activity, Calendar, Practice plan) |

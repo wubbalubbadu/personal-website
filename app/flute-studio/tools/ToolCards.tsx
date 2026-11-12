@@ -15,10 +15,11 @@ import "./tools.css";
  */
 const TOOLS=["tuner","metronome","drone"] as const;
 
+/** Tiles on Home and the Tools page alike (.tool-tiles in home-preview-cards.css). */
 export default function ToolCards(){
   const {t,lang}=useLanguage(),zh=lang==="zh";
   const preview={tuner:<TunerPreview/>,metronome:<MetronomePreview/>,drone:<DronePreview/>};
-  return <section className="home-preview preview-grid" aria-label={zh?"工具":"Tools"}>
+  return <section className="home-preview preview-grid tool-tiles" aria-label={zh?"工具":"Tools"}>
     {TOOLS.map(tool=><button key={tool} type="button" className={`preview-card preview-card--${tool}`} onClick={()=>openPracticeTool(tool)}>
       <div className="preview-card__stage">{preview[tool]}</div>
       <div className="preview-card__copy"><b>{t.quickTools[tool]}</b>{/* Tuner, metronome and drone explain themselves: a subtitle only if one is written. */}{t.quickTools[`${tool}Detail` as const]&&<small>{t.quickTools[`${tool}Detail` as const]}</small>}</div>

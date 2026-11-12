@@ -23,13 +23,13 @@ function useStep(count:number,ms:number,on:boolean){
   return index;
 }
 
-/** Tuner: a held A settling toward the centre of the cents ruler. */
+/** Tuner: a held note settling toward the centre of the cents ruler. No note name (Nov 12): the ruler says it. */
 const TUNER_CENTS=[-18,-11,-6,-2,1,3,0,-1];
 export function TunerPreview(){
   const root=useRef<HTMLDivElement>(null),on=useOnScreen(root),i=useStep(TUNER_CENTS.length,650,on);
   const cents=TUNER_CENTS[i],band=Math.abs(cents)<=5?"in":Math.abs(cents)<=12?"near":"off";
   return <div className="tool-demo tuner-demo" ref={root} aria-hidden="true">
-    <div className="tuner-demo__read"><b>A<sup>4</sup></b><em className={`is-${band}`}>{cents>0?"+":""}{cents}¢</em></div>
+    <div className="tuner-demo__read"><em className={`is-${band}`}>{cents>0?"+":""}{cents}¢</em></div>
     <div className="tuner-demo__ruler">
       {Array.from({length:21},(_,tick)=><i key={tick} className={tick%5===0?"is-major":""}/>)}
       <span className={`tuner-demo__needle is-${band}`} style={{left:`${50+cents}%`}}/>

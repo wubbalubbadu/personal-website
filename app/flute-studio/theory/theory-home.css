@@ -47,3 +47,31 @@
   .theory-home .course-check{width:24px;height:24px;padding:0;justify-content:center;gap:0;font-size:13px}
   .theory-home .course-check__word{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 }
+
+/* Nov 12: lesson cards in the studio's tile look (see COMPONENTS.md, Practice tile). The tint fills the card, the
+   numbered name sits on top, no description, the drawing on a 140px stage, 3px corners, no shadow, no lift.
+   Four across like every other tile row; two on phones. No sand: the first of each four is pale lilac. */
+.theory-home .theory-course-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:20px}
+@media(max-width:760px){.theory-home .theory-course-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.theory-home .theory-course-grid .theory-course{height:auto;display:flex;flex-direction:column;border-radius:3px;box-shadow:none;background:var(--tile-tint);transform:none}
+@media(hover:hover) and (pointer:fine){.theory-home .theory-course-grid .theory-course:hover{transform:none;box-shadow:none;filter:brightness(.98)}}
+.theory-home .theory-course-grid .theory-course:focus-visible{box-shadow:none}
+.theory-home .theory-course:nth-child(4n+1){--tile-tint:#f2eef8}
+.theory-home .theory-course:nth-child(4n+2){--tile-tint:var(--tint-slate)}
+.theory-home .theory-course:nth-child(4n+3){--tile-tint:var(--tint-pink)}
+.theory-home .theory-course:nth-child(4n+4){--tile-tint:var(--tint-green)}
+.theory-home .theory-course-grid .theory-course>.theory-course__art{order:1;height:140px;padding:0 12px;background:transparent}
+.theory-home .theory-course-grid .theory-course>div:not(.theory-course__art){height:auto;padding:10px 12px 0}
+.theory-home .theory-course-grid .theory-course h2{font-size:15px;font-weight:600;margin:0}
+.theory-home .theory-course-grid .theory-course p{display:none}
+@media(max-width:760px){.theory-home .theory-course-grid .theory-course>.theory-course__art{height:104px}}
+/* Completed sits at the drawing's bottom left, small and square, so it never covers the name. */
+.theory-home .theory-course-grid .course-check{top:auto;bottom:8px;left:12px;border-radius:3px;box-shadow:none}
+.theory-home .theory-course-grid .theory-course{align-self:stretch;text-align:left}
+.theory-home .theory-course-grid .theory-course>.theory-course__art{margin-top:auto}
+.theory-home .theory-course-grid .theory-course>div:not(.theory-course__art)>div{align-items:flex-start;text-align:left}
+.theory-home .theory-course-grid .theory-course>div:not(.theory-course__art)>div{width:100%;margin:0}
+/* Every card the same size: the title always takes two lines of room, wrapped or not. */
+.theory-home .theory-course-grid .theory-course h2{min-height:2.6em}
+.theory-home .theory-course-grid .theory-course h2{align-self:stretch;width:100%;margin:0!important;text-align:left!important}
+.theory-home .theory-course-grid .theory-course>div:not(.theory-course__art){align-self:stretch!important}

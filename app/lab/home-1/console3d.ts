@@ -9,6 +9,7 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { aoTexture, crossShape, grainTexture, makeClicker, roundedRect, triangleShape } from "../_kit/console-parts";
 import { toMatrix3d } from "../handheld-3d/dialogue";
+import { unlockAudio } from "../../components/ps1-mascot";
 
 export type Key3D = "up" | "down" | "left" | "right" | "tri" | "cir" | "crs" | "sqr";
 
@@ -462,6 +463,8 @@ export function mountConsole3D(
     down(k, true);
   };
   const onUp = () => {
+    // lifting the finger is when iPhone lets sound start
+    unlockAudio();
     if (pointerKey) up(pointerKey);
     pointerKey = null;
   };
@@ -651,9 +654,18 @@ export function mountConsole3D(
     raf = requestAnimationFrame(tick);
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
+    // In small steps: this spring is stiff, and one big step on a slow frame
+    // (a hitch, a phone catching up) made it blow up and fling a button off
+    // the console. Under 1/120 s a step it stays put whatever the frame rate.
+    const steps = Math.ceil(dt * 120);
+    const h = dt / steps;
     for (const s of Object.values(springs)) {
-      s.v += (1100 * (s.target - s.p) - 30 * s.v) * dt;
-      s.p += s.v * dt;
+      for (let i = 0; i < steps; i++) {
+        s.v += (1100 * (s.target - s.p) - 30 * s.v) * h;
+        s.p += s.v * h;
+      }
+      // a button never travels past its well or above its rim
+      s.p = Math.max(-0.3, Math.min(1.3, s.p));
     }
     const tilt = 0.13;
     dpadPivot.rotation.x = -(springs.up.p - springs.down.p) * tilt;

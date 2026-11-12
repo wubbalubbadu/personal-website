@@ -1,16 +1,16 @@
 "use client";
 
-import {ItemCard} from "../components/ItemCard";
 import {PracticeIcon} from "../components/PracticeIcon";
 import Link from "next/link";
 import {exerciseCatalog,type ExerciseEntry} from "../../../content/exercise-catalog";
 import {deleteSaved,useSavedExercises} from "../lib/savedExercises";
 import {canOpen,describeSaved,savedHref} from "./saved-kinds";
 import {useLanguage} from "../i18n/LanguageContext";
+import {musicLibrary,libraryShelf} from "../../../content/music-library";
+import TrickyPreview from "../tricky-bits/TrickyPreview";
 import ScaleStudioPreview from "../ScaleStudioPreview";
 import LongTonePreview from "../LongTonePreview";
 import BreathingPreview from "../BreathingPreview";
-import TallySticks from "../components/TallySticks";
 import {activeBits,useTrickyBits} from "../lib/trickyBits";
 import "../tricky-bits/tricky-bits.css";
 import "../home-preview-cards.css";
@@ -33,7 +33,7 @@ const cardTint:Record<string,string>={"scale-studio":"preview-card--scales","lon
 
 function Preview({id,zh}:{id:string;zh:boolean}){
   switch(id){
-    case "scale-studio": return <ScaleStudioPreview zh={zh}/>;
+    case "scale-studio": return <ScaleStudioPreview zh={zh} bar/>;
     case "long-tones": return <LongTonePreview zh={zh}/>;
     case "breathing-lab": return <BreathingPreview zh={zh}/>;
     default: return null;
@@ -47,6 +47,12 @@ export default function ExercisesHub(){
   // appear a moment after the cards and push them down.
   const {items,ready}=useSavedExercises();
   const sets=items.filter(canOpen);
+
+  // Tricky bits tile: the newest bit you saved from a piece with a score, else two bars of the Bumble Bee.
+  const library=[...musicLibrary,...libraryShelf];
+  const newest=[...bits].sort((x,y)=>y.addedAt-x.addedAt).map(bit=>({bit,piece:library.find(entry=>entry.id===bit.pieceId)})).find(({piece})=>piece?.scorePath);
+  const tricky=newest?{scorePath:newest.piece!.scorePath!,from:newest.bit.from,to:newest.bit.to,label:`${newest.piece!.title} ${newest.bit.label}`}
+    :{scorePath:"/music/nikolai-rimsky-korsakov-flight-of-the-bumble-bee/score.musicxml",from:3,to:4,label:"Flight of the Bumble Bee 3–4"};
 
   const titleOf=(entry:ExerciseEntry)=>zh?entry.zhTitle:entry.title;
   const detailOf=(entry:ExerciseEntry)=>zh?entry.zhDetail:entry.detail;
@@ -75,10 +81,10 @@ export default function ExercisesHub(){
         </div>
       </section>}
 
-      <section className="home-preview preview-grid preview-grid--three" aria-label={t.exercises.title}>
+      <section className="home-preview preview-grid practice-tiles" aria-label={t.exercises.title}>
         {available.map(entry=>(
           <Link key={entry.id} href={entry.href!} className={`preview-card ${cardTint[entry.id]??""}`}>
-            <div className="preview-card__stage"><Preview id={entry.id} zh={zh}/></div>
+            <div className="preview-card__stage"><div className="practice-tile__fit"><Preview id={entry.id} zh={zh}/></div></div>
             <div className="preview-card__copy"><b>{titleOf(entry)}</b><small>{detailOf(entry)}</small></div>
           </Link>
         ))}
@@ -86,10 +92,8 @@ export default function ExercisesHub(){
             exercise catalog (which also fills the Library), since it is your own bars rather than an exercise. */}
         <Link href="/flute-studio/tricky-bits" className="preview-card preview-card--tricky">
           <div className="preview-card__stage" aria-hidden="true">
-            <ItemCard className="tricky-preview-card">
-              <span className="tricky-preview-card__bars">{zh?"第 12–16 小节":"Bars 12–16"}</span>
-              <TallySticks count={7}/>
-            </ItemCard>
+            {/* The passage itself, engraved like Your studio's card: your newest saved bit, or a sample before you have one. */}
+            <TrickyPreview scorePath={tricky.scorePath} from={tricky.from} to={tricky.to} label={tricky.label}/>
           </div>
           <div className="preview-card__copy"><b>{t.trickyBits.title}</b>
             <small>{bits.length?(zh?`${bits.length} 个保存的段落`:`${bits.length} saved ${bits.length===1?"passage":"passages"}`):(zh?"把难的小节存下来，在这里反复练。":"Save hard bars from any piece and practise them here.")}</small></div>

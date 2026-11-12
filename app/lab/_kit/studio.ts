@@ -75,6 +75,9 @@ export const ITEMS: Record<ItemId, Item> = {
     name: "Flute",
     react: "Let me play you something.",
     body: "I'm doing my master's in flute performance at New England Conservatory. I compete, teach, and share performances online.",
+    // what the hello's "Tell me about your flute playing" says (her pick: it
+    // reads better than the short line above, which stays as a fallback)
+    topic: "flute",
     plays: true,
   },
   ipad: {
@@ -97,26 +100,66 @@ export const ITEMS: Record<ItemId, Item> = {
  * offers background, flute and projects. Drafts for Haylie's tone pass: facts
  * only from what she has approved, app/lib/projects.ts, and her teaching.
  */
-export type Question = { ask: string; say: string; open?: { label: string; href: string }; links?: LinkItem[] };
+export type Question = {
+  ask: string;
+  say: string;
+  open?: { label: string; href: string };
+  links?: LinkItem[];
+  /** Plays on the console's own screen while she talks about it (an embed URL). */
+  video?: string;
+  /** Several short videos instead, one at a time, with "Next video" to step on. */
+  videos?: Clip[];
+};
+
+/** One of her TikToks for the console, with its numbers as they stood on
+ *  `COUNTS_ON` (TikTok's player shows none, and its site can't be read live). */
+export type Clip = { src: string; title: string; likes: number; plays: number; href?: string };
+/** A TikTok link as its embeddable player (TikTok's own, it plays inline),
+ *  without its caption and "original sound" lines (her call: the console's
+ *  own strip names the song). */
+const tiktokEmbed = (url: string) => {
+  const id = url.match(/video\/(\d+)/)?.[1];
+  return id ? `https://www.tiktok.com/player/v1/${id}?autoplay=1&music_info=0&description=0&rel=0` : "";
+};
+const tiktok = (href: string, title: string, likes: number, plays: number): Clip => ({ src: tiktokEmbed(href), href, title, likes, plays });
+/** When the counts below were copied from TikTok. Refresh them now and then. */
+export const COUNTS_ON = "Nov 12, 2026";
+/**
+ * The short videos the social media poster plays ("Show me some of your
+ * videos!"), in her order (Day 1, I Need U, XO); left and right step through
+ * them. Add one with
+ * its TikTok link, a title, and the likes and plays from its page.
+ */
+export const TIKTOK_PICKS: Clip[] = [
+  tiktok("https://www.tiktok.com/@wubulubadudu/video/7549605355471260941", "Red Velvet · Day 1", 32500, 169400),
+  tiktok("https://www.tiktok.com/@wubulubadudu/video/7538083046537317646", "BTS · I Need U", 185700, 701100),
+  tiktok("https://www.tiktok.com/@wubulubadudu/video/7500666071444196651", "ENHYPEN · XO", 296400, 1300000),
+];
+
+/** The competition round, as an embed that starts at 9:44, the Papoutsakis (her pick). */
+const COMPETITION_VIDEO = "https://www.youtube-nocookie.com/embed/ya3cFeMKD14?start=584&autoplay=1&playsinline=1&rel=0";
 export const QUESTIONS: Partial<Record<ItemId, Record<string, Question>>> = {
+  // Two questions, each with something to show for it, instead of four thin
+  // ones (her note: too many choices, not enough in each). Teaching folds into
+  // what she's doing now; the socials ride along with hearing her play.
   flute: {
+    listen: {
+      ask: "Can I hear you play?",
+      say: "Here's a round from a competition, playing on the screen. Most of what I post is shorter: pieces I arrange and make my own backing tracks for, for around 240k people on TikTok, Douyin, WeChat Channels and RedNote.",
+      video: COMPETITION_VIDEO,
+      links: FLUTE_LINKS.filter((l) => l.label !== "Competition footage"),
+    },
     now: {
-      ask: "What are you working on right now?",
-      say: "I'm doing my master's in flute performance at New England Conservatory on a scholarship, and I compete on the young-artist circuit. Next up, I'm recording études and putting them on YouTube.",
-      open: { label: "Watch a competition round", href: FLUTE_LINKS[0].href },
+      ask: "What are you working on now?",
+      // her call: no button out to a mail app, just the address to write to
+      say: "My master's in flute performance at New England Conservatory, on a scholarship, and competitions on the young-artist circuit. Next I'm recording études for YouTube. I teach too, from middle schoolers to adult amateurs. For lessons, email me at hayliewu0709@gmail.com.",
     },
-    training: {
-      ask: "What's your training?",
-      say: "I did a flute performance degree at Northwestern alongside computer science. Now I'm doing my master's in flute performance at New England Conservatory.",
-    },
-    teach: {
-      ask: "Do you teach?",
-      say: "Yes! I teach students from middle school through high school, and adult amateurs too. If you'd like lessons, write to me.",
-      open: { label: "Ask about lessons", href: "mailto:hayliewu0709@gmail.com?subject=Flute%20lessons" },
-    },
-    online: {
-      ask: "Where can I hear you play?",
-      say: "Online, mostly. Around 240k people follow along on TikTok, Douyin, WeChat Channels and RedNote. Most of it is repertoire I arrange and produce my own accompaniment tracks for, to make classical music feel approachable to people who don't already listen to it.",
+  },
+  socials: {
+    videos: {
+      ask: "Show me some of your videos!",
+      say: "Here's one, playing on the screen. I arrange each piece and make the backing track myself, then film it. There are more on my pages.",
+      videos: TIKTOK_PICKS,
       links: FLUTE_LINKS.filter((l) => l.label !== "Competition footage"),
     },
   },
@@ -184,13 +227,13 @@ export const LOOKS: { wear: Outfit[]; line: string }[] = [
   { wear: [], line: "Just me. Honestly, still the best look." },
 ];
 
-/** Up looks at the wall, down at the desk; left and right move along a row. */
+/** Up looks at the wall, down at the desk, down again the living room; left
+ *  and right move along a row and stop at its ends. The desk is one row, left
+ *  to right as it reads on screen (her call: two rows with up and down between
+ *  them was too hard to guess): laptop, letter, Learning Log, then the cat,
+ *  then the flute and the cookies. */
 export const WALL: ItemId[] = ["diploma", "resume", "socials"];
 export const DESK: ItemId[] = ["laptop", "letter", "book", "flute", "cookies"];
-/** The desk has depth: up and down step between the back of it and the front.
- *  Down from the front goes to the living room; up from the back goes to the wall. */
-export const DESK_DOWN: Partial<Record<ItemId, ItemId>> = { laptop: "letter", book: "letter", cookies: "flute" };
-export const DESK_UP: Partial<Record<ItemId, ItemId>> = { letter: "laptop", flute: "cookies" };
 /** The living room, one row, left to right. */
 export const ROOM: ItemId[] = ["closet", "stand", "window", "cushion", "jar"];
 

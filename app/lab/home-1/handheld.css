@@ -182,11 +182,78 @@
   0%, 100% { transform: translate(-50%, 0); }
   50% { transform: translate(-50%, -2px); }
 }
+/* a video playing on the console's screen (the flute's "Can I hear you
+ * play?"), edge to edge, under the button guide so Back still shows */
+.hh-video {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #0d0b10;
+  /* pulled out of the thing you're looking at: a quick pop from small, with a
+   * little overshoot, in a few hard steps like the rest of the console */
+  transform-origin: 50% 45%;
+  animation: hh-video-in 0.42s cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+}
+@keyframes hh-video-in {
+  from { transform: scale(0.12); opacity: 0; border-radius: 40%; }
+  55% { opacity: 1; }
+  to { transform: scale(1); opacity: 1; border-radius: 0; }
+}
+/* a short video's title and its TikTok numbers, top left over the video,
+ * in the guide's pixel style; pops in a moment after the video */
+.hh-clip {
+  position: absolute;
+  z-index: 6;
+  left: 8px;
+  top: 7px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: rgba(40, 30, 36, 0.72);
+  color: #fff8ea;
+  font: 400 max(1.9cqw, 9px) / 1 var(--font-pix);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: hh-guide-in 0.32s steps(3, end) 0.35s both;
+}
+.hh-clip b {
+  font-weight: 400;
+  text-transform: uppercase;
+}
+.hh-clip span:first-of-type {
+  color: #ff8fa8;
+}
+/* when TikTok won't play for this visitor: a link out, bottom centre, in
+ * the guide's pixel style (a link, so it gets the hand cursor) */
+.hh-clip-out {
+  position: absolute;
+  z-index: 6;
+  left: 50%;
+  bottom: 34px;
+  transform: translateX(-50%);
+  padding: 5px 9px;
+  border-radius: 4px;
+  background: rgba(40, 30, 36, 0.86);
+  color: #fff8ea;
+  font: 400 max(1.9cqw, 9px) / 1 var(--font-pix);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  animation: hh-guide-in 0.32s steps(3, end) both;
+}
 /* the button guide: bottom right, just left of the down arrow, pixel style
  * like a game's prompt line; fades in and out in hard steps (CatHost) */
 .hh-guide {
   position: absolute;
-  z-index: 3;
+  z-index: 6;
   right: 40px;
   bottom: 7px;
   display: flex;
@@ -229,8 +296,32 @@
 .hh-guide__btn--tri { color: #7ee0b3; }
 .hh-guide__btn--sqr { color: #f0a8d8; }
 .hh-guide__btn--pad { color: #d8d0d8; border-radius: 3px; }
+/* like a game's prompt: the items step in one after another from the right,
+ * then the main button (the first one, usually ✕) keeps a small bob */
+.hh-guide.is-on .hh-guide__item {
+  animation: hh-guide-in 0.32s steps(3, end) both;
+}
+.hh-guide.is-on .hh-guide__item:nth-child(2) { animation-delay: 0.06s; }
+.hh-guide.is-on .hh-guide__item:nth-child(3) { animation-delay: 0.12s; }
+.hh-guide.is-on .hh-guide__item:nth-child(4) { animation-delay: 0.18s; }
+@keyframes hh-guide-in {
+  from { transform: translateX(10px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.hh-guide.is-on .hh-guide__item:has(.hh-guide__btn--crs) .hh-guide__btn {
+  animation: hh-guide-bob 1.1s steps(2, jump-none) 0.4s infinite;
+}
+@keyframes hh-guide-bob {
+  0%, 60% { transform: translateY(0); }
+  80% { transform: translateY(-2px); }
+  100% { transform: translateY(0); }
+}
 @media (prefers-reduced-motion: reduce) {
   .hh-guide { transition: none; }
+  .hh-guide.is-on .hh-guide__item,
+  .hh-guide.is-on .hh-guide__btn,
+  .hh-video,
+  .hh-clip { animation: none; }
 }
 
 /* the snack counter: a pixel cookie and how many */

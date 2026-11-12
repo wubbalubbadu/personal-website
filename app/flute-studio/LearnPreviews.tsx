@@ -4,7 +4,6 @@ import {useEffect,useRef,useState,type RefObject} from "react";
 import TrebleClef from "./theory/TrebleClef";
 import QuarterNote from "./theory/QuarterNote";
 import {noteY,ledgerLines} from "./theory/model";
-import {CLEF_GUIDE} from "./theory/ClefTracing";
 import {FluteDiagram} from "./components/FluteDiagram";
 import {fingeringsForMidi} from "../../content/fingerings/flute";
 import {trills,movingKeys} from "../../content/fingerings/trills";
@@ -51,15 +50,17 @@ function NoteStaff({p,x=250,extra}:{p:number;x?:number;extra?:React.ReactNode}){
   </svg>;
 }
 
-/** Theory lessons: the treble clef draws itself, then a note drops onto the G line it names. */
+/**
+ * Theory lessons: the treble clef with the G line it names, as the Tools cards do it: one big label, one graphic.
+ * Still on purpose (Nov 12): the old clef-drawing loop was one more moving thing in a busy grid.
+ */
 export function TheoryPreview({zh}:{zh:boolean}){
-  const root=useRef<HTMLDivElement>(null),on=useOnScreen(root);
-  return <div className={`learn-demo theory-demo ${on?"is-on":""}`} ref={root} aria-hidden="true">
-    <svg viewBox="40 36 680 232" role="presentation">
-      {[0,2,4,6,8].map(l=><line key={l} x1="55" x2="705" y1={noteY(l)} y2={noteY(l)} className={`learn-staff__line ${l===2?"theory-demo__g":""}`}/>)}
-      <path d={CLEF_GUIDE} pathLength={1} className="theory-demo__clef"/>
-      <g className="theory-demo__drop"><g transform={`translate(540 ${noteY(2)})`}><QuarterNote/></g></g>
-      <text x="580" y={noteY(2)+48} className="theory-demo__label">{zh?"G · sol":"G · sol"}</text>
+  return <div className="learn-demo theory-demo" aria-hidden="true">
+    <b>{zh?"G 线":"G"}</b>
+    <svg viewBox="40 36 300 232" role="presentation">
+      {[0,2,4,6,8].map(l=><line key={l} x1="55" x2="330" y1={noteY(l)} y2={noteY(l)} className={`learn-staff__line ${l===2?"theory-demo__g":""}`}/>)}
+      <TrebleClef/>
+      <g transform={`translate(260 ${noteY(2)})`}><QuarterNote/></g>
     </svg>
   </div>;
 }
@@ -67,7 +68,7 @@ export function TheoryPreview({zh}:{zh:boolean}){
 /** Body & embouchure: a note climbs the range while the page's own register cue changes with it. */
 const EMB_NOTES=["C4","G4","E5","C6","G6"];
 export function EmbouchurePreview(){
-  const root=useRef<HTMLDivElement>(null),on=useOnScreen(root),i=useStep(EMB_NOTES.length,1700,on);
+  const root=useRef<HTMLDivElement>(null),on=useOnScreen(root),i=useStep(EMB_NOTES.length,2400,on);
   const name=EMB_NOTES[i],midi=midiOf(name),pct=(midi-MIN_NOTE)/(MAX_NOTE-MIN_NOTE)*100;
   const [where,cue]=guidance(midi).split(": ");
   return <div className="learn-demo emb-demo" ref={root} aria-hidden="true">
@@ -83,7 +84,7 @@ export function EmbouchurePreview(){
 /** Fingering chart: the note moves up and the real diagram changes with it. */
 const FINGER_NOTES=["C4","G4","D5","A5","E6"];
 export function FingeringPreview(){
-  const root=useRef<HTMLDivElement>(null),on=useOnScreen(root),i=useStep(FINGER_NOTES.length,1500,on);
+  const root=useRef<HTMLDivElement>(null),on=useOnScreen(root),i=useStep(FINGER_NOTES.length,2400,on);
   const name=FINGER_NOTES[i],keys=fingeringsForMidi(midiOf(name))?.fingerings[0]?.keys??[];
   return <div className="learn-demo finger-demo" ref={root} aria-hidden="true">
     <NoteStaff p={pos(name)}/>
@@ -94,7 +95,7 @@ export function FingeringPreview(){
 /** Trill chart: a note marked with the standard tr ornament; the fingering flickers between its two states, moving keys highlighted. */
 const TRILL=trills.find(t=>!t.unavailable&&t.base==="C5"&&t.interval===2)??trills.find(t=>!t.unavailable)!;
 export function TrillPreview(){
-  const root=useRef<HTMLDivElement>(null),on=useOnScreen(root),flick=useStep(2,140,on);
+  const root=useRef<HTMLDivElement>(null),on=useOnScreen(root),flick=useStep(2,600,on);
   const base=TRILL.base.replace(/[♯♭]/,""),p=pos(base);
   return <div className="learn-demo finger-demo" ref={root} aria-hidden="true">
     {/* The engraved "tr" ornament above the note (or above the staff, whichever is higher). */}
@@ -109,7 +110,7 @@ export function TrillPreview(){
  * label rather than a list of six.
  */
 export function RoadmapPreview({regions}:{regions:readonly {id:string;tone:string;title:string}[]}){
-  const root=useRef<HTMLDivElement>(null),on=useOnScreen(root),step=useStep(regions.length+3,650,on);
+  const root=useRef<HTMLDivElement>(null),on=useOnScreen(root),step=useStep(regions.length+3,1000,on);
   const done=(index:number)=>on?step>index:index<2;
   const named=regions[Math.min(Math.max(on?step-1:1,0),regions.length-1)];
   return <div className="roadmap-preview" ref={root} aria-hidden="true">

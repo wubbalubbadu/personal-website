@@ -61,7 +61,7 @@ export default function FluteView() {
       <p className="fl-caption">Competition footage</p>
       <div className="fl-video">
         <iframe
-          src="https://www.youtube-nocookie.com/embed/ya3cFeMKD14?start=649"
+          src="https://www.youtube-nocookie.com/embed/ya3cFeMKD14?start=584"
           title="Competition performance"
           loading="lazy"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"

@@ -51,7 +51,7 @@ export default function ResourcesHub() {
         {/* The same animated cards as the home page, so each page shows what
             it does before you open it. Theory lessons comes first: it is
             where a new player starts. */}
-        <section className="home-preview preview-grid" aria-label={zh ? "学习" : "Learn"}>
+        <section className="home-preview preview-grid learn-tiles" aria-label={zh ? "学习" : "Learn"}>
           {LEARN_PAGES.map(page => (
             <Link key={page.key} href={page.href} className={`preview-card preview-card--${page.key}`}>
               <div className="preview-card__stage">{preview(page.key)}</div>

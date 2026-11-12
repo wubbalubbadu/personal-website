@@ -44,3 +44,21 @@
 @media(hover:hover){.action-button:hover:not(:disabled){background:#e8e8ea}}
 
 .action-button--inherit-type{font-size:inherit;font-weight:inherit}
+
+/* Page titles (Nov 12): one size for every page's <h1>, down from 42px / 780,
+   which read too big and chunky. Each page still has its own older h1 rule;
+   this list overrides them all from one place. Add new page headers here. */
+:is(.exercise-hub__header, .library-page-header, .practice-page__header, .roadmap-header, .bl-header, .theory-home .theory-home__header, .fingering-chart__header, .scale-book) h1 {
+  font-size: 28px; font-weight: 700; line-height: 1.15; letter-spacing: -0.02em;
+}
+/* The Library's sticky large title sets its size with !important (library.css), so this has to as well. */
+.large-title h1 { font-size: 28px !important; font-weight: 700 !important; letter-spacing: -0.02em !important; }
+
+/* Nov 12: square corners where the studio lists music, to match the Home tiles. Tags, piece chips and the Library
+   filter chips go square too. Panels (Today's practice, calendar) and floating controls keep their shape for now. */
+body :is(.library-list, .item-card, .item-card__body, .list-stack__card, .passages__list, .deadline-card) { border-radius: 3px; }
+body :is(.tag-pill, .piece-chip, .library-chips__row > button) { border-radius: 3px; }
+/* The Library list is set with !important in viewer-fixes.css and library.css; square it and swap its float shadow
+   for the hairline white cards use (no lift). */
+body .library-list { border-radius: 3px !important; box-shadow: none !important; border: 1px solid #e4e4e7 !important; }
+body .practice-page .passages__list { border-radius: 3px; }

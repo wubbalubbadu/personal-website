@@ -1,6 +1,7 @@
 // Pieces of the 3D handheld shared by the lab study (handheld-3d) and Cat host's
 // 3D console: textures drawn in code, outline shapes, and the button clicks.
 import * as THREE from "three";
+import { unlockAudio } from "../../components/ps1-mascot";
 
 // ---------------------------------------------------------------- textures
 
@@ -135,8 +136,24 @@ export function makeClicker() {
   let ctx: AudioContext | null = null;
   let noise: AudioBuffer | null = null;
   let kind: ClickKind = "pop";
+  let waiting = false;
   const play = (down: boolean, pitch = 1, note = 2) => {
-    ctx ??= new AudioContext();
+    // The cat's audio, not one of its own: iPhone Safari only starts sound when
+    // a finger lifts, and the press comes on touch down, so a fresh context here
+    // stayed silent for the first press. The shared one is unlocked by every
+    // tap; a press that lands before that sounds as soon as it's running.
+    ctx ??= unlockAudio();
+    if (!ctx) return;
+    if (ctx.state !== "running") {
+      if (down && !waiting) {
+        waiting = true;
+        void ctx.resume().then(() => {
+          waiting = false;
+          play(true, pitch, note);
+        });
+      }
+      return;
+    }
     if (!noise) {
       noise = ctx.createBuffer(1, ctx.sampleRate * 0.05, ctx.sampleRate);
       const d = noise.getChannelData(0);

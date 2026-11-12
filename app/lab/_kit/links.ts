@@ -80,7 +80,7 @@ export const FLUTE_LINKS: LinkItem[] = [
   {
     label: "Competition footage",
     sub: "YouTube",
-    href: "https://www.youtube.com/watch?v=ya3cFeMKD14&t=649s",
+    href: "https://www.youtube.com/watch?v=ya3cFeMKD14&t=584s",
   },
   { label: "TikTok", sub: "@wubulubadudu", href: "https://www.tiktok.com/@wubulubadudu" },
   {

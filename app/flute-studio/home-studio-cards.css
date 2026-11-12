@@ -46,3 +46,18 @@
   .today-card__rows>li>.card-label{grid-column:1/-1}
   .today-card__chips{grid-column:1/-1}
 }
+
+/* Nov 12: Your studio in the tile look. Small square corners, no shadow, no lift. Today is a white panel with a
+   hairline (it holds buttons, so it stays white); the other cards are tiles like the rows above, the name on top. */
+.studio-cards .today-card{border-radius:3px;box-shadow:none;border:1px solid #e4e4e7}
+.today-card__rows>li{border-top-color:#ececef}
+.today-card__action{border-radius:3px}
+.today-card .piece-chip{height:28px;padding:0 10px;border-radius:3px;box-shadow:none;background:#f4f4f5}
+@media(hover:hover){.today-card a.piece-chip:hover{background:#ececee}}
+.studio-cards .preview-card.studio-card,.preview-grid.studio-cards .preview-card.studio-card{border-radius:3px;box-shadow:none;background:var(--tile-tint,#f4f4f5)}
+.studio-cards .studio-card:hover,.studio-cards .studio-card:focus-visible{transform:none;box-shadow:none;filter:brightness(.98)}
+.studio-cards .studio-card .preview-card__copy{order:-1;padding:10px 12px 0;background:transparent}
+.studio-cards .studio-card .preview-card__copy small{margin-top:2px}
+.studio-cards .preview-card.studio-card .studio-card__stage{background:transparent}
+.studio-cards .studio-card:has(.tricky-preview){--tile-tint:var(--tint-green)}
+.studio-cards .studio-card:has(.studio-card__week){--tile-tint:var(--tint-slate)}
