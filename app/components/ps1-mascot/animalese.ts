@@ -24,7 +24,7 @@ export type Voice = {
 
 export const VOICES = {
   cookie: { pitch: 330, formant: 1.15, wobble: 0.05, length: 62, wave: "sawtooth", volume: 0.5 },
-  cat: { pitch: 520, formant: 1.35, wobble: 0.07, length: 52, wave: "sawtooth", volume: 0.42 },
+  cat: { pitch: 470, formant: 1.35, wobble: 0.07, length: 52, wave: "sawtooth", volume: 0.42 },
 } satisfies Record<string, Voice>;
 
 type Vowel = "a" | "e" | "i" | "o" | "u";
@@ -116,11 +116,23 @@ type WebkitWindow = Window & { webkitAudioContext?: typeof AudioContext };
 export function unlockAudio() {
   if (typeof window === "undefined") return null;
   if (!ctx) {
+    // iPhone: count as media playback, so the ring/silent switch doesn't mute
+    // the cat (Safari's audio session; other browsers don't have it)
+    const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
+    if (session) session.type = "playback";
     const Ctor = window.AudioContext ?? (window as WebkitWindow).webkitAudioContext;
     if (!Ctor) return null;
     ctx = new Ctor();
   }
-  if (ctx.state === "suspended") void ctx.resume();
+  if (ctx.state !== "running") {
+    void ctx.resume();
+    // iPhone Safari only really starts on a sound played inside the tap: a
+    // one-sample silent one does it
+    const b = ctx.createBufferSource();
+    b.buffer = ctx.createBuffer(1, 1, 22050);
+    b.connect(ctx.destination);
+    b.start(0);
+  }
   return ctx;
 }
 

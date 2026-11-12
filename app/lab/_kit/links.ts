@@ -12,6 +12,7 @@ export const COPY = {
   who: "I'm doing my master's in flute performance at New England Conservatory. I have a computer science degree from Northwestern, and I build music software.",
   nowTitle: "What I'm up to",
   contactLine: "Email is the best way to reach me, I actually check it.",
+  email: "hayliewu0709@gmail.com",
 };
 
 export type Place = {

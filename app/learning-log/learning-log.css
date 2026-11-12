@@ -14,56 +14,75 @@ body {
 }
 
 .ll {
-  --ground: #e3e5df;
-  --paper: #eff0eb;
-  --panel: #f6f7f2;
-  --card: #fbfbf8;
-  --ink: #1a1e1b;
-  --ink-70: rgba(26, 30, 27, 0.7);
-  --ink-50: rgba(26, 30, 27, 0.5);
-  --ink-38: rgba(26, 30, 27, 0.38);
-  --rule: rgba(26, 30, 27, 0.13);
-  --rule-soft: rgba(26, 30, 27, 0.06);
-  --pine: #2f5d50;
-  --pine-wash: rgba(47, 93, 80, 0.09);
-  --amber: #b06f28;
-  --amber-wash: rgba(176, 111, 40, 0.1);
-  --warn: #b0472b;
-  --warn-wash: rgba(176, 71, 43, 0.09);
-  --shadow: 0 42px 90px -34px rgba(20, 32, 26, 0.42), 0 10px 26px -14px rgba(20, 32, 26, 0.2);
-  --font-ui: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-pix: "Silkscreen", "Space Grotesk", ui-monospace, monospace;
-  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --ground: #ffffff;
+  --paper: #f6f8fa;
+  --panel: #f6f8fa;
+  --card: #ffffff;
+  --ink: #1f2328;
+  --ink-70: #1f2328;
+  --ink-50: #59636e;
+  --ink-38: #818b98;
+  --rule: #d1d9e0;
+  --rule-soft: #eff2f5;
+  --pine: #0969da;
+  --pine-wash: rgba(9, 105, 218, 0.08);
+  --amber: #9a6700;
+  --amber-wash: rgba(154, 103, 0, 0.1);
+  --warn: #d1242f;
+  --warn-wash: rgba(209, 36, 47, 0.08);
+  --shadow: 0 8px 24px rgba(140, 149, 159, 0.2);
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+  --font-pix: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+  --font-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
 
   min-height: 100vh;
-  background-color: var(--ground);
-  background-image: radial-gradient(circle, var(--rule-soft) 1px, transparent 1.4px);
-  background-size: 26px 26px;
+  background: var(--ground);
   color: var(--ink);
   font-family: var(--font-ui);
-  -webkit-font-smoothing: antialiased;
+  font-size: 16px;
+  line-height: 1.5;
 }
 
+/* GitHub's dark palette, following the site's own theme setting like the front page. */
 @media (prefers-color-scheme: dark) {
-  .ll:not([data-theme="light"]) {
-    --ground: #0d0f0d;
-    --paper: #171a16;
-    --panel: #1c201b;
-    --card: #20241f;
-    --ink: #e8eae3;
-    --ink-70: rgba(232, 234, 227, 0.7);
-    --ink-50: rgba(232, 234, 227, 0.5);
-    --ink-38: rgba(232, 234, 227, 0.36);
-    --rule: rgba(232, 234, 227, 0.15);
-    --rule-soft: rgba(232, 234, 227, 0.07);
-    --pine: #7aae9a;
-    --pine-wash: rgba(122, 174, 154, 0.13);
-    --amber: #d7a05d;
-    --amber-wash: rgba(215, 160, 93, 0.12);
-    --warn: #e08b6b;
-    --warn-wash: rgba(224, 139, 107, 0.12);
-    --shadow: 0 42px 100px -30px rgba(0, 0, 0, 0.72), 0 10px 30px -12px rgba(0, 0, 0, 0.5);
+  :root:not([data-theme="light"]) .ll {
+    --ground: #0d1117;
+    --paper: #151b23;
+    --panel: #151b23;
+    --card: #0d1117;
+    --ink: #f0f6fc;
+    --ink-70: #f0f6fc;
+    --ink-50: #9198a1;
+    --ink-38: #6e7681;
+    --rule: #3d444d;
+    --rule-soft: #262c36;
+    --pine: #4493f8;
+    --pine-wash: rgba(68, 147, 248, 0.12);
+    --amber: #d29922;
+    --amber-wash: rgba(210, 153, 34, 0.12);
+    --warn: #f85149;
+    --warn-wash: rgba(248, 81, 73, 0.12);
+    --shadow: 0 8px 24px rgba(1, 4, 9, 0.6);
   }
+}
+:root[data-theme="dark"] .ll {
+  --ground: #0d1117;
+  --paper: #151b23;
+  --panel: #151b23;
+  --card: #0d1117;
+  --ink: #f0f6fc;
+  --ink-70: #f0f6fc;
+  --ink-50: #9198a1;
+  --ink-38: #6e7681;
+  --rule: #3d444d;
+  --rule-soft: #262c36;
+  --pine: #4493f8;
+  --pine-wash: rgba(68, 147, 248, 0.12);
+  --amber: #d29922;
+  --amber-wash: rgba(210, 153, 34, 0.12);
+  --warn: #f85149;
+  --warn-wash: rgba(248, 81, 73, 0.12);
+  --shadow: 0 8px 24px rgba(1, 4, 9, 0.6);
 }
 
 .ll * {
@@ -135,15 +154,15 @@ body {
 }
 .ll-progress-chip {
   font-family: var(--font-pix);
-  font-size: 8px;
-  letter-spacing: 0.12em;
+  font-size: 12px;
+  letter-spacing: 0;
   color: var(--pine);
   white-space: nowrap;
 }
 .ll-note-src {
   font-family: var(--font-pix);
-  font-size: 8px;
-  letter-spacing: 0.12em;
+  font-size: 12px;
+  letter-spacing: 0;
   color: var(--ink-50);
   white-space: nowrap;
   text-decoration: none;
@@ -162,8 +181,8 @@ body {
 }
 .ll-eyebrow {
   font-family: var(--font-pix);
-  font-size: 9px;
-  letter-spacing: 0.2em;
+  font-size: 12px;
+  letter-spacing: 0;
   color: var(--amber);
   margin: 0 0 18px;
 }
@@ -196,7 +215,7 @@ body {
 }
 .ll-unit__n {
   font-family: var(--font-pix);
-  font-size: 10px;
+  font-size: 12px;
   color: var(--ink-38);
 }
 .ll-unit__head h2 {
@@ -245,9 +264,9 @@ body {
 }
 .ll-chapter-card__title small {
   font-family: var(--font-pix);
-  font-size: 8px;
+  font-size: 12px;
   color: var(--ink-38);
-  letter-spacing: 0.1em;
+  letter-spacing: 0;
 }
 .ll-chapter-card__sum {
   font-size: 13px;
@@ -289,8 +308,8 @@ body {
   padding: 0;
   margin: 0 0 20px;
   font-family: var(--font-pix);
-  font-size: 10px;
-  letter-spacing: 0.1em;
+  font-size: 12px;
+  letter-spacing: 0;
   color: var(--ink-50);
   cursor: pointer;
 }
@@ -331,9 +350,9 @@ body {
 }
 .ll-log-card__title small {
   font-family: var(--font-pix);
-  font-size: 8px;
+  font-size: 12px;
   color: var(--ink-38);
-  letter-spacing: 0.1em;
+  letter-spacing: 0;
   font-weight: 400;
 }
 .ll-log-card__sum {
@@ -424,17 +443,13 @@ body {
 }
 .ll-slide-card {
   width: min(760px, 100%);
-  background: var(--paper);
-  border: 1px solid var(--rule);
-  border-radius: 18px;
-  box-shadow: var(--shadow);
-  padding: clamp(24px, 4vw, 42px);
+  padding: 8px 0 0;
   flex: 1;
 }
 .ll-slide-card__kicker {
   font-family: var(--font-pix);
-  font-size: 8px;
-  letter-spacing: 0.16em;
+  font-size: 12px;
+  letter-spacing: 0;
   color: var(--ink-38);
   margin: 0 0 14px;
 }
@@ -446,7 +461,7 @@ body {
 }
 .ll-slide-card__lede {
   font-size: 15px;
-  color: var(--amber);
+  color: var(--ink-50);
   margin: 0 0 22px;
 }
 .ll-slide-nav {
@@ -480,36 +495,12 @@ body {
 }
 .ll-slide-nav__count {
   font-family: var(--font-pix);
-  font-size: 9px;
-  letter-spacing: 0.1em;
+  font-size: 12px;
+  letter-spacing: 0;
   color: var(--ink-50);
   min-width: 96px;
   text-align: center;
 }
-.ll-slide-dots {
-  position: fixed;
-  top: 62px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 5px;
-  max-width: 80vw;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-.ll-slide-dots i {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--rule);
-}
-.ll-slide-dots i.is-here {
-  background: var(--pine);
-}
-.ll-slide-dots i.is-done {
-  background: var(--amber);
-}
-
 /* ---- blocks -------------------------------------------------------- */
 
 .ll-body {
@@ -527,7 +518,7 @@ body {
   margin-top: 10px;
 }
 .ll-body code {
-  font-family: var(--font-pix);
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.82em;
   background: var(--rule-soft);
   padding: 1px 5px;
@@ -579,8 +570,8 @@ body {
 }
 .ll-keypoints__t {
   font-family: var(--font-pix);
-  font-size: 9px;
-  letter-spacing: 0.13em;
+  font-size: 12px;
+  letter-spacing: 0;
   color: var(--ink-50);
   margin: 0 0 8px;
 }
@@ -648,8 +639,8 @@ body {
 }
 .ll-aside__t {
   font-family: var(--font-pix);
-  font-size: 8px;
-  letter-spacing: 0.14em;
+  font-size: 12px;
+  letter-spacing: 0;
   color: var(--ink-50);
   margin: 0 0 6px;
   display: flex;
@@ -694,8 +685,8 @@ body {
 }
 .ll-discussion__t {
   font-family: var(--font-pix);
-  font-size: 9px;
-  letter-spacing: 0.14em;
+  font-size: 12px;
+  letter-spacing: 0;
   color: var(--pine);
   margin: 0 0 12px;
 }
@@ -726,7 +717,7 @@ body {
 .ll-qa__q::before {
   content: "Q";
   font-family: var(--font-pix);
-  font-size: 9px;
+  font-size: 12px;
   color: var(--amber);
   flex: none;
   margin-top: 3px;
@@ -935,8 +926,8 @@ body {
 }
 .ll-widget__readout {
   font-family: var(--font-pix);
-  font-size: 9px;
-  letter-spacing: 0.08em;
+  font-size: 12px;
+  letter-spacing: 0;
   color: var(--pine);
   margin-top: 10px;
 }
@@ -1170,4 +1161,336 @@ body {
     overflow-x: auto;
     overflow-y: hidden;
   }
+}
+
+/* ===================================================================
+   Chapter and note pages, set like GitHub markdown: one 16px text size,
+   plain disc bullets, semibold headings, asides as GitHub alerts.
+   =================================================================== */
+
+.ll h1,
+.ll h2,
+.ll h3,
+.ll h4 {
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.25;
+}
+
+/* page and section titles */
+.ll-reader,
+.ll-slide-card {
+  max-width: 880px;
+}
+.ll-reader__h,
+.ll-slide-card__h {
+  font-size: 2em;
+  margin: 0 0 16px;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--rule);
+}
+.ll-reader__sum,
+.ll-slide-card__lede,
+.ll-slide-sec__lede {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink-50);
+  margin: 0 0 16px;
+  max-width: none;
+}
+.ll-slide-card__kicker {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  color: var(--ink-50);
+  margin: 0 0 8px;
+}
+.ll-slide-sec {
+  border-top: 0;
+  padding: 8px 0 24px;
+}
+.ll-slide-sec > h3 {
+  font-size: 1.5em;
+  margin: 24px 0 16px;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--rule);
+}
+
+/* body: blocks stack with markdown's 16px rhythm */
+.ll-body {
+  display: block;
+}
+.ll-body > * {
+  margin: 0 0 16px;
+}
+.ll-body p {
+  font-size: 16px;
+  line-height: 1.5;
+}
+.ll-body p + p {
+  margin-top: 16px;
+}
+.ll-body code {
+  font-size: 85%;
+  padding: 0.2em 0.4em;
+  border-radius: 6px;
+  background: rgba(129, 139, 152, 0.15);
+}
+.ll-heading {
+  font-size: 1.25em;
+  font-weight: 600;
+  line-height: 1.25;
+  margin: 24px 0 16px !important;
+}
+
+/* key points: a bold lead line, then an ordinary bulleted list */
+.ll-keypoints {
+  border-left: 0;
+  padding-left: 0;
+}
+.ll-keypoints__t {
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 8px;
+}
+.ll-keypoints ul,
+.ll-qa__a {
+  display: block;
+  list-style: disc;
+  margin: 0;
+  padding-left: 2em;
+}
+.ll-keypoints li,
+.ll-qa__a li {
+  list-style: disc;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink);
+  padding-left: 0;
+}
+.ll-keypoints li + li,
+.ll-qa__a li + li {
+  margin-top: 0.25em;
+}
+.ll-keypoints li::before,
+.ll-qa__a li::before {
+  content: none;
+}
+/* result and warning lists read like GitHub's Tip and Caution alerts */
+.ll-keypoints.t-result,
+.ll-keypoints.t-warn {
+  padding: 8px 16px;
+  border-left: 0.25em solid var(--pine);
+}
+.ll-keypoints.t-warn {
+  border-left-color: var(--warn);
+}
+.ll-keypoints.t-result .ll-keypoints__t {
+  color: var(--pine);
+}
+.ll-keypoints.t-warn .ll-keypoints__t {
+  color: var(--warn);
+}
+
+/* asides: GitHub alerts, a colored bar and title with plain text */
+.ll-aside,
+.ll-aside.v-analogy,
+.ll-aside.v-note,
+.ll-aside.v-aside,
+.ll-aside.v-intuition {
+  border: 0;
+  border-left: 0.25em solid var(--rule);
+  border-radius: 0;
+  background: none;
+  padding: 8px 16px;
+}
+.ll-aside.v-note,
+.ll-aside.v-aside {
+  border-left-color: var(--pine);
+}
+.ll-aside.v-analogy {
+  border-left-color: var(--amber);
+}
+.ll-aside__t {
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.ll-aside.v-note .ll-aside__t,
+.ll-aside.v-aside .ll-aside__t {
+  color: var(--pine);
+}
+.ll-aside.v-analogy .ll-aside__t {
+  color: var(--amber);
+}
+.ll-aside__body {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink);
+  margin-top: 8px;
+}
+
+/* class discussion: a heading and disclosure rows, like <details> */
+.ll-discussion {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  padding: 0;
+}
+.ll-discussion__t {
+  font-family: var(--font-ui);
+  font-size: 1.25em;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 24px 0 8px;
+}
+.ll-qa,
+.ll-qa:first-of-type {
+  border-top: 0;
+  padding: 4px 0;
+}
+.ll .ll-qa__q {
+  display: block;
+  position: relative;
+  padding: 0 0 0 1.25em;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.ll .ll-qa__q::before {
+  content: "▸";
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 16px;
+  color: var(--ink-50);
+}
+.ll .ll-qa__q[aria-expanded="true"]::before {
+  content: "▾";
+}
+.ll-qa__a {
+  margin: 8px 0 0 1.25em;
+}
+
+/* quiz: no outer box; the choices are GitHub buttons */
+.ll-quiz {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+}
+.ll-quiz__p {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+.ll-quiz__choices {
+  gap: 8px;
+}
+.ll-quiz__choice {
+  font-size: 14px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: var(--paper);
+}
+.ll-quiz__explain {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink);
+  margin-top: 16px;
+  padding: 0 16px;
+  border-left: 0.25em solid var(--pine);
+}
+
+/* formulas sit in the text, figures and widgets keep a thin frame */
+.ll-formula {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  padding: 0;
+}
+.ll-formula__cap,
+.ll-figure figcaption,
+.ll-widget__cap {
+  font-size: 14px;
+  color: var(--ink-50);
+}
+.ll-figure svg,
+.ll-widget {
+  border-radius: 6px;
+}
+.ll-widget__readout {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 13px;
+}
+
+/* GitHub buttons for "mark understood" and the slide arrows */
+.ll-understood,
+.ll-slide-nav button {
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 5px 16px;
+  background: var(--paper);
+  color: var(--ink);
+  margin-top: 8px;
+}
+.ll-slide-nav button {
+  margin-top: 0;
+}
+.ll-slide-nav__count,
+.ll-progress-chip,
+.ll-note-src {
+  font-family: var(--font-ui);
+  font-size: 14px;
+}
+
+/* the same README box as the front page: thin border on wide screens, none on a phone */
+.ll-reader,
+.ll-slide-card {
+  margin: 24px auto 0;
+  padding: 32px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--ground);
+}
+@media (max-width: 767px) {
+  .ll-reader,
+  .ll-slide-card {
+    margin-top: 0;
+    padding: 16px 0 0;
+    border: 0;
+  }
+}
+
+/* Slides: the box is as tall as its slide, and understood / prev / next sit right under the text. */
+.ll-slides {
+  min-height: 0;
+  padding-bottom: 64px;
+}
+.ll-slide-card {
+  flex: none;
+}
+.ll .ll-slide-nav {
+  position: static;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  margin-top: 24px;
+  padding: 16px 0 0;
+  background: none;
+  backdrop-filter: none;
+  border-top: 1px solid var(--rule);
+}
+.ll .ll-slide-nav .ll-understood {
+  margin-top: 0;
+}
+.ll .ll-slide-nav__count {
+  min-width: 0;
+  padding: 0 4px;
 }

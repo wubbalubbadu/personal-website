@@ -126,3 +126,10 @@ The previous note recorded user deployment through October 11. That is historica
 - [x] **/lab/cat-host** (Codex): deleted October 25 (moved to the Trash).
 - [x] **NEC framing:** "master's in flute performance" everywhere (October 25).
 - [ ] **Paused experiments, no code yet:** sight-reading generator, blind intonation and attack map, warm-up melodies, breath budget, tendency test extras, markup manager, overtone playground, memory mode, interval X-ray, recommend me a piece.
+
+## 3D handheld landing (/lab/handheld-3d), open as of Nov 5
+- Cartridge role: right now it repeats what the room already shows (the laptop has the projects). Choices: each cartridge plays a mini demo on the screen, or drop the cartridges. Haylie decides.
+- Desktop only: cartridges could sit stacked beside the console. Later.
+- Pick one from each toggle: hologram look (island warm, island cool, dark glass), power-on (chime, tuner), click sound (pop, tick, wood).
+- D-pad focus (hologram vs room) is deferred.
+- The cartridge swap was reworked Nov 6: it slides straight out of the slot, moves off to the side, the next one comes in and is pushed home, and the console dips a little. Check it once her pick on the cartridge role is in.

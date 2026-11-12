@@ -1,0 +1,137 @@
+/* See your articulation (lab/articulation, moved from the studio Tools page until it is tested with a real flute). Values from DESIGN.md; components from COMPONENTS.md. */
+.artic__lead{margin:8px 0 0;max-width:640px;font-size:15px;line-height:1.45;color:#71747e}
+.artic__heading{margin:0;font-size:20px;font-weight:650;letter-spacing:-.02em;color:#292a33}
+.artic__hint{margin:8px 0 0;font-size:13px;line-height:1.45;color:#85868e;max-width:760px}
+.artic-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Input card */
+.artic__input{display:grid;gap:12px;padding:20px;border-radius:20px;margin-bottom:28px}
+.artic__buttons{display:flex;gap:8px;flex-wrap:wrap}
+/* Plain grey action button (DESIGN.md "Buttons"; COMPONENTS.md "Not reused yet" item 5 lists this copy). */
+.artic__action{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 16px;border:0;border-radius:12px;background:#f1f1f2;color:#45464f;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.artic__action svg{width:18px;height:18px}
+.artic__action.is-main{color:#292a33}
+.artic__action.is-small{height:34px;padding:0 12px;font-size:13px;border-radius:10px}
+.artic__action:disabled{opacity:.5;cursor:default}
+@media(hover:hover){.artic__action:not(:disabled):hover{background:#e8e8ea}}
+.artic__action.is-recording{color:#a5372f}
+.artic__stop{width:12px;height:12px;border-radius:3px;background:#d4473d;animation:artic-pulse 1.2s ease-in-out infinite}
+@keyframes artic-pulse{50%{opacity:.45}}
+@media(prefers-reduced-motion:reduce){.artic__stop{animation:none}}
+.artic__status{margin:0;font-size:14px;color:#45464f}
+.artic__problem{margin:0;font-size:14px;color:#a15b1a}
+.artic__privacy{font-size:12px;color:#85868e}
+.artic__take{display:grid;gap:4px}
+.artic__take small{font-size:12px;color:#85868e}
+.artic__progress{display:grid;gap:6px;font-size:13px;color:#45464f}
+.artic__progress i{display:block;height:6px;border-radius:3px;background:#ececef;overflow:hidden;max-width:360px}
+.artic__progress b{display:block;height:100%;background:#79588e;transition:width .15s linear}
+
+.artic__ideas{margin-bottom:28px}
+.artic__ideas ol{margin:10px 0 0;padding-left:22px;list-style:decimal;display:grid;gap:6px;font-size:15px;line-height:1.45;color:#45464f;max-width:720px}
+
+.artic__section{margin-bottom:32px}
+.artic__section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.artic__card{padding:14px;border-radius:20px}
+
+/* Legend */
+.artic__legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:#5a5c63}
+.artic__legend span{display:inline-flex;align-items:center;gap:5px}
+.artic__legend i{width:12px;height:8px;border-radius:2px}
+
+/* Phrase view */
+.artic-phrase{position:relative;background:#fff;border-radius:20px;box-shadow:0 8px 28px rgba(41,42,51,.055);padding:10px 0}
+.artic-phrase__scroll{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+.artic-phrase svg{display:block;cursor:pointer;user-select:none}
+.artic-phrase__chosen{fill:#eee7f2}
+.artic-phrase__lane{font-size:11px;font-weight:600;fill:#a3a5ad}
+.artic-phrase__bracket{fill:none;stroke:#b4b6bd;stroke-width:1.2}
+.artic-phrase__phrase{font-size:12px;font-weight:600;fill:#45464f}
+.artic-phrase__envelope{fill:#d9dade}
+.artic-phrase__contour{fill:none;stroke:#292a33;stroke-width:1.8;stroke-linejoin:round}
+.artic-phrase__pitch{stroke:#b9a6c6;stroke-width:1.6;stroke-linecap:round}
+.artic-phrase__note-pitch{stroke:#62567a;stroke-width:2.4;stroke-linecap:round}
+.artic-phrase__name{font-size:10.5px;font-weight:600;fill:#62567a}
+.artic-phrase__rest{fill:currentColor;opacity:.16}
+.artic-phrase__sound{fill:currentColor}
+.artic-phrase__block.is-chosen .artic-phrase__sound{stroke:#292a33;stroke-width:1.5}
+.artic-phrase__tick{stroke:#c5c6cc}
+.artic-phrase__time{font-size:10.5px;fill:#85868e;font-variant-numeric:tabular-nums}
+
+/* Phrase cards */
+.artic__phrases{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.artic__phrase{display:grid;gap:2px;text-align:left;padding:10px 14px;border:0;border-radius:14px;background:#f5f5f7;color:#292a33;font:inherit;cursor:pointer;max-width:100%}
+.artic__phrase b{font-size:14px;font-weight:600}
+.artic__phrase span{font-size:14px;color:#45464f}
+.artic__phrase small{font-size:12px;color:#85868e;font-variant-numeric:tabular-nums}
+.artic__phrase.is-chosen{background:#eee7f2}
+.artic__phrase.is-chosen b{color:#79588e}
+
+/* Close-up */
+.artic__note-nav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.artic__note-nav span{font-size:13px;color:#85868e;font-variant-numeric:tabular-nums;min-width:52px;text-align:center}
+.artic__icon{width:36px;height:36px;display:inline-grid;place-items:center;border:0;border-radius:10px;background:transparent;color:#45464f;cursor:pointer}
+.artic__icon:disabled{opacity:.35;cursor:default}
+@media(hover:hover){.artic__icon:not(:disabled):hover{background:#f1f1f4}}
+.artic__closeup-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px;align-items:start}
+.artic-shape svg,.artic-overlay svg{display:block}
+.artic-shape__fill{fill:#d9dade;opacity:.7}
+.artic-shape__line{fill:none;stroke:#292a33;stroke-width:1.6;stroke-linejoin:round}
+.artic-shape__attack{fill:#f1e7d6}
+.artic-shape__release{fill:#e6e8eb}
+.artic-shape__start{stroke:#c5c6cc;stroke-dasharray:2 3}
+.artic-shape__held{stroke:#6b5a3a;stroke-width:1.2;stroke-dasharray:5 4}
+.artic-shape__sounded{stroke:#292a33;stroke-width:3;stroke-linecap:round}
+.artic-shape__mark{font-size:11px;font-weight:600;fill:#45464f;font-variant-numeric:tabular-nums}
+.artic-shape__zero{stroke:#dcdde1}
+.artic-shape__axis{font-size:10px;fill:#a3a5ad}
+.artic-shape__cents{fill:none;stroke:#62567a;stroke-width:1.6;stroke-linejoin:round}
+.artic-shape__settle{stroke:#79588e;stroke-width:1.2}
+
+.artic__facts{margin:0;display:grid;gap:12px}
+.artic__fact{display:grid;grid-template-columns:72px minmax(0,1fr);gap:10px}
+.artic__fact dt{display:flex;align-items:flex-start;gap:6px;font-size:13px;font-weight:600;color:#85868e;padding-top:1px}
+.artic__fact dt i{width:10px;height:10px;border-radius:2px;margin-top:3px;flex:none}
+.artic__fact dd{margin:0;display:grid;gap:2px}
+.artic__fact b{font-size:15px;font-weight:600;color:#292a33;font-variant-numeric:tabular-nums}
+.artic__fact small{font-size:12.5px;line-height:1.4;color:#85868e}
+
+/* Overlay */
+.artic-overlay__line{fill:none;stroke-width:1.4;opacity:.55;cursor:pointer}
+.artic-overlay__line.is-chosen{stroke:#292a33;stroke-width:2.6;opacity:1}
+.artic-overlay__start{stroke:#c5c6cc;stroke-dasharray:2 3}
+.artic-overlay__tick{stroke:#c5c6cc}
+.artic-overlay__time{font-size:10.5px;fill:#85868e;font-variant-numeric:tabular-nums}
+
+/* Footer */
+.artic__footer{display:grid;gap:14px;justify-items:start}
+.artic__how{max-width:760px;font-size:14px;color:#45464f}
+.artic__how summary{cursor:pointer;font-weight:600;color:#292a33}
+.artic__how ul{margin:10px 0 0;padding-left:20px;display:grid;gap:6px;line-height:1.45}
+
+@media(max-width:860px){.artic__closeup-grid{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:760px){.artic__input{padding:16px}.artic__fact{grid-template-columns:64px minmax(0,1fr)}}
+.artic-phrase__peak{fill:#292a33}
+/* The studio header lays its children in a row; this page's lead sentence goes under the title. */
+.artic .exercise-hub__header>div{display:block}
+
+/* Spectrogram under the close-up */
+.artic-spectro{position:relative;margin-top:8px;border-radius:10px;overflow:hidden}
+.artic-spectro canvas{display:block}
+.artic-spectro svg{position:absolute;inset:0;pointer-events:none}
+.artic-spectro__grid{stroke:#85868e}
+.artic-spectro__axis{font-size:10px;fill:#5a5c63;paint-order:stroke;stroke:#fff;stroke-width:3px}
+.artic-spectro__edge{stroke:#c5c6cc;stroke-dasharray:2 3}
+.artic-phrase__breath{fill:#f7e1f8}
+.artic-phrase__bright{fill:none;stroke:#a07a3c;stroke-width:1.6;stroke-linejoin:round}
+.artic__legend .artic__legend-line{width:14px;height:2px;border-radius:1px}
+.artic-overlay__ghost{fill:none;stroke:#9a9ca3;stroke-width:1.3;stroke-dasharray:4 3;opacity:.7}
+
+/* Reference and comparison */
+.artic__reference{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:#45464f}
+.artic__compare{width:100%;max-width:760px;border-collapse:separate;border-spacing:0;padding:8px 14px;border-radius:20px;font-size:14px}
+.artic__compare th,.artic__compare td{padding:8px 10px;text-align:left;border-bottom:1px solid #f0f0f2;font-variant-numeric:tabular-nums}
+.artic__compare tr:last-child th,.artic__compare tr:last-child td{border-bottom:0}
+.artic__compare thead th{font-size:12px;font-weight:600;color:#85868e}
+.artic__compare tbody th{font-weight:600;color:#45464f}
+.artic__compare td:last-child{color:#79588e;font-weight:600}

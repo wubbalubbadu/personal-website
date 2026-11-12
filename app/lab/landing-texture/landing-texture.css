@@ -1,0 +1,352 @@
+/* Craft passes over Cat host (see LandingTexture.tsx). Only overrides, all
+ * scoped under .lt--*, so /lab/home-1 and the live home are untouched. */
+
+.lt {
+  /* fine film grain: black specks with alpha from the noise */
+  --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  .5 0 0 0 -.22'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  --grain-soft: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  .28 0 0 0 -.13'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  /* light specks, for the dark bezel and buttons */
+  --grain-lt: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  .6 0 0 0 -.26'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  position: relative;
+}
+
+/* ---- the look picker (lab chrome, not part of the design) ---- */
+.lt-pick {
+  position: fixed;
+  z-index: 50;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: calc(100vw - 20px);
+  padding: 4px;
+  border: 1px solid rgba(36, 18, 32, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 252, 246, 0.92);
+  font: 500 12px/1 "Space Grotesk", system-ui, sans-serif;
+}
+.lt-pick button {
+  padding: 7px 11px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: #241220;
+  font: inherit;
+  white-space: pre;
+}
+.lt-pick button[aria-pressed="true"] {
+  background: #241220;
+  color: #fffcf6;
+}
+@media (max-width: 759px) {
+  .lt-pick {
+    top: auto;
+    bottom: 10px;
+  }
+}
+.lt-pick .lt-pick__again {
+  color: #46633d;
+  font-weight: 600;
+}
+
+/* ================= A: retouched plastic (B and C build on it) ================= */
+
+:is(.lt--a, .lt--b, .lt--c) .lab.ch {
+  background-color: #f6efe2;
+  background-image: var(--grain-soft);
+  background-size: 180px;
+  background-blend-mode: multiply;
+}
+/* the page's grain is faint; the console's is a touch stronger */
+:is(.lt--a, .lt--b, .lt--c) .hh {
+  background-image:
+    radial-gradient(120% 70% at 30% 0%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 55%),
+    linear-gradient(170deg, var(--dev-hi) 0%, var(--dev-body) 40%, var(--dev-lo) 100%);
+  box-shadow:
+    /* lip of the moulding */
+    inset 0 2px 1px rgba(255, 255, 255, 0.9),
+    inset 0 0 0 1px rgba(120, 40, 80, 0.12),
+    inset 0 -8px 14px -6px rgba(110, 30, 70, 0.28),
+    inset 10px 0 18px -12px rgba(255, 255, 255, 0.6),
+    /* resting on something: a tight contact shadow, then a soft one */
+    0 1px 1px rgba(70, 20, 45, 0.18),
+    0 10px 14px -10px rgba(70, 20, 45, 0.35),
+    0 40px 60px -34px rgba(70, 20, 45, 0.45);
+}
+/* grain and worn shine where the thumbs rest; above the body, under the parts */
+:is(.lt--a, .lt--b, .lt--c) .hh::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(9% 16% at 13% 52%, rgba(255, 255, 255, 0.3), transparent 70%),
+    radial-gradient(9% 16% at 87% 52%, rgba(255, 255, 255, 0.3), transparent 70%),
+    var(--grain) 0 0 / 180px;
+  opacity: 0.5;
+  mix-blend-mode: multiply;
+}
+:is(.lt--a, .lt--b, .lt--c) :is(.hh-top, .hh-ctl) {
+  position: relative;
+  z-index: 1;
+}
+/* the moulding seam just inside the edge */
+:is(.lt--a, .lt--b, .lt--c) .hh::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    0 1px 0 rgba(120, 40, 80, 0.1);
+}
+
+/* bezel: a recessed, slightly glossy frame */
+:is(.lt--a, .lt--b, .lt--c) .hh-bezel {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 30%),
+    var(--grain-lt) 0 0 / 140px,
+    var(--dev-bezel);
+  background-blend-mode: normal, soft-light, normal;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+    inset 0 3px 6px rgba(0, 0, 0, 0.55),
+    0 -1px 0 rgba(120, 40, 80, 0.25),
+    0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* screen: glass with a curved glare, a faint pixel grid and dark corners */
+:is(.lt--a, .lt--b, .lt--c) .hh-scene::after {
+  background:
+    linear-gradient(118deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.05) 26%, rgba(255, 255, 255, 0) 27%),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.06) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
+    radial-gradient(130% 120% at 50% 45%, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.32) 100%);
+}
+
+/* buttons: convex caps that sink when pressed */
+:is(.lt--a, .lt--b, .lt--c) .hh .hh-dpad > * {
+  background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 60%);
+}
+:is(.lt--a, .lt--b, .lt--c) .hh-dpad {
+  filter: drop-shadow(0 2px 0 rgba(70, 20, 45, 0.35)) drop-shadow(0 4px 5px rgba(70, 20, 45, 0.25));
+}
+:is(.lt--a, .lt--b, .lt--c) .hh .hh-face__btn,
+:is(.lt--a, .lt--b, .lt--c) .hh .hh-ab__btn {
+  background-image: radial-gradient(70% 70% at 35% 28%, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 60%);
+  box-shadow:
+    inset 0 -2px 2px rgba(0, 0, 0, 0.35),
+    0 2px 0 rgba(70, 20, 45, 0.35),
+    0 4px 6px rgba(70, 20, 45, 0.22);
+}
+:is(.lt--a, .lt--b, .lt--c) .hh .hh-face__btn:active,
+:is(.lt--a, .lt--b, .lt--c) .hh .hh-ab__btn:active {
+  box-shadow:
+    inset 0 2px 3px rgba(0, 0, 0, 0.45),
+    0 1px 0 rgba(70, 20, 45, 0.3);
+}
+/* printing pressed into the plastic */
+:is(.lt--a, .lt--b, .lt--c) .hh-print {
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+  opacity: 0.85;
+}
+/* the bubble is paper, not a flat shape */
+:is(.lt--a, .lt--b, .lt--c) .ch-bubble,
+:is(.lt--a, .lt--b, .lt--c) .ch-you {
+  background-image: var(--grain-soft);
+  background-size: 180px;
+  background-blend-mode: multiply;
+}
+
+/* ================= B: the page is the desk ================= */
+
+.lt--b .lab.ch {
+  background-color: #efe4d0;
+  background-image:
+    radial-gradient(70% 55% at 50% 30%, rgba(255, 246, 225, 0.95), rgba(255, 246, 225, 0) 70%),
+    radial-gradient(140% 100% at 50% 40%, rgba(0, 0, 0, 0) 55%, rgba(80, 50, 30, 0.18) 100%),
+    var(--grain-soft);
+  background-size: auto, auto, 180px;
+  background-blend-mode: normal, normal, multiply;
+}
+.lt-desk {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.lt-desk > span {
+  position: absolute;
+  display: block;
+}
+/* a page of music slid half under the console */
+.lt-desk__sheet {
+  left: max(2vw, calc(50% - 640px));
+  top: 330px;
+  width: 260px;
+  height: 340px;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 30px, rgba(36, 18, 32, 0.35) 30px 31px, transparent 31px 37px, rgba(36, 18, 32, 0.35) 37px 38px, transparent 38px 44px, rgba(36, 18, 32, 0.35) 44px 45px, transparent 45px 51px, rgba(36, 18, 32, 0.35) 51px 52px, transparent 52px 58px, rgba(36, 18, 32, 0.35) 58px 59px, transparent 59px 84px) 0 22px / 100% 84px no-repeat,
+    repeating-linear-gradient(180deg, transparent 0 30px, rgba(36, 18, 32, 0.35) 30px 31px, transparent 31px 37px, rgba(36, 18, 32, 0.35) 37px 38px, transparent 38px 44px, rgba(36, 18, 32, 0.35) 44px 45px, transparent 45px 51px, rgba(36, 18, 32, 0.35) 51px 52px, transparent 52px 58px, rgba(36, 18, 32, 0.35) 58px 59px, transparent 59px 84px) 0 112px / 100% 84px no-repeat,
+    repeating-linear-gradient(180deg, transparent 0 30px, rgba(36, 18, 32, 0.35) 30px 31px, transparent 31px 37px, rgba(36, 18, 32, 0.35) 37px 38px, transparent 38px 44px, rgba(36, 18, 32, 0.35) 44px 45px, transparent 45px 51px, rgba(36, 18, 32, 0.35) 51px 52px, transparent 52px 58px, rgba(36, 18, 32, 0.35) 58px 59px, transparent 59px 84px) 0 202px / 100% 84px no-repeat,
+    #fffaf0;
+  background-origin: content-box;
+  padding: 0 22px;
+  box-sizing: border-box;
+  transform: rotate(-9deg);
+  box-shadow: 0 1px 1px rgba(80, 50, 30, 0.2), 0 12px 24px -12px rgba(80, 50, 30, 0.35);
+}
+/* a pencil */
+.lt-desk__pencil {
+  right: max(3vw, calc(50% - 620px));
+  top: 520px;
+  width: 210px;
+  height: 11px;
+  border-radius: 2px 6px 6px 2px;
+  background:
+    linear-gradient(90deg, #f2c9a0 0 22px, transparent 22px),
+    linear-gradient(180deg, #ffd25a 0 33%, #f2b632 33% 66%, #e0a01e 66%);
+  clip-path: polygon(0 50%, 22px 0, 100% 0, 100% 100%, 22px 100%);
+  transform: rotate(14deg);
+  filter: drop-shadow(0 6px 4px rgba(80, 50, 30, 0.3));
+}
+/* a mug, seen from above */
+.lt-desk__mug {
+  right: max(6vw, calc(50% - 560px));
+  top: 270px;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 50%, #6b3f25 0 52%, #fffcf6 53% 64%, #f3c3d4 65%);
+  box-shadow: 0 10px 18px -8px rgba(80, 50, 30, 0.45);
+}
+.lt-desk__mug::after {
+  content: "";
+  position: absolute;
+  right: -18px;
+  top: 34px;
+  width: 26px;
+  height: 22px;
+  border: 6px solid #f3c3d4;
+  border-left: 0;
+  border-radius: 0 14px 14px 0;
+}
+.lt--b .ch-stage {
+  position: relative;
+}
+@media (max-width: 1100px) {
+  .lt-desk {
+    display: none;
+  }
+}
+
+/* ================= C: power on ================= */
+
+/* the cat's scene stays dark until the console is in tune */
+.lt--c.is-booting .hh-scene,
+.lt--c.is-booting .ch-bubble,
+.lt--c.is-booting .ch-you {
+  opacity: 0;
+}
+.lt--c .hh-scene,
+.lt--c .ch-bubble,
+.lt--c .ch-you {
+  transition: opacity 0.5s ease;
+}
+.lt--c .ch-you {
+  transition-delay: 0.25s;
+}
+.lt--c.is-booting .hh-led {
+  animation: lt-blink 0.5s steps(2) 3;
+}
+.lt-boot {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 6px;
+  background: #141826;
+  color: #f4f1ff;
+  font-family: "Silkscreen", ui-monospace, monospace;
+  transition: opacity 0.45s ease;
+}
+.lt-boot.is-out {
+  opacity: 0;
+}
+.lt-boot__dial {
+  position: relative;
+  width: clamp(140px, 30%, 260px);
+  aspect-ratio: 2 / 1;
+  border-radius: 999px 999px 0 0;
+  border: 2px solid rgba(244, 241, 255, 0.25);
+  border-bottom: 0;
+}
+.lt-boot__tick {
+  position: absolute;
+  bottom: 6px;
+  font-size: 13px;
+  opacity: 0.6;
+}
+.lt-boot__tick--flat { left: 10px; }
+.lt-boot__tick--sharp { right: 10px; }
+.lt-boot__tick--mid {
+  left: 50%;
+  top: 0;
+  bottom: auto;
+  width: 2px;
+  height: 12px;
+  margin-left: -1px;
+  background: rgba(244, 241, 255, 0.5);
+}
+.lt-boot__needle {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 3px;
+  height: 88%;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background: #ffd25a;
+  transform-origin: 50% 100%;
+  transform: rotate(-62deg);
+  animation: lt-tune 1.5s cubic-bezier(0.3, 1.6, 0.5, 1) forwards;
+}
+.lt-boot.is-ok .lt-boot__needle,
+.lt-boot.is-out .lt-boot__needle {
+  background: #6bdcae;
+  box-shadow: 0 0 10px #6bdcae;
+}
+.lt-boot__note {
+  margin: 0;
+  font-size: clamp(22px, 5vw, 40px);
+  line-height: 1;
+}
+.lt-boot__line {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  opacity: 0.75;
+}
+.lt-boot.is-ok .lt-boot__line {
+  color: #6bdcae;
+  opacity: 1;
+}
+@keyframes lt-tune {
+  0% { transform: rotate(-62deg); }
+  45% { transform: rotate(18deg); }
+  70% { transform: rotate(-7deg); }
+  100% { transform: rotate(0deg); }
+}
+@keyframes lt-blink {
+  50% { opacity: 0.2; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lt-boot__needle { animation: none; transform: none; }
+}

@@ -5,6 +5,8 @@ import "./lab-index.css";
 
 const DIRECTIONS = [
   { href: "/lab/home-1", name: "Cat host, wide handheld", line: "The cat lives on a PSP style handheld beside the intro and links." },
+  { href: "/lab/handheld-3d", name: "3D handheld study", line: "The handheld as a real 3D object: rocking D-pad, domed buttons that sink and click, the cat live on its screen." },
+  { href: "/lab/landing-texture", name: "Cat host, craft passes", line: "Three looks on the live handheld: retouched plastic, resting on a desk, and powering on by tuning to A." },
   { href: "/lab/home-1b", name: "Cat host, portrait handheld", line: "The same page with a Game Boy style handheld." },
   { href: "/lab/home-2", name: "Memory card", line: "A PS1 memory card screen. Each save block is one thing I make." },
   { href: "/lab/home-3", name: "Staff of notes", line: "One line of music. Each note is a link, and it plays." },

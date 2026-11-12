@@ -69,7 +69,6 @@ export const GREETING: AnswerNode[] = [
       { text: "." },
     ],
   },
-  { kind: "text", value: "Here are some starting points." },
 ];
 
 /** Suggestion pills, grouped, shown at the root of the conversation. */
@@ -149,14 +148,6 @@ export const INTENTS: Record<string, Intent> = {
         value:
           "After finishing undergrad at Northwestern University, I decided to spend two years training intensively in flute performance at New England Conservatory. It was a very intentional decision to take this window of my life to push my playing as far as I could. At the same time, I've continued building software, and I'm still shipping projects.",
       },
-      {
-        kind: "rich",
-        segments: [
-          { text: "If you want the detailed version, my " },
-          { text: "résumé", intent: "resume" },
-          { text: " is one click away." },
-        ],
-      },
     ],
     followUps: ["experience", "tech-stack", "resume"],
   },
@@ -180,7 +171,7 @@ export const INTENTS: Record<string, Intent> = {
     id: "cookie-flute-studio",
     chip: "Cookie Flute Studio",
     ask: "Tell me about Cookie Flute Studio.",
-    answer: [{ kind: "text", value: "A real-time practice tool I'm building for flutists. Here's the rundown, and there's a link to open it." }],
+    answer: [{ kind: "text", value: "A real-time practice tool I'm building for flutists." }],
     canvas: { kind: "project", slug: "cookie-flute-studio" },
     followUps: ["learning-log", "market", "skuy"],
   },
@@ -189,7 +180,7 @@ export const INTENTS: Record<string, Intent> = {
     id: "learning-log",
     chip: "Learning Log",
     ask: "Tell me about the Learning Log.",
-    answer: [{ kind: "text", value: "My class notes, rebuilt as an interactive textbook. Opening it now." }],
+    answer: [{ kind: "text", value: "My class notes, rebuilt as an interactive textbook." }],
     navigate: "/learning-log",
     followUps: ["cookie-flute-studio", "market", "skuy"],
   },
@@ -221,14 +212,6 @@ export const INTENTS: Record<string, Intent> = {
         kind: "text",
         value:
           "I'm doing my master's in flute performance at New England Conservatory on a scholarship, and I'm deep in the young-artist competition circuit.",
-      },
-      {
-        kind: "rich",
-        segments: [
-          { text: "There's competition footage and a few clips on the right, plus my " },
-          { text: "music résumé", href: "/haylie-wu-music-resume.pdf" },
-          { text: "." },
-        ],
       },
       {
         kind: "text",

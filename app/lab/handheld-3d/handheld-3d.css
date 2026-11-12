@@ -1,0 +1,556 @@
+.h3 {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-height: 100dvh;
+  background: radial-gradient(80% 70% at 50% 40%, #fbf6ec, #efe6d6);
+}
+.h3-stage {
+  position: relative;
+  min-height: 0;
+  height: min(88dvh, 900px);
+  cursor: default;
+  touch-action: none;
+}
+.h3-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.h3-help {
+  margin: 0 auto 28px;
+  font: 500 13px/1.4 var(--font-ui);
+  color: var(--ink);
+}
+.h3-help kbd {
+  padding: 1px 6px;
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  background: var(--paper);
+  font: inherit;
+}
+/* keyboard hints mean nothing on a touch screen */
+@media (hover: none) {
+  .h3-help {
+    display: none;
+  }
+}
+
+/* ---- which dialogue renderer (lab chrome) ---- */
+.h3-pick {
+  position: fixed;
+  z-index: 5;
+  top: 12px;
+  left: 50%;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--paper);
+  transform: translateX(-50%);
+  font: 500 13px/1 var(--font-ui);
+}
+.h3-pick button {
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+}
+.h3-pick button[aria-pressed="true"] {
+  background: rgba(70, 99, 61, 0.14);
+  color: #2f4528;
+  font-weight: 600;
+}
+
+/* ---- the hologram the console projects ---- */
+.h3-holo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
+  font-family: var(--font-ui);
+}
+.h3-holo__panel {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  padding: 52px 52px 40px;
+  border: 3px solid rgba(120, 230, 255, 0.75);
+  border-radius: 26px;
+  /* deep glass, so white words read on a light page */
+  background:
+    repeating-linear-gradient(0deg, rgba(120, 230, 255, 0.07) 0 2px, transparent 2px 6px),
+    linear-gradient(180deg, rgba(22, 44, 66, 0.86), rgba(26, 30, 58, 0.82));
+  box-shadow:
+    0 0 0 6px rgba(120, 230, 255, 0.12),
+    0 0 40px rgba(95, 227, 255, 0.45),
+    inset 0 0 60px rgba(95, 227, 255, 0.18);
+  color: #f2fcff;
+  pointer-events: auto;
+  transform-origin: 50% 100%;
+}
+.h3-holo__panel.is-on {
+  animation: h3-holo-on 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+.h3-holo__panel.is-new {
+  animation: h3-holo-flicker 0.32s steps(4, jump-none);
+}
+.h3-holo__name {
+  position: absolute;
+  top: 18px;
+  left: 52px;
+  font: 600 20px/1 var(--font-ui);
+  letter-spacing: 0.16em;
+  color: #7fe9ff;
+  text-shadow: 0 0 10px rgba(95, 227, 255, 0.8);
+}
+.h3-holo__text {
+  margin: 0;
+  font: 500 32px/44px var(--font-ui);
+  text-shadow: 0 0 12px rgba(95, 227, 255, 0.45);
+}
+.h3-holo__more {
+  position: absolute;
+  right: 36px;
+  bottom: 24px;
+  color: #7fe9ff;
+  font-size: 26px;
+  animation: h3-blink 0.9s steps(2, jump-none) infinite;
+}
+.h3-holo__choices {
+  position: absolute;
+  left: 40px;
+  right: 40px;
+  bottom: 28px;
+  display: grid;
+  gap: 2px;
+}
+.h3-holo__choices[hidden],
+.h3-holo__more[hidden],
+.h3-holo[hidden] {
+  display: none;
+}
+.h3-holo__choices button {
+  position: relative;
+  height: 50px;
+  padding: 0 0 0 44px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: #dff8ff;
+  font: 500 27px/50px var(--font-ui);
+  text-align: left;
+  white-space: nowrap;
+}
+/* a long list (the laptop's projects, the socials) goes in two columns */
+.h3-holo__choices.is-many {
+  grid-template-columns: 1fr 1fr;
+  column-gap: 12px;
+}
+.h3-holo__choices.is-many button {
+  overflow: hidden;
+  font-size: 23px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.h3-holo__choices button.is-cursor {
+  background: rgba(120, 230, 255, 0.16);
+  color: #fff;
+}
+.h3-holo__choices button.is-cursor::before {
+  content: "▶";
+  position: absolute;
+  left: 14px;
+  color: #7fe9ff;
+}
+@keyframes h3-holo-on {
+  0% { opacity: 0; transform: scale(0.2, 0.02); }
+  40% { opacity: 0.6; transform: scale(1, 0.04); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes h3-holo-flicker {
+  0% { opacity: 0.35; }
+  50% { opacity: 0.9; }
+  75% { opacity: 0.55; }
+  100% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .h3-holo__panel.is-on,
+  .h3-holo__panel.is-new { animation: none; }
+}
+
+.h3-pick--try {
+  top: auto;
+  bottom: 56px;
+}
+
+/* ---- a more physical hologram: see-through glass, a scan line, colour fringe ---- */
+.h3-holo__panel {
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(0deg, rgba(120, 230, 255, 0.07) 0 2px, transparent 2px 6px),
+    linear-gradient(180deg, rgba(22, 44, 66, 0.8), rgba(26, 30, 58, 0.74));
+  backdrop-filter: blur(2px);
+}
+/* the light enters along the bottom edge */
+.h3-holo__panel::after {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -2px;
+  height: 4px;
+  border-radius: 4px;
+  background: #b9f4ff;
+  box-shadow: 0 0 18px 4px rgba(95, 227, 255, 0.8);
+  pointer-events: none;
+}
+.h3-holo__scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -20%;
+  height: 18%;
+  background: linear-gradient(180deg, transparent, rgba(150, 240, 255, 0.12), transparent);
+  pointer-events: none;
+  animation: h3-scan 3.8s linear infinite;
+}
+.h3-holo__text,
+.h3-holo__title {
+  /* red and blue a hair apart, like light that isn't quite focused */
+  text-shadow:
+    -1px 0 rgba(255, 110, 170, 0.55),
+    1px 0 rgba(95, 227, 255, 0.7),
+    0 0 14px rgba(95, 227, 255, 0.4);
+}
+.h3-holo__title {
+  display: block;
+  margin: 0 0 8px;
+  font: 600 38px/1.15 var(--font-ui);
+  color: #fff;
+}
+.h3-holo__title[hidden] {
+  display: none;
+}
+.h3-holo__clip {
+  display: none;
+}
+.h3-holo__panel.is-clip .h3-holo__clip {
+  position: absolute;
+  inset: 40px 40px 30px;
+  display: grid;
+  place-items: center;
+}
+.h3-holo__panel.is-clip :is(.h3-holo__text, .h3-holo__title, .h3-holo__more, .h3-holo__choices) {
+  display: none;
+}
+.h3-holo__clip iframe {
+  height: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: 12px;
+  opacity: 0.94;
+  box-shadow: 0 0 30px rgba(95, 227, 255, 0.35);
+}
+@keyframes h3-scan {
+  to { top: 110%; }
+}
+
+/* ---- the power-on tuner on the console's screen ---- */
+.h3-boot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  transform-origin: 0 0;
+  background: #121522;
+  color: #f4f1ff;
+  font-family: var(--font-pix);
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+.h3-boot.is-out {
+  opacity: 0;
+}
+.h3-boot__dial {
+  position: relative;
+  width: 300px;
+  height: 150px;
+  border: 3px solid rgba(244, 241, 255, 0.25);
+  border-bottom: 0;
+  border-radius: 150px 150px 0 0;
+}
+.h3-boot__mark {
+  position: absolute;
+  bottom: 8px;
+  font-size: 22px;
+  opacity: 0.6;
+}
+.h3-boot__mark--flat { left: 18px; }
+.h3-boot__mark--sharp { right: 18px; }
+.h3-boot__mark--mid {
+  left: 50%;
+  top: 0;
+  bottom: auto;
+  width: 3px;
+  height: 18px;
+  margin-left: -1.5px;
+  background: rgba(244, 241, 255, 0.55);
+}
+.h3-boot__needle {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 5px;
+  height: 132px;
+  margin-left: -2.5px;
+  border-radius: 3px;
+  background: #ffd25a;
+  transform-origin: 50% 100%;
+  transform: rotate(-62deg);
+}
+.h3-boot.is-run .h3-boot__needle {
+  animation: h3-tune 1.5s cubic-bezier(0.3, 1.6, 0.5, 1) forwards;
+}
+.h3-boot.is-ok .h3-boot__needle {
+  transform: none;
+  background: #6bdcae;
+  box-shadow: 0 0 16px #6bdcae;
+}
+.h3-boot__note {
+  margin: 0;
+  font-size: 64px;
+  line-height: 1;
+}
+.h3-boot__line {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: 0.1em;
+  opacity: 0.8;
+}
+.h3-boot.is-ok .h3-boot__line {
+  color: #6bdcae;
+  opacity: 1;
+}
+@keyframes h3-tune {
+  0% { transform: rotate(-62deg); }
+  45% { transform: rotate(18deg); }
+  70% { transform: rotate(-7deg); }
+  100% { transform: rotate(0deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .h3-holo__scan { animation: none; display: none; }
+  .h3-boot.is-run .h3-boot__needle { animation: none; transform: none; }
+}
+
+/* ---- island looks: rounded speech bubbles, made of light ---- */
+.h3-holo:is([data-look="warm"], [data-look="cool"]) .h3-holo__panel {
+  --bub: rgba(255, 246, 226, 0.78);
+  --ink-h: #5b4330;
+  --edge: rgba(255, 214, 150, 0.9);
+  --glow: rgba(255, 196, 120, 0.5);
+  --line: rgba(255, 200, 140, 0.12);
+  --tag: #ff9d4d;
+  --pick: #ff9d4d;
+  padding: 66px 84px 40px;
+  border: 0;
+  /* a slightly lumpy oval, like the island's speech bubbles */
+  border-radius: 150px 170px 140px 160px / 120px 130px 150px 120px;
+  background:
+    repeating-linear-gradient(0deg, var(--line) 0 2px, transparent 2px 6px),
+    var(--bub);
+  box-shadow:
+    0 0 0 4px var(--edge),
+    0 0 36px 6px var(--glow),
+    inset 0 0 40px rgba(255, 255, 255, 0.5);
+  color: var(--ink-h);
+  backdrop-filter: blur(3px);
+}
+.h3-holo[data-look="cool"] .h3-holo__panel {
+  --bub: rgba(222, 248, 255, 0.74);
+  --ink-h: #1f4a5c;
+  --edge: rgba(130, 228, 255, 0.95);
+  --glow: rgba(95, 227, 255, 0.55);
+  --line: rgba(95, 200, 240, 0.12);
+  --tag: #ff8fb8;
+  --pick: #2fb6d8;
+}
+.h3-holo:is([data-look="warm"], [data-look="cool"]) .h3-holo__panel::after {
+  display: none;
+}
+/* the name tag sits on the bubble's rim, a little crooked */
+.h3-holo:is([data-look="warm"], [data-look="cool"]) .h3-holo__name {
+  top: 6px;
+  left: 70px;
+  padding: 10px 26px;
+  border-radius: 999px;
+  background: var(--tag);
+  color: #fff;
+  font: 700 24px/1 var(--font-ui);
+  letter-spacing: 0.04em;
+  text-shadow: none;
+  box-shadow: 0 0 18px var(--glow);
+  transform: rotate(-4deg);
+}
+.h3-holo:is([data-look="warm"], [data-look="cool"]) :is(.h3-holo__text, .h3-holo__title) {
+  color: var(--ink-h);
+  font-weight: 600;
+  /* soft light bleed instead of the red and blue fringe */
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.9), 0 0 2px rgba(255, 255, 255, 0.8);
+}
+.h3-holo:is([data-look="warm"], [data-look="cool"]) .h3-holo__text {
+  font-size: 31px;
+  line-height: 43px;
+}
+.h3-holo:is([data-look="warm"], [data-look="cool"]) .h3-holo__more {
+  right: 50%;
+  bottom: 14px;
+  color: var(--pick);
+  animation: h3-bob 0.8s ease-in-out infinite;
+}
+/* choices sit inside the bubble under the words, the picked one in a soft pill */
+.h3-holo:is([data-look="warm"], [data-look="cool"]) .h3-holo__choices {
+  left: 70px;
+  right: auto;
+  bottom: 34px;
+  justify-items: start;
+  gap: 4px;
+}
+.h3-holo:is([data-look="warm"], [data-look="cool"]) .h3-holo__choices button {
+  height: 46px;
+  padding: 0 22px 0 46px;
+  border-radius: 999px;
+  color: var(--ink-h);
+  font: 600 27px/46px var(--font-ui);
+}
+.h3-holo:is([data-look="warm"], [data-look="cool"]) .h3-holo__choices button.is-cursor {
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--ink-h);
+  box-shadow: 0 0 0 2px var(--edge);
+}
+.h3-holo:is([data-look="warm"], [data-look="cool"]) .h3-holo__choices button.is-cursor::before {
+  left: 16px;
+  color: var(--pick);
+  animation: h3-nudge 0.8s ease-in-out infinite;
+}
+.h3-holo:is([data-look="warm"], [data-look="cool"]) .h3-holo__scan {
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+}
+@keyframes h3-bob {
+  50% { transform: translateY(5px); }
+}
+@keyframes h3-nudge {
+  50% { transform: translateX(4px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .h3-holo .h3-holo__more,
+  .h3-holo .h3-holo__choices button.is-cursor::before { animation: none; }
+}
+
+.h3-pick--sound {
+  top: auto;
+  bottom: 100px;
+  white-space: nowrap;
+}
+
+/* ---- power on: chime ---- */
+@property --iris {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 0%;
+}
+.h3-boot[data-style="chime"] {
+  gap: 4px;
+  overflow: hidden;
+  background: #fff4e6;
+  color: #e86a9a;
+}
+/* the tube warming up: black, a bright line, then the picture */
+.h3-boot[data-style="chime"]::before,
+.h3-boot[data-style="chime"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.h3-boot[data-style="chime"]::before {
+  background: #121522;
+  opacity: 0;
+}
+.h3-boot[data-style="chime"]::after {
+  top: 50%;
+  bottom: auto;
+  height: 6px;
+  margin-top: -3px;
+  background: #fff;
+  box-shadow: 0 0 24px 6px rgba(255, 255, 255, 0.8);
+  opacity: 0;
+}
+.h3-boot[data-style="chime"].is-run::before {
+  animation: h3-tube-dark 0.42s ease-in both;
+}
+.h3-boot[data-style="chime"].is-run::after {
+  animation: h3-tube-line 0.42s ease-out both;
+}
+.h3-boot__logo {
+  display: flex;
+  margin: 0;
+  font: 700 120px/1 var(--font-ui);
+  letter-spacing: -0.02em;
+}
+.h3-boot__logo span {
+  display: inline-block;
+}
+.h3-boot.is-run .h3-boot__logo span {
+  animation: h3-drop 0.5s cubic-bezier(0.3, 1.5, 0.5, 1) calc(0.42s + var(--i) * 0.09s) both;
+}
+.h3-boot.is-ok .h3-boot__logo span {
+  animation: h3-wave 0.5s ease-in-out calc(var(--i) * 0.06s);
+}
+.h3-boot__sub {
+  margin: 0;
+  color: #a4826a;
+  font: 600 26px/1.2 var(--font-ui);
+  letter-spacing: 0.08em;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.h3-boot.is-ok .h3-boot__sub {
+  opacity: 1;
+}
+/* an iris opens from the middle onto the room */
+.h3-boot[data-style="chime"].is-out {
+  opacity: 1;
+  mask: radial-gradient(circle at 50% 50%, transparent var(--iris), #000 calc(var(--iris) + 0.5%));
+  animation: h3-iris 0.5s ease-in forwards;
+}
+@keyframes h3-tube-dark {
+  0%, 30% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes h3-tube-line {
+  0% { opacity: 1; transform: scaleX(0); }
+  35% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1) scaleY(60); }
+}
+@keyframes h3-drop {
+  0% { opacity: 0; transform: translateY(-120%); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes h3-wave {
+  40% { transform: translateY(-14%); }
+}
+@keyframes h3-iris {
+  to { --iris: 80%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .h3-boot[data-style="chime"] *,
+  .h3-boot[data-style="chime"]::before,
+  .h3-boot[data-style="chime"]::after { animation: none; }
+}

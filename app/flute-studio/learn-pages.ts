@@ -22,8 +22,8 @@ export const LEARN_PAGES: readonly LearnPage[] = [
   },
   {
     key: "rhythm-drills", href: "/flute-studio/rhythm-drills", en: "Rhythm drills", zh: "节奏训练",
-    enDetail: "Tap rhythms that keep getting harder, with real bars from the Library.",
-    zhDetail: "越点越难的节奏，还有曲库里的真实小节。", icon: "rhythm",
+    enDetail: "Tap rhythms at Easy, Medium or Hard, with real bars from the Library.",
+    zhDetail: "简单、中等、困难三个难度的节奏，还有曲库里的真实小节。", icon: "rhythm",
   },
   {
     key: "fingerings",

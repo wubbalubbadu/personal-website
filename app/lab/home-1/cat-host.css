@@ -281,6 +281,25 @@
   visibility: visible;
   animation: ch-point 0.6s steps(2, jump-none) infinite alternate;
 }
+/* The one thing you probably came for (open the project): tinted, a little
+   stronger, with the "›" the studio uses for links that take you somewhere. */
+.ch-you__choices button.is-main {
+  background: rgba(91, 141, 239, 0.14);
+  color: #2f5fc4;
+  font-weight: 600;
+}
+.ch-you__choices button.is-main::after {
+  content: "›";
+  margin-left: 2px;
+}
+/* other choices that take you somewhere (a link, not a question) get the arrow too */
+.ch-you__choices button.is-go::after {
+  content: "›";
+  margin-left: 2px;
+}
+.ch-you__choices button.is-main[data-cursor] {
+  background: rgba(91, 141, 239, 0.22);
+}
 .ch-you__choices button:focus-visible {
   outline: 2px solid var(--you-tag);
   outline-offset: -2px;
@@ -288,43 +307,6 @@
 @keyframes ch-point {
   from { transform: translateX(0); }
   to { transform: translateX(3px); }
-}
-
-/* the controls, always in view, like a game's hint strip */
-.ch-hint {
-  margin: 0;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px 14px;
-  min-height: 22px;
-  font-family: var(--font-pix);
-  font-size: 9px;
-  letter-spacing: 0.06em;
-  color: var(--ink-50);
-}
-.ch-hint span {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-/* Keyboard prompts mean nothing on a touchscreen (also hides them before scripts load). */
-@media (hover: none) {
-  .ch-hint {
-    display: none;
-  }
-}
-/* A little key cap, like the button prompts in a game. */
-.ch-hint kbd {
-  min-width: 16px;
-  padding: 2px 4px 1px;
-  font: inherit;
-  text-align: center;
-  color: var(--ink-70);
-  background: var(--paper);
-  border: 1px solid var(--ink-50);
-  border-bottom-width: 2px;
-  border-radius: 3px;
 }
 
 /* the room's things as a plain list, for screen readers */
@@ -345,10 +327,10 @@
   }
 }
 
-@media (min-width: 760px) {
+@media (min-width: 760px) and (min-height: 560px) and (orientation: landscape) {
   .ch-stage {
     gap: 22px;
-    padding: 3vh 40px 48px;
+    padding: 3vh 12px 48px;
   }
 }
 /* A project's actions side by side (open it, read its full details); they wrap on a phone. */
@@ -360,4 +342,363 @@
 }
 .ch-bubble__actions .ch-bubble__go {
   margin-top: 0;
+}
+
+/* ---- the bubbles as holograms (every size now, with the 3D console) ----
+ * Same bubbles, same words and sizes. Made of light rather than painted: tinted
+ * glass that is brightest where the beam hits it, a thin bright rim, words
+ * that glow in the bubble's own light, and fine scan lines running over
+ * everything, words included. Haylie's light is warm, yours is cool. They stay
+ * dark until the console has booted, then the beam grows from the lens and
+ * they flicker on. */
+@media all {
+  .ch-bubble,
+  .ch-you {
+    background:
+      radial-gradient(120% 90% at 50% 0%, var(--holo-hot), transparent 70%),
+      var(--holo-bub);
+    color: var(--holo-ink);
+    box-shadow:
+      0 0 0 1.5px var(--holo-edge),
+      0 0 0 5px var(--holo-halo),
+      0 0 34px 6px var(--holo-glow),
+      inset 0 0 22px var(--holo-inner);
+    backdrop-filter: blur(6px) saturate(1.2);
+    text-shadow:
+      0 0 7px var(--holo-glow),
+      -0.6px 0 0 var(--holo-fringe-a),
+      0.6px 0 0 var(--holo-fringe-b);
+  }
+  /* scan lines and a slow sweep of light, over the words too */
+  .ch-bubble::after,
+  .ch-you::after {
+    content: "";
+    position: absolute;
+    z-index: 3;
+    inset: 0;
+    display: block;
+    width: auto;
+    height: auto;
+    border-radius: inherit;
+    background:
+      linear-gradient(to bottom, transparent 0 40%, var(--holo-sweep) 50%, transparent 60% 100%) 0 -100% / 100% 300% no-repeat,
+      repeating-linear-gradient(to bottom, var(--holo-scan) 0 1px, transparent 1px 4px);
+    transform: none;
+    pointer-events: none;
+    animation: ch-sweep 4.5s linear infinite;
+  }
+  .ch-bubble {
+    --holo-bub: rgba(255, 238, 214, 0.62);
+    --holo-hot: rgba(255, 252, 240, 0.85);
+    --holo-ink: #5a3a22;
+    --holo-edge: rgba(255, 236, 205, 0.95);
+    --holo-halo: rgba(255, 190, 120, 0.22);
+    --holo-glow: rgba(255, 178, 100, 0.45);
+    --holo-inner: rgba(255, 210, 160, 0.45);
+    --holo-scan: rgba(150, 90, 40, 0.07);
+    --holo-sweep: rgba(255, 255, 255, 0.35);
+    --holo-fringe-a: rgba(255, 110, 150, 0.25);
+    --holo-fringe-b: rgba(80, 210, 255, 0.25);
+    --box: var(--holo-bub);
+    --box-ink: var(--holo-ink);
+  }
+  .ch-you {
+    --holo-bub: rgba(212, 244, 255, 0.58);
+    --holo-hot: rgba(240, 253, 255, 0.85);
+    --holo-ink: #1c4659;
+    --holo-edge: rgba(215, 248, 255, 0.95);
+    --holo-halo: rgba(95, 210, 255, 0.22);
+    --holo-glow: rgba(80, 200, 255, 0.45);
+    --holo-inner: rgba(150, 225, 255, 0.45);
+    --holo-scan: rgba(30, 90, 120, 0.07);
+    --holo-sweep: rgba(255, 255, 255, 0.35);
+    --holo-fringe-a: rgba(255, 110, 180, 0.22);
+    --holo-fringe-b: rgba(60, 200, 255, 0.28);
+    --you: var(--holo-bub);
+    --you-ink: var(--holo-ink);
+  }
+  /* the tail becomes the beam: light fanning down from the lens */
+  .ch-bubble::before {
+    top: -46px;
+    left: 50%;
+    z-index: -1;
+    width: 62%;
+    height: 46px;
+    margin-left: -31%;
+    border-radius: 0;
+    background: linear-gradient(to bottom, rgba(95, 227, 255, 0.55), rgba(255, 220, 170, 0.18));
+    clip-path: polygon(49% 0, 51% 0, 100% 100%, 0 100%);
+    /* (the old tail was a rotated square; the beam stands straight) */
+    transform: none;
+    transform-origin: 50% 0;
+    animation: ch-beam 2.4s ease-in-out infinite;
+  }
+  /* one rhythm in both bubbles: the questions sit on the same 24px lines as
+     her words, instead of tall 40px rows (phones keep the big tap targets) */
+  .ch-you {
+    padding: 16px 12px 12px;
+  }
+  .ch-you__choices {
+    gap: 0;
+  }
+  .ch-you__choices button {
+    min-height: 0;
+    padding: 5px 12px 5px 6px;
+    font-size: 16px;
+    line-height: 24px;
+  }
+  .ch-you__choices button[data-cursor] {
+    background: rgba(255, 255, 255, 0.55);
+    box-shadow: 0 0 12px rgba(120, 220, 255, 0.45);
+  }
+  .ch-you__said {
+    font-size: 16px;
+    line-height: 24px;
+  }
+  .ch-bubble__name,
+  .ch-you__name {
+    z-index: 4;
+    text-shadow: none;
+    box-shadow: 0 0 14px var(--holo-glow);
+  }
+
+  /* ---- power on: dark until the console boots ---- */
+  /* opacity too: the choice arrow sets its own visibility and would show through */
+  .ch-stage:not(.is-booted) :is(.ch-bubble, .ch-you) {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .ch-stage.is-booted .ch-bubble::before {
+    animation:
+      ch-beam-grow 0.35s steps(5, end) both,
+      ch-beam 2.4s ease-in-out 0.35s infinite;
+  }
+  .ch-stage.is-booted .ch-bubble {
+    animation: ch-holo-on 0.55s steps(6, end) 0.3s both;
+  }
+  .ch-stage.is-booted .ch-you {
+    animation: ch-holo-on 0.45s steps(5, end) both;
+  }
+}
+@keyframes ch-beam {
+  50% {
+    opacity: 0.75;
+  }
+}
+@keyframes ch-beam-grow {
+  from {
+    transform: scaleY(0);
+  }
+}
+/* unfolds top to bottom out of the beam, flickering like a projector warming up */
+@keyframes ch-holo-on {
+  0% {
+    opacity: 0;
+    clip-path: inset(0 0 100% 0 round 18px);
+  }
+  30% {
+    opacity: 0.9;
+  }
+  45% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 1;
+    clip-path: inset(-40px -40px -40px -40px round 18px);
+  }
+}
+@keyframes ch-sweep {
+  to {
+    background-position: 0 200%, 0 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ch-bubble::before,
+  .ch-bubble::after,
+  .ch-you::after,
+  .ch-stage.is-booted .ch-bubble,
+  .ch-stage.is-booted .ch-you,
+  .ch-stage.is-booted .ch-bubble::before {
+    animation: none;
+  }
+}
+
+/* ---- prototype (?desk): the console stands on a desk, the bubbles are a
+ * hologram standing on a projector pad in front of it. console3d warps
+ * .ch-holo into place each frame, the same way it places the screen. */
+.ch-holo {
+  display: contents;
+}
+@media (min-width: 760px) and (min-height: 560px) and (orientation: landscape) {
+  /* one screen, no scrolling: the console is sized by the window's height too,
+   * leaving HOLO_ROOM under it for the hologram; the stage is exactly one
+   * window tall and clips the desk that runs on past it */
+  .ch-stage.is-desk {
+    --holo-room: 290px;
+    position: relative;
+    box-sizing: border-box;
+    height: 100svh;
+    padding: 0 12px;
+    align-content: start;
+  }
+  .ch-stage.is-desk .hh--psp {
+    aspect-ratio: 230 / 116;
+    /* no fixed cap: the height rule already keeps the bubbles on screen, and a cap
+       only shrank the console on big monitors */
+    width: min(100%, calc((100svh - var(--holo-room)) * 230 / 116));
+  }
+  /* your side a touch smaller than hers (about 5%), easier to read at this angle */
+  .ch-stage.is-desk .ch-you__choices button {
+    padding: 4px 10px 4px 6px;
+    font-size: 15px;
+    line-height: 22px;
+  }
+  /* long lists (the projects) go in two columns, so they never run off the page */
+  .ch-stage.is-desk .ch-you:has(.ch-you__choices.is-many) {
+    width: 100%;
+    margin-right: 0;
+  }
+  .ch-stage.is-desk .ch-you__choices.is-many {
+    grid-template-columns: 1fr 1fr;
+    column-gap: 6px;
+  }
+  /* the 3D canvas runs on under the hologram, so it stands on the wood */
+  .ch-stage.is-desk {
+    overflow: clip;
+  }
+  .ch-stage.is-desk .hh-3d {
+    left: calc(50% - 50vw);
+    right: calc(50% - 50vw);
+    bottom: calc(-1 * var(--holo-room));
+  }
+  .ch-stage.is-desk .ch-holo {
+    position: absolute;
+    z-index: 5;
+    left: 0;
+    top: 0;
+    width: 760px;
+    display: grid;
+    gap: 14px;
+    justify-items: center;
+    transform-origin: 0 0;
+    pointer-events: none;
+  }
+  .ch-stage.is-desk .ch-holo > * {
+    pointer-events: auto;
+  }
+  /* the light comes up from the pad now, not down from the lens */
+  .ch-stage.is-desk .ch-bubble::before {
+    display: none;
+  }
+  /* the desk runs to the page edges left and right, and softens toward you */
+  .ch-stage.is-desk .hh-3d canvas {
+    -webkit-mask-image: linear-gradient(to bottom, #000 62%, transparent);
+    mask-image: linear-gradient(to bottom, #000 62%, transparent);
+  }
+  /* a pool of the projector's light on the wood, under the words */
+  .ch-stage.is-desk .ch-holo::after {
+    content: "";
+    position: absolute;
+    inset: -40px -60px;
+    z-index: -1;
+    background: radial-gradient(closest-side, rgba(255, 175, 210, 0.38), rgba(255, 175, 210, 0.12) 60%, transparent);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .ch-stage.is-desk.is-booted .ch-holo::after {
+    opacity: 1;
+    transition: opacity 0.5s steps(5) 0.2s;
+  }
+}
+
+/* ---- the desk on phones and portrait iPads (the tall console) ----
+ * The same desk and hologram as on wide screens: the console on top as big as
+ * the width allows, the hologram lying on the desk under it (console3d warps
+ * .ch-holo there each frame). The page may scroll if the talk runs long. */
+@media not all and (min-width: 760px) and (min-height: 560px) and (orientation: landscape) {
+  .ch-stage.is-desk {
+    --holo-room: 330px;
+    position: relative;
+    box-sizing: border-box;
+    min-height: 100svh;
+    padding: 0 4px var(--holo-room);
+    align-content: start;
+    overflow: clip;
+  }
+  .ch-stage.is-desk .hh--psp.is-tall {
+    width: min(100%, calc((100svh - var(--holo-room) - 8px) * var(--tall-vw, 120) / var(--tall-vh, 126)));
+    margin-inline: auto;
+  }
+  /* phones: always the full width, however short Safari's bars leave the
+   * screen (the page scrolls to the hologram) */
+  @media (max-width: 599px) {
+    .ch-stage.is-desk .hh--psp.is-tall {
+      width: 100%;
+    }
+  }
+  /* (as specific as handheld.css's tall rules, which set inset: 0) */
+  .ch-stage.is-desk .hh--psp.is-tall .hh-3d {
+    left: calc(50% - 50vw);
+    right: calc(50% - 50vw);
+    bottom: calc(-1 * var(--holo-room));
+  }
+  .ch-stage.is-desk .hh-3d canvas {
+    -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent);
+    mask-image: linear-gradient(to bottom, #000 70%, transparent);
+  }
+  .ch-stage.is-desk .ch-holo {
+    position: absolute;
+    z-index: 5;
+    left: 0;
+    top: 0;
+    /* laid out wide, then shrunk onto the desk (console3d), so the words land
+     * small on a phone */
+    width: 450px;
+    display: grid;
+    gap: 12px;
+    justify-items: center;
+    transform-origin: 0 0;
+    pointer-events: none;
+  }
+  .ch-stage.is-desk .ch-holo > * {
+    pointer-events: auto;
+  }
+  .ch-stage.is-desk .ch-bubble::before {
+    display: none;
+  }
+  /* smaller words on a phone, so the hologram doesn't outgrow the console */
+  .ch-stage.is-desk .ch-bubble {
+    font-size: 13.5px;
+    line-height: 1.45;
+  }
+  .ch-stage.is-desk .ch-you__choices button {
+    min-height: 30px;
+    font-size: 13.5px;
+    line-height: 1.35;
+  }
+  .ch-stage.is-desk .ch-holo::after {
+    content: "";
+    position: absolute;
+    inset: -30px -30px;
+    z-index: -1;
+    background: radial-gradient(closest-side, rgba(255, 175, 210, 0.38), rgba(255, 175, 210, 0.12) 60%, transparent);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .ch-stage.is-desk.is-booted .ch-holo::after {
+    opacity: 1;
+    transition: opacity 0.5s steps(5) 0.2s;
+  }
+}
+
+/* Opening a project: dive into the console's screen, then the page changes. */
+.ch-stage.is-diving {
+  transform-origin: var(--dive-x, 50%) var(--dive-y, 30%);
+  animation: ch-dive 0.65s cubic-bezier(0.55, 0, 0.85, 0.35) forwards;
+  pointer-events: none;
+}
+@keyframes ch-dive {
+  60% { opacity: 1; }
+  to { transform: scale(5); opacity: 0; }
 }

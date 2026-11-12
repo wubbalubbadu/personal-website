@@ -98,7 +98,7 @@ export function cookieTexture(extent: number, seed = 7) {
   );
 }
 
-export type FaceExpression = "open" | "blink" | "happy" | "chomp" | "content" | "sleep" | "surprised";
+export type FaceExpression = "open" | "blink" | "happy" | "chomp" | "content" | "sleep" | "surprised" | "talk";
 
 /** Redraws the 32x32 face decal in place; cheap enough to do on every blink. */
 export function drawFace(canvas: HTMLCanvasElement, expr: FaceExpression, kind: "cookie" | "cat" = "cookie") {
@@ -115,7 +115,7 @@ export function drawFace(canvas: HTMLCanvasElement, expr: FaceExpression, kind: 
     px(g, PALETTE.blush, 24, 18, 4, 2);
   }
   const eye = (x: number) => {
-    if (expr === "open" || expr === "chomp") {
+    if (expr === "open" || expr === "chomp" || expr === "talk") {
       px(g, ink, x, 12, 3, 5);
       px(g, ink, x - 1, 13, 5, 3);
       px(g, "#ffffff", x, 13);
@@ -146,11 +146,16 @@ export function drawFace(canvas: HTMLCanvasElement, expr: FaceExpression, kind: 
     px(g, "#e98a9c", 15, 17, 2, 1);
     g.translate(0, 1);
   }
-  if (cat && expr !== "chomp" && expr !== "surprised" && expr !== "content" && expr !== "happy") {
+  if (cat && expr !== "chomp" && expr !== "talk" && expr !== "surprised" && expr !== "content" && expr !== "happy") {
     // tiny cat smile
     px(g, ink, 14, 18);
     px(g, ink, 15, 19, 2, 1);
     px(g, ink, 17, 18);
+  } else if (expr === "talk") {
+    // talking: a small soft mouth, not the wide chomp
+    px(g, ink, 15, 19, 2, 1);
+    px(g, ink, 14, 20, 4, 1);
+    px(g, "#c9566a", 15, 20, 2, 1);
   } else if (expr === "chomp" || expr === "surprised") {
     px(g, ink, 14, 18, 4, 4);
     px(g, ink, 13, 19, 6, 2);

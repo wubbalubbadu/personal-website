@@ -1,18 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import "../_kit/kit.css";
 import "./cat-host.css";
 import "./handheld.css";
 import { SheetHost, useOpenSheet } from "../_kit/Sheets";
-import { CONTACT_LINKS, COPY, FLUTE_LINKS, opensNewTab, PROJECT_ROWS, type LinkItem, type ProjectRow } from "../_kit/links";
+import { opensNewTab, PROJECT_ROWS, type ProjectRow } from "../_kit/links";
 import { playFlute } from "../_kit/fluteTone";
 import { useMedia, usePrefersReducedMotion } from "../_kit/hooks";
 import { INTENTS, type AnswerNode, type RichSeg } from "../../lib/answers";
-import { getProject } from "../../lib/projects";
 import { playStep, timeline, unlockAudio, VOICES, type MascotEngine, type MascotMood, type Outfit } from "../../components/ps1-mascot";
 import { Console, type Device, type Pad } from "./Handheld";
-import ItemArt, { LaptopArt, type ArtId } from "./ItemArt";
+import { paintPaper, paintProjectScreen } from "./ItemArt";
+import { DESK, DESK_DOWN, DESK_UP, DESKTOP_LINE, ITEMS, LOOKS, QUESTIONS, ROOM, SNACK_LINES, SNACK_MILESTONES, TUNE, WALL, type ItemId, type Question } from "../_kit/studio";
 
 /*
  * Cat host: the page is the handheld, and its screen is the cat's studio.
@@ -24,204 +24,17 @@ import ItemArt, { LaptopArt, type ArtId } from "./ItemArt";
  * first paint.
  */
 
-/* ---- what's in the room ---- */
+/** Inspecting these flies the camera square onto the real thing in the room
+ *  (like the laptop) and renders sharp while you're there. */
+const CLOSE_UP = new Set<ItemId>(["diploma", "resume", "socials", "letter"]);
 
-type ItemId =
-  | "diploma" | "resume" | "socials" | "laptop" | "book" | "letter" | "flute" | "ipad" | "cookies"
-  // the living room
-  | "closet" | "stand" | "window" | "jar" | "cushion";
-
-type Item = {
-  name: string;
-  /** What the cat says when you inspect it (in the bubble). */
-  react: string;
-  /** The item card's paragraph. Drafts for Haylie to edit. */
-  body: string;
-  open?: { label: string; href: string };
-  links?: LinkItem[];
-  /** Inspecting zooms into the laptop's screen and opens its desktop. */
-  desktop?: boolean;
-  /** The cat picks it up and plays. */
-  plays?: boolean;
-  /** What the cat does when you inspect it (eat, nap); `plays` means flute. */
-  mood?: MascotMood;
-  /** A snack: the cat eats one, the counter goes up, it says one of SNACK_LINES. */
-  snack?: boolean;
-  /** The dress-up closet: each inspect puts on the next of LOOKS. */
-  closet?: boolean;
-  /** Inspecting runs this whole conversation from app/lib/answers.ts instead of `body`. */
-  topic?: "flute" | "background" | "projects";
-};
-
-const ITEMS: Record<ItemId, Item> = {
-  diploma: {
-    name: "Diploma",
-    react: "My diploma!",
-    body: "I studied computer science and flute performance at Northwestern. Now I'm doing my master's in flute performance at New England Conservatory, and I've kept building software the whole time.",
-  },
-  resume: {
-    name: "Résumé",
-    react: "Everything's on here.",
-    body: "My software résumé: features shipped at MathWorks, leading the backend at a startup, and tools and research at Northwestern.",
-    open: { label: "Open my résumé", href: "/haylie-wu-resume.pdf" },
-  },
-  socials: {
-    name: "Social media",
-    react: "Come find me online!",
-    body: "I share performances and short clips online, around 240k followers across TikTok, Douyin, WeChat Channels and RedNote.",
-    links: FLUTE_LINKS.filter((l) => l.label !== "Competition footage"),
-  },
-  laptop: {
-    name: "Laptop",
-    react: "My projects live in here.",
-    body: "",
-    desktop: true,
-  },
-  // The Learning Log has its own book on the desk, and stays on the laptop too.
-  book: {
-    name: "Learning Log",
-    react: "My study notes!",
-    body: getProject("learning-log")?.preview ?? "",
-    open: { label: "Open the Learning Log", href: "/learning-log" },
-  },
-  letter: {
-    name: "Letter",
-    react: "Write to me!",
-    body: COPY.contactLine,
-    links: CONTACT_LINKS.filter((l) => l.label !== "Résumé"),
-  },
-  flute: {
-    name: "Flute",
-    react: "Let me play you something.",
-    body: "Let me play you something first. Then ask me anything about the flute side of my life.",
-    plays: true,
-  },
-  ipad: {
-    name: "Cookie Flute Studio",
-    react: "My practice app!",
-    body: "Cookie Flute Studio is the practice app I'm building for flutists. It runs in your browser, in English and Chinese. Ask me anything about it.",
-    open: { label: "Open Cookie Flute Studio", href: "/flute-studio" },
-  },
-  // The fun things: no links, the cat just does something. Drafts for Haylie.
-  cookies: { name: "Cookies", react: "", body: "", snack: true, mood: "eat" },
-  jar: { name: "Cookie jar", react: "", body: "", snack: true, mood: "eat" },
-  closet: { name: "Closet", react: "", body: "", closet: true },
-  cushion: { name: "Cushion", react: "", body: "Five more minutes.", mood: "sleep" },
-  stand: { name: "Music stand", react: "", body: "Long tones first. Always.", plays: true },
-  window: { name: "Window", react: "", body: "Good light for practising." },
-};
-
-/**
- * Some things open their own questions when you inspect them, the way the hello
- * offers background, flute and projects. Drafts for Haylie's tone pass: facts
- * only from what she has approved, app/lib/projects.ts, and her teaching.
- */
-type Question = { ask: string; say: string; open?: { label: string; href: string }; links?: LinkItem[] };
-const QUESTIONS: Partial<Record<ItemId, Record<string, Question>>> = {
-  flute: {
-    now: {
-      ask: "What are you working on right now?",
-      say: "I'm doing my master's in flute performance at New England Conservatory on a scholarship, and I compete on the young-artist circuit. Next up, I'm recording études and putting them on YouTube.",
-      open: { label: "Watch a competition round", href: FLUTE_LINKS[0].href },
-    },
-    training: {
-      ask: "What's your training?",
-      say: "I did a flute performance degree at Northwestern alongside computer science. Now I'm doing my master's in flute performance at New England Conservatory.",
-    },
-    teach: {
-      ask: "Do you teach?",
-      say: "Yes! I teach students from middle school through high school, and adult amateurs too. If you'd like lessons, write to me.",
-      open: { label: "Ask about lessons", href: "mailto:hayliewu0709@gmail.com?subject=Flute%20lessons" },
-    },
-    online: {
-      ask: "Where can I hear you play?",
-      say: "Online, mostly. Around 240k people follow along on TikTok, Douyin, WeChat Channels and RedNote. Most of it is repertoire I arrange and produce my own accompaniment tracks for, to make classical music feel approachable to people who don't already listen to it.",
-      links: FLUTE_LINKS.filter((l) => l.label !== "Competition footage"),
-    },
-  },
-  laptop: {
-    proud: {
-      ask: "What are you proudest of?",
-      say: "Cookie Flute Studio. Most practice apps store sheet music as image files. Mine stores the rule behind a scale, writes the notation itself and draws it in your browser. Change the key or the range and you get a fresh score, so one engine makes a twelve-key scale book, long tones and a four-octave trill chart.",
-      open: { label: "Open Cookie Flute Studio", href: "/flute-studio" },
-    },
-    hard: {
-      ask: "What was the hardest problem?",
-      say: "Getting the sheet music to lay out properly. The notation library I use assumes printed paper, so on a phone it put one bar per line. Now I measure how many notes actually fit on the first line, then rewrite the music with line breaks in the right places. Page turns work the same way: I measure the drawn lines and work out each page myself.",
-    },
-    log: {
-      ask: "What's Learning Log?",
-      say: "My class notes, rebuilt as an interactive textbook you can read or click through like slides. The first one is a CMU course on deep learning for music, with demos you can play with: hear aliasing happen, build a sound from sine waves, watch a live spectrogram.",
-      open: { label: "Open Learning Log", href: "/learning-log" },
-    },
-    before: {
-      ask: "What did you build before?",
-      say: "I was the lead backend engineer on SKUY, a student startup with about 15 engineers. I built its APIs and the scraping pipelines behind a news feed for 1,000+ users, cut first load by about 35%, and moved the database from PostgreSQL to Firebase.",
-    },
-    how: {
-      ask: "What do you build with?",
-      say: "Cookie Flute Studio is one Next.js app in TypeScript, designed and coded by me. The notation is engraved with OpenSheetMusicDisplay, the sound comes from the Web Audio API, the 3D is three.js, and it runs on Cloudflare Workers.",
-    },
-  },
-  ipad: {
-    what: {
-      ask: "What does it do?",
-      say: "Say you're working on long tones. Pick the note and the range, and it writes the exercise out for you. Turn on the drone, play, and watch your pitch line up with it, or not. Scales, études and fingering charts work the same way.",
-    },
-    different: {
-      ask: "What makes it different?",
-      say: "Most practice apps store sheet music as files. Mine mostly doesn't. It keeps the rule behind a scale or exercise and writes the music on the spot, so change the range or articulation and you get a fresh score.",
-    },
-  },
-};
-
-/** The graphic shown when you inspect each thing (the flute has the cat playing instead). */
-const ART: Partial<Record<ItemId, ArtId>> = {
-  letter: "letter",
-  diploma: "diploma",
-  resume: "resume",
-  socials: "socials",
-  ipad: "ipad",
-};
-
-
-/** What the cat says with each cookie, in turn. */
-const SNACK_LINES: string[][] = [
-  ["Crunch. Okay, just one.", "Long tones make me hungry. Nobody warns you about that.", "Fine. One more, for focus."],
-  ["Don't tell my teacher.", "Crumbs in the flute keys mean a whole cleaning session.", "Worth it, though."],
-  ["Practice break! Five minutes.", "Maybe ten.", "Okay, a cookie and then a nap. That's the plan."],
-  ["Still warm. Someone loves me.", "Want one? I'll save you the biggest one.", "...I ate the biggest one. Sorry."],
-  ["Fuel for long tones.", "Breath support starts in the stomach, so this counts as practice.", "That's my story and I'm sticking to it."],
-  ["These are the good ones.", "Sugar cookies. Cat safe, flute safe, crumb heavy.", "Don't look at the desk."],
-];
-/** What she says on the nth cookie instead, when the count gets silly. */
-const SNACK_MILESTONES: Record<number, string[]> = {
-  5: ["That's five.", "I'm cutting myself off.", "(I'm not.)"],
-  10: ["Ten cookies.", "This is now a cookie recital.", "Please hold your applause until the end."],
-  20: ["Twenty?!", "You're a bad influence.", "Thank you."],
-};
-
-/** The closet's looks, in turn, and what she says in each. Drafts for Haylie. */
-const LOOKS: { wear: Outfit[]; line: string }[] = [
-  { wear: ["beret"], line: "A beret! Very artist. I'd paint you something, but my paws only know scales." },
-  { wear: ["bow"], line: "My recital bow. Please hold your applause until the end of the piece." },
-  { wear: ["glasses"], line: "Reading glasses. I look like I know what a Fourier transform is. I do, a little." },
-  { wear: ["cap"], line: "The graduation cap again. I earned it, I'm wearing it." },
-  { wear: ["apron"], line: "Apron on. Baker by day, flutist by night." },
-  { wear: ["beret", "bow", "glasses", "apron"], line: "Everything at once. This is called fashion." },
-  { wear: [], line: "Just me. Honestly, still the best look." },
-];
 const DRESS_UP: Outfit[] = ["bow", "beret"];
 
-/** Up looks at the wall, down at the desk; left and right move along a row. */
-const WALL: ItemId[] = ["diploma", "resume", "socials"];
-const DESK: ItemId[] = ["laptop", "book", "letter", "flute", "ipad", "cookies"];
-/** The living room, one row, left to right. */
-const ROOM: ItemId[] = ["closet", "stand", "window", "cushion", "jar"];
 type Place = "studio" | "room";
 
-/** The laptop's desktop: every project, Cookie Flute Studio included. */
-const APPS: ProjectRow[] = PROJECT_ROWS;
+/** The laptop browses the main projects, one at a time; the music and the
+ *  OpenMusic patches live only on the projects page ("See all projects"). */
+const APPS: ProjectRow[] = PROJECT_ROWS.filter((p) => p.slug !== "music-playground" && p.slug !== "openmusic");
 
 /* ---- questions you can ask, answered from app/lib/answers.ts ---- */
 
@@ -238,7 +51,6 @@ const TOPIC_ASK: Record<Topic, string> = {
 /** The live answers point at a side panel this page doesn't have. */
 const FIXES: [string, string][] = [
   [" The full list is on the right, open any of them.", ""],
-  ["There's competition footage and a few clips on the right, plus my ", "There's competition footage on YouTube"],
 ];
 const fix = (t: string) => FIXES.reduce((s, [a, b]) => s.replace(a, b), t);
 
@@ -340,16 +152,30 @@ function NodeBody({ node, n }: { node: AnswerNode; n: number }) {
 
 type Mode = "intro" | "browse" | "topic" | "item" | "desktop" | "app";
 
+/** One line of the button guide: which button, and what it does now. */
+type GuideHint = ["crs" | "cir" | "tri" | "sqr" | "pad", string];
+const GUIDE_GLYPH: Record<GuideHint[0], string> = { crs: "✕", cir: "○", tri: "△", sqr: "□", pad: "✚" };
+const GUIDE_NAME: Record<GuideHint[0], string> = { crs: "Cross", cir: "Circle", tri: "Triangle", sqr: "Square", pad: "D-pad" };
+function ButtonGuide({ hints, on }: { hints: GuideHint[]; on: boolean }) {
+  return (
+    <div className={`hh-guide${on ? " is-on" : ""}`} aria-hidden="true">
+      {hints.map(([k, label]) => (
+        <span key={k} className="hh-guide__item" title={GUIDE_NAME[k]}>
+          <i className={`hh-guide__btn hh-guide__btn--${k}`}>{GUIDE_GLYPH[k]}</i>
+          {label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 /* Who she is first (flutist and software engineer), then what she does, then the schools. */
 const INTRO =
   "Hi, I'm Haylie Wu! I'm a flutist and software engineer. I perform, teach, and build software for musicians. I studied computer science and flute at Northwestern, and I'm completing my master's in flute performance at New England Conservatory.";
-const DESKTOP_LINE =
-  "Six things I've built live in here: my flute practice app, my Learning Log, two apps from college, my music production, and my OpenMusic patches. Tap one for the short version. The full details are on my projects page.";
 /** Each app's bubble is a preview; /projects has the whole write-up. */
-const appLine = (p: ProjectRow) => `The short version: ${p.preview}`;
+const appLine = (p: ProjectRow) => p.preview;
 const detailsHref = (p: ProjectRow) => `/projects#${p.slug}`;
 /** A short tune for when the cat picks up the flute. */
-const TUNE = [587.33, 659.25, 739.99, 783.99, 880, 783.99];
 /** How long the camera takes to move in before the item card slides up. */
 const ZOOM_MS = 650;
 
@@ -424,32 +250,27 @@ function Tracks({ tracks }: { tracks: { label: string; src: string }[] }) {
   );
 }
 
-function LinkPills({ links }: { links: LinkItem[] }) {
-  return (
-    <div className="ch-bubble__links">
-      {links.map((l) => {
-        const ext = opensNewTab(l.href);
-        return (
-          <a key={l.href} href={l.href} target={ext ? "_blank" : undefined} rel={ext ? "noreferrer" : undefined}>
-            {l.label}
-          </a>
-        );
-      })}
-    </div>
-  );
-}
-
 function CatHostInner({ device }: { device: Device }) {
   const reduced = usePrefersReducedMotion();
-  const wide = useMedia("(min-width: 760px)");
-  const touch = useMedia("(hover: none)");
+  const wide = useMedia("(min-width: 760px) and (min-height: 560px) and (orientation: landscape)");
+  // the console lies on a desk by default; ?flat shows the old upright one (false on the server, read once in the browser)
+  const desk = useSyncExternalStore(
+    noSubscribe,
+    () => !new URLSearchParams(window.location.search).has("flat"),
+    () => false,
+  );
+  const [booted, setBooted] = useState(false);
   const openSheet = useOpenSheet();
 
   const engineRef = useRef<MascotEngine | null>(null);
   const [ready, setReady] = useState(false);
+  /* She looks straight at you through the boot and the first 5 seconds after
+     it (the hello), and only then starts following the cursor. */
+  const bootedAtRef = useRef(0);
   const onEngine = useCallback((e: MascotEngine | null) => {
     engineRef.current = e;
     setReady(Boolean(e));
+    if (e) e.holdGaze(bootedAtRef.current ? Math.max(0, bootedAtRef.current + 5000 - performance.now()) : Infinity);
   }, []);
 
   /* ---- sound: on by default, heard from the first tap or key (browsers need one) ---- */
@@ -484,7 +305,8 @@ function CatHostInner({ device }: { device: Device }) {
   /* Where the D-pad was, so backing out to the whole room keeps your place. */
   const lastRef = useRef<ItemId | null>(null);
   const [appIndex, setAppIndex] = useState(0);
-  const [cardShown, setCardShown] = useState(false);
+  const [, setCardShown] = useState(false);
+  const appIndexRef = useRef(0);
   /* Late at night (the visitor's own clock, 11pm to 6am) she's napping when you
      arrive; a pet wakes her. */
   const [mood, setMood] = useState<MascotMood>(() => {
@@ -554,11 +376,52 @@ function CatHostInner({ device }: { device: Device }) {
         window.setTimeout(() => {
           setN(st.index + 1);
           if (soundRef.current) playStep(st, VOICES.cat);
+          // her mouth moves with each letter she says, sound on or off
+          if (st.vowel) engineRef.current?.speak();
         }, 60 + st.at),
       );
     },
     [reduced],
   );
+
+  /* From across the room the laptop shows its plain pixel screen, like the
+     diploma does (her call: the tiny project picture was just confusing
+     pixels); the project, with dots for browsing, comes on as you fly in. */
+  const screenCanvas = useRef<{ laptop?: HTMLCanvasElement; diploma?: HTMLCanvasElement; resume?: HTMLCanvasElement; letter?: HTMLCanvasElement }>({});
+  // From the moment the camera starts flying in, not when it lands: switching to
+  // the sharp render and the real picture at the very end read as a jolt.
+  const onLaptop = mode === "app" && selected === "laptop";
+  const closeUp = mode === "item" && selected && CLOSE_UP.has(selected) ? selected : null;
+  useEffect(() => {
+    const eng = engineRef.current;
+    if (!ready || !eng) return;
+    let stale = false;
+    const paint = (id: "laptop", on: boolean, app: ProjectRow | undefined, w: number, h: number, opts = {}) => {
+      if (!on || !app) {
+        eng.setScreen(id, null);
+        return;
+      }
+      const c = (screenCanvas.current[id] ??= Object.assign(document.createElement("canvas"), { width: w, height: h }));
+      void paintProjectScreen(c, app, { ...opts, stale: () => stale }).then(() => {
+        if (!stale) eng.setScreen(id, c);
+      });
+    };
+    paint("laptop", onLaptop, APPS[appIndex], 480, 300, { index: appIndex, count: APPS.length });
+    // the diploma and the résumé page, sharp, only while you're looking at them
+    for (const [id, w, h] of [["diploma", 570, 420], ["resume", 780, 1060], ["letter", 740, 500]] as const) {
+      if (closeUp !== id) {
+        eng.setScreen(id, null);
+        continue;
+      }
+      const c = (screenCanvas.current[id] ??= Object.assign(document.createElement("canvas"), { width: w, height: h }));
+      void paintPaper(c, id, () => stale).then((ok) => {
+        if (ok && !stale) eng.setScreen(id, c);
+      });
+    }
+    return () => {
+      stale = true;
+    };
+  }, [ready, onLaptop, appIndex, closeUp]);
 
   /* The engine follows: camera eases toward the pick (right up to it when inspecting). */
   const close = mode === "item" || mode === "desktop" || mode === "app";
@@ -613,11 +476,11 @@ function CatHostInner({ device }: { device: Device }) {
       setAsked(null);
       lastRef.current = id;
       setSelected(id);
-      setMode(it.desktop ? "desktop" : "item");
+      setMode(it.desktop ? "app" : "item");
       setPage(0);
       setMood(it.mood ?? (it.plays ? "flute" : "idle"));
       if (it.plays && soundRef.current) TUNE.forEach((f, i) => window.setTimeout(() => playFlute(f, 0.28), 300 + i * 260));
-      let line = it.desktop ? DESKTOP_LINE : it.topic ? fix(nodeText(answerPages(it.topic)[0])) : it.body;
+      let line = it.desktop ? fix(nodeText(paginate([{ kind: "text", value: appLine(APPS[appIndexRef.current]) }])[0])) : it.topic ? fix(nodeText(answerPages(it.topic)[0])) : it.body;
       if (it.snack) {
         const lines = SNACK_MILESTONES[eatenRef.current + 1] ?? SNACK_LINES[eatenRef.current % SNACK_LINES.length];
         line = lines.join(" ");
@@ -664,6 +527,7 @@ function CatHostInner({ device }: { device: Device }) {
 
   const showApp = useCallback(
     (i: number) => {
+      appIndexRef.current = i;
       setAppIndex(i);
       setMode("app");
       setPage(0);
@@ -682,37 +546,102 @@ function CatHostInner({ device }: { device: Device }) {
     [openSheet],
   );
 
+  /* Opening a project dives into it, like stepping into the screen: the whole
+     stage zooms toward the console's screen and fades, then the page changes.
+     (A project that opens in a new tab just opens; so does reduced motion.) */
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [diving, setDiving] = useState(false);
+  const dive = useCallback(
+    (href: string | undefined) => {
+      const stage = stageRef.current;
+      const scr = stage?.querySelector(".hh-screen");
+      if (!href || reduced || opensNewTab(href) || !stage || !scr) {
+        goTo(href);
+        return;
+      }
+      const sr = stage.getBoundingClientRect();
+      const r = scr.getBoundingClientRect();
+      stage.style.setProperty("--dive-x", `${r.left + r.width / 2 - sr.left}px`);
+      stage.style.setProperty("--dive-y", `${r.top + r.height / 2 - sr.top}px`);
+      setDiving(true);
+      window.setTimeout(() => goTo(href), 650);
+    },
+    [reduced, goTo],
+  );
+  // coming back with the browser's Back button: the page may be restored as it was
+  useEffect(() => {
+    const back = () => setDiving(false);
+    window.addEventListener("pageshow", back);
+    return () => window.removeEventListener("pageshow", back);
+  }, []);
+
   /* RPG choices: the questions, in their own little window under the dialogue. */
   /* Inspecting something that has its own questions (the flute, the laptop, the iPad). */
   const holding = (mode === "item" || mode === "desktop") && Boolean(questions);
   /* At the closet the one choice is the next outfit. */
   const dressing = mode === "item" && selected === "closet";
-  const showChoices = done && last && (mode === "intro" || mode === "topic" || holding || dressing);
-  /* Each choice is a question about the thing in hand, or one of the hello's topics. */
-  type Option = { key: string; label: string; topic?: Topic };
-  const options = useMemo<Option[]>(
-    () =>
-      dressing
-        ? [{ key: "look", label: "Try another look?" }]
-        : holding && questions
-        ? Object.entries(questions)
-            .filter(([k]) => k !== asked)
-            .map(([k, q]) => ({ key: k, label: q.ask }))
-        : TOPICS.filter((t) => !(mode === "topic" && t === topic)).map((t) => ({ key: t, label: TOPIC_ASK[t], topic: t })),
-    [dressing, holding, questions, asked, mode, topic],
-  );
+  /* Looking at a project on the laptop: its actions are your choices. */
+  const atProject = mode === "app";
+  /* The thing's own links (open the résumé, write to me, the socials, a
+     question's video) are your choices too, not buttons in her bubble. */
+  const extras = question ?? (mode === "item" ? item : null);
+  /* Each choice is a question about the thing in hand, one of the hello's topics,
+     or somewhere to go. `main` is the one you most likely came for: highlighted,
+     and where the pointer starts. */
+  type Option = { key: string; label: string; topic?: Topic; href?: string; main?: boolean };
+  const options = useMemo<Option[]>(() => {
+    if (atProject)
+      return [
+        // so the laptop never feels stuck on one project (the D-pad does this too)
+        { key: "next", label: "Next project" },
+        ...(app.href ? [{ key: "open", label: `Open ${app.name}`, main: true }] : []),
+        { key: "details", label: "Full details" },
+        { key: "all", label: "See all projects" },
+      ];
+    if (dressing) return [{ key: "look", label: "Try another look?" }];
+    const go: Option[] = [
+      ...(extras?.open ? [{ key: "open", label: extras.open.label, href: extras.open.href, main: true }] : []),
+      ...(extras?.links ?? []).map((l, i) => {
+        const mail = l.href.startsWith("mailto:");
+        return { key: `link${i}`, label: mail ? "Email me" : l.label, href: l.href, main: mail && !extras?.open };
+      }),
+    ];
+    if (holding && questions)
+      return [
+        ...go,
+        ...Object.entries(questions)
+          .filter(([k]) => k !== asked)
+          .map(([k, q]) => ({ key: k, label: q.ask })),
+      ];
+    if (mode === "item") return go;
+    return TOPICS.filter((t) => !(mode === "topic" && t === topic)).map((t) => ({ key: t, label: TOPIC_ASK[t], topic: t }));
+  }, [atProject, app, dressing, extras, holding, questions, asked, mode, topic]);
+  const showChoices =
+    done && last && (mode === "intro" || mode === "topic" || holding || dressing || atProject || (mode === "item" && options.length > 0));
   const choose = useCallback(
     (o: Option) => {
-      if (o.key === "look" && dressing) inspect("closet");
+      if (atProject) {
+        if (o.key === "open") dive(app.href);
+        else if (o.key === "next") showApp((appIndexRef.current + 1) % APPS.length);
+        else goTo(o.key === "details" ? detailsHref(app) : "/projects");
+      } else if (o.href) goTo(o.href);
+      else if (o.key === "look" && dressing) inspect("closet");
       else if (o.topic) ask(o.topic);
       else if (questions?.[o.key]) askAbout(o.key, questions[o.key]);
     },
-    [ask, askAbout, questions, dressing, inspect],
+    [ask, askAbout, questions, dressing, inspect, atProject, app, dive, goTo, showApp],
   );
-  /* The button and links under the answer: the flute question's, or the item's. */
-  const extras = question ?? (mode === "item" ? item : null);
   const [choice, setChoice] = useState(0);
   const cursor = Math.min(choice, options.length - 1);
+  /* The pointer starts on the main choice (on a project that's "Open", even
+     though "Next project" sits above it), fresh for each thing and question. */
+  const recIndex = Math.max(0, options.findIndex((o) => o.main));
+  const choiceKey = `${mode}:${selected}:${asked}:${app.slug}`;
+  const [prevRec, setPrevRec] = useState(choiceKey);
+  if (prevRec !== choiceKey) {
+    setPrevRec(choiceKey);
+    setChoice(recIndex);
+  }
 
   /* ---- the buttons ---- */
   const a = useCallback(() => {
@@ -728,33 +657,33 @@ function CatHostInner({ device }: { device: Device }) {
     }
     if (mode === "intro" || mode === "topic") pick(DESK[0]);
     else if (mode === "browse" && selected) inspect(selected);
-    else if (mode === "item" && ((questions && !asked) || dressing) && options[cursor]) choose(options[cursor]);
-    else if (mode === "item" && extras) {
-      if (extras.open) goTo(extras.open.href);
-      else if (extras.links?.[0]) goTo(extras.links[0].href);
-    } else if (mode === "desktop") showApp(appIndex);
-    else if (mode === "app") goTo(app.href ?? detailsHref(app));
-  }, [done, last, page, pages, mode, selected, extras, questions, asked, dressing, options, cursor, choose, app, appIndex, pick, inspect, showApp, goTo, typeOut]);
+    else if (mode === "item" && options[cursor]) choose(options[cursor]);
+    else if (mode === "desktop") showApp(appIndex);
+    else if (mode === "app" && options[cursor]) choose(options[cursor]);
+  }, [done, last, page, pages, mode, selected, options, cursor, choose, appIndex, pick, inspect, showApp, typeOut]);
 
   const b = useCallback(() => {
-    if (mode === "app") setMode("desktop");
-    // Everything else zooms all the way back to the whole room, so the view never
-    // stays parked on the thing; the D-pad still remembers where you were.
-    else pick(null);
-  }, [mode, pick]);
+    // Back zooms all the way out to the whole room (from a project on the
+    // laptop too), so the view never stays parked on the thing; the D-pad
+    // still remembers where you were.
+    pick(null);
+  }, [pick]);
 
   const step = useCallback(
     (d: number) => {
       if (mode === "desktop" || mode === "app") {
-        setAppIndex((i) => (i + d + APPS.length) % APPS.length);
+        showApp((appIndexRef.current + d + APPS.length) % APPS.length);
         return;
       }
       const at = selected ?? lastRef.current;
       const row = place === "room" ? ROOM : at && WALL.includes(at) ? WALL : DESK;
       const i = at ? row.indexOf(at) : -1;
-      pick(row[(i + d + row.length) % row.length]);
+      /* Nothing picked yet: start from the middle, where the cat is, so A takes the
+       * nearest thing on her left and D the nearest on her right. */
+      const mid = Math.floor(row.length / 2);
+      pick(i < 0 ? row[d < 0 ? mid - 1 : mid] : row[(i + d + row.length) % row.length]);
     },
-    [mode, selected, pick, place],
+    [mode, selected, pick, place, showApp],
   );
 
   const row = useCallback(
@@ -768,7 +697,7 @@ function CatHostInner({ device }: { device: Device }) {
     [mode, selected, pick],
   );
 
-  /* Down from the desk goes to the living room; up from there comes back. */
+  /* Down from the front of the desk goes to the living room; up from there comes back. */
   const moveTo = useCallback(
     (to: Place) => {
       pick(null);
@@ -790,9 +719,39 @@ function CatHostInner({ device }: { device: Device }) {
   }, [mood, mode]);
   useEffect(() => () => window.clearTimeout(wakeTimer.current), []);
 
+  /* Wide screens: once the console has booted, the hologram comes on and the cat
+     greets you like a game opening: a happy face, then the hello types itself out. */
+  const greetTimer = useRef(0);
+  const onBooted = useCallback(() => {
+    setBooted(true);
+    bootedAtRef.current = performance.now();
+    engineRef.current?.holdGaze(5000);
+    // a game opening: she waves hello, then says it
+    engineRef.current?.wave(2.6);
+    if (mode !== "intro" || reduced) return;
+    // the bubble comes on empty, then she says hello
+    setN(0);
+    window.clearTimeout(greetTimer.current);
+    greetTimer.current = window.setTimeout(() => typeOut(INTRO), 650);
+  }, [mode, typeOut, reduced]);
+  useEffect(() => () => window.clearTimeout(greetTimer.current), []);
+
   const pad: Pad = {
-    up: () => (place === "room" ? moveTo("studio") : row(WALL)),
-    down: () => (place === "room" ? undefined : selected && DESK.includes(selected) ? moveTo("room") : row(DESK)),
+    // Up and down follow the desk's depth: wall, back of the desk, front of the
+    // desk (letter, flute), then the living room.
+    up: () => {
+      if (place === "room") return moveTo("studio");
+      const back = selected && DESK_UP[selected];
+      if (back) pick(back);
+      else row(WALL);
+    },
+    down: () => {
+      if (place === "room") return;
+      if (!selected || !DESK.includes(selected)) return row(DESK);
+      const front = DESK_DOWN[selected];
+      if (front) pick(front);
+      else moveTo("room");
+    },
     left: () => step(-1),
     right: () => step(1),
     a,
@@ -894,14 +853,38 @@ function CatHostInner({ device }: { device: Device }) {
 
   /* The controls under the console, drawn like a game's button prompts: a key
      cap then the verb, only the ones that work right now. */
-  const hint: [string, string][] = [
-    ...(close ? [] : [["WASD", "MOVE"] as [string, string]]),
-    ...(mode === "browse" ? [["ENTER", "INSPECT"] as [string, string]] : []),
-    ...(showChoices ? [[`1-${options.length}`, "ASK"] as [string, string]] : []),
-    close ? ["ESC", "BACK"] : ["P", "PET"],
-  ];
 
   /* ---- drawn over the scene ---- */
+  /* The button guide in the screen's corner (like a game's "✕ Select ○ Back"):
+     only the buttons that do something right now. It fades in when they
+     change and out again after a few seconds, so it never sits in the way. */
+  const guide: GuideHint[] = !booted
+    ? []
+    : !done
+      ? [["crs", "Skip"]]
+      : !last
+        ? [["crs", "Next"]]
+        : mode === "intro" || mode === "topic"
+          ? [["pad", "Look"], ["crs", "Select"], ["tri", "Pet"]]
+          : mode === "browse"
+            ? [["pad", "Move"], ["crs", "Open"], ["cir", "Back"]]
+            : mode === "item"
+              ? [["crs", "Choose"], ["cir", "Back"]]
+              : [["pad", "Browse"], ["crs", "Choose"], ["cir", "Back"]];
+  if (place === "room" && booted) guide.push(["sqr", "Desk"]);
+  const guideKey = guide.map((g) => g.join(" ")).join(" · ");
+  const [guideOn, setGuideOn] = useState(false);
+  useEffect(() => {
+    if (!guideKey) return;
+    const show = window.setTimeout(() => setGuideOn(true), 0);
+    // zoomed in on something, it stays, so the way back is always there
+    const hide = window.setTimeout(() => setGuideOn(false), 4500);
+    return () => {
+      window.clearTimeout(show);
+      window.clearTimeout(hide);
+    };
+  }, [guideKey]);
+
   const overlay = (
     <>
       {tagId ? (
@@ -910,7 +893,6 @@ function CatHostInner({ device }: { device: Device }) {
         </span>
       ) : null}
 
-      {mode === "item" && selected && selected in ART && cardShown ? <ItemArt id={ART[selected]!} onBack={b} /> : null}
 
       {/* Only when you're at the table, not while looking up at the wall. */}
       {!close && !(selected && WALL.includes(selected)) ? (
@@ -924,25 +906,25 @@ function CatHostInner({ device }: { device: Device }) {
           <ExitArrow />
         </button>
       ) : null}
+      {guide.length ? <ButtonGuide hints={guide} on={guideOn || close} /> : null}
       {eaten > 0 ? (
         <span className="hh-count" role="img" aria-label={`${eaten} cookies eaten`} title="Cookies the cat has eaten">
           <CookieIcon />×{eaten}
         </span>
       ) : null}
 
-      {(mode === "desktop" || mode === "app") && cardShown ? (
-        <LaptopArt apps={APPS} index={appIndex} open={mode === "app"} onPick={showApp} onBack={b} />
-      ) : null}
     </>
   );
 
   return (
     <>
-      <div className="ch-stage">
+      {/* On wide screens the bubbles are a hologram that comes on after the console boots. */}
+      <div ref={stageRef} className={`ch-stage${booted ? " is-booted" : ""}${desk ? " is-desk" : ""}${diving ? " is-diving" : ""}`}>
         <Console
           device={device}
           sceneAspect={device === "psp" && wide ? 16 / 9 : 4 / 3}
-          pixelHeight={wide ? 200 : 150}
+          // sharper while you read a screen up close; the PS1 crunch everywhere else
+          pixelHeight={onLaptop || closeUp ? 540 : device === "psp" ? 300 : 200}
           mood={focusMood ?? mood}
           scene={place}
           onEngine={onEngine}
@@ -951,8 +933,12 @@ function CatHostInner({ device }: { device: Device }) {
           overlay={overlay}
           pad={pad}
           talking={!done}
+          onBooted={onBooted}
         />
 
+        {/* Both bubbles; a plain pass-through box, except in the ?desk prototype,
+            where it becomes a hologram standing on the desk. */}
+        <div className="ch-holo">
         {/* What the cat says comes out of the speaker, into this bubble. */}
         {/* Tapping the bubble is a shortcut for A; keyboard users have the device buttons and keys. */}
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
@@ -983,25 +969,7 @@ function CatHostInner({ device }: { device: Device }) {
             ) : null}
             {mode === "intro" || mode === "browse" ? <h1>{INTRO.slice(0, n)}</h1> : <p><NodeBody node={node} n={n} /></p>}
           </div>
-          {done && last && extras?.open ? (
-            <button type="button" className="ch-bubble__go" onClick={() => goTo(extras.open!.href)}>
-              {extras.open.label} ›
-            </button>
-          ) : null}
-          {done && last && extras?.links ? <LinkPills links={extras.links} /> : null}
           {done && last && mode === "app" && app.audio?.length ? <Tracks tracks={app.audio} /> : null}
-          {done && last && mode === "app" ? (
-            <div className="ch-bubble__actions">
-              {app.href ? (
-                <button type="button" className="ch-bubble__go" onClick={() => goTo(app.href)}>
-                  Open {app.name} ›
-                </button>
-              ) : null}
-              <button type="button" className="ch-bubble__go" onClick={() => goTo(detailsHref(app))}>
-                Full details ›
-              </button>
-            </div>
-          ) : null}
           {done && last && mode === "desktop" && !question ? (
             <button type="button" className="ch-bubble__go" onClick={() => goTo("/projects")}>
               See all projects ›
@@ -1015,43 +983,29 @@ function CatHostInner({ device }: { device: Device }) {
         </div>
 
         {/* The visitor's side of the conversation: a reply bubble from the other
-            direction. It offers the questions, then keeps the one you asked. */}
-        {showChoices || mode === "topic" || question ? (
+            direction. Only while there's something to pick: once you've asked,
+            it gets out of the way so her answer has the room. */}
+        {showChoices ? (
           <div className="ch-you">
             <span className="ch-you__name">YOU</span>
-            {showChoices ? (
-              <div className="ch-you__choices" role="group" aria-label="Ask me">
-                {options.map((o, i) => (
-                  <button
-                    type="button"
-                    key={o.key}
-                    data-cursor={cursor === i || undefined}
-                    onPointerEnter={() => setChoice(i)}
-                    onFocus={() => setChoice(i)}
-                    onClick={() => choose(o)}
-                  >
-                    {o.label}
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <p className="ch-you__said">{question ? question.ask : TOPIC_ASK[topic]}</p>
-            )}
+            <div className={`ch-you__choices${options.length > 4 ? " is-many" : ""}`} role="group" aria-label="Ask me">
+              {options.map((o, i) => (
+                <button
+                  type="button"
+                  key={o.key}
+                  className={o.main ? "is-main" : o.href ? "is-go" : undefined}
+                  data-cursor={cursor === i || undefined}
+                  onPointerEnter={() => setChoice(i)}
+                  onFocus={() => setChoice(i)}
+                  onClick={() => choose(o)}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
           </div>
         ) : null}
-
-
-        {/* Key prompts are for keyboards; on a touchscreen the glow and the buttons say enough. */}
-        {touch ? null : (
-          <p className="ch-hint" aria-hidden="true">
-            {hint.map(([key, verb]) => (
-              <span key={verb}>
-                <kbd>{key}</kbd>
-                {verb}
-              </span>
-            ))}
-          </p>
-        )}
+        </div>
 
         {/* The same things as plain buttons, for screen readers and anyone who prefers a list. */}
         <ul className="sr-only" aria-label="Things in the room">
@@ -1067,6 +1021,8 @@ function CatHostInner({ device }: { device: Device }) {
     </>
   );
 }
+
+const noSubscribe = () => () => {};
 
 export default function CatHost({ device = "psp" }: { device?: Device }) {
   return (

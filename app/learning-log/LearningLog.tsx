@@ -4,6 +4,9 @@ import "./learning-log.css";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { aiMusic } from "./content/ai-music";
 import { notes, noteIds, getNote, type Note } from "./content/notes";
+import { researchMaps, researchIds, getResearch } from "./content/research";
+import ResearchView from "./view/ResearchView";
+import ContentsPage from "./view/ContentsPage";
 import type { Chapter } from "./content/types";
 import { RichText } from "./view/rich";
 import Reader from "./view/Reader";
@@ -12,13 +15,14 @@ import { useProgress } from "./view/useProgress";
 import { useNoteProgress } from "./view/useNoteProgress";
 
 type Mode = "read" | "slides";
-type View = "index" | "course" | "note";
+type View = "index" | "course" | "note" | "research";
 
 /**
  * Hash routing:
  *   ``                                        → the logs index
  *   `#course`                                 → the AI-for-Music course landing
  *   `#<noteId>` (optionally `#<noteId>/3`)    → a standalone note
+ *   `#<researchId>`                           → a research map, its own notebook page
  *   `#<chapterId>` (optionally `#<chapterId>/3`) → a chapter of the course
  */
 function readHash(): { view: View; id: string | null; slide: number } {
@@ -29,6 +33,7 @@ function readHash(): { view: View; id: string | null; slide: number } {
   const [id, s] = raw.split("/");
   const slide = s ? Math.max(0, +s - 1) || 0 : 0;
   if (id && noteIds.has(id)) return { view: "note", id, slide };
+  if (id && researchIds.has(id)) return { view: "research", id, slide: 0 };
   return { view: "course", id: id || null, slide };
 }
 
@@ -82,6 +87,7 @@ export default function LearningLog() {
   const openChapter = useCallback((id: string) => nav(`#${id}`, "course", id), [nav]);
   const exitChapter = useCallback(() => nav("#course", "course"), [nav]);
   const openNote = useCallback((id: string) => nav(`#${id}`, "note", id), [nav]);
+  const openResearch = useCallback((id: string) => nav(`#${id}`, "research", id), [nav]);
 
   const setIdx = useCallback(
     (i: number) => {
@@ -92,6 +98,23 @@ export default function LearningLog() {
   );
 
   const reading = chapter ?? note;
+
+  // A research map is its own page in the landing page's style, outside the Learning Log shell.
+  const research = view === "research" && openId ? getResearch(openId) : undefined;
+  if (research) return <ResearchView key={research.id} map={research} onExit={goIndex} />;
+  // The front page lists every chapter itself, so `#course` and unknown ids land there too.
+  if (view === "index" || view === "research" || (view === "note" && !note) || (view === "course" && !chapter)) {
+    return (
+      <ContentsPage
+        course={course}
+        notes={notes}
+        research={researchMaps}
+        onChapter={openChapter}
+        onNote={openNote}
+        onResearch={openResearch}
+      />
+    );
+  }
 
   return (
     <div className="ll">
@@ -151,12 +174,8 @@ export default function LearningLog() {
         ) : null}
       </header>
 
-      {view === "index" ? (
-        <LogsIndex onCourse={goCourse} onNote={openNote} />
-      ) : note ? (
+      {note ? (
         <NoteView key={note.id} note={note} mode={mode} index={slideIdx} onIndex={setIdx} onExit={goIndex} />
-      ) : view === "note" ? (
-        <LogsIndex onCourse={goCourse} onNote={openNote} />
       ) : !chapter ? (
         <Landing onOpen={openChapter} onBack={goIndex} progress={progress} />
       ) : mode === "read" ? (
@@ -206,44 +225,6 @@ function NoteView({
       onToggle={prog.toggle}
       onExit={onExit}
     />
-  );
-}
-
-function LogsIndex({ onCourse, onNote }: { onCourse: () => void; onNote: (id: string) => void }) {
-  return (
-    <main className="ll-landing">
-      <p className="ll-eyebrow">LEARNING LOG</p>
-      <h1>What I&rsquo;ve been learning</h1>
-      <p className="ll-landing__about">
-        Notes I keep while working through a course or reading a paper, rebuilt as something you can click around in
-        rather than scroll past. More gets added as I go.
-      </p>
-      <ul className="ll-logs">
-        <li>
-          <button type="button" className="ll-log-card" onClick={onCourse}>
-            <span className="ll-log-card__title">
-              AI for Music
-              <small>Course</small>
-            </span>
-            <span className="ll-log-card__sum">
-              A CMU deep-learning-for-music course, rebuilt as an interactive textbook: music theory, digital audio,
-              latent generation, then symbolic music models.
-            </span>
-          </button>
-        </li>
-        {notes.map((n) => (
-          <li key={n.id}>
-            <button type="button" className="ll-log-card" onClick={() => onNote(n.id)}>
-              <span className="ll-log-card__title">
-                {n.title}
-                <small>{n.kind}</small>
-              </span>
-              <span className="ll-log-card__sum">{n.summary}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
-    </main>
   );
 }
 

@@ -35,6 +35,8 @@ export type Project = {
   externalHref?: string;
   /** Two or three plain sentences: the home page's laptop bubble and the lead line on /projects. */
   preview?: string;
+  /** /projects headings over the two bullet lists, when "What it does" / "How it's built" don't fit (a skill rather than a product). */
+  labels?: { does: string; how: string };
   /** /projects bullets: what it does for the person using it. */
   does?: string[];
   /** /projects bullets: the stack and how it works. */
@@ -107,7 +109,7 @@ slug: "cookie-flute-studio",
     ],
     links: [{ label: "Open Cookie Flute Studio", href: "/flute-studio" }],
     preview:
-      "Cookie Flute Studio makes sheet music something you work with: reshape the page, tap a note for its fingering, see your pitch on every note as you play, and build a scale book for exactly what you need.",
+      "Cookie Flute Studio makes sheet music interactive, with practice tools built around each piece. It generates exercises for what you're working on and listens as you play.",
     pitch:
       "I want sheet music to mean more than notes on a page. You should be able to change how it's laid out, transpose it, see what every marking means, zoom into a passage and turn it into a technical exercise, and understand the key it's in. Everything else in the studio, from fingerings to pitch tracking, works on the music in front of you.",
     items: [
@@ -252,18 +254,19 @@ slug: "cookie-flute-studio",
   },
   {
     slug: "openmusic",
-    name: "OpenMusic",
+    name: "Composing in OpenMusic",
     size: "small",
     status: "Active",
     year: "2026",
     role: "Solo",
     tech: ["OpenMusic"],
-    blurb: "Composing with patches in OpenMusic, a visual programming language for music.",
-    detail: "Composing with patches in OpenMusic, a visual programming language for music.",
+    blurb: "How I compose with OpenMusic, IRCAM's visual programming language for music.",
+    detail: "How I compose with OpenMusic, IRCAM's visual programming language for music.",
     image: "/projects/om-patch.jpg",
     imageFit: "contain",
     preview:
-      "OpenMusic is a visual programming language for composers. I use it to build musical material with patches, transform it, and export it as MIDI.",
+      "OpenMusic is IRCAM's visual programming language for composers. I use it to compose: I build the musical material as a patch, transform it, and export it as MIDI. The picture is one of my patches.",
+    labels: { does: "What I use it for", how: "Techniques I've used" },
     does: [
       "Composing with patches: chords written in midicents, shifted in frequency, moved step by step from one to the next and rounded to quarter tones.",
       "Exporting the result as MIDI to bring into a score or a DAW.",

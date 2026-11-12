@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { usePrefersReducedMotion } from "../_kit/hooks";
 import { ICONS, PALETTE as ICON_COLORS } from "../_kit/PixelIcon";
-import type { ProjectRow } from "../_kit/links";
+import { COPY, type ProjectRow } from "../_kit/links";
 
 /**
  * What you see when you inspect something: a pixel-art graphic of the thing
@@ -485,4 +485,218 @@ export function LaptopArt({
       </div>
     </div>
   );
+}
+
+/* ---- one project on a real screen in the room (the laptop, the iPad) ----
+ * The camera flies right up to the screen in 3D and this is what it shows:
+ * the project's screenshot edge to edge (or its icon). The laptop browses
+ * (dots show where you are); the iPad just shows its one app. */
+
+const shotCache = new Map<string, Promise<HTMLImageElement | null>>();
+function loadShot(src: string) {
+  let p = shotCache.get(src);
+  if (!p) {
+    p = new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
+    shotCache.set(src, p);
+  }
+  return p;
+}
+
+/** Pictures made for the room's screens (the projects page keeps its own). */
+const SCREEN_SHOT: Record<string, string> = {
+  "cookie-flute-studio": "/lab/previews/flute-studio-reader.jpg",
+};
+/** How far into the top of a screenshot the screen looks (1: the whole width). */
+const SCREEN_ZOOM: Record<string, number> = {};
+
+/** Paints `app` onto `canvas`: the screenshot filling the whole screen, with
+ * small pixel-art dots over its bottom edge for where you are. The dots are drawn
+ * on a small pixel grid scaled up so they stay crisp; the screenshot is drawn at
+ * full resolution so you can actually see it. Resolves once drawn; `stale` drops a replaced paint. */
+export async function paintProjectScreen(
+  canvas: HTMLCanvasElement,
+  app: ProjectRow,
+  opts: { index?: number; count?: number; stale?: () => boolean } = {},
+) {
+  const src = SCREEN_SHOT[app.slug] ?? app.image ?? PREVIEW[app.slug];
+  const [img] = await Promise.all([src ? loadShot(src) : Promise.resolve(null), document.fonts.load("8px Silkscreen").catch(() => null)]);
+  if (opts.stale?.()) return;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  const k = 2.5; // pixel-grid scale
+  const w = canvas.width / k;
+  const h = canvas.height / k;
+  const browsing = opts.count !== undefined && opts.index !== undefined;
+  // No card, no title bar, no frame: the laptop's own screen is the frame, and
+  // Haylie's bubble already names the project. Anything more reads as a screen
+  // inside a screen inside a screen.
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = "#fff0f5";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  if (img) {
+    // full resolution, from the top of the page (where the good part usually is)
+    ctx.imageSmoothingEnabled = true;
+    const scale = Math.max(canvas.width / img.width, canvas.height / img.height) * (SCREEN_ZOOM[app.slug] ?? 1);
+    const sw = canvas.width / scale;
+    const sh = canvas.height / scale;
+    ctx.drawImage(img, (img.width - sw) / 2, 0, sw, sh, 0, 0, canvas.width, canvas.height);
+  } else {
+    ctx.setTransform(k, 0, 0, k, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    const rows = iconFor(app.slug);
+    const s = 3;
+    drawIcon(ctx, rows, Math.round((w - (rows[0]?.length ?? 0) * s) / 2), Math.round((h - rows.length * s) / 2), s);
+  }
+  // just dots for where you are: painted arrows would look clickable and aren't
+  // ("Next project" in the bubble and the D-pad do the browsing)
+  if (browsing) {
+    ctx.setTransform(k, 0, 0, k, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    const n = opts.count!;
+    const pill = { w: n * 8 + 6, h: 11 };
+    const px0 = Math.round(w / 2 - pill.w / 2);
+    const py0 = h - pill.h - 4;
+    ctx.fillStyle = "rgba(255, 240, 245, 0.9)";
+    ctx.fillRect(px0, py0, pill.w, pill.h);
+    for (let i = 0; i < n; i++) {
+      ctx.fillStyle = i === opts.index ? "#c2185b" : "#e8b9cc";
+      ctx.fillRect(px0 + 4 + i * 8, py0 + 3, 5, 5);
+    }
+  }
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+}
+
+/* ---- the papers on the wall, up close ----
+ * The camera flies onto the real diploma and résumé (like the laptop), and
+ * these paint what's on them, sharp enough to read: the actual first page of
+ * the résumé, and a diploma with the real degrees on it. */
+
+const RESUME_PAGE = "/lab/previews/resume-page.jpg";
+
+/** Paints the paper for `id` ("diploma" 570x420, "resume" 780x1060) onto `canvas`. */
+/** The letter, opened: the envelope's flap folded back and a note card out
+ *  of it with the address on, so zooming in reads it to you. */
+function paintLetter(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  // the envelope behind
+  ctx.fillStyle = "#f3e6cf";
+  ctx.fillRect(0, 0, w, h);
+  // its flap, folded open above the card
+  ctx.fillStyle = "#e8d6b6";
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(w, 0);
+  ctx.lineTo(w / 2, h * 0.34);
+  ctx.closePath();
+  ctx.fill();
+  // the card
+  const cx = w * 0.09;
+  const cy = h * 0.12;
+  const cw = w * 0.82;
+  const ch = h * 0.66;
+  ctx.fillStyle = "#fffdf7";
+  ctx.shadowColor = "rgba(58, 42, 32, 0.18)";
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetY = 3;
+  ctx.fillRect(cx, cy, cw, ch);
+  ctx.shadowColor = "transparent";
+  const text = (s: string, y: number, font: string, color: string) => {
+    ctx.font = font;
+    ctx.fillStyle = color;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(s, w / 2, y);
+  };
+  const serif = "Georgia, 'Times New Roman', serif";
+  text("Write to me!", cy + ch * 0.26, `italic 40px ${serif}`, "#3a2a20");
+  text(COPY.email, cy + ch * 0.6, `600 30px ${serif}`, "#c4456f");
+  // the envelope's front pocket over the card's bottom, with the heart seal
+  ctx.fillStyle = "#f7ecd8";
+  ctx.beginPath();
+  ctx.moveTo(0, h * 0.62);
+  ctx.lineTo(w / 2, h * 0.86);
+  ctx.lineTo(w, h * 0.62);
+  ctx.lineTo(w, h);
+  ctx.lineTo(0, h);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = "#e3d2b4";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.fillStyle = "#e0457b";
+  const hx = w / 2;
+  const hy = h * 0.84;
+  ctx.beginPath();
+  ctx.moveTo(hx, hy + 16);
+  ctx.bezierCurveTo(hx - 30, hy - 4, hx - 14, hy - 24, hx, hy - 10);
+  ctx.bezierCurveTo(hx + 14, hy - 24, hx + 30, hy - 4, hx, hy + 16);
+  ctx.fill();
+}
+
+export async function paintPaper(canvas: HTMLCanvasElement, id: "diploma" | "resume" | "letter", stale?: () => boolean) {
+  const img = id === "resume" ? await loadShot(RESUME_PAGE) : null;
+  if (stale?.()) return false;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return false;
+  const { width: w, height: h } = canvas;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.imageSmoothingEnabled = true;
+  if (id === "resume") {
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, w, h);
+    if (!img) return true;
+    // the whole page, fit to the width (letter paper is a touch wider than the prop)
+    const dh = (img.height / img.width) * w;
+    ctx.drawImage(img, 0, Math.max(0, (h - dh) / 2), w, Math.min(h, dh));
+    return true;
+  }
+  if (id === "letter") {
+    paintLetter(ctx, w, h);
+    return true;
+  }
+  // the diploma: cream paper, a gold double rule, the degrees, a seal
+  ctx.fillStyle = "#fbf3dc";
+  ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = "#c9a96a";
+  ctx.lineWidth = 6;
+  ctx.strokeRect(16, 16, w - 32, h - 32);
+  ctx.lineWidth = 2;
+  ctx.strokeRect(28, 28, w - 56, h - 56);
+  const line = (s: string, y: number, font: string, color = "#3a2a20") => {
+    ctx.font = font;
+    ctx.fillStyle = color;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(s, w / 2, y);
+  };
+  const serif = "Georgia, 'Times New Roman', serif";
+  line("Northwestern University", 82, `600 34px ${serif}`, "#4e2a84");
+  line("has conferred upon", 128, `italic 17px ${serif}`, "#5b4a3a");
+  line("Haylie Wu", 176, `italic 44px ${serif}`);
+  line("the degrees of", 222, `italic 17px ${serif}`, "#5b4a3a");
+  line("Bachelor of Science in Computer Science", 260, `600 21px ${serif}`);
+  line("Bachelor of Music in Flute Performance", 292, `600 21px ${serif}`);
+  // signature lines and the seal
+  ctx.strokeStyle = "#5b4a3a";
+  ctx.lineWidth = 1.5;
+  for (const x of [90, 250]) {
+    ctx.beginPath();
+    ctx.moveTo(x, 362);
+    ctx.lineTo(x + 120, 362);
+    ctx.stroke();
+  }
+  ctx.fillStyle = "#c8314a";
+  ctx.beginPath();
+  ctx.arc(w - 100, 352, 34, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "#fbf3dc";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(w - 100, 352, 25, 0, Math.PI * 2);
+  ctx.stroke();
+  return true;
 }

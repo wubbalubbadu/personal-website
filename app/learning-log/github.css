@@ -1,0 +1,233 @@
+/* Learning Log front page, set like a GitHub README (GitHub's Primer
+   markdown values, light and dark). */
+
+html:has(.gh),
+body:has(.gh) {
+  height: auto !important;
+  overflow: auto !important;
+}
+
+.gh {
+  --gh-bg: #ffffff;
+  --gh-fg: #1f2328;
+  --gh-muted: #59636e;
+  --gh-link: #0969da;
+  --gh-border: #d1d9e0;
+  --gh-border-soft: rgba(209, 217, 224, 0.7);
+
+  min-height: 100dvh;
+  background: var(--gh-bg);
+  color: var(--gh-fg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .gh {
+    --gh-bg: #0d1117;
+    --gh-fg: #f0f6fc;
+    --gh-muted: #9198a1;
+    --gh-link: #4493f8;
+    --gh-border: #3d444d;
+    --gh-border-soft: rgba(61, 68, 77, 0.7);
+  }
+}
+:root[data-theme="dark"] .gh {
+  --gh-bg: #0d1117;
+  --gh-fg: #f0f6fc;
+  --gh-muted: #9198a1;
+  --gh-link: #4493f8;
+  --gh-border: #3d444d;
+  --gh-border-soft: rgba(61, 68, 77, 0.7);
+}
+
+.gh * {
+  box-sizing: border-box;
+}
+
+.gh-wrap {
+  max-width: 1012px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+}
+
+.gh-home {
+  display: inline-block;
+  margin-bottom: 16px;
+  color: var(--gh-link);
+  font-size: 14px;
+  text-decoration: none;
+}
+.gh-home:hover {
+  text-decoration: underline;
+}
+
+.gh-md {
+  border: 1px solid var(--gh-border);
+  border-radius: 6px;
+  padding: 32px;
+}
+.gh-md > :first-child {
+  margin-top: 0;
+}
+
+.gh-md h1,
+.gh-md h2,
+.gh-md h3 {
+  margin: 24px 0 16px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.gh-md h1,
+.gh-md h2 {
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--gh-border-soft);
+}
+.gh-md h1 {
+  font-size: 2em;
+}
+.gh-md h2 {
+  font-size: 1.5em;
+}
+.gh-md h3 {
+  font-size: 1.25em;
+}
+.gh-md p,
+.gh-md ul {
+  margin: 0 0 16px;
+}
+.gh-md ul {
+  padding-left: 2em;
+  list-style: disc;
+}
+.gh-md li + li {
+  margin-top: 0.25em;
+}
+
+.gh-link {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--gh-link);
+  text-align: left;
+  cursor: pointer;
+}
+.gh-link:hover {
+  text-decoration: underline;
+}
+.gh-sum::before {
+  content: ": ";
+}
+.gh-sum {
+  color: var(--gh-fg);
+}
+
+.gh-md code {
+  padding: 0.2em 0.4em;
+  border-radius: 6px;
+  background: rgba(129, 139, 152, 0.15);
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 85%;
+}
+
+@media (max-width: 767px) {
+  .gh-md {
+    border: 0;
+    padding: 0;
+  }
+}
+
+/* Research map: GitHub task lists. */
+.gh-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: baseline;
+  color: var(--gh-muted);
+  font-size: 14px;
+}
+.gh-meta.is-copyleft {
+  color: #9a6700;
+}
+:root[data-theme="dark"] .gh-meta.is-copyleft {
+  color: #d29922;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .gh-meta.is-copyleft {
+    color: #d29922;
+  }
+}
+.gh-md a {
+  color: var(--gh-link);
+  text-decoration: none;
+}
+.gh-md a:hover {
+  text-decoration: underline;
+}
+.gh-tasks {
+  list-style: none;
+  padding-left: 0 !important;
+}
+.gh-task {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.gh-task + .gh-task {
+  margin-top: 8px;
+}
+.gh-task input {
+  margin: 0.3em 0 0;
+  flex: none;
+}
+.gh-task.is-done > div > a,
+.gh-task.is-done > div {
+  color: var(--gh-muted);
+}
+.gh-star {
+  flex: none;
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  line-height: 1.5;
+  color: var(--gh-muted);
+  cursor: pointer;
+}
+.gh-star.is-on {
+  color: #9a6700;
+}
+.gh-md blockquote {
+  margin: 8px 0 0;
+  padding: 0 1em;
+  border-left: 0.25em solid var(--gh-border);
+  color: var(--gh-muted);
+}
+.gh-md ol {
+  margin: 0 0 16px;
+  padding-left: 2em;
+}
+.gh-q {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.gh-q textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--gh-border);
+  border-radius: 6px;
+  background: var(--gh-bg);
+  color: var(--gh-fg);
+  font: inherit;
+  font-size: 14px;
+  resize: vertical;
+}
+.gh-q textarea:focus {
+  outline: 2px solid var(--gh-link);
+  outline-offset: -1px;
+}

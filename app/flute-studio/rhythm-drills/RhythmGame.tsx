@@ -6,7 +6,7 @@ import {useRhythmAudio} from '../theory/rhythm/useRhythmAudio';
 import {usePhoneNotation} from '../theory/usePhoneNotation';
 import {compileRhythm,gradeTaps,type TapMark} from '../theory/dots-and-ties/rhythmSequence';
 import {useLanguage} from '../i18n/LanguageContext';
-import {barLength,makeRhythm,maxLength,RANKS,shortestOf,tempoFor,TOP_RANK,wantedRank,type DrillPattern} from './drills';
+import {barLength,fitsTier,makeTierRhythm,maxLength,shortestOf,tierTempo,TIERS,type DrillPattern,type Tier} from './drills';
 import realBarsJson from './real-bars.json';
 import '../theory/engraved-row.css';
 import '../theory/dots-and-ties/dots-and-ties.css';
@@ -14,71 +14,54 @@ import '../components/passage-guide.css';
 import './rhythm-drills.css';
 
 const REAL_BARS=realBarsJson as unknown as DrillPattern[];
-const LIVES=3,UP_AFTER=2,REAL_SHARE=.35,BEST_KEY='cookie:rhythm-drills-best';
+const REAL_SHARE=.35,TIER_KEY='cookie:rhythm-drills-tier';
 const COUNT_Y=248,MARK_Y=278;
-type Phase='start'|'ready'|'run'|'result'|'over';
-type Best={level:number;streak:number};
-type Result={perfect:boolean;marks:TapMark[];missing:number[];levelUp:boolean;levelDown:boolean};
+type Phase='ready'|'run'|'result';
+type Result={perfect:boolean;marks:TapMark[];missing:number[]};
 
-function readBest():Best{try{const b=JSON.parse(localStorage.getItem(BEST_KEY)??'null');if(b&&typeof b.level==='number'&&typeof b.streak==='number')return b}catch{/* No storage: no best yet. */}return {level:0,streak:0}}
-function saveBest(b:Best){try{localStorage.setItem(BEST_KEY,JSON.stringify(b))}catch{/* Private mode: the best is just not kept. */}}
+function readTier():Tier{try{const t=localStorage.getItem(TIER_KEY);if(TIERS.some(x=>x.id===t))return t as Tier}catch{/* No storage: start easy. */}return 'easy'}
+function saveTier(t:Tier){try{localStorage.setItem(TIER_KEY,t)}catch{/* Private mode: the choice is just not kept. */}}
 
 /**
- * Endless rhythm drills. Read a rhythm, tap it after a one-bar count-in, see each tap graded under its note. Two clean
- * rhythms in a row move you up a level (the tempo creeps up too); a miss costs a life and a level. Three misses end the
- * run. Some rounds are real bars from pieces in the Library, named after you play them.
+ * Rhythm drills. Pick Easy, Medium or Hard, read a rhythm, tap it after a one-bar count-in, and see each tap graded
+ * under its note. Every rhythm is new (made on the spot, sometimes a real bar from the Library, named after you play it).
  */
 export default function RhythmGame(){
   const {lang}=useLanguage(),zh=lang==='zh',tr=(en:string,cn:string)=>zh?cn:en;
   const phone=usePhoneNotation(),right=phone?520:820,room=right-120,frame=`20 45 ${right+10} 310`;
   const audio=useRhythmAudio();
-  const [phase,setPhase]=useState<Phase>('start');
-  const [level,setLevel]=useState(1),[lives,setLives]=useState(LIVES),[streak,setStreak]=useState(0),[inARow,setInARow]=useState(0);
-  const [run,setRun]=useState({best:0,top:1,rounds:0});
-  const [best,setBest]=useState<Best>({level:0,streak:0}),[record,setRecord]=useState(false);
+  const [phase,setPhase]=useState<Phase>('ready');
+  const [tier,setTier]=useState<Tier>('easy'),[streak,setStreak]=useState(0);
   const [pattern,setPattern]=useState<DrillPattern|null>(null),[result,setResult]=useState<Result|null>(null);
   const [marks,setMarks]=useState<TapMark[]>([]),[pressed,setPressed]=useState(false);
   const taps=useRef<number[]>([]),used=useRef(new Set<string>()),round=useRef(0),guard=useRef(0);
-  // Read after hydration: the best lives in this browser's storage, which the server render has no view of.
-  useEffect(()=>{const sync=()=>setBest(readBest());sync()},[]);
+  const tierInfo=TIERS.find(t=>t.id===tier)!;
 
   const data=useMemo(()=>pattern?compileRhythm(pattern):null,[pattern]);
-  const bpm=pattern?tempoFor(level,pattern):0,spq=bpm?60/bpm:.75;
+  const bpm=pattern?tierTempo(tier,pattern):0,spq=bpm?60/bpm:.75;
   const bar=pattern?barLength(pattern.meter):4,span=data?.total??0;
 
-  /** The next rhythm: sometimes a real bar near this level that fits the screen, otherwise a new one. */
-  const next=useCallback((lvl:number)=>{
+  /** The next rhythm: sometimes a real bar in this difficulty that fits the screen, otherwise a new one. */
+  const next=useCallback((t:Tier)=>{
     round.current++;
-    const want=wantedRank(lvl);
-    const real=REAL_BARS.filter(p=>!used.current.has(p.id)&&(want>=TOP_RANK?p.rank>=10:p.rank<=want&&p.rank>=want-1)&&barLength(p.meter)<=maxLength(room,shortestOf(p.items)));
-    const p=real.length&&Math.random()<REAL_SHARE?real[Math.floor(Math.random()*real.length)]:makeRhythm(lvl,Math.random,room,`r${round.current}`);
+    const real=REAL_BARS.filter(p=>!used.current.has(p.id)&&fitsTier(p.items,p.rank,t)&&barLength(p.meter)<=maxLength(room,shortestOf(p.items)));
+    const p=real.length&&Math.random()<REAL_SHARE?real[Math.floor(Math.random()*real.length)]:makeTierRhythm(t,Math.random,room,`r${round.current}`);
     if(p.source)used.current.add(p.id);
     setPattern(p);setResult(null);setMarks([]);setPhase('ready');guard.current=performance.now()+250;
   },[room]);
+  // The first rhythm is made after hydration: it is random, and the remembered difficulty lives in this browser.
+  useEffect(()=>{const first=()=>{const t=readTier();setTier(t);next(t)};first()},[next]);
 
-  function begin(from:number){
-    audio.stop();used.current.clear();
-    setLevel(from);setLives(LIVES);setStreak(0);setInARow(0);setRun({best:0,top:from,rounds:0});setRecord(false);
-    next(from);
+  function choose(t:Tier){
+    if(t===tier)return;
+    audio.stop();used.current.clear();saveTier(t);setTier(t);setStreak(0);next(t);
   }
 
   function grade(){
     if(!data||!pattern)return;
     const g=gradeTaps(taps.current,data.onsets,spq);
-    let lvl=level,up=false,down=false;
-    if(g.perfect){
-      const row=inARow+1,s=streak+1;
-      if(row>=UP_AFTER){lvl=level+1;up=true;setInARow(0)}else setInARow(row);
-      setStreak(s);
-      // A long streak earns a life back.
-      if(s%10===0)setLives(l=>Math.min(LIVES,l+1));
-      setRun(r=>({best:Math.max(r.best,s),top:Math.max(r.top,lvl),rounds:r.rounds+1}));
-    }else{
-      lvl=Math.max(1,level-1);down=lvl<level;
-      setStreak(0);setInARow(0);setLives(l=>l-1);
-      setRun(r=>({...r,rounds:r.rounds+1}));
-    }
-    setLevel(lvl);setMarks(g.marks);setResult({perfect:g.perfect,marks:g.marks,missing:g.missing,levelUp:up,levelDown:down});
+    setStreak(s=>g.perfect?s+1:0);
+    setMarks(g.marks);setResult({perfect:g.perfect,marks:g.marks,missing:g.missing});
     setPhase('result');guard.current=performance.now()+500;
   }
 
@@ -88,16 +71,7 @@ export default function RhythmGame(){
     void audio.counted({values:[bar+span],top:pattern.top??4,beatUnit:pattern.beat,notes:false,speak:false,secondsPerQuarter:spq,
       onEnd:grade,onError:()=>setPhase('ready')});
   }
-  // The run has ended when the last life went: show that result, then the end screen.
-  function proceed(){
-    if(lives<=0){
-      const b={level:Math.max(best.level,run.top),streak:Math.max(best.streak,run.best)};
-      setRecord(run.top>best.level||run.best>best.streak);
-      if(b.level!==best.level||b.streak!==best.streak){saveBest(b);setBest(b)}
-      audio.stop();setPhase('over');return;
-    }
-    next(level);
-  }
+  function proceed(){next(tier)}
   function hear(){
     if(!data||!pattern)return;
     if(audio.elapsed>=0){audio.stop();return}
@@ -117,35 +91,26 @@ export default function RhythmGame(){
     else if(phase==='result')proceed();
   // play and proceed read the latest state each render.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[phase,position,clap,spq,bar,span,data,lives,level]);
+  },[phase,position,clap,spq,bar,span,data,tier]);
   useEffect(()=>{
     const key=(e:KeyboardEvent)=>{
       if(e.repeat||e.metaKey||e.ctrlKey||e.altKey||['Shift','Control','Alt','Meta','Tab','Escape','CapsLock'].includes(e.key))return;
       // A focused button handles its own Enter and Space outside a run.
       if(phase!=='run'&&(e.target as HTMLElement)?.closest?.('button,a,input'))return;
-      if(phase==='start'||phase==='over')return;
       e.preventDefault();press(e.timeStamp);
     };
     window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);
   },[phase,press]);
   useEffect(()=>{const hide=()=>{if(document.hidden&&phase==='run'){audio.stop();setPhase('ready')}};document.addEventListener('visibilitychange',hide);return()=>document.removeEventListener('visibilitychange',hide)},[phase,audio]);
 
-  const startAt=Math.max(1,Math.min(TOP_RANK,best.level-2));
-  if(phase==='start'||phase==='over'||!pattern||!data){
-    const over=phase==='over';
-    return <main className="rd-game rd-game--intro">
-      <h1>{tr('Rhythm drills','节奏训练')}</h1>
-      {over?<>
-        <p className="rd-game__big">{tr(`Level ${run.top}`,`第 ${run.top} 级`)}</p>
-        <p className="rd-game__lead">{tr(`You got as far as ${RANKS[wantedRank(run.top)][0].toLowerCase()}, with ${run.best} in a row at best.`,`你一路练到了「${RANKS[wantedRank(run.top)][1]}」，最多连续答对 ${run.best} 个。`)}{record?tr(' A new best.',' 新纪录！'):''}</p>
-      </>:<p className="rd-game__lead">{tr('Read the rhythm, then tap each note after the count-in. Two clean rhythms in a row take you up a level and a little faster. A miss costs one of your three lives. Some rhythms come from pieces in the Library.','先读节奏，数拍后在每个音开始时点一下。连续两次全对升一级，速度也会稍微加快。错一次扣一条命，一共三条。有些节奏来自曲库里的乐曲。')}</p>}
-      {best.level>0&&<p className="rd-game__best">{tr(`Your best: level ${best.level}, ${best.streak} in a row`,`你的最佳：第 ${best.level} 级，连续 ${best.streak} 个`)}</p>}
-      <div className="rd-game__actions">
-        <button className="rd-button action-button action-button--large" onClick={()=>begin(1)}>{over?tr('Play again','再玩一次'):tr('Start','开始')}</button>
-        {startAt>1&&<button className="rd-button action-button action-button--large" onClick={()=>begin(startAt)}>{tr(`Start at level ${startAt}`,`从第 ${startAt} 级开始`)}</button>}
-      </div>
-    </main>;
-  }
+  // Difficulty on the page itself (the studio's View switch), with one line saying what it includes.
+  const picker=<div className="rd-game__level">
+    <div className="view-switch" role="group" aria-label={tr('Difficulty','难度')}>
+      {TIERS.map(t=><button key={t.id} type="button" aria-pressed={tier===t.id} onClick={()=>choose(t.id)}>{tr(...t.name)}</button>)}
+    </div>
+    <small>{tr(...tierInfo.includes)}</small>
+  </div>;
+  if(!pattern||!data)return <main className="rd-game"><header className="rd-game__stats">{picker}</header></main>;
 
   const judged=phase==='result';
   const top=pattern.top??4,clicks=Array.from({length:Math.round(span/pattern.beat)},(_,i)=>i);
@@ -158,15 +123,13 @@ export default function RhythmGame(){
     [result.missing.length,tr('1 note missed','漏了 1 个音'),tr('# notes missed','漏了 # 个音')],
     [result.marks.filter(m=>m.timing==='extra').length,tr('1 extra tap','多点了 1 次'),tr('# extra taps','多点了 # 次')],
   ].filter(([k])=>(k as number)>0).map(([k,one,many])=>counts(k as number,one as string,many as string)).join(zh?'，':', ')+(zh?'。':'.'):'';
-  const levelNote=result?.levelUp?tr(` Up to level ${level}.`,` 升到第 ${level} 级。`):result?.levelDown?tr(` Back to level ${level}.`,` 回到第 ${level} 级。`):'';
-  const padLabel=phase==='ready'?tr('Tap here or press any key to start','点这里或按任意键开始'):phase==='run'?(countIn>=0?tr('Count in','预备'):tr('Tap each note','每个音点一下')):lives<=0?tr('Tap or press any key to see your run','点一下或按任意键看结果'):tr('Tap or press any key for the next rhythm','点一下或按任意键，下一个节奏');
+  const padLabel=phase==='ready'?tr('Tap here or press any key to start','点这里或按任意键开始'):phase==='run'?(countIn>=0?tr('Count in','预备'):tr('Tap each note','每个音点一下')):tr('Tap or press any key for the next rhythm','点一下或按任意键，下一个节奏');
 
   return <main className="rd-game">
     <header className="rd-game__stats">
-      <div className="rd-game__level"><b>{tr(`Level ${level}`,`第 ${level} 级`)}</b><small>{tr(...RANKS[Math.min(pattern.rank||1,TOP_RANK)])}</small></div>
+      {picker}
       <div className="rd-game__stat"><b>{streak}</b><small>{tr('in a row','连续')}</small></div>
       <div className="rd-game__stat"><b>{bpm}</b><small>bpm</small></div>
-      <div className="rd-game__lives" role="img" aria-label={tr(`${lives} of ${LIVES} lives left`,`还剩 ${lives} 条命`)}>{Array.from({length:LIVES},(_,i)=><i key={i} className={i<lives?'is-left':undefined}/>)}</div>
     </header>
 
     <div className="rd-game__staff">
@@ -185,7 +148,7 @@ export default function RhythmGame(){
 
     {/* After the round: how it went, and where a real bar comes from. */}
     <p className={`rd-game__result${result?.perfect?' is-clean':result?' is-off':''}`} role="status" aria-live="polite">
-      {result?summary+levelNote:' '}
+      {result?summary:' '}
       {result&&source&&<span className="rd-game__source">{tr(`From ${source.title} (${source.composer}), bar ${source.bar}`,`出自《${source.zhTitle??source.title}》（${source.composer}），第 ${source.bar} 小节`)}</span>}
     </p>
 
@@ -199,7 +162,7 @@ export default function RhythmGame(){
       {phase==='ready'&&<button className="rd-button action-button action-button--large" onPointerUp={e=>e.currentTarget.blur()} onClick={play}>{tr('Count me in','数拍开始')}</button>}
       {phase==='run'&&<button className="rd-button action-button action-button--large" onPointerUp={e=>e.currentTarget.blur()} onClick={()=>{audio.stop();setMarks([]);setPhase('ready')}}>{tr('Stop','停止')}</button>}
       {phase==='result'&&<>
-        <button className="rd-button action-button action-button--large" onPointerUp={e=>e.currentTarget.blur()} onClick={proceed}>{lives<=0?tr('See your run','看结果'):tr('Next rhythm','下一个节奏')}</button>
+        <button className="rd-button action-button action-button--large" onPointerUp={e=>e.currentTarget.blur()} onClick={proceed}>{tr('Next rhythm','下一个节奏')}</button>
         <button className="rd-button action-button action-button--large" onPointerUp={e=>e.currentTarget.blur()} onClick={hear}>{audio.elapsed>=0?tr('Stop','停止'):tr('Hear it','听一遍')}</button>
       </>}
     </div>

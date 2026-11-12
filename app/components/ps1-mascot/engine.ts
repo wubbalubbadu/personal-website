@@ -64,6 +64,8 @@ type SceneSetup = {
   fov: number;
   rootPos: [number, number, number];
   rootRotY: number;
+  /** The character's size in this set (1 when left out). */
+  rootScale?: number;
   clear: string | null;
   shadow: boolean;
   floating: boolean;
@@ -78,6 +80,11 @@ type SceneSetup = {
   fitHeight?: number;
 };
 
+/** How much of fitWidth a square-ish screen fits across. */
+const NARROW_FIT = 0.9;
+/** And how far left it leans, to keep the laptop whole. */
+const NARROW_SHIFT = -0.4;
+
 /** One pickable thing in a set: its group (glows and hops) and the point labels hang from. */
 type HotspotDef = {
   id: string;
@@ -86,6 +93,8 @@ type HotspotDef = {
   /** Where inspecting looks instead of the thing itself (the flute: at the cat playing it). */
   inspectAt?: THREE.Vector3;
   inspectDist?: number;
+  /** Look from this side (a unit vector from the thing toward the camera), e.g. straight at the laptop's screen. */
+  inspectDir?: THREE.Vector3;
 };
 type Hotspot = HotspotDef & {
   baseY: number;
@@ -156,6 +165,10 @@ export class MascotEngine {
   private acc = 0;
   private time = 0;
   private reactAt = -10;
+  /** Talking: the mouth is open until this time (each letter opens it briefly). */
+  private mouthUntil = -10;
+  /** Waving hello with the right paw until this time. */
+  private waveUntil = -10;
   private reaction: Reaction = "hop";
   private nextBlink = 2;
   private blinkUntil = 0;
@@ -167,6 +180,8 @@ export class MascotEngine {
   private pose = { y: 0, rx: 0, ry: 0, rz: 0, sy: 1 };
   // studio: pickable things, the selection and a camera that follows it
   private hotspots: Hotspot[] = [];
+  /** Screens in the studio a page can draw on (the laptop, the iPad), with their own idle pictures. */
+  private screens = new Map<string, { mesh: THREE.Mesh; idle: THREE.Texture; tex: THREE.CanvasTexture | null }>();
   private selected: string | null = null;
   /** The thing under the pointer: it wiggles a little. */
   private hovered: string | null = null;
@@ -190,6 +205,8 @@ export class MascotEngine {
   /** Inspecting: the camera moves right up to the selected thing. */
   private close = false;
   private lookLock = false;
+  /** Until this time (performance.now()), the face stays forward and ignores the pointer. */
+  private gazeUntil = 0;
   private camPos = new THREE.Vector3();
   private camTarget = new THREE.Vector3();
   private camFov = 36;
@@ -589,6 +606,8 @@ export class MascotEngine {
 
   // ---------------------------------------------------------------- sets
   setScene(name: MascotScene) {
+    this.screens.forEach((s) => s.tex?.dispose());
+    this.screens.clear();
     if (this.setGroup) {
       this.scene.remove(this.setGroup);
       this.disposeObject(this.setGroup);
@@ -614,6 +633,7 @@ export class MascotEngine {
     this.aimCamera(true);
     this.root.position.set(...rootPos);
     this.root.rotation.y = rootRotY;
+    this.root.scale.setScalar(this.setup.rootScale ?? 1);
     this.shadow.visible = shadow;
     if (clear) this.renderer.setClearColor(clear, 1);
     else this.renderer.setClearColor(0x000000, 0);
@@ -723,10 +743,11 @@ export class MascotEngine {
         tile.rotation.z = (i % 2 ? 1 : -1) * 0.06;
         socials.add(tile);
       });
-      socials.position.set(1.95, 2.7, -2.15);
-      spot("socials", socials, [2.73, 2.78, -2.1]);
+      socials.position.set(1.85, 2.7, -2.15);
+      spot("socials", socials, [2.75, 2.79, -2.1]);
 
-      // Desk: laptop and book, the iPad with music on it, the flute, a letter.
+      // Desk: laptop, book and letter on the left, the flute in front, cookies on
+      // the right. (No iPad: the laptop already shows Cookie Flute Studio.)
       const laptop = new THREE.Group();
       const metal = this.mat({ color: "#c9ccd6" });
       const lBase = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.06, 0.95), metal);
@@ -752,22 +773,6 @@ export class MascotEngine {
       book.rotation.y = 0.6;
       spot("book", book, [-1.61, 0.2, -0.2]);
 
-      const ipad = new THREE.Group();
-      const slab = new THREE.Mesh(new THREE.BoxGeometry(0.95, 1.25, 0.04), this.mat({ color: "#2b2d3a" }));
-      const music = new THREE.Mesh(new THREE.PlaneGeometry(0.85, 1.13), this.mat({ map: tex(sheetTexture()), lit: false }));
-      // Well clear of the slab: the PS1 vertex snap makes close layers fight.
-      music.position.z = 0.07;
-      const tab = new THREE.Group();
-      tab.add(slab, music);
-      tab.position.y = 0.62;
-      tab.rotation.x = -0.3;
-      const wedge = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.4), this.mat({ color: "#e8c3d2" }));
-      wedge.position.set(0, 0.06, -0.12);
-      ipad.add(wedge, tab);
-      ipad.position.set(1.75, 0, -0.35);
-      ipad.rotation.y = -0.3;
-      spot("ipad", ipad, [1.75, 0.95, -0.3]);
-
       const flute = new THREE.Group();
       const tube = new THREE.CylinderGeometry(0.06, 0.06, 2.6, 7);
       tube.rotateZ(Math.PI / 2);
@@ -782,11 +787,15 @@ export class MascotEngine {
 
       const letter = new THREE.Group();
       const env = new THREE.Mesh(new THREE.PlaneGeometry(0.74, 0.5), this.mat({ map: tex(envelopeTexture()) }));
-      env.rotation.set(-Math.PI / 2, 0, 0.25);
-      env.position.y = 0.012;
+      // lying on the desk, only a hair tipped so the low desktop camera sees
+      // more than a sliver (tipped more, it looked like it floated)
+      env.rotation.set(-Math.PI / 2 + 0.12, 0, 0.25);
+      env.position.y = 0.04;
       letter.add(env);
-      letter.position.set(-1.75, 0, 1.3);
-      spot("letter", letter, [-1.75, 0.12, 1.3]);
+      // a little further back, so the 4:3 phone screen shows all of it
+      // out in front of the laptop, with desk between them
+      letter.position.set(-1.35, 0, 1.5);
+      spot("letter", letter, [-1.35, 0.12, 1.5]);
 
       // A plate of cookies: inspecting it, the cat has one.
       const plate = new THREE.Group();
@@ -799,18 +808,54 @@ export class MascotEngine {
         c.rotation.set(i === 2 ? 0.2 : 0, i * 0.7, i === 2 ? -0.15 : 0);
         plate.add(c);
       });
-      plate.position.set(2.45, 0, 0.95);
-      spot("cookies", plate, [2.45, 0.22, 0.95], { at: [0.2, 1.3, 0.2], dist: 4.6 });
+      plate.position.set(2.2, 0, 0.15);
+      spot("cookies", plate, [2.2, 0.22, 0.15], { at: [0.2, 1.3, 0.2], dist: 4.6 });
 
-      group.add(wall, desk, diploma, resume, socials, laptop, book, ipad, flute, letter, plate);
+      // her call: the wall pieces 15% bigger, the desk things a touch bigger
+      for (const g of [diploma, resume, socials]) g.scale.setScalar(1.15);
+      for (const g of [laptop, book, flute, letter, plate]) g.scale.setScalar(1.08);
+      group.add(wall, desk, diploma, resume, socials, laptop, book, flute, letter, plate);
+      // Inspecting the laptop flies right up to its screen, square on, so the
+      // page can show the projects on the laptop itself.
+      group.updateMatrixWorld(true);
+      for (const [id, scr, dist] of [["laptop", lScreen, 1.85]] as const) {
+        const h = hotspots.find((x) => x.id === id);
+        if (h) {
+          h.inspectAt = scr.getWorldPosition(new THREE.Vector3());
+          h.inspectDir = new THREE.Vector3(0, 0, 1).transformDirection(scr.matrixWorld);
+          h.inspectDist = dist;
+        }
+      }
+      // The wall pieces and the letter get the same close-up: the camera flies
+      // square onto the real thing instead of a separate picture covering it.
+      // Distances frame each one with a little room (the view is ~0.88 x dist wide).
+      const lookAt = (id: string, at: THREE.Vector3, dir: THREE.Vector3, dist: number) => {
+        const h = hotspots.find((x) => x.id === id);
+        if (!h) return;
+        h.inspectAt = at;
+        h.inspectDir = dir.normalize();
+        h.inspectDist = dist;
+      };
+      const facing = (o: THREE.Object3D) => new THREE.Vector3(0, 0, 1).transformDirection(o.matrixWorld);
+      lookAt("diploma", dPaper.getWorldPosition(new THREE.Vector3()), facing(dPaper), 2.75);
+      lookAt("resume", rPaper.getWorldPosition(new THREE.Vector3()), new THREE.Vector3(0, 0, 1), 2.5);
+      lookAt("socials", new THREE.Box3().setFromObject(socials).getCenter(new THREE.Vector3()), new THREE.Vector3(0, 0, 1), 2.95);
+      // the letter lies on the desk: look down at it, tipped a little toward you
+      lookAt("letter", env.getWorldPosition(new THREE.Vector3()), new THREE.Vector3(0, 0.92, 0.38), 1.45);
+      // Surfaces the page can paint on up close (a project, the résumé page, the diploma).
+      for (const [id, scr] of [["laptop", lScreen], ["diploma", dPaper], ["resume", rPaper], ["letter", env]] as const) {
+        this.screens.set(id, { mesh: scr, idle: (scr.material as THREE.ShaderMaterial).uniforms.map.value as THREE.Texture, tex: null });
+      }
       return {
         ...base,
         camPos: [0, 2.9, 7.0],
         camTarget: [0, 1.4, -0.2],
-        fov: 40,
+        // framed 10% tighter than before (her call): the room fills more of the screen
+        fov: 36.5,
         ownSnack: true,
-        fitWidth: 7.2,
-        fitHeight: 4.5,
+        fitWidth: 6.55,
+        rootScale: 1.1,
+        fitHeight: 4.1,
         clear: "#a7cde6",
         hotspots: hotspots.sort((a, b) => a.anchor.x - b.anchor.x),
       };
@@ -1028,6 +1073,27 @@ export class MascotEngine {
   }
 
   /** The thing under the pointer (or none): it gives a small wiggle. */
+  /** Draws a page's picture on a studio surface ("laptop", "diploma", "resume"): a canvas the
+   *  caller redraws (call again after redrawing), or null for its own picture. */
+  setScreen(id: string, canvas: HTMLCanvasElement | null) {
+    const s = this.screens.get(id);
+    if (!s) return;
+    const u = (s.mesh.material as THREE.ShaderMaterial).uniforms.map;
+    if (canvas) {
+      if (s.tex?.image !== canvas) {
+        s.tex?.dispose();
+        s.tex = new THREE.CanvasTexture(canvas);
+        // smooth: these screens carry real screenshots, drawn sharper than the room
+        s.tex.magFilter = THREE.LinearFilter;
+        s.tex.minFilter = THREE.LinearFilter;
+        s.tex.generateMipmaps = false;
+      }
+      s.tex.needsUpdate = true;
+      u.value = s.tex;
+    } else u.value = s.idle;
+    this.requestRender();
+  }
+
   hover(id: string | null) {
     this.hovered = this.hotspots.some((h) => h.id === id) ? id : null;
     this.requestRender();
@@ -1085,7 +1151,7 @@ export class MascotEngine {
       // Inspecting: straight at the thing, close enough to fill the view.
       const at = h.inspectAt ?? h.anchor;
       const dist = h.inspectDist ?? 3.2;
-      const dir = basePos.clone().sub(at).normalize();
+      const dir = h.inspectDir?.clone() ?? basePos.clone().sub(at).normalize();
       this.goalTarget.copy(at);
       this.goalPos.copy(at).addScaledVector(dir, dist);
       this.goalFov = Math.max(30, fit(dist * 0.88, dist));
@@ -1097,14 +1163,36 @@ export class MascotEngine {
       this.goalTarget.copy(focus);
       this.goalPos.copy(focus).addScaledVector(dir, 5.6);
       this.goalFov = Math.max(this.setup.fov, fit(4.8, 5.6));
+      // (on a narrow screen that widens too: lift it so the extra shows as
+      // wall, not the desk's front edge with sky under it)
+      if (this.goalFov > this.setup.fov && this.reserve === 0) {
+        const span = (f: number) => 2 * 5.6 * Math.tan(THREE.MathUtils.degToRad(f) / 2);
+        const up = new THREE.Vector3(0, (span(this.goalFov) - span(this.setup.fov)) / 2, 0);
+        this.goalPos.add(up);
+        this.goalTarget.add(up);
+      }
     } else {
       this.goalPos.copy(basePos);
       this.goalTarget.copy(baseTarget);
-      const fw = this.setup.fitWidth;
+      // on a square-ish screen (the phone's console) fitting the whole desk
+      // across left mostly wall; fit a bit less and let the sides crop (her
+      // call: mostly desk and cat)
+      const narrow = this.camera.aspect < 1.2;
+      const fw = this.setup.fitWidth && (narrow ? this.setup.fitWidth * NARROW_FIT : this.setup.fitWidth);
       const fh = this.setup.fitHeight;
       const dist = basePos.distanceTo(baseTarget);
       const tall = fh ? THREE.MathUtils.radToDeg(2 * Math.atan(fh / (1 - this.reserve) / 2 / dist)) : 0;
       this.goalFov = Math.max(this.setup.fov, fw ? fit(fw, dist) : 0, tall);
+      // Widened to fit across a narrow (squarish) screen: keep the bottom edge
+      // where it was so the extra shows as wall, not as empty space under the
+      // desk's front edge; and lean the view a touch left so the laptop (far
+      // left, it matters) stays whole while the sides crop
+      if (this.goalFov > this.setup.fov && this.reserve === 0) {
+        const span = (f: number) => 2 * dist * Math.tan(THREE.MathUtils.degToRad(f) / 2);
+        const up = new THREE.Vector3(narrow ? NARROW_SHIFT : 0, (span(this.goalFov) - span(this.setup.fov)) / 2, 0);
+        this.goalPos.add(up);
+        this.goalTarget.add(up);
+      }
     }
     // Slide the whole view down (camera and target together) so the content
     // rises into the part of the screen the page leaves clear.
@@ -1130,19 +1218,37 @@ export class MascotEngine {
     this.camera.updateProjectionMatrix();
   }
 
+  /** Keeps the face looking straight out for `ms` (Infinity until called again),
+   *  however the pointer moves: a greeting looks at you, not at the cursor. */
+  holdGaze(ms: number) {
+    this.gazeUntil = performance.now() + ms;
+    if (!this.lookLock) this.lookTarget.set(0, 0);
+    this.requestRender();
+  }
+
   setFps(fps: number) {
     this.fps = Math.max(5, Math.min(60, fps));
   }
 
   /** Pointer position in canvas-relative units, -1..1 (null when it leaves). */
   setPointer(x: number | null, y = 0) {
-    if (this.lookLock) return;
+    if (this.lookLock || performance.now() < this.gazeUntil) return;
     if (x === null) this.lookTarget.set(0, 0);
     else this.lookTarget.set(Math.max(-1, Math.min(1, x)), Math.max(-1, Math.min(1, y)));
     if (this.still) {
       this.look.copy(this.lookTarget);
       this.requestRender();
     }
+  }
+
+  /** One syllable: the mouth pops open for a moment. Call it for each letter she says. */
+  speak() {
+    this.mouthUntil = this.time + 0.085;
+  }
+
+  /** Wave hello with the right paw, with a happy face, for `seconds`. */
+  wave(seconds = 2) {
+    this.waveUntil = this.time + seconds;
   }
 
   /** The click reaction: a random little bit (or, with reduced motion, a smile). */
@@ -1222,6 +1328,7 @@ export class MascotEngine {
 
   dispose() {
     this.stop();
+    this.screens.forEach((s) => s.tex?.dispose());
     if (this.setGroup) this.disposeObject(this.setGroup);
     this.disposeObject(this.scene);
     this.textures.forEach((t) => t.dispose());
@@ -1295,11 +1402,11 @@ export class MascotEngine {
     const react = still ? 1 : (t - this.reactAt) / REACTIONS[this.reaction];
     const reacting = react >= 0 && react < 1;
 
-    let y = Math.sin(t * 2.4) * 0.026;
+    let y = Math.sin(t * 2.4) * 0.018;
     let rx = -ly * 0.32;
     let ry = lx * 0.55;
     let rz = -lx * 0.14 + Math.sin(t * 1.15) * 0.035;
-    let sy = 1 + Math.sin(t * 2.4 + 0.6) * 0.018;
+    let sy = 1 + Math.sin(t * 2.4 + 0.6) * 0.0126;
     let face: FaceExpression = "open";
     const sway = Math.sin(t * 2.4) * 0.03;
     const [sL, sR] = this.char.arms.map((a) => a.shoulder);
@@ -1440,6 +1547,17 @@ export class MascotEngine {
       }
     }
 
+    // Waving hello: the right paw up, rocking side to side, happy eyes to start.
+    const waving = t < this.waveUntil && !reacting && this.mood === "idle" && !still;
+    if (waving) {
+      const w = Math.sin(t * 13);
+      handR = sR.clone().add(new THREE.Vector3(0.3 + w * 0.13, 0.44, 0.15));
+      rz += w * 0.03;
+      if (this.waveUntil - t > 1) face = "happy";
+    }
+    // Talking: each letter pops the mouth open.
+    if (t < this.mouthUntil && this.mood === "idle" && (face === "open" || face === "happy")) face = "talk";
+
     // Blink every few seconds, but not when the eyes are already closed.
     if (!still && t > this.nextBlink) {
       this.blinkUntil = t + 0.12;
@@ -1504,6 +1622,8 @@ export class MascotEngine {
       h.group.rotation.z = h.baseRotZ + (hov && !still ? Math.sin(t * 13) * 0.04 : 0);
       // The cat picks the desk flute up to play it.
       if (h.id === "flute") h.group.visible = this.mood !== "flute";
+      // up close on a thing, its own sparkle would sit right on top of its screen
+      h.sparkle.visible = !(this.close && h.id === this.selected);
       h.sparkle.quaternion.copy(this.camera.quaternion);
       h.sparkle.scale.setScalar(on ? 1.3 : 0.55 + 0.45 * pulse);
       h.sparkle.material.uniforms.uOpacity.value = on ? 1 : 0.35 + 0.65 * pulse;

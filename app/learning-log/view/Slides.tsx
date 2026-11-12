@@ -50,12 +50,6 @@ export default function Slides({
 
   return (
     <div className="ll-slides">
-      <div className="ll-slide-dots" aria-hidden="true">
-        {chapter.slides.map((s, i) => (
-          <i key={s.id} className={i === index ? "is-here" : isDone(s.id) ? "is-done" : ""} />
-        ))}
-      </div>
-
       <div className="ll-slide-card" key={slide.id}>
         <p className="ll-slide-card__kicker">
           <RichText>{chapter.title}</RichText> · {index + 1} / {count}
@@ -63,25 +57,25 @@ export default function Slides({
         <h2 className="ll-slide-card__h"><RichText>{slide.title}</RichText></h2>
         {slide.lede ? <p className="ll-slide-card__lede"><RichText>{slide.lede}</RichText></p> : null}
         <Blocks blocks={slide.blocks} />
-        <button
-          type="button"
-          className={`ll-understood${done ? " is-on" : ""}`}
-          onClick={() => onToggle(slide.id)}
-          aria-pressed={done}
-        >
-          <i aria-hidden="true">{done ? "✓" : ""}</i>
-          {done ? "understood" : "mark understood  ·  f"}
-        </button>
-      </div>
-
-      <div className="ll-slide-nav">
-        <button type="button" onClick={() => go(-1)} disabled={index === 0}>← prev</button>
-        <span className="ll-slide-nav__count">{index + 1} / {count}</span>
-        {index === count - 1 ? (
-          <button type="button" onClick={onExit}>done ✓</button>
-        ) : (
-          <button type="button" onClick={() => go(1)}>next →</button>
-        )}
+        <div className="ll-slide-nav">
+          <button
+            type="button"
+            className={`ll-understood${done ? " is-on" : ""}`}
+            onClick={() => onToggle(slide.id)}
+            aria-pressed={done}
+          >
+            <i aria-hidden="true">{done ? "✓" : ""}</i>
+            {done ? "understood" : "mark understood  ·  f"}
+          </button>
+          <span className="ll-top__spacer" />
+          <button type="button" onClick={() => go(-1)} disabled={index === 0}>← prev</button>
+          <span className="ll-slide-nav__count">{index + 1} / {count}</span>
+          {index === count - 1 ? (
+            <button type="button" onClick={onExit}>done ✓</button>
+          ) : (
+            <button type="button" onClick={() => go(1)}>next →</button>
+          )}
+        </div>
       </div>
     </div>
   );

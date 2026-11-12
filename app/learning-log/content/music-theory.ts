@@ -69,7 +69,6 @@ export const musicTheoryUnit: Unit = {
         {
           id: "note-names",
           title: "Note name + octave number",
-          lede: "哆瑞咪发嗦啦西哆 = 1 2 3 4 5 6 7 1 = C4 D4 E4 F4 G4 A4 B4 C5",
           blocks: [
             {
               type: "prose",

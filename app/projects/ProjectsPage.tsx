@@ -165,7 +165,7 @@ function Plain({ p }: { p: Project }) {
         {p.pitch ? <p className="pjx__lead">{p.pitch}</p> : p.preview ? <p className="pjx__lead">{p.preview}</p> : null}
         {p.does?.length ? (
           <>
-            <h3>What it does</h3>
+            <h3>{p.labels?.does ?? "What it does"}</h3>
             <ul>
               {p.does.map((d) => (
                 <li key={d}>{d}</li>
@@ -175,7 +175,7 @@ function Plain({ p }: { p: Project }) {
         ) : null}
         {p.how?.length ? (
           <>
-            <h3>How it&rsquo;s built</h3>
+            <h3>{p.labels?.how ?? "How it\u2019s built"}</h3>
             <ul>
               {p.how.map((d) => (
                 <li key={d}>{d}</li>

@@ -1,7 +1,10 @@
+import type {Metadata} from "next";
 import Raindrops from "./Raindrops";
 
-export const metadata = {title: "Raindrops | Lab"};
+export const metadata: Metadata = {
+  title: "Raindrops | Lab",
+  description: "Each note you play falls as a drop: pitch sets where, articulation sets how it splashes, rings and fades.",
+  robots: {index: false, follow: false},
+};
 
-export default function Page() {
-  return <Raindrops />;
-}
+export default function RaindropsPage() { return <Raindrops/>; }

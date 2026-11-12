@@ -1,71 +1,42 @@
-.drops {
-  --drops-night: #0f1a1f;
-  --drops-ink: #dfe8e2;
-  --drops-soft: #8fa39a;
-  --drops-pill: rgba(223, 232, 226, 0.1);
-  --drops-pill-on: rgba(223, 232, 226, 0.22);
+/* Raindrops (lab): a dark page around the pond. */
+.rain{min-height:100vh;box-sizing:border-box;padding:32px 24px 64px;background:#05060a;color:#d9dce6;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif}
+.rain__head{max-width:1180px;margin:0 auto 22px}
+.rain__back{font-size:13px;color:#8f95a8;text-decoration:none}
+.rain__back:hover{color:#d9dce6}
+.rain__head h1{margin:8px 0 6px;font-size:42px;font-weight:760;letter-spacing:-.04em;color:#f3f4f8}
+.rain__head p{margin:0;max-width:640px;font-size:15px;line-height:1.5;color:#9ca2b5}
 
-  position: fixed;
-  inset: 0;
-  overflow: hidden;
-  background: var(--drops-night);
-  color: var(--drops-ink);
-  font-family: "Space Grotesk", system-ui, sans-serif;
-}
+.rain__layout{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:28px;align-items:start}
+.rain__stage{position:relative}
+.rain__canvas{display:block;width:100%;height:auto;max-width:calc(82vh * .8);margin:0 auto;border-radius:18px;background:#05060a;box-shadow:0 0 0 1px rgba(255,255,255,.06)}
+.rain__empty{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+.rain__empty p{margin:0;padding:10px 16px;border-radius:12px;background:rgba(255,255,255,.06);font-size:15px;color:#c8ccd8}
 
-.drops__canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
+.rain__side{display:grid;gap:14px}
+.rain__buttons,.rain__transport{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.rain__button{height:40px;padding:0 16px;border:0;border-radius:12px;background:rgba(255,255,255,.08);color:#e6e8ef;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.rain__button.is-main{background:#e6e8ef;color:#0b0c12}
+.rain__button:disabled{opacity:.45;cursor:default}
+@media(hover:hover){.rain__button:not(:disabled):hover{background:rgba(255,255,255,.14)}.rain__button.is-main:not(:disabled):hover{background:#fff}}
+.rain__transport input[type=range]{flex:1;min-width:120px;accent-color:#c9b6e4}
+.rain__time{font-size:13px;color:#9ca2b5;font-variant-numeric:tabular-nums}
+.rain__take{margin:0;font-size:13px;color:#9ca2b5}
+.rain__toggles{display:grid;gap:6px;font-size:14px;color:#c8ccd8}
+.rain__toggles input{accent-color:#c9b6e4;margin-right:6px}
+.rain__problem{margin:0;font-size:14px;color:#f0b37a}
 
-.drops__bar {
-  position: absolute;
-  top: 16px;
-  left: 16px;
-  display: flex;
-  gap: 8px;
-}
+.rain__how{border-top:1px solid rgba(255,255,255,.08);padding-top:12px;font-size:14px}
+.rain__how summary{cursor:pointer;font-weight:600;color:#e6e8ef}
+.rain__how dl{margin:10px 0 0;display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px 12px}
+.rain__how dt{font-weight:600;color:#c9b6e4}
+.rain__how dd{margin:0;line-height:1.45;color:#aeb3c4}
+.rain__note{margin:12px 0 0;font-size:12.5px;line-height:1.45;color:#8f95a8}
+.rain__note code{font-size:12px;color:#c8ccd8}
 
-.drops__bar button {
-  border: 0;
-  border-radius: 999px;
-  padding: 8px 16px;
-  background: var(--drops-pill);
-  color: var(--drops-ink);
-  font: inherit;
-  font-size: 14px;
-  cursor: default;
+@media(max-width:900px){
+  .rain{padding:20px 16px 48px}
+  .rain__layout{grid-template-columns:minmax(0,1fr)}
+  .rain__head h1{font-size:34px}
 }
-
-.drops__bar button:hover,
-.drops__bar button[aria-pressed="true"] {
-  background: var(--drops-pill-on);
-}
-
-.drops__numbers {
-  position: absolute;
-  left: 16px;
-  bottom: 16px;
-  border-collapse: collapse;
-  color: var(--drops-soft);
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-}
-
-.drops__numbers th {
-  font-weight: 500;
-  text-align: right;
-  padding: 2px 8px;
-}
-
-.drops__numbers td {
-  text-align: right;
-  padding: 2px 8px;
-}
-
-.drops__numbers th:first-child,
-.drops__numbers td:first-child {
-  text-align: left;
-}
+.rain__button.is-live{background:rgba(201,182,228,.18);color:#e9defa}
+@media(hover:hover){.rain__button.is-live:not(:disabled):hover{background:rgba(201,182,228,.28)}}

@@ -2,7 +2,7 @@
  * plastic shading. Its screen carries the scene, Haylie's dialogue box and
  * the game menu. Layouts:
  *   stacked  screen on top, controls under it (the GB always; the PSP on phones)
- *   side     the PSP from 760px: D-pad | screen | face buttons
+ *   side     the PSP from 760px in landscape: D-pad | screen | face buttons
  * The PSP switches by media query, so the server-rendered page is already right.
  */
 
@@ -67,7 +67,7 @@
   border-radius: 20px 20px 70px 20px;
   padding-bottom: 26px;
 }
-@media (min-width: 760px) {
+@media (min-width: 760px) and (min-height: 560px) and (orientation: landscape) {
   .hh--psp {
     --w: 1040px;
     grid-template-areas:
@@ -182,6 +182,57 @@
   0%, 100% { transform: translate(-50%, 0); }
   50% { transform: translate(-50%, -2px); }
 }
+/* the button guide: bottom right, just left of the down arrow, pixel style
+ * like a game's prompt line; fades in and out in hard steps (CatHost) */
+.hh-guide {
+  position: absolute;
+  z-index: 3;
+  right: 40px;
+  bottom: 7px;
+  display: flex;
+  gap: 8px;
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: rgba(40, 30, 36, 0.72);
+  color: #fff8ea;
+  font: 400 max(1.9cqw, 9px) / 1 var(--font-pix);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s steps(4, end);
+}
+.hh-guide.is-on {
+  opacity: 1;
+}
+.hh-guide__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.hh-guide__btn {
+  display: inline-grid;
+  place-items: center;
+  width: 1.5em;
+  height: 1.5em;
+  border-radius: 50%;
+  background: #1f1a22;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+  font-style: normal;
+  font-family: system-ui, sans-serif;
+  font-size: 0.95em;
+  line-height: 1;
+}
+.hh-guide__btn--crs { color: #8fb0ff; }
+.hh-guide__btn--cir { color: #ff8fa8; }
+.hh-guide__btn--tri { color: #7ee0b3; }
+.hh-guide__btn--sqr { color: #f0a8d8; }
+.hh-guide__btn--pad { color: #d8d0d8; border-radius: 3px; }
+@media (prefers-reduced-motion: reduce) {
+  .hh-guide { transition: none; }
+}
+
 /* the snack counter: a pixel cookie and how many */
 .hh-count {
   position: absolute;
@@ -484,7 +535,7 @@
 .hh-speaker--right { right: 7%; }
 .hh--stacked .hh-speaker,
 .hh--psp .hh-speaker { display: none; }
-@media (min-width: 760px) {
+@media (min-width: 760px) and (min-height: 560px) and (orientation: landscape) {
   .hh--psp .hh-speaker { display: block; }
 }
 .hh-grille {
@@ -500,7 +551,7 @@
 }
 
 /* ---- bigger screens ---- */
-@media (min-width: 760px) {
+@media (min-width: 760px) and (min-height: 560px) and (orientation: landscape) {
   .hh--gb.hh--stacked { --w: 430px; }
   .hh-desktop { left: 12px; right: 12px; top: 12px; bottom: 12px; }
   .hh-face { --f: 84px; }
@@ -513,4 +564,261 @@
   .hh button:active { transform: none; }
   .hh.is-talking .hh-waves i { animation: none; }
   .hh-art, .hh-desktop { animation: none; }
+}
+
+/* ---- the 3D console (PSP from 760px in landscape; console3d.ts draws it) ----
+ * The CSS body steps aside: the stage keeps the 3D view's shape, the canvas
+ * fills it, and the HTML screen sits where the 3D screen is (these percentages
+ * match the model at rest, so the first paint is already in place; the script
+ * then bends it onto the screen's corners every frame). The HTML buttons stay
+ * for keyboards and screen readers, out of sight. */
+.hh-3d {
+  display: none;
+}
+@media (min-width: 760px) and (min-height: 560px) and (orientation: landscape) {
+  .hh--psp {
+    /* 140 / 230 of this is the screen: about 850px wide at full size */
+    --w: 1400px;
+    display: block;
+    aspect-ratio: 230 / 104;
+    padding: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+  .hh--psp .hh-3d {
+    display: block;
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+  }
+  .hh--psp .hh-3d.is-on {
+    opacity: 1;
+  }
+  .hh--psp .hh-3d canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .hh--psp .hh-top {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    pointer-events: none;
+  }
+  .hh--psp .hh-bezel {
+    padding: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+  .hh--psp .hh-screen {
+    position: absolute;
+    left: 19.57%;
+    top: 12.14%;
+    width: 60.87%;
+    transform-origin: 0 0;
+    border-radius: 3px;
+    pointer-events: auto;
+  }
+  /* glass: one soft diagonal band of light over the picture */
+  .hh--psp .hh-screen::after {
+    content: "";
+    position: absolute;
+    z-index: 5;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04) 32%, transparent 33%);
+    pointer-events: none;
+  }
+  .hh--psp :is(.hh-ctl, .hh-speaker) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+/* ---- the tall 3D console (phones and portrait iPads; console3d.ts "tall") ----
+ * Same idea as the wide one: the CSS body steps aside, the canvas fills a box
+ * the shape of the 3D view (120 x 126 mm), and the HTML screen starts where the
+ * 3D screen is (these percentages match TALL_SCREEN in console3d.ts). */
+.hh--psp.is-tall {
+  display: block;
+  width: min(100%, 500px);
+  aspect-ratio: var(--tall-vw, 120) / var(--tall-vh, 126);
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+.hh--psp.is-tall .hh-3d {
+  display: block;
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+.hh--psp.is-tall .hh-3d.is-on {
+  opacity: 1;
+}
+.hh--psp.is-tall .hh-3d canvas {
+  /* a quick tap on a 3D button is a press, not the start of a double-tap zoom */
+  touch-action: manipulation;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.hh--psp.is-tall .hh-top {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+}
+.hh--psp.is-tall .hh-bezel {
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+.hh--psp.is-tall .hh-screen {
+  position: absolute;
+  left: 8.33%;
+  top: 8.73%;
+  width: 83.33%;
+  transform-origin: 0 0;
+  /* 8mm corners on a 100 x 75mm screen: the shell's curve, one step in */
+  /* (the x radius in mm over the screen's width, which grows with --tall-vw,
+   * so the corners stay round instead of stretching oval) */
+  border-radius: calc(800% / (var(--tall-vw, 120) - 20)) / calc(800% / (var(--tall-vh, 126) - 51));
+  pointer-events: auto;
+}
+.hh--psp.is-tall .hh-screen::after {
+  content: "";
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04) 32%, transparent 33%);
+  pointer-events: none;
+}
+.hh--psp.is-tall :is(.hh-ctl, .hh-speaker) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---- the power-on, on the 3D console's screen (Boot in Handheld.tsx) ----
+ * Pixel-y on purpose: the name drops in in hard steps, then the boot screen
+ * fades out in four hard steps onto the room. */
+@media all {
+  .hh--psp .hh-screen {
+    container-type: inline-size;
+  }
+  /* the screen waits for the 3D console, so it never shows up on its own first */
+  .hh--psp.is-3d:not(.is-3d-ready) .hh-screen {
+    visibility: hidden;
+  }
+  .hh-boot {
+    position: absolute;
+    z-index: 6;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    overflow: hidden;
+    background: #fff4e6;
+    color: #e86a9a;
+    pointer-events: none;
+  }
+  .hh-boot.is-out {
+    animation: hh-step-out 0.5s steps(4, end) forwards;
+  }
+  /* the tube warming up: black, a bright line, then the picture */
+  .hh-boot::before,
+  .hh-boot::after {
+    content: "";
+    position: absolute;
+    z-index: 2;
+    inset: 0;
+    pointer-events: none;
+  }
+  .hh-boot::before {
+    background: #121522;
+    opacity: 0;
+    animation: hh-tube-dark 0.42s ease-in both;
+  }
+  .hh-boot::after {
+    top: 50%;
+    bottom: auto;
+    height: 6px;
+    margin-top: -3px;
+    background: #fff;
+    box-shadow: 0 0 24px 6px rgba(255, 255, 255, 0.8);
+    opacity: 0;
+    animation: hh-tube-line 0.42s ease-out both;
+  }
+  .hh-boot__logo {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    margin: 0;
+    font: 400 6.4cqw/1 var(--font-pix);
+  }
+  .hh-boot__logo span {
+    display: inline-block;
+    animation: hh-drop 0.36s steps(4, end) calc(0.42s + var(--i) * 0.07s) backwards;
+  }
+  /* dropped in: no animation left at all, so every letter sits on the line
+   * (iPhone Safari left some letters, E and OM, stuck partway up) */
+  .hh-boot.is-in .hh-boot__logo span {
+    animation: none;
+  }
+  /* waits under the name, blinking like a cartridge title screen */
+  .hh-boot__start {
+    position: absolute;
+    z-index: 1;
+    left: 0;
+    right: 0;
+    bottom: 22%;
+    margin: 0;
+    text-align: center;
+    /* (never tiny on a phone's screen) */
+    font: 400 max(3cqw, 13px)/1 var(--font-pix);
+    letter-spacing: 0.12em;
+    color: #c4567f;
+    visibility: hidden;
+  }
+  .hh-boot__start.is-on {
+    visibility: visible;
+    animation: hh-blink 1.1s steps(1, end) infinite;
+  }
+  .hh-boot.is-ok .hh-boot__logo span {
+    animation: hh-wave 0.4s steps(3, end) calc(var(--i) * 0.04s);
+  }
+}
+@keyframes hh-tube-dark {
+  0%, 30% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes hh-tube-line {
+  0% { opacity: 1; transform: scaleX(0); }
+  35% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1) scaleY(60); }
+}
+@keyframes hh-drop {
+  0% { opacity: 0; transform: translateY(-120%); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes hh-wave {
+  40% { transform: translateY(-18%); }
+}
+@keyframes hh-blink {
+  50% { opacity: 0; }
+}
+@keyframes hh-step-out {
+  to { opacity: 0; }
 }
