@@ -328,8 +328,10 @@
 .hh-count {
   position: absolute;
   z-index: 3;
-  right: 8px;
-  top: 8px;
+  /* clear of the screen's edge and its rounded corner (it was touching),
+     and further in as the screen gets bigger */
+  right: max(16px, 3.4cqw);
+  top: max(13px, 2.8cqw);
   display: inline-flex;
   align-items: center;
   gap: 4px;

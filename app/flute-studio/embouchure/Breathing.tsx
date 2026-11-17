@@ -6,6 +6,12 @@ import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import Workbench from '../components/Workbench';
 import {PracticeIcon} from '../components/PracticeIcon';
 import {breathPose,createBreathingModel} from './breathing-model';
+import {linePath,linePoint} from "../breathing/breathLine";
+
+// The breath line under the model: this page's cycle starts full, empties (exhale), then fills again (inhale).
+const LINE={left:14,right:254,top:18,bottom:88};
+const lineFullness=(c:number)=>(1+Math.cos(c*Math.PI*2))/2;
+const lineSeek=(e:{clientX:number;currentTarget:Element})=>{const r=e.currentTarget.getBoundingClientRect();return Math.max(0,Math.min(.999,((e.clientX-r.left)/r.width*268-LINE.left)/(LINE.right-LINE.left)))};
 
 export default function Breathing(){
  const {lang}=useLanguage(),zh=lang==='zh';
@@ -16,7 +22,7 @@ export default function Breathing(){
   // WebGL availability is only known when the browser renderer is created.
   // eslint-disable-next-line react-hooks/set-state-in-effect
   try{renderer=new THREE.WebGLRenderer({antialias:true});}catch{setError(true);return;}
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));renderer.setClearColor('#f5f5f7');container.appendChild(renderer.domElement);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));renderer.setClearColor('#f4f6f9');container.appendChild(renderer.domElement);
   renderer.domElement.setAttribute('aria-label',(zh?"有控制地呼吸时的肋骨、肺、横膈膜与腹壁":"Ribs, lungs, diaphragm and abdominal wall during a controlled breath"));
   renderer.domElement.setAttribute('role','img');
   const scene=new THREE.Scene();scene.add(new THREE.HemisphereLight('#ffffff','#8d7477',1.85));
@@ -51,7 +57,7 @@ export default function Breathing(){
  const pose=breathPose(phase,inhale);
  const toggle=()=>{running.current=!running.current;setPlaying(running.current);};
  const seek=(c:number)=>{c=((c%1)+1)%1;cycleRef.current=c;setCyclePosition(c);const p=(1+Math.cos(c*Math.PI*2))/2;phaseRef.current=p;setPhase(p);inhaling.current=c>=.5;setInhale(c>=.5);running.current=false;setPlaying(false);};
- const angle=cyclePosition*Math.PI*2;
+ const lineDot=linePoint(cyclePosition,lineFullness,LINE);
  // Which moment of the breath: 0 inhale, 1 early exhale (still full), 2 late exhale. Every caption and part line has
  // one text per moment, all laid in the same spot (Stack), so the panel never changes height and the ring stays put.
  const moment=pose.inhale?0:phase>.5?1:2;
@@ -81,17 +87,17 @@ export default function Breathing(){
    <dl className="emb-parts">{parts.map(([name,what])=><div key={name}><dt>{name}</dt><dd><Stack texts={what} active={moment}/></dd></div>)}</dl>
   </section>
   <section className="emb-block emb-block--side breath-cycle-block" aria-labelledby="breath-cycle-label">
-   <span className="emb-label" id="breath-cycle-label">{zh?"沿着圆圈拖动":"Drag around the circle"}</span>
+   <span className="emb-label" id="breath-cycle-label">{zh?"沿着这条线拖动":"Drag along the line"}</span>
    <div className="breath-cycle" role="slider" tabIndex={0} aria-label={(zh?"呼吸周期":"Breath cycle")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(cyclePosition*100)} aria-valuetext={zh?`${inhale?"吸气":"呼气"}，气息 ${Math.round(phase*100)}%`:`${inhale?"Inhale":"Exhale"}, ${Math.round(phase*100)} percent full`}
-    onKeyDown={e=>{if(['ArrowRight','ArrowUp','ArrowLeft','ArrowDown','Home'].includes(e.key)){e.preventDefault();seek(e.key==='Home'?0:cyclePosition+(['ArrowRight','ArrowUp'].includes(e.key)?.025:-.025));}}}
-    onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);const r=e.currentTarget.getBoundingClientRect();seek((Math.atan2(e.clientX-r.left-r.width/2,-(e.clientY-r.top-r.height/2))+2*Math.PI)/(2*Math.PI));}}
-    onPointerMove={e=>{if(e.currentTarget.hasPointerCapture(e.pointerId)){const r=e.currentTarget.getBoundingClientRect();seek((Math.atan2(e.clientX-r.left-r.width/2,-(e.clientY-r.top-r.height/2))+2*Math.PI)/(2*Math.PI));}}}>
-    <svg viewBox="-24 0 268 160" aria-hidden="true">
-     <path d="M110 20 A60 60 0 0 1 110 140" fill="none" stroke="#ca9295" strokeWidth="6" strokeLinecap="round"/>
-     <path d="M110 140 A60 60 0 0 1 110 20" fill="none" stroke="#87b4c8" strokeWidth="6" strokeLinecap="round"/>
-     <path d="M164 77 l6 6 6-6 M44 83 l6-6 6 6" fill="none" stroke="#85868e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-     <text x="38" y="84" textAnchor="end">{(zh?"吸气":"Inhale")}</text><text x="182" y="84" textAnchor="start">{(zh?"呼气":"Exhale")}</text>
-     <circle cx={110+60*Math.sin(angle)} cy={80-60*Math.cos(angle)} r="8" fill="#6d4585" stroke="white" strokeWidth="2.5"/>
+    onKeyDown={e=>{if(['ArrowRight','ArrowUp','ArrowLeft','ArrowDown','Home'].includes(e.key)){e.preventDefault();seek(e.key==='Home'?0:Math.max(0,Math.min(.999,cyclePosition+(['ArrowRight','ArrowUp'].includes(e.key)?.025:-.025))));}}}
+    onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);seek(lineSeek(e));}}
+    onPointerMove={e=>{if(e.currentTarget.hasPointerCapture(e.pointerId))seek(lineSeek(e));}}>
+    <svg viewBox="0 0 268 120" aria-hidden="true">
+     <path d={`M${LINE.left} ${LINE.bottom}H${LINE.right}`} stroke="rgba(41,42,51,.1)" strokeWidth="1"/>
+     <path d={linePath(0,.5,lineFullness,LINE)} fill="none" stroke="#ca9295" strokeWidth="4" strokeLinecap="round"/>
+     <path d={linePath(.5,1,lineFullness,LINE)} fill="none" stroke="#87b4c8" strokeWidth="4" strokeLinecap="round"/>
+     <text x={(LINE.left+LINE.right)/2-(LINE.right-LINE.left)/4} y="112" textAnchor="middle">{(zh?"呼气":"Exhale")}</text><text x={(LINE.left+LINE.right)/2+(LINE.right-LINE.left)/4} y="112" textAnchor="middle">{(zh?"吸气":"Inhale")}</text>
+     <circle cx={lineDot.x} cy={lineDot.y} r="7" fill="#6d4585" stroke="white" strokeWidth="2.5"/>
     </svg>
    </div>
   </section>

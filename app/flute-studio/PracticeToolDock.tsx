@@ -33,6 +33,7 @@ import {FluteDiagram} from "./components/FluteDiagram";
 import {fluteFingerings, midiForPitch} from "../../content/fingerings/flute";
 import {StaffNote} from "./components/StaffNote";
 import {ChevronIcon} from "./components/HeaderIcons";
+import {PracticeIcon} from "./components/PracticeIcon";
 import {ClickNoteIcon,SubdivisionIcon} from "./components/SubdivisionIcon";
 import {METERS,METER_STEPS,clicksOf,defaultMarks,groupingsFor,marksKey,marksOf,meterLabel,meterOf,nextMark,noteIn,notesFor,type BeatMark,type ClickNote,type Meter,type MetronomeSetup} from "./lib/metronomeSetup";
 
@@ -66,6 +67,11 @@ function useMore(key:string):[boolean,()=>void]{
   return [open,()=>{const next=!open;setOpen(next);try{localStorage.setItem(key,next?"1":"0")}catch{/* fine */}}];
 }
 
+/** The one options button each tool has (Nov 16): the sliders icon at the right of its heading, purple while its options are open. */
+function Options({open,onToggle,label}:{open:boolean;onToggle:()=>void;label:string}){
+  return <button type="button" className="tp-options" aria-expanded={open} aria-label={label} onClick={onToggle}><PracticeIcon name="settings"/></button>;
+}
+
 /** One row: a label and a View switch of words, the studio's way to pick one of a few (COMPONENTS.md). */
 function Choice<T extends string>({zh,label,value,options,onPick}:{zh:boolean;label:[string,string];value:T;options:[T,string,string][];onPick:(v:T)=>void}){
   return <div className="tp-row">
@@ -88,7 +94,7 @@ function Volume({zh,label,value,onChange}:{zh:boolean;label:[string,string];valu
  * The metronome's "More": what the tempo counts, the meter and its grouping, subdivision ticks, and one dot per click
  * to tap through normal, accent and silent. Changes reach the running click immediately (PracticeAudio).
  */
-function MetronomeMore({zh,open,onToggle,setup,setSetup,beats,accent,setAccent,toolBeat,toolPulse,preview}:{zh:boolean;open:boolean;onToggle:()=>void;
+function MetronomeMore({zh,open,setup,setSetup,beats,accent,setAccent,toolBeat,toolPulse,preview}:{zh:boolean;open:boolean;
   /** Pulse training: where the bar sounding now sits in its round of click and silent bars. */
   toolPulse:(()=>(PulseState&{silent:boolean})|null)|null;
   setup:MetronomeSetup;setSetup:(next:MetronomeSetup)=>void;beats:number;accent:boolean;setAccent:(on:boolean)=>void;toolBeat:(()=>number|null)|null;
@@ -139,7 +145,6 @@ function MetronomeMore({zh,open,onToggle,setup,setSetup,beats,accent,setAccent,t
       {custom&&<div className="tp-row tp-beats__foot">
         {custom&&<button type="button" className="text-action" onClick={()=>{const saved={...setup.marks};delete saved[key];setSetup({...setup,marks:saved})}}>{zh?"重置":"Reset"}</button>}
       </div>}
-    <button type="button" className="text-action tp-more" aria-expanded={open} onClick={onToggle}>{zh?"更多":"More"}<ChevronIcon/></button>
       </div>
     {open&&<div className="tp-more__body" ref={bodyRef}>
       {groupings.length>1&&<div className="tp-row">
@@ -619,19 +624,18 @@ export default function PracticeToolDock() {
                 }} aria-label={zh?`${reading.name}${reading.octave} 的指法`:`Fingering for ${reading.name}${reading.octave}`}>
                   <b>{reading.name}</b><sup>{reading.octave}</sup>
                 </button>
-
+                <span className="tp-head__end">
+                  {/* Tuned to something other than 440: say so, so a reading is never a surprise. */}
+                  {!tunerMore&&sounds.a4!==440&&<span className="tp-hint">A = {sounds.a4}</span>}
+                  <Options open={tunerMore} onToggle={toggleTunerMore} label={zh?"调音器选项":"Tuner options"}/>
+                </span>
               </div>
               <div className="tp-meter" style={rulerStyle}>
                 <div className="tp-meter__track"><span className="tp-meter__band"/><i className="tp-meter__center"/><em className="tp-meter__needle"/></div>
                 {/* The reading rides under the needle, so the eye stays on one spot. */}
                 <span className="tp-meter__cents">{signalActive?`${reading.cents>0?"+":""}${Math.round(reading.cents)}¢`:listening?tunerMessage:""}</span>
               </div>
-              {micProblem&&<p className="tp-mic-note"><MicBlocked zh={zh} unavailable={micProblem==="unavailable"}/><button type="button" className="text-action" onClick={tuner}>{zh?"重试":"Retry"}</button></p>}
-              <div className="tp-row tp-tuner__foot">
-                <button type="button" className="text-action tp-more" aria-expanded={tunerMore} onClick={toggleTunerMore}>{zh?"更多":"More"}<ChevronIcon/></button>
-                {/* Tuned to something other than 440: say so, so a reading is never a surprise. */}
-                {!tunerMore&&sounds.a4!==440&&<span className="tp-hint">A = {sounds.a4}</span>}
-              </div>
+              {micProblem&&<div className="tp-mic-note"><MicBlocked zh={zh} unavailable={micProblem==="unavailable"}/><button type="button" className="tp-chip" onClick={tuner}>{zh?"重试":"Retry"}</button></div>}
               {tunerMore&&<div className="tp-more__body">
                 <div className="tp-row">
                   <span className="tp-label">{zh?"标准音":"Tune to"}</span>
@@ -644,10 +648,13 @@ export default function PracticeToolDock() {
             {/* Drones: tap a note to hold it, tap again to stop; several can
                 sound at once. The note the tuner hears is outlined. */}
             <section ref={droneSection} className="tp-drones" tabIndex={-1}>
-              <div className="tp-row">
+              <div className="tp-row tp-head">
                 <span className="tp-label">{zh?"持续音":"Drone"}</span>
+                <span className="tp-head__end">
                 <Stepper size="small" tone="text" value={octave} min={3} max={6} onChange={setOctave} display={zh?`第 ${octave} 八度`:`Octave ${octave}`}
                   label={zh?"持续音八度":"Drone octave"} decreaseLabel={t.toolDock.lowerOctave} increaseLabel={t.toolDock.higherOctave}/>
+                  <Options open={droneMore} onToggle={toggleDroneMore} label={zh?"持续音选项":"Drone options"}/>
+                </span>
               </div>
               <div className="tp-notes">
                 {pitches.map(pitch=>{
@@ -658,11 +665,8 @@ export default function PracticeToolDock() {
               {drones.length>0&&<div className="tp-drone-active" role="group" aria-label={zh?"正在播放的持续音":"Active drone pitches"}>
                 {drones.map(note=><button key={note} type="button" className="tp-chip is-on" aria-label={zh?`停止 ${note}`:`Stop ${note}`}
                   onClick={()=>toggleSharedDrone(note.slice(0,-1),Number(note.slice(-1)))}>{note}<span aria-hidden="true"> ×</span></button>)}
+                {drones.length>1&&<button type="button" className="text-action" onClick={stopAllDrones}>{zh?"全部停止":"Stop all"}</button>}
               </div>}
-              <div className="tp-row tp-drone__foot">
-                {drones.length>0&&<button type="button" className="text-action" onClick={stopAllDrones}>{zh?"全部停止":"Stop all"}</button>}
-              <button type="button" className="text-action tp-more" aria-expanded={droneMore} onClick={toggleDroneMore}>{zh?"更多":"More"}<ChevronIcon/></button>
-              </div>
               {droneMore&&<div className="tp-more__body">
                 <Choice zh={zh} label={["Sound","音色"]} value={sounds.drone} options={DRONE_SOUNDS} onPick={drone=>{setToolSounds({drone});previewDrone()}}/>
                 <Choice zh={zh} label={["Add","加音"]} value={sounds.droneAdd} options={DRONE_ADDS} onPick={droneAdd=>{setToolSounds({droneAdd});previewDrone()}}/>
@@ -671,6 +675,10 @@ export default function PracticeToolDock() {
 
             {/* Metronome. */}
             <section ref={metroSection} className="tp-metro" tabIndex={-1}>
+              <div className="tp-row tp-head">
+                <span className="tp-label">{zh?"节拍器":"Metronome"}</span>
+                <Options open={more} onToggle={()=>{const next=!more;setMore(next);try{localStorage.setItem(MORE_KEY,next?"1":"0")}catch{/* fine */}}} label={zh?"节拍器选项":"Metronome options"}/>
+              </div>
               <button type="button" className={`tp-play ${metro?"is-on":""}`} onClick={toggleToolMetro} aria-label={metro?t.toolDock.stopMetronome:t.toolDock.startMetronome} aria-pressed={metro}>
                 {metro?<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="4" width="8" height="8" rx="1.5"/></svg>:<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.5v9l7.5-4.5z"/></svg>}
               </button>
@@ -691,7 +699,7 @@ export default function PracticeToolDock() {
                 <ChevronIcon/>
               </span>
               <button type="button" className={`tp-chip ${accent?"is-on":""}`} aria-pressed={accent} onClick={()=>setAccent(!accent)}>{zh?"重音":"Accent"}</button>
-              <MetronomeMore zh={zh} open={more} onToggle={()=>{const next=!more;setMore(next);try{localStorage.setItem(MORE_KEY,next?"1":"0")}catch{/* fine */}}}
+              <MetronomeMore zh={zh} open={more}
                 setup={setup} setSetup={setSetup} beats={beats} accent={accent} setAccent={setAccent} toolBeat={toolMode?toolBeat:null} toolPulse={toolMode?toolPulse:null} preview={previewClick}/>
             </section>
           </div>:<div className="tools-panel__body">

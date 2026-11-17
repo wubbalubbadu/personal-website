@@ -10,6 +10,7 @@ const DIRECTIONS = [
   { href: "/lab/home-1b", name: "Cat host, portrait handheld", line: "The same page with a Game Boy style handheld." },
   { href: "/lab/home-2", name: "Memory card", line: "A PS1 memory card screen. Each save block is one thing I make." },
   { href: "/lab/home-3", name: "Staff of notes", line: "One line of music. Each note is a link, and it plays." },
+  { href: "/lab/spa", name: "Soak, a shared bathhouse", line: "Not a landing page. A small bathhouse to wander as a little figurine: sauna, hot spring, cold plunge, a warm floor to lie on, with other people in it." },
 ];
 
 export default function LabIndex() {

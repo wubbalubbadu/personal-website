@@ -2,17 +2,31 @@
    coloured dots are the tag pills' tints (lib/musicStatus STATUS_TONES). */
 .status-button{position:relative;display:inline-flex}
 .status-button__trigger{
-  display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 13px 0 10px;
-  border:0;border-radius:999px;background:#f1f1f4;color:#45464f;
-  font:inherit;font-size:13px;font-weight:500;white-space:nowrap;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px 0 9px;
+  border:0;border-radius:999px;background:#edf1f5;color:#45464f;
+  font:inherit;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer;
 }
+/* One size for every status pill (Nov 14): the Library's list chips (28px, 12px type, 11px/9px sides), so the
+   reader, book pages and cards no longer carry a big 34px pill. */
 /* !important: the reader gives every button a green hover. */
-.status-button .status-button__trigger:hover{background-color:#e6e6ea!important}
+.status-button .status-button__trigger:hover{background-color:#e2e8ef!important}
 .status-button__trigger svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
-.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex:0 0 auto}
-.status-dot[data-tone="blue"]{background:#6f8aa3}
-.status-dot[data-tone="sand"]{background:#b08a45}
-.status-dot[data-tone="sage"]{background:#6c8f5f}
+/* A status is an icon, never a dot (Nov 14): dots are for tags, so "what kind of piece" and "where you are with it"
+   look different. Bookmark = Want to learn, half-filled circle = Working on, ticked circle = Learned. The markup is
+   still <i class="status-dot" data-tone>, so every place that shows a status follows. Drawn as a mask so the tone
+   colours it. */
+.status-dot{display:inline-block;width:15px;height:15px;flex:0 0 auto;background:currentColor;-webkit-mask:var(--status-icon) center/contain no-repeat;mask:var(--status-icon) center/contain no-repeat}
+.status-dot[data-tone="blue"]{--status-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5.5 3.5h9v13l-4.5-3.4-4.5 3.4z'/%3E%3C/svg%3E");background:#5d7b99}
+.status-dot[data-tone="sand"]{--status-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='10' cy='10' r='6.8'/%3E%3Cpath d='M10 3.2a6.8 6.8 0 0 1 0 13.6z' fill='black'/%3E%3C/svg%3E");background:#a57a2e}
+.status-dot[data-tone="sage"]{--status-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='10' cy='10' r='6.8'/%3E%3Cpath d='M6.9 10.2 9.1 12.4 13.2 7.9'/%3E%3C/svg%3E");background:#5d8450}
+/* On a list: the button wears that list's home-page tint (slate, sand, sage) and its icon takes the text colour. No border, no ring. */
+.status-button__trigger[data-status] .status-dot{background:currentColor}
+.status-button__trigger[data-status="want"]{background:#edf1f5;color:#3d5878}
+.status-button__trigger[data-status="working"]{background:#f7f1e6;color:#765621}
+.status-button__trigger[data-status="learned"]{background:#eef4ec;color:#40553d}
+.status-button .status-button__trigger[data-status="want"]:hover{background-color:#e0e8f1!important}
+.status-button .status-button__trigger[data-status="working"]:hover{background-color:#f1e7d3!important}
+.status-button .status-button__trigger[data-status="learned"]:hover{background-color:#e2ecde!important}
 
 .status-button__menu{
   position:fixed;z-index:200;width:190px;padding:8px;box-sizing:border-box;
@@ -27,7 +41,7 @@
 .status-button__menu button b{font-size:13px;font-weight:500}
 /* One hover for every row, the toolbar's neutral grey; one type style (the reader's global button rules would otherwise make them 500). */
 html body .status-button__menu button{min-height:37px;font-size:14px!important;font-weight:400!important;line-height:1.3}
-html body .status-button__menu button:hover{background-color:#f5f5f7!important}
+html body .status-button__menu button:hover{background-color:#f4f6f9!important}
 /* Selected is the tick alone: no second grey, no weight change. */
 html body .status-button__menu button.is-on{background-color:transparent!important;font-weight:400}
 /* Remove: same row shape, size and type as the others; a thin rule above sets it apart, and only its colour is quieter. */
@@ -55,3 +69,7 @@ html body .status-button__menu .status-button__remove::before{content:"";positio
   .status-button--compact .status-button__trigger[data-status]{width:34px;padding:0;justify-content:center}
   .status-button--compact .status-button__trigger[data-status]>span{display:none}
 }
+
+/* Squared to match the tags and filter chips beside it (Nov 14): radius 3 on My Studio cards. Library rows use a
+   round dot (music-row.css); a page header uses a round pill (detail-header.css). The reader's top bar keeps its own shape. */
+.working-card__list .status-button__trigger { border-radius: 3px; }

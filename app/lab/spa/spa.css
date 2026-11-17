@@ -1,0 +1,401 @@
+/* Soak: the 3D view fills the window; everything else floats over it as soft
+ * pills (light, fully round, no dark fills). */
+
+html:has(.spa),
+body:has(.spa) {
+  overflow: hidden;
+  height: 100%;
+}
+
+.spa {
+  position: fixed;
+  inset: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: #2a2540;
+  color: #3a2a30;
+  --pill: rgba(255, 251, 244, 0.86);
+  --pill-line: rgba(58, 42, 48, 0.1);
+  --green: #46633d;
+  --green-wash: #e1ecd8;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.spa-stage {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+}
+.spa-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---- what your body feels ---- */
+.spa-feel,
+.spa-feel > i {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.spa-feel > i {
+  opacity: 0;
+  transition: opacity 0.9s ease;
+}
+.spa-feel__warm {
+  background: radial-gradient(ellipse at center, transparent 48%, rgba(255, 120, 86, 0.55) 115%);
+}
+.spa-feel__cold {
+  background: radial-gradient(ellipse at center, transparent 42%, rgba(120, 170, 255, 0.6) 112%);
+}
+.spa-feel__steam {
+  background: radial-gradient(ellipse at 50% 60%, rgba(255, 250, 244, 0.2), rgba(255, 250, 244, 0.75));
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+.spa-feel > .spa-feel__under {
+  background: linear-gradient(rgba(60, 130, 170, 0.72), rgba(20, 60, 100, 0.9));
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition-duration: 0.2s;
+}
+.spa-feel__nap {
+  background: #120d14;
+  animation: spa-breathe 4.2s ease-in-out infinite;
+}
+.spa-feel > .spa-feel__nap {
+  transition-duration: 1.6s;
+}
+@keyframes spa-breathe {
+  50% {
+    background: #1d1620;
+  }
+}
+/* two slices over your eyes: all you see is green with the light coming through */
+.spa-feel__cukes {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4vmin;
+  background: #17120f;
+}
+.spa-feel__cukes b {
+  width: 44vmin;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(255, 255, 230, 0.5) 0 6%, transparent 7%) 0 0 / 22% 22%,
+    radial-gradient(circle, #d9efb4 0 34%, #b7dc8c 35% 82%, #6f9a4a 83% 100%);
+  box-shadow: 0 0 9vmin rgba(190, 230, 140, 0.25);
+}
+
+/* ---- pills ---- */
+.spa-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 15px;
+  border: 1px solid var(--pill-line);
+  border-radius: 999px;
+  background: var(--pill);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: inherit;
+  font: 500 14px/1 var(--font-ui);
+  cursor: default;
+}
+button.spa-pill:hover {
+  background: #fffdf8;
+}
+.spa-pill--icon {
+  width: 38px;
+  padding: 0;
+  justify-content: center;
+}
+.spa-pill--place b {
+  font-weight: 600;
+}
+.spa-pill--place span {
+  padding-left: 9px;
+  border-left: 1px solid var(--pill-line);
+  color: rgba(58, 42, 48, 0.78);
+}
+.spa-pill--quiet {
+  color: rgba(58, 42, 48, 0.82);
+}
+
+.spa-top {
+  position: absolute;
+  top: max(14px, env(safe-area-inset-top));
+  left: 14px;
+  right: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  pointer-events: none;
+}
+.spa-top > * {
+  pointer-events: auto;
+}
+.spa-top__right {
+  display: flex;
+  gap: 8px;
+}
+
+.spa-panel {
+  position: absolute;
+  top: 46px;
+  right: 0;
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--pill-line);
+  border-radius: 20px;
+  background: rgba(255, 251, 244, 0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font: 500 13px/1 var(--font-ui);
+}
+.spa-panel__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.spa-panel {
+  max-width: calc(100vw - 28px);
+}
+.spa-panel__row span {
+  width: 52px;
+  color: rgba(58, 42, 48, 0.75);
+}
+.spa-panel__row button {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--pill-line);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: default;
+}
+.spa-panel__row button:hover {
+  background: #fff;
+}
+.spa-panel__row button[aria-pressed="true"] {
+  border-color: transparent;
+  background: var(--green-wash);
+  color: var(--green);
+  font-weight: 600;
+}
+.spa-panel__name {
+  margin: 2px 0 0;
+  color: rgba(58, 42, 48, 0.8);
+}
+.spa-panel__name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.spa-panel__name button {
+  margin-left: auto;
+  min-height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--green-wash);
+  color: var(--green);
+  font: 600 13px/1 var(--font-ui);
+  cursor: default;
+}
+.spa-panel__name button:hover {
+  background: #d5e4c9;
+}
+.spa-panel__name b {
+  font-weight: 600;
+  color: #3a2a30;
+}
+
+.spa-hint {
+  position: absolute;
+  left: 50%;
+  top: calc(max(14px, env(safe-area-inset-top)) + 52px);
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: rgba(40, 30, 38, 0.5);
+  color: #fffaf2;
+  font: 500 13px/1.3 var(--font-ui);
+  white-space: nowrap;
+  pointer-events: none;
+  animation: spa-rise 0.6s ease both;
+}
+@keyframes spa-rise {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+}
+
+/* ---- the verbs for where you are ---- */
+.spa-verbs {
+  position: absolute;
+  left: 50%;
+  bottom: max(22px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  width: max-content;
+  max-width: calc(100vw - 24px);
+}
+.spa-verb {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 18px 0 15px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--green-wash);
+  color: var(--green);
+  font: 600 14px/1 var(--font-ui);
+  cursor: default;
+  transition: transform 0.12s ease, background 0.15s ease, opacity 0.2s ease;
+}
+.spa-verb:hover:not(:disabled) {
+  background: #eef5e8;
+}
+.spa-verb:active:not(:disabled) {
+  transform: scale(0.96);
+}
+.spa-verb:disabled {
+  opacity: 0.55;
+}
+.spa-verb[aria-pressed="true"] {
+  background: var(--green);
+  color: #f6fbf1;
+}
+.spa-verb[aria-pressed="true"]:hover:not(:disabled) {
+  background: #3d5735;
+}
+.spa-verb--plain {
+  border-color: var(--pill-line);
+  background: var(--pill);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #3a2a30;
+  font-weight: 500;
+}
+.spa-verb--plain:hover:not(:disabled) {
+  background: #fffdf8;
+}
+
+/* ---- the front door ---- */
+.spa-door {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(36, 28, 48, 0.42);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+}
+.spa-door__card {
+  width: min(380px, 100%);
+  padding: 30px 28px 26px;
+  border-radius: 28px;
+  background: rgba(255, 251, 244, 0.95);
+  text-align: center;
+}
+.spa-door__card .spa-door__mark {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: #27365f;
+  color: #f6efe0;
+  font: 500 30px/1 "Hiragino Mincho ProN", "Songti SC", serif;
+}
+.spa-door__card h1 {
+  margin: 0 0 8px;
+  font: 600 28px/1.1 var(--font-ui);
+}
+.spa-door__card p {
+  text-wrap: balance;
+  margin: 0 0 20px;
+  font: 400 15px/1.5 var(--font-ui);
+  color: rgba(58, 42, 48, 0.86);
+}
+.spa-door__card button {
+  min-height: 46px;
+  padding: 0 28px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--green-wash);
+  color: var(--green);
+  font: 600 15px/1 var(--font-ui);
+  cursor: default;
+}
+.spa-door__card button:hover:not(:disabled) {
+  background: #d5e4c9;
+}
+.spa-door__card button:disabled {
+  background: transparent;
+  color: rgba(58, 42, 48, 0.7);
+  font-weight: 500;
+}
+
+@media (max-width: 520px) {
+  .spa-verb {
+    min-height: 44px;
+    padding: 0 14px 0 12px;
+    font-size: 13px;
+  }
+  .spa-pill--place span {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spa-feel__nap,
+  .spa-hint {
+    animation: none;
+  }
+}
+
+/* ---- small extras ---- */
+/* which key presses this verb (mouse and keyboard only) */
+.spa-verb kbd {
+  min-width: 18px;
+  padding: 2px 5px;
+  border-radius: 6px;
+  background: rgba(58, 42, 48, 0.08);
+  color: inherit;
+  font: 500 11px/1.2 var(--font-ui);
+  text-align: center;
+  opacity: 0.75;
+}
+.spa-verb[aria-pressed="true"] kbd {
+  background: rgba(255, 255, 255, 0.2);
+}
+/* a clear ring for anyone moving with the Tab key */
+.spa button:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+.spa-door__card .spa-door__inside {
+  margin: -8px 0 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--green);
+}

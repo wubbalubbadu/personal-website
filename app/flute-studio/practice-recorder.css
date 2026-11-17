@@ -28,7 +28,7 @@ html:root body .restored-reader .practice-bar .score-recorder>button.tool.record
   font-variant-numeric:tabular-nums;white-space:nowrap;
 }
 .recording-playback{display:grid;grid-template-columns:44px minmax(0,1fr);align-items:center;gap:10px;margin:12px 0}
-.recording-playback .recording-playback__toggle{display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:12px;background:#f1f1f4;color:#45464f;cursor:pointer}
+.recording-playback .recording-playback__toggle{display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:12px;background:#edf1f5;color:#45464f;cursor:pointer}
 .recording-playback__toggle svg{width:20px;height:20px}
 .recording-playback__timeline{min-width:0}
 .recording-playback input[type="range"]{display:block;appearance:none;-webkit-appearance:none;width:100%;height:28px;margin:0;background:transparent;cursor:pointer}

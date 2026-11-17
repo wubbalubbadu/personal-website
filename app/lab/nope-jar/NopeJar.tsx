@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import "./nope-jar.css";
 
 type Item = { emoji: string; name: string; price: number; kcal: number };
@@ -59,27 +59,55 @@ function save(entries: Entry[]) {
   }
 }
 
+// The jar lives outside React: read from storage once in the browser, then kept in memory so it still
+// works when storage is blocked.
+const EMPTY: Entry[] = [];
+let jar: Entry[] | null = null;
+const watchers = new Set<() => void>();
+const watch = (onChange: () => void) => {
+  watchers.add(onChange);
+  return () => {
+    watchers.delete(onChange);
+  };
+};
+const current = () => (jar ??= load());
+const commit = (next: Entry[]) => {
+  jar = next;
+  save(next);
+  watchers.forEach((onChange) => onChange());
+};
+
+function Grid({ title, items, onSkip }: { title: string; items: Item[]; onSkip: (item: Item) => void }) {
+  return (
+    <section className="nope__group">
+      <h2>{title}</h2>
+      <div className="nope__grid">
+        {items.map((item) => (
+          <button key={item.emoji} type="button" title={item.name} aria-label={`Skipped ${item.name}`} onClick={() => onSkip(item)}>
+            {item.emoji}
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 const money = (entries: Entry[]) => Math.round(entries.reduce((sum, e) => sum + e.price * e.size, 0));
 const calories = (entries: Entry[]) => Math.round(entries.reduce((sum, e) => sum + e.kcal * e.size, 0));
 
 export default function NopeJar() {
-  const [entries, setEntries] = useState<Entry[]>([]);
+  // Empty on the server and the first render, then whatever the jar holds.
+  const entries = useSyncExternalStore(watch, current, () => EMPTY);
   // Only the newest tap can be resized or undone, and only until the next tap.
   const [lastId, setLastId] = useState<number | null>(null);
-
-  useEffect(() => {
-    setEntries(load());
-  }, []);
-
-  const commit = (next: Entry[]) => {
-    setEntries(next);
-    save(next);
-  };
+  // "This week" is counted back from here: the time the page opened, moved on by every tap.
+  const [now, setNow] = useState(() => Date.now());
 
   const skip = (item: Item) => {
     const id = Date.now();
     commit([...entries, { ...item, id, size: 1 }]);
     setLastId(id);
+    setNow(id);
   };
 
   const resize = (size: number) => commit(entries.map((e) => (e.id === lastId ? { ...e, size } : e)));
@@ -90,20 +118,7 @@ export default function NopeJar() {
   };
 
   const last = entries.find((e) => e.id === lastId);
-  const week = entries.filter((e) => e.id > Date.now() - WEEK_MS);
-
-  const grid = (title: string, items: Item[]) => (
-    <section className="nope__group">
-      <h2>{title}</h2>
-      <div className="nope__grid">
-        {items.map((item) => (
-          <button key={item.emoji} type="button" title={item.name} aria-label={`Skipped ${item.name}`} onClick={() => skip(item)}>
-            {item.emoji}
-          </button>
-        ))}
-      </div>
-    </section>
-  );
+  const week = entries.filter((e) => e.id > now - WEEK_MS);
 
   return (
     <main className="nope">
@@ -152,8 +167,8 @@ export default function NopeJar() {
         </section>
 
         <div className="nope__pickers">
-          {grid("Food", FOOD)}
-          {grid("Stuff", STUFF)}
+          <Grid title="Food" items={FOOD} onSkip={skip} />
+          <Grid title="Stuff" items={STUFF} onSkip={skip} />
         </div>
       </div>
     </main>

@@ -9,7 +9,7 @@ import {useDeadlines} from "../../lib/deadlines";
 import {deleteMockRun,drawExcerpts,mockPool,runClock,saveMockRun,useMockRuns,type MockExcerpt,type MockRun} from "../../lib/mockAuditions";
 import FixedScoreViewer from "../../components/FixedScoreViewer";
 import {ScoreViewer} from "../../components/ScoreViewer";
-import BackChevron from "../../components/BackChevron";
+import DetailHeader from "../../components/DetailHeader";
 import {PracticeIcon} from "../../components/PracticeIcon";
 import {CheckIcon} from "../../components/HeaderIcons";
 import {RecordingPlayback} from "../../components/RecordingPlayback";
@@ -28,14 +28,25 @@ import "./mock-audition.css";
  * recording can run from the first note to the last.
  */
 type Phase={step:"setup"}|{step:"ready";index:number;left:number}|{step:"play";index:number;since:number}|{step:"end"};
+type Setup={count:number;pause:number;order:MockExcerpt[]};
 const PAUSES=[0,20,30];
+/** The time, for event handlers. The purity lint misreads begin() (only ever a click handler) as render code. */
+const now=()=>Date.now();
+/** A repeatable random source (mulberry32), so the first draw can be worked out while rendering from one seed. */
+function seeded(seed:number){
+  let state=seed>>>0;
+  return()=>{state=(state+0x6d2b79f5)>>>0;let t=state;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296};
+}
 
 /** One take for the whole run, the same way the reader's recorder makes one (nothing is uploaded). */
 function useRunRecording(){
   const [take,setTake]=useState<{url:string;type:string;duration:number}|null>(null),[on,setOn]=useState(false),[blocked,setBlocked]=useState(false);
+  // Whole seconds recorded so far, for the clock in the reader's top bar. Kept in state because the time is not a render-time value.
+  const [seconds,setSeconds]=useState(0);
   const recorder=useRef<MediaRecorder|null>(null),stream=useRef<MediaStream|null>(null),chunks=useRef<Blob[]>([]),started=useRef(0);
   useEffect(()=>()=>{if(recorder.current?.state==="recording")recorder.current.stop();closeMic(stream.current)},[]);
   useEffect(()=>()=>{if(take)URL.revokeObjectURL(take.url)},[take]);
+  useEffect(()=>{if(!on)return;const id=window.setInterval(()=>setSeconds(Math.floor((Date.now()-started.current)/1000)),1000);return()=>window.clearInterval(id)},[on]);
   async function start(){
     setTake(null);setBlocked(false);
     try{
@@ -43,11 +54,11 @@ function useRunRecording(){
       const next=new MediaRecorder(media);
       next.ondataavailable=event=>{if(event.data.size)chunks.current.push(event.data)};
       next.onstop=()=>{setTake({url:URL.createObjectURL(new Blob(chunks.current,{type:next.mimeType})),type:next.mimeType,duration:(Date.now()-started.current)/1000});closeMic(media)};
-      next.start();recorder.current=next;started.current=Date.now();setOn(true);
+      next.start();recorder.current=next;started.current=Date.now();setSeconds(0);setOn(true);
     }catch{closeMic(stream.current);stream.current=null;setBlocked(true)}
   }
   function stop(){if(recorder.current?.state==="recording")recorder.current.stop();setOn(false)}
-  return {take,on,blocked,start,stop,since:started,discard:()=>setTake(null)};
+  return {take,on,blocked,start,stop,seconds,discard:()=>setTake(null)};
 }
 
 export default function MockAuditionPage(){
@@ -63,19 +74,17 @@ export default function MockAuditionPage(){
   const earlier=runs.filter(run=>run.deadlineId===deadlineId);
 
   // Setup choices and the drawn order: unset until the deadline is known, then sized like your last run of it.
-  const [setup,setSetup]=useState<{count:number;pause:number;order:MockExcerpt[]}|null>(null),[record,setRecord]=useState(false);
+  // Until you change something the first draw is derived from one seed made on mount, so it stays the same draw
+  // across renders; any choice (or starting the run) pins the setup in state.
+  const [seed]=useState(()=>Math.floor(Math.random()*4294967296));
+  const [chosen,setChosen]=useState<Setup|null>(null),[record,setRecord]=useState(false);
   const [run,setRun]=useState<MockRun|null>(null),[phase,setPhase]=useState<Phase>({step:"setup"});
   const recording=useRunRecording();
-  useEffect(()=>{
-    if(setup||!deadline||!pool.length)return;
-    const last=earlier[0],count=last?Math.min(last.items.length,pool.length):Math.min(3,pool.length);
-    // A random draw is not a render-time value, so it is made once here after the stores have been read.
-    setSetup({count,pause:last?last.pause:20,order:drawExcerpts(pool,count)});
-  // pool and earlier are rebuilt every render; their contents only matter once, before the first draw.
-  },[setup,deadline,pool.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  const lastRun=earlier[0],firstCount=lastRun?Math.min(lastRun.items.length,pool.length):Math.min(3,pool.length);
+  const setup:Setup|null=chosen??(deadline&&pool.length?{count:firstCount,pause:lastRun?lastRun.pause:20,order:drawExcerpts(pool,firstCount,seeded(seed))}:null);
   const count=setup?.count??3,pause=setup?.pause??20,order=setup?.order??[];
-  const setPause=(value:number)=>setSetup(current=>current&&{...current,pause:value});
-  const setOrder=(next:MockExcerpt[])=>setSetup(current=>current&&{...current,order:next});
+  const setPause=(value:number)=>{if(setup)setChosen({...setup,pause:value})};
+  const setOrder=(next:MockExcerpt[])=>{if(setup)setChosen({...setup,order:next})};
 
   const itemOf=(excerpt:MockExcerpt)=>library.find(entry=>entry.id===excerpt.piece);
   const label=(excerpt:MockExcerpt)=>{
@@ -85,15 +94,17 @@ export default function MockAuditionPage(){
     return {title:pieceTitle(item,zh),passage:passage?(zh?passage.zhLabel??passage.label:passage.label):item.excerpt?(zh?item.excerpt.zhPassage??item.excerpt.passage:item.excerpt.passage):"",composer:item.composer};
   };
   const choices=[...Array.from({length:Math.min(pool.length-1,5)},(_,i)=>i+1),pool.length];
-  const choose=(size:number)=>setSetup(current=>current&&{...current,count:size,order:drawExcerpts(pool,size)});
+  const choose=(size:number)=>{if(setup)setChosen({...setup,count:size,order:drawExcerpts(pool,size)})};
 
   // Saved as it goes, so leaving halfway still keeps what you played.
   function store(next:Omit<MockRun,"at">){setRun(saveMockRun(next))}
   function begin(){
-    if(!deadline||!order.length)return;
+    if(!deadline||!setup||!order.length)return;
+    setChosen(setup);
     if(record)void recording.start();
-    store({id:crypto.randomUUID(),deadlineId:deadline.id,deadlineName:deadline.name,startedAt:Date.now(),pause,items:order});
-    setPhase(pause?{step:"ready",index:0,left:pause}:{step:"play",index:0,since:Date.now()});
+    const at=now();
+    store({id:crypto.randomUUID(),deadlineId:deadline.id,deadlineName:deadline.name,startedAt:at,pause,items:order});
+    setPhase(pause?{step:"ready",index:0,left:pause}:{step:"play",index:0,since:at});
   }
   function next(){
     if(!run||phase.step!=="play")return;
@@ -106,13 +117,10 @@ export default function MockAuditionPage(){
   // The walk to the next stand: counts down, or one tap when you are ready sooner.
   useEffect(()=>{
     if(phase.step!=="ready")return;
-    if(phase.left<=0){setPhase({step:"play",index:phase.index,since:Date.now()});return}
-    const timer=window.setTimeout(()=>setPhase({...phase,left:phase.left-1}),1000);
+    // The last second hands over to the reader from the timer itself.
+    const timer=window.setTimeout(()=>setPhase(phase.left>1?{...phase,left:phase.left-1}:{step:"play",index:phase.index,since:Date.now()}),phase.left>0?1000:0);
     return()=>window.clearTimeout(timer);
   },[phase]);
-  // The recording's clock, shown in the reader's top bar while the run is being recorded.
-  const [,tick]=useState(0);
-  useEffect(()=>{if(!recording.on)return;const id=window.setInterval(()=>tick(n=>n+1),1000);return()=>window.clearInterval(id)},[recording.on]);
   function saveTake(){
     const take=recording.take;if(!take)return;
     const day=new Date(run?.startedAt??Date.now()),pad=(n:number)=>String(n).padStart(2,"0");
@@ -138,7 +146,7 @@ export default function MockAuditionPage(){
   if(run&&phase.step==="play"){
     const excerpt=run.items[phase.index],item=itemOf(excerpt),last=phase.index===run.items.length-1;
     const actions=<span className="book-stepper mock-stepper">
-      {recording.on&&<button type="button" className="mock-stepper__rec has-tip" data-tip={zh?"停止录音":"Stop recording"} aria-label={zh?"停止录音":"Stop recording"} onClick={recording.stop}><i aria-hidden="true"/>{(()=>{const whole=Math.floor((Date.now()-recording.since.current)/1000);return `${Math.floor(whole/60)}:${String(whole%60).padStart(2,"0")}`})()}</button>}
+      {recording.on&&<button type="button" className="mock-stepper__rec has-tip" data-tip={zh?"停止录音":"Stop recording"} aria-label={zh?"停止录音":"Stop recording"} onClick={recording.stop}><i aria-hidden="true"/>{`${Math.floor(recording.seconds/60)}:${String(recording.seconds%60).padStart(2,"0")}`}</button>}
       <span className="book-stepper__label" aria-label={zh?`第 ${phase.index+1} 首，共 ${run.items.length} 首`:`Excerpt ${phase.index+1} of ${run.items.length}`}>{phase.index+1} / {run.items.length}</span>
       {/* Mic refused: the reader's notice pill, once, on the first excerpt; the run carries on without a recording. */}
       {recording.blocked&&phase.index===0&&<span className="drone-hint" role="status">{micBlockedText(zh)}</span>}
@@ -171,15 +179,15 @@ export default function MockAuditionPage(){
   }
 
   const header=(title:string,meta?:string)=><>
-    <Link className="book-page__back" href="/flute-studio/practice" aria-label={text.back}><BackChevron/></Link>
-    <header className="exercise-hub__header book-page__header"><div><h1>{title}</h1>{meta&&<p className="mock-meta">{meta}</p>}</div></header>
+    <DetailHeader backHref="/flute-studio/practice" backLabel={zh?"我的工作室":"My Studio"} title={title} meta={meta}/>
   </>;
   const deadlineMeta=deadline?`${deadline.name} · ${new Date(...(deadline.date.split("-").map(Number).map((n,i)=>i===1?n-1:n) as [number,number,number])).toLocaleDateString(zh?"zh-CN":undefined,{month:"long",day:"numeric"})}`:undefined;
 
   // The end: what was played, how long each took, one optional line per excerpt. No grades.
   if(run&&phase.step==="end"){
     const played=run.items.filter(item=>item.seconds!==undefined);
-    const total=Math.round(((run.endedAt??Date.now())-run.startedAt)/1000);
+    // Every way into this screen stamps endedAt; the last save time stands in if an older record lacks it.
+    const total=Math.round(((run.endedAt??run.at)-run.startedAt)/1000);
     return <main className="exercise-hub mock-page"><div className="exercise-hub__content">
       {header(text.title,run.deadlineName)}
       <section className="deadline-card mock-card">

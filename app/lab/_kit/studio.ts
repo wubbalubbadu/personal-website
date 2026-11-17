@@ -7,7 +7,7 @@ import type { MascotMood, Outfit } from "../../components/ps1-mascot";
 /* ---- what's in the room ---- */
 
 export type ItemId =
-  | "diploma" | "resume" | "socials" | "laptop" | "book" | "letter" | "flute" | "ipad" | "cookies"
+  | "diploma" | "resume" | "socials" | "laptop" | "book" | "letter" | "flute" | "ipad" | "cookies" | "brush"
   // the living room
   | "closet" | "stand" | "window" | "jar" | "cushion";
 
@@ -29,6 +29,8 @@ export type Item = {
   snack?: boolean;
   /** The dress-up closet: each inspect puts on the next of LOOKS. */
   closet?: boolean;
+  /** The paintbrush: each inspect repaints the studio in the next of ROOM_PAINTS. */
+  paint?: boolean;
   /** Inspecting runs this whole conversation from app/lib/answers.ts instead of `body`. */
   topic?: "flute" | "background" | "projects";
 };
@@ -88,6 +90,7 @@ export const ITEMS: Record<ItemId, Item> = {
   },
   // The fun things: no links, the cat just does something. Drafts for Haylie.
   cookies: { name: "Cookies", react: "", body: "", snack: true, mood: "eat" },
+  brush: { name: "Paintbrush", react: "", body: "", paint: true },
   jar: { name: "Cookie jar", react: "", body: "", snack: true, mood: "eat" },
   closet: { name: "Closet", react: "", body: "", closet: true },
   cushion: { name: "Cushion", react: "", body: "Five more minutes.", mood: "sleep" },
@@ -216,6 +219,14 @@ export const SNACK_MILESTONES: Record<number, string[]> = {
   20: ["Twenty?!", "You're a bad influence.", "Thank you."],
 };
 
+/** What she says as the paintbrush repaints the studio, by paint style (the
+ *  engine's order: blue stripes, garden room, Christmas). Drafts for Haylie. */
+export const ROOM_PAINTS: string[] = [
+  "Blue stripes again. This one's my favorite.",
+  "A garden room! Big windows, trees outside. I can practise for the birds.",
+  "Christmas! Lights up, tree up. Time for carols on the flute.",
+];
+
 /** The closet's looks, in turn, and what she says in each. Drafts for Haylie. */
 export const LOOKS: { wear: Outfit[]; line: string }[] = [
   { wear: ["beret"], line: "A beret! Very artist. I'd paint you something, but my paws only know scales." },
@@ -233,7 +244,7 @@ export const LOOKS: { wear: Outfit[]; line: string }[] = [
  *  them was too hard to guess): laptop, letter, Learning Log, then the cat,
  *  then the flute and the cookies. */
 export const WALL: ItemId[] = ["diploma", "resume", "socials"];
-export const DESK: ItemId[] = ["laptop", "letter", "book", "flute", "cookies"];
+export const DESK: ItemId[] = ["laptop", "letter", "book", "flute", "cookies", "brush"];
 /** The living room, one row, left to right. */
 export const ROOM: ItemId[] = ["closet", "stand", "window", "cushion", "jar"];
 

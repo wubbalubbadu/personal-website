@@ -149,7 +149,7 @@ export function TonePracticeReader({groups:providedGroups,pattern,zh,...reader}:
     {details&&graph}
   </section>:undefined;
   return <div className="tone-workspace">
-    <ScoreViewer {...reader} practiceActions={pitchButton} practiceRow={pitchRow} stage={stage}
+    <ScoreViewer {...reader} extraSystemSpacing={reader.extraSystemSpacing??4} practiceActions={pitchButton} practiceRow={pitchRow} stage={stage}
       dock={enabled&&details&&!closeup?<div className="tone-dock">
           {groups[group]&&<div className="tone-dock-music"><ToneNotation block={groups[group]} pattern={pattern} active={selected?.id??0} cursorAfter={review===null&&session.cursorAfter} startEvent={startEvent} attempts={session.attempts} onSelect={select} zh={zh}/></div>}
           {graph}<CloseButton className="tone-dock-close" label={zh?'关闭图表':'Close graph'} onClick={()=>setDetails(false)}/></div>

@@ -57,11 +57,11 @@ html:root body .account-menu__panel .account-menu__item.is-on{
   background:var(--studio-on-bg,#eee7f2)!important;color:var(--studio-on-ink,#79588e)!important;font-weight:500!important;
 }
 @media(hover:hover){
-  html:root body .account-menu__panel .account-menu__item:not(.is-on):hover{background:#e6e6ea!important}
+  html:root body .account-menu__panel .account-menu__item:not(.is-on):hover{background:#e2e8ef!important}
   html:root body .account-menu__panel .account-menu__item.is-on:hover{background:#e5d9ee!important}
-  html:root body .reader-settings-panel :is(.scale-book__chip,.scale-book__preset,.reader-choice button,.reader-display-options .tool,.reader-terms):not(.selected):not(.on):not([aria-pressed="true"]):hover{background:#e6e6ea!important}
+  html:root body .reader-settings-panel :is(.scale-book__chip,.scale-book__preset,.reader-choice button,.reader-display-options .tool,.reader-terms):not(.selected):not(.on):not([aria-pressed="true"]):hover{background:#e2e8ef!important}
   html:root body .reader-settings-panel :is(.scale-book__chip.selected,.scale-book__preset.selected,.reader-choice button[aria-pressed="true"],.reader-display-options .tool.on,.reader-terms.on):hover{background:#e5d9ee!important;color:var(--studio-on-ink,#79588e)!important}
-  html:root body .reader-settings-panel .scale-book__metronome>button:hover:not(:disabled){background:#e6e6ea!important;border-radius:9px!important}
+  html:root body .reader-settings-panel .scale-book__metronome>button:hover:not(:disabled){background:#e2e8ef!important;border-radius:9px!important}
 }
 html:root body :is(.reader-settings-panel,.account-menu__panel) :is(button,a):focus-visible{outline:2px solid #8c6aa1!important;outline-offset:2px}
 /* Labels inside an accordion are subordinate to its section heading. */

@@ -103,7 +103,7 @@
 .tone-time-axis span:first-child{transform:none}
 .tone-note-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin:10px 0 0 46px}
 .tone-workspace .tone-note-card{display:grid;gap:2px;justify-items:start;padding:8px 10px;min-height:0;border:1px solid transparent;border-radius:8px;background:#f5f6f3;text-align:left;font:400 13px var(--font,sans-serif);color:#41464b}
-.tone-workspace .tone-note-card:hover:not(:disabled){background:#f5f5f7}
+.tone-workspace .tone-note-card:hover:not(:disabled){background:#f4f6f9}
 .tone-note-card-head{display:flex;gap:8px;align-items:baseline;font-variant-numeric:tabular-nums}
 .tone-note-card-head b{font-weight:500;color:#111}.tone-note-card-head span,.tone-note-card small{color:var(--tone-muted);font-size:12px;font-variant-numeric:tabular-nums}
 .tone-note-card strong{font-weight:500}
@@ -194,3 +194,13 @@ html body .reader-workspace .pitch-row .pitch-start.is-on svg{transform:scale(ca
 .tone-compare{display:flex;align-items:center;gap:8px;margin-left:auto}
 .tone-compare>span{font-size:12px;color:var(--tone-muted)}
 .tone-note-card small.tone-note-compare{color:#5a5c63}
+
+/* Nov 16: the pitch bar without dividing lines. No vertical dividers, no rule under the bar and none above the
+   graph: the mic and what it hears sit on the left, the graph controls on the right, and space does the grouping.
+   The bar is one centred column as wide as the music's reading width. */
+html body .reader-workspace .pitch-row{border-bottom:0;padding:6px 16px 2px}
+html body .reader-workspace .pitch-row-surface{width:min(720px,100%);gap:4px}
+html body .reader-workspace .pitch-row .divider{flex:0 0 8px;height:0;margin:0;background:none}
+html body .reader-workspace .pitch-row .divider:first-of-type{flex:1 1 8px}
+html body .tone-closeup .tone-graph{border-top:0}
+html body .reader-workspace .pitch-row .pitch-history{padding:0 12px;color:#292a33!important;font-weight:600}

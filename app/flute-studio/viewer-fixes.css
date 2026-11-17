@@ -6,16 +6,7 @@
    fingers do nothing while pinching in still shrank. A transform never
    touches layout. ScoreViewer reserves the extra room it needs to scroll
    into, since a transform claims no space of its own. */
-.app-shell .score-paper.engraved{transform:scale(var(--viewer-magnify,1));transform-origin:0 0;padding-top:20px;padding-bottom:40px}.viewer-zoom-group{display:flex;align-items:center;gap:16px;font-variant-numeric:tabular-nums}.viewer-zoom-group b{margin-left:0;color:#5d6068;font-size:10px;font-weight:700}
-
-/* Zoom steppers replaced with drag sliders — same underlying zoom/magnify
-   state, just no more clicking a tiny button repeatedly to get anywhere. */
-.zoom-slider{display:flex;align-items:center;gap:7px;font-size:10px;color:#71747e}
-.zoom-slider input[type="range"]{width:72px;accent-color:#678956;cursor:pointer}
-.zoom-slider b{min-width:32px;text-align:right}
-
-/* Page-turn controls, next to the zoom sliders in the same footer. */
-.workspace .statusbar{height:auto!important;min-height:44px!important;flex-basis:auto!important;padding:8px 20px!important;gap:16px;flex-wrap:wrap}
+.app-shell .score-paper.engraved{transform:scale(var(--viewer-magnify,1));transform-origin:0 0;padding-top:20px;padding-bottom:40px}
 /* The floating "Practice tools" launcher (PracticeToolDock, mounted once at
    the flute-studio layout root — see layout.tsx) is a page-independent
    fixed pill that knows nothing about this taller footer. At desktop/
@@ -62,13 +53,9 @@ html.score-focus-mode .workspace{padding-top:0!important;margin-left:0!important
 /* Fixed annotation lanes are already below each engraved measure. */
 .workspace .osmd-score{padding-bottom:58px!important}
 
-/* Home and Library rows navigate directly. Stars are the only trailing action. */
-.continue-row{grid-template-columns:minmax(0,1fr) 48px!important;padding:0 18px 0 0!important}.continue-main{min-width:0;min-height:96px;padding:15px 0 15px 18px;display:grid;grid-template-columns:62px minmax(0,1fr);gap:15px;align-items:center;color:#292a33;text-decoration:none}.continue-star{width:44px;height:44px;border:0;background:transparent;color:#92949b;font:400 26px/1 -apple-system,BlinkMacSystemFont,sans-serif;cursor:pointer;transition:color .16s ease,background-color .16s ease}.continue-star:hover{color:#b47a16;background:#faf3e6;border-radius:50%}.continue-star.saved{color:#b47a16}.continue-row:hover{background:#f4f7f2!important;transform:none!important}.library-row{grid-template-columns:62px minmax(0,1fr) 44px!important}.exercise-hub__action:not(.exercise-hub__action--muted){min-width:32px!important;padding:0!important;background:transparent!important;color:#a5a7ad!important;font-size:25px!important;font-weight:400!important}
-
 /* Viewer controls draw from the same Home palette. */
-.workspace .tool.on{background:#dcebd9!important;color:#3f5d39!important}.workspace .score-play:hover{background:#cfe3ca!important}.workspace .topbar,.workspace .practice-bar{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Arial,sans-serif!important}.workspace .topbar strong{font-size:16px!important;font-weight:600!important}.workspace .tool,.workspace .audio-tool,.workspace .icon-btn{font-weight:500!important}
-.workspace .has-tip::after,.workspace .theory-tip,.workspace .flute-tip,.workspace .markup-pop{animation:viewerPopoverReveal .18s ease-out both}@keyframes viewerPopoverReveal{from{opacity:0;margin-top:5px}to{opacity:1;margin-top:0}}@media(prefers-reduced-motion:reduce){.workspace .has-tip::after,.workspace .theory-tip,.workspace .flute-tip,.workspace .markup-pop{animation:none}}
-.workspace .transport-pop{border:1px solid #dedfd9!important;background:rgba(255,255,255,.98)!important;color:#292a33!important;box-shadow:0 14px 36px rgba(41,42,51,.14)!important}
+.workspace .tool.on{background:#dcebd9!important;color:#3f5d39!important}.workspace .topbar,.workspace .practice-bar{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Arial,sans-serif!important}.workspace .topbar strong{font-size:16px!important;font-weight:600!important}.workspace .tool,.workspace .icon-btn{font-weight:500!important}
+.workspace .has-tip::after,.workspace .theory-tip,.workspace .flute-tip{animation:viewerPopoverReveal .18s ease-out both}@keyframes viewerPopoverReveal{from{opacity:0;margin-top:5px}to{opacity:1;margin-top:0}}@media(prefers-reduced-motion:reduce){.workspace .has-tip::after,.workspace .theory-tip,.workspace .flute-tip{animation:none}}
 
 /* Tooltips stay hidden until their own control is hovered or focused. */
 .workspace .has-tip::after{animation:none!important;opacity:0!important;visibility:hidden!important;margin-top:0!important;transform:translate(-50%,-3px)!important;transition:opacity .16s ease,transform .16s ease,visibility 0s linear .16s!important}.workspace .has-tip:hover::after,.workspace .has-tip:focus-visible::after{opacity:1!important;visibility:visible!important;transform:translate(-50%,0)!important;transition-delay:0s!important}
@@ -80,23 +67,8 @@ html.score-focus-mode .workspace{padding-top:0!important;margin-left:0!important
 /* Tempo slider gains an inline tap-tempo icon instead of a popover. */
 .workspace .tempo{width:auto!important;display:flex!important;align-items:center;gap:8px}
 .workspace .tempo input{width:90px!important}
-.workspace .tap-tempo-btn{width:34px;height:34px;border:0;border-radius:50%;background:transparent;color:#6f7178;font-size:19px;display:grid;place-items:center;cursor:pointer;transition:background-color .16s ease,color .16s ease}
-.workspace .tap-tempo-btn:hover{background:#f5f5f7;color:#3f5d39}
 
-/* One compact control family for the viewer toolbar — flat, no boxes. */
-.workspace .score-play,.workspace .audio-tool{height:44px!important;min-width:44px!important;border:0!important;border-radius:12px!important;background:transparent!important;color:#4f5158!important;padding:0 13px!important;font-size:12px!important;font-weight:500!important;box-shadow:none!important}.workspace .score-play:hover,.workspace .audio-tool:hover{background:#f5f5f7!important}.workspace .score-play.active,.workspace .audio-tool.active{background:#dcebd9!important;color:#3f5d39!important}.workspace .tool{min-width:74px!important;border-radius:12px!important;border:0!important;background:transparent!important}.workspace .icon-btn,.workspace .record-button{border-radius:12px!important}
-
-/* Metronome/Drone (.audio-tool) used to be a completely different button
-   shape from Note display/Rhythm/Accidentals/Fingering/Mark up (.tool) —
-   icon beside the label instead of above it, its own height, its own grid.
-   Same icon-on-top structure as .tool now, so the whole practice bar reads
-   as one family of buttons instead of two. Drone's extra state text (which
-   .tool's buttons don't have) becomes a small second line under the label
-   rather than a bolted-on inline value. */
-.workspace .audio-tool{display:grid!important;grid-template-columns:none!important;grid-auto-flow:row!important;place-items:center!important;gap:1px!important;height:53px!important;min-width:74px!important;padding:5px 8px!important;font-size:10px!important;line-height:1.15!important;text-align:center!important}
-.workspace .audio-tool span{grid-row:auto!important;font-size:19px!important;line-height:1!important}
-.workspace .audio-tool small{display:block;font-size:8px!important;line-height:1!important;font-weight:500;color:#85868e}
-.workspace .audio-tool.active small{color:#3f5d39!important}
+/* One compact control family for the viewer toolbar — flat, no boxes. */.workspace .tool{min-width:74px!important;border-radius:12px!important;border:0!important;background:transparent!important}.workspace .icon-btn,.workspace .record-button{border-radius:12px!important}
 
 /* Editorial score heading with a dedicated author line and breathing room. */
 .workspace .custom-score-heading{margin:6px 0 28px!important}.workspace .custom-score-heading h1{margin:0!important}.workspace .custom-score-heading .score-composer{display:block;margin:14px auto 0;padding:0;border:0;background:none;color:#85868e;font:400 13px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;letter-spacing:0}.workspace .custom-score-heading button.score-composer{cursor:pointer}.workspace .custom-score-heading button.score-composer:hover{color:#5f6168}.osmd-score text[data-score-title]{font-family:Georgia,serif;fill:#292a33}.osmd-score text[data-composer]{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;font-weight:500;fill:#85868e}.osmd-score text[data-composer-card]{cursor:pointer}
@@ -104,7 +76,7 @@ html.score-focus-mode .workspace{padding-top:0!important;margin-left:0!important
 /* The same shared row container appears on Home and in Library. One shared
    rule so their border/shadow treatment can't drift apart again — if a card
    container like this needs its look changed, change it here, not per-file. */
-.home-music-list,.saved-home-grid,.library-list{overflow:hidden!important;border:0!important;border-radius:20px!important;background:#fff!important;box-shadow:0 10px 30px rgba(41,42,51,.08)!important}
+.library-list{overflow:hidden!important;border:0!important;border-radius:20px!important;background:#fff!important;box-shadow:0 10px 30px rgba(41,42,51,.08)!important}
 
 /* The back control names its destination ("Library") so it reads as leaving
    the piece; its look lives in components/back-button.css. */
@@ -137,7 +109,7 @@ html.score-focus-mode .workspace{padding-top:0!important;margin-left:0!important
 
 /* Neutral hover is only for idle controls. Selected choices retain their
    purple state, and the plain reset/disclosure rows stay unboxed. */
-html body :is(.reader-workspace,.reader-settings-panel) button:hover:where(:not(.tempo-pill button):not(.stepper button):not(:disabled):not([class*="close"]):not([aria-label^="Close"]):not([aria-label^="Cancel"]):not(.scale-book__section-summary):not(.scale-book__others-toggle):not(.reader-settings-reset):not(.reader-text-action):not(.selected):not(.on):not(.active):not(.chosen):not([aria-pressed="true"]):not([aria-selected="true"]):not([aria-expanded="true"]):not(.scale-book__crumb):not(.scale-book__key-actions button):not(.reader-pages button):not(.icon-btn):not(.dock-launcher):not(.account-menu__trigger):not(.practice-clock-button)){background-color:#f5f5f7!important}
+html body :is(.reader-workspace,.reader-settings-panel) button:hover:where(:not(.tempo-pill button):not(.stepper button):not(:disabled):not([class*="close"]):not([aria-label^="Close"]):not([aria-label^="Cancel"]):not(.scale-book__section-summary):not(.scale-book__others-toggle):not(.reader-settings-reset):not(.reader-text-action):not(.selected):not(.on):not(.active):not(.chosen):not([aria-pressed="true"]):not([aria-selected="true"]):not([aria-expanded="true"]):not(.scale-book__crumb):not(.scale-book__key-actions button):not(.reader-pages button):not(.icon-btn):not(.dock-launcher):not(.account-menu__trigger):not(.practice-clock-button)){background-color:#f4f6f9!important}
 
 /* Tooltips: a small dark pill with tight type, not a wide white card. Hidden on a button whose own panel is open, so one never ends up underneath it. */
 .workspace .has-tip::after{background:#1f2024!important;color:#fff!important;border:0!important;box-shadow:none!important;padding:5px 9px!important;border-radius:7px!important;font-size:12px!important;font-weight:500!important;line-height:1.3!important;letter-spacing:0!important;word-spacing:0!important;width:max-content!important;max-width:190px!important;white-space:normal!important;text-align:left!important;z-index:600!important}

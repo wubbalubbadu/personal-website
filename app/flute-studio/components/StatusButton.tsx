@@ -14,8 +14,12 @@ import "./status-button.css";
  *
  * `compact` is for Library rows: a round + until the item is on a list,
  * then the list's name with its dot.
+ *
+ * `ensureId` is for things that only exist once they are on a list (a Scale Studio
+ * setup, Nov 14): called when a list is chosen, it saves the thing and returns the id
+ * to write the status to. Removing from lists only clears the status.
  */
-export function StatusButton({id,zh,compact=false}:{id:string;zh:boolean;compact?:boolean}){
+export function StatusButton({id,zh,compact=false,ensureId}:{id:string;zh:boolean;compact?:boolean;ensureId?:()=>string|null}){
   const status=useStatuses()[id];
   const [open,setOpen]=useState(false);
   const wrap=useRef<HTMLSpanElement>(null);
@@ -45,16 +49,17 @@ export function StatusButton({id,zh,compact=false}:{id:string;zh:boolean;compact
   const label=status?STATUS_LABELS[status][zh?"zh":"en"]:zh?"加入想学":"Want to learn";
   // Inside a Library row the button sits in a link; keep taps to itself.
   const own=(event:React.MouseEvent)=>{event.preventDefault();event.stopPropagation()};
+  const choose=(value:typeof STATUSES[number])=>{const target=ensureId?ensureId():id;if(target)setStatus(target,value)};
   return <span className={`status-button${compact?" status-button--compact":""}`} ref={wrap}>
     <button type="button" className="status-button__trigger" data-status={status??undefined} aria-haspopup="menu" aria-expanded={open}
       aria-label={status?`${label}. ${zh?"更改列表":"Change list"}`:zh?"加入想学列表":"Add to Want to learn"}
-      onClick={event=>{own(event);if(!status)setStatus(id,"want");setOpen(value=>!value)}}>
+      onClick={event=>{own(event);if(!status)choose("want");setOpen(value=>!value)}}>
       {status?<i className="status-dot" data-tone={STATUS_TONES[status]} aria-hidden="true"/>:<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11"/></svg>}
       <span>{label}</span>
     </button>
     {open&&createPortal(<span ref={menu} className="status-button__menu" role="menu" style={{left:position.left,top:position.top,visibility:position.placed?"visible":"hidden"}}>
       {STATUSES.map(value=><button key={value} type="button" role="menuitemradio" aria-checked={status===value} className={status===value?"is-on":""}
-        onClick={event=>{own(event);setStatus(id,value);setOpen(false)}}>
+        onClick={event=>{own(event);choose(value);setOpen(false)}}>
         <i className="status-dot" data-tone={STATUS_TONES[value]} aria-hidden="true"/><span>{STATUS_LABELS[value][zh?"zh":"en"]}</span>{status===value&&<b aria-hidden="true">✓</b>}
       </button>)}
       {status&&<button type="button" role="menuitem" className="status-button__remove" onClick={event=>{own(event);setStatus(id,null);setOpen(false)}}>{zh?"从列表中移除":"Remove from lists"}</button>}

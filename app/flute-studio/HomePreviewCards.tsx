@@ -7,7 +7,6 @@ import LongTonePreview from "./LongTonePreview";
 import TrickyPreview from "./tricky-bits/TrickyPreview";
 import MusicSweep from "./MusicSweep";
 import BreathingPreview from "./BreathingPreview";
-import {TheoryPreview,EmbouchurePreview,FingeringPreview,TrillPreview,RoadmapPreview} from "./LearnPreviews";
 import "./home-preview-cards.css";
 import "./components/preview-grid.css";
 
@@ -19,7 +18,6 @@ const warmScoreReader=()=>{void import("opensheetmusicdisplay")};
 
 export default function HomePreviewCards(){
   const {t,lang}=useLanguage();
-  const regions=t.roadmap.regions;
   const sentence=(text:string)=>/[.!?。！？]$/.test(text.trim())?text:`${text}${lang==="zh"?"。":"."}`;
 
 

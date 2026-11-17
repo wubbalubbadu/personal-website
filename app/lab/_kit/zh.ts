@@ -75,6 +75,7 @@ export const ZH = {
       open: "打开 Cookie 长笛工作室",
     },
     cookies: { name: "饼干", react: "", body: "" },
+    brush: { name: "画笔", react: "", body: "" },
     jar: { name: "饼干罐", react: "", body: "" },
     closet: { name: "衣柜", react: "", body: "" },
     cushion: { name: "坐垫", react: "", body: "再睡五分钟。" },
@@ -150,6 +151,13 @@ export const ZH = {
     20: ["二十块？！", "你真是个坏榜样。", "谢谢你。"],
   } as Record<number, string[]>,
 
+  /** The paintbrush's lines, in the same order as ROOM_PAINTS in studio.ts. */
+  paints: [
+    "又是蓝色条纹。这个我最喜欢。",
+    "花园房！大窗户，外面都是树。我可以吹给小鸟听。",
+    "圣诞节！彩灯挂好了，圣诞树也摆好了。该用长笛吹圣诞歌啦。",
+  ],
+
   /** The closet's lines, in the same order as LOOKS in studio.ts. */
   looks: [
     "贝雷帽！很有艺术家的感觉。我想给你画一幅画，可我的爪子只会音阶。",
@@ -190,6 +198,7 @@ export const ZH = {
     details: "完整介绍",
     allProjects: "查看全部项目",
     anotherLook: "再换一套？",
+    paintAgain: "再刷一次？",
     emailMe: "给我发邮件",
     seeAll: "查看全部项目 ›",
     next: "下一页",
@@ -215,6 +224,7 @@ export const ZH = {
       Ask: "提问",
       "Next project": "下一个项目",
       "Try it on": "试穿",
+      Repaint: "换个颜色",
       Details: "详情",
       "Next video": "下一个视频",
       "Zoom in": "靠近看",

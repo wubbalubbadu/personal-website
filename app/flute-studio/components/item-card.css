@@ -1,4 +1,4 @@
-.item-card{position:relative;background:#fff;border-radius:14px;box-shadow:0 0 0 1px #e6e6ea;transition:box-shadow .15s}
+.item-card{position:relative;background:#fff;border-radius:14px;box-shadow:0 0 0 1px #e2e8ef;transition:box-shadow .15s}
 .item-card:has(>a:hover),.item-card:has(>a:focus-visible),.item-card:has(>button:hover){box-shadow:0 0 0 1px #c9cbd1}
 .item-card__body{display:flex;flex-direction:column;align-items:flex-start;gap:2px;height:100%;box-sizing:border-box;padding:11px 14px 12px;border-radius:inherit;color:inherit;text-decoration:none}
 .item-card__body.is-disabled{opacity:.5}

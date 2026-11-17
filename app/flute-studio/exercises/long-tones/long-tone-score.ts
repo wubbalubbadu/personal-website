@@ -323,7 +323,7 @@ export function longToneMusicXML(pattern: TonePattern, span: ToneSpan, newLines 
  * other half of the label.
  */
 const phaseHeading = (direction: Direction, notes: number) =>
-  `${direction === "down" ? "Descending" : "Ascending"} — ${notes} notes`;
+  `${direction === "down" ? "Descending" : "Ascending"}, ${notes} notes`;
 
 
 /**

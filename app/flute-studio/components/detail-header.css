@@ -1,0 +1,19 @@
+/* DetailHeader.tsx: back link above, title with its status pill, one meta line (Nov 14). The title is the tab
+   pages' title (28 / 700) and starts on their left edge; the back link line sits where their extra top space is,
+   so the title lands at the same height as Library's and Exercises'. */
+.detail-header{padding:22px 0 24px}
+.detail-header__back{display:inline-flex;align-items:center;gap:2px;height:24px;margin:0 0 8px -4px;padding-right:6px;color:#6f7178;font-size:13px;font-weight:500;text-decoration:none}
+.detail-header__back .back-chevron{width:18px;height:18px}
+@media (hover:hover) and (pointer:fine){.detail-header__back:hover{color:#292a33}}
+.detail-header__title{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px}
+.detail-header__title h1{margin:0;font-size:28px;line-height:1.15;font-weight:700;letter-spacing:-.02em;color:#292a33}
+.detail-header__meta{margin:6px 0 0;color:#85868e;font-size:14px}
+.detail-header__about{max-width:640px;margin:12px 0 0;color:#5f6169;font-size:15px;line-height:1.55}
+
+/* The list button as a status pill: round, a little lower than the tab pages' controls, words kept. */
+/* The status pill keeps the one studio size from status-button.css (28px, 12px type). */
+
+@media(max-width:760px){
+  .detail-header{padding:12px 0 20px}
+  .detail-header__title h1{font-size:26px}
+}

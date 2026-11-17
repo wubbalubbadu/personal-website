@@ -1,14 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import ts from 'typescript';
-import {hzFromMidi} from '../app/flute-studio/lib/pitch.ts';
-
-// Resolve the production module's extensionless import without changing browser imports.
-const source = fs.readFileSync(new URL('../app/flute-studio/lib/noteSegmenter.ts', import.meta.url), 'utf8')
-  .replace('"./pitch"', JSON.stringify(new URL('../app/flute-studio/lib/pitch.ts', import.meta.url).href));
-const compiled = ts.transpile(source, {module:ts.ModuleKind.ESNext, target:ts.ScriptTarget.ES2022});
-const {NoteSegmenter, summarise, LOST_TONE_MS} = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString('base64')}`);
+import {tsModule} from './helpers/ts-module.mjs';
+const {hzFromMidi} = await import(tsModule('app/flute-studio/lib/pitch.ts'));
+const {NoteSegmenter, summarise, LOST_TONE_MS} = await import(tsModule('app/flute-studio/lib/noteSegmenter.ts'));
 const frame = (at, midi = 72, cents = 0) => ({at, hz:hzFromMidi(midi) * 2 ** (cents / 1200), rms:.05, clarity:.99});
 const push = (segmenter, at, midi = 72, cents = 0) => segmenter.push(frame(at, midi, cents), at);
 const near = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-8, `${actual} vs ${expected}`);

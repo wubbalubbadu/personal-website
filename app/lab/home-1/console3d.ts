@@ -260,6 +260,9 @@ export function mountConsole3D(
     curveSegments: 72,
   });
   shellGeo.translate(0, 0, -18);
+  // plain pink plastic, the same in every room (her call, after trying a
+  // print, little charms and a colour per room: a shell the wall's colour
+  // lost its depth against the screen)
   device.add(mesh(shellGeo, plastic(PINK, 0.55, 0.6)));
 
   const shoulderMat = plastic("#d998b2", 0.55);
@@ -629,11 +632,16 @@ export function mountConsole3D(
     // in desk mode the canvas runs past the screen's own box: shift by the difference
     let ox = 0;
     let oy = 0;
-    if (desk && screenEl.offsetParent) {
+    if (desk && screenEl.offsetParent instanceof HTMLElement) {
+      const parent = screenEl.offsetParent;
       const hr = host.getBoundingClientRect();
-      const pr = screenEl.offsetParent.getBoundingClientRect();
-      ox = hr.left - pr.left;
-      oy = hr.top - pr.top;
+      const pr = parent.getBoundingClientRect();
+      // Rects include any CSS transform on the stage (the dive into the screen scales it 5x), but the offset is
+      // applied inside that transform: divide by the scale, or the screen drifts off and the dive lands on the
+      // dark 3D screen behind it.
+      const k = parent.offsetWidth ? pr.width / parent.offsetWidth : 1;
+      ox = (hr.left - pr.left) / k;
+      oy = (hr.top - pr.top) / k;
     }
     const sw = L.screenW / 2;
     const sh = L.screenH / 2;
@@ -702,8 +710,10 @@ export function mountConsole3D(
       const ch = host.clientHeight;
       const hr = host.getBoundingClientRect();
       const sr = desk.stage.getBoundingClientRect();
-      const ox = hr.left - sr.left;
-      const oy = hr.top - sr.top;
+      // unscaled, as in quad(): the stage may be mid-dive
+      const k = desk.stage.offsetWidth ? sr.width / desk.stage.offsetWidth : 1;
+      const ox = (hr.left - sr.left) / k;
+      const oy = (hr.top - sr.top) / k;
       const hq = holoCorners(holoMm.w, holoMm.h).map((p) => {
         const v = p.project(camera);
         return [ox + ((v.x + 1) / 2) * cw, oy + ((1 - v.y) / 2) * ch];

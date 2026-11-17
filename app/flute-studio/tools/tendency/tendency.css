@@ -16,18 +16,18 @@
 /* Steady controls: no hover lift or press shrink on this page's buttons. */
 .tendency button,.tendency a{transform:none!important}
 .tendency__presets,.tendency__switch{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
-.tendency__presets button,.tendency__switch button{height:32px;padding:0 14px;border:0;border-radius:999px;background:#f1f1f2;color:#45464f;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.tendency__presets button,.tendency__switch button{height:32px;padding:0 14px;border:0;border-radius:999px;background:#edf1f5;color:#45464f;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
 .tendency__presets button[aria-pressed="true"],.tendency__switch button[aria-pressed="true"]{background:#292a33;color:#fff}
 .tendency__switch{justify-content:flex-start}
 
 .tendency__actions{display:flex;gap:8px;justify-content:center;margin-top:4px}
 .tendency__primary,.tendency__secondary{height:42px;padding:0 22px;border:0;border-radius:12px;font:inherit;font-size:15px;font-weight:650;cursor:pointer;display:inline-flex;align-items:center;text-decoration:none}
-.tendency__primary{background:#e7eee3;color:#40553d}
-.tendency__primary:hover{background:#dce8d7}
-.tendency__secondary{background:#f1f1f2;color:#45464f}
+/* Nov 16: the primary is the shared .action-button (slate), not the retired green. */
+.tendency__primary{color:#292a33}
+.tendency__secondary{background:#edf1f5;color:#45464f}
 /* Plain text links, the studio way (see .pitch-card__test): green, no underline. */
-.tendency__link{border:0;background:transparent;padding:0;color:#46633d;font:inherit;font-size:13px;font-weight:600;text-decoration:none;cursor:pointer}
-.tendency__link:hover{color:#2f4529}
+.tendency__link{border:0;background:transparent;padding:0;color:#292a33;font:inherit;font-size:13px;font-weight:600;text-decoration:none;cursor:pointer}
+.tendency__link:hover{color:#292a33}
 
 .tendency__readout,.tendency__now{display:grid;justify-items:center;gap:6px}
 .tendency__readout b,.tendency__now b{font-size:44px;font-weight:760;letter-spacing:-.03em;line-height:1}

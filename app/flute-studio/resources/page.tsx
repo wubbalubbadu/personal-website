@@ -4,6 +4,7 @@ import Link from "next/link";
 import {LEARN_PAGES} from "../learn-pages";
 import {TheoryPreview,EmbouchurePreview,FingeringPreview,TrillPreview,RoadmapPreview} from "../LearnPreviews";
 import RhythmDrillsPreview from "../rhythm-drills/RhythmDrillsPreview";
+import ToolCards from "../tools/ToolCards";
 import "../home-preview-cards.css";
 import "../components/preview-grid.css";
 import {useLanguage} from "../i18n/LanguageContext";
@@ -29,7 +30,7 @@ export default function ResourcesHub() {
   const sentence=(text:string)=>/[.!?。！？]$/.test(text.trim())?text:`${text}${zh?"。":"."}`;
   const preview=(key:string)=>{
     switch(key){
-      case "theory": return <TheoryPreview zh={zh}/>;
+      case "theory": return <TheoryPreview/>;
       case "rhythm-drills": return <RhythmDrillsPreview/>;
       case "fingerings": return <FingeringPreview/>;
       case "trills": return <TrillPreview/>;
@@ -59,6 +60,10 @@ export default function ResourcesHub() {
             </Link>
           ))}
         </section>
+
+        {/* Tools live under Learn (Nov 12): too few to fill a tab of their own. /flute-studio/tools still works. */}
+        <h2 className="home-preview__group">{zh ? "工具" : "Tools"}</h2>
+        <ToolCards/>
 
       </div>
     </main>

@@ -5,7 +5,7 @@
 .rd-game__actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;min-height:44px}
 
 /* Difficulty (View switch and what it includes), streak, tempo: one quiet row above the staff. */
-.rd-game__stats{display:flex;align-items:center;gap:28px;padding-bottom:12px;border-bottom:1px solid #ececef}
+.rd-game__stats{display:flex;align-items:center;gap:28px;padding-bottom:12px}
 .rd-game__level{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
 .rd-game__level small,.rd-game__stat small{font-size:13px;color:#85868e}
 .rd-game__stat{display:flex;flex-direction:column;align-items:center}
@@ -19,7 +19,8 @@
 .rd-game__source{display:block;font-size:14px;font-weight:400;color:#71747e}
 .rd-game__count{display:flex;justify-content:center;min-height:16px}
 .rd-game__pad{height:120px;cursor:default}
-.rd-game__pad.is-live{border-color:#b8a9c9}
+.rd-game__pad.is-live{background:#f2eef8}
+.rd-game__pad.is-live.is-pressed{background:#e4dcf0}
 
 @media(max-width:760px){
   .rd-game{padding:64px 16px 24px;gap:10px}

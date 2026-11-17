@@ -22,7 +22,7 @@ function useDestinations(){
     {key:"exercises",label:t.nav.exercises,href:"/flute-studio/exercises",icon:"exercises",also:["/flute-studio/breathing"]},
     // Learn is the Resources page plus every page it lists, so the tab stays
     // lit while you are inside a lesson or a chart.
-    {key:"resources",label:t.nav.resources,href:"/flute-studio/resources",icon:"learn",also:LEARN_PAGES.map(page=>page.href)},
+    {key:"resources",label:t.nav.resources,href:"/flute-studio/resources",icon:"learn",also:[...LEARN_PAGES.map(page=>page.href),"/flute-studio/tools"]},
     {key:"practice",label:t.nav.practice,short:lang==="zh"?"我的":"Me",href:"/flute-studio/practice",icon:"studio",phone:true,also:[]},
   ] as const;
 }

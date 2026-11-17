@@ -2,20 +2,20 @@
 
 import Link from "next/link";
 import {useEffect,useLayoutEffect,useRef,useState} from "react";
-import {pieceTitle,tagName,type MusicItem} from "../../../content/music-library";
+import {pieceTitle,type MusicItem} from "../../../content/music-library";
 import {StatusButton} from "../components/StatusButton";
 import {STATUSES,STATUS_LABELS,STATUS_TONES,setStatus,useStatusEntries,type MusicStatus} from "../lib/musicStatus";
 import {useBookProgress} from "../lib/bookProgress";
-import {tagTone,BEGINNER_TONE} from "../lib/tagTone";
 import "./music-shelf.css";
 
 const STORE_KEY="cookie:music-status:v1",STORE_EVENT="cookie:music-status";
 
 /**
- * Your three lists side by side, like a calm board: Want to learn, Working on, Learned. Cards are the item card
- * (white, hairline, no lift). Moving a piece is the list button on its card, the same one as everywhere else; on a
- * wide screen a card can also be dragged to another column. Phones show one column at a time and swipe sideways,
- * with the next column peeking in. A piece that has just arrived on Learned gets a small sage ring and a tick.
+ * Your three lists as three shelves, one above another: Want to learn, Working on, Learned (Nov 12, printed ink
+ * style). Each piece stands on its shelf as a printed score cover: paper, a thin double rule, the title in serif and
+ * the composer in small caps. A full shelf scrolls sideways. Moving a piece is the list button on its cover, the
+ * same one as everywhere else; on a wide screen a cover can also be dragged to another shelf. A piece that has just
+ * arrived on Learned gets a tick.
  */
 export default function MusicShelf({items,zh,focus,filtered}:{items:MusicItem[];zh:boolean;focus?:MusicStatus;filtered:boolean}){
   const entries=useStatusEntries();
@@ -46,13 +46,11 @@ export default function MusicShelf({items,zh,focus,filtered}:{items:MusicItem[];
     return()=>{window.removeEventListener(STORE_EVENT,onChange);timers.forEach(clearTimeout)};
   },[]);
 
-  // Opened from a list link (the rail's Want to learn, My Studio): on a phone, start on that column; on a wide
-  // screen all three are in view, so the column just glows once.
+  // Opened from a list link (the rail's Want to learn, My Studio): bring that shelf into view; it glows once.
   const board=useRef<HTMLDivElement>(null);
   useLayoutEffect(()=>{
     if(!focus)return;
-    const column=board.current?.querySelector<HTMLElement>(`[data-status="${focus}"]`);
-    if(column&&board.current)board.current.scrollLeft=column.offsetLeft-board.current.offsetLeft;
+    board.current?.querySelector<HTMLElement>(`[data-status="${focus}"]`)?.scrollIntoView({block:"nearest"});
   },[focus]);
 
   // Dragging is a shortcut for a mouse or a pencil on a wide screen; the list button does the same job everywhere.
@@ -78,8 +76,8 @@ export default function MusicShelf({items,zh,focus,filtered}:{items:MusicItem[];
         <div className="music-shelf__cards">
           {columns[status].map(item=><ShelfCard key={item.id} item={item} zh={zh} arrived={fresh[item.id]===status?status:undefined}
             dragging={dragging===item.id} onDrag={setDragging}/>)}
-          {/* An empty column keeps a quiet outline, which is also where a dragged card can land. No words. */}
-          {!columns[status].length&&<div className="music-shelf__empty" aria-hidden="true"/>}
+          {/* An empty shelf says so in a quiet printed line; it is also where a dragged cover can land. */}
+          {!columns[status].length&&<p className="music-shelf__empty">{zh?"还没有曲目":"Nothing here yet"}</p>}
         </div>
       </section>)}
     </div>
@@ -89,19 +87,14 @@ export default function MusicShelf({items,zh,focus,filtered}:{items:MusicItem[];
 function ShelfCard({item,zh,arrived,dragging,onDrag}:{item:MusicItem;zh:boolean;arrived?:MusicStatus;dragging:boolean;onDrag:(id:string|null)=>void}){
   const exercise=item.exercise;
   const title=exercise&&zh?exercise.zhTitle:pieceTitle(item,zh);
-  const detail=exercise?(zh?exercise.zhDetail:exercise.detail):item.composer;
-  // One tag says what kind of music it is; the row in the List view carries the rest.
-  const tag=item.tags[0];
-  const tone=tag?tagTone(tag):item.beginner?BEGINNER_TONE:undefined;
-  const kind=tag?tagName(tag,zh):item.beginner?(zh?"入门":"Beginner"):undefined;
+  const detail=exercise?undefined:item.composer;
   const className=`music-shelf__card${arrived?" is-arrived":""}${arrived==="learned"?" is-learned-now":""}${dragging?" is-dragging":""}`;
+  // A printed cover: title, a short rule, the composer. The List view carries the tags.
   const body=<>
     <b>{title}</b>
+    <i className="music-shelf__rule" aria-hidden="true"/>
     {detail&&<small>{detail}</small>}
-    <span className="music-shelf__meta">
-      {kind&&<span className="music-shelf__kind" data-tone={tone}><i aria-hidden="true"/>{kind}</span>}
-      {item.bookCount?<BookProgress id={item.id} count={item.bookCount} zh={zh}/>:null}
-    </span>
+    {item.bookCount?<BookProgress id={item.id} count={item.bookCount} zh={zh}/>:null}
   </>;
   return <article className={className} draggable={!!item.viewerPath}
     onDragStart={event=>{event.dataTransfer.setData("text/x-cookie-piece",item.id);event.dataTransfer.effectAllowed="move";onDrag(item.id)}}

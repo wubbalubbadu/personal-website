@@ -6,7 +6,7 @@ import {apply,collect,decode,describe,drawingSize,encode,markBackedUp,removeStor
 import {musicLibrary} from "../../../content/music-library";
 import {PracticeIcon} from "../components/PracticeIcon";
 import {ChevronIcon} from "../components/HeaderIcons";
-import {clearHistoryMonth,historyMonths,type HistoryKind,type HistoryMonth} from "../lib/historyMonths";
+import {clearHistoryMonth,historyMonths,monthLabel,monthSummary,type HistoryKind,type HistoryMonth} from "../lib/historyMonths";
 import "../practice/practice-page.css";
 import OfflineMusicCard from "./OfflineMusicCard";
 import "./transfer.css";
@@ -99,7 +99,7 @@ export default function TransferPage(){
             <span>{zh?"包括铅笔标注":"Include pencil drawings"}<small>{kb(drawings)}{zh?"，代码会更长":", makes the code longer"}</small></span>
           </label>}
           <div className="transfer-card__actions">
-            <button type="button" className="transfer-card__primary" onClick={copyCode}>{zh?"复制代码":"Copy code"}</button>
+            <button type="button" className="action-button transfer-card__primary" onClick={copyCode}>{zh?"复制代码":"Copy code"}</button>
             <button type="button" className="transfer-card__secondary" onClick={sendFile}>{zh?"发送文件":"Send as file"}</button>
           </div>
           {sent&&<p className={`transfer-card__note${sent==="failed"?" is-error":""}`} role="status">{sentNote[sent]}</p>}
@@ -124,11 +124,11 @@ export default function TransferPage(){
             <p><b>{zh?`${when} 生成的代码`:`Code made ${when}`}</b></p>
             <ul>{describe(snapshot,zh).map(line=><li key={line}>{line}</li>)}</ul>
             {!confirming
-              ?<button type="button" className="transfer-card__primary" onClick={()=>setConfirming(true)}>{zh?"用到这台设备":"Use on this device"}</button>
+              ?<button type="button" className="action-button transfer-card__primary" onClick={()=>setConfirming(true)}>{zh?"用到这台设备":"Use on this device"}</button>
               :<div className="transfer-card__confirm">
                 <p>{zh?"会和这台设备上的内容合并：两边的练习记录、音准记录和收藏都会保留。精练小节的速度记录会合并，重复次数保留较高值；目标、步长和设置以代码为准。":"This combines with what's on this device. Practice history, pitch records and saved music from both are kept. Tricky-bit tempos combine; repetition counts keep the higher count. Goals, steps and settings take the code’s values."}</p>
                 <div className="transfer-card__actions">
-                  <button type="button" className="transfer-card__primary" onClick={replace}>{zh?"合并":"Combine"}</button>
+                  <button type="button" className="action-button transfer-card__primary" onClick={replace}>{zh?"合并":"Combine"}</button>
                   <button type="button" className="transfer-card__secondary" onClick={()=>setConfirming(false)}>{zh?"取消":"Cancel"}</button>
                 </div>
               </div>}
@@ -152,8 +152,8 @@ function scoreTitle(scoreId:string,zh:boolean){
 /**
  * Stored on this device: every kind of saved data with its size, and pencil drawings piece by piece, each with a
  * trash button (COMPONENTS.md Trash) that asks once ("Tap again to delete") before deleting from this device only.
- * Practice history and pitch history also open into months, so one month can go without the rest; the second tap
- * says exactly what that month holds.
+ * Practice history and pitch history also open into months (lib/historyMonths.ts), newest first, so one month can go
+ * without the rest: only what is dated in that month, never a setting. The second tap says exactly what that month holds.
  */
 function StoredOnDevice({zh}:{zh:boolean}){
   const [version,setVersion]=useState(0),[armed,setArmed]=useState<string|null>(null),[open,setOpen]=useState<string|null>(null);
@@ -164,17 +164,10 @@ function StoredOnDevice({zh}:{zh:boolean}){
   // A month's second tap comes after reading what it holds, so it waits longer.
   useEffect(()=>{if(!armed)return;const timer=window.setTimeout(()=>setArmed(null),/^(practice|pitch):/.test(armed)?6000:3000);return()=>window.clearTimeout(timer)},[armed]);
   if(!report)return null;
-  const monthName=(month:string)=>{const [y,m]=month.split("-").map(Number);return new Date(y,m-1,1).toLocaleDateString(zh?"zh-CN":undefined,{year:"numeric",month:"long"})};
-  /** What a month holds, in words: the row's meta line, and (with the month) the confirmation. */
-  const holds=(row:HistoryMonth)=>[
-    row.sessions&&(zh?`${row.sessions} 次练习`:`${row.sessions} ${row.sessions===1?"session":"sessions"}`),
-    row.reps&&(zh?`${row.repDays} 天的重复次数`:`${row.repDays} ${row.repDays===1?"day":"days"} of repetitions`),
-    row.notes&&(zh?`${row.notes} 个测过的音`:`${row.notes} measured ${row.notes===1?"note":"notes"}`),
-  ].filter(Boolean).join(zh?"、":", ");
   // Only the two kinds of dated history open into months; each opens when it has at least one month in it.
   const hasMonths=(kind:HistoryKind)=>historyMonths(kind).length>0;
   const monthList=(kind:HistoryKind,rows:HistoryMonth[])=><ul className="storage-list storage-list--pieces" id={`months-${kind}`}>{rows.map(row=>{
-    const id=`${kind}:${row.month}`,name=monthName(row.month),what=holds(row);
+    const id=`${kind}:${row.month}`,name=monthLabel(row.month,zh),what=monthSummary(row,zh);
     return <li key={id}>
       <div className="storage-row"><span><b>{name}</b><small>{what}</small></span>
         <button type="button" className={armed===id?"storage-row__delete is-armed":"storage-row__delete"} aria-label={armed===id?(zh?`再点一次删除${name}的 ${what}`:`Tap again to delete ${what} from ${name}`):(zh?`删除${name}`:`Delete ${name}`)}

@@ -1,25 +1,92 @@
 # Cookie Flute Studio: which component to use
 
-**The rule: reuse before you build.** If something on the page means the same thing as something elsewhere in the
-studio, it uses the same component, so changing that component changes it everywhere. Before adding UI, find its job
-below and use what is listed. If nothing fits, add a component here instead of styling a one-off.
+**Reuse before you build.** If something means the same thing as something elsewhere in the studio, it uses the same
+component, so changing that component changes it everywhere. Find the job below and use what is listed. If nothing
+fits, add a row here in the same change. Values (colours, sizes) live in [DESIGN.md](DESIGN.md).
 
-Values (colours, sizes, shadows) live in [DESIGN.md](DESIGN.md). This file says *which piece* to use. Started
-October 8, 2026 from a scan of the studio. Source-audited October 19, 2026; components added that week recorded October 20; the older computed-style measurements below have not been remeasured in a browser.
+Rewritten November 16, 2026. The rules come first because most rework has come from breaking one of them, not from
+picking the wrong component. Older measurement tables and audits were removed; they are in git history.
+
+## The rules
+
+### 1. Shape says what a thing is
+
+| What it is | Shape | Examples |
+|---|---|---|
+| Holds information (a tile, card, panel, list, calendar day) | **Square**, radius 3 | Home tiles, insight tiles, item cards, Breathing Lab presets and stage, the tuner box |
+| Something you press to do a thing (a button, a stepper, a note key) | **Soft rounded**, radius 10 to 12 | Start, Copy code, the Stepper, tools panel keys and chips, the rhythm tap pad (slate fill, no outline, lilac while live) |
+| Choose one of a few, or a status | **Round capsule** | View switch, list status pills, tag filter chips |
+| Floats over the music | **Round** soft pill | Bar selection pill, tempo and rep pills |
+
+Do not square everything. Squaring buttons and steppers was tried on November 16 and rejected the same day ("this
+Start button is even a square, that's just really weird").
+
+### 2. No boxes inside boxes
+
+A tinted tile does not contain white chips or white cards. Inside a tile, content sits directly on the tint. If a
+group needs its own items, make it a list of rows on the page (the Exercise book row), not chips in a tinted box.
+Rejected Nov 16: the Technique map as tinted regions full of white chips.
+
+### 3. One list row everywhere
+
+Library rows, a book's numbers and the Technique map are the same row: 60px, title 16 / 600 on a 20px line, one grey
+13px line 4px under it, `#ececef` hairlines, the trailing control flush with the hairline's end, one left edge shared
+with the page title. If two lists look different, one of them is wrong.
+
+### 4. Lines are the last resort
+
+Group with space first. No vertical dividers between toolbar groups, no rule under a toolbar and another above the
+panel below it. Hairlines belong between rows of a list, nowhere else. (The pitch bar lost its dividers Nov 16.)
+
+### 5. Colour
+
+- **Fills:** the home tints only. Slate `#edf1f5` (also every control fill), green `#eef4ec`, pink `#faf0f6`, lilac
+  `#f2eef8`, sand `#f7f1e6`. Never a neutral grey, never cream.
+- **Selected or happening now:** purple (`#eee7f2` / `#79588e`; on a control `#f1e5f5` / `#6d4585`). Not green, and
+  not a black fill. Dark `#292a33` fills are allowed only on a selected tab chip, and prefer the View switch.
+- **Done:** green tick (`#46633d`). Green is not a button colour and not a link colour.
+- **Links:** ink `#292a33`, 600, no underline, no trailing ›, no colour change on hover.
+- **State is a fill, never a ring or border** (today in the calendar, a chosen day, an "on" chip).
+
+### 6. Hover
+
+| Kind | Hover |
+|---|---|
+| Control with a fill | one step darker, `#e2e8ef` |
+| Icon button | slate circle or square behind it |
+| Close × | nothing |
+| Trash | grey to ink |
+| List row | **No hover. A press flash:** while held, the row's words drop to 55% and ease back on release (one rule at the end of `studio-shared.css`). Chosen Nov 16 as option C while she was away; A (arrow after the title) and B (words slide right) were the other two shown. Rejected as hovers: grey band, green title, darker hairlines |
+| Home tile | none (flat, no lift) |
+
+### 7. Compact
+
+Tiles pad 10 12 12. Section headings sit 26px under the section above and 8 to 10px over their content. Panels in
+one row are the same height (`align-items: stretch`). If a page scrolls because of padding, the padding is wrong.
+
+### 8. Where controls sit
+
+A delete or other row action sits right after the row's words, not at the far right edge of the page ("never a good
+design", Nov 16). The far right is for a status or a tick that every row has.
+
+### 9. Page headers
+
+Every page title is 28 / 700, starting at the same left edge and height. A page reached from another page uses
+DetailHeader (small back line above the title, one grey meta line under it).
 
 ## Use this for that
 
 | Job | Use | Where it lives | Notes |
 |---|---|---|---|
 | A big card for an exercise, lesson, tool or feature (home, Exercises, Learn) | **Preview card** | `.preview-card` in `home-preview-cards.css`, grid in `components/preview-grid.css`, built in `HomePreviewCards.tsx` / `LearnPreviews.tsx` | Tinted stage with an animated demo on top, words below. Lifts on hover. The only card that lifts. |
-| The Practice row on Home (Scale Studio, Long tones, Browse music, Breathing Lab) | **Practice tile** | `.practice-tiles` + `.practice-tile__fit` at the end of `home-preview-cards.css`, markup in `HomePreviewCards.tsx` | Nov 12. A preview card reshaped into one part: the tint fills the tile, the name (15 / 600) sits top left, no subtitle, the demo drawn at its 340 x 172 stage and scaled by `--tile-fit` (0.78; 0.5 on phones) and `--demo-fit` per demo; captions hidden; the name sits on its own line above the demo, never over it. Fixed stage heights: Home Practice 140, Learn and Tools 80; the Exercises, Learn and Tools tab pages all use the Home Practice tile (140). Home Learn is names only, five across, no demos. Breathing Lab is one breath drawn as a thin curve (in 4, out 6) with a moving dot, in the same fit box and padding as Long tones; not the ring. The Theory lessons index (`theory-home.css`, end) uses the same tile: name on top with two lines of room so every card is one size, drawing below, Completed as a small square badge at the drawing's bottom left. Browse music shows the opening of the Badinerie engraved (TrickyPreview, `MUSIC_SAMPLE`), the whole tile opens the Library, no chips. All Practice demos are drawn in ink (end of home-preview-cards.css): black lines, no colour or white boxes; Long tones and Breathing lines both 3px non-scaling so they weigh the same. Radius 3, no shadow, no lift. Every row four across from 761px up, two across on phones. Learn demos are Tools-style (one big label, one graphic, no staff); Theory is a still clef with the G line marked. Tricky bits on Exercises shows your newest saved passage engraved (TrickyPreview), or two bars of the Bumble Bee before you have one; no label, no tally. Breathing is pale lilac `#f2eef8`, not sand. Learn (`.learn-tiles`) and Tools (`ToolCards` → `.tool-tiles`) use the same tile look, on Home and on their own tab pages (Learn, Tools). No sand on Home: Theory and Metronome are lilac too. The Exercises page uses the Practice tiles too (Tricky bits in green). Browse music wraps its engraving in `MusicSweep` (`MusicSweep.tsx`): noteheads light in purple `#79588e` one at a time, left to right, then a short rest; only while on screen, still with reduced motion. Scale Studio's hand-drawn staff is weighted to match OSMD (staff space about 6.2px, staffline 0.62px, stem 0.93px at desktop; `--demo-fit: 0.91`, staff 2.4, stem 3.6), so both notations read as one engraver. Scale Studio passes `bar` to ScaleStudioPreview (one 4/4 bar of eighths, same size as the old music demo). |
+| The Practice row on Home (Scale Studio, Long tones, Browse music, Breathing Lab) | **Practice tile** | `.practice-tiles` + `.practice-tile__fit` at the end of `home-preview-cards.css`, markup in `HomePreviewCards.tsx` | Nov 12. A preview card reshaped into one part: the tint fills the tile, the name (15 / 600) sits top left, no subtitle, the demo drawn at its 340 x 172 stage and scaled by `--tile-fit` (0.78; 0.5 on phones) and `--demo-fit` per demo; captions hidden; the name sits on its own line above the demo, never over it. Fixed stage heights: Home Practice 140, Learn and Tools 80; the Exercises, Learn and Tools tab pages all use the Home Practice tile (140). Home Learn is names only, five across, no demos. Breathing Lab is one breath drawn as a thin curve (in 4, out 6) with a moving dot, in the same fit box and padding as Long tones; not the ring. The Theory lessons index (`theory-home.css`, end) uses the same tile: name on top with two lines of room so every card is one size, drawing below, Completed as a small square badge at the drawing's bottom left. Browse music shows the opening of the Badinerie engraved (TrickyPreview, `MUSIC_SAMPLE`), the whole tile opens the Library, no chips. All Practice demos are drawn in ink (end of home-preview-cards.css): black lines, no colour or white boxes; Long tones and Breathing lines both 3px non-scaling so they weigh the same. Radius 3, no shadow, no lift. Every row four across from 761px up, two across on phones. Learn demos are in ink with no note names (end of `home-preview-cards.css`, Nov 12): Theory is three lines of printed expression words (italic serif, dynamics bold italic); Fingering and Trill are the diagram alone; Body & embouchure is the register slider with low and high; Rhythm drills is the bar with ink tap marks, no counts; Roadmap dots are black. Tools are a section of the Learn page (`resources/page.tsx`, ToolCards), and in the rail they are listed under Learn. Tricky bits on Exercises shows your newest saved passage engraved (TrickyPreview), or two bars of the Bumble Bee before you have one; no label, no tally. Breathing is pale lilac `#f2eef8`, not sand. Learn (`.learn-tiles`) and Tools (`ToolCards` → `.tool-tiles`) use the same tile look, on Home and on their own tab pages (Learn, Tools). No sand on Home: Theory and Metronome are lilac too. The Exercises page uses the Practice tiles too (Tricky bits in green). Browse music wraps its engraving in `MusicSweep` (`MusicSweep.tsx`): noteheads light in purple `#79588e` one at a time, left to right, then a short rest; only while on screen, still with reduced motion. Scale Studio's hand-drawn staff is weighted to match OSMD (staff space about 6.2px, staffline 0.62px, stem 0.93px at desktop; `--demo-fit: 0.91`, staff 2.4, stem 3.6), so both notations read as one engraver. Scale Studio passes `bar` to ScaleStudioPreview (one 4/4 bar of eighths, same size as the old music demo). On phones (760px and down) Scale Studio is laid out by the tile's width instead of the fit box: its staff starts 24px in, like Browse music's, and runs to 6px from the right edge; Browse music's OSMD is zoomed 0.91 so both staffs measure about 5.7px per space. |
 | A summary of your practice on Home (Today, Working on, Tricky bits, This week) | **Studio cards** | `HomeStudioCards.tsx` + `home-studio-cards.css`; the Today card is `HomeTodayCard.tsx` | Since Nov 12 in the tile look: radius 3, no shadow. Today is white with a hairline, square piece chips and buttons; the other cards are tinted tiles with the name on top (Tricky bits green, This week slate). Only cards with real data appear. Colour only where it means something (list dot, green practice time, sand deadline). Today stacks rows that each appear only with something real: Where you left off, Working on (piece chips), Coming up, Warm-up today (one saved set by rotation), Routine progress. |
-| A white card for a piece or item in a list (Working on, tricky bits, lists) | **ItemCard** | `components/ItemCard.tsx` + `item-card.css` | White, radius 14, 1px shadow `#e6e6ea`, no lift. Title 15px / 600, meta 12.5px. Semantic `as` supports list items and articles; `.item-card__body` styles the primary link separately from secondary actions. Used by My Studio and tricky bits. |
-| A panel that groups controls or data (Today's practice, calendar, pitch map) | **Practice card** | `.practice-card` (`practice/practice-page.css`, studio card tokens in `studio-card-tokens.css`) | White, card shadow, no border. |
-| A row in a long list (Library, saved music) | **Music row** | `MusicRow.tsx` + `music-row.css`, art from `StudioRowArt.tsx` | DESIGN.md "List row". |
-| What kind of piece it is (Excerpt, Etude, Exercise, genres) | **Tag pill** | `components/tag-pill.css`, colour from `lib/tagTone.ts` | Tinted pill, words only. Never a new colour map. |
+| A white card for a piece or item in a list (Working on, tricky bits, lists) | **ItemCard** | `components/ItemCard.tsx` + `item-card.css` | White, radius 3, 1px hairline, no lift. Title 15px / 600, meta 12.5px. Semantic `as` supports list items and articles; `.item-card__body` styles the primary link separately from secondary actions. Used by My Studio and tricky bits. |
+| A panel that groups controls or data (Today's practice, calendar, pitch map) | **Practice card** | `.practice-card` (`practice/practice-page.css`, studio card tokens in `studio-card-tokens.css`) | White, 1px hairline `#e4e4e7`, radius 3, no shadow (Nov 16). On My Studio the insight panels are colour tiles instead, see "Insight tile". |
+| A row in a long list (Library, saved music) | **Music row** | `MusicRow.tsx` + `music-row.css`, art from `StudioRowArt.tsx` | DESIGN.md "List row". In the Library the list is quiet rules (Nov 14, her pick over square tiles and a grey panel): no box, entries divided by `#ececef` hairlines, a hairline closing the list, no heavy ink rules; heading, chips, hairlines and titles share one left edge, so there is no grey hover band (both a band past the lines and text pushed in were tried and rejected); green title hover was rejected, hover pending. The Want to learn, Working on and Learned filter chips are round (the tag chips stay square). One column at every width (two columns cut titles to one letter). The list button in rows is a round 30px dot with no words (+ when on no list), in a fixed slot every row keeps, flush with the hairline's end, so all tags end on one edge; on book pages and My Studio cards it keeps its words and is square (radius 3). Two lines (title, composer) with the tags to their right at every width; on phones the tags shrink to 20px and wrap to at most two lines in a 150px column. A book's page lists its numbers the same way (`music/books/book.css`). |
+| What kind of piece it is (Excerpt, Etude, Exercise, genres) | **Tag pill** | `components/tag-pill.css`, colour from `lib/tagTone.ts` | Tinted pill, words only. Never a new colour map. In Library rows (Nov 14) a tag is a 7px dot in its colour plus the word, no box, matching the Library's tag chips, so the dot means the same thing in the filter and the list; "Coming soon" is the grey word alone. |
 | A piece you can open, listed inside something (a deadline's pieces, Home's Today card) | **Piece chip** | `components/piece-chip.css` | White, hairline, the piece's status dot (same as the lists). Not a tag pill: tags describe, chips go somewhere. |
-| Which list a piece is on (Want to learn, Working on, Learned) | **Status dot** + **StatusButton** | `components/StatusButton.tsx`, `status-button.css`, tones in `lib/musicStatus.ts` | A dot, not a pill. The button is how anything goes on a list. |
+| Which list a piece is on (Want to learn, Working on, Learned) | **Status dot** + **StatusButton** | `components/StatusButton.tsx`, `status-button.css`, tones in `lib/musicStatus.ts` | A dot, not a pill. The button is how anything goes on a list. One pill size everywhere (Nov 14): 28px, 12px type, sides 11/9, like the Library's list chips. `ensureId` saves a thing on first use (a Scale Studio setup becomes a set, `scale-set:<id>`, so each setup has its own status). |
 | A date or deadline label ("in 12 days") | **Tag pill**, `data-tone="sand"` | `tag-pill.css` | Same pill shape as tags. |
 | Labeled tools in the reader toolbar (Mark up, Listen, Scales, Tempos, View) | **Fixed-width tool** | last block of `studio-shell.css` | 46px each so icons sit at even intervals. Only the tempo controls get a grey pill; page controls stay plain (tried as a pill, rejected: read as another adjustable tool). |
 | An excerpt's tempo and tally | **ExcerptTempoMark** | `components/ExcerptTempoMark.tsx` | TempoPill + RepPill, one pair per passage tab, above the music in both PDF (outside the page, so Draw marks never shift) and XML (ScoreViewer `paperTop`, top-left beside the title). Same tally key in both views. View settings "Practice tempo" shows/hides it. |
@@ -39,9 +106,10 @@ October 8, 2026 from a scan of the studio. Source-audited October 19, 2026; comp
 | Resume score following after browsing | **ResumeFollowingPill** | `components/useScoreFollow.tsx`, `reader-workspace.css` | Used by ScoreViewer with the hook's direction and resume callback. Do not add another scroll timer. |
 | Header and toolbar icons | **HeaderIcons / PracticeIcon** | `components/HeaderIcons.tsx`, `components/PracticeIcon.tsx` | 20px box, 1.7 stroke, round caps. Don't draw new inline SVGs for an icon that exists. |
 | Back to the previous page | **BackChevron** | `components/BackChevron.tsx`, `back-button.css` | |
+| The contents page of any book of numbered things (Reichert, Köhler, Cookie's scale routine, the melodies) | **Exercise book** | `components/ExerciseBook.tsx` (rows styled in `music/books/book.css`), progress in `lib/bookProgress.ts` | Nov 14: every practice book matches. Nov 16: rows use the Library row's exact measures (60px row, 16 / 600 title on a 20px line, 13px meta 4px under, tick flush with the hairline's end) and "Last opened" is grey words, not a green box. The Technique map (`roadmap/page.tsx`) is this same row under area headings: name, one grey line, tick; no tinted boxes, no chips, no dialog. DetailHeader on top with the done count (`useBookDoneText`), then one ruled row per item: bold name, grey detail line, "Last opened" pill, a done tick you set yourself. Don't build a book page any other way. |
 | Previous and next through a set (book pieces, pages, tricky bits) | **Book stepper** | `.book-stepper` (`music/books/book.css`) | ‹ 1 / 15 ›. These arrows are controls and stay. |
 | A run through several pieces in order (mock audition) | **Mock audition run** | `practice/mock/page.tsx` + `mock-audition.css`, data in `lib/mockAuditions.ts` | Setup (how many, pause, record), a numbered running order, each excerpt in the normal reader with a "next up" screen between, and an end list with times. The reader header holds a Book stepper (`.mock-stepper`) whose record button shows the run's one take; playback is RecordingPlayback. |
-| A dialog over the page (edit a deadline, practise a tricky bit) | **Dialog** | `components/Dialog.tsx` + `dialog.css` | Backdrop, white panel, a title row ending in CloseButton, Escape closes, a bottom sheet on phones. `width` medium (forms) or wide (music). Contents style themselves. Current shell does not manage focus trapping or restoration; callers must handle that until the shared shell does. |
+| A dialog over the page (edit a deadline, practise a tricky bit) | **Dialog** | `components/Dialog.tsx` + `dialog.css` | Backdrop, white panel, a title row ending in CloseButton, Escape closes, a bottom sheet on phones. `width` medium (forms) or wide (music). Contents style themselves. Current shell moves focus in on open, keeps Tab inside, and returns focus to the opener on close (Nov 16, `lib/focusTrap.ts`); callers must handle that until the shared shell does. |
 | A menu or panel that opens from a button | **ReaderPopover** | `components/ReaderPopover.tsx` | Anchored to its button. |
 | Extra choices for one reader tool (Metronome, Drone) | **Tool ▾ menu** | a ReaderPopover with `<ChevronIcon/>` as trigger, right after the tool button (`.metronome-options`, `.drone-options`) | The ▾ joins its tool as one tile: same grey or purple behind both, square inner corners, hover only darkens icons. Choices are `.reader-choice` rows; remembered per piece. |
 | SubdivisionIcon | **SubdivisionIcon** | `components/SubdivisionIcon.tsx` | Quarter, two eighths, a triplet, four sixteenths drawn with the scale-notation glyphs; used in the metronome ▾ menu. |
@@ -63,99 +131,53 @@ October 8, 2026 from a scan of the studio. Source-audited October 19, 2026; comp
 | A hover label on the music itself (a note's count while beat sticks are on) | **beat-tip** | `.beat-tip` in `viewer-fixes.css`, rendered by ScoreViewer | Same small dark look as has-tip, above the notehead, hover only (a click on a note never opens it). |
 | A quiet housekeeping action (restore defaults, reset a view) | **Text action** | `.text-action` in `studio-shared.css` | Grey words, no border, no fill, darker on hover. The reader's and Scale Studio's "Reset" (`.reader-settings-reset`, a grey pill) should move to it. |
 | Counting today's repetitions of a skill (a scale, an exercise) | **RepPill** | `components/RepPill.tsx` + `rep-pill.css`, data in `lib/repLog.ts` | Sits beside its TempoPill and is built the same way, in pink: tally mark, −, the number (type to set it), +. Fixed width. Counts per day; the My Studio day panel and "Most practised" add them up. Used by Scale Studio's tempo marks. |
+| All-time count of one skill, beside its RepPill | **RepTotal** | `components/RepPill.tsx` + `rep-pill.css` | Plain pink text, no background ("7 total" / "共 7 次"), every day and tempo added up; a scale's ranges and groupings share one total (`totalGroup`). Hidden at zero. Replaced a planned colour square: use a number, not a colour map, for counts. |
 | The hard passages you're working on, across pieces (My Studio) | **PassagesList** | `practice/PassagesList.tsx`, styles `.passages` in `practice/practice-page.css` | The Routine's checklist rows: the circle marks it done (moves to a folded Done group, kept), piece over bars and tempo, a small TempoTrend once there are two days, Trash that asks once. Links come from `bitHref` in `lib/trickyBits.ts`: the piece at those bars, selected, close-up open. |
 | Counting a passage's repetitions over weeks | **Rep ladder** (inside `tricky-bits/BitPractice.tsx`) | `tricky-bits/` | One row per tempo, running total kept forever; also logs to `lib/repLog.ts` for the day report. |
 | Change a number one step at a time (beats, octave, meter, a note, minutes) | **Stepper** | `components/Stepper.tsx` + `stepper.css` | −, value, + on action grey. `size` medium 36px or small 28px; `tone="text"` for a worded value ("Octave 4"). Hold to repeat (speeds up), arrow keys and Home/End on the value (one tab stop, `role=spinbutton`), 44px touch targets. `onChange` with `min`/`max`, or `onStep` for a list (`wrap` goes round). The end that can't go further is disabled. `className` for width only. Use for settings tempos; playable score tempos use TempoPill and reps use RepPill. Used by Breathing Lab, the tools panel (tempo, drone and fingering octave, meter) and the tendency test. |
 | A volume or other 0 to 1 amount | **Volume slider** | `.tp-volume` in `tools-panel.css`, `Volume` in `PracticeToolDock.tsx` | Label left, native range right, `accent-color` selected purple `#6d4585`. Added October 21, 2026 for the metronome's beat and accent volumes. Move to `components/` if a second place needs one. |
+| Extra settings for one tool in the tools panel (tuner, drone, metronome) | **Options button** | `Options` in `PracticeToolDock.tsx`, `.tp-options` in `tools-panel.css` | Nov 16. One sliders icon at the right end of the tool's heading line, 30px, purple fill while its options are open. Replaced three grey "More" words. Options are label and control rows under the tool. No dividing lines in the panel: the tuner is a green tile, the other tools a heading and controls. Anything on or sounding is the selected purple; the heard note key is a green or sand fill, never a ring. |
 | How the tools sound (click, accent, drone voice, concert A) | **Tool sounds** | `lib/toolSounds.ts` (store, `cookie:tool-sounds:v1`), `lib/useToolSounds.ts`, `components/clickSounds.ts`, `components/sampledDrone.ts` | One studio-wide setting. Always book clicks with `bookClick`/`bookTick` and drones with `droneVoice`, and get pitch from `lib/pitch.ts` / `pitchFrequency`, so the choice and the A reach every page. Never hard-code 440. |
 | The rounds of a changing breathing pattern | **Round strip** | `breathing/Sequence.tsx`, `.bl-sequence` in `breathing/breathing-lab.css` | One row of eight cells, in count over out count; the current round in purple `#eee7f2` / `#79588e` with a 3px bar filling as the breath goes by, finished rounds keep a grey bar. A row, never a list, so the phone does not scroll. Also drawn in the home Breathing Lab card (sized up there). |
 | A first routine for someone who has none | **Starter routine** | `exercises/StarterRoutine.tsx`, store in `exercises/starter-routine.ts` (`useStarterOffer`, `addStarterRoutine`, `dismissStarter`) | Shown on the Exercises hub in the saved sets' spot (same rows) and on Home in the Today card's spot, only while there are no saved sets and it was not dismissed. Add saves an ordinary Scale Studio set and puts its steps on the Routine; Not now hides it for good. |
 | Tapping a rhythm in a lesson (the thing you press on each note) | **Cookie at the tap spot** | `LessonFrame` prop `cookieAway` + the spot in `theory/dots-and-ties/RhythmPractice.tsx` (`.dt-tap-spot`) | The guide Cookie hops from the bubble to the tap spot (none with reduced motion) and says "Tap on me!". The whole spot (320 by 104, 84 high on phones) is the target; Cookie is only the picture and squishes on each tap, Space included; it looks happy after a clean attempt and goes "hmm" (`.is-unsure` in `cookie-button.css`) otherwise. No hover box. Its place by the bubble keeps its width, so nothing moves. Used by lesson 7; lessons 2, 3 and 6 still tap on a second CookieButton (see "Not reused yet").
 | Tally marks | **TallySticks** | `components/TallySticks.tsx` + `tally-sticks.css` | Four upright, the fifth across. |
-| Reference lists you dip into (Want to learn, Learned, Recently opened) | **List stacks** | `.list-stacks` in `practice/practice-page.css` (My Studio) | A row of piles: the top card shows, two edges peek out when there is more; the title links to the full list; tapping the pile opens its cards in a grid below, animated with view transitions (no animation where unsupported or with reduced motion). Not for what you practise from (Working on, Tricky bits stay open). |
+| Reference lists you dip into (Want to learn, Learned, Recently opened) | **List stacks** | `.list-stacks` in `practice/practice-page.css` (My Studio) | A row of piles: the top card shows, two edges peek out when there is more; the title links to the full list; tapping the pile opens its cards in a grid below, animated with view transitions (no animation where unsupported or with reduced motion). Not for what you practise from (Working on, Tricky bits stay open). Radius 3 on the top card and on the edges peeking under it (Nov 12). The Me page's panels (Today's practice, calendar, day list, Practice insights) are radius 3 too, in `studio-shared.css`. |
 | Two or more ways to show one thing (Cards / Continuous, List / Shelf / Timeline, Breathing Lab's Cycle / Flower / Body / Embouchure) | **View switch** | `.view-switch` in `studio-shared.css` | Grey track, chosen one white with a hairline, `aria-pressed`. Words only, no glyphs. On a tinted stage it sits below the stage, on white, so the track stays visible. |
-| Search a page's list | **Library search** | `.library-find` in `music/library.css` | A short capsule (max 320px) in the view switch's grey track `#f1f1f4`, no border, hairline ring on focus. Sits on one row with the view switch. Move to `studio-shared.css` when a second page needs it. |
-| Narrow a list by tag | **Tag chips** | `.library-tag` in `music/library.css` | Quiet at rest: a 7px tone dot and the word on nothing, grey hover. Chosen: the tag's own tint (tag-pill pairs). No All chip: tap the chosen one again to clear. One wrapping row; one sideways-scrolling line on phones. Replaced the Library's old filled chips with the dark All. |
-| Your lists as a board (Want to learn, Working on, Learned) | **Music shelf** | `music/MusicShelf.tsx` + `music/music-shelf.css` | Three grey `#f5f5f7` columns of white item cards (title, composer, one tag as dot and word, a book's done bar). Moved by the card's StatusButton (dot only), or dragged on wide screens. Arriving on Learned: sage wash and a tick; none with reduced motion. Phones: one column at a time, swiped, the next peeking. |
+| Search a page's list | **Library search** | `.library-find` in `music/library.css` | A short capsule (max 320px) in the view switch's grey track `#edf1f5`, no border, hairline ring on focus. Sits on one row with the view switch. Move to `studio-shared.css` when a second page needs it. |
+| Narrow a list by tag | **Tag chips** | `.library-tag` in `music/library.css` | Quiet at rest: a 7px tone dot and the word on nothing, grey hover. Chosen: the tag's own tint (tag-pill pairs). No All chip: tap the chosen one again to clear. One wrapping row; one sideways-scrolling line on phones. Replaced the Library's old filled chips with the dark All. Re-applied Nov 14 after the filled chips and black All had crept back (rules at the end of `music-row.css`); the first dot sits on the page's left edge. Your-list chips (Want to learn, Working on, Learned) are a second row of round grey pills, chosen is white with a hairline like the view switch. Spacing: title, 20, search row, 16, chips, 6 between rows, 20, list. |
+| Your lists as shelves (Want to learn, Working on, Learned) | **Music shelf** | `music/MusicShelf.tsx` + `music/music-shelf.css` | Nov 12, printed ink style: three shelves one above another, each a row of printed score covers (paper `#fbfaf6`, 1px ink frame with an inner rule, italic serif title, a short rule, composer in serif small caps) standing on a 3px ink plank; a full shelf scrolls sideways, edge to edge on phones. The list button is its bare dot inside the cover's top-right corner. Empty shelf: one italic grey line. Drag a cover to another shelf on wide screens. No rounded boxes, no grey columns. |
 | A composer's dates, nationality and period as one line | **composerFacts** | `music/ComposerTimeline.tsx` | "1685 to 1750 · German · Baroque", Chinese words mapped. The timeline's composer card (a Dialog) uses it; the reader's StoryCard in ScoreViewer still builds its own English-only line and should switch to it. |
 | The Library as a timeline of composers | **ComposerTimeline** | `music/ComposerTimeline.tsx` + `music/composer-timeline.css` | Life bars across the centuries, pieces as dots at the year written, over period bands in the roadmap tints. Only composers with a birth year in `content/composers.json` get a row; the rest stay in the List. The name opens the composer card in the shared Dialog. Phones scroll it sideways inside its own box. |
-| A link in running text or under a card | **Text link** | DESIGN.md / memory "no underlined links" | Green `#46633d`, 600, no underline, **no trailing ›**. |
+| The top of a page you reach from another page (a book, Cookie's scale routine, a mock audition) | **DetailHeader** | `components/DetailHeader.tsx` + `detail-header.css` | Nov 14. A small "‹ Library" back line above the title, never a column beside it, so the title and everything under it start on the tab pages' left edge and the title sits at their height. Title 28 / 700; the list status is a round pill right after the title on the same line (wraps under it on phones); one grey meta line (composer · count). Lists under it: one-line items get no rules (Cookie's routine, `.book-page__list--plain`), two-line items keep hairlines; no hover colour or band, the hand pointer only. |
+| A link in running text or under a card | **Text link** | DESIGN.md / memory "no underlined links" | Ink `#292a33`, 600, no underline, **no trailing ›**. Not green, and no colour change on hover (green links and green hovers rejected Nov 14 as an old-website look). |
 | A page's section heading | **Section heading** | `.home-preview__group` | One heading style per page level. |
 | The small label inside a card or panel ("WORKING ON", "THIS WEEK", "TRICKY BITS") | **Card label** | to be added as `.card-label` in `studio-shared.css` | 11px, 600, capitals, letter-spacing .06em, grey `#85868e`, optional status dot in front. Gives a card three levels: label, title, meta. Only inside cards and panels, never as a page or section heading (those stay sentence case). Any other capitals in the studio are one-offs to convert or remove. |
 
 | A grey tempo box in a reader toolbar | **ToolbarTempo** | `components/ToolbarTempo.tsx` | Shared minus, input and plus markup; callers retain draft, live tempo, tooltip and commit behavior. The grey appearance remains owned by reader toolbar CSS. |
+| One breath, drawn (Breathing Lab's Line view, the Body page's drag control, Home's Breathing tile) | **Breath line** | `breathing/breathLine.ts` (`linePath`, `linePoint`, `countedFullness`) | Nov 16, replaced the two-colour ring she was sick of. A curve that rises on the inhale (blue `#87b4c8`), stays level on a hold (sand `#cab994`) and falls on the exhale (pink `#ca9295`), 4px, with a purple dot riding it over a faint baseline. Never draw a breath as a ring again. |
+| A panel of numbers about your practice (calendar, the day, where time goes, most practised, pitch tendencies) | **Insight tile** | end of `practice/practice-page.css` | Nov 16. The Home tile: tint fills it (slate, lilac, green, pink), name top left 15 / 600, radius 3, padding 10 12 12, no border or shadow. Calendar days and pitch cells are 30px squares, white on the tint; today is bold, the chosen day is a white fill, never a ring. |
+| A row of settings in a control card (In, Hold, Out, Tempo, Sound) | **Settings row** | `.bl-count-step` in `breathing/breathing-lab.css` | Label left 14 / 400 `#45464f`, control right: a Stepper for numbers, a View switch for on / off. No custom pills, no raised white highlight. Move to `studio-shared.css` when a second page needs it. |
 
-## Text sizes by component (measured October 8, 2026)
+## Tried and rejected (do not bring back)
 
-Size / weight as the browser actually renders them (computed style, not the CSS, which has override layers). Use the
-"Target" column for anything new; rows marked **mismatch** are where the same job renders differently today.
-
-| Text | Where measured | Renders as | Target |
-|---|---|---|---|
-| Page title | every tab (`h1`) | 42 / 780 | 42 / 780 |
-| Section heading | `.home-preview__group`, every page | 20 / 650 | 20 / 650 (chosen October 8) |
-| Card label | Home shelf labels, rail captions, dock titles (all slightly different today) | | 11 / 600 capitals, grey (decided October 9) |
-| Big card title | preview cards: Home 16 / 600, tab-page grids 15 / 600 | | 16 / 600; 15 / 600 in the smaller tab-page grid |
-| Item card title | My Studio `.working-card` | 16 / 600 | 16 / 600 |
-| List row title | Library rows | 16 / 600 | 16 / 600 |
-| Meta line under a title | item cards, Library rows | 13 / 400 | 13 / 400, grey `#85868e` |
-| List or checklist item | Routine | 15 / 400 | 15 / 400 |
-| Panel heading inside a card | Today's practice, Routine | 16 / 600 | 16 / 600 |
-| Text link | "+ Deadline", "Take the pitch test" | 14 / 600 | 14 / 600, green `#46633d` |
-| Tag pill | everywhere | 12 / 560 | 12 / 560 |
-| Count beside a heading | Routine "0 of 4" 14 / 400 | | 14 / 400 grey |
-| Studio nav tab | top bar | 14 / 500 | 14 / 500 |
-| Toolbar icon label (word under an icon) | reader header tools | 10.5 / 500 | 10.5 / 500 |
-| Tempo number | Scale Studio tempo mark 15 / 500 tabular; tricky bit chip 14 / 600; dock `.tp-chip` 13 / 600; dock stepper 16 / 400 | **mismatch** (four ways) | 15 / 500 tabular, from the tempo mark |
-| Big number | My Studio clock 30 / 450; stats row 22 / 600 | | Clock 30 / 450; stats 22 / 600 |
-
-**Weights in use:** 400 (text), 500 (labels, numbers), 600 (titles, links), 650 to 780 (headings only). Avoid new
-in-between weights (560, 680, 720); move toward 400 / 500 / 600 / 700.
-
-## Colour, underline and hover: what the studio does today (audit, October 8, 2026)
-
-Facts from a scan, not settled rules yet. Use them so new work matches what exists.
-
-**Green** (`#46633d`, `#40553d`, `#678956` and near-greens) is the oldest accent, in about 25 stylesheets. Its jobs
-today: text links, "done / correct" (ticked routine steps, lesson answers), active and selected states in the tools
-dock and Breathing Lab, soft tint buttons. Heaviest in `reader-workspace.css`, `practice/practice-page.css`,
-`practice-tool-dock.css`, `passage-guide.css`.
-
-**Purple** (`#79588e`, `#eee7f2`, `#62567a` and family) is newer, in about 11 stylesheets. Its jobs today: what is
-playing or active in the reader (the playback cursor, the measure selection, the tricky bit tempo chip), selected chips
-in Scale Studio's settings (`studio-shell.css` has the most), the lavender "Classical" tag. That is why Scale Studio and
-the reader read purple and the rest reads green.
-
-**Decided October 8: purple = selected, green = links and done.** Purple marks what is chosen or active right now
-(selected bars, the playing note, the chosen tempo, a selected option). Green marks text links and finished things
-(ticked steps, correct answers, learned). Tag tints (lavender "Classical" and so on) are a separate palette and stay.
-Most purple already means "selected". Still to convert: green used for *selected* states in the tools dock and
-Breathing Lab (`practice-tool-dock.css`, `breathing/breathing-lab.css`), and the dark `#292a33` selected chips in
-Scale Studio's settings (`studio-shell.css`), once we decide whether selected chips go purple too.
-
-**Underlines:** links are never underlined. The hover underlines that were left (tools dock fingering link, Home shelf
-link, fingering alternatives, long-tone report, My Studio empty-state links, the studio page back link) were removed
-October 8. Two deliberate underlines stay: the reader's tappable music terms and Scale Studio's breadcrumb
-(`.scale-book__crumb`, grey, never green), plus a focus-visible underline on Scale Studio's section titles for keyboards.
-
-**Hover and press, by kind:**
-
-| Kind | Hover | Notes |
-|---|---|---|
-| Preview card (tinted stage) | lifts 3px + deeper shadow | Every page now. Exercises and Learn didn't lift until October 8: a blanket rule in `viewer-fixes.css` (`.exercise-hub a{transform:none!important}`, the wrapper both pages share) cancelled it; it now skips `.preview-card`. Theory lessons were outside that wrapper, which is why they lifted. |
-| Item card (white) | border darkens, no lift | |
-| List row | background tint | DESIGN.md "List row". |
-| Icon button | grey circle `#f1f1f4` | |
-| Close | nothing | CloseButton. |
-| Text link | colour only | |
-| Any button, pressed | **no feedback** | `viewer-fixes.css:59` sets `transform:none!important` on every `.studio-route button`, which also cancels the `scale(.98)` press in `studio-shared` for buttons. Links still get it. Decide whether buttons should press too. |
+- A ring for a breath cycle (Nov 16). Use the Breath line.
+- Square buttons and steppers (Nov 16). See rule 1.
+- Tinted regions filled with white chips; a dialog just to tick a skill (Nov 16).
+- Darker hairlines as a row hover; a grey hover band; green title hover.
+- A green "Last opened" box in a list row; green primary buttons; black selected buttons.
+- White panels floating on a shadow; cards that lift on hover.
+- A raised white highlight inside a grey control to mean "on".
+- Vertical divider lines in toolbars.
+- Warm cream and cool grey fills; sand on Home.
+- Trash at the far right edge of a wide row.
 
 ## Not reused yet (source audit, October 19, 2026)
 
 Fix these by pointing them at the component above, not by restyling them in place. Highest value first.
 
 1. **Tempo reuse completed locally (October 30).** XML and fixed readers use `ToolbarTempo` for the chosen grey box. Scale Tempos and key-exercise rows use editable `Stepper`; the tools panel already uses it. TempoPill remains the playable blue score/passage control. Stepper signs darken on hover without a separate fill.
-2. **Roadmap detail is its own dialog.** `roadmap/page.tsx:78` (`.roadmap-detail`, tinted by region) still has its own backdrop and panel. A future move onto `Dialog` must preserve the roadmap's focus handling; the shared shell currently only handles Escape and backdrop dismissal. Tricky bit and Deadline dialogs already use `Dialog`.
+2. ~~Roadmap detail dialog~~ gone Nov 16: the Technique map has no dialog now. Old text: **Roadmap detail is its own dialog.** `roadmap/page.tsx:78` (`.roadmap-detail`, tinted by region) still has its own backdrop and panel. A future move onto `Dialog` must preserve the roadmap's focus handling; the shared shell currently only handles Escape and backdrop dismissal. Tricky bit and Deadline dialogs already use `Dialog`.
 3. **Legacy list-dot CSS.** `.continue-dot` remains in `home-preview-cards.css:195`, but no TSX consumer was found and `ContinuePracticingCard.tsx` / `HomeStudioBrief.tsx` no longer exist. This is a CSS cleanup candidate, not two live components to migrate. Keep `.status-dot` for list status; check rendered pages before deleting old styles.
 6. **The Key control's arrows.** `.reader-key__stepper` (`reader-workspace.css:1070`) is a third − / + design: icon
    arrows around a two-line value (key name over the move). Its two-line value is why it isn't a `Stepper`; either give
@@ -169,23 +191,12 @@ Fix these by pointing them at the component above, not by restyling them in plac
    `.rhythm-clap`. The user found two cookies confusing in lesson 7, where the guide Cookie now moves to the tap spot (`cookieAway`). The
    user is still deciding whether these lessons follow; do not switch them yet (lesson 2's hold step needs press-and-hold).
 
-## Audit limits and unresolved rules (October 19, 2026)
-
-This pass checks source and reuse, not computed styles, touch behavior or accessibility acceptance.
-The October 8 measurement tables are historical evidence, not current browser measurements.
-
-- `.card-label` remains a proposal: no matching shared selector or TSX consumer was found. Do not assume the row above describes an available class.
-- ItemCard uses the final compact My Studio values, 15px / 600 and 12.5px meta. The earlier measurements above are historical.
-- DESIGN.md's typography table says section titles are 24px / 700, while this document's later target and `.home-preview__group` source are 20px / 650. Use the existing component when adding a section; resolve the document conflict before a broad typography pass.
-- ItemCard uses a 1px shadow outline, shared by working items and tricky bits. Dashboard card guidance is separate.
-- The close-button implementation is shared, but the catalog's “used by every close” is an intention rather than an exhaustive accessibility claim. Dialog focus behavior still needs a separate check.
-- Selection colour is purple and the action button is plain grey (both recorded in DESIGN.md); the plain action copies now share a class; the tools-panel selected chips remain unresolved (item 7). This audit does not change mascot interactions or approve a global restyle.
-
 ## Keeping this current
 
 - Adding a component: add a row above, in the same session.
 - Finding a one-off: add it to "Not reused yet" with the file and line, even if you don't fix it now.
 - Fixing one: delete its entry.
+- When she rejects something, add it to "Tried and rejected" with the date, in her words where possible.
 
 Theory interaction rules and component usage: [theory/COMPONENTS.md](theory/COMPONENTS.md). `rests/SplitSpan.tsx` provides accessible duration splitting by cut gesture, tap, or keyboard.
 
@@ -200,4 +211,4 @@ The tools-panel tempo uses `Stepper` with `editable`, `liveValue={liveTempo}`, a
 
 The tools-panel tuner starts listening when its main view opens and releases the microphone when closed or switched to fingering. Keep Retry only for microphone errors; no separate Listen control. The compact view omits instructional paragraphs.
 
-Tools-panel secondary labels (status, More, octave) share 13px/500 text. Each More action aligns right; metronome dots share its footer row. Active drones appear below the note grid as existing green chips, each removable by pitch and octave, with Stop all in the footer.
+Tools-panel: each tool has one Options button (see the table) instead of a More word; metronome dots sit under its controls. Active drones appear below the note grid as purple chips, each removable by pitch and octave, with Stop all in the footer.

@@ -33,6 +33,8 @@ export function PracticeCard({routine:storedRoutine,zh,findable,lookup,onRoutine
   // The clock is the shared one (the top bar's clock button runs the same one).
   const live=usePracticeClock();
   const [now,setNow]=useState(0),[input,setInput]=useState("");
+  // "Add step" is a button; pressing it swaps in the field (and its picker) until a step is added or you leave it.
+  const [adding,setAdding]=useState(false);
   // A step you tapped: the clock times it next (or switches to it now), so the list never has to go in order.
   const [picked,setPicked]=useState<string|null>(null);
   useEffect(()=>{
@@ -69,9 +71,15 @@ export function PracticeCard({routine:storedRoutine,zh,findable,lookup,onRoutine
     if(live){const following=rest.find(item=>item.doneOn!==today);if(following)switchClock(asTarget(following),fallback);else stopClock(fallback)}
     setNow(nowMs());
   }
-  function pick(item:RoutineItem){
-    setPicked(item.id);
-    if(live&&item.doneOn!==today)switchClock(asTarget(item),fallback);
+  /**
+   * Tapping a step's name. With the clock stopped it ticks (or unticks) the step. While the clock runs, tapping the
+   * step being timed finishes it, and tapping another unticked step moves the clock to that one, so the list never
+   * has to go in order. The number in front always ticks, whatever the clock is doing.
+   */
+  function tapLine(item:RoutineItem){
+    if(!live||item.doneOn===today){toggle(item);return}
+    if(timingStep&&item.id===timingStep.id){next();return}
+    setPicked(item.id);switchClock(asTarget(item),fallback);
   }
   function finish(){stopClock(fallback);setNow(nowMs())}
   function toggle(item:RoutineItem){
@@ -79,7 +87,7 @@ export function PracticeCard({routine:storedRoutine,zh,findable,lookup,onRoutine
     if(live&&timingStep&&item.id===timingStep.id){next();return}
     onRoutine(routine.map(step=>step.id===item.id?{...step,doneOn:step.doneOn===today?undefined:today}:step));
   }
-  const add=(step:RoutineItem)=>{onRoutine([...routine,step]);setInput("")};
+  const add=(step:RoutineItem)=>{onRoutine([...routine,step]);setInput("");setAdding(false)};
   const allDone=routine.length>0&&current<0;
 
   return <section id="today" className="practice-card practice-today" aria-labelledby="today-title">
@@ -97,15 +105,15 @@ export function PracticeCard({routine:storedRoutine,zh,findable,lookup,onRoutine
       <div className="practice-today__time" aria-live="off">{formatClock(times.target)}
         {live&&times.total>times.target+999&&<small className="practice-today__total">{zh?`本次共 ${formatClock(times.total)}`:`Session ${formatClock(times.total)}`}</small>}
       </div>
-      {/* Soft pill controls, the same two as the top bar clock: play or pause, and stop. Play alone until you start;
-          then stop joins on the left. Steps are ticked
+      {/* Printed controls (Nov 14): a word and a small ink glyph, no button shape. Start alone until you start; then
+          Stop joins on the left. Steps are ticked
           by you (or by a logged session), never by the clock: you can pause, do something else, and come back. */}
       <div className="practice-today__actions">
         {/* Stop only once there is something to stop, and on the left, so play/pause never moves under your finger. */}
-        {live&&<button type="button" className="has-tip" data-tip={zh?"结束":"Stop"} aria-label={zh?"结束":"Stop"} onClick={finish}><PracticeIcon name="stop"/></button>}
+        {live&&<button type="button" onClick={finish}><span>{zh?"结束":"Stop"}</span><PracticeIcon name="stop"/></button>}
         {live?.running
-          ?<button type="button" className="has-tip" data-tip={labels.pause} aria-label={labels.pause} onClick={pauseClock}><PracticeIcon name="pause"/></button>
-          :<button type="button" className="has-tip" data-tip={live?labels.resume:labels.start} aria-label={live?labels.resume:labels.start} onClick={start}><PracticeIcon name="play"/></button>}
+          ?<button type="button" onClick={pauseClock}><span>{labels.pause}</span><PracticeIcon name="pause"/></button>
+          :<button type="button" onClick={start}><span>{live?labels.resume:labels.start}</span><PracticeIcon name="play"/></button>}
       </div>
       {/* A finished stretch asks here whether to save it (with a note) before it goes in your log. */}
       <SessionReview zh={zh}/>
@@ -114,25 +122,27 @@ export function PracticeCard({routine:storedRoutine,zh,findable,lookup,onRoutine
       <div className="practice-card__heading">
         <h3>{zh?"练习清单":"Routine"}</h3>
         {routine.length>0&&<span className="routine-count">{zh?`${routine.filter(item=>item.doneOn===today).length} / ${routine.length}`:`${routine.filter(item=>item.doneOn===today).length} of ${routine.length}`}</span>}
+        {/* Add is a real button in the tile's header, never a line of the list (Nov 14). It turns into the field. */}
+        <span className="routine-adder">{adding
+          ?<SuggestField id="routine" items={findable} value={input} onChange={setInput} onText={text=>add({id:crypto.randomUUID(),text})} onPick={item=>add({id:crypto.randomUUID(),text:item.title,ref:item.id})}
+            placeholder={zh?"输入，或选练习和曲目":"Type, or pick an exercise or piece"} label={labels.addAria} submitLabel={zh?"添加":"Add"} focusOnOpen onLeave={()=>setAdding(false)}/>
+          :<button type="button" className="routine-adder__button" onClick={()=>setAdding(true)}><PracticeIcon name="plus"/>{zh?"添加步骤":"Add step"}</button>}</span>
       </div>
-      {/* A checklist like a notes app: a circle, the words, a hairline under each; two columns when there is room. */}
+      {/* A numbered list, like a printed programme: the number ticks the step (a done step is struck through), and
+          Open and remove sit right after the name. */}
       <ol className="routine-list">{routine.map((item,i)=>{
         const path=item.ref?.startsWith("scale-set:")?`/flute-studio/exercises/scales?set=${encodeURIComponent(item.ref.slice(10))}&back=/flute-studio/practice`:item.ref?lookup(item.ref)?.viewerPath:null;
         return <li key={item.id} className={`${item.doneOn===today?"done":""}${(timingStep?item.id===timingStep.id:!live&&i===current)?" is-current":""}`}>
           <label className="routine-list__check">
             <input type="checkbox" checked={Boolean(item.doneOn===today)} onChange={()=>toggle(item)} aria-label={labels.markDone(item.text)}/>
-            <span aria-hidden="true">✓</span>
+            <span aria-hidden="true">{i+1}</span>
           </label>
-          <button type="button" className="routine-list__text" onClick={()=>pick(item)} aria-label={zh?`给 ${item.text} 计时`:`Time ${item.text}`}>{item.text}</button>
-          {path&&<Link className="routine-list__open" href={path}>{zh?"打开":"Open"}</Link>}
+          <button type="button" className="routine-list__text" onClick={()=>tapLine(item)}>{item.text}</button>
+          {path&&<Link className="routine-list__open" href={path}>{zh?"打开":"Open"} ›</Link>}
           <button type="button" aria-label={labels.remove(item.text)} className="routine-delete" onClick={()=>onRoutine(routine.filter(step=>step.id!==item.id))}><PracticeIcon name="delete"/></button>
         </li>;
-      })}
-        <li className="routine-list__add">
-          <SuggestField id="routine" items={findable} value={input} onChange={setInput} onText={text=>add({id:crypto.randomUUID(),text})} onPick={item=>add({id:crypto.randomUUID(),text:item.title,ref:item.id})}
-            placeholder={zh?"添加：输入，或选练习和曲目":"Add: type, or pick an exercise or piece"} label={labels.addAria} submitLabel={zh?"添加":"Add"} icon={<PracticeIcon name="plus"/>}/>
-        </li>
-      </ol>
+      })}</ol>
+      {routine.length===0&&<p className="routine-empty">{zh?"还没有步骤。添加今天想练的内容。":"No steps yet. Add what you want to play today."}</p>}
     </div>
   </section>;
 }

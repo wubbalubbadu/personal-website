@@ -7,25 +7,18 @@
 /* ---------- Page frame: the workbench fills the window under the title, so the page does not scroll. ---------- */
 html body .studio-page:has(.emb) { padding-bottom: 24px; } /* studio-page.css gives every page 96px under it */
 
-/* ---------- Embouchure / Breathing: the Library's filter chips (music/library.css .library-chips). ---------- */
-.emb-views { display: flex; gap: 6px; margin: 0 0 16px; }
-.emb .emb-views button {
-  height: 32px; padding: 0 13px; border: 0; border-radius: 999px;
-  background: #f1f1f2; color: #5f6169;
-  font: inherit; font-size: 13px; font-weight: 500;
-}
-.emb .emb-views button[aria-pressed="true"] { background: #292a33; color: #fff; }
-@media (hover: hover) { .emb .emb-views button:not([aria-pressed="true"]):hover { background: #e6e6ea; } }
+/* ---------- Embouchure / Breathing: the shared View switch (studio-shared.css .view-switch), Nov 16. ---------- */
+.emb-views { margin: 0 0 16px; }
 
-/* ---------- The frame: an item card (COMPONENTS.md "Item card": white, 1px #e6e6ea, radius 18). ---------- */
+/* ---------- The frame: white with a hairline, square like the tiles (Nov 16; was radius 18). ---------- */
 .emb .workbench__surface {
   grid-template-columns: minmax(0, 1fr) 340px;
-  border: 1px solid #e6e6ea; border-radius: 18px; box-shadow: none; overflow: hidden;
+  border: 1px solid #e2e8ef; border-radius: 3px; box-shadow: none; overflow: hidden;
 }
-.emb .workbench__viewport { background: #f5f5f7; }
+.emb .workbench__viewport { background: #f4f6f9; }
 .emb .workbench__panel {
   gap: 0; padding: 4px 20px 8px;
-  border-left: 1px solid #e6e6ea;
+  border-left: 1px solid #e2e8ef;
   font-size: 14px; color: #292a33;
 }
 
@@ -65,7 +58,7 @@ html body .studio-page:has(.emb) { padding-bottom: 24px; } /* studio-page.css gi
 .emb-block { display: flex; flex-direction: column; gap: 10px; width: 100%; padding: 16px 0; }
 .emb-block + .emb-block { border-top: 1px solid #ececef; }
 /* COMPONENTS.md "Card label". */
-.emb-label { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #85868e; }
+.emb-label { font-size: 13px; font-weight: 500; color: #85868e; }
 
 /* Register: one of three, like the fingering chart's note buttons (fingerings.css .fingering-chart__notes): grey
    rounded squares, the chosen one in the studio's purple "on" tint, the range as the small grey sub line. */
@@ -73,14 +66,14 @@ html body .studio-page:has(.emb) { padding-bottom: 24px; } /* studio-page.css gi
 .emb .emb-registers button {
   display: flex; flex-direction: column; align-items: center; gap: 3px;
   min-height: 48px; padding: 7px 4px; border: 0; border-radius: 12px;
-  background: #f1f1f4; color: #292a33;
+  background: #edf1f5; color: #292a33;
   font: inherit; font-size: 14px; font-weight: 600; line-height: 1.1;
   transition: background-color .16s ease, color .16s ease;
 }
 .emb .emb-registers button small { font-size: 11px; font-weight: 500; color: #85868e; white-space: nowrap; }
 .emb .emb-registers button[aria-pressed="true"] { background: #f1e5f5; color: #6d4585; }
 .emb .emb-registers button[aria-pressed="true"] small { color: #9a7aae; }
-@media (hover: hover) { .emb .emb-registers button:not([aria-pressed="true"]):hover { background: #e6e6ea; } }
+@media (hover: hover) { .emb .emb-registers button:not([aria-pressed="true"]):hover { background: #e2e8ef; } }
 
 /* Note: the staff, its name, and Play scale on one row; the slider under them. */
 .emb-note-row { display: flex; align-items: center; gap: 12px; }
@@ -106,7 +99,7 @@ html body .studio-page:has(.emb) { padding-bottom: 24px; } /* studio-page.css gi
 /* Breathing's circle: drag the purple dot round the breath. */
 .breath-cycle-block { flex: 1; display: flex; flex-direction: column; align-items: center; }
 .breath-cycle-block .emb-label { align-self: flex-start; }
-.breath-cycle { width: 100%; max-width: 400px; margin: auto; aspect-ratio: 268 / 160; touch-action: none; user-select: none; -webkit-user-select: none; border-radius: 12px; }
+.breath-cycle { width: 100%; max-width: 400px; margin: auto; aspect-ratio: 268 / 120; touch-action: none; user-select: none; -webkit-user-select: none; border-radius: 12px; }
 .breath-cycle svg { display: block; width: 100%; height: 100%; overflow: visible; }
 .breath-cycle text { font-family: inherit; font-size: 10px; fill: #71747e; }
 .breath-cycle:focus-visible { outline: 2px solid #b8bac2; outline-offset: 2px; }
@@ -130,7 +123,7 @@ html body .studio-page:has(.emb) { padding-bottom: 24px; } /* studio-page.css gi
   .emb .workbench__surface { grid-template-columns: 1fr; }
   .emb .workbench__panel {
     display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 28px; align-items: start;
-    padding: 4px 24px 8px; border-left: 0; border-top: 1px solid #e6e6ea;
+    padding: 4px 24px 8px; border-left: 0; border-top: 1px solid #e2e8ef;
   }
   .emb .emb-block--side { grid-column: 2; grid-row: 1 / span 2; border-top: 0; }
   .emb-canvas { height: clamp(320px, calc(100dvh - 620px), 560px); }
@@ -145,7 +138,7 @@ html body .studio-page:has(.emb) { padding-bottom: 24px; } /* studio-page.css gi
   html body .studio-page:has(.emb) { padding-top: 12px; }
   .emb-views { margin-bottom: 12px; }
   .emb .workbench__surface { grid-template-columns: 1fr; }
-  .emb .workbench__panel { padding: 0 16px 4px; border-left: 0; border-top: 1px solid #e6e6ea; }
+  .emb .workbench__panel { padding: 0 16px 4px; border-left: 0; border-top: 1px solid #e2e8ef; }
   .emb-canvas { height: clamp(200px, calc(100dvh - 560px), 340px); }
   .emb-canvas.breath-canvas { height: auto; min-height: clamp(160px, calc(100dvh - 580px), 320px); }
   .emb-block { padding: 12px 0; gap: 8px; }

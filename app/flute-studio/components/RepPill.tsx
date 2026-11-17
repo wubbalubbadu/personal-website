@@ -1,6 +1,6 @@
 "use client";
 import {useState} from "react";
-import {logRep,repDay,useRepLog,type RepItem} from "../lib/repLog";
+import {logRep,repDay,repTotal,useRepLog,type RepItem} from "../lib/repLog";
 import "./rep-pill.css";
 
 /**
@@ -23,4 +23,14 @@ export function RepPill({item,tempo,zh,className}:{item:RepItem;tempo:number;zh:
       onChange={e=>setDraft(e.target.value)} onBlur={commit} onKeyDown={e=>{if(e.key==="Enter")e.currentTarget.blur()}}/></label>
     <button type="button" className="rep-pill__step" aria-label={text.add} onClick={()=>logRep(item,tempo,1)}>+</button>
   </span>;
+}
+
+/**
+ * Every rep of one thing so far, all days and tempos, as a plain number to the right of its RepPill. Shown once there
+ * is at least one. Replaces the planned colour square (Nov 14): a number says how much, a colour needed a key.
+ */
+export function RepTotal({item,zh}:{item:RepItem;zh:boolean}){
+  const total=repTotal(useRepLog(),item.key);
+  if(!total)return null;
+  return <span className="rep-total" title={zh?`${item.title}：一共 ${total} 次`:`${item.title}: ${total} in all`}>{zh?`共 ${total} 次`:`${total} total`}</span>;
 }

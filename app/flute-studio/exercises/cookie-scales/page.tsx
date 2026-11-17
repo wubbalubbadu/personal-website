@@ -9,14 +9,14 @@ import '../scales/scale-book.css';
 import {ScoreTempoMarks} from '../../components/ScoreTempoMarks';
 import {ScoreViewer} from '../../components/ScoreViewer';
 import {PracticeIcon} from '../../components/PracticeIcon';
-import BackChevron from '../../components/BackChevron';
+import DetailHeader from '../../components/DetailHeader';
 import {useLanguage} from '../../i18n/LanguageContext';
 import {StatusButton} from '../../components/StatusButton';
-import {recordOpened,useBookProgress} from '../../lib/bookProgress';
+import {recordOpened} from '../../lib/bookProgress';
+import {ExerciseBook,useBookDoneText} from '../../components/ExerciseBook';
 import {routine,routineXML,routineBlocks,routineSpan,type RoutineExercise} from './routine';
 import '../exercises.css';
 import '../../music/books/book.css';
-import '../../components/tag-pill.css';
 import {usePracticeTempoMarks} from "../../lib/practiceTempoMarks";
 
 const home='/flute-studio/music/cookie-scales';
@@ -99,14 +99,13 @@ function RoutineReader({exercise,zh}:{exercise:RoutineExercise;zh:boolean}){
 export default function CookieScaleRoutine(){
   const params=useSearchParams(),{lang}=useLanguage(),zh=lang==='zh';
   const exercise=routine.find(e=>e.id===params.get('exercise'));
-  const progress=useBookProgress(bookId);
+  const doneText=useBookDoneText(bookId,routine.length,zh);
   if(exercise)return <RoutineReader key={exercise.id} exercise={exercise} zh={zh}/>;
+  // An exercise book like Reichert's (components/ExerciseBook.tsx): Nov 14, the practice books should all match.
   return <main className="exercise-hub"><div className="exercise-hub__content">
-    <Link className="book-page__back" href="/flute-studio/music?tag=exercise" aria-label={zh?'返回音乐库':'Back to Music Library'}><BackChevron/></Link>
-    <header className="exercise-hub__header book-page__header"><div><h1>{zh?'Cookie 的音阶练习':'Cookie’s Scale Routine'}</h1></div>
-      {/* For the whole book, as on Reichert's page. No "done" count: a scale is never finished. */}
-      <div className="book-page__actions"><StatusButton id={bookId} zh={zh}/></div>
-    </header>
-    <section className="book-page__list" aria-label={zh?'练习目录':'Routine exercises'}>{routine.map((e,i)=><article key={e.id} className="book-row"><Link className="book-row__main" href={href(e.id)}><span className="book-row__copy"><strong>{i+1}. {zh?e.zh:e.title}</strong></span>{progress.last===i+1&&<span className="tag-pill" data-tone="sage">{zh?'上次练到这里':'Last opened'}</span>}</Link></article>)}</section>
+    <DetailHeader backHref="/flute-studio/music?tag=exercise" backLabel={zh?'音乐库':'Library'} title={zh?'Cookie 的音阶练习':'Cookie’s Scale Routine'}
+      status={<StatusButton id={bookId} zh={zh}/>} meta={<>Cookie · {doneText}</>}/>
+    <ExerciseBook bookId={bookId} label={zh?'练习目录':'Routine exercises'} zh={zh} items={routine.map((e,i)=>({number:i+1,href:href(e.id),title:zh?e.zh:e.title,
+      detail:[zh?`第 ${i+1} 首`:`No. ${i+1}`,e.type==='chromatic'?(zh?`${e.forms.length} 种练法`:`${e.forms.length} patterns`):(zh?'所有调':'All keys')].join(' · ')}))}/>
   </div></main>;
 }

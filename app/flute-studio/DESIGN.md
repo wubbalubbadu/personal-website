@@ -1,227 +1,123 @@
-# Cookie Flute Studio — Design Reference
+# Cookie Flute Studio: the values
 
-> **Components first.** [COMPONENTS.md](COMPONENTS.md) says which component to use for each job (cards, pills,
-> tempo, close, delete, text sizes).
-> - **Using something:** look it up in COMPONENTS.md and use the component listed, not a page-local copy.
-> - **Building something new:** add it to COMPONENTS.md in the same change (its job, where it lives, its text size).
-> - **Spotting a one-off:** add it to COMPONENTS.md's "Not reused yet" list with the file and line.
-> - **No new `!important`.** Win with a more specific selector (two classes), not `!important`. Older layers
->   (`ios-theme.css`, `studio-shell.css`, `viewer-fixes.css`) are full of it, which is why every later fix needed it too;
->   only match it where you must override one of those, and note it.
+[COMPONENTS.md](COMPONENTS.md) says **which thing to use and the rules** (shape, no boxes in boxes, one list row,
+colour, hover, compactness). This file holds **the numbers** those rules use. If the two disagree, COMPONENTS.md wins
+and this file has a mistake: fix it here.
 
-Every value below is pulled directly from the CSS actually running on the site
-today (`ios-theme.css`, `practice-tool-dock.css`,
-`studio-home.css`, `saved-music.css`, `library.css`, `exercises.css`,
-`practice-activity-hero.css`). Nothing here is invented — if a page looks
-inconsistent, it's because it *isn't* using these values. Check here first.
+Rewritten November 16, 2026. Everything superseded (card shadows, 18 to 24px card radii, cream and grey fills, the
+green button, uppercase dark filter tabs, 78px rows) was removed; it is in git history.
 
-## Color
+- **Using something:** look it up in COMPONENTS.md and use the component listed, not a page-local copy.
+- **Building something new:** add it to COMPONENTS.md in the same change.
+- **No new `!important`.** Win with a more specific selector. The older layers (`ios-theme.css`, `studio-shell.css`,
+  `viewer-fixes.css`) are full of it; match it only where you must override one of them, and say so in a comment.
+  Phone reader rules need `:not(#_)` to win.
 
-| Token | Value | Use |
+## Colour
+
+| Name | Value | Use |
 |---|---|---|
-| Ink | `#292a33` | Primary text |
-| Muted | `#71747e` / `#85868e` | Secondary text, meta lines |
-| Canvas | `#fff` | Page background (was `#f5f5f7` — dropped so it doesn't fight card shadows or the header) |
-| Card | `#ffffff` | Surface background |
-| Border | none | Cards don't use borders anymore — separation comes from shadow only (`0 10px 30px rgba(41,42,51,.08)` resting). Watch for `ios-theme.css`, a legacy layer that still has `!important` padding/background rules for `.studio-main`/`.library-main`/`.scale-main` — new page-level CSS has to mark its own rule `!important` too or it silently loses. |
-| Accent | `#678956` | Green: links and finished things (ticked steps, correct answers). Not for selected states since October 8 |
-| Accent (dark) | `#46633d` / `#40553d` | Accent text on tinted surfaces |
-| Accent (tint) | `#e4ecdf` / `#e7eee3` / `#e5ece1` | Badge fills and "done" states. Retired for buttons on October 16 (see Buttons) |
-| Selected (purple) | `#eee7f2` / `#79588e`; on a control `#f1e5f5` / `#6d4585` | What is chosen or happening now: a selected option, the playing note, the current round, a ticking metronome |
-| Action grey | `#f1f1f2` / `#45464f`, hover `#e8e8ea` | Plain action buttons and steppers (see Buttons) |
-| Pink | `#f49fff` | Secondary accent (pet, drone, a few icons) |
-| Pink (pale) | `#fce7fd` | Pink tint fills |
+| Ink | `#292a33` | Primary text, links, the main action's label |
+| Body grey | `#45464f` / `#55575f` | Secondary text. Never lighter than `#6f717a` for anything you must read |
+| Meta grey | `#85868e` | The 13px line under a row title, counts, captions |
+| Canvas and surfaces | `#fff` | Pages, cards, panels |
+| Hairline | `#ececef` | Between rows of a list and around a card. Nowhere else |
+| Slate | `#edf1f5`, hover `#e2e8ef`, lighter `#f4f6f9` | Every control fill (buttons, steppers, search, view switch, icon buttons) and slate tiles |
+| Green tint | `#eef4ec`, ink `#40553d` | Tiles, Learned, the tuner box |
+| Pink tint | `#faf0f6` | Tiles |
+| Lilac tint | `#f2eef8` | Tiles, a live tap pad |
+| Sand tint | `#f7f1e6`, ink `#765621` | Tiles, Working on |
+| Selected purple | `#eee7f2` / `#79588e`; on a control `#f1e5f5` / `#6d4585` | Chosen or happening now: a selected option, the playing note, an "on" chip |
+| Done green | `#46633d` | The tick on a finished row, a correct answer. Not a button or link colour |
+| Dark fill | `#292a33` on white text | A selected tab chip only. Prefer the View switch |
+| Armed red | `#a5372f` | The second tap of a delete ("Tap again to delete") only |
 
-**Icon-tile tone system** (used for category/type icons throughout):
+Never a neutral grey fill, never cream, never a gradient. State is a fill, never a ring or border.
 
-| Tone | Background | Ink |
+## Type
+
+Font everywhere: `-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif`.
+
+| Role | Size / weight | Notes |
 |---|---|---|
-| Green | `#dcebd9` | `#3f5d39` |
-| Pink | `#f7e1f8` | `#68466b` |
-| Sand | `#f1e7d6` / `#f2e8d3` | `#6b5a3a` / `#765d2e` |
-| Slate/gray | `#e6e8eb` | `#4f5962` |
+| Page title | 28 / 700, line 1.15, -0.02em | Every page `<h1>`, starting 24px from the left and 92px down. One shared rule at the end of `studio-shared.css` lists the page headers; add new ones there |
+| Big number | 48 to 54 / 700, -0.035 to -0.055em | Tuner note, tempo, selected pitch |
+| Section heading | 20 / 700 | 26px under the section above, 8 to 10px over its content |
+| Row title | 16 / 600 on a 20px line | The one list row |
+| Row meta | 13 / 400, `#85868e`, 4px under the title | |
+| Body | 14 to 15 / 400, line 1.4 | |
+| Control label | 13 to 15 / 600 | Buttons, switches |
+| Setting label | 14 / 400 | "In", "Hold", "Tempo" beside a stepper: sentence case, never uppercase |
 
-Flat fills only — no gradients. (Older files had gradient icon tiles; every
-place that's been touched this session flattened them. Treat gradients as
-a bug if you see one.)
+Use few bold weights: 700 for titles, 600 for row titles and controls, 400 for the rest. No 650 to 770 in-betweens.
+No uppercase labels.
 
-## Typography
+## Shape
 
-Font family, everywhere: `-apple-system, BlinkMacSystemFont, "SF Pro Display",
-"SF Pro Text", "Helvetica Neue", Arial, sans-serif`.
-
-| Role | Size | Weight | Line-height | Letter-spacing | Where |
-|---|---|---|---|---|---|
-| Page title | 28px (since Nov 12; was 42px) | 700 | 1.15 | -0.02em | Every page `<h1>` ("Library", "Exercises", "Learn"). One shared rule at the end of `studio-shared.css` lists the page headers; add new ones there |
-| Big display number | 48–54px | 740–770 | ~1 | -0.035 to -0.055em | Tuner note, tempo number, selected pitch |
-| Section title | 24px | 700 | 1.15 | -0.025em | "Choose a focus", "Quick tools" |
-| Card/dashboard heading | 20px | 700 | 1.15 | -0.02em | Dashboard card titles (Practice activity, Calendar, Practice plan) |
-| Row title | 16px | 600 | 1.25 | -0.01em | List row primary text |
-| Tool-card title | 14px | 680 | — | -0.015em | Dock tool headings |
-| Body / meta | 14px | 400 | 1.35 | 0 | Descriptions, secondary lines |
-| Small meta | 11–13px | 400–650 | 1.2–1.4 | 0 | Timestamps, counts, captions |
-| Eyebrow | 10–12px | 700–720 | — | 0.08–0.13em, uppercase | "THEORY LESSON", "QUICK TOOLS" section labels |
-| Button label | 12–14px | 600–680 | — | 0 | All buttons |
-
-**Rules that actually matter:**
-- Big numbers get tight negative letter-spacing (-0.035 to -0.055em) — this is
-  what makes them read as confident, not just "large text."
-- Eyebrows are the only uppercase text on the site. Don't add another one
-  without a reason — one per page, max.
-- Never introduce a font-size that isn't in this table. If nothing here fits,
-  that's a sign to reconsider the component, not to invent a new size.
-
-## Radius
-
-| Value | Use |
+| What it is | Radius |
 |---|---|
-| 12–13px | Buttons, small pills, icon tiles inside dashboard cards |
-| 13–14px | List-row icon tiles |
-| 18–20px | Cards, list containers, dock tool cards |
-| 22–24px | Dashboard cards (Practice activity / Calendar / Practice plan), floating dock panel |
-| 999px | True pills only (badges, the tempo/drone selector chips) |
-
-Don't invent a radius outside this set. If something needs to feel "bigger,"
-reach for 22–24px, not an arbitrary new number.
-
-**Which shape for which job (decided 2026-10-11).** The shape tells you what a control does:
-
-| Job | Shape | Examples |
-|---|---|---|
-| Choose one of a few (tabs, filters, modes, formats) | Capsule (999px), dark when chosen | Library chips, close-up Technique/Pitch/Rhythm, PDF/XML |
-| A small status or value | Capsule | Working on, tempo pill, tally pill, tags |
-| A button, and the hover behind it | Rounded square (8–12px) | Toolbar tools, timer/settings hover, Graph/Clear |
-| Toggles that can be on together | Rounded-square tile, icon over word (like the practice tools) | View settings "Show on the page" |
-| A card or panel | 14–24px (see above) | Settings panel, item cards |
-
-So a capsule never means "button", and a square tile never means "pick one".
+| Holds information: tile, card, panel, calendar day, stage | 3px |
+| Button, stepper, note key, tap pad | 10 to 12px (small 8 to 10px) |
+| Choose one of a few, a status, a tag filter | capsule (999px) |
+| Floats over the music: bar pill, tempo and rep pills, the phone page turner | capsule |
+| Speech bubble (Cookie talking in a lesson) | its own rounded bubble; it is a character, not a container |
 
 ## Elevation
 
-| Shadow | Use |
-|---|---|
-| `0 1px 0 rgba(0,0,0,.05)` | Flat list cards (barely-there separation) |
-| `0 8px 28px rgba(41,42,51,.055)` | Raised dashboard cards |
-| `0 9px 28px rgba(41,42,51,.03–.10)` | Row/tile hover or card resting state (varies by page, always this family) |
-| `0 24px 70–80px rgba(41,42,51,.2–.22)` | The floating practice-tools dock only — nothing else should float this hard |
+Cards and tiles are flat: a `#ececef` hairline or a tint, no shadow, no lift on hover. Only things that float over
+content have a shadow: popovers and sheets (ReaderPopover), the practice tools panel, floating pills over the music.
 
-## Page layout
+## Layout
 
-Every route's main container uses the same top/side padding, so content sits
-the same distance from the fixed 64px header everywhere: `padding: 64px 24px
-<bottom>` (bottom varies by page length — 130px on longer pages, 96px on
-short ones like Exercises). Mobile (`≤760px`): `24px 16px <bottom>`.
-Applies to `.studio-main`, `.library-main`, `.exercise-hub`, `.practice-page`,
-`.settings-page`. If a page's content still looks flush against the header,
-check `ios-theme.css` first — it's the usual cause (see Border note above).
+- Page container: `padding: 64px 24px <bottom>` under the fixed 64px header; phones (760px and under) 16px sides.
+- Tiles pad 10 12 12. Panels in one row share a height (`align-items: stretch`).
+- The list row is 60px: `grid-template-columns: minmax(0,1fr) 30px`, padding 9px 0, the trailing tick or status in
+  the 30px column. A row action (trash, a menu) sits right after the row's words, not at the far right.
+- If a page scrolls because of padding, the padding is wrong.
 
-## Buttons
+## Controls
 
-**Plain grey action (the default since October 16, 2026):** Start, Stop, Save, Add, Play scale, Keep offline.
-```css
-background: #f1f1f2;
-color: #45464f;          /* #292a33 for the one main action on a panel, e.g. Breathing Lab's Start */
-border: 0;
-border-radius: 10px to 12px;
-height: 34px to 40px;        /* 44px where it is the whole screen's action (rhythm drills) */
-font-size: 13px to 15px;
-font-weight: 600;
-```
-Hover: `background: #e8e8ea` (hover-capable pointers only). An icon in front is 18px (PracticeIcon). Once a toggle
-is on (kept offline), it takes the selected purple tint `#f1e5f5` / `#6d4585`. No dark fills, no green fills.
-Use `.action-button` in `studio-shared.css`, with compact or large size modifiers as needed. Page classes retain placement and selected/disabled behavior. The old starter-routine action no longer exists.
+**Action button** (`.action-button` in `studio-shared.css`): slate `#edf1f5`, label `#45464f` (ink for a panel's one
+main action), no border, radius 12, height 40, 14 / 600. `--compact` is 34px tall, radius 10, 13px. `--large` has a
+44px minimum for a whole screen's action. Hover is one step darker. Icons in front are 18px. An "on" toggle takes the
+selected purple.
 
-**Soft tint (retired):** the green `#e7eee3` / `#40553d` button was the default until October 16 and still appears in
-older corners (close-up Rhythm Start / Try again). Convert it to plain grey when touched.
+**Stepper** (`components/Stepper.tsx`): slate, radius 12, 36px tall, value 16 / 600 tabular; small is 28px, radius
+10. Signs answer to a 44px square on touch screens.
 
-**Steppers** (− value +): the shared `Stepper` (`components/Stepper.tsx`), on action grey `#f1f1f2`, signs
-`#45464f`, hover ink `#292a33` with no separate fill. Medium 36px tall (value 16 / 600 tabular), small 28px (value 14 / 600, or 12 / 600 grey
-for a worded value such as "Octave 4"). Signs answer to a 44px square on touch screens.
+**View switch** (`.view-switch`): a capsule holding two or more choices, the chosen one white on slate. Use it for
+tabs and On / Off pairs too.
 
-**Filter/category tabs — one recipe everywhere (Library, Exercises, and the
-practice-tools dock all use this exact pattern):**
-```css
-/* rest */
-background: #f1f1f4;
-color: #5a5c63;
-font-size: 12px;
-text-transform: uppercase;
-letter-spacing: .02em;
-font-weight: 650;
+**Icon button:** transparent, no border, 36 to 42px; hover is a slate shape behind it.
 
-/* active */
-background: #292a33;
-color: #fff;
-```
-This dark active state is specific to tab/chip *selection* — it's not the
-general "active state" color for buttons in general (those use the purple
-selected tint, see Color). Don't use `#292a33` on anything that isn't a selected
-tab/chip.
+**Close ×:** only closes. A plain × (1.7 stroke, round caps), no fill, no circle, and no hover change at all
+(`.markup-close` in `reader-workspace.css` is the model).
 
-**Icon buttons (star, download, share, more-actions, back-arrow):**
-```css
-background: transparent;
-border: 0;
-border-radius: 12px;
-width/height: 42px;
-color: inherit or #5a5c63;
-```
-Hover: `background: #f1f5ef`.
+**Trash:** the only way to take something away (`PracticeIcon name="delete"`). Grey `#9a9ca3`, no fill; hover turns
+it ink; red only for the armed second tap. Always visible on touch.
 
-**Close (×) buttons are the one exception to that hover** — same
-transparent, borderless shape, but *no* hover background change at all
-(see `.dock-close` in practice-tool-dock.css). A dismiss action doesn't
-get the same hover affordance as a persistent toolbar icon; don't add
-`:hover{background:...}` to a close button even though it looks like an
-icon button otherwise.
+**Links:** ink, 600, no underline, no trailing ›, no colour on hover. The hand cursor is only for links that go
+somewhere (one global rule in `studio-shell.css`).
 
-### Close vs delete (the user has asked for this many times: follow it every time)
+## Statuses and tags
 
-- **× means close, and only close**: it dismisses a panel, dialog, sheet or toolbar. It looks exactly like the
-  Mark Up toolbar's close (`.markup-close` in reader-workspace.css): a plain × (1.7 stroke, round caps), no fill,
-  no border, no circle behind it, dark (`#111`), and **no hover background or colour change**.
-- **Taking something away uses the trash icon** (`PracticeIcon name="delete"`), never ×: removing a step, a session,
-  a piece from a list, a piece from a deadline. Grey (`#9a9ca3`), no fill; on hover only the colour changes, to ink
-  (`#292a33`, since October 16). Red (`#a5372f`) is only for the armed second tap ("Tap again to delete"). On rows
-  and cards it can be hidden until hover, but it must always be visible on touch (`@media(hover:none)`).
-- Never a filled grey or tinted circle behind either icon, and never an × that removes data.
+A tag (what kind of piece) is an 8px dot and a 13px word on nothing. A status (where you are with it) is a round pill
+in its tint with an icon: bookmark for Want to learn (slate, ink `#3d5878`), half circle for Working on (sand),
+ticked circle for Learned (green). Chosen is a deeper step of the same tint. In the Library the tags and statuses
+share one 28px filter line; do not add a row per filter group.
 
-## Cards & Rows
+## Notation glyphs: never hand-draw these
 
-- **List row**: `min-height: 78px`, icon tile + title/meta stack + trailing
-  chevron or action, `grid-template-columns: 52px minmax(0,1fr) auto`.
-  Hover: background tint (`#f4f7f2` / `#f8faf7`), no shadow change.
-- **Quick-tool card**: `height: 94px`, icon badge (44px, translucent-white
-  circle on a tinted card background) + title/detail stack + chevron. Grid:
-  `44px minmax(0,1fr) 14px`. Hover: `translateY(-2px)` + subtle shadow.
-- **Dashboard card**: white surface, `1px solid #dedfd9`, `22px` radius,
-  `22px` padding, the raised shadow above. Heading is icon-tile (38px,
-  11px radius) + title, `11px` gap.
+Clefs, noteheads, accidentals and other symbols come from a real glyph (the Unicode musical symbols, see
+`StaffNote.tsx`) or a notation library. A freehand SVG clef was tried and reverted. If a glyph sits wrong, fix its
+position or size, not the glyph.
 
-## What this doesn't cover yet
+## Score reader
 
-Pages still on the newer token system (`studio-tokens.css`) — currently just
-Simulation (`/flute-studio/embouchure`) — are being migrated toward these
-values directly (hardcoded, not through tokens) rather than the reverse.
-When touching Simulation again, pull numbers from this doc, not from
-`studio-tokens.css`.
+`components/ReaderPopover.tsx` is the one surface for View settings, Customize scales and the phone dots menu: white,
+hairline, soft shadow, anchored to its button on wide screens and a bottom sheet on phones. Do not add a centred
+dialog or a second panel skin.
 
-## Musical notation glyphs — never hand-draw these
-
-Clefs, noteheads, accidentals, and other notation symbols must come from a
-real glyph (the Unicode musical-symbol characters, e.g. `𝄞` treble clef,
-`♯` sharp — see `StaffNote.tsx`) or a proper notation library. Do not
-approximate them with hand-drawn SVG paths/circles — a freehand clef doesn't
-read as an actual clef no matter how carefully its coordinates are tuned;
-this was tried and reverted. If a glyph is positioned wrong, fix its
-position/size, don't replace the glyph itself.
-
-## Score reader settings
-
-`components/ReaderPopover.tsx` is the shared button-anchored surface for
-View settings and Customize scales. Use it for both; do not introduce a
-centered dialog or separate panel skin. It reuses the inline drone panel's
-white surface, subtle border, 14px radius, and shadow. Reading mode and page width use two visible choices with a soft green
-selected state; reading aids retain their green icon-and-label buttons.
-Reset is a secondary text action. The reader hides global navigation and uses
-two compact rows: identity/customization, then practice/page/view controls.
+On phones the reader has two bars (the last block of `studio-shell.css`): identity on top; Listen with metronome and
+tempo, Customize, Drone, View and the dots below. Everything else lives in the dots (`components/PhoneMore.tsx`).
+Check desktop, iPad and 375px after any change to the bars.

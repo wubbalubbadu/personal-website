@@ -16,6 +16,7 @@ import AccountMenu from "../AccountMenu";
 import PracticeRecorder from "../PracticeRecorder";
 import {StatusButton} from "./StatusButton";
 import {PracticeIcon} from "./PracticeIcon";
+import {PhoneMore} from "./PhoneMore";
 import BackChevron from "./BackChevron";
 import {AnnotationLayer} from "./AnnotationLayer";
 import {ReaderPopover} from "./ReaderPopover";
@@ -102,7 +103,7 @@ export default function FixedScoreViewer({item,onInteractive,passage:pinned,back
   const turn=(next:number)=>{if(next<0||next>=pages.length)return;reset();setPage(spread?next-next%2:next);setError(false)};
   useEffect(()=>{
     const key=(e:KeyboardEvent)=>{
-      if(annotating||e.ctrlKey||e.metaKey||e.altKey||(e.target as HTMLElement).closest('input,textarea,button,a,[contenteditable], [role="dialog"]'))return;
+      if(annotating||e.ctrlKey||e.metaKey||e.altKey||(e.target instanceof Element&&e.target.closest('input,textarea,button,a,[contenteditable], [role="dialog"]')))return;
       if(e.key==='ArrowRight'||e.key==='PageDown'){e.preventDefault();turn(page+step)}
       if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();turn(page-step)}
     };
@@ -123,7 +124,7 @@ export default function FixedScoreViewer({item,onInteractive,passage:pinned,back
         {onInteractive&&(passage.scorePath??(passages.length===1&&item.scorePath))&&<div className="reader-choice format-switch" role="group" aria-label={zh?'乐谱格式':'Score format'}><button aria-pressed={true}>PDF</button><button aria-pressed={false} onClick={()=>onInteractive(passage.id)}>XML</button></div>}
         <span className="topbar-spacer"/><PracticeClockButton/><div id="reader-tools-slot" className="topbar-tools-slot"/><AccountMenu/>
       </div></header>
-      <div className="practice-bar">
+      <div className="practice-bar"><span className="phone-more"><PhoneMore zh={zh}/></span>
         <div className="tool-group"><button data-tip={t.scoreViewer.markUp} className={`tool has-tip${annotating?' on':''}`} aria-pressed={annotating} onClick={()=>setAnnotating(v=>!v)}><PracticeIcon name="markup"/>{t.scoreViewer.markUp}</button>
           {recordings.length>0&&<button data-tip={zh?"参考录音":"Reference recordings"} className={`tool has-tip${listen?' on':''}`} aria-expanded={listen} aria-controls="excerpt-recordings" onClick={()=>{setListen(v=>!v);setVideo(null)}}><PracticeIcon name="play"/>{zh?'聆听':'Listen'}</button>}
         </div>

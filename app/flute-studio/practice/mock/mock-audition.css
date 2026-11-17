@@ -1,7 +1,6 @@
 /* Mock audition (practice/mock): setup, the "next up" screen between excerpts, the end list. Cards are the deadline
    cards (practice-page.css), choices the view switch, back link the book page's. */
 .mock-page .exercise-hub__content{max-width:760px}
-.mock-page .book-page__header>div{display:block}
 .mock-meta{margin:6px 0 0;font-size:14px;color:#85868e}
 .mock-earlier .shelf__title small{margin-left:8px;font-size:15px;font-weight:500;color:#9a9ba2;letter-spacing:0}
 .mock-settings{display:grid;gap:12px;margin:0 0 20px}
@@ -15,7 +14,7 @@
 
 /* The running order: numbered like an audition list. */
 .mock-order{display:grid;margin:10px 0 0;padding:0;list-style:none}
-.mock-order li{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:10px;align-items:baseline;padding:9px 0;border-top:1px solid #f0f0f2}
+.mock-order li{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:10px;align-items:baseline;padding:9px 0;border-top:1px solid #edf1f5}
 .mock-order li:first-child{border-top:0}
 .mock-order__number{font-size:14px;font-weight:500;color:#85868e;font-variant-numeric:tabular-nums}
 .mock-order__name{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;min-width:0}
@@ -27,7 +26,7 @@
 .mock-order li[data-state="done"]{opacity:.45}
 .mock-order li[data-state="now"] .mock-order__number{color:#6d4585}
 .mock-order li[data-state="skipped"]{opacity:.45}
-.mock-note{flex-basis:100%;height:34px;margin-top:6px;padding:0 10px;border:1px solid #e6e6ea;border-radius:10px;background:#fff;font:inherit;font-size:14px;color:#292a33}
+.mock-note{flex-basis:100%;height:34px;margin-top:6px;padding:0 10px;border:1px solid #e2e8ef;border-radius:10px;background:#fff;font:inherit;font-size:14px;color:#292a33}
 .mock-note::placeholder{color:#a3a5ac}
 .mock-note:focus{outline:none;border-color:#c9cbd1}
 
@@ -36,7 +35,7 @@
 
 
 .mock-button:disabled{opacity:.45;cursor:default}
-.mock-take{margin-top:14px;padding-top:14px;border-top:1px solid #f0f0f2}
+.mock-take{margin-top:14px;padding-top:14px;border-top:1px solid #edf1f5}
 .mock-take .recorder-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
 .mock-take .recorder-note{display:block;margin-top:8px;font-size:12px;color:#85868e}
 .mock-earlier .mock-order li{padding:7px 0}

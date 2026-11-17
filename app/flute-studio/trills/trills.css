@@ -17,9 +17,9 @@
 .trill-row__between{color:#9698a0;font-size:.7em;font-weight:400}
 .trill-row__controls{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;margin-top:8px}
 /* An action: the studio's plain grey button (no dark or green fills). */
-.trill-row__animate{height:36px;padding:0 14px;border:0;border-radius:10px;background:#f1f1f2;color:#45464f;font:600 13px/1 inherit}
+.trill-row__animate{height:36px;padding:0 14px;border:0;border-radius:10px;background:#edf1f5;color:#45464f;font:600 13px/1 inherit}
 .trill-row__animate:disabled{opacity:.45}
-@media(hover:hover){.trill-row__animate:hover:not(:disabled){background:#e8e8ea}}
+@media(hover:hover){.trill-row__animate:hover:not(:disabled){background:#e2e8ef}}
 .trill-row button:focus-visible{outline:3px solid rgba(121,88,142,.3);outline-offset:2px}
 
 .trill-row__fingering{width:100%;max-width:560px;min-width:0;--flute-key-ground:#fff;color:#2f3a2c}
@@ -31,7 +31,7 @@
 .trill-row__hint{margin:4px 0 0;color:#6d6f76;font-size:13px;line-height:1.5}
 .trill-row__key-name{min-height:20px;margin:4px 0 0;font-size:12px;color:#80828a;line-height:1.5}
 .trill-row__unavailable{max-width:420px;margin:8px auto 0;color:#7a5340;font-size:14px;line-height:1.6}
-.trill-chart__footnote a{color:#46633d;font-weight:600;text-decoration:none}
+.trill-chart__footnote a{color:#292a33;font-weight:600;text-decoration:none}
 
 /* Phones: the switch says which trill it is, the moving keys are already red, and the range and source note waits
    for a wider screen, so the page fits without scrolling. */

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readTempoRatios,clampTempo,scheduledTempoAt} from '../app/flute-studio/lib/scoreTempo.ts';
+import {tsModule} from './helpers/ts-module.mjs';
+const {readTempoRatios,clampTempo,scheduledTempoAt}=await import(tsModule('app/flute-studio/lib/scoreTempo.ts'));
 test('saved speed preserves proportion through opening and dotted-quarter section',()=>{
  const saved=readTempoRatios(JSON.stringify({arnold:46/69}));
  assert.equal(clampTempo(69*saved.arnold),46);

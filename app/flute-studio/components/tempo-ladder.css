@@ -5,14 +5,14 @@
 .tempo-ladder-setup__row .stepper{width:116px}
 .tempo-ladder-setup__steps{display:flex;gap:4px}
 /* Same plain grey as the Stepper; the chosen step takes the selected purple (DESIGN.md). */
-.tempo-ladder-setup .tempo-ladder-setup__steps button{min-width:44px;height:28px;padding:0 8px;border:0;border-radius:10px;background:#f1f1f2;color:#45464f;font:inherit;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
-@media(hover:hover){.tempo-ladder-setup .tempo-ladder-setup__steps button:hover{background:#e8e8ea}}
+.tempo-ladder-setup .tempo-ladder-setup__steps button{min-width:44px;height:28px;padding:0 8px;border:0;border-radius:10px;background:#edf1f5;color:#45464f;font:inherit;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+@media(hover:hover){.tempo-ladder-setup .tempo-ladder-setup__steps button:hover{background:#e2e8ef}}
 .tempo-ladder-setup .tempo-ladder-setup__steps button[aria-pressed="true"]{background:#f1e5f5;color:#6d4585}
 .tempo-ladder-setup__actions{display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-top:4px}
 .tempo-ladder-setup__note{font-size:13px;color:#85868e}
 /* The plain grey action button (DESIGN.md "Buttons"), dark text as the panel's one main action. */
-.tempo-ladder-setup .tempo-ladder__start{height:36px;padding:0 18px;border:0;border-radius:10px;background:#f1f1f2;color:#292a33;font:inherit;font-size:14px;font-weight:600}
-@media(hover:hover){.tempo-ladder-setup .tempo-ladder__start:hover:not(:disabled){background:#e8e8ea}}
+.tempo-ladder-setup .tempo-ladder__start{height:36px;padding:0 18px;border:0;border-radius:10px;background:#edf1f5;color:#292a33;font:inherit;font-size:14px;font-weight:600}
+@media(hover:hover){.tempo-ladder-setup .tempo-ladder__start:hover:not(:disabled){background:#e2e8ef}}
 .tempo-ladder-setup .tempo-ladder__start:disabled{opacity:.45}
 
 /* The card: soft-pill look (white, hairline, small shadow), in the marks layer over the passage. Drag by any empty part. */
@@ -35,9 +35,9 @@
 .tempo-ladder__target{font-weight:600;color:#2f5d99}
 .tempo-ladder__target.is-reached{color:#46633d}
 /* Step back, the tally, step up: one centred row under the line. */
-.tempo-ladder__controls{display:flex;align-items:center;justify-content:center;gap:8px;padding-top:8px;border-top:1px solid #f2f2f4}
+.tempo-ladder__controls{display:flex;align-items:center;justify-content:center;gap:8px;padding-top:8px;border-top:1px solid #f4f6f9}
 .tempo-ladder__icon{width:32px;height:32px;display:grid;place-items:center;border:0;border-radius:50%;background:transparent;color:#45464f;padding:0}
-@media(hover:hover){.tempo-ladder__icon:hover:not(:disabled){background:#f1f1f4}}
+@media(hover:hover){.tempo-ladder__icon:hover:not(:disabled){background:#edf1f5}}
 .tempo-ladder__icon:disabled{opacity:.3}
 .tempo-ladder__icon svg{width:18px;height:18px}
 @media(prefers-reduced-motion:reduce){.tempo-ladder__here{transition:none}}

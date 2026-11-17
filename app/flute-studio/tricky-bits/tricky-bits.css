@@ -11,49 +11,49 @@
 .tricky-card__meta{display:flex;justify-content:space-between;gap:8px;min-height:20px;margin-top:6px;font-size:13px;font-weight:500;color:#6f7178;font-variant-numeric:tabular-nums}
 .tricky-card__more{position:absolute;top:8px;right:8px;width:34px;height:34px;display:grid;place-items:center;border:0;border-radius:999px;background:transparent;color:#6f7178;cursor:pointer}
 .tricky-card__more svg{width:20px;height:20px}
-.tricky-card__more:hover,.tricky-card__more[aria-expanded="true"]{background:#f1f1f4;color:#292a33}
+.tricky-card__more:hover,.tricky-card__more[aria-expanded="true"]{background:#edf1f5;color:#292a33}
 .tricky-card__menu{position:absolute;z-index:20;top:44px;right:8px;width:190px;padding:6px;display:grid;gap:2px;border:1px solid #e6e7e3;border-radius:16px;background:#fff;box-shadow:0 16px 44px rgba(41,42,51,.16)}
 .tricky-card__menu a,.tricky-card__menu button{display:block;width:100%;padding:9px 10px;border:0;border-radius:10px;background:none;font:inherit;font-size:14px;font-weight:400;color:#292a33;text-align:left;text-decoration:none;cursor:pointer}
-.tricky-card__menu a:hover,.tricky-card__menu button:hover{background:#f5f5f7}
+.tricky-card__menu a:hover,.tricky-card__menu button:hover{background:#f4f6f9}
 .tricky-card__menu button{color:#6f7178}
 
 /* The pop-up. */
 .tricky-dialog__panel{display:grid;gap:14px}
 .tricky-dialog__panel .dialog__head{margin-bottom:0}
 .tricky-dialog__heading{display:flex;align-items:center;gap:12px;min-width:0}
-.tricky-dialog__pager{display:inline-flex;align-items:center;gap:0;padding:0 2px;height:36px;border-radius:12px;background:#f1f1f4;font-size:14px;font-weight:500;color:#45464f;font-variant-numeric:tabular-nums}
+.tricky-dialog__pager{display:inline-flex;align-items:center;gap:0;padding:0 2px;height:36px;border-radius:12px;background:#edf1f5;font-size:14px;font-weight:500;color:#45464f;font-variant-numeric:tabular-nums}
 .tricky-dialog__pager button{width:30px;height:36px;border:0;border-radius:12px;background:transparent;color:#45464f;display:grid;place-items:center;cursor:pointer}
-.tricky-dialog__pager button:hover:not(:disabled){background:#e6e6ea}.tricky-dialog__pager button:disabled{opacity:.35;cursor:default}
+.tricky-dialog__pager button:hover:not(:disabled){background:#e2e8ef}.tricky-dialog__pager button:disabled{opacity:.35;cursor:default}
 .tricky-dialog__pager svg{width:18px;height:18px}.tricky-dialog__pager span{padding:0 6px}
 .tricky-dialog__title{display:grid;gap:1px;min-width:0}
 .tricky-dialog__title strong{font-size:16px;font-weight:600;color:#292a33;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tricky-dialog__title span{font-size:13px;color:#85868e}
 .tricky-dialog__music{min-height:120px}
 .tricky-dialog__note{margin:30px 0;font-size:14px;color:#85868e}
-.tricky-dialog__panel .practice-listen{border:0;background:#f1f1f4;border-radius:12px;padding:0 14px;min-height:40px;font:inherit;font-size:14px;font-weight:500;color:#292a33;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
-.tricky-dialog__panel .practice-listen:hover:not(:disabled){background:#e6e6ea}
+.tricky-dialog__panel .practice-listen{border:0;background:#edf1f5;border-radius:12px;padding:0 14px;min-height:40px;font:inherit;font-size:14px;font-weight:500;color:#292a33;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.tricky-dialog__panel .practice-listen:hover:not(:disabled){background:#e2e8ef}
 .tricky-dialog__panel .practice-notation__stage{display:flex;align-items:center;gap:12px}.tricky-dialog__panel .practice-notation__music{flex:1;min-width:0;overflow-x:auto}
 
 .tricky-dialog__tempos{display:grid;gap:12px}
 .tricky-chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .tricky-chip{min-width:52px;height:38px;padding:0 14px;border:1px solid #e0e1e5;border-radius:999px;background:#fff;color:#45464f;font:inherit;font-size:15px;font-weight:500;font-variant-numeric:tabular-nums;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none}
-.tricky-chip:hover{background:#f5f5f7}
+.tricky-chip:hover{background:#f4f6f9}
 .tricky-chip.on{background:var(--studio-on-bg,#eee7f2);border-color:transparent;color:var(--studio-on-ink,#79588e)}
 .tricky-chip--add{display:grid;place-items:center;padding:0;min-width:38px;width:38px;color:#6f7178}.tricky-chip--add svg{width:18px;height:18px}
 .tricky-goal{display:flex;align-items:center;gap:12px}
-.tricky-goal__bar{flex:1;height:8px;border-radius:999px;background:#f1f1f4;overflow:hidden}
+.tricky-goal__bar{flex:1;height:8px;border-radius:999px;background:#edf1f5;overflow:hidden}
 .tricky-goal__bar i{display:block;height:100%;border-radius:999px;background:#6c8f5f;transition:width .3s ease}
 .tricky-goal__label{border:0;background:transparent;padding:6px 4px;font:inherit;font-size:14px;font-weight:500;color:#45464f;cursor:pointer;min-width:7ch;text-align:right}
 .tricky-goal__label:hover{color:#292a33}
 .tricky-goal__input{width:76px;height:34px;border:1px solid #d4d5da;border-radius:10px;padding:0 10px;font:inherit;font-size:15px;text-align:center}
 
 .tricky-dialog__tally{display:flex;align-items:center;gap:14px;padding-top:6px;border-top:1px solid #efeff1}
-.tricky-step{width:40px;height:40px;border:0;border-radius:999px;background:#f1f1f4;color:#292a33;font:inherit;font-size:22px;line-height:1;cursor:pointer}
-.tricky-step:hover:not(:disabled){background:#e6e6ea}.tricky-step:disabled{opacity:.35;cursor:default}
+.tricky-step{width:40px;height:40px;border:0;border-radius:999px;background:#edf1f5;color:#292a33;font:inherit;font-size:22px;line-height:1;cursor:pointer}
+.tricky-step:hover:not(:disabled){background:#e2e8ef}.tricky-step:disabled{opacity:.35;cursor:default}
 .tricky-dialog__total{font-size:18px;font-weight:600;color:#292a33;min-width:5.5ch;text-align:right;font-variant-numeric:tabular-nums}
 .tricky-dialog__total small{font-size:13px;font-weight:400;color:#85868e}
 .tricky-dialog__panel footer{padding-top:2px}
-.tricky-dialog__panel footer a{font-size:14px;font-weight:600;color:#46633d;text-decoration:none}
+.tricky-dialog__panel footer a{font-size:14px;font-weight:600;color:#292a33;text-decoration:none}
 
 @media(max-width:760px){
   .tricky-grid{grid-template-columns:1fr}
@@ -75,7 +75,7 @@ html body .tricky-dialog__panel .practice-notation__music,html body .tricky-dial
 .bit-practice__music .practice-notation__music{overflow:visible}
 .bit-practice__music .practice-notation__music svg{width:100%!important;height:auto!important}
 .bit-practice__music .practice-listen{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 14px;border:1px solid #d4d5da;border-radius:999px;background:#fff;font:inherit;font-size:14px;font-weight:500;color:#292a33;cursor:pointer}
-.bit-practice__music .practice-listen:hover:not(:disabled){background:#f1f1f4}
+.bit-practice__music .practice-listen:hover:not(:disabled){background:#edf1f5}
 .bit-practice__note{margin:24px 0;font-size:14px;color:#85868e}
 /* Tempo pill on the left, Listen pushed to the right. */
 .bit-practice__music .practice-notation__stage{order:0}
@@ -94,14 +94,14 @@ html body .tricky-dialog__panel .practice-notation__music,html body .tricky-dial
 .bit-practice__count{font-size:14px;font-weight:500;color:#45464f;text-align:right;font-variant-numeric:tabular-nums}
 .bit-practice__steps{display:inline-flex;gap:4px}
 .bit-practice__step{width:32px;height:32px;display:inline-grid;place-items:center;border:1px solid #d4d5da;border-radius:999px;background:#fff;color:#292a33;font:inherit;font-size:18px;line-height:1;cursor:pointer}
-.bit-practice__step:hover:not(:disabled){background:#f1f1f4}
+.bit-practice__step:hover:not(:disabled){background:#edf1f5}
 .bit-practice__step:disabled{opacity:.35;cursor:default}
 .bit-practice__total{margin:0;font-size:13px;color:#85868e}
 .tricky-sheet{display:grid;gap:18px}
-.tricky-sheet__bit{padding:16px 20px 18px;border-radius:18px;background:#fff;box-shadow:0 0 0 1px #e6e6ea}
+.tricky-sheet__bit{padding:16px 20px 18px;border-radius:18px;background:#fff;box-shadow:0 0 0 1px #e2e8ef}
 .tricky-sheet__bit>header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:8px}
 .tricky-sheet__bit>header b{font-size:15px;font-weight:600;color:#45464f}
-.tricky-sheet__bit>header a{font-size:14px;font-weight:600;color:#46633d;text-decoration:none}
+.tricky-sheet__bit>header a{font-size:14px;font-weight:600;color:#292a33;text-decoration:none}
 
 /* Ladder, fixed positions: tempo (40px), count (28px), the − + slot (72px, empty on rows that aren't current),
    then the sticks, which may grow without moving anything. − and + are borderless, like the tempo pill's. */

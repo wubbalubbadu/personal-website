@@ -107,6 +107,14 @@ function Track({ label, src }: { label: string; src: string }) {
     const r = e.currentTarget.getBoundingClientRect();
     a.currentTime = ((e.clientX - r.left) / r.width) * length;
   };
+  /* The same bar from the keyboard: arrows move five seconds. */
+  const nudge = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const a = audio.current;
+    const step = e.key === "ArrowRight" ? 5 : e.key === "ArrowLeft" ? -5 : 0;
+    if (!a || !length || !step) return;
+    e.preventDefault();
+    a.currentTime = Math.min(length, Math.max(0, a.currentTime + step));
+  };
   return (
     <div className="pjx__track">
       <button type="button" className="pjx__play" aria-label={`${playing ? "Pause" : "Play"} ${label}`} onClick={toggle}>
@@ -119,7 +127,18 @@ function Track({ label, src }: { label: string; src: string }) {
           <span>{label}</span>
           <span className="pjx__time">{length ? `${clock(time)} / ${clock(length)}` : ""}</span>
         </div>
-        <div className="pjx__bar" onClick={seek}>
+        <div
+          className="pjx__bar"
+          role="slider"
+          tabIndex={0}
+          aria-label={`Seek ${label}`}
+          aria-valuemin={0}
+          aria-valuemax={Math.round(length)}
+          aria-valuenow={Math.round(time)}
+          aria-valuetext={clock(time)}
+          onClick={seek}
+          onKeyDown={nudge}
+        >
           <i style={{ width: length ? `${(time / length) * 100}%` : 0 }} />
         </div>
       </div>

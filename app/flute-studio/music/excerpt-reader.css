@@ -10,14 +10,14 @@
 .excerpt-recordings{grid-area:recordings;min-width:0;min-height:0;overflow:auto;background:#fff;border-left:1px solid #e6e7e3;padding:14px 18px;color:#292a33}
 .excerpt-recordings>header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .excerpt-recordings>header>span{font-size:14px;font-weight:600}
-.excerpt-recording{display:grid;gap:2px;padding:12px 0;border-top:1px solid #f0f0f2}
+.excerpt-recording{display:grid;gap:2px;padding:12px 0;border-top:1px solid #edf1f5}
 .excerpt-recording>strong{font-size:14px;font-weight:600;line-height:1.35}
 .excerpt-recording>span{font-size:13px;color:#85868e;line-height:1.35}
 .excerpt-recording>div{display:flex;align-items:center;gap:8px;margin-top:8px}
 .excerpt-recording .scale-book__chip{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:9px;font-size:12.5px;font-weight:500}
 .excerpt-recording .scale-book__chip svg{width:16px;height:16px}
 .excerpt-recording a.text-action{text-decoration:none}
-.excerpt-recordings iframe{display:block;border:0;aspect-ratio:16/9;width:100%;margin-top:10px;border-radius:10px;background:#f1f1f4}
+.excerpt-recordings iframe{display:block;border:0;aspect-ratio:16/9;width:100%;margin-top:10px;border-radius:10px;background:#edf1f5}
 @media(min-width:1500px){.fixed-score-reader .excerpt-passages{position:absolute;left:16px;top:12px;flex-direction:column;align-items:flex-start;margin:0;max-width:200px}}
 .fixed-score-reader .practice-bar{gap:4px!important}
 .reader-workspace .score-paper:has(.excerpt-score-subtitle) .custom-score-heading{display:block!important;text-align:center}

@@ -5,7 +5,8 @@
   background: #fff;
   color: var(--ink);
   font-family: var(--font);
-  padding: 64px var(--page-pad) 96px;
+  /* 24px sides: the one left edge every studio page title starts at (Nov 16). */
+  padding: 64px 24px 96px;
   scrollbar-gutter: stable;
 }
 
@@ -48,10 +49,10 @@
 
 .studio-page__head h1 {
   margin: 0;
-  font-size: var(--text-page-title);
-  line-height: 1.04;
-  font-weight: 780;
-  letter-spacing: -0.04em;
+  font-size: 28px; /* the one page title size (Nov 12 rule in studio-shared.css); was the 42px token */
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .studio-page__intro {

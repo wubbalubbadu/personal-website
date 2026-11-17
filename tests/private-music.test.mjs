@@ -1,10 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import ts from 'typescript';
-const source=fs.readFileSync(new URL('../app/flute-studio/lib/privateMusic.ts',import.meta.url),'utf8').replace("import {useEffect,useSyncExternalStore} from 'react';","const useEffect=fn=>fn();const useSyncExternalStore=(_subscribe,snapshot)=>snapshot();");
-const js=ts.transpile(source,{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022});
-const load=()=>import(`data:text/javascript;base64,${Buffer.from(js+'\n// '+Math.random()).toString('base64')}`);
+import {tsModule} from './helpers/ts-module.mjs';
+const stubs={react:'export const useEffect=fn=>fn();export const useSyncExternalStore=(_subscribe,snapshot)=>snapshot();','./offlineMusic':'export const removePrivateOffline=()=>{};'};
+const load=()=>import(tsModule('app/flute-studio/lib/privateMusic.ts',{stubs,fresh:true}));
 const storage=()=>{const data=new Map();return {getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)}};
 test('unlock survives a fresh module and lock forgets it',async()=>{
  globalThis.localStorage=storage();globalThis.sessionStorage=storage();

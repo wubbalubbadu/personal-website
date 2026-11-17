@@ -184,7 +184,7 @@ export function faceCanvas() {
   return paint(32, 32, () => {});
 }
 
-export function woodTexture(seed = 3, base = "#a8693a", dark = "#8a5330", light = "#bd7d48") {
+export function woodTexture(seed = 3, base = "#a8693a", dark = "#8a5330", light = "#bd7d48", plank = "#6e4126") {
   const rand = rng(seed);
   return pixelTexture(
     paint(32, 32, (g) => {
@@ -195,7 +195,7 @@ export function woodTexture(seed = 3, base = "#a8693a", dark = "#8a5330", light 
           if (rand() < 0.05) col = dark;
           px(g, col, x, y);
         }
-      for (const y of [0, 8, 16, 24]) px(g, "#6e4126", 0, y, 32, 1);
+      for (const y of [0, 8, 16, 24]) px(g, plank, 0, y, 32, 1);
     }),
     true,
   );
@@ -206,6 +206,74 @@ export function wallTexture(top: string, bottom: string) {
     paint(8, 32, (g) => {
       const a = new THREE.Color(top), b = new THREE.Color(bottom);
       for (let y = 0; y < 32; y++) px(g, "#" + a.clone().lerp(b, y / 31).getHexString(), 0, y, 8, 1);
+    }),
+  );
+}
+
+/** Vertical two-tone stripes for a wall (the studio's striped paint style). */
+export function stripeWallTexture(a: string, b: string) {
+  return pixelTexture(
+    paint(16, 32, (g) => {
+      px(g, a, 0, 0, 16, 32);
+      px(g, b, 0, 0, 8, 32);
+    }),
+    true,
+  );
+}
+
+/**
+ * The garden room's wall (14 x 8 units, 8 px a unit): glass from the desk up,
+ * with sky, clouds, far hills and round trees outside, behind white window
+ * bars. The wall pieces hang on the bars. Rows count down from the wall's top
+ * (y 6.6); the desk top is row 53.
+ */
+export function gardenWallTexture() {
+  return pixelTexture(
+    paint(112, 64, (g) => {
+      // sky, paler toward the hills
+      const top = new THREE.Color("#8fd0f2"), low = new THREE.Color("#d6f0fb");
+      for (let y = 0; y < 46; y++) px(g, "#" + top.clone().lerp(low, y / 45).getHexString(), 0, y, 112, 1);
+      // clouds
+      for (const [x, y, w] of [[26, 22, 9], [58, 17, 12], [84, 25, 8], [8, 14, 10], [100, 15, 9]]) {
+        px(g, "#ffffff", x + 2, y - 1, w - 4, 1);
+        px(g, "#ffffff", x, y, w, 2);
+      }
+      // far hills
+      for (let x = 0; x < 112; x++) {
+        const h = 5 + Math.round(3 * Math.sin(x * 0.11) + 2 * Math.sin(x * 0.047 + 2));
+        px(g, "#b9dfa6", x, 44 - h, 1, h + 2);
+      }
+      // lawn
+      px(g, "#9bd07f", 0, 46, 112, 7);
+      px(g, "#8cc571", 0, 50, 112, 3);
+      // round trees: a trunk and two tones of leaves
+      for (const [x, r] of [[14, 6], [33, 5], [50, 7], [71, 5], [88, 6], [104, 5], [41, 4], [62, 4], [96, 4]]) {
+        const base = 49;
+        px(g, "#9a6a45", x, base - r, 2, r + 1);
+        for (let dy = -r; dy <= r; dy++) {
+          const half = Math.round(Math.sqrt(r * r - dy * dy));
+          px(g, dy < -r / 3 ? "#7ec268" : "#62ad54", x + 1 - half, base - r - r + dy, half * 2, 1);
+        }
+        px(g, "#9bd486", x - 1, base - r - r - Math.round(r * 0.6), 2, 2);
+      }
+      // the wall under the sill (behind the desk) and the white window bars
+      px(g, "#f3ead9", 0, 53, 112, 11);
+      px(g, "#ffffff", 0, 52, 112, 2);
+      px(g, "#ffffff", 0, 12, 112, 2);
+      for (let x = 7; x < 112; x += 16) px(g, "#ffffff", x, 12, 2, 41);
+      px(g, "#f3ead9", 0, 0, 112, 12);
+    }),
+  );
+}
+
+/** The Christmas room's wall: deep red, with a scatter of small white snow dots. */
+export function christmasWallTexture() {
+  const rand = rng(11);
+  return pixelTexture(
+    paint(112, 64, (g) => {
+      const top = new THREE.Color("#b8433f"), low = new THREE.Color("#9a3233");
+      for (let y = 0; y < 64; y++) px(g, "#" + top.clone().lerp(low, y / 63).getHexString(), 0, y, 112, 1);
+      for (let i = 0; i < 70; i++) px(g, rand() < 0.5 ? "#f6dcd4" : "#d98a80", Math.floor(rand() * 112), Math.floor(rand() * 64));
     }),
   );
 }
@@ -284,9 +352,11 @@ export function flatTexture(color: string) {
 export function fluteTexture() {
   return pixelTexture(
     paint(32, 4, (g) => {
-      px(g, "#d9dde4", 0, 0, 32, 4);
-      px(g, "#f6f8fb", 0, 1, 32, 1);
-      for (let x = 6; x < 30; x += 4) px(g, "#8c93a0", x, 2, 2, 2);
+      // one even silver (her call: the dark key patches read as blotches);
+      // the keys are only a shade deeper, the highlight a shade lighter
+      px(g, "#dfe3ea", 0, 0, 32, 4);
+      px(g, "#eef1f5", 0, 1, 32, 1);
+      for (let x = 6; x < 30; x += 4) px(g, "#cdd2da", x, 2, 2, 2);
     }),
   );
 }

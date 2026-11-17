@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {detectPitch, hzFromMidi, midiFromHz, centsFromMidi, median} from '../app/flute-studio/lib/pitch.ts';
-import {traceDuration, traceY} from '../app/flute-studio/lib/toneTrace.ts';
+import {tsModule} from './helpers/ts-module.mjs';
+const {detectPitch, hzFromMidi, midiFromHz, centsFromMidi, median} = await import(tsModule('app/flute-studio/lib/pitch.ts'));
+const {traceDuration, traceY} = await import(tsModule('app/flute-studio/lib/toneTrace.ts'));
 
 const near = (actual, expected, tolerance = 1e-8) => assert.ok(Math.abs(actual - expected) < tolerance, `${actual} vs ${expected}`);
 

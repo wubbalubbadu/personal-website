@@ -1,6 +1,6 @@
 "use client";
 
-import {useEffect,useState} from "react";
+import {useEffect,useState,useSyncExternalStore} from "react";
 import ScaleStudioPreview from "../../flute-studio/ScaleStudioPreview";
 import LongTonePreview from "../../flute-studio/LongTonePreview";
 import MusicPreview from "../../flute-studio/MusicPreview";
@@ -36,15 +36,16 @@ const TOOLS=[
 ];
 const TABS=[["Library","/music"],["Exercises","/exercises"],["Learn","/resources"],["My Studio","/practice"]];
 const TURN_MS=8000;
+const REDUCED="(prefers-reduced-motion: reduce)";
+const never=()=>()=>{};
+const today=()=>new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"});
+const watchMotion=(onChange:()=>void)=>{const query=matchMedia(REDUCED);query.addEventListener("change",onChange);return()=>query.removeEventListener("change",onChange)};
 
 export default function HomeIndex(){
-  const [active,setActive]=useState(0),[held,setHeld]=useState(false),[still,setStill]=useState(false),[date,setDate]=useState("");
-
-  // Rendered on the client only, so the server's clock can't disagree.
-  useEffect(()=>{
-    setDate(new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"}));
-    setStill(matchMedia("(prefers-reduced-motion: reduce)").matches);
-  },[]);
+  const [active,setActive]=useState(0),[held,setHeld]=useState(false);
+  // Read on the client only (empty and moving on the server and the first render), so the server's clock can't disagree.
+  const date=useSyncExternalStore(never,today,()=>"");
+  const still=useSyncExternalStore(watchMotion,()=>matchMedia(REDUCED).matches,()=>false);
   // The stand turns its own page unless you are pointing at a row.
   useEffect(()=>{
     if(held||still)return;

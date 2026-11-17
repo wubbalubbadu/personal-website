@@ -119,17 +119,17 @@ html.score-focus-mode .reader-tools,html.score-focus-mode .reader-document{displ
 .reader-header .view-settings-heading button{min-width:32px;min-height:32px;padding:4px}
 .reader-view-settings>label{display:grid;gap:10px;font-size:14px}
 .reader-view-settings input[type="range"]{width:100%;accent-color:#678956}
-.reader-header .view-reset{font-size:13px;background:#f1f1f4;min-height:36px}
+.reader-header .view-reset{font-size:13px;background:#edf1f5;min-height:36px}
 @media(max-width:760px){.reader-pages{margin-left:auto;flex:none;order:0}.reader-playback{flex:none;flex-wrap:wrap}.reader-view-settings{position:fixed;top:110px;right:12px}.reader-tools .aids-collapse{width:40px;height:40px}.reader-workspace[data-aids-expanded="false"] .workspace{grid-template-columns:48px minmax(0,1fr)}}
 @media(max-width:599px){.reader-workspace .workspace,.reader-workspace[data-aids-expanded="false"] .workspace{grid-template-columns:minmax(0,1fr)}.reader-tools{display:flex;flex-direction:column;max-height:180px}.reader-tools .aids-collapse{align-self:flex-start}.reader-aids{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));width:100%}.reader-customize{padding:0;margin:0;border:0;align-self:flex-start}.reader-customize .scale-book__customize{padding:6px 12px}.reader-workspace .reader-aids .tool{min-height:58px;font-size:11px!important}.reader-view-settings{top:100px}.reader-workspace .markup-row-surface{margin:0}}
 
 /* Reuse DESIGN.md / PracticeToolDock tabs, rather than a reader-only toggle. */
 .reader-header .reader-mode-tabs{display:flex;gap:8px;padding:0;background:none;border:0}
-.reader-header .reader-mode-tabs button{height:36px;min-height:36px;flex:1;padding:0 13px;border:0;border-radius:14px;background:#f1f1f4;color:#5a5c63;font-size:12px;font-weight:650}
+.reader-header .reader-mode-tabs button{height:36px;min-height:36px;flex:1;padding:0 13px;border:0;border-radius:14px;background:#edf1f5;color:#5a5c63;font-size:12px;font-weight:650}
 .reader-header .reader-mode-tabs button.selected{background:#292a33!important;color:#fff!important}
 .reader-document .reader-save,.reader-document>a{border-radius:12px;color:#5a5c63;min-height:42px;display:flex;align-items:center;justify-content:center}
 .reader-document .reader-save{width:42px;height:42px;padding:10px}
-.reader-document .reader-save:hover,.reader-document>a:hover{background:#f5f5f7}
+.reader-document .reader-save:hover,.reader-document>a:hover{background:#f4f6f9}
 .reader-document>a{padding:0 8px}
 .reader-tools .scale-book__customize{background:#e7eee3;color:#40553d;border:1px solid #d7e1d2;border-radius:13px;font-size:12px;font-weight:680;cursor:pointer}
 .reader-tools .scale-book__customize:hover{background:#dce8d7;box-shadow:none}
@@ -413,7 +413,7 @@ html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document"
 /* "All keys" / "Clear" are the same quiet text buttons as Restore defaults. */
 .reader-settings-panel .scale-book__key-actions{gap:14px;margin-bottom:8px}
 .reader-settings-panel .scale-book__key-actions button{padding:4px;color:#71747e;font-size:12px}
-.reader-settings-panel .scale-book__key-actions button:hover{color:#40553d}
+.reader-settings-panel .scale-book__key-actions button:hover{color:#292a33}
 /* Typed per-key tempo, matching the practice bar's own field. */
 .scale-book__tempo-field{display:flex;align-items:center;gap:4px;font-size:13px;color:#71747e}
 .scale-book__tempo-field input{width:44px;border:0;border-radius:8px;background:rgba(41,42,51,.05);padding:4px 2px;font:inherit;font-size:14px;font-weight:600;color:#40553d;text-align:center;-moz-appearance:textfield}
@@ -422,7 +422,7 @@ html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document"
 /* Breadcrumb segments are navigation, not decoration: each opens
    Customize scales on the section that owns it. */
 .scale-book__crumb{border:0;border-radius:8px;background:transparent;padding:3px 5px;font:inherit;color:inherit;cursor:pointer;text-decoration:underline;text-decoration-color:#d3d5da;text-underline-offset:3px}
-.scale-book__crumb:hover{background:#f5f5f7;color:#40553d;text-decoration-color:#40553d}
+.scale-book__crumb:hover{background:#f4f6f9;color:#292a33;text-decoration-color:#292a33}
 .restored-reader .scale-book__chapter-inline{gap:2px}
 /* Sub-label inside a section that holds more than one control group. */
 .reader-settings-panel .scale-book__field-label{margin:10px 0 4px;font-size:12px;font-weight:500;color:#71747e}
@@ -497,7 +497,7 @@ html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document"
   color:#71747e;font-size:16px;cursor:pointer;
   transition:background-color .16s ease,color .16s ease;
 }
-.reader-settings-panel .scale-book__metronome>button:not(.scale-book__row-tool):hover:not(:disabled){background:rgba(41,42,51,.07);color:#40553d}
+.reader-settings-panel .scale-book__metronome>button:not(.scale-book__row-tool):hover:not(:disabled){background:rgba(41,42,51,.07);color:#292a33}
 .reader-settings-panel .scale-book__metronome>button:disabled{opacity:.35;cursor:default}
 
 /* ── The Customize scales trigger ─────────────────────────────────────────
@@ -579,7 +579,7 @@ html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document"
 }
 .reader-settings-panel .scale-book__row-tool:first-of-type{margin-left:6px}
 .reader-settings-panel .scale-book__row-tool svg{width:18px;height:18px}
-.reader-settings-panel .scale-book__row-tool:hover{background:rgba(41,42,51,.07);color:#40553d}
+.reader-settings-panel .scale-book__row-tool:hover{background:rgba(41,42,51,.07);color:#292a33}
 .reader-settings-panel .scale-book__row-tool.on{background:#dce8d7;color:#40553d}
 @media(prefers-reduced-motion:reduce){.reader-settings-panel .scale-book__row-tool{transition:none}}
 
@@ -646,7 +646,7 @@ html.score-focus-mode .restored-reader .workspace{grid-template-areas:"document"
   color:#8b8d94;font-size:17px;line-height:1;cursor:pointer;
   display:grid!important;place-items:center;
 }
-.restored-reader .practice-bar .tempo-step:hover:not(:disabled){background:rgba(41,42,51,.09);color:#40553d}
+.restored-reader .practice-bar .tempo-step:hover:not(:disabled){background:rgba(41,42,51,.09);color:#292a33}
 .restored-reader .practice-bar .tempo-step:disabled{opacity:.3;cursor:default}
 /* Fingers need more than 26px; the visual size stays the same. */
 @media(hover:none){
@@ -869,8 +869,8 @@ html.score-focus-mode .restored-reader[data-dock] .workspace{grid-template-areas
 
 html body .restored-reader .reader-rows[data-smart-drone]{display:block!important}
 .smart-drone-panel{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:9px 16px;border-bottom:1px solid var(--line);font-size:13px;background:#fff}
-.smart-drone-panel button{background:#f1f1f4;color:#494953;border:0;border-radius:12px;min-height:44px;padding:4px 14px;cursor:pointer}
-.smart-drone-panel button:hover{background:#f5f5f7}
+.smart-drone-panel button{background:#edf1f5;color:#494953;border:0;border-radius:12px;min-height:44px;padding:4px 14px;cursor:pointer}
+.smart-drone-panel button:hover{background:#f4f6f9}
 .smart-drone-panel button:focus-visible,.smart-drone-trigger:focus-visible{outline:2px solid #8c6aa1;outline-offset:2px}
 .reader-workspace .markup-row .markup-close,.reader-workspace .markup-row .annotation-toolbar .markup-close,.reader-workspace .markup-row .markup-close:hover{border:0!important;box-shadow:none!important;background:transparent!important;border-radius:0!important}
 .osmd-score .smart-drone-strip{fill:#2e6fb0;fill-opacity:.32;stroke:none;pointer-events:none}
@@ -914,7 +914,7 @@ html body .smart-drone-panel .auto-drone-close{display:grid;place-items:center;m
 html body .restored-reader .practice-bar .tool{border-radius:12px!important}
 html body .restored-reader .practice-bar .tool.on,
 html body .restored-reader .practice-bar .tool[aria-pressed="true"]{background-color:#eee7f2!important;color:#79588e!important}
-html body .restored-reader .practice-bar .tool:hover:not(:disabled){background-color:#f5f5f7!important}
+html body .restored-reader .practice-bar .tool:hover:not(:disabled){background-color:#f4f6f9!important}
 html body .restored-reader .practice-bar .tool:focus-visible{outline:2px solid #8c6aa1!important;outline-offset:2px}
 .custom-score-heading h1,.osmd-score svg text[data-score-title]{font-variant-numeric:lining-nums;font-feature-settings:"lnum" 1}
 html body .restored-reader .practice-bar .transport>button.tool.smart-drone-trigger.on,
@@ -934,7 +934,7 @@ html body .reader-workspace .custom-score-heading{display:none!important}
  html body .restored-reader .practice-bar .reader-view .tool.reader-accompaniment{font-size:0!important;width:36px!important;min-width:36px!important;padding:0!important}
 }
 
-.reader-play-start{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:14px;padding:10px;border:0;border-radius:12px;background:#efeff2;color:#292a34;cursor:pointer;font:inherit}
+.reader-play-start{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:14px;padding:10px;border:0;border-radius:12px;background:#edf1f5;color:#292a34;cursor:pointer;font:inherit}
 .reader-play-start:hover{background:#e5e5e9}
 .reader-play-start svg{width:20px;height:20px}
 .score-count-in{position:absolute;z-index:8;left:50%;top:20px;transform:translateX(-50%);padding:12px 18px;border-radius:20px;background:#fff;box-shadow:0 3px 18px #00000015;pointer-events:none}
@@ -979,7 +979,7 @@ html body .reader-settings-panel .scale-book__ranges .scale-book__chip{white-spa
 /* All keys / Clear / Restore defaults: text actions, never a grey box. Hover only darkens the text, so nothing changes size. */
 html body :is(.reader-settings-panel,.restored-reader) :is(.scale-book__key-actions button,.reader-settings-reset),
 html body :is(.reader-settings-panel,.restored-reader) :is(.scale-book__key-actions button,.reader-settings-reset):is(:hover,:focus,:focus-visible,:active,[aria-pressed="true"],.selected,.on){background:transparent!important;box-shadow:none!important}
-html body :is(.reader-settings-panel,.restored-reader) :is(.scale-book__key-actions button,.reader-settings-reset):hover{color:#2f4a28!important}
+html body :is(.reader-settings-panel,.restored-reader) :is(.scale-book__key-actions button,.reader-settings-reset):hover{color:#292a33!important}
 
 /* Icon-only buttons (tuner, settings, add, download, page arrows, to top, full screen) share one look: a 20px icon with one stroke weight, and on hover a 30px rounded square in a light grey, never the whole hit area. */
 html body :is(.reader-pages button,.topbar .icon-btn,.topbar .dock-launcher,.topbar .account-menu__trigger){position:relative;isolation:isolate}
@@ -988,7 +988,7 @@ html body :is(.reader-pages button,.topbar .icon-btn,.topbar .dock-launcher,.top
 html body :is(.reader-pages button,.topbar .icon-btn,.topbar .dock-launcher,.topbar .account-menu__trigger):not(:disabled):hover,
 html body .restored-reader .topbar :is(.icon-btn,.dock-launcher,.account-menu__trigger):is(.icon-btn,.dock-launcher,.account-menu__trigger):is(.icon-btn,.dock-launcher,.account-menu__trigger):hover:not(:disabled),
 html body .restored-reader .practice-bar .reader-pages button.tool:hover:not(:disabled){background:transparent!important;background-color:transparent!important;box-shadow:none!important}
-html body :is(.reader-pages button,.topbar .icon-btn,.topbar .dock-launcher,.topbar .account-menu__trigger)::before{content:"";position:absolute;left:50%;top:50%;width:30px;height:30px;transform:translate(-50%,-50%);border-radius:8px;background:#f3f3f5;opacity:0;z-index:-1;pointer-events:none;transition:opacity .12s}
+html body :is(.reader-pages button,.topbar .icon-btn,.topbar .dock-launcher,.topbar .account-menu__trigger)::before{content:"";position:absolute;left:50%;top:50%;width:30px;height:30px;transform:translate(-50%,-50%);border-radius:8px;background:#f4f6f9;opacity:0;z-index:-1;pointer-events:none;transition:opacity .12s}
 html body :is(.reader-pages button,.topbar .icon-btn,.topbar .dock-launcher,.topbar .account-menu__trigger):not(:disabled):hover::before{opacity:1}
 html body :is(.reader-pages button,.topbar .icon-btn,.topbar .dock-launcher,.topbar .account-menu__trigger) svg :is(path,circle,line,rect,polyline,polygon){stroke:#686a72!important}
 
@@ -998,7 +998,7 @@ html body :is(.reader-pages button,.topbar .icon-btn,.topbar .dock-launcher,.top
 /* Page layout heading with a small quiet action at the right: Fit page. It looks and behaves exactly like Restore defaults: grey text, a pointer, no box, and the text turns green on hover. */
 .reader-settings-panel .reader-row-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
 html body .reader-settings-panel .reader-text-action{min-height:0;padding:2px 0;border:0;background:transparent!important;box-shadow:none!important;color:#85868e;font:inherit;font-size:12.5px;font-weight:500;cursor:pointer}
-html body .reader-settings-panel .reader-text-action:hover,html body .reader-settings-panel .reader-text-action:focus-visible{background:transparent!important;color:#2f4a28!important}
+html body .reader-settings-panel .reader-text-action:hover,html body .reader-settings-panel .reader-text-action:focus-visible{background:transparent!important;color:#292a33!important}
 
 /* Tap tips are plain white, the same as the other cards, not the cream paper tint. */
 .restored-reader .flute-tip.finger-chart,.restored-reader .flute-tip.note-info-tip{background:#fff!important}
@@ -1059,7 +1059,7 @@ html body .score-count-in.score-count-in:not(.rhythm-tap__count){position:fixed;
    from the playing line during Listen. The arrow points at the playing line. */
 .follow-resume{position:fixed;z-index:405;left:50%;top:var(--reader-notice-top,164px);transform:translateX(-50%);padding:3px;border-radius:999px;border:var(--pill-border);background:var(--pill-bg);box-shadow:var(--pill-shadow);animation:follow-resume-in .18s ease both}
 html body .follow-resume button{display:inline-flex;align-items:center;gap:6px;height:34px;min-height:0;padding:0 14px 0 10px;border:0;border-radius:999px;background:transparent;color:#292a33;font:inherit;font-size:14px;font-weight:500;white-space:nowrap;cursor:default}
-html body .follow-resume button:hover{background:#f1f1f4}
+html body .follow-resume button:hover{background:#edf1f5}
 .follow-resume svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .follow-resume svg[data-direction="up"]{transform:rotate(180deg)}
 @keyframes follow-resume-in{from{opacity:0;transform:translate(-50%,-4px)}to{opacity:1;transform:translate(-50%,0)}}
@@ -1067,13 +1067,13 @@ html body .follow-resume button:hover{background:#f1f1f4}
 /* Key (View settings): the piece's key between two half-step arrows, the move spelled out under it. */
 .reader-key__stepper{display:flex;align-items:center;gap:6px;margin:6px 0 8px}
 html body .reader-settings-panel .reader-key__stepper button{display:grid;place-items:center;width:34px;height:34px;min-height:0;padding:0;border:0;border-radius:999px;background:transparent;color:#292a33}
-html body .reader-settings-panel .reader-key__stepper button:hover:not(:disabled){background:#f1f1f4}
+html body .reader-settings-panel .reader-key__stepper button:hover:not(:disabled){background:#edf1f5}
 html body .reader-settings-panel .reader-key__stepper button:disabled{opacity:.35}
 .reader-key__stepper svg{width:18px;height:18px}
 .reader-key__stepper>span{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;text-align:center}
 .reader-key__stepper strong{font-size:15px;font-weight:600;color:#292a33}
 .reader-key__stepper small{font-size:12.5px;color:#71747e}
-.reader-key .reader-setting-note .reader-text-action{display:inline;color:#46633d!important;font-weight:600}
+.reader-key .reader-setting-note .reader-text-action{display:inline;color:#292a33!important;font-weight:600}
 /* "· transposed up a whole step" after the composer, the byline's own grey serif, so a moved key is never forgotten. */
 html body .workspace .custom-score-heading .score-byline .score-transposed{display:inline!important;margin:0!important;padding:0!important;font:inherit!important;color:inherit!important}
 /* Now playing: the bar under the cursor, in the selection's purple (the selection hides while playing). */

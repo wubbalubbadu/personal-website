@@ -1,4 +1,4 @@
-.music-row{min-height:78px;display:grid;grid-template-columns:minmax(0,1fr) 48px;align-items:center;border-bottom:1px solid #e4e4e7;background:#fff;transition:background-color .16s ease}.music-row:last-child{border-bottom:0}.music-row:has(.music-row__main:focus-visible){background:#f4f4f6}@media(hover:hover) and (pointer:fine){.music-row:has(.music-row__main:hover){background:#f4f4f6}}.music-row__main{min-width:0;min-height:78px;padding:10px 0 10px 18px;display:grid;grid-template-columns:52px minmax(0,1fr);align-items:center;gap:13px;color:#292a33;text-decoration:none}.music-row__main:focus-visible{outline:3px solid rgba(41,42,51,.2);outline-offset:-3px}.music-row__main--disabled{cursor:default}.music-row__icon{width:48px;height:48px;border-radius:13px;display:grid;place-items:center}.music-row__icon--technique,.music-row__icon--tone,.music-row__icon--breathing,.music-row__icon--articulation{background:#f1f1f2;color:#292a33}.music-row__icon--simple{background:#f1ede4;color:#6e6048}.music-row__icon--repertoire{background:#f6e6dd;color:#7a5340}.music-row__icon--etude{background:#e8e9ee;color:#555965}.music-row__icon--pop{background:#e2ebf3;color:#4b6378}.music-row__icon--excerpt{background:#eee6f2;color:#685271}.music-row__copy{min-width:0}.music-row__copy strong,.music-row__copy small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.music-row__copy strong{font-size:16px;line-height:1.25;font-weight:600;letter-spacing:-.01em}.music-row__copy small{margin-top:4px;color:#85868e;font-size:13px;line-height:1.3;font-weight:400;text-transform:none}@media(max-width:700px){.music-row__main{padding-left:14px;grid-template-columns:50px minmax(0,1fr)}}@media(prefers-reduced-motion:reduce){.music-row{transition:none}}
+.music-row{min-height:78px;display:grid;grid-template-columns:minmax(0,1fr) 48px;align-items:center;border-bottom:1px solid #e4e4e7;background:#fff;transition:background-color .16s ease}.music-row:last-child{border-bottom:0}.music-row:has(.music-row__main:focus-visible){background:#f4f4f6}@media(hover:hover) and (pointer:fine){.music-row:has(.music-row__main:hover){background:#f4f4f6}}.music-row__main{min-width:0;min-height:78px;padding:10px 0 10px 18px;display:grid;grid-template-columns:52px minmax(0,1fr);align-items:center;gap:13px;color:#292a33;text-decoration:none}.music-row__main:focus-visible{outline:3px solid rgba(41,42,51,.2);outline-offset:-3px}.music-row__main--disabled{cursor:default}.music-row__icon{width:48px;height:48px;border-radius:13px;display:grid;place-items:center}.music-row__icon--technique,.music-row__icon--tone,.music-row__icon--breathing,.music-row__icon--articulation{background:#edf1f5;color:#292a33}.music-row__icon--simple{background:#f1ede4;color:#6e6048}.music-row__icon--repertoire{background:#f6e6dd;color:#7a5340}.music-row__icon--etude{background:#e8e9ee;color:#555965}.music-row__icon--pop{background:#e2ebf3;color:#4b6378}.music-row__icon--excerpt{background:#eee6f2;color:#685271}.music-row__copy{min-width:0}.music-row__copy strong,.music-row__copy small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.music-row__copy strong{font-size:16px;line-height:1.25;font-weight:600;letter-spacing:-.01em}.music-row__copy small{margin-top:4px;color:#85868e;font-size:13px;line-height:1.3;font-weight:400;text-transform:none}@media(max-width:700px){.music-row__main{padding-left:14px;grid-template-columns:50px minmax(0,1fr)}}@media(prefers-reduced-motion:reduce){.music-row{transition:none}}
 
 /* No icon column: title and composer on the left, tags on the right, which
    on a wide row fills space the icon never used. On narrow rows the tags
@@ -7,3 +7,130 @@
 @media(max-width:650px){
   .music-row__main{grid-template-columns:minmax(0,1fr);gap:7px;padding:11px 0 11px 16px;min-height:0}
 }
+
+/* Phones (Nov 12): tags stay to the right of the title and composer instead of taking a row of their own, and the
+   padding is tighter, so a phone shows about twice as many pieces. The title and composer truncate; the tags keep
+   their words, wrapping to at most two short lines beside them. */
+@media(max-width:650px){
+  .music-row{min-height:0}
+  .music-row__main{grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:9px 0 9px 14px;min-height:56px}
+  .music-row__main .tag-pills{justify-content:flex-end;max-width:min(150px,42vw);gap:4px}
+  .music-row__main .tag-pill{height:20px;padding:0 7px;font-size:11px}
+  .music-row__copy strong{font-size:15px}
+  .music-row__copy small{margin-top:2px;font-size:12.5px}
+}
+
+/* The Library list, quiet rules (Nov 14, her pick A): no box around it, entries divided by hairlines, the last
+   one closed by a hairline too. No heavy ink rules (the Nov 12 printed-catalogue rules read as a different page from
+   the coloured tags). One column at every width: the Library is capped at 1120px, so two columns gave each row about
+   540px and cut titles to one letter. Overrides the white boxed list in viewer-fixes.css and studio-shared.css,
+   hence the !important. */
+body .library-list { border: 0 !important; border-bottom: 1px solid #ececef !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; overflow: visible !important; }
+.library-list .music-row { background: transparent; border-bottom: 0; border-top: 1px solid #ececef; padding-right: 0; }
+.library-list .music-row__main { padding-left: 0; }
+/* Laptop rows as compact as phone ones (Nov 12). Every row keeps the two-line height (59px; 56 on phones) even
+   with no second line, so exercise rows, which show no description, space out like the rest (Nov 14). */
+@media (min-width: 651px) { .library-list .music-row { min-height: 0; } .library-list .music-row__main { min-height: 59px; padding-top: 9px; padding-bottom: 9px; } }
+
+
+/* The list button in a Library row is a round dot, no words (Nov 14): the words took up to 120px and made every
+   row's tags end somewhere else. Now each row ends in the same 30px circle (the list's dot, or + when it is on
+   none), rows without one keep its place empty, and the circle's right edge meets the end of the hairline, as the
+   title meets its start. The filter chips above use the same dots, so they double as the key; the menu names them. */
+body .library-list .music-row { grid-template-columns: minmax(0, 1fr) 30px; column-gap: 14px; padding-right: 0; }
+body .library-list .status-button__trigger { width: 30px; height: 30px; padding: 0; justify-content: center; border-radius: 50%; }
+.library-list .status-button__trigger > span { display: none; }
+.library-list .music-row__main { padding-right: 0; }
+
+/* Your-list filter chips (Want to learn, Working on, Learned) are round, like the dots they carry and the round
+   list buttons in the rows (Nov 14). The tag chips stay square, like the tags. */
+body .library-content .category-tabs.library-chips button.is-mine { border-radius: 999px; }
+
+/* One left edge (Nov 14): the heading, the chips, the hairlines and the titles all start at the same x, and the
+   hairlines end where the dot ends. So there is no grey hover band: a band needs room around the text, which either
+   sticks out past the lines or pushes the text in off the edge, and both were tried and looked wrong. Green title hover was tried and rejected (Nov 14);
+   hover design pending her pick. Keyboard focus keeps a visible ring. */
+@media (hover: hover) and (pointer: fine) {
+  body .library-list .music-row:has(.music-row__main:hover) { background: transparent; box-shadow: none; }
+}
+body .library-list .music-row:has(.music-row__main:focus-visible) { background: transparent; }
+.library-list .music-row__main:focus-visible { outline: 2px solid #292a33; outline-offset: 2px; border-radius: 3px; }
+.library-list .music-row__copy strong { transition: color .12s ease; }
+/* The heading (4px) and the chip row (2px) were nudged in from that edge; pull them back so all four line up. */
+body .library-content .library-page-header { padding-left: 0; padding-right: 0; }
+body .library-content .category-tabs.library-chips { padding-left: 0; }
+
+/* The Library's top, as one unit (Nov 14): title, then one toolbar row (a short search on the left, the view
+   switch on the right), then the chips, then the list. Title to toolbar 20, toolbar to chips 16, between chip rows
+   6, chips to list 20. The search is the short capsule COMPONENTS.md specifies (320px), not the whole row. */
+@media (min-width: 761px) {
+  body .library-content .library-page-header { padding-bottom: 20px !important; }
+  body .library-content .library-toolbar { margin: 0 0 16px !important; }
+  body .library-content .library-find { flex: 0 1 320px; height: 34px; }
+  body .library-content .category-tabs.library-chips { padding-top: 0 !important; padding-bottom: 20px !important; row-gap: 6px !important; }
+}
+
+/* Tag chips (the kind of music): quiet at rest, a 7px dot in the tag's colour and the word on nothing, grey on hover;
+   chosen, the tag's own tint, in a round pill like the list pills beside it. Same 12px type and height as before. */
+body .library-content .category-tabs.library-chips button:not(.is-mine) { height: 28px; padding: 0 9px 0 8px !important; gap: 6px; border-radius: 999px; font-size: 13px !important; font-weight: 500; background: transparent !important; color: #4f5158 !important; filter: none !important; }
+body .library-content .category-tabs.library-chips button:not(.is-mine)::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #b9bac0; flex: none; }
+body .library-content .category-tabs.library-chips button[data-tone="sage"]::before { background: #6c8f5f; }
+body .library-content .category-tabs.library-chips button[data-tone="sand"]::before { background: #b08a45; }
+body .library-content .category-tabs.library-chips button[data-tone="blue"]::before { background: #6f8aa3; }
+body .library-content .category-tabs.library-chips button[data-tone="pink"]::before { background: #a9739f; }
+body .library-content .category-tabs.library-chips button[data-tone="lavender"]::before { background: #8a7aa8; }
+body .library-content .category-tabs.library-chips button[data-tone="coral"]::before { background: #b47a63; }
+@media (hover: hover) and (pointer: fine) { body .library-content .category-tabs.library-chips button:not(.is-mine):not(.active):hover { background: #edf1f5 !important; } }
+body .library-content .category-tabs.library-chips button.active[data-tone="sage"] { background: #e4ecdf !important; color: #46633d !important; }
+body .library-content .category-tabs.library-chips button.active[data-tone="sand"] { background: #f3ead6 !important; color: #765d31 !important; }
+body .library-content .category-tabs.library-chips button.active[data-tone="blue"] { background: #e2eaf1 !important; color: #4b6378 !important; }
+body .library-content .category-tabs.library-chips button.active[data-tone="pink"] { background: #f1e4ef !important; color: #7c4f78 !important; }
+body .library-content .category-tabs.library-chips button.active[data-tone="lavender"] { background: #e9e5f1 !important; color: #62567a !important; }
+body .library-content .category-tabs.library-chips button.active[data-tone="coral"] { background: #f4e4de !important; color: #825747 !important; }
+body .library-content .category-tabs.library-chips button.active:not(.is-mine) { font-weight: 560; }
+
+/* Your-list chips, on the tag line and the same 13px / 28px as the tags (Nov 14). Each list wears its own home-page
+   tint even at rest (slate, sand, sage) with its icon; chosen is a deeper step of the same tint. Never grey, never
+   a border, never black. */
+body .library-content .category-tabs.library-chips button.is-mine { height: 28px; padding: 0 11px 0 9px !important; gap: 6px; border-radius: 999px; font-size: 13px !important; font-weight: 500; box-shadow: none; }
+body .library-content .category-tabs.library-chips button.is-mine .status-dot { width: 15px; height: 15px; box-shadow: none; background: currentColor; }
+body .library-content .category-tabs.library-chips button.is-mine:has(.status-dot[data-tone="blue"]) { background: #edf1f5 !important; color: #3d5878 !important; }
+body .library-content .category-tabs.library-chips button.is-mine:has(.status-dot[data-tone="sand"]) { background: #f7f1e6 !important; color: #765621 !important; }
+body .library-content .category-tabs.library-chips button.is-mine:has(.status-dot[data-tone="sage"]) { background: #eef4ec !important; color: #40553d !important; }
+body .library-content .category-tabs.library-chips button.is-mine.active:has(.status-dot[data-tone="blue"]) { background: #d5e1ee !important; color: #2f4967 !important; }
+body .library-content .category-tabs.library-chips button.is-mine.active:has(.status-dot[data-tone="sand"]) { background: #eedfbf !important; color: #624613 !important; }
+body .library-content .category-tabs.library-chips button.is-mine.active:has(.status-dot[data-tone="sage"]) { background: #d3e2cb !important; color: #314a2c !important; }
+body .library-content .category-tabs.library-chips button.is-mine.active { font-weight: 600; }
+/* Tags and list pills are all round pills starting on the page's left edge (Nov 14): no negative margin, so a
+   hovered or chosen tag never pokes out left of the title. Packed close: 4px between pills, and no per-pill margin, so a pill that wraps starts exactly on that edge. */
+@media (min-width: 761px) { body .library-content .category-tabs.library-chips .library-chips__row { gap: 6px 4px !important; } }
+
+/* Tags in the rows read the same as the tag chips above (Nov 14): a 7px dot in the tag's colour and the word,
+   no tinted box, so the dot means one thing everywhere on the page. "Coming soon" is the grey word alone. */
+.library-list .tag-pills { gap: 6px 14px; align-items: center; }
+.library-list .tag-pill { height: auto; padding: 0; gap: 6px; background: transparent !important; color: #5f6169 !important; box-shadow: none !important; font-size: 12px; font-weight: 500; }
+.library-list .tag-pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #b9bac0; flex: none; }
+.library-list .tag-pill[data-tone="sage"]::before { background: #6c8f5f; }
+.library-list .tag-pill[data-tone="sand"]::before { background: #b08a45; }
+.library-list .tag-pill[data-tone="blue"]::before { background: #6f8aa3; }
+.library-list .tag-pill[data-tone="pink"]::before { background: #a9739f; }
+.library-list .tag-pill[data-tone="lavender"]::before { background: #8a7aa8; }
+.library-list .tag-pill[data-tone="coral"]::before { background: #b47a63; }
+.library-list .tag-pill[data-tone="soon"] { color: #9a9ba2 !important; }
+.library-list .tag-pill[data-tone="soon"]::before { display: none; }
+@media (max-width: 650px) { .library-list .tag-pill { height: auto; padding: 0; font-size: 11.5px; } }
+
+/* Hover, one behaviour for every pill on the filter line (Nov 14): a tag gets the slate fill, a list pill goes one
+   step deeper in its own tint. Chosen pills don't change on hover. */
+@media (hover: hover) and (pointer: fine) {
+  body .library-content .category-tabs.library-chips button.is-mine:not(.active):has(.status-dot[data-tone="blue"]):hover { background: #e0e8f1 !important; }
+  body .library-content .category-tabs.library-chips button.is-mine:not(.active):has(.status-dot[data-tone="sand"]):hover { background: #f1e7d3 !important; }
+  body .library-content .category-tabs.library-chips button.is-mine:not(.active):has(.status-dot[data-tone="sage"]):hover { background: #e2ecde !important; }
+}
+
+/* Piece rows have no hover band (Nov 14, her call again): the rounded slate band left a gap against the hairlines
+   and looked awkward. Rows show nothing on hover; the cursor stays the normal arrow (the hand looked dated). */
+html:root body :is(.music-row__main, .book-row__main)[href] { cursor: default !important; }
+
+/* Row hover (Nov 16): darkening the hairlines above and below the row was tried and rejected ("not a valid hover").
+   Rejected so far: grey band, green title, darker hairlines. Rows show nothing on hover until she picks one. */

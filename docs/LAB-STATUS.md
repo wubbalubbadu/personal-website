@@ -18,6 +18,7 @@ One row per `app/lab` route in the main checkout, as of Nov 6, 2026. "Last chang
 | `/lab/studio-home-claude` | Studio home as a method book contents page, one music stand demo | Oct 28 | No | She found it too niche. Delete once a home direction is picked |
 | `/lab/studio-home-tool` | Studio home as the tool itself: stand tools, a live Scale Studio panel, Library search | Oct 28 (git Nov 3) | No | Superseded by the 2x2 mockups. Delete once a home direction is picked |
 | `/lab/studio-home-2x2` | Studio home as one 2x2 (Music, Scale Studio, Long tones, At the stand), looks A, B, C | Nov 5 | Yes, via its patch | Not in the main checkout yet: apply `docs/.applied-patches/studio-home-2x2.patch`. Read `home-2x2-notes.md` and pick A, B or C |
+| `/lab/spa` | Soak: a shared bathhouse in three.js seen from behind your own figurine (lounge, sauna, hot spring, cold plunge, lake), bots, synthesized sound, tab to tab multiplayer | Nov 13 (uncommitted) | Yes | Pick a body shape and a face style in its settings pill, listen to the sound, then answer the open decisions in `docs/SPA-PROTOTYPE.md` |
 
 `app/lab/_kit` is shared code (mascot engine, sprites), not a route.
 

@@ -1,17 +1,17 @@
 'use client';
-import {TempoPill} from "../components/TempoPill";
 import {PracticeIcon} from "../components/PracticeIcon";
 import {Stepper} from "../components/Stepper";
 import {lazy,Suspense,useEffect,useRef,useState,useSyncExternalStore} from 'react';
 import Sequence from './Sequence';
 import {breathAt,counts,cueBank,cueBankZh,nextPhase,patterns,ROUNDS,sequenceBeats,type Settings} from './timing';
+import {countedFullness,linePath,linePoint} from "./breathLine";
 import './breathing-lab.css';
 import {useLanguage} from '../i18n/LanguageContext';
 const BodyView=lazy(()=>import('./BodyView'));
 
 type Visual='cycle'|'flower'|'body'|'embouchure';
 type Phase='Inhale'|'Hold'|'Exhale';
-const visuals:[Visual,string,string][]=[['cycle','Cycle','呼吸环'],['flower','Flower','花朵'],['body','Body','身体'],['embouchure','Embouchure','口型']];
+const visuals:[Visual,string,string][]=[['cycle','Line','呼吸线'],['flower','Flower','花朵'],['body','Body','身体'],['embouchure','Embouchure','口型']];
 
 // Gentle cues: a soft tone where each phase begins (higher for in, lower for out) and a quiet tick on the other beats.
 const phaseTone:Record<Phase,number>={Inhale:659.25,Hold:554.37,Exhale:440};
@@ -68,16 +68,19 @@ export default function BreathingLab(){
  const sample=breathAt(beats,settings),total=sample.inhale+sample.exhale+sample.hold;
  const phaseLabel=zh?{Inhale:"吸气",Hold:"停留",Exhale:"呼气"}[sample.phase]:sample.phase;
  const cueOptions=(zh?cueBankZh:cueBank)[sample.phase as keyof typeof cueBank],cue=cueOptions[Math.floor(Math.abs(Math.sin((sample.round*3+cueSeed+sample.phase.length)*12.9898))*10000)%cueOptions.length];
- const angle=sample.cycle*Math.PI*2,inhale=sample.phase==='Inhale',moving=playing&&!reduced;
+ const inhale=sample.phase==='Inhale',moving=playing&&!reduced;
  const phaseCount=sample.phase==='Inhale'?sample.inhale:sample.phase==='Hold'?sample.hold:sample.exhale;
  const changing=settings.pattern!=='even';
- const message=done?(zh?`${ROUNDS}轮完成。`:`${ROUNDS} rounds done.`):!playing?(zh?'按开始，跟着圆环呼吸。':'Press Start and breathe with the ring.'):cue;
- const ring=<svg viewBox="0 0 240 240" className="bl-ring" role="img" aria-label={`${phaseLabel}, ${zh?"拍数":"beat"} ${sample.beat} / ${phaseCount}`}>
-  <circle cx="120" cy="120" r="94" fill="none" stroke="#ca9295" strokeWidth="9"/>
-  <circle cx="120" cy="120" r="94" fill="none" stroke="#87b4c8" strokeWidth="9" pathLength="100" strokeDasharray={`${sample.inhale/total*100} 100`} transform="rotate(-90 120 120)"/>
-  {sample.hold>0&&<circle cx="120" cy="120" r="94" fill="none" stroke="#cab994" strokeWidth="9" pathLength="100" strokeDasharray={`${sample.hold/total*100} 100`} strokeDashoffset={-sample.inhale/total*100} transform="rotate(-90 120 120)"/>}
-  <circle cx={120+94*Math.sin(angle)} cy={120-94*Math.cos(angle)} r="8" fill="#79588e" stroke="white" strokeWidth="3"/>
-  <text x="120" y="108" textAnchor="middle" className="bl-phase">{phaseLabel}</text><text x="120" y="151" textAnchor="middle" className="bl-count">{playing?sample.beat:0}<tspan className="bl-total"> / {phaseCount}</tspan></text>
+ const message=done?(zh?`${ROUNDS}轮完成。`:`${ROUNDS} rounds done.`):!playing?(zh?'按开始，跟着这条线呼吸。':'Press Start and breathe with the line.'):cue;
+ // The breath line: up on the inhale, level on the hold, down on the exhale; the dot is where you are.
+ const lineBox={left:24,right:296,top:96,bottom:176},full=countedFullness(sample.inhale,sample.hold,sample.exhale),inEnd=sample.inhale/total,holdEnd=(sample.inhale+sample.hold)/total,dot=linePoint(Math.min(1,sample.cycle),full,lineBox);
+ const ring=<svg viewBox="0 0 320 200" className="bl-ring" role="img" aria-label={`${phaseLabel}, ${zh?"拍数":"beat"} ${sample.beat} / ${phaseCount}`}>
+  <text x="160" y="26" textAnchor="middle" className="bl-phase">{phaseLabel}</text><text x="160" y="66" textAnchor="middle" className="bl-count">{playing?sample.beat:0}<tspan className="bl-total"> / {phaseCount}</tspan></text>
+  <path d={`M${lineBox.left} ${lineBox.bottom}H${lineBox.right}`} stroke="rgba(41,42,51,.1)" strokeWidth="1"/>
+  <path d={linePath(0,inEnd,full,lineBox)} fill="none" stroke="#87b4c8" strokeWidth="4" strokeLinecap="round"/>
+  {sample.hold>0&&<path d={linePath(inEnd,holdEnd,full,lineBox)} fill="none" stroke="#cab994" strokeWidth="4" strokeLinecap="round"/>}
+  <path d={linePath(holdEnd,1,full,lineBox)} fill="none" stroke="#ca9295" strokeWidth="4" strokeLinecap="round"/>
+  <circle cx={dot.x} cy={dot.y} r="7" fill="#79588e" stroke="white" strokeWidth="2.5"/>
  </svg>;
  return <main className="breathing-lab">
   <header className="bl-header"><h1>{zh?"呼吸实验室":"Breathing Lab"}</h1></header>
@@ -103,11 +106,21 @@ export default function BreathingLab(){
      <Stepper className="bl-stepper" value={settings[key]} min={key==='hold'?0:.5} max={key==='hold'?4:20} onStep={d=>update(key,settings[key]+d)}
       label={zh?`${{inhale:"吸气",hold:"停留",exhale:"呼气"}[key]}拍数`:`${{inhale:'Inhale',hold:'Hold',exhale:'Exhale'}[key]} beats`}
       decreaseLabel={zh?`${{inhale:"吸气",hold:"停留",exhale:"呼气"}[key]}减少拍数`:`${key} fewer beats`} increaseLabel={zh?`${{inhale:"吸气",hold:"停留",exhale:"呼气"}[key]}增加拍数`:`${key} more beats`}/>
-    </div>)}</div>
+    </div>)}
+     <div className="bl-count-step">
+      <span>{zh?'速度':'Tempo'}</span>
+      <Stepper className="bl-stepper" value={bpm} min={40} max={120} editable onChange={value=>{stop();setBpm(Math.max(40,Math.min(120,value)))}}
+       label={zh?"呼吸速度":"Breathing tempo"} decreaseLabel={zh?"慢一点":"Slower"} increaseLabel={zh?"快一点":"Faster"}/>
+     </div>
+     <div className="bl-count-step">
+      <span>{zh?'声音':'Sound'}</span>
+      <div className="view-switch bl-sound" role="group" aria-label={zh?"声音提示":"Sound cues"}>
+       <button type="button" aria-pressed={sound} onClick={()=>setSound(true)}>{zh?'开':'On'}</button>
+       <button type="button" aria-pressed={!sound} onClick={()=>setSound(false)}>{zh?'关':'Off'}</button>
+      </div>
+     </div>
+    </div>
     <div className="bl-play-row">
-     {/* The studio's tempo pill: its metronome button turns the sound cues on or off, the number is the beat in bpm. */}
-     <TempoPill size="large" label={zh?"呼吸速度":"Breathing tempo"} tempo={bpm} sounding={sound} onSound={()=>setSound(!sound)}
-       onChange={value=>{stop();setBpm(Math.max(40,Math.min(120,value)))}}/>
      <button type="button" className="bl-start action-button" aria-pressed={playing} onClick={()=>void start()}><PracticeIcon name={playing?'stop':'play'}/>{playing?(zh?'停止':'Stop'):(zh?'开始':'Start')}</button>
     </div>
     {audioError&&<small className="bl-note" role="status">{zh?"声音不可用，呼吸动画仍可使用。":"Sound unavailable. The visual timer still works."}</small>}

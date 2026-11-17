@@ -133,7 +133,7 @@ export default function TendencyTest(){
           <RangeStepper label={zh?"最低":"Lowest"} value={low} min={LOWEST} max={high-MIN_SPAN} onChange={v=>setRange([Math.max(LOWEST,Math.min(v,high-MIN_SPAN)),high])}/>
           <RangeStepper label={zh?"最高":"Highest"} value={high} min={low+MIN_SPAN} max={HIGHEST} onChange={v=>setRange([low,Math.min(HIGHEST,Math.max(v,low+MIN_SPAN))])}/>
         </div>
-        <button type="button" className="tendency__primary" onClick={()=>void startListening()}>{zh?"开始":"Start"}</button>
+        <button type="button" className="action-button tendency__primary" onClick={()=>void startListening()}>{zh?"开始":"Start"}</button>
         {/* One way back to the usual range, and only once it has been changed. */}
         {(low!==DEFAULT_RANGE[0]||high!==DEFAULT_RANGE[1])&&<button type="button" className="tendency__link" onClick={()=>setRange(DEFAULT_RANGE)}>{zh?"恢复为低音 C 到高音 C":"Back to low C to high C"}</button>}
         {last&&<p className="tendency__note">{zh?"上次测试：":"Last test: "}{new Date(last.date).toLocaleDateString(zh?"zh-CN":undefined)} · <button type="button" className="tendency__link" onClick={()=>{setResult(last);setStep("results")}}>{zh?"查看结果":"See the results"}</button></p>}
@@ -151,7 +151,7 @@ export default function TendencyTest(){
           </div>
           {micProblem&&<p className="tendency__hint"><MicBlocked zh={zh} unavailable={pitch.status==="unavailable"}/></p>}
           <div className="tendency__actions">
-            <button type="button" className="tendency__primary" onClick={()=>{setReadings({});begin(passSequence(low,high),"play")}}>{zh?"调好了，继续":"Continue"}</button>
+            <button type="button" className="action-button tendency__primary" onClick={()=>{setReadings({});begin(passSequence(low,high),"play")}}>{zh?"调好了，继续":"Continue"}</button>
             <button type="button" className="tendency__secondary" onClick={()=>{setReadings({});begin(passSequence(low,high),"play")}}>{zh?"跳过":"Skip"}</button>
           </div>
         </section>}
@@ -182,7 +182,7 @@ export default function TendencyTest(){
         </div>
         <HeatMap result={result} relative={relative} zh={zh}/>
         <div className="tendency__actions">
-          <button type="button" className="tendency__primary" onClick={()=>{setResult(null);setStep("range")}}>{zh?"再测一次":"Test again"}</button>
+          <button type="button" className="action-button tendency__primary" onClick={()=>{setResult(null);setStep("range")}}>{zh?"再测一次":"Test again"}</button>
           <Link className="tendency__secondary" href="/flute-studio/tools">{zh?"完成":"Done"}</Link>
         </div>
       </section>}

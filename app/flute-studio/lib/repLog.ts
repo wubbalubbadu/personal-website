@@ -60,3 +60,19 @@ export function repTotals(log:Log){
   }
   return [...totals.values()].filter(row=>row.total>0).sort((a,b)=>b.total-a.total);
 }
+/**
+ * What a total adds up. A scale is one thing however it was played: one octave, full range or a custom range, in
+ * groups or not, all count toward the same total ("scale-book:major:thirds-in3:C:full" -> "scale-book:major:thirds:C").
+ * Decided Nov 14. Anything else totals by its own key.
+ */
+export function totalGroup(key:string){
+  const parts=key.split(":");
+  if(parts[0]!=="scale-book"||parts.length<4)return key;
+  return ["scale-book",parts[1],parts[2].replace(/-in\d+$/,""),parts[3]].join(":");
+}
+/** One thing's reps, every day, tempo, range and grouping added up (the total beside a scale's tally). */
+export function repTotal(log:Log,key:string){
+  const group=totalGroup(key);let total=0;
+  for(const page of Object.values(log))for(const [entryKey,entry] of Object.entries(page??{}))if(totalGroup(entryKey)===group)total+=sum(entry?.reps??{});
+  return total;
+}

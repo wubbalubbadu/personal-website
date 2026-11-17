@@ -20,7 +20,7 @@
 
 /* View switch (COMPONENTS.md): two or three ways to show the same page (Cards / Continuous). A quiet grey track;
    the chosen one is white with a hairline, so "selected" reads without a dark fill. */
-:is(.studio-route,.reader-settings-panel,.tools-panel) .view-switch{display:inline-flex;gap:2px;padding:3px;border-radius:999px;background:#f1f1f4}
+:is(.studio-route,.reader-settings-panel,.tools-panel) .view-switch{display:inline-flex;gap:2px;padding:3px;border-radius:999px;background:#edf1f5}
 :is(.studio-route,.reader-settings-panel,.tools-panel) .view-switch button{height:30px;padding:0 14px;border:0;border-radius:999px;background:transparent;font:inherit;font-size:13px;font-weight:500;color:#6f7178;cursor:pointer}
 :is(.studio-route,.reader-settings-panel,.tools-panel) .view-switch button:hover{color:#292a33}
 :is(.studio-route,.reader-settings-panel,.tools-panel) .view-switch button[aria-pressed="true"]{background:#fff;color:#292a33;box-shadow:0 0 0 1px #e1e1e5,0 1px 3px rgba(41,42,51,.06)}
@@ -37,11 +37,11 @@
 .studio-route .card-label{display:flex;align-items:center;gap:6px;margin:0;font-size:11px;font-weight:600;line-height:1.3;letter-spacing:.06em;text-transform:uppercase;color:#85868e}
 
 /* Shared plain grey action. Sizes retain existing control geometry. */
-.action-button{height:var(--action-height,40px);min-height:var(--action-min-height,auto);padding:var(--action-padding,0 20px);border:0;border-radius:var(--action-radius,12px);background:#f1f1f2;color:var(--action-ink,#45464f);font:inherit;font-size:var(--action-font-size,14px);font-weight:var(--action-weight,600);cursor:var(--action-cursor,pointer)}
+.action-button{height:var(--action-height,40px);min-height:var(--action-min-height,auto);padding:var(--action-padding,0 20px);border:0;border-radius:var(--action-radius,12px);background:#edf1f5;color:var(--action-ink,#45464f);font:inherit;font-size:var(--action-font-size,14px);font-weight:var(--action-weight,600);cursor:var(--action-cursor,pointer)}
 .action-button--compact{--action-height:34px;--action-padding:0 12px 0 8px;--action-radius:10px;--action-font-size:13px;--action-cursor:default}
 .action-button--large{--action-height:auto;--action-min-height:44px;--action-padding:0 18px;--action-font-size:15px;--action-weight:500;--action-cursor:default}
 .action-button svg{width:18px;height:18px}
-@media(hover:hover){.action-button:hover:not(:disabled){background:#e8e8ea}}
+@media(hover:hover){.action-button:hover:not(:disabled){background:#e2e8ef}}
 
 .action-button--inherit-type{font-size:inherit;font-weight:inherit}
 
@@ -58,7 +58,33 @@
    filter chips go square too. Panels (Today's practice, calendar) and floating controls keep their shape for now. */
 body :is(.library-list, .item-card, .item-card__body, .list-stack__card, .passages__list, .deadline-card) { border-radius: 3px; }
 body :is(.tag-pill, .piece-chip, .library-chips__row > button) { border-radius: 3px; }
+/* Nov 12, later: the Me page's panels go square too (Today's practice, the calendar, the day list, Practice insights),
+   and so do the edges peeking under a list stack, which were still 14px under a square top card. */
+body .practice-page :is(.practice-card, .studio-month .calendar-card, .studio-status-grid, .studio-data-grid, .list-stack__pile:focus-visible) { border-radius: 3px; }
+body .practice-page .list-stack__pile.has-more::before, body .practice-page .list-stack__pile.has-more::after { border-radius: 3px; }
 /* The Library list is set with !important in viewer-fixes.css and library.css; square it and swap its float shadow
    for the hairline white cards use (no lift). */
 body .library-list { border-radius: 3px !important; box-shadow: none !important; border: 1px solid #e4e4e7 !important; }
 body .practice-page .passages__list { border-radius: 3px; }
+
+/* Page titles sit a little higher, and at one height on every tab (Nov 14): Library, Exercises, Learn and My Studio
+   had 50px above the title; 28px now. Phones keep their own rule (studio-shell.css sets 0 there). */
+@media (min-width: 761px) {
+  html body .studio-route :is(.library-page-header, .exercise-hub__header, .practice-page__header, .studio-page__head, .theory-home__header, .fingering-chart__header, .bl-header) { padding-top: 28px !important; }
+}
+
+/* Nov 16: white panels sit flat with a hairline, like the Library list, instead of floating on a shadow
+   (My Studio's panels and the Sync devices cards were the last to lift). Square, as the Me page already was. */
+body .studio-route .practice-card { border: 1px solid #e4e4e7; border-radius: 3px; box-shadow: none; }
+
+/* Nov 16: every page title starts on the content's left edge. Exercises, Learn, Theory, the charts, the Body page
+   and Breathing Lab had 4px of side padding on their header, so their titles sat 4px right of their own tiles and
+   of the Library's and My Studio's titles. */
+html body .studio-route :is(.exercise-hub__header, .studio-page__head, .theory-home__header, .fingering-chart__header, .bl-header) { padding-left: 0; padding-right: 0; }
+
+/* Nov 16: the list row's feedback is a press, not a hover (option C of the three shown that day; a grey band, a
+   green title and darker hairlines were all rejected as hovers, and most practice happens on an iPad where hover
+   does not exist). While a row is held its words drop to 55%, then ease back on release. No fill, so the list's
+   left edge and hairlines never move. */
+body .studio-route :is(.music-row__main, .book-row__main, .exercise-hub__row-main)[href] { transition: opacity .28s ease; -webkit-tap-highlight-color: transparent; }
+body .studio-route :is(.music-row__main, .book-row__main, .exercise-hub__row-main)[href]:active { opacity: .55; transition-duration: 0s; }

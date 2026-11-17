@@ -8,15 +8,15 @@
 .transfer-card__option span{display:grid;gap:2px}
 .transfer-card__option small{font-size:12px;color:#9a9ca3}
 .transfer-card__actions{display:flex;gap:8px;flex-wrap:wrap}
-.transfer-card__primary,.transfer-card__secondary{height:44px;padding:0 18px;border:0;border-radius:14px;font:inherit;font-size:14px;font-weight:650;cursor:pointer}
-.transfer-card__primary{background:#e7eee3;color:#40553d}
-.transfer-card__primary:hover{background:#dce8d7}
-.transfer-card__secondary{background:#f1f1f4;color:#3d3e46}
-.transfer-card__secondary:hover{background:#e6e6ea}
+.transfer-card__primary,.transfer-card__secondary{height:44px;padding:0 18px;border:0;border-radius:14px;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+/* Nov 16: the primary is the shared .action-button (slate), not the retired green. */
+.transfer-card__primary{color:#292a33}
+.transfer-card__secondary{background:#edf1f5;color:#3d3e46}
+.transfer-card__secondary:hover{background:#e2e8ef}
 .transfer-card__code{width:100%;min-height:96px;box-sizing:border-box;padding:12px;border:1px solid #e3e3e8;border-radius:14px;background:#fafafb;resize:vertical;
   font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;color:#3d3e46;word-break:break-all}
 .transfer-card__code:focus{outline:2px solid rgba(103,137,86,.45);outline-offset:1px;background:#fff}
-.transfer-card__file{justify-self:start;padding:0;border:0;background:none;font:inherit;font-size:14px;color:#46633d;font-weight:600;cursor:pointer}
+.transfer-card__file{justify-self:start;padding:0;border:0;background:none;font:inherit;font-size:14px;color:#292a33;font-weight:600;cursor:pointer}
 .transfer-card__note{margin:0;font-size:14px;line-height:1.5;color:#46633d}
 .transfer-card__note.is-error{color:#b04a3c}
 .transfer-card__found{display:grid;gap:10px;padding:14px;border-radius:14px;background:#f4f7f2}
@@ -34,13 +34,13 @@
    between, the studio's grey trash that asks once. */
 .storage-card{grid-column:1/-1}
 .storage-list{list-style:none;margin:0;padding:0;display:grid}
-.storage-list>li+li{border-top:1px solid #f0f0f2}
-.storage-list--pieces{margin:0 0 6px 16px;border-left:1px solid #f0f0f2;padding-left:12px}
+.storage-list>li+li{border-top:1px solid #edf1f5}
+.storage-list--pieces{margin:0 0 6px 16px;border-left:1px solid #edf1f5;padding-left:12px}
 .storage-row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px}
 .storage-row>span{display:grid;gap:2px}
 .storage-row b{font-size:15px;font-weight:600;color:#292a33}
 .storage-row small{font-size:13px;color:#85868e}
-.storage-row__delete{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 8px;border:0;border-radius:10px;background:transparent;color:#a5a7ad;font:inherit;font-size:13px;cursor:pointer}
+.storage-row__delete{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 8px;border:0;border-radius:10px;background:transparent;color:#9a9ca3;font:inherit;font-size:13px;cursor:pointer}
 .storage-row__delete svg{width:18px;height:18px}
 @media(hover:hover){.storage-row__delete:hover{color:#292a33}}
 .storage-row__delete.is-armed{color:#a5372f}
@@ -50,3 +50,12 @@
 .storage-row__confirm{margin:-4px 0 10px;font-size:13px;color:#a5372f}
 .storage-row>span{flex:1;min-width:0}
 .storage-row__months,.storage-row__delete span{white-space:nowrap}
+
+/* Nov 16: the intro sits under the title, not beside it (My Studio's header is a flex row for its clock). */
+.transfer-page .practice-page__header{display:block}
+
+/* Nov 16: the trash sits beside the words it deletes, never alone at the far right (COMPONENTS.md: row actions). */
+.storage-row{justify-content:flex-start;gap:4px}
+.storage-row>span{flex:0 1 auto;margin-right:8px}
+.storage-list>li+li{border-top-color:#ececef}
+.storage-list--pieces{border-left:0;padding-left:0}

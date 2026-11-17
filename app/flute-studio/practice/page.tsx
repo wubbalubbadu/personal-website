@@ -128,7 +128,9 @@ export default function PracticePage(){
   // Ids are all the stores keep, so titles come from the library — which
   // already contains the exercises as well as the pieces.
   const exerciseItems:StudioListItem[]=exerciseCatalog.map(item=>({id:item.id,title:zh?item.zhTitle:item.title,composer:zh?"练习":"Exercise",viewerPath:item.href}));
-  const byId=new Map<string,StudioListItem>([...musicLibrary,...libraryShelf.filter(item=>item.bookCount)].map(item=>[item.id,{...item,title:pieceTitle(item,zh)}] as [string,StudioListItem]).concat(exerciseItems.map(item=>[item.id,item])));
+  // Scale Studio setups go on lists as saved sets (scale-set:<id>), each its own entry like a study in a book.
+  const setItems:StudioListItem[]=scaleSets.map(set=>({id:`scale-set:${set.id}`,title:set.name,composer:zh?"音阶工作室":"Scale Studio",viewerPath:`/flute-studio/exercises/scales?set=${encodeURIComponent(set.id)}`}));
+  const byId=new Map<string,StudioListItem>([...musicLibrary,...libraryShelf.filter(item=>item.bookCount)].map(item=>[item.id,{...item,title:pieceTitle(item,zh)}] as [string,StudioListItem]).concat(exerciseItems.map(item=>[item.id,item])).concat(setItems.map(item=>[item.id,item])));
   const recentItems=recentIds.map(id=>byId.get(id)).filter((item):item is StudioListItem=>!!item);
   // Your lists in the order you would pick up from: working on, want to learn, learned.
   const listItems=(["working","want","learned"] as const)

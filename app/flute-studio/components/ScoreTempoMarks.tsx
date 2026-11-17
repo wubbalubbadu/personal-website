@@ -2,7 +2,7 @@
 import "./score-tempo-marks.css";
 import {useLayoutEffect,useState} from "react";
 import {TempoPill} from "./TempoPill";
-import {RepPill} from "./RepPill";
+import {RepPill,RepTotal} from "./RepPill";
 import type {RepItem} from "../lib/repLog";
 export function ScoreTempoMarks({root,version,marks,onChange,onSound,soundingId,zh=false}:{root:HTMLDivElement|null;version:number;marks:{id:string;label:string;tempo:number;/** Count reps of this exercise beside its tempo (RepPill). */rep?:RepItem}[];zh?:boolean;onChange:(id:string,tempo:number)=>void;onSound:(id:string,tempo:number)=>void;soundingId:string|null}){
   // Carries the layout version the positions were measured against. Marks
@@ -42,8 +42,8 @@ export function ScoreTempoMarks({root,version,marks,onChange,onSound,soundingId,
       // Sat beside the name to begin with, which put it right where a high
       // note's ledger lines reach up. Its own lane directly above the name
       // is the one band in a block that nothing engraved occupies.
-      // With a rep pill beside it (and the tempo pill's trend button) the pair is up to ~190px wide: near the right edge, slide it back so it stays on the page.
-      const room=mark.rep?192:84;
+      // With a rep pill beside it (and the tempo pill's trend button) the group is up to ~250px wide with the all-time total: near the right edge, slide it back so it stays on the page.
+      const room=mark.rep?250:84;
       placed.push({id:mark.id,x:Math.max(0,Math.min(rect.left-rootBox.left,rootBox.width-room)),y:rect.top-rootBox.top-3});
     }
     setSpots({version,placed});
@@ -72,6 +72,7 @@ export function ScoreTempoMarks({root,version,marks,onChange,onSound,soundingId,
         if(soundingId===spot.id&&owned!==spot.id){setOwned(spot.id);onChange(spot.id,mark.tempo);return}
         setOwned(soundingId===spot.id?null:spot.id);onSound(spot.id,mark.tempo)}} onChange={value=>onChange(spot.id,value)} history={mark.rep?.key}/>
       {mark.rep&&<RepPill item={mark.rep} tempo={mark.tempo} zh={zh}/>}
+      {mark.rep&&<RepTotal item={mark.rep} zh={zh}/>}
     </span>;
   })}</>;
 }

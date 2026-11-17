@@ -5,7 +5,7 @@
  */
 import { INTENTS, type AnswerNode, type RichSeg } from "../../lib/answers";
 import { PROJECT_ROWS, type ProjectRow } from "../_kit/links";
-import { DESKTOP_LINE, ITEMS, LOOKS, QUESTIONS, SNACK_LINES, SNACK_MILESTONES, type Item, type ItemId, type Question } from "../_kit/studio";
+import { DESKTOP_LINE, ITEMS, LOOKS, QUESTIONS, ROOM_PAINTS, SNACK_LINES, SNACK_MILESTONES, type Item, type ItemId, type Question } from "../_kit/studio";
 import type { Lang } from "../_kit/lang";
 import { ZH } from "../_kit/zh";
 
@@ -33,6 +33,7 @@ const UI_EN = {
   details: "Full details",
   allProjects: "See all projects",
   anotherLook: "Try another look?",
+  paintAgain: "Paint it again?",
   emailMe: "Email me",
   seeAll: "See all projects ›",
   next: "Next",
@@ -123,6 +124,7 @@ export function copyFor(lang: Lang) {
       snackLines: SNACK_LINES,
       snackMilestones: SNACK_MILESTONES,
       looks: LOOKS,
+      paints: ROOM_PAINTS,
       desktopLine: DESKTOP_LINE,
       apps: APPS_EN,
       ui: UI_EN,
@@ -161,6 +163,7 @@ export function copyFor(lang: Lang) {
     snackLines: ZH.snackLines,
     snackMilestones: ZH.snackMilestones,
     looks: LOOKS.map((l, i) => ({ ...l, line: ZH.looks[i] ?? l.line })),
+    paints: ROOM_PAINTS.map((l, i) => ZH.paints[i] ?? l),
     desktopLine: ZH.desktopLine,
     apps: APPS_EN.map((p) => {
       const t = ZH.projects[p.slug];

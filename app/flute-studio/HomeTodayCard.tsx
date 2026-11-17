@@ -28,16 +28,18 @@ export function HomeTodayCard({zh,now,library,recentIds,statuses,deadlines,routi
   passages?:TrickyBit[];
 }){
   const history=useTempoHistory();
-  const [spots,setSpots]=useState<LeftOff[]>([]),[warmUp,setWarmUp]=useState<ScaleSet|null>(null);
+  const [spots,setSpots]=useState<LeftOff[]>([]),[warmUp,setWarmUp]=useState<ScaleSet|null>(null),[sets,setSets]=useState<ScaleSet[]>([]);
   useEffect(()=>{
-    const load=()=>{const all=readScaleSets();setWarmUp(warmUpSet(all,readSetPlays()));setSpots(readLeftOff())};
+    const load=()=>{const all=readScaleSets();setSets(all);setWarmUp(warmUpSet(all,readSetPlays()));setSpots(readLeftOff())};
     load();
     window.addEventListener(scaleSetsEvent,load);window.addEventListener("storage",load);
     return()=>{window.removeEventListener(scaleSetsEvent,load);window.removeEventListener("storage",load)};
   },[]);
 
   // An excerpt passage's XML is stored as "piece:passage"; the piece is what you open.
-  const itemFor=(id:string)=>library.find(entry=>entry.id===id)??library.find(entry=>id.startsWith(`${entry.id}:`));
+  // A Scale Studio setup on a list (scale-set:<id>) reads as a piece titled with the set's name.
+  const setItem=(id:string)=>{const set=id.startsWith("scale-set:")?sets.find(entry=>`scale-set:${entry.id}`===id):undefined;return set?({id,title:set.name,viewerPath:`/flute-studio/exercises/scales?set=${encodeURIComponent(set.id)}`,status:"published"} as unknown as MusicItem):undefined};
+  const itemFor=(id:string)=>setItem(id)??library.find(entry=>entry.id===id)??library.find(entry=>id.startsWith(`${entry.id}:`));
   const label={leftOff:zh?"上次停在":"Where you left off",working:zh?"正在练":"Working on",coming:zh?"即将到来":"Coming up",warmUp:zh?"今天的热身":"Warm-up today",routine:zh?"练习清单":"Routine"};
 
   // Where you left off: the newest recent that is a score you can open.

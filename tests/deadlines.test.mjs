@@ -1,13 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import ts from 'typescript';
-const compile=source=>ts.transpile(source,{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022});
-const load=source=>import('data:text/javascript,'+encodeURIComponent(compile(source)));
-const read=name=>fs.readFileSync(new URL(`../app/flute-studio/lib/${name}.ts`,import.meta.url),'utf8');
-const statusUrl='data:text/javascript,'+encodeURIComponent(compile(read('musicStatus').replace('import {useEffect,useSyncExternalStore} from "react";','const useEffect=()=>{},useSyncExternalStore=()=>"";')));
-const deadlines=await load(read('deadlines').replace('import {useSyncExternalStore} from "react";','const useSyncExternalStore=()=>"";').replace('./musicStatus',statusUrl));
-const transfer=await load(read('transfer'));
+import {tsModule} from './helpers/ts-module.mjs';
+const react={react:'export const useEffect=()=>{},useSyncExternalStore=()=>"";'};
+const deadlines=await import(tsModule('app/flute-studio/lib/deadlines.ts',{stubs:react}));
+const transfer=await import(tsModule('app/flute-studio/lib/transfer.ts',{stubs:{...react,'./historyMonths':'export const pruneCleared=()=>{};'}}));
 const makeStore=(initial={})=>{const map=new Map(Object.entries(initial));return {get length(){return map.size},key:i=>[...map.keys()][i]??null,getItem:k=>map.get(k)??null,setItem:(k,v)=>map.set(k,String(v)),removeItem:k=>map.delete(k)}};
 const key=deadlines.DEADLINES_KEY;
 const records=()=>JSON.parse(localStorage.getItem(key)??'[]');

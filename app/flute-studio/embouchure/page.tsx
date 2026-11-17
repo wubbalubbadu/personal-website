@@ -28,7 +28,7 @@ function Embouchure(){
  useEffect(()=>{
    const container=host.current!;let renderer:THREE.WebGLRenderer;
    try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});}catch{const message=document.createElement('p');message.setAttribute('role','alert');message.className='emb-error';message.textContent=(zh?"无法启动三维视图，请使用支持 WebGL 的浏览器。":"This browser could not start the 3D viewer. Try a browser with WebGL enabled.");container.appendChild(message);return()=>message.remove();}
-   renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));renderer.setClearColor('#f5f5f7');container.appendChild(renderer.domElement);
+   renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));renderer.setClearColor('#f4f6f9');container.appendChild(renderer.domElement);
    renderer.domElement.setAttribute('aria-label',(zh?"嘴部、舌头、嘴唇与长笛笛头的交互式剖面图":"Interactive side cutaway of mouth, tongue, lips, and flute headjoint"));
    const scene=new THREE.Scene();scene.add(new THREE.HemisphereLight('#ffffff','#8d7477',1.85));const light=new THREE.DirectionalLight('#fff8ec',2.35);light.position.set(-2,4,7);scene.add(light);
    const camera=new THREE.PerspectiveCamera(34,1,.1,100);camera.position.set(-.5,.0,8.8);
@@ -109,7 +109,7 @@ export default function EmbouchurePage(){
  const [view,setView]=useState<'embouchure'|'breathing'>('embouchure');
  return <StudioPage title={(zh?"身体与口型":"Body & embouchure")} backHref="/flute-studio" width="wide">
   <div className="emb">
-   <nav className="emb-views" aria-label={(zh?"身体模型":"Body models")}>
+   <nav className="emb-views view-switch" aria-label={(zh?"身体模型":"Body models")}>
     <button type="button" aria-pressed={view==='embouchure'} onClick={()=>setView('embouchure')}>{(zh?"口型":"Embouchure")}</button>
     <button type="button" aria-pressed={view==='breathing'} onClick={()=>setView('breathing')}>{(zh?"呼吸":"Breathing")}</button>
    </nav>

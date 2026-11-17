@@ -6,7 +6,7 @@
 .studio-art-tile{
   display:grid;place-items:center;flex:0 0 auto;
   width:48px;height:48px;border-radius:13px;
-  background:var(--spectrum,#f1f1f2);background-size:300% 100%;
+  background:var(--spectrum,#edf1f5);background-size:300% 100%;
   color:#fff;
 }
 .hub-art{width:30px;height:24px;overflow:visible}

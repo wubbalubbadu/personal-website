@@ -2,6 +2,8 @@
 
 Source triaged October 19, 2026. Open work, local implementations awaiting acceptance, and completed local history are separated below. The full idea bank is in [COOKIE-TODO-UPDATED.md](COOKIE-TODO-UPDATED.md).
 
+**1.0 launch list (November 14):** [V1-PLAN.md](V1-PLAN.md) gathers what is left before the first release.
+
 This audit does not establish deployment status. Project policy is local edits and local testing only; the user handles Cloudflare Pages deployment. Source presence and passing automated tests do not complete iPhone, iPad, Pencil or real-flute checks.
 
 ## Session maintenance result (October 19, local)
@@ -10,6 +12,52 @@ This audit does not establish deployment status. Project policy is local edits a
 - `npm test` passed the production build and **226 tests**. Added 14 pitch/segmentation/trace behavior tests and repaired two existing test loaders. The same-millisecond deadline regression now passes in the existing source.
 - [COMPONENTS.md](../app/flute-studio/COMPONENTS.md) now identifies stale references, available shared components, and unresolved design-document conflicts. No global restyle was approved by the audit.
 - Review details and remaining maintenance work: [MAINTENANCE-2026-10-19.md](MAINTENANCE-2026-10-19.md).
+
+## Overnight restyle, November 16 (local, uncommitted, awaiting your look)
+
+Done and checked in the browser at laptop, iPad and phone widths unless noted. Rules now live at the top of
+[COMPONENTS.md](../app/flute-studio/COMPONENTS.md).
+
+- **Technique map:** rebuilt as book rows (name, one grey line, tick) under area headings. No tinted boxes, chips or dialog.
+- **Book pages:** rows match the Library row exactly; "Last opened" is grey words.
+- **My Studio:** tighter spacing; Practice insights are colour tiles; square calendar days with no ring; Today and Routine the same height; tricky bits are rows on the page with the trash beside the words.
+- **Breathing Lab:** the ring is gone, replaced by a breath line; three even columns; control card is plain rows (In, Hold, Out, Tempo, Sound) and Start. Body page's drag ring is the same line.
+- **Pitch bar** (long tones and close-up): no dividing lines. Close-up not opened tonight, only long tones.
+- **Smaller:** every page title 28 / 700 at one left edge (Theory index, Body page, Breathing Lab, Sync devices fixed); green buttons on Sync devices and the pitch test are the shared slate button; Body page tabs are the View switch; tools panel tuner box is a green tile and "on" chips are purple.
+
+### Open after tonight, suggested order
+
+1. [x] **Row hover: built C while you were away** (no hover; the row's words dim to 55% while pressed and ease back). One rule at the end of `studio-shared.css`; delete it or say A or B to swap. Rejected earlier: grey band, green title, darker hairlines.
+2. [x] **Tools panel rework: built A while you were away.** Same order; each tool has a heading and one sliders icon for its options (purple while open) instead of three "More" words; no dividing lines; play, drone keys and chips are purple when on; the heard note is a fill, not a ring; Stop all sits with the sounding notes. Checked at laptop and 375px. Not checked: the tuner with a live microphone. B (three colour tiles) and C (metronome first) remain options.
+3. [x] **Test files that failed to load:** all eight load again through one shared loader, `tests/helpers/ts-module.mjs`, which follows a file's imports itself, so a lib file gaining an import no longer breaks its test. Two Chinese wording checks in `score-theory-language` were stale and now match the current copy. 271 of 271 pass (run without the build step).
+4. [x] **ScoreViewer console error:** `balanceSystemBreaks` returns early when the XML has not arrived.
+5. [x] **Long tones labels over the staff:** the reader gets 4 more units between lines, so "Descending, 3 notes" no longer touches the line above. Cost: 4 lines a page instead of 5 at 1180px. The label lost its dash ("Descending, 2 notes").
+6. [x] **Page titles on one left edge:** 24px, 92px down on 12 pages. The Body page is 6px in between about 1100 and 1180px wide only (its content is centred at 1120px); left as is.
+7. [x] **Lint:** (cleared Nov 17, see below) studio was down to 5 errors, all older: `practice/mock/page.tsx` (two set-state-in-effect, two `Date.now` in render) and `ticket-check/page.tsx` (a link with no address). The rest are lab pages and `app/projects`.
+8. [x] **DESIGN.md** rewritten to hold only current values; COMPONENTS.md keeps the rules.
+9. [x] **Leftover rounded and green bits:** the rhythm tap pad is a slate fill with no outline (lilac while live), in drills and close-up; close-up Start is the slate button; Sync devices trash sits beside the words. Left alone on purpose: Cookie's speech bubble in lessons (a character, not a container) and the trill chart's Animate button (already the slate button).
+
+### Late night, Nov 16 to 17 (local, uncommitted)
+
+- [x] **Lint:** 0 errors in the studio, lab and projects. Mock audition: the first draw comes from one seed and the recording clock ticks in state. Ticket check link fixed. The only errors left anywhere are in `.private-music` scripts.
+- [x] **Tempo words:** `wordTempo` in `lib/scoreTempo.ts` now reads words without accents ("Modere", "MASSIG"), knows a bare "Animé" (120 to 144), "Tempo di menuetto" (108 to 132), "con brio" (three quarters up its range) and "sostenuto" (a quarter up), and "nicht zu", "ziemlich" as softeners. Your call: are those placements right?
+- [x] **Clear history by month** now also clears that month's tempo days and pitch lines, and says so ("1 day of tempos", "2 pitch lines"). 8 new tests.
+- [x] **Dead CSS:** 127 unused classes removed from 7 older files (the old tools dock file went from 869 to 241 lines). The agent wrongly removed the Library's `library-shell` and `library-main`; those lines are restored and the Library checked. Look at Home, Library, My Studio and a reader once in passing.
+- [ ] **Not done (stopped by the usage limit):** reader popovers reachable by keyboard, more lib tests, and the design rule audits of the Learn pages and the charts. Nothing of theirs was written.
+
+### Phone reader (Nov 16, late)
+
+- [x] **Toolbar blinked on Next page** (phone): fixed with `tuckHoldRef` in ScoreViewer.
+- [x] **Phone reader bars rebuilt** (phone widths only). Two rows, about 88px. Dots (`components/PhoneMore.tsx`): Draw, Record, Tempos, Focus mode, Practice timer, Practice tools, Settings.
+- [x] **Checked since:** excerpt pages with the second reader (Leonore 3) and a PDF piece (Gold Dust) fit at 375px; from the dots, Draw opens the drawing bar, Practice timer starts and the running clock stays in the top row, Settings opens its sheet, Focus mode hides the title row and the dots then offer "Leave focus mode". The dots rows now say "Focus mode" and "Practice timer" instead of the long button names.
+- [ ] **Still not checked:** Record from the dots and a recording in progress (the mic is blocked in the test browser); a real iPhone. In focus mode the dots have no Practice tools row; decide if that is wanted.
+- [ ] **Open questions:** order of the second row (Customize sits before Drone); whether Draw should come back out of the dots; pressed shapes on the metronome and page turner need your eye on a real phone.
+
+### Ideas parked tonight
+
+- **NEC practice room map:** dropped. NEC's MIDAS site shows availability without a login, but 33 Gainsborough is walk-in (63 of 82 rooms had no booking all day), so a map would mislead; Jordan Hall alone (32 rooms) is too small to matter.
+- **Hour grid study room:** not started; judged another toy.
+- **Warm up with me videos:** not discussed further. Worth a real conversation: it is the idea tied to income and to the studio.
 
 ## 1. Check on a real iPhone, iPad and flute (while practising)
 
@@ -32,7 +80,7 @@ The previous note recorded user deployment through October 11. That is historica
 ## 2. Known problems
 
 - [ ] **Remaining lint debt:** 25 warnings, mostly reader/notation effect dependencies. Audit effect ownership and callback stability before changing dependency arrays; verify playback, layout changes, unmount cleanup and saved preferences. Do not suppress them globally.
-- [ ] **Dialog focus handling:** the shared `components/Dialog.tsx` handles Escape and backdrop dismissal, but has no shared focus trap or restoration. Preserve the roadmap's existing focus handling if consolidating its custom dialog.
+- [x] **Dialog focus handling** (Nov 16): the shared Dialog moves focus in, keeps Tab inside and returns focus to the opener (`lib/focusTrap.ts`, 8 tests). Needs a keyboard check: deadline dialog opens with focus on Close (not the Name field, to keep the iPad keyboard down); tricky bit dialog arrows and Tab.
 - [ ] **Component documentation conflicts:** reconcile typography, card borders and selection-color rules identified in COMPONENTS.md before a broad visual cleanup. Historical measurements are not current computed-style evidence.
 
 - [ ] **Tempo pill would not change in full screen** (iPad, 2026-10-10, not reproduced). Likely Safari's full-screen × sitting over the toolbar; touch devices no longer use Safari full screen (2026-10-11), so recheck in focus mode.
@@ -58,6 +106,8 @@ The previous note recorded user deployment through October 11. That is historica
 - [ ] **Fancier tuner, metronome and drone** (October 21): their cards get options: choose the click sound and accents, choose the drone sound, tuner calibration (A = 440, 442, 443 and so on).
 
 - [ ] **Tempo word without a metronome mark** (Moderato, Allegro): use the word's usual speed range. Needs a rule first.
+- [x] **Scale total instead of a heat map** (November 14): the colour square was dropped as confusing. Each scale's tally in Scale Studio and Cookie's scale book now has its all-time count to the right ("7 total", `RepTotal` in `components/RepPill.tsx`), shown once there is at least one. One octave, full range, a custom range and groupings of the same scale and key share one total (decided November 14, `totalGroup` in `lib/repLog.ts`); thirds, fourths and so on stay their own. Today's tally and My Studio's "Most practised" still count each version apart.
+- [ ] **Warm-up melodies in the routine** (November 14): melody exercises as steps in your own warm-up routine, not only scales and long tones. Was listed under paused experiments with no detail. Needs a plan first: which melodies, where they come from, how they sit in a routine.
 - [ ] **Personal settings:** design what is remembered globally, per saved set and per exercise, then build.
 
 ## Built locally, acceptance still open (source checked October 19)
@@ -125,7 +175,7 @@ The previous note recorded user deployment through October 11. That is historica
 - [ ] **Real-device checks:** mock audition recording, offline sheet music on iPad, new tool sounds, score-following swipes.
 - [x] **/lab/cat-host** (Codex): deleted October 25 (moved to the Trash).
 - [x] **NEC framing:** "master's in flute performance" everywhere (October 25).
-- [ ] **Paused experiments, no code yet:** sight-reading generator, blind intonation and attack map, warm-up melodies, breath budget, tendency test extras, markup manager, overtone playground, memory mode, interval X-ray, recommend me a piece.
+- [ ] **Paused experiments, no code yet:** sight-reading generator, blind intonation and attack map, breath budget, tendency test extras, markup manager, overtone playground, memory mode, interval X-ray, recommend me a piece.
 
 ## 3D handheld landing (/lab/handheld-3d), open as of Nov 5
 - Cartridge role: right now it repeats what the room already shows (the laptop has the projects). Choices: each cartridge plays a mini demo on the screen, or drop the cartridges. Haylie decides.

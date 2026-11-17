@@ -200,6 +200,11 @@ function CatHostInner({ device }: { device: Device }) {
   const openSheet = useOpenSheet();
 
   const engineRef = useRef<MascotEngine | null>(null);
+  /* Which paint style the studio is in (the desk's paintbrush steps through
+     them). Every visit starts in the striped room (her call), so it isn't
+     remembered. */
+  const [paint, setPaint] = useState(0);
+  const paintRef = useRef(0);
   const [ready, setReady] = useState(false);
   /* She looks straight at you through the boot and the first 5 seconds after
      it (the hello), and only then starts following the cursor. */
@@ -207,6 +212,7 @@ function CatHostInner({ device }: { device: Device }) {
   const onEngine = useCallback((e: MascotEngine | null) => {
     engineRef.current = e;
     setReady(Boolean(e));
+    if (e) e.setStudioStyle(paintRef.current);
     if (e) e.holdGaze(bootedAtRef.current ? Math.max(0, bootedAtRef.current + 5000 - performance.now()) : Infinity);
   }, []);
 
@@ -312,10 +318,11 @@ function CatHostInner({ device }: { device: Device }) {
     if (mode === "desktop" && item) return [{ kind: "text", value: C.desktopLine }];
     // A cookie's lines read as one little speech, not a click per sentence.
     if (mode === "item" && item?.snack) return [{ kind: "text", value: C.join(snackLines) }];
+    if (mode === "item" && item?.paint) return [{ kind: "text", value: C.paints[paint] }];
     if (mode === "item" && item?.closet) return [{ kind: "text", value: C.looks[Math.max(0, look)].line }];
     if (mode === "item" && item) return item.topic ? C.answerPages(item.topic) : [{ kind: "text", value: item.body }];
     return [{ kind: "text", value: C.intro }];
-  }, [mode, topic, item, app, snackLines, look, question, C]);
+  }, [mode, topic, item, app, snackLines, look, paint, question, C]);
   const node = pages[Math.min(page, pages.length - 1)];
   const text = fix(nodeText(node));
   const done = n >= text.length;
@@ -398,9 +405,12 @@ function CatHostInner({ device }: { device: Device }) {
   /* While answering a question, the cat looks at what the current page is about. */
   const focus = mode === "topic" && !unfocused ? focusFor(text, topic) : null;
   const looking = selected ?? focus?.item ?? null;
+  /* Repainting: the camera pulls back to the whole room, so you see the new
+     walls (zoomed in on the brush you'd see none of it). */
+  const repainting = mode === "item" && selected === "brush";
   useEffect(() => {
-    if (ready) engineRef.current?.select(looking, close);
-  }, [ready, looking, close]);
+    if (ready) engineRef.current?.select(repainting ? null : looking, close && !repainting);
+  }, [ready, looking, close, repainting]);
   /* Dress-up: on as soon as you hover or pick the thing, so you see it before the
      camera zooms in (and away from her). */
   const near = (...ids: ItemId[]) => ids.some((id) => id === selected || id === hovered);
@@ -455,6 +465,13 @@ function CatHostInner({ device }: { device: Device }) {
         eatenRef.current += 1;
         setEaten(eatenRef.current);
         setSnackLines(lines);
+      }
+      if (it.paint) {
+        const next = (paintRef.current + 1) % C.paints.length;
+        paintRef.current = next;
+        setPaint(next);
+        engineRef.current?.setStudioStyle(next);
+        line = C.paints[next];
       }
       if (it.closet) {
         const next = (lookRef.current + 1) % C.looks.length;
@@ -549,6 +566,8 @@ function CatHostInner({ device }: { device: Device }) {
   const holding = (mode === "item" || mode === "desktop") && Boolean(questions);
   /* At the closet the one choice is the next outfit. */
   const dressing = mode === "item" && selected === "closet";
+  /* At the paintbrush the one choice is the next colour. */
+  const painting = mode === "item" && selected === "brush";
   /* Looking at a project on the laptop: its actions are your choices. */
   const atProject = mode === "app";
   /* The thing's own links (open the résumé, write to me, the socials, a
@@ -568,6 +587,7 @@ function CatHostInner({ device }: { device: Device }) {
         { key: "all", label: C.ui.allProjects },
       ];
     if (dressing) return [{ key: "look", label: C.ui.anotherLook }];
+    if (painting) return [{ key: "paint", label: C.ui.paintAgain }];
     const go: Option[] = [
       ...(extras?.open ? [{ key: "open", label: extras.open.label, href: extras.open.href, main: true }] : []),
       ...(extras?.links ?? []).map((l, i) => {
@@ -589,9 +609,9 @@ function CatHostInner({ device }: { device: Device }) {
       ];
     if (mode === "item") return go;
     return TOPICS.filter((t) => !(mode === "topic" && t === topic)).map((t) => ({ key: t, label: C.topicAsk[t], topic: t }));
-  }, [atProject, app, dressing, extras, holding, questions, asked, mode, topic, C]);
+  }, [atProject, app, dressing, painting, extras, holding, questions, asked, mode, topic, C]);
   const showChoices =
-    done && last && (mode === "intro" || mode === "topic" || holding || dressing || atProject || (mode === "item" && options.length > 0));
+    done && last && (mode === "intro" || mode === "topic" || holding || dressing || painting || atProject || (mode === "item" && options.length > 0));
   const choose = useCallback(
     (o: Option) => {
       if (atProject) {
@@ -600,10 +620,11 @@ function CatHostInner({ device }: { device: Device }) {
         else goTo(o.key === "details" ? detailsHref(app) : "/projects");
       } else if (o.href) goTo(o.href);
       else if (o.key === "look" && dressing) inspect("closet");
+      else if (o.key === "paint" && painting) inspect("brush");
       else if (o.topic) ask(o.topic);
       else if (questions?.[o.key]) askAbout(o.key, questions[o.key]);
     },
-    [ask, askAbout, questions, dressing, inspect, atProject, app, dive, goTo, showApp, APPS.length],
+    [ask, askAbout, questions, dressing, painting, inspect, atProject, app, dive, goTo, showApp, APPS.length],
   );
   const [choice, setChoice] = useState(0);
   const cursor = Math.min(choice, options.length - 1);
@@ -857,6 +878,7 @@ function CatHostInner({ device }: { device: Device }) {
     if (o.topic || questions?.[o.key]) return "Ask";
     if (o.key === "next") return "Next project";
     if (o.key === "look") return "Try it on";
+    if (o.key === "paint") return "Repaint";
     if (o.key === "details") return "Details";
     if (o.key === "all") return "All projects";
     const href = o.href ?? (o.key === "open" ? app.href : undefined);

@@ -14,8 +14,8 @@
    stacking a big margin here on top of that left a visible dead gap. */
 .exercise-hub__tabs{display:flex;flex-wrap:wrap;gap:6px;overflow:visible;margin:8px 0 24px;scrollbar-width:none}
 .exercise-hub__tabs::-webkit-scrollbar{display:none}
-.exercise-hub__tabs button{flex:0 0 auto;height:34px;display:inline-flex;align-items:center;justify-content:center;line-height:1;border:0;border-radius:17px;padding:0 15px;background:#f1f1f4;color:#5a5c63;font:inherit;font-size:12px;text-transform:uppercase;letter-spacing:.02em;font-weight:650;cursor:pointer;transition:background-color .16s ease,color .16s ease}
-.exercise-hub__tabs button:hover{background:#e6e6ea}
+.exercise-hub__tabs button{flex:0 0 auto;height:34px;display:inline-flex;align-items:center;justify-content:center;line-height:1;border:0;border-radius:17px;padding:0 15px;background:#edf1f5;color:#5a5c63;font:inherit;font-size:12px;text-transform:uppercase;letter-spacing:.02em;font-weight:650;cursor:pointer;transition:background-color .16s ease,color .16s ease}
+.exercise-hub__tabs button:hover{background:#e2e8ef}
 .exercise-hub__tabs button.active{background:#292a33;color:#fff}
 
 .exercise-hub__list{overflow:hidden;border-radius:20px;background:white;box-shadow:0 10px 30px rgba(41,42,51,.08);margin-bottom:30px}
@@ -33,7 +33,7 @@
    focus area (see StudioItemIcon), no per-row colour. The mark alone
    carries the category, and the monochrome treatment is what tells an
    exercise apart from a piece of music in the Library's mixed list. */
-.exercise-hub__icon{width:48px;height:48px;border-radius:13px;display:grid;place-items:center;background:#f1f1f2;color:#292a33}
+.exercise-hub__icon{width:48px;height:48px;border-radius:13px;display:grid;place-items:center;background:#edf1f5;color:#292a33}
 .exercise-hub__copy{min-width:0;display:block}
 .exercise-hub__copy strong{display:block;font-size:16px;line-height:1.25;font-weight:600;letter-spacing:-.01em}
 .exercise-hub__copy small{display:block;margin-top:3px;font-size:13px;color:#72747c}

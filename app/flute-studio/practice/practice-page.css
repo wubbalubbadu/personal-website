@@ -20,12 +20,12 @@
 .focus-card__duration{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:6px}
 .focus-card__duration span{min-width:56px;font-size:13px;font-weight:600;color:#5a5c63;font-variant-numeric:tabular-nums}
 .focus-card__duration button{width:26px;height:26px;border:1px solid #e2e2e6;border-radius:50%;background:#fff;color:#5a5c63;font-size:15px;line-height:1;cursor:pointer}
-.focus-card__duration button:hover:not(:disabled){background:#f5f5f7}
+.focus-card__duration button:hover:not(:disabled){background:#f4f6f9}
 .focus-card__duration button:disabled{opacity:.35;cursor:default}
 .focus-card__actions{display:grid;grid-template-columns:44px 1fr;gap:10px;margin-top:20px}
 .focus-card__reset,.focus-card__primary{height:44px;border:0;border-radius:14px;cursor:pointer;font-size:14px;font-weight:650}
-.focus-card__reset{display:grid;place-items:center;background:#f1f1f4;color:#5a5c63}
-.focus-card__reset:hover{background:#e6e6ea}
+.focus-card__reset{display:grid;place-items:center;background:#edf1f5;color:#5a5c63}
+.focus-card__reset:hover{background:#e2e8ef}
 .focus-card__primary{background:#678956;color:#fff}
 .focus-card__primary:hover{background:#557747}
 .focus-card>small{display:block;margin-top:14px;font-size:12px;color:#85868e}
@@ -60,7 +60,7 @@
 /* Recently opened / Saved — compact lists, since they are a way back to
    something rather than a thing to read. */
 .studio-mini-list { list-style: none; margin: 4px 0 0; padding: 0; display: grid; }
-.studio-mini-list li + li { border-top: 1px solid #f0f0f2; }
+.studio-mini-list li + li { border-top: 1px solid #edf1f5; }
 .studio-mini-list a {
   display: grid; gap: 2px; padding: 9px 4px;
   color: inherit; text-decoration: none; border-radius: 8px;
@@ -118,7 +118,7 @@
 .pitch-card__subhead{margin-top:18px!important}
 .pitch-card__focus.is-fixed b{color:#40553d}
 .pitch-map__cell b i{font-style:normal;font-weight:500}
-.pitch-card__test{margin-left:auto;font-size:14px;font-weight:600;color:#46633d;text-decoration:none;white-space:nowrap}
+.pitch-card__test{margin-left:auto;font-size:14px;font-weight:600;color:#292a33;text-decoration:none;white-space:nowrap}
 
 /* My Studio follows the app's quiet card hierarchy: work first, data below. */
 .practice-page__content> :is(.studio-work,.studio-data,.studio-tracker){margin-bottom:28px}
@@ -135,7 +135,7 @@
 .studio-status-card h2 a{display:flex;align-items:center;gap:8px;color:inherit;text-decoration:none}
 .studio-status-card h2 a:hover{color:#79588e}
 .practice-page .studio-mini-list a{padding:10px 8px;margin-inline:-8px}
-.practice-page .studio-mini-list a:hover{background:#f1f1f4}
+.practice-page .studio-mini-list a:hover{background:#edf1f5}
 .practice-page .practice-card__empty{font-size:13px;margin-top:12px;color:#71747e}
 .practice-page .practice-card__empty a{color:#79588e;text-decoration:none}
 .practice-page .focus-card__clock{font-size:44px;font-weight:600}
@@ -192,10 +192,10 @@
 .practice-page .studio-shelf .continue-section p{margin-bottom:10px}
 .practice-page .studio-shelf .continue-section p a{color:inherit;text-decoration:none}
 .practice-page .studio-shelf .continue-section p a:hover{color:#292a33}
-.practice-page .studio-shelf .status-dot{width:7px;height:7px}
+.practice-page .studio-shelf .status-dot{width:13px;height:13px}
 .practice-page .studio-shelf ul{gap:2px}
 .practice-page .studio-shelf li :is(a,span){display:block;margin:0 -10px;padding:8px 10px;border-radius:10px;color:inherit;text-decoration:none}
-.practice-page .studio-shelf li a:hover{background:#f5f5f7}
+.practice-page .studio-shelf li a:hover{background:#f4f6f9}
 .practice-page .studio-shelf li span.is-disabled{opacity:.5}
 .practice-page .studio-shelf li b{display:block;font-size:14px;font-weight:600;line-height:1.3}
 .practice-page .studio-shelf li small{display:block;margin-top:2px;font-size:12px;color:#85868e}
@@ -230,7 +230,7 @@
 .routine-delete:focus-visible{outline:2px solid #b8bac2;outline-offset:1px}
 .routine-delete svg{width:17px;height:17px}
 @media(hover:none){.routine-delete{opacity:1}}
-.routine-add{display:flex;align-items:center;gap:10px;height:46px;margin:0;padding:0 6px 0 14px;border-radius:12px;background:#f5f5f7;color:#85868e}
+.routine-add{display:flex;align-items:center;gap:10px;height:46px;margin:0;padding:0 6px 0 14px;border-radius:12px;background:#f4f6f9;color:#85868e}
 .routine-add>svg{flex:0 0 auto;width:17px;height:17px}
 .routine-add input{flex:1;min-width:0;height:100%;border:0;background:transparent;outline:0;font:inherit;font-size:14px;color:#292a33}
 .routine-add:focus-within{box-shadow:inset 0 0 0 1.5px #c9cbd1}
@@ -238,7 +238,7 @@
 .routine-add button:hover{background:#fafafa}
 .routine-suggestions{list-style:none;margin:6px 0 0;padding:6px;border-radius:14px;background:#fff;box-shadow:0 10px 30px rgba(41,42,51,.1)}
 .routine-suggestions button{display:block;width:100%;padding:9px 10px;border:0;border-radius:10px;background:transparent;text-align:left;font:inherit;font-size:14px;color:inherit;cursor:pointer}
-.routine-suggestions button:hover,.routine-suggestions button.is-active{background:#f5f5f7}
+.routine-suggestions button:hover,.routine-suggestions button.is-active{background:#f4f6f9}
 .routine-suggestions small{display:block;margin-top:2px;font-size:12px;color:#85868e}
 .routine-card .practice-card__empty{margin-top:12px}
 
@@ -307,10 +307,10 @@
 .studio-day{display:flex;flex-direction:column}
 .studio-day__total{font-size:14px;color:#71747e}
 .studio-day__list{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:2px}
-.studio-day__list li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;padding:10px 0;border-bottom:1px solid #f0f0f2}
+.studio-day__list li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;padding:10px 0;border-bottom:1px solid #edf1f5}
 .studio-day__list li:last-child{border-bottom:0}
 .studio-day__list .history-day__note{grid-column:1/-1;margin:2px 0 0}
-.studio-day .stats-row{margin-top:auto;padding-top:20px;border-top:1px solid #f0f0f2;grid-template-columns:repeat(4,minmax(0,1fr))}
+.studio-day .stats-row{margin-top:auto;padding-top:20px;border-top:1px solid #edf1f5;grid-template-columns:repeat(4,minmax(0,1fr))}
 .studio-day .practice-card__empty{margin:14px 0 20px}
 @media(max-width:760px){.studio-month{grid-template-columns:1fr}.studio-day .stats-row{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
@@ -322,7 +322,7 @@
 .studio-month .calendar-card .calendar-grid{grid-template-columns:repeat(7,36px);gap:4px}
 .studio-month .calendar-card .calendar-grid__cell{height:36px;font-size:13px;border-radius:9px}
 .studio-month .calendar-card .calendar-grid__weekday{font-size:12px}
-.studio-month .calendar-card .stats-row{margin-top:18px;padding-top:16px;border-top:1px solid #f0f0f2;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}
+.studio-month .calendar-card .stats-row{margin-top:18px;padding-top:16px;border-top:1px solid #edf1f5;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}
 .studio-month .calendar-card .stats-row b{font-size:22px}
 @media(max-width:760px){.studio-month{grid-template-columns:1fr}.studio-month .calendar-card .calendar-grid{grid-template-columns:repeat(7,minmax(0,1fr))}}
 
@@ -336,7 +336,7 @@
 .practice-today__total{margin-top:4px;font-size:14px;color:#71747e;font-variant-numeric:tabular-nums}
 .practice-today__clock .suggest-field{align-self:stretch;margin-top:16px;text-align:left}
 .practice-today__actions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:auto;padding-top:20px;align-self:stretch}
-.practice-today__actions button{height:44px;padding:0 16px;border:0;border-radius:13px;background:#f1f1f4;color:#3d3f47;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.practice-today__actions button{height:44px;padding:0 16px;border:0;border-radius:13px;background:#edf1f5;color:#3d3f47;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
 .practice-today__actions button:hover{background:#e8e8ec}
 .practice-today__actions .practice-today__primary{flex:1;background:#e7eee3;color:#40553d}
 .practice-today__actions .practice-today__primary:hover{background:#dce8d7}
@@ -347,7 +347,7 @@
 .practice-today__reset{margin-left:auto;padding:0;border:0;background:none;font:inherit;font-size:14px;font-weight:600;color:#71747e;cursor:pointer}
 .practice-today__reset:hover{color:#292a33}
 /* The step you are on stands out: a soft grey row with a dark ring on its circle. */
-.routine-list li.is-current{background:#f5f5f7}
+.routine-list li.is-current{background:#f4f6f9}
 .routine-list li.is-current .routine-list__check span{border-color:#292a33}
 .practice-today .routine-list{margin-bottom:12px}
 @media(max-width:760px){.practice-today{grid-template-columns:1fr}.practice-today__clock{border-right:0;border-bottom:1px solid #eeefec}}
@@ -373,23 +373,23 @@
 .studio-day__list li{grid-template-columns:minmax(0,1fr) auto 34px;align-items:center}
 .studio-day__delete{display:grid;place-items:center;width:32px;height:32px;padding:0;border:0;border-radius:9px;background:transparent;color:#9a9ca3;cursor:pointer;opacity:0;transition:opacity .12s}
 .studio-day__list li:hover .studio-day__delete,.studio-day__delete:focus-visible{opacity:1}
-.studio-day__delete:hover{background:#f1f1f4;color:#5a5c63}
+.studio-day__delete:hover{background:#edf1f5;color:#5a5c63}
 .studio-day__delete svg{width:16px;height:16px}
 @media(hover:none){.studio-day__delete{opacity:1}}
-.studio-day__undo{margin:12px 0 0;padding:8px 12px;border-radius:10px;background:#f5f5f7;font-size:14px;color:#5a5c63}
+.studio-day__undo{margin:12px 0 0;padding:8px 12px;border-radius:10px;background:#f4f6f9;font-size:14px;color:#5a5c63}
 .studio-day__undo button{margin-left:6px;padding:0;border:0;background:none;font:inherit;font-weight:650;color:#292a33;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 
 .practice-today__clock .session-review{align-self:stretch;margin:16px 0 4px;padding:14px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px #ececef}
 
 /* Deadlines (lib/deadlines.ts): the + button by the title, Coming up cards with a pill per piece, Past folded away. */
 .practice-page .practice-page__header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
-.practice-page__add-deadline{flex:none;height:34px;padding:0 14px;border:0;border-radius:999px;background:#f1f1f2;color:#5f6169;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.practice-page__add-deadline{flex:none;height:34px;padding:0 14px;border:0;border-radius:999px;background:#edf1f5;color:#5f6169;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
 .practice-page__add-deadline:hover{background:#e7e7ea;color:#292a33}
 .practice-page .deadlines{margin:0 0 16px}
 .deadline-card{margin:0 0 10px;padding:16px 20px;border-radius:20px;background:#fff;box-shadow:0 0 0 1px #ececef}
 .deadline-card__head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
 .deadline-card__name{padding:0;border:0;background:none;font:inherit;font-size:16px;font-weight:650;color:#292a33;text-align:left;cursor:pointer}
-.deadline-card__name:hover{color:#46633d}
+/* green name hover removed (Nov 14) */
 .deadline-card__end{display:inline-flex;align-items:baseline;gap:14px;flex:none}
 .deadline-card__when{flex:none;font-size:12.5px;font-weight:600;color:#765d31;background:#f3ead6;padding:3px 10px;border-radius:999px}
 .deadline-card__pieces{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0;padding:0;list-style:none}
@@ -409,7 +409,7 @@
 .deadline-dialog__pieces button:hover{color:#292a33}
 .deadline-dialog__error{margin:8px 0 0;font-size:13px;color:#a2402d}
 .deadline-dialog__actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
-.deadline-dialog__actions button{height:38px;padding:0 16px;border:0;border-radius:999px;background:#f1f1f2;color:#3f4048;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.deadline-dialog__actions button{height:38px;padding:0 16px;border:0;border-radius:999px;background:#edf1f5;color:#3f4048;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
 .deadline-dialog__actions .deadline-dialog__save{background:#46633d;color:#fff}
 .deadline-dialog__actions .deadline-dialog__delete{margin-right:auto;background:none;color:#a2402d}
 @media(max-width:560px){.deadline-dialog__row{grid-template-columns:1fr}.deadline-card{padding:14px 16px}}
@@ -417,12 +417,12 @@
 /* Working on as cards (Edit shows a remove button on each), then the folded lists: tricky bits, want, learned, recent. */
 .practice-page .working{margin:0 0 18px}
 .working__head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
-.working__edit{height:30px;padding:0 12px;border:0;border-radius:999px;background:none;color:#46633d;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.working__edit{height:30px;padding:0 12px;border:0;border-radius:999px;background:none;color:#292a33;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
 .working__edit:hover,.working__edit[aria-pressed="true"]{background:#e4ecdf}
 .working__grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin:0;padding:0;list-style:none}
 .working-card .working-card__meta{margin-top:6px;color:#6f7078}
 .working-card .tag-pill{margin-top:8px}
-.working-card__remove{position:absolute;top:8px;right:8px;display:grid;place-items:center;width:28px;height:28px;border:0;border-radius:999px;background:#f1f1f2;color:#5f6169;cursor:pointer}
+.working-card__remove{position:absolute;top:8px;right:8px;display:grid;place-items:center;width:28px;height:28px;border:0;border-radius:999px;background:#edf1f5;color:#5f6169;cursor:pointer}
 .working-card__remove:hover{background:#f4e4de;color:#825747}
 .studio-folds{display:grid;margin:0 0 28px;border-top:1px solid #ececef}
 .studio-fold{border-bottom:1px solid #ececef}
@@ -433,11 +433,11 @@
 .studio-fold summary small{font-size:13px;font-weight:500;color:#9a9ba2}
 .studio-fold__list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:2px 16px;margin:0 0 6px;padding:0;list-style:none}
 .studio-fold__list :is(a,span){display:block;padding:8px 6px;border-radius:10px;color:inherit;text-decoration:none}
-.studio-fold__list a:hover{background:#f5f5f7}
+.studio-fold__list a:hover{background:#f4f6f9}
 .studio-fold__list span.is-disabled{opacity:.5}
 .studio-fold__list b{display:block;font-size:14px;font-weight:600;line-height:1.3}
 .studio-fold__list small{display:block;margin-top:2px;font-size:12.5px;color:#85868e}
-.studio-fold__more{display:inline-block;margin:0 6px 14px;color:#46633d;font-size:13px;font-weight:600;text-decoration:none}
+.studio-fold__more{display:inline-block;margin:0 6px 14px;color:#292a33;font-size:13px;font-weight:600;text-decoration:none}
 @media(max-width:560px){.working__grid{grid-template-columns:1fr 1fr;gap:8px}}
 .working__grid.is-tidying .working-card>:is(a,span){padding-right:44px}
 
@@ -455,7 +455,7 @@
 .practice-page .practice-today__clock .session-review{flex-basis:100%}
 .practice-page .practice-today__steps{padding:18px 24px 14px}
 .practice-page .practice-today .routine-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:28px;row-gap:0;margin:0}
-.practice-page .practice-today .routine-list li{min-height:46px;padding:0 2px;border-radius:0;border-bottom:1px solid #f0f0f2;background:none}
+.practice-page .practice-today .routine-list li{min-height:46px;padding:0 2px;border-radius:0;border-bottom:1px solid #edf1f5;background:none}
 .practice-page .practice-today .routine-list li:hover,.practice-page .practice-today .routine-list li.is-current{background:none}
 .practice-page .practice-today .routine-list li.is-current .routine-list__text{font-weight:600}
 .practice-page .practice-today .routine-delete:hover{background:none;color:#292a33}
@@ -475,8 +475,8 @@
 /* Section heads with their one action (+ Deadline), shelves with a real heading and a count, cards that lift like the
    home page's preview cards, and a trash icon (shown on hover, always on touch) to take a piece off Working on. */
 .practice-page .section-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
-.section-head__action{flex:none;padding:0;border:0;background:none;color:#46633d;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
-.section-head__action:hover{color:#2f4628}
+.section-head__action{flex:none;padding:0;border:0;background:none;color:#292a33;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.section-head__action:hover{color:#292a33}
 .practice-page .shelf{margin:0 0 22px}
 .practice-page .shelf__title small{margin-left:8px;font-size:15px;font-weight:500;color:#9a9ba2;letter-spacing:0}
 .practice-page .shelf__title button{display:inline-flex;align-items:baseline;padding:0;border:0;background:none;font:inherit;color:inherit;letter-spacing:inherit;cursor:pointer}
@@ -504,7 +504,7 @@
 .practice-page .practice-today .routine-list li.is-current .routine-list__text{font-weight:inherit;color:#292a33}
 .practice-page .practice-today .routine-list li.is-current .routine-list__check span{border-color:#46633d;border-width:2px}
 .practice-page .routine-list__text{padding:12px 0;border:0;background:none;font:inherit;font-size:15px;color:inherit;text-align:left;cursor:pointer}
-.practice-page .routine-list__open{flex:none;font-size:13px;font-weight:600;color:#46633d;text-decoration:none;opacity:0;transition:opacity .12s}
+.practice-page .routine-list__open{flex:none;font-size:13px;font-weight:600;color:#292a33;text-decoration:none;opacity:0;transition:opacity .12s}
 .practice-page .routine-list li:hover .routine-list__open,.practice-page .routine-list__open:focus-visible{opacity:1}
 @media(hover:none){.practice-page .routine-list__open{opacity:1}}
 .practice-page .shelf__title .chevron-icon{align-self:center;width:22px;height:22px;margin-left:10px;color:#6f7078;transition:transform .15s}
@@ -513,7 +513,7 @@
 /* The clock's controls as one soft pill (the approved floating-control look): white, hairline border, round icon buttons. */
 .practice-page .practice-today__actions{display:inline-flex;gap:2px;padding:3px;border:1px solid #d4d5da;border-radius:999px;background:#fff;box-shadow:0 3px 10px rgba(41,42,51,.08)}
 .practice-page .practice-today__actions button,.practice-page .practice-today__actions .practice-today__primary{flex:none;display:grid;place-items:center;width:38px;min-width:0;height:38px;padding:0;border:0;border-radius:999px;background:transparent;color:#292a33}
-.practice-page .practice-today__actions button:hover{background:#f1f1f4}
+.practice-page .practice-today__actions button:hover{background:#edf1f5}
 .practice-page .practice-today__actions svg{width:18px;height:18px}
 
 /* Repetitions (lib/repLog.ts): the day's list in the day panel, and the all-time "Most practised" card. */
@@ -526,7 +526,7 @@
 .practice-page .most-practised{margin:0 0 20px}
 .most-practised h2{margin:0 0 10px;font-size:16px;font-weight:600}
 .most-practised ol{display:grid;gap:2px;margin:0;padding:0;list-style:none}
-.most-practised li{display:grid;grid-template-columns:24px minmax(0,1fr) auto;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px solid #f2f2f4}
+.most-practised li{display:grid;grid-template-columns:24px minmax(0,1fr) auto;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px solid #f4f6f9}
 .most-practised li:last-child{border-bottom:0}
 .most-practised__rank{font-size:13px;font-weight:600;color:#9a9ba2;font-variant-numeric:tabular-nums}
 .most-practised__title{font-size:15px;color:#292a33;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -596,12 +596,12 @@
 .practice-page .list-stacks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:4px 0 14px}
 .list-stack__title{display:flex;align-items:baseline;gap:8px;margin:0 0 12px;font-size:16px;font-weight:600;color:#292a33}
 .list-stack__title a{color:#292a33;text-decoration:none}
-.list-stack__title a:hover{color:#46633d}
+/* green title hover removed (Nov 14) */
 .list-stack__title small{font-size:13px;font-weight:500;color:#9a9ba2}
 .list-stack__pile{position:relative;display:block;width:100%;padding:0 0 10px;border:0;background:none;text-align:left;cursor:pointer;font:inherit}
-.list-stack__pile.has-more::before,.list-stack__pile.has-more::after{content:"";position:absolute;left:10px;right:10px;bottom:5px;height:40px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px #e6e6ea;transition:transform .2s ease}
+.list-stack__pile.has-more::before,.list-stack__pile.has-more::after{content:"";position:absolute;left:10px;right:10px;bottom:5px;height:40px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px #e2e8ef;transition:transform .2s ease}
 .list-stack__pile.has-more::before{left:20px;right:20px;bottom:0}
-.list-stack__card{position:relative;z-index:1;display:flex;flex-direction:column;gap:2px;padding:12px 14px 13px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px #e6e6ea;transition:box-shadow .15s}
+.list-stack__card{position:relative;z-index:1;display:flex;flex-direction:column;gap:2px;padding:12px 14px 13px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px #e2e8ef;transition:box-shadow .15s}
 .list-stack__card b{font-size:15px;font-weight:600;color:#292a33;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .list-stack__card small{font-size:13px;color:#85868e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .list-stack__pile:hover .list-stack__card{box-shadow:0 0 0 1px #c9cbd1}
@@ -637,7 +637,7 @@
    no outline or shadow to stand apart. */
 @media(max-width:600px){
   .practice-page .practice-page__content .home-preview__group{margin-top:12px!important}
-  html body .practice-page{background:#f5f5f7}
+  html body .practice-page{background:#f4f6f9}
   html body .practice-page :is(.practice-card,.studio-status-grid,.studio-data-grid){box-shadow:none!important;border:0!important;background:#fff}
 }
 @media(max-width:600px){
@@ -664,7 +664,7 @@
 .getting-faster h2{margin:0 0 10px;font-size:16px;font-weight:600}
 .practice-page .getting-faster .section-head{align-items:center}
 .getting-faster ol{display:grid;gap:2px;margin:0;padding:0;list-style:none}
-.getting-faster li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid #f2f2f4}
+.getting-faster li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid #f4f6f9}
 .getting-faster li:last-child{border-bottom:0}
 .getting-faster__title{min-width:0;font-size:15px;color:#292a33;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .getting-faster__title small{display:block;font-size:12px;color:#85868e}
@@ -680,7 +680,7 @@
 .practice-page .passages__main{flex:1 1 auto;min-width:0;display:grid;gap:2px;padding:6px 0;color:inherit;text-decoration:none}
 .practice-page .passages__main b{font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .practice-page .passages__main small{font-size:13px;color:#85868e;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-@media(hover:hover){.practice-page .passages__main:hover b{color:#46633d}}
+/* green hover removed (Nov 14) */
 .practice-page .passages__trend{flex:0 0 auto;display:grid;place-items:center}
 .practice-page .passages__list li.done .passages__main b{color:#98999f;text-decoration:line-through}
 .practice-page .passages__list li.done .routine-list__check span{background:#ebebee;border-color:#ebebee;color:#45464f}
@@ -691,3 +691,149 @@
 @media(hover:none){.practice-page .passages__list .routine-delete{opacity:1}}
 /* Trash asks once: armed, it turns red and stays shown until the second tap or a few seconds pass. */
 .practice-page .passages__list .routine-delete.is-armed{opacity:1;color:#c0392b}
+
+/* ── Today's practice, November 14: two separate square tiles in the home page's style ─────────────────────────────
+   Her pick after two mockups. A small clock tile on the left (it is only a timer, so it stays small) and the
+   routine tile beside it. Tint fills each tile; 3px corners; no shadow, no dividers, no underlines. Text is ink,
+   never grey: the smaller line is set apart by size and weight alone, like print. Add is the last line of the
+   list, on the left under the steps, and its picker shows about ten one-line rows. */
+html body .practice-page .practice-today{display:grid;grid-template-columns:minmax(200px,248px) minmax(0,1fr);gap:10px;align-items:start;padding:0!important;background:none!important;box-shadow:none!important;border:0!important;border-radius:0!important;overflow:visible}
+html body .practice-page .practice-today__clock,html body .practice-page .practice-today__steps{border:0!important;border-radius:3px;box-shadow:none}
+html body .practice-page .practice-today__clock{background:#edf1f5;padding:14px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px 12px}
+html body .practice-page .practice-today__what{grid-column:1 / -1}
+html body .practice-page .practice-today__clock h2{font-size:16px;font-weight:600;color:#292a33}
+html body .practice-page .practice-today__now{margin:2px 0 0;font-size:13.5px;font-weight:400;color:#292a33}
+html body .practice-page .practice-today__now span{margin-right:5px;font-size:13.5px;font-weight:400;color:#292a33}
+html body .practice-page .practice-today__now span::after{content:":"}
+html body .practice-page .practice-today__time{font-size:30px;font-weight:600;color:#292a33;line-height:1;flex-wrap:wrap}
+html body .practice-page .practice-today__total{font-size:12.5px;font-weight:400;color:#292a33}
+html body .practice-page .practice-today__clock .session-review{grid-column:1 / -1}
+html body .practice-page .practice-today__steps{background:#f2eef8;padding:14px 16px 10px}
+html body .practice-page .practice-today__steps h3{font-size:16px;font-weight:600}
+html body .practice-page .practice-today__steps .practice-card__heading{margin-bottom:4px}
+html body .practice-page .practice-today .routine-count{font-size:13.5px;font-weight:400;color:#292a33}
+html body .practice-page .practice-today .routine-list{display:block;margin:0}
+html body .practice-page .practice-today .routine-list li{min-height:38px;padding:0;border:0!important;background:none}
+html body .practice-page .practice-today .routine-list__text{padding:8px 0;font-size:14.5px;color:#292a33}
+html body .practice-page .practice-today .routine-list li.done .routine-list__text{color:#292a33;opacity:.55}
+html body .practice-page .practice-today .routine-list__check span{border:1.5px solid #292a33}
+html body .practice-page .practice-today .routine-list li.done .routine-list__check span{background:#292a33;border-color:#292a33;color:#fff}
+html body .practice-page .practice-today .routine-list__open{font-size:13.5px;font-weight:500;color:#292a33}
+html body .practice-page .practice-today .routine-delete{color:#292a33;opacity:.55}
+html body .practice-page .practice-today .routine-delete:hover{opacity:1;background:none}
+html body .practice-page .routine-list__add .routine-add{height:38px}
+html body .practice-page .routine-list__add .routine-add>svg{width:22px;color:#292a33}
+html body .practice-page .routine-list__add .routine-add input{font-size:14.5px;color:#292a33}
+html body .practice-page .routine-list__add .routine-add input::placeholder{color:#292a33;opacity:.6}
+/* The picker: one line per item (name left, kind right), 13.5px, tall enough for about ten. */
+html body .practice-page .routine-suggestions{max-height:min(396px,60vh);padding:6px;border-radius:10px;background:#fff;box-shadow:0 8px 24px rgba(41,42,51,.12);max-width:420px}
+html body .practice-page .routine-suggestions button{padding:8px 10px;border-radius:7px;font-size:13.5px;color:#292a33}
+html body .practice-page .routine-suggestions button span{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+html body .practice-page .routine-suggestions small{display:inline;margin:0;font-size:12.5px;color:#292a33;opacity:.6;flex:none}
+html body .practice-page .routine-suggestions button:hover,html body .practice-page .routine-suggestions button.is-active{background:#f2eef8}
+@media(max-width:700px){
+  html body .practice-page .practice-today{grid-template-columns:1fr}
+}
+html body .practice-page .practice-today__actions button{background:#fff!important;box-shadow:none!important;border:0!important;color:#292a33}
+
+/* ── Today's practice, printed (November 14, her pick A) ──────────────────────────────────────────────────────────
+   Tile names sit top-left like the home tiles (15px / 600, 12px from the edges). The routine is a numbered list,
+   like a printed programme: no tick circle; the number ticks the step and a done step is struck through. Open and
+   remove sit right after the name. Add step is a white pill in the header, never a list line. The clock's controls
+   are a word and an ink glyph with no button shape. */
+html body .practice-page .practice-today__clock,html body .practice-page .practice-today__steps{padding:12px}
+html body .practice-page .practice-today__clock h2,html body .practice-page .practice-today__steps h3{font-size:15px;font-weight:600;line-height:1.25}
+html body .practice-page .practice-today__now,html body .practice-page .practice-today__now span{font-size:13px}
+html body .practice-page .practice-today__time{font-size:26px;align-self:end}
+html body .practice-page .practice-today__actions{display:flex;gap:14px;align-self:end;padding:0 0 2px}
+html body .practice-page .practice-today__actions button{display:inline-flex;align-items:center;gap:5px;width:auto!important;height:auto!important;min-height:0;padding:0!important;border-radius:0!important;background:none!important;color:#292a33;font-size:14px;font-weight:600;cursor:default}
+html body .practice-page .practice-today__actions button svg{width:13px;height:13px}
+html body .practice-page .practice-today__actions button:hover{background:none!important;text-decoration:underline;text-underline-offset:3px}
+html body .practice-page .practice-today__steps .practice-card__heading{display:flex;align-items:center;gap:8px;min-height:28px;margin-bottom:6px}
+html body .practice-page .routine-adder{position:relative;margin-left:auto}
+html body .practice-page .routine-adder__button{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 12px 0 9px;border:0;border-radius:999px;background:#fff;color:#292a33;font:inherit;font-size:13px;font-weight:500;cursor:default}
+html body .practice-page .routine-adder__button:hover{background:#e6def2}
+html body .practice-page .routine-adder__button svg{width:14px;height:14px}
+html body .practice-page .routine-adder .suggest-field{width:min(300px,62vw)}
+html body .practice-page .routine-adder .routine-add{height:28px;padding:0 4px 0 12px;border-radius:999px;background:#fff;box-shadow:none}
+html body .practice-page .routine-adder .routine-add input{font-size:13px;color:#292a33}
+html body .practice-page .routine-adder .routine-add input::placeholder{color:#292a33;opacity:.55}
+html body .practice-page .routine-adder .routine-add button{height:22px;padding:0 9px;border-radius:999px;background:#f2eef8;box-shadow:none;font-size:12.5px;font-weight:500}
+html body .practice-page .routine-adder .routine-suggestions{left:auto;right:0;width:min(380px,84vw);max-width:none}
+html body .practice-page .practice-today .routine-list{display:block;margin:0;padding:0;list-style:none}
+html body .practice-page .practice-today .routine-list li{display:flex;align-items:center;gap:4px;min-height:30px}
+html body .practice-page .practice-today .routine-list__check{display:inline-grid;place-items:center start;width:22px;height:30px;cursor:default}
+html body .practice-page .practice-today .routine-list__check input{position:absolute;opacity:0;width:22px;height:30px;margin:0;cursor:default}
+html body .practice-page .practice-today .routine-list__check span,html body .practice-page .practice-today .routine-list li.done .routine-list__check span,html body .practice-page .practice-today .routine-list li.is-current .routine-list__check span{width:auto;height:auto;border:0!important;border-radius:0;background:none!important;color:#292a33;font-size:14px;font-weight:400;font-variant-numeric:tabular-nums;display:inline;transform:none}
+html body .practice-page .practice-today .routine-list__check input:focus-visible+span{text-decoration:underline}
+html body .practice-page .practice-today .routine-list__text{flex:0 1 auto;min-width:0;padding:5px 0;font-size:14px;color:#292a33;cursor:default}
+html body .practice-page .practice-today .routine-list li.is-current .routine-list__text{font-weight:600}
+html body .practice-page .practice-today .routine-list li.done .routine-list__text,html body .practice-page .practice-today .routine-list li.done .routine-list__check span{opacity:.5;text-decoration:line-through}
+html body .practice-page .practice-today .routine-list__open{margin-left:10px;font-size:13px;font-weight:500;color:#292a33;white-space:nowrap}
+html body .practice-page .practice-today .routine-delete{margin-left:6px;width:26px;height:26px;opacity:0;transition:opacity .12s}
+html body .practice-page .practice-today .routine-delete svg{width:14px;height:14px}
+html body .practice-page .practice-today .routine-list li:hover .routine-delete,html body .practice-page .practice-today .routine-delete:focus-visible{opacity:.7}
+html body .practice-page .practice-today .routine-list li:hover .routine-delete:hover{opacity:1}
+@media(hover:none){html body .practice-page .practice-today .routine-delete{opacity:.7}}
+html body .practice-page .routine-empty{margin:2px 0 4px;font-size:13.5px;color:#292a33}
+html body .practice-page .practice-today__actions{background:none!important;box-shadow:none!important;border-radius:0!important;border:0!important}
+
+/* ---------- Nov 16: My Studio, compact, and Practice insights as colour tiles ----------
+   Her notes: "everything has so much padding", "practice insights can be a little colour tile too".
+   Same tile as Home (COMPONENTS.md "Practice tile"): the tint fills the tile, name top left 15 / 600, radius 3,
+   no border, no shadow. Calendar days are small square cells; today and the chosen day show as a fill, never a
+   ring. Scoped off the Sync devices page, which shares .practice-page. */
+body .studio-route .practice-page:not(.transfer-page) .home-preview__group{margin-top:26px;margin-bottom:10px}
+body .studio-route .practice-page:not(.transfer-page) .section-head .home-preview__group{margin-top:26px;margin-bottom:8px}
+body .studio-route .practice-page:not(.transfer-page) :is(.working,.shelf){margin-bottom:6px}
+body .studio-route .practice-page:not(.transfer-page) .list-stacks{margin-top:18px;margin-bottom:0}
+
+/* Tricky bits: rows on the page, not a floating white panel. */
+body .studio-route .practice-page .passages__list{padding:0;background:transparent;box-shadow:none;border-top:1px solid #ececef;border-bottom:1px solid #ececef;border-radius:0}
+body .studio-route .practice-page .passages__list li{min-height:48px;padding:0}
+
+/* The tiles. */
+body .studio-route .practice-page:not(.transfer-page) :is(.calendar-card,.studio-day,.time-split,.most-practised,.pitch-card){border:0;box-shadow:none;border-radius:3px;padding:10px 12px 12px}
+body .studio-route .practice-page:not(.transfer-page) :is(.calendar-card,.pitch-card){background:#edf1f5}
+body .studio-route .practice-page:not(.transfer-page) .studio-day{background:#f2eef8}
+body .studio-route .practice-page:not(.transfer-page) .time-split{background:#eef4ec}
+body .studio-route .practice-page:not(.transfer-page) .most-practised{background:#faf0f6}
+body .studio-route .practice-page:not(.transfer-page) :is(.calendar-card,.studio-day,.time-split,.most-practised,.pitch-card) h2{font-size:15px;line-height:1.3;font-weight:600;letter-spacing:0}
+body .studio-route .practice-page:not(.transfer-page) :is(.studio-month,.insight-cards){gap:8px;margin-bottom:8px}
+body .studio-route .practice-page:not(.transfer-page) .studio-day .practice-card__empty{margin:8px 0 0}
+body .studio-route .practice-page:not(.transfer-page) .studio-day__list{margin-top:6px}
+body .studio-route .practice-page:not(.transfer-page) .studio-day__list li{padding:6px 0;border-bottom-color:rgba(41,42,51,.08)}
+
+/* Calendar: 30px square days, white on the slate tile; practised days keep their greens. */
+body .studio-route .practice-page .calendar-card .practice-card__heading{margin-bottom:6px}
+body .studio-route .practice-page .calendar-card__nav button{width:26px;height:26px;border-radius:3px;background:transparent}
+@media(hover:hover){body .studio-route .practice-page .calendar-card__nav button:not(:disabled):hover{background:rgba(255,255,255,.8)}}
+body .studio-route .practice-page .studio-month .calendar-card .calendar-grid{grid-template-columns:repeat(7,30px);gap:3px}
+body .studio-route .practice-page .studio-month .calendar-card .calendar-grid__cell{height:30px;border-radius:2px;font-size:12px;box-shadow:none}
+body .studio-route .practice-page .calendar-grid__cell.is-pickable:not([data-level="1"],[data-level="2"],[data-level="3"]){background:rgba(255,255,255,.7)}
+body .studio-route .practice-page .calendar-grid__cell.is-today{font-weight:700;color:#292a33}
+body .studio-route .practice-page .calendar-grid__cell.is-selected{box-shadow:none;outline:0}
+body .studio-route .practice-page .calendar-grid__cell.is-selected:not([data-level="1"],[data-level="2"],[data-level="3"]){background:#fff;color:#292a33}
+body .studio-route .practice-page .calendar-grid__cell.is-selected:is([data-level="1"],[data-level="2"],[data-level="3"]){box-shadow:inset 0 -2px 0 #292a33}
+body .studio-route .practice-page .calendar-card__legend{margin-top:6px}
+body .studio-route .practice-page .studio-month .calendar-card .stats-row{margin-top:10px;padding-top:10px;border-top:1px solid rgba(41,42,51,.08);gap:8px 12px}
+body .studio-route .practice-page .studio-month .calendar-card .stats-row li{gap:0}
+body .studio-route .practice-page .studio-month .calendar-card .stats-row b{font-size:18px}
+body .studio-route .practice-page .stats-row small,body .studio-route .practice-page .stats-row b span{font-size:12px}
+@media(max-width:760px){body .studio-route .practice-page .studio-month .calendar-card .calendar-grid{grid-template-columns:repeat(7,minmax(0,1fr))}}
+
+/* Pitch tendencies: smaller square cells; untested notes are faint white squares, not dashed boxes. */
+body .studio-route .practice-page .pitch-map__cell{width:30px;height:30px;border-radius:2px}
+body .studio-route .practice-page .pitch-map__cell.is-empty{border:0;background:rgba(255,255,255,.6)}
+body .studio-route .practice-page .pitch-map__row{grid-template-columns:24px repeat(12,30px);gap:3px}
+@media(max-width:760px){body .studio-route .practice-page .pitch-map__cell{width:auto;height:auto}body .studio-route .practice-page .pitch-map__row{grid-template-columns:20px repeat(12,minmax(0,1fr))}}
+
+/* Today and Routine are one row of two tiles: the same height, always (was align-items:start, 98 vs 89px). */
+html body .practice-page .practice-today{align-items:stretch}
+
+/* Tricky bits (Nov 16): the trash sits right after the passage's words, not at the far right edge of the page
+   ("never a good design"); no grey band on hover. */
+body .studio-route .practice-page .passages__list li{background:transparent}
+body .studio-route .practice-page .passages__list li:hover{background:transparent}
+body .studio-route .practice-page .passages__list .passages__main{flex:0 1 auto}
+body .studio-route .practice-page .passages__list .routine-delete{margin-left:4px;margin-right:auto}

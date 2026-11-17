@@ -100,14 +100,13 @@ export default function MusicLibrary(){
             const chip=(value:string,label:string,mark?:React.ReactNode)=>{const on=shelf===value;const mine=mark!==undefined;return <button key={value} className={`${on?"active":""}${mine?" is-mine":""}`} aria-pressed={on} data-tone={value==="all"||mine?undefined:value==="beginner"?BEGINNER_TONE:tagTone(value)} onClick={()=>{setShelf(on&&value!=="all"?"all":value)}}>{mark}{label}</button>};
             const rest=tags.filter(tag=>!lead.includes(tag));
             return <>
-              {/* Row one: All and the music's tags. Row two: your three lists. */}
+              {/* One row: the music's tags, quiet until chosen, then your three lists. No All chip (COMPONENTS.md):
+                  tapping the chosen chip again clears it. */}
               <span className="library-chips__row">
-              {chip("all",zh?"全部":"All")}
               {lead.map(tag=>chip(tag,tagLabel(tag)))}
               {chip("beginner",zh?"入门":"Beginner")}
               {rest.map(tag=>chip(tag,tagLabel(tag)))}
-              </span>
-              <span className="library-chips__row library-chips__row--lists">
+              {/* Your three lists sit on the same line as the tags, at the same size (Nov 14): one filter row, not two. */}
               {STATUSES.map(value=>chip(`status:${value}`,STATUS_LABELS[value][zh?"zh":"en"],<i className="status-dot" data-tone={STATUS_TONES[value]} aria-hidden="true"/>))}
               </span>
             </>;

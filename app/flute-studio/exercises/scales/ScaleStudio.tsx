@@ -496,14 +496,8 @@ export default function ScaleStudio(){
     window.addEventListener(PRACTISING_EVENT,played);
     return()=>window.removeEventListener(PRACTISING_EVENT,played);
   },[playedSet,metro]);
-  function toggleSaved(){
-    if(savedMatch){forgetSet(savedMatch);return}
-    // Saved straight away under a name taken from the settings; the Sets
-    // tab then opens with that name, so renaming is there if wanted but
-    // never a step you have to take.
-    commitSave();
-    openCustomize("presets");
-  }
+  // The top bar's + (save the panel as a set) was replaced by the list button (Nov 14): Scale Studio goes on
+  // Want to learn / Working on like any exercise. Sets are still saved from the Sets tab of the panel.
   /** A separate set under a name of its own (the suggested one, numbered if it is taken). */
   /** Deleting a set: if it is the one open here, the name field goes back to the suggestion rather than keeping a name nothing has. */
   function forgetSet(set:ScaleSet){
@@ -755,9 +749,17 @@ export default function ScaleStudio(){
          line instead of spilling a short second line. One move of the
          Note spacing slider overrides it, and the choice is remembered. */
       defaultNoteSpacing={0.55} extraSystemSpacing={tempoMarks?3:0} practiceTempo={{value:tempoMarks,onChange:setTempoMarks}}
-      save={{saved:!!savedMatch,onToggle:toggleSaved,label:zh?"保存为我的组合":"Save as a set",savedLabel:zh?"已保存为组合，点按移除":"Saved as a set. Tap to remove"}}
-      headerActions={reader=><button type="button" className="icon-btn has-tip" disabled={reader.exporting} data-tip={reader.exporting?(zh?"正在生成 PDF…":"Making the PDF\u2026"):(zh?"下载 PDF":"Download PDF")} aria-label={reader.exporting?(zh?"正在生成 PDF…":"Making the PDF\u2026"):(zh?"下载 PDF":"Download PDF")} onClick={()=>reader.download()}>{reader.exporting?"\u22ef":<DownloadIcon/>}</button>}
-      scoreMarks={tempoMarks?context=><ScaleTempoMarks root={context.root} version={context.version} zh={zh} marks={blocks.map(block=>{const id=blockTempoId(block,range);return {id,label:block.label,tempo:tempoForBlock(block,range,tempos),rep:{key:id,title:block.label,kind:"scale" as const}}})} onChange={(id,next)=>{setActiveBlock(id);setTempos(prev=>({...prev,[id]:next}));context.controls.setTempo(next)}} soundingId={context.controls.metronome?activeBlock||null:null} onSound={(id,tempo)=>{const running=context.controls.metronome&&activeBlock===id;setActiveBlock(id);context.controls.setTempo(tempo);if(running||!context.controls.metronome)context.controls.toggleMetronome()}}/>:undefined} printConfig={zh?{title:englishTitle,asset:scaleBookMusicXML(buildBlocks(true),range,newLines,articulationRotation.map(e=>e.articulation),rhythms,ending,scaleStart,customSpan,groupSize)}:undefined} lineBreak={{value:newLines,onChange:setNewLines}} config={{title:bookTitle,composer:"",smartDroneCountInBeats:4,smartDrone:blocks.map((block,index)=>{const tonic=keyForType(block.key,typeById(block.type));const written=blockNotes(block).find(note=>note.midi%12===tonic.pc);return {measure:1,event:blockEventStarts[index],pitch:tonic.label[0].toUpperCase()+tonic.label.slice(1)+String(written?.octave??4),...(written?{displayPitch:`${written.step}${accidentalGlyph(written.alter)}${written.octave}`}:{})}}),asset:scaleBookMusicXML(blocks,range,newLines,articulationRotation.map(e=>e.articulation),rhythms,ending,scaleStart,customSpan,groupSize),displayPitches,noteKeySignatures,syllables,id:`scale-book-${rangeKey}-${grouping}-${ending}-${scaleStart}-${groupSize!==1?`in${groupSize}-`:""}${types.join("+")}-${forms.join("+")}-${selected.map(k=>k.id).join("-")}`,backHref:backTo?.href??"/flute-studio/exercises",...(backTo?{backLabel:backTo.label}:{}),defaultTempo:activeBlock&&tempos[activeBlock]?tempos[activeBlock]:blocks[0]?tempoForBlock(blocks[0],range,tempos):60,rememberTempo:false}}
+      listEnsureId={()=>{
+        // Each setup is its own entry, like a numbered study in a book (Nov 14): putting what is on screen on a list
+        // saves it as a set under the suggested name, and the status belongs to that set.
+        if(savedMatch)return `scale-set:${savedMatch.id}`;
+        const saved=saveScaleSet(suggestedSetName,currentConfig());
+        if(!saved)return null;
+        setActiveSet(saved);setSetName(saved.name);
+        return `scale-set:${saved.id}`;
+      }}
+      headerEnd={reader=><button type="button" className="icon-btn has-tip" disabled={reader.exporting} data-tip={reader.exporting?(zh?"正在生成 PDF…":"Making the PDF\u2026"):(zh?"下载 PDF":"Download PDF")} aria-label={reader.exporting?(zh?"正在生成 PDF…":"Making the PDF\u2026"):(zh?"下载 PDF":"Download PDF")} onClick={()=>reader.download()}>{reader.exporting?"\u22ef":<DownloadIcon/>}</button>}
+      scoreMarks={tempoMarks?context=><ScaleTempoMarks root={context.root} version={context.version} zh={zh} marks={blocks.map(block=>{const id=blockTempoId(block,range);return {id,label:block.label,tempo:tempoForBlock(block,range,tempos),rep:{key:id,title:block.label,kind:"scale" as const}}})} onChange={(id,next)=>{setActiveBlock(id);setTempos(prev=>({...prev,[id]:next}));context.controls.setTempo(next)}} soundingId={context.controls.metronome?activeBlock||null:null} onSound={(id,tempo)=>{const running=context.controls.metronome&&activeBlock===id;setActiveBlock(id);context.controls.setTempo(tempo);if(running||!context.controls.metronome)context.controls.toggleMetronome()}}/>:undefined} printConfig={zh?{title:englishTitle,asset:scaleBookMusicXML(buildBlocks(true),range,newLines,articulationRotation.map(e=>e.articulation),rhythms,ending,scaleStart,customSpan,groupSize)}:undefined} lineBreak={{value:newLines,onChange:setNewLines}} config={{listId:savedMatch?`scale-set:${savedMatch.id}`:"scale-set:unsaved",title:bookTitle,composer:"",smartDroneCountInBeats:4,smartDrone:blocks.map((block,index)=>{const tonic=keyForType(block.key,typeById(block.type));const written=blockNotes(block).find(note=>note.midi%12===tonic.pc);return {measure:1,event:blockEventStarts[index],pitch:tonic.label[0].toUpperCase()+tonic.label.slice(1)+String(written?.octave??4),...(written?{displayPitch:`${written.step}${accidentalGlyph(written.alter)}${written.octave}`}:{})}}),asset:scaleBookMusicXML(blocks,range,newLines,articulationRotation.map(e=>e.articulation),rhythms,ending,scaleStart,customSpan,groupSize),displayPitches,noteKeySignatures,syllables,id:`scale-book-${rangeKey}-${grouping}-${ending}-${scaleStart}-${groupSize!==1?`in${groupSize}-`:""}${types.join("+")}-${forms.join("+")}-${selected.map(k=>k.id).join("-")}`,backHref:backTo?.href??"/flute-studio/exercises",...(backTo?{backLabel:backTo.label}:{}),defaultTempo:activeBlock&&tempos[activeBlock]?tempos[activeBlock]:blocks[0]?tempoForBlock(blocks[0],range,tempos):60,rememberTempo:false}}
       toolbar={<div className="scale-book__chapter-inline"><button type="button" className="scale-book__crumb has-tip" data-tip={zh?"换成小调、半音阶、全音阶或各种调式":"Change to minor, chromatic, whole tone or a mode"} onClick={()=>openCustomize("type")}>{typeWord}</button><button type="button" className="scale-book__crumb has-tip" data-tip={zh?"音阶，或改成琶音、三度、八度等练法":"Play the scale, or switch to arpeggios, thirds, octaves and more"} onClick={()=>openCustomize("form")}>{formWord}</button><span aria-hidden="true">·</span><button type="button" className="scale-book__crumb has-tip" data-tip={zh?"改成一个八度，或自己设定从哪个音到哪个音":"Change to one octave, or set your own lowest and highest note"} onClick={()=>openCustomize("range")}>{zh?chosenRange.zh:chosenRange.label}</button><span aria-hidden="true">·</span><button type="button" className="scale-book__crumb has-tip" data-tip={zh?"选择要练哪些调":"Choose which keys to practice"} onClick={()=>openCustomize("keys")}>{selected.length} {zh?"个调性":selected.length===1?"key":"keys"}</button></div>}
       settings={reader=><>
 
@@ -778,7 +780,7 @@ export default function ScaleStudio(){
               </button>
               <button type="button" className="scale-book__set-delete" aria-label={zh?`删除 ${set.name}`:`Delete ${set.name}`} onClick={()=>forgetSet(set)}><PracticeIcon name="delete"/></button>
             </li>)}</ul>
-            :<p className="scale-book__sets-empty">{zh?"还没有保存的组合。点顶部的 +，就能保存现在这组音阶，它会出现在练习页面。":"No saved sets yet. Tap + at the top to save the scales on screen. Saved sets also show on the Exercises page."}</p>}
+            :<p className="scale-book__sets-empty">{zh?"还没有保存的组合。用顶部的列表按钮把现在这组音阶加入列表，或在下面保存。保存的组合也会出现在练习页面。":"No saved sets yet. Put the scales on screen on a list from the button at the top, or save them below. Saved sets also show on the Exercises page."}</p>}
           </OptionGroup>
           {/* Saving sits with the saved sets it adds to. */}
           <div className="scale-book__save">

@@ -20,7 +20,7 @@
 .chart-now__diagram{width:100%;max-width:560px;margin-top:6px;color:#2f3a2c;--flute-key-ground:#fff}
 .chart-now__diagram :is(circle,ellipse,rect,path){transition:fill .18s ease,stroke .18s ease}
 /* Text link (COMPONENTS): green, 600, no underline. */
-.chart-now__sibling{margin-top:4px;color:#46633d;font-size:13px;font-weight:600;text-decoration:none}
+.chart-now__sibling{margin-top:4px;color:#292a33;font-size:13px;font-weight:600;text-decoration:none}
 .chart-now__sibling sub{color:inherit;opacity:.75}
 
 /* The staff. EngravedNote's drawing has empty room above the clef and below the low notes, and grows taller for
@@ -38,14 +38,14 @@
 .chart-step--previous svg{transform:rotate(90deg)}
 .chart-step--next svg{transform:rotate(-90deg)}
 .chart-step:disabled{opacity:.25}
-@media(hover:hover){.chart-step:hover:not(:disabled){background:#f1f1f4;color:#292a33}}
+@media(hover:hover){.chart-step:hover:not(:disabled){background:#edf1f5;color:#292a33}}
 
 /* Choose one: alternate fingerings and the notes. Capsules (DESIGN "which shape"), plain until chosen, then the
    studio's purple "on" tint. */
 .chart-choices{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin-top:8px}
 :is(.chart-choices,.note-picker__notes) button{height:34px;padding:0 12px;border:0;border-radius:999px;background:transparent;color:#45464f;font:600 14px/1 inherit;white-space:nowrap;transition:background-color .16s ease,color .16s ease}
-.chart-choices button{height:30px;font-size:13px;box-shadow:inset 0 0 0 1px #e6e6ea}
-@media(hover:hover){:is(.chart-choices,.note-picker__notes) button:hover{background:#f1f1f4}}
+.chart-choices button{height:30px;font-size:13px;box-shadow:inset 0 0 0 1px #e2e8ef}
+@media(hover:hover){:is(.chart-choices,.note-picker__notes) button:hover{background:#edf1f5}}
 :is(.chart-choices,.note-picker__notes) button[aria-pressed="true"]{background:#f1e5f5;color:#6d4585;box-shadow:none}
 .note-picker__notes button[aria-pressed="true"] sub{color:#9a7aae}
 :is(.chart-choices,.note-picker__notes) button:focus-visible,.chart-step:focus-visible{outline:3px solid rgba(121,88,142,.3);outline-offset:2px}

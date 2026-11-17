@@ -2,22 +2,12 @@
    colour that means something (the list's dot, green for practice time, sand for a deadline). */
 .studio-cards{margin-bottom:28px}
 .studio-card .studio-card__stage{display:flex;flex-direction:column;justify-content:center;gap:10px;padding:14px 16px;box-sizing:border-box;background:#f6f6f7}
-.studio-card__deadline{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.studio-card__deadline b{font-size:14px;font-weight:600;color:#292a33;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.studio-card__deadline .tag-pill{flex:none;height:22px;font-size:11.5px}
-.studio-card__routine small{display:block;margin-top:5px;font-size:12px;color:#85868e}
-.studio-card__bar{height:6px;border-radius:3px;background:#e6e6ea;overflow:hidden}
-.studio-card__bar i{display:block;height:100%;border-radius:3px;background:#7f9f6f}
-.studio-card__list{display:grid;gap:5px;margin:0;padding:0;list-style:none}
-.studio-card__list li{display:flex;align-items:center;gap:8px;min-width:0;font-size:13px;font-weight:500;color:#292a33;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.studio-card__list .status-dot{width:7px;height:7px}
-.studio-card__more{font-size:12px;color:#85868e}
 .studio-card__stage--music{padding:6px 10px;overflow:hidden}
 .studio-card__stage--music .tricky-preview{width:100%}
 .studio-card__week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;height:100%;align-items:end}
 .studio-card__week span{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%}
 .studio-card__week i{display:block;width:100%;max-width:18px;border-radius:4px;background:#9cbb8c}
-.studio-card__week i[data-empty]{height:3px!important;background:#e6e6ea}
+.studio-card__week i[data-empty]{height:3px!important;background:#e2e8ef}
 .studio-card__week small{font-size:10.5px;color:#9a9ba2}
 .studio-card .studio-card__stage{align-items:stretch;justify-items:stretch;place-items:initial;text-align:left}
 .preview-card.studio-card .studio-card__stage{padding:18px 20px}
@@ -28,18 +18,18 @@
 .studio-cards .today-card{grid-column:span 2;display:flex;flex-direction:column;gap:6px;padding:18px 20px 12px;border-radius:18px;background:#fff;box-shadow:var(--studio-card-shadow);color:#292a33}
 .today-card__title{margin:0;font-size:16px;font-weight:600;letter-spacing:-.01em}
 .today-card__rows{display:grid;margin:0;padding:0;list-style:none}
-.today-card__rows>li{display:grid;grid-template-columns:152px minmax(0,1fr) auto;align-items:center;gap:4px 14px;min-height:52px;padding:6px 0;border-top:1px solid #f0f0f2}
+.today-card__rows>li{display:grid;grid-template-columns:152px minmax(0,1fr) auto;align-items:center;gap:4px 14px;min-height:52px;padding:6px 0;border-top:1px solid #edf1f5}
 .today-card__rows>li:first-child{border-top:0}
 .today-card__main{display:grid;gap:2px;min-width:0;text-decoration:none;color:inherit}
 .today-card__main b{font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .today-card__main small{font-size:13px;color:#85868e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-@media(hover:hover){.today-card__main:hover b{color:#46633d}}
-.today-card__action{display:inline-flex;align-items:center;height:32px;padding:0 14px;border-radius:10px;background:#f1f1f2;color:#45464f;font-size:13px;font-weight:600;text-decoration:none}
-@media(hover:hover){.today-card__action:hover{background:#e8e8ea}}
+/* Green hover on text removed (Nov 14): links stay ink, no colour change on hover. */
+.today-card__action{display:inline-flex;align-items:center;height:32px;padding:0 14px;border-radius:10px;background:#edf1f5;color:#45464f;font-size:13px;font-weight:600;text-decoration:none}
+@media(hover:hover){.today-card__action:hover{background:#e2e8ef}}
 .today-card__rows .tag-pill{justify-self:end}
 .today-card__chips{grid-column:2/-1;display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-width:0}
 .today-card__chips .piece-chip{max-width:100%;overflow:hidden;text-overflow:ellipsis}
-.today-card__more{font-size:13px;font-weight:600;color:#46633d;text-decoration:none}
+.today-card__more{font-size:13px;font-weight:600;color:#292a33;text-decoration:none}
 @media(max-width:760px){
   .studio-cards .today-card{grid-column:auto;padding:16px 16px 10px}
   .today-card__rows>li{grid-template-columns:minmax(0,1fr) auto;padding:10px 0}

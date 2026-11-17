@@ -6,26 +6,27 @@
 .bl-header,.bl-workspace{width:min(1120px,100%);margin-inline:auto}
 .bl-header{padding:50px 4px 20px;flex-shrink:0}
 .bl-header h1{margin:0;font-size:42px;line-height:1.04;font-weight:780;letter-spacing:-.04em}
-.bl-workspace{display:grid;grid-template-columns:190px minmax(260px,1fr) 280px;gap:16px;flex:1;min-height:0;max-height:680px}
+.bl-workspace{display:grid;grid-template-columns:220px minmax(260px,1fr) 260px;gap:12px;flex:1;min-height:0;max-height:430px} /* Nov 16: three columns of one height, the stage no longer towering over its neighbours */
 
 /* Patterns: filter chips. Grey, the chosen one dark (the one place dark fills are allowed). */
 .bl-exercises{display:flex;flex-direction:column;gap:10px;overflow-y:auto;scrollbar-width:none}
 .bl-exercises::-webkit-scrollbar{display:none}
-.bl-exercises button{display:block;text-align:left;padding:16px 14px;border:0;border-radius:18px;background:#f4f4f5;color:#45464f}
+.bl-exercises button{display:block;text-align:left;padding:12px 14px;border:0;border-radius:3px;background:#edf1f5;color:#45464f}
 .bl-exercises strong{display:block;font-size:14px;font-weight:600;color:#292a33}
 .bl-exercises small{display:block;margin-top:6px;font-size:12px;color:#85868e}
-.bl-exercises button[aria-pressed=true]{background:#292a33}
-.bl-exercises button[aria-pressed=true] strong{color:#fff}
-.bl-exercises button[aria-pressed=true] small{color:#c9cad0}
+/* Nov 16: the chosen exercise takes the selected purple tint (DESIGN.md), not a black fill. */
+.bl-exercises button[aria-pressed=true]{background:#eee7f2}
+.bl-exercises button[aria-pressed=true] strong{color:#292a33}
+.bl-exercises button[aria-pressed=true] small{color:#79588e}
 
 /* Stage and the view switch under it. The switch is the studio's .view-switch (studio-shared.css); only placed here. */
 .bl-stage-column{display:flex;flex-direction:column;align-items:center;gap:10px;min-width:0;min-height:0}
-.bl-stage{align-self:stretch;flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;border-radius:24px;background:#f1f5f6}
+.bl-stage{align-self:stretch;flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;border-radius:3px;background:#edf1f5}
 .bl-scene{position:relative;flex:1;min-height:0;display:grid;place-items:center}
 .bl-illustration,.bl-body{position:absolute;inset:0;width:100%;height:100%}
 .bl-body canvas{display:block}
 .bl-body p,.bl-loading{margin:0;padding:16px;text-align:center;font-size:14px;color:#71747e}
-.bl-large-ring{width:min(75%,420px);height:100%;display:grid;place-items:center}
+.bl-large-ring{width:min(86%,560px);height:100%;display:grid;place-items:center}
 .bl-ring{width:100%;max-height:100%;overflow:visible}
 .bl-phase{font:600 18px -apple-system,BlinkMacSystemFont,Arial,sans-serif;fill:#71747e}
 .bl-count{font:740 36px -apple-system,BlinkMacSystemFont,Arial,sans-serif;fill:#292a33;font-variant-numeric:tabular-nums}
@@ -35,19 +36,13 @@
 .bl-visuals{flex:none;max-width:100%}
 
 /* Controls card: white, hairline, no shadow. */
-.bl-controls{align-self:start;display:flex;flex-direction:column;gap:14px;padding:16px;border:1px solid #ececef;border-radius:20px;background:#fff;min-width:0}
+.bl-controls{align-self:start;display:flex;flex-direction:column;gap:14px;padding:16px;border:1px solid #e4e4e7;border-radius:3px;background:#fff;min-width:0}
 .bl-counts{display:grid;gap:6px}
 .bl-count-step{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.bl-count-step>span:first-child{font-size:13px;font-weight:600;color:#6f7178}
+.bl-count-step>span:first-child{font-size:14px;font-weight:400;color:#45464f}
 /* The counts are the studio Stepper (components/Stepper.tsx); only its width is set here. */
 .bl-stepper{width:112px;flex:none}
 .bl-play-row{display:grid;gap:8px}
-/* The tempo pill in plain grey: the sound is a setting that is usually on, so the shared purple "metronome ticking"
-   would be lit all the time. On shows as a white circle behind the icon (the grey controls' own selected look). */
-.bl-play-row .tempo-pill{justify-content:space-between;width:100%;box-sizing:border-box;background:#f1f1f2;color:#45464f;box-shadow:none}
-.bl-play-row .tempo-pill .tempo-pill__sound{background:transparent;color:#9a9ca3}
-.bl-play-row .tempo-pill.is-sounding .tempo-pill__sound{background:#fff;color:#292a33;box-shadow:0 1px 2px rgba(41,42,51,.12)}
-.bl-play-row .tempo-pill :is(.tempo-pill__step,.tempo-pill__value input){color:#45464f}
 /* Start / Stop: the studio's plain grey action button, with its icon. */
 .bl-start{--action-padding:0 14px;--action-font-size:15px;--action-ink:#292a33;--action-cursor:default;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
 .bl-start svg{width:18px;height:18px}
@@ -77,7 +72,7 @@
 }
 /* Phone and iPad portrait: the controls card is wide and short, the three counts side by side, tempo and Start on one row. */
 @media(max-width:1000px){
-  .bl-counts{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .bl-counts{grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px}
   .bl-count-step{flex-direction:column;align-items:stretch;gap:4px}
   .bl-count-step>span:first-child{text-align:center;font-size:12px}
   .bl-stepper{width:100%}
@@ -101,7 +96,7 @@
   .bl-header{display:none}
   .bl-workspace{display:flex;flex-direction:column;gap:10px;max-height:none}
   .bl-exercises{flex:none;flex-direction:row;gap:6px;overflow-x:auto;margin-right:-16px;padding-right:16px}
-  .bl-exercises button{flex:0 0 auto;height:34px;display:inline-flex;align-items:center;padding:0 14px;border-radius:17px;background:#f1f1f4}
+  .bl-exercises button{flex:0 0 auto;height:34px;display:inline-flex;align-items:center;padding:0 14px;border-radius:17px;background:#edf1f5}
   .bl-exercises strong{font-size:13px;color:#5a5c63}
   .bl-exercises small{display:none}
   .bl-stage-column{flex:1;min-height:0;gap:8px}
@@ -112,3 +107,12 @@
 }
 
 @media(prefers-reduced-motion:reduce){.bl-cue{animation:none}}
+
+
+/* Nov 16: the control card is five plain rows (In, Hold, Out, Tempo, Sound) and Start. Labels are 14 / 400 like any
+   settings row; Sound is the shared View switch; no custom tempo pill and no raised white highlight. */
+.bl-sound{flex:none}
+.breathing-lab .bl-sound button{height:26px;padding:0 12px}
+.bl-controls{gap:12px;padding:12px}
+.bl-exercises{align-content:start}
+.breathing-lab .bl-play-row{grid-template-columns:1fr}

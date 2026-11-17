@@ -1,15 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import ts from 'typescript';
-function moduleUrl(file, replacements={}) {
-  let source=fs.readFileSync(new URL(file,import.meta.url),'utf8');
-  for(const [from,to] of Object.entries(replacements)) source=source.replace(from,to);
-  return `data:text/javascript;base64,${Buffer.from(ts.transpile(source,{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022})).toString('base64')}`;
-}
+import {tsModule} from './helpers/ts-module.mjs';
+const moduleUrl=file=>tsModule(file.replace('../',''));
 const pitchUrl=moduleUrl('../app/flute-studio/lib/pitch.ts');
 const {detectPitch,hzFromMidi}=await import(pitchUrl);
-const {ToneSession,toneSummary,tonePitchLabel,TONE_MIN_RMS}=await import(moduleUrl('../app/flute-studio/lib/toneSession.ts',{"'./pitch'":JSON.stringify(pitchUrl)}));
+const {ToneSession,toneSummary,tonePitchLabel,TONE_MIN_RMS}=await import(moduleUrl('../app/flute-studio/lib/toneSession.ts'));
 const targets=[60,61,62].map((midi,id)=>({id,midi,group:id,pitch:['C4','C♯4','D4'][id]}));
 function play(session,midi,from,to,cents=0){for(let at=from;at<=to;at+=40)session.push({at,hz:hzFromMidi(midi)*2**(cents/1200),clarity:.99,rms:.05},at)}
 
@@ -192,7 +187,7 @@ test('after finishing a group, its first note starts it again; the next group\'s
   assert.equal(onward.snapshot().cursor,2);
 });
 
-const history=await import(moduleUrl('../app/flute-studio/lib/pitchHistory.ts',{"'./toneSession'":JSON.stringify(moduleUrl('../app/flute-studio/lib/toneSession.ts',{"'./pitch'":JSON.stringify(pitchUrl)}))}));
+const history=await import(moduleUrl('../app/flute-studio/lib/pitchHistory.ts'));
 test('pitch history: still-off notes are to-dos, self-corrected notes are not, and old readings age out',()=>{
   const r=(midi,center,drift=0,first)=>({at:1,pitch:String(midi),midi,ms:4000,center,drift,exercise:'x',...(first===undefined?{}:{first})});
   const records=[

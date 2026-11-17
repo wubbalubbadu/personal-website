@@ -35,34 +35,41 @@ export function liveTempo(draft:string):number|null{const value=Number(draft);re
  * playback quote the same numbers (it already has the French and German basics, and "très modéré" at 46 to 66); these are
  * the words it has no number for. "held" words mean restrained (moderato):
  * "very" holds them back further rather than speeding them up.
+ * Every word here is matched folded (lower case, accents off, ß as ss), so "Modere", "MÄSSIG" and "Tres vif" read
+ * the same as their accented spellings.
  */
 type Side="slow"|"held"|"fast";
+const fold=(text:string)=>text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/ß/g,"ss");
+const folded=(words:string[])=>new Set(words.map(fold));
 const VERY_HELD:[number,number]=[46,66];
-const EXTRA_SPEEDS:Record<string,[number,number]>={larghissimo:[20,24],adagietto:[70,80],"molto moderato":VERY_HELD,"mäßig":[108,120],vite:[120,156],lebhaft:[156,176]};
-const HELD=new Set(["moderato","modéré","modérément","mässig","mäßig","très modéré","molto moderato"]);
+const MINUET:[number,number]=[108,132];
+const EXTRA_SPEEDS:Record<string,[number,number]>={larghissimo:[20,24],adagietto:[70,80],"molto moderato":VERY_HELD,"mäßig":[108,120],vite:[120,156],lebhaft:[156,176],
+  // A bare "Animé" names a speed (French for a lively allegro); "plus animé" and "un peu animé" stay relative changes.
+  "animé":[120,144],"tempo di menuetto":MINUET,"tempo di minuetto":MINUET,"tempo di menuet":MINUET};
+const HELD=folded(["moderato","modéré","modérément","mässig","mäßig","très modéré","molto moderato"]);
 const SPEEDS:{parts:string[];range:[number,number]}[]=[
-  ...Object.entries(musicTerms as Record<string,{bpm?:number[]}>).filter(([,term])=>term.bpm?.length===2).map(([phrase,term])=>({parts:phrase.split(" "),range:[term.bpm![0],term.bpm![1]] as [number,number]})),
-  ...Object.entries(EXTRA_SPEEDS).map(([phrase,range])=>({parts:phrase.split(" "),range})),
+  ...Object.entries(musicTerms as Record<string,{bpm?:number[]}>).filter(([,term])=>term.bpm?.length===2).map(([phrase,term])=>({parts:fold(phrase).split(" "),range:[term.bpm![0],term.bpm![1]] as [number,number]})),
+  ...Object.entries(EXTRA_SPEEDS).map(([phrase,range])=>({parts:fold(phrase).split(" "),range})),
 ].sort((a,b)=>b.parts.length-a.parts.length);
 const middle=([low,high]:[number,number])=>(low+high)/2;
 const sideOf=(phrase:string,range:[number,number]):Side=>HELD.has(phrase)?"held":middle(range)>=114?"fast":"slow";
 
-const FASTER=new Set(["mosso","vivo","allegro","animato","animé","vite","presto","mouvementé","vivace","agitato"]);
-const SLOWER=new Set(["lento","lent","moderato","modéré","tranquillo","tranquille","largo","adagio","calmo","sostenuto"]);
-const INTENSIFIERS=new Set(["molto","assai","très","sehr"]);
-const SOFTENERS=["non troppo","non tanto","pas trop","assez","poco","un poco","etwas","un peu"];
+const FASTER=folded(["mosso","vivo","allegro","animato","animé","vite","presto","mouvementé","vivace","agitato"]);
+const SLOWER=folded(["lento","lent","moderato","modéré","tranquillo","tranquille","largo","adagio","calmo","sostenuto"]);
+const INTENSIFIERS=folded(["molto","assai","très","sehr"]);
+const SOFTENERS=["non troppo","non tanto","pas trop","nicht zu","assez","ziemlich","un poco","poco","etwas","un peu"];
 
 export type TempoWord=
-  /** bpm in quarter notes for x/4, before converting to the bar's beat. */
-  |{kind:"speed";label:string;key:string;bpm:number}
+  /** bpm in quarter notes for x/4, before converting to the bar's beat. low and high are the range it was placed in. */
+  |{kind:"speed";label:string;key:string;bpm:number;low:number;high:number}
   |{kind:"relative";label:string;factor:number}
   |{kind:"primo";label:string}
   |{kind:"return";label:string};
 
-/** Words the way the reader reads them: lower case, trailing dots off, "piu" as "più", "mouvᵗ" and "mouv!" as "mouvement". */
+/** Words the way the reader reads them: folded (lower case, no accents), trailing dots off, "mouvᵗ" and "mouv!" as "mouvement". */
 function tempoTokens(text:string){
   const original=text.replace(/[(),;:!]/g," ").split(/\s+/).map(word=>word.replace(/\.+$/,"")).filter(Boolean);
-  const words=original.map(word=>{const w=word.toLowerCase();return w==="piu"?"più":/^mouv(ᵗ|t|ement)?$/.test(w)?"mouvement":w});
+  const words=original.map(word=>{const w=fold(word);return /^mouv(ᵗ|t|ement)?$/.test(w)?"mouvement":w});
   return {original,words};
 }
 const has=(words:string[],phrase:string)=>{const parts=phrase.split(" ");return words.some((_,i)=>parts.every((part,k)=>words[i+k]===part))};
@@ -80,15 +87,15 @@ export function wordTempo(text:string):TempoWord|null{
   for(let i=0;i<words.length;i++){
     const word=words[i],next=words[i+1]??"";
     let up:boolean|null=null;
-    if((word==="più"||word==="plus")&&(FASTER.has(next)||SLOWER.has(next)))up=FASTER.has(next);
+    if((word==="piu"||word==="plus")&&(FASTER.has(next)||SLOWER.has(next)))up=FASTER.has(next);
     else if((word==="meno"||word==="moins")&&(FASTER.has(next)||next==="vite"))up=false;
-    else if(word==="mouvementé"||word==="schneller"||word==="bewegter")up=true;
+    else if(word==="mouvemente"||word==="schneller"||word==="bewegter")up=true;
     else if(word==="langsamer"||word==="ruhiger")up=false;
-    else if((word==="animé"||word==="animato")&&(words[i-1]==="peu"||words[i-1]==="poco"))up=true;
+    else if((word==="anime"||word==="animato")&&(words[i-1]==="peu"||words[i-1]==="poco"))up=true;
     if(up===null)continue;
-    const step=has(words,"très peu")||words.includes("pochissimo")?1.05:has(words,"molto più")||has(words,"beaucoup plus")?1.25:words.includes("poco")||words.includes("peu")||words.includes("etwas")?1.08:1.15;
+    const step=has(words,"tres peu")||words.includes("pochissimo")?1.05:has(words,"molto piu")||has(words,"beaucoup plus")?1.25:words.includes("poco")||words.includes("peu")||words.includes("etwas")?1.08:1.15;
     const first=Math.max(0,["un","poco","peu","molto","beaucoup","etwas"].includes(words[i-1]??"")?i-(words[i-2]==="un"?2:1):i);
-    const last=word==="più"||word==="plus"||word==="meno"||word==="moins"?i+1:i;
+    const last=word==="piu"||word==="plus"||word==="meno"||word==="moins"?i+1:i;
     return {kind:"relative",label:span(first,last),factor:up?step:1/step};
   }
   // 2. Back to the opening: Tempo I, Tempo primo, 1° tempo, 1er mouvement.
@@ -109,13 +116,16 @@ export function wordTempo(text:string):TempoWord|null{
     const qualifier=(index:number)=>{if(index>last)last=index};
     const moto=words.findIndex((word,i)=>(word==="moto"&&words[i-1]==="con")||word==="mosso"||word==="bewegt");
     if(moto>=0){position=.75;qualifier(moto)}
+    // "con brio" is brisk for its word (three quarters up, like con moto); "sostenuto" is broad (a quarter up).
+    const brio=words.findIndex((word,i)=>word==="brio"&&words[i-1]==="con"),held=words.findIndex((word,i)=>word==="sostenuto"&&!own.has(i));
+    if(brio>=0){position=.75;qualifier(brio)}else if(held>=0&&moto<0){position=.25;qualifier(held)}
     const very=words.findIndex((word,i)=>INTENSIFIERS.has(word)&&!own.has(i));
     const soft=SOFTENERS.map(phrase=>{const parts=phrase.split(" ");const at=words.findIndex((_,i)=>parts.every((part,k)=>words[i+k]===part));return at<0?null:{at,end:at+parts.length-1}}).find(Boolean);
     if(very>=0){qualifier(very);if(side==="held"){range=VERY_HELD;position=.5}else position=side==="fast"?1:0}
     else if(soft){qualifier(soft.end);if(side!=="held")position=side==="fast"?0:1}
     const first=Math.min(head.at,very>=0?very:Infinity,soft&&soft.at<head.at?soft.at:Infinity);
-    const key=side==="held"&&very>=0?"très modéré":found.map(({phrase})=>phrase).join(" ");
-    return {kind:"speed",label:span(first,last),key,bpm:Math.round(range[0]+position*(range[1]-range[0]))};
+    const key=side==="held"&&very>=0?"tres modere":found.map(({phrase})=>phrase).join(" ");
+    return {kind:"speed",label:span(first,last),key,bpm:Math.round(range[0]+position*(range[1]-range[0])),low:range[0],high:range[1]};
   }
   // 4. A return after a change.
   const back=words.findIndex((word,i)=>(word==="a"&&words[i+1]==="tempo")||(word==="au"&&words[i+1]==="mouvement")||(word==="im"&&words[i+1]==="tempo"));

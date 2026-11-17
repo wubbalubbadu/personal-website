@@ -6,6 +6,7 @@ import * as THREE from "three";
 import {
   createGlobals,
   ditherBackdropMaterial,
+  hexToVec3,
   ps1Material,
   type PS1Globals,
 } from "./ps1Material";
@@ -26,6 +27,9 @@ import {
   pixelTexture,
   roundRugTexture,
   sheetTexture,
+  christmasWallTexture,
+  gardenWallTexture,
+  stripeWallTexture,
   wallTexture,
   wallpaperTexture,
   windowTexture,
@@ -247,6 +251,40 @@ export class MascotEngine {
   private track<T extends THREE.Texture>(t: T) {
     this.textures.push(t);
     return t;
+  }
+
+  /** Which paint style the studio is in (see buildSet), and its switchable parts. */
+  private studioStyle = 0;
+  private studioParts: {
+    wall: THREE.Mesh;
+    desk: THREE.Mesh;
+    wallMaps: THREE.Texture[];
+    deskMaps: THREE.Texture[];
+    frameMat: THREE.ShaderMaterial;
+    xmas: THREE.Object3D;
+    tipMat: THREE.ShaderMaterial;
+  } | null = null;
+  /** How many studio paint styles there are. */
+  static readonly STUDIO_STYLES = 3;
+  /** Repaints the studio (the desk's paintbrush): 0 blue stripes, 1 garden room, 2 Christmas. */
+  setStudioStyle(style: number) {
+    this.studioStyle = ((style % MascotEngine.STUDIO_STYLES) + MascotEngine.STUDIO_STYLES) % MascotEngine.STUDIO_STYLES;
+    this.applyStudioStyle();
+    this.requestRender();
+  }
+  private applyStudioStyle() {
+    const p = this.studioParts;
+    if (!p) return;
+    const st = this.studioStyle;
+    const wallMat = p.wall.material as THREE.ShaderMaterial;
+    wallMat.uniforms.map.value = p.wallMaps[st];
+    // the stripes repeat across the wall; the plain walls are one soft gradient
+    (wallMat.uniforms.uUvScale.value as THREE.Vector2).set(st === 0 ? 14 : 1, 1);
+    (p.desk.material as THREE.ShaderMaterial).uniforms.map.value = p.deskMaps[st];
+    p.xmas.visible = st === 2;
+    // the brush is loaded with the colour that comes next
+    const next = ["#7ec268", "#c0392f", "#bcdcf3"][st];
+    (p.tipMat.uniforms.uColor.value as THREE.Vector3).copy(hexToVec3(next));
   }
 
   private mat(opts: Parameters<typeof ps1Material>[1] = {}) {
@@ -612,6 +650,7 @@ export class MascotEngine {
       this.scene.remove(this.setGroup);
       this.disposeObject(this.setGroup);
     }
+    this.studioParts = null;
     this.setup = this.buildSet(name);
     this.setGroup = this.setup.group;
     this.scene.add(this.setGroup);
@@ -712,12 +751,93 @@ export class MascotEngine {
           inspectDist: inspect?.dist,
         });
       };
-      const wall = new THREE.Mesh(new THREE.PlaneGeometry(14, 8), this.mat({ map: tex(wallTexture("#cfe7f6", "#a7cde6")), lit: false }));
+      /* The studio comes in a few paint styles; the paintbrush on the desk
+         steps through them (setStudioStyle). Everything a style changes is
+         built once here and switched by applyStudioStyle, so repainting never
+         rebuilds the room or moves the camera. Style 0 (her pick): stripes. */
+      const wallMaps = [
+        tex(stripeWallTexture("#fff6ea", "#cbe4f6")), // 0: the regular room, cream and light blue stripes (blue, so the pink console stands off it)
+        tex(gardenWallTexture()), // 1: a garden room, big windows with trees outside
+        tex(christmasWallTexture()), // 2: Christmas, deep red with snow dots
+      ];
+      // each room has a desk that goes with it (her calls: mid-tone, so it
+      // keeps the cat's chunky 3D look; a quiet grain, not stripy; no purple)
+      const deskMaps = [
+        tex(woodTexture(3, "#d59a7c", "#c98c6e", "#dea689", "#b97f63")), // rosy caramel
+        tex(woodTexture(3, "#d2a05f", "#c59250", "#dcae70", "#b08045")), // honey
+        tex(woodTexture(3, "#a8693a", "#9c5f33", "#b37443", "#844e2a")), // warm walnut
+      ];
+      const wall = new THREE.Mesh(new THREE.PlaneGeometry(14, 8), this.mat({ map: wallMaps[0], lit: false }));
       wall.position.set(0, 2.6, -2.2);
-      const desk = new THREE.Mesh(new THREE.BoxGeometry(9, 0.3, 3.8), this.mat({ map: tex(woodTexture()), repeat: [3, 1.5] }));
+      const desk = new THREE.Mesh(new THREE.BoxGeometry(9, 0.3, 3.8), this.mat({ map: deskMaps[0], repeat: [3, 1.5] }));
       desk.position.set(0, -0.15, 0.1);
-      const frameMat = this.mat({ color: "#6b4a33" });
-
+      const frameMat = this.mat({ color: "#f7f2ea" });
+      // Christmas: a garland of lights across the wall, and a small tree
+      // tucked in the back left corner behind the laptop
+      const xmas = new THREE.Group();
+      {
+        const cord = this.mat({ color: "#2f6b45", lit: false });
+        const colors = ["#ffe08a", "#ffffff", "#7fd08a", "#ffe08a", "#ff9aa8"];
+        const N = 13;
+        const at = (k: number) => {
+          const t = k / (N - 1);
+          const swag = (t * 2) % 1; // two swags across the wall
+          return [-4.0 + t * 8.0, 3.78 - Math.sin((k === N - 1 ? 0 : swag) * Math.PI) * 0.26] as const;
+        };
+        for (let k = 0; k < N; k++) {
+          const [x, y] = at(k);
+          const bulb = new THREE.Mesh(new THREE.IcosahedronGeometry(0.12, 0), this.mat({ color: colors[k % colors.length], lit: false }));
+          bulb.position.set(x, y - 0.13, -2.1);
+          xmas.add(bulb);
+          if (k < N - 1) {
+            const [x2, y2] = at(k + 1);
+            const seg = new THREE.Mesh(new THREE.BoxGeometry(Math.hypot(x2 - x, y2 - y), 0.05, 0.03), cord);
+            seg.position.set((x + x2) / 2, (y + y2) / 2, -2.13);
+            seg.rotation.z = Math.atan2(y2 - y, x2 - x);
+            xmas.add(seg);
+          }
+        }
+        const tree = new THREE.Group();
+        const pine = this.mat({ color: "#3f8f58" });
+        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.3, 6), this.mat({ color: "#8a5330" }));
+        trunk.position.y = 0.15;
+        tree.add(trunk);
+        for (const [y, r, h] of [[0.6, 0.62, 0.8], [1.1, 0.48, 0.7], [1.55, 0.32, 0.6]]) {
+          const tier = new THREE.Mesh(new THREE.ConeGeometry(r, h, 7), pine);
+          tier.position.y = y;
+          tree.add(tier);
+        }
+        const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.13, 0), this.mat({ color: "#ffd95a", lit: false }));
+        star.position.y = 1.95;
+        tree.add(star);
+        for (const [x, y, z, c] of [[0.3, 0.55, 0.42, "#ff6b7a"], [-0.28, 0.75, 0.4, "#ffe08a"], [0.12, 1.05, 0.36, "#ffffff"], [-0.14, 1.35, 0.26, "#ff6b7a"], [0.2, 1.5, 0.2, "#ffe08a"]] as const) {
+          const ball = new THREE.Mesh(new THREE.IcosahedronGeometry(0.07, 0), this.mat({ color: c, lit: false }));
+          ball.position.set(x, y, z);
+          tree.add(ball);
+        }
+        tree.position.set(-3.85, 0, -1.25);
+        xmas.add(tree);
+      }
+      // The paintbrush that does the repainting: just a flat brush lying on
+      // the desk, front right (her call: the one standing in a pot was
+      // confusing). Its bristles carry the colour that comes next.
+      const brush = new THREE.Group();
+      const handle = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.07, 0.13), this.mat({ color: "#e0a85a" }));
+      handle.position.set(-0.36, 0.045, 0);
+      const ferrule = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.085, 0.3), this.mat({ color: "#c9ccd6" }));
+      ferrule.position.set(0.0, 0.045, 0);
+      const bristles = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.07, 0.3), this.mat({ color: "#f7ecd8" }));
+      bristles.position.set(0.21, 0.045, 0);
+      const tipMat = this.mat({ color: "#ffd9e2" });
+      const tip = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.075, 0.31), tipMat);
+      tip.position.set(0.32, 0.045, 0);
+      brush.add(handle, ferrule, bristles, tip);
+      brush.rotation.y = 0.55;
+      brush.position.set(2.7, 0, 1.2);
+      spot("brush", brush, [2.75, 0.2, 1.2], { at: [0.2, 1.45, 0.2], dist: 4.6 });
+      this.studioParts = { wall, desk, wallMaps, deskMaps, frameMat, xmas, tipMat };
+      this.applyStudioStyle();
+      const extras: THREE.Object3D[] = [xmas, brush];
       // Wall: the diploma, the résumé, a row of social tiles.
       const diploma = new THREE.Group();
       const dFrame = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.0, 0.06), frameMat);
@@ -813,8 +933,9 @@ export class MascotEngine {
 
       // her call: the wall pieces 15% bigger, the desk things a touch bigger
       for (const g of [diploma, resume, socials]) g.scale.setScalar(1.15);
-      for (const g of [laptop, book, flute, letter, plate]) g.scale.setScalar(1.08);
+      for (const g of [laptop, book, flute, letter, plate, brush]) g.scale.setScalar(1.08);
       group.add(wall, desk, diploma, resume, socials, laptop, book, flute, letter, plate);
+      group.add(...extras);
       // Inspecting the laptop flies right up to its screen, square on, so the
       // page can show the projects on the laptop itself.
       group.updateMatrixWorld(true);

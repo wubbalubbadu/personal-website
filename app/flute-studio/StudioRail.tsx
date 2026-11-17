@@ -18,7 +18,7 @@ import {openPracticeTool} from "./PracticeAudio";
 
 export type RailIcon = "home"|"library"|"exercises"|"learn"|"studio"|"tools";
 export type RailDestination = {key:string;label:string;href:string;icon:RailIcon;active:boolean};
-type RailChild = {key:string;label:string;href:string;active?:boolean}|{key:string;caption:string};
+type RailChild = {key:string;label:string;href:string;active?:boolean}|{key:string;caption:string}|{key:string;label:string;onClick:()=>void};
 
 /** Line icons drawn on a 24 grid like the rest of the studio's icons. */
 function RailGlyph({name}:{name:RailIcon}){
@@ -74,7 +74,13 @@ export default function StudioRail({destinations,open}:{destinations:RailDestina
       key:status,label:zh?STATUS_LABELS[status].zh:({working:"Working On",want:"Want to Learn",learned:"Learned"})[status],
       href:`/flute-studio/music?list=${status}`,active:pathname==="/flute-studio/music"&&search.get("list")===status,
     }));
-    if(key==="resources")return LEARN_PAGES.map(page=>({key:page.key,label:zh?page.zh:page.en,href:page.href,active:pathname.startsWith(page.href)}));
+    // Tools sit under Learn (Nov 12): the three dock tools open over the current page; the tendency test is a page.
+    if(key==="resources")return [
+      ...LEARN_PAGES.map(page=>({key:page.key,label:zh?page.zh:page.en,href:page.href,active:pathname.startsWith(page.href)})),
+      {key:"tools-caption",caption:t.nav.tools},
+      ...(["tuner","metronome","drone"] as const).map(tool=>({key:tool,label:t.quickTools[tool],onClick:()=>openPracticeTool(tool)})),
+      {key:"tendency",label:zh?"音准倾向测试":"Pitch tendency test",href:"/flute-studio/tools/tendency",active:pathname==="/flute-studio/tools/tendency"},
+    ];
     return [];
   };
 
@@ -97,23 +103,10 @@ export default function StudioRail({destinations,open}:{destinations:RailDestina
         {children.length>0&&<ul className="studio-rail__children">
           {children.map(child=>"caption" in child
             ?<li key={child.key} className="studio-rail__caption">{child.caption}</li>
+            :"onClick" in child?<li key={child.key}><button type="button" onClick={child.onClick}>{child.label}</button></li>
             :<li key={child.key}><Link href={child.href} className={child.active?"is-current":undefined} aria-current={child.active?"page":undefined}>{child.label}</Link></li>)}
         </ul>}
       </div>;
     })}
-    {/* Tools goes to the Tools page; open, the rail also lists each tool,
-        which opens straight in the practice dock over the current page. It
-        is here as well as in the top bar because the corner button alone
-        was easy to miss. */}
-    <div className="studio-rail__group studio-rail__group--tools">
-      <Link href="/flute-studio/tools" className={pathname.startsWith("/flute-studio/tools")?"studio-rail__item is-active is-current":"studio-rail__item"} aria-current={pathname.startsWith("/flute-studio/tools")?"page":undefined}>
-        <RailGlyph name="tools"/>
-        <span>{t.nav.tools}</span>
-      </Link>
-      <ul className="studio-rail__children">
-        {(["tuner","metronome","drone"] as const).map(tool=><li key={tool}><button type="button" onClick={()=>openPracticeTool(tool)}>{t.quickTools[tool]}</button></li>)}
-        <li><Link href="/flute-studio/tools/tendency" aria-current={pathname==="/flute-studio/tools/tendency"?"page":undefined} className={pathname==="/flute-studio/tools/tendency"?"is-current":undefined}>{zh?"音准倾向测试":"Pitch tendency test"}</Link></li>
-      </ul>
-    </div>
   </nav>;
 }
