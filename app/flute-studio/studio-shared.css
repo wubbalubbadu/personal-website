@@ -88,3 +88,6 @@ html body .studio-route :is(.exercise-hub__header, .studio-page__head, .theory-h
    left edge and hairlines never move. */
 body .studio-route :is(.music-row__main, .book-row__main, .exercise-hub__row-main)[href] { transition: opacity .28s ease; -webkit-tap-highlight-color: transparent; }
 body .studio-route :is(.music-row__main, .book-row__main, .exercise-hub__row-main)[href]:active { opacity: .55; transition-duration: 0s; }
+/* Nov 17: list rows never shrink on press. The global `.studio-route a:active{transform:scale(.98)}` scaled a
+   full-width row toward its centre, so its words jumped about 10px right when tapped. Rows only dim. */
+body .studio-route :is(.music-row__main, .book-row__main, .exercise-hub__row-main, .music-row, .book-row):active { transform: none !important; }

@@ -1090,3 +1090,60 @@ html body .osmd-score .note-pill--below{transform:translate(-50%,0);background:t
 .reader-play-spinner{display:block;width:16px;height:16px;border:2px solid #d9dadf;border-top-color:#6f7178;border-radius:50%;animation:reader-play-spin .7s linear infinite}
 @keyframes reader-play-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.reader-play-spinner{animation:none;border-top-color:#d9dadf}}
+
+/* ---------- Nov 17: pick one is the switch ----------
+   Any reader menu choice where you pick exactly one (Steady click or Follows the music, the subdivision, page size,
+   note names, octave) is the studio's view switch, stretched so its choices share the width: a round track, the
+   chosen one a white capsule. Pick several stays tiles. `.panel-switch--glyphs` holds the rhythm glyphs
+   (SubdivisionIcon), drawn as the real notes, never a 3 over two eighths. The !important flags only answer the older
+   .reader-settings-panel button layers above. */
+html:root body .reader-settings-panel .reader-setting-row:has(>.panel-switch){flex-direction:column;align-items:stretch;gap:8px;min-height:0;padding:0}
+html:root body .reader-settings-panel .panel-switch{display:flex;width:100%;box-sizing:border-box;flex-wrap:nowrap;gap:2px;padding:3px;border-radius:999px;background:#edf1f5}
+html:root body .reader-settings-panel .panel-switch>button{flex:1 1 0;min-width:0;height:30px!important;min-height:0!important;margin:0!important;padding:0 8px!important;border:0!important;border-radius:999px!important;background:transparent!important;color:#6f7178!important;font-size:13px!important;font-weight:500!important;line-height:1!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:none!important;display:flex;align-items:center;justify-content:center}
+html:root body .reader-settings-panel .panel-switch>button:hover{color:#292a33!important;background:transparent!important}
+html:root body .reader-settings-panel .panel-switch>button[aria-pressed="true"]{background:#fff!important;color:#292a33!important;box-shadow:0 0 0 1px #e1e1e5,0 1px 3px rgba(41,42,51,.06)!important}
+html:root body .reader-settings-panel .panel-switch--glyphs>button{height:34px!important;padding:0 4px!important}
+html:root body .reader-settings-panel .panel-switch--glyphs .subdivision-icon{width:32px;height:24px;color:currentColor}
+/* Row labels in these menus: one small sentence-case label, the same as Customize scales. */
+html:root body .reader-settings-panel :is(.reader-row-head>span:first-child,.reader-setting-row:has(>.panel-switch)>span){font-size:13px!important;font-weight:600!important;color:#45464f!important;letter-spacing:0!important;text-transform:none!important}
+
+/* Nov 17: the fingering card over the music, tighter. It was the note name on a row of its own above the keys, in
+   generous padding, so half the card was empty. Now one row: the name, then the keys beside it; 8 / 12px padding,
+   a hairline and the soft popover shadow like every reader pop-over, keys in ink (not green-black). Several ways to
+   finger a note stack under each other, each with its small label. */
+html body .restored-reader .flute-tip.finger-chart{display:flex;align-items:center;gap:10px;padding:8px 12px!important;border:1px solid #ececef!important;border-radius:12px!important;box-shadow:0 6px 20px rgba(41,42,51,.12)!important;width:max-content!important;max-width:calc(100vw - 24px)}
+html body .restored-reader .flute-tip.finger-chart>strong{flex:none;margin:0;font:600 14px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text",Arial,sans-serif;color:#292a33}
+html body .restored-reader .flute-tip.finger-chart>strong sup{font-size:10px;font-weight:600;color:#6f717a;margin-left:1px}
+html body .restored-reader .flute-tip.finger-chart .finger-all{margin:0;gap:6px}
+html body .restored-reader .flute-tip.finger-chart .flute-diagram{width:196px;height:auto;color:#292a33}
+html body .restored-reader .flute-tip.finger-chart .finger-diagram__label{margin:0 0 1px;font-weight:500;color:#6f717a}
+
+/* Nov 17: settings that only show in the phone's View sheet (Drone's Tap / Follows the music, which lives in the
+   Drone ▾ on wider screens). The key sits right under the grip, with no "Key" label above it. */
+.reader-setting-row--phone{display:none!important}
+@media(max-width:760px){
+  html:root body .reader-settings-panel .reader-setting-row--phone{display:flex!important}
+  html:root body .reader-settings-panel>.reader-sheet-grip+.reader-panel-heading+.reader-key{margin-top:-8px}
+  html:root body .reader-settings-panel .reader-key .reader-key__stepper{margin-top:0}
+}
+.reader-key__back{justify-content:flex-end}
+
+/* Nov 17, the View sheet "still doesn't look good": it mixed two label styles (grey 13px over the switches, ink
+   15px beside the sliders), green native sliders and a ring on the chosen segment. Now every label is one style,
+   the sliders are slate with a white thumb (no colour: nothing is selected), the chosen segment has a soft shadow
+   and no ring, and the grip stays put at the top while the sheet scrolls. */
+html:root body .reader-settings-panel :is(.reader-row-head>span:first-child,.reader-setting-row>span:first-child,label.reader-setting-row){font-size:14px!important;font-weight:600!important;color:#292a33!important;letter-spacing:0!important;text-transform:none!important}
+html:root body .reader-settings-panel .panel-switch>button[aria-pressed="true"]{box-shadow:0 1px 3px rgba(41,42,51,.12),0 1px 1px rgba(41,42,51,.04)!important}
+html:root body .reader-settings-panel input[type="range"]{-webkit-appearance:none;appearance:none;height:22px;background:transparent;accent-color:auto;cursor:default}
+html:root body .reader-settings-panel input[type="range"]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:#dfe3e8}
+html:root body .reader-settings-panel input[type="range"]::-moz-range-track{height:4px;border-radius:2px;background:#dfe3e8}
+html:root body .reader-settings-panel input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;margin-top:-9px;border:0;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(41,42,51,.22),0 0 1px rgba(41,42,51,.2)}
+html:root body .reader-settings-panel input[type="range"]::-moz-range-thumb{width:22px;height:22px;border:0;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(41,42,51,.22),0 0 1px rgba(41,42,51,.2)}
+@media(max-width:760px){
+  html:root body .reader-settings-panel>.reader-sheet-grip{position:sticky!important;top:0;z-index:3;background:#fff}
+}
+/* Nov 17, "a little more compact": shorter Show on the page tiles and slider rows on the phone sheet. */
+@media(max-width:760px){
+  html:root body .reader-settings-panel .reader-display-options .tool{min-height:50px!important;padding:6px 4px!important;gap:2px!important;font-size:12px!important}
+  html:root body .reader-settings-panel label.reader-setting-row{min-height:32px!important}
+}

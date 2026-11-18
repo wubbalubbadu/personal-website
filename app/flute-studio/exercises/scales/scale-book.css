@@ -253,3 +253,12 @@ html:root body .reader-settings-panel .scale-panel .scale-book__preset-grid--fou
   html:root body .reader-settings-panel .scale-panel .scale-book__options{grid-template-columns:repeat(2,minmax(0,1fr))}
   html:root body .reader-settings-panel .scale-panel :is(.scale-book__options,.scale-book__keys,.scale-book__note-grid) .scale-book__chip.scale-book__chip{padding:6px 8px!important}
 }
+/* Nov 17: fewer kinds of text in Customize scales. Group labels are sentence case at 13 / 600 (no small grey
+   capitals), the same label every reader menu uses. "All keys" and "Clear" sit on the Keys label line, right-aligned,
+   instead of a line of their own. */
+html:root body .reader-settings-panel .scale-panel .scale-book__group-label{font-size:13px;font-weight:600;letter-spacing:0;text-transform:none;color:#45464f}
+html:root body .reader-settings-panel .scale-panel .scale-book__group[data-scale-group="keys"]{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:8px}
+html:root body .reader-settings-panel .scale-panel .scale-book__group[data-scale-group="keys"]>:not(.scale-book__group-label):not(.scale-book__key-actions){grid-column:1/-1}
+html:root body .reader-settings-panel .scale-panel .scale-book__group[data-scale-group="keys"]>.scale-book__key-actions{margin:0!important;gap:2px}
+html:root body .reader-settings-panel .scale-panel .scale-book__group[data-scale-group="keys"]>.scale-book__key-actions button{height:24px!important;padding:0 6px!important;margin:0!important;font-size:13px!important;font-weight:500!important;color:#6f717a!important}
+html:root body .reader-settings-panel .scale-panel .scale-book__group[data-scale-group="keys"]>.scale-book__key-actions button:hover{color:#292a33!important}

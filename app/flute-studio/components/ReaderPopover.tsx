@@ -21,7 +21,7 @@ export function ReaderPopover({label,trigger,children,className="",panelClassNam
   const close=useCallback(()=>{
     if(!isSheet()){setOpen(false);return}
     setClosing(true);
-    window.setTimeout(()=>{setClosing(false);setDragY(0);setOpen(false)},220);
+    window.setTimeout(()=>{setClosing(false);setDragY(0);setOpen(false)},280);
   },[setOpen]);
   const grip={
     onPointerDown:(event:React.PointerEvent<HTMLDivElement>)=>{drag.current={start:event.clientY,pointer:event.pointerId};event.currentTarget.setPointerCapture(event.pointerId)},

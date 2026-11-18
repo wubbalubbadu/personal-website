@@ -287,6 +287,17 @@ export class MascotEngine {
     (p.tipMat.uniforms.uColor.value as THREE.Vector3).copy(hexToVec3(next));
   }
 
+  private radioParts: { dial: THREE.ShaderMaterial; needle: THREE.Mesh } | null = null;
+  /** The desk radio: its dial lights up while it plays, and the needle moves
+   *  to a different spot for each song. */
+  setRadio(on: boolean, song: number) {
+    const p = this.radioParts;
+    if (!p) return;
+    (p.dial.uniforms.uColor.value as THREE.Vector3).copy(hexToVec3(on ? "#ffe37a" : "#e6dcc4"));
+    p.needle.position.x = 0.09 + ((song % 3) * 0.11);
+    this.requestRender();
+  }
+
   private mat(opts: Parameters<typeof ps1Material>[1] = {}) {
     return ps1Material(this.globals, opts);
   }
@@ -833,8 +844,10 @@ export class MascotEngine {
       tip.position.set(0.32, 0.045, 0);
       brush.add(handle, ferrule, bristles, tip);
       brush.rotation.y = 0.55;
-      brush.position.set(2.7, 0, 1.2);
-      spot("brush", brush, [2.75, 0.2, 1.2], { at: [0.2, 1.45, 0.2], dist: 4.6 });
+      // where the cookie plate was (Nov 17): front right sat under the phone
+      // screen's button hints, so on a phone you could hardly see it
+      brush.position.set(2.5, 0, 0.1);
+      spot("brush", brush, [2.5, 0.2, 0.1], { at: [0.2, 1.45, 0.2], dist: 4.6 });
       this.studioParts = { wall, desk, wallMaps, deskMaps, frameMat, xmas, tipMat };
       this.applyStudioStyle();
       const extras: THREE.Object3D[] = [xmas, brush];
@@ -917,24 +930,49 @@ export class MascotEngine {
       letter.position.set(-1.35, 0, 1.5);
       spot("letter", letter, [-1.35, 0.12, 1.5]);
 
-      // A plate of cookies: inspecting it, the cat has one.
-      const plate = new THREE.Group();
-      const dish = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.42, 0.05, 10), this.mat({ color: "#fffaf0" }));
-      dish.position.y = 0.03;
-      plate.add(dish);
-      [[-0.12, 0.08, 0.05], [0.14, 0.08, -0.06], [0.0, 0.14, 0.02]].forEach(([x, y, z], i) => {
-        const c = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.05, 9), this.mat({ map: this.cookieTex }));
-        c.position.set(x, y, z);
-        c.rotation.set(i === 2 ? 0.2 : 0, i * 0.7, i === 2 ? -0.15 : 0);
-        plate.add(c);
-      });
-      plate.position.set(2.2, 0, 0.15);
-      spot("cookies", plate, [2.2, 0.22, 0.15], { at: [0.2, 1.3, 0.2], dist: 4.6 });
+      // A little radio, back right (Nov 17; it replaced the cookie plate, the
+      // living room keeps the cookie jar). A boxy retro set: speaker grille on
+      // the left, a dial on the right, two knobs and an antenna. The dial's
+      // light is on while the radio plays.
+      const radio = new THREE.Group();
+      const shell = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.5, 0.34), this.mat({ color: "#8ccfc0" }));
+      shell.position.y = 0.25;
+      const grille = new THREE.Mesh(new THREE.PlaneGeometry(0.36, 0.32), this.mat({ color: "#f3ead8" }));
+      grille.position.set(-0.2, 0.27, 0.171);
+      for (let i = 0; i < 4; i++) {
+        const slot = new THREE.Mesh(new THREE.PlaneGeometry(0.28, 0.03), this.mat({ color: "#c9b99a" }));
+        slot.position.set(-0.2, 0.17 + i * 0.07, 0.172);
+        radio.add(slot);
+      }
+      const dial = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.13), this.mat({ color: "#fff6dc", lit: false }));
+      dial.position.set(0.2, 0.34, 0.171);
+      const needle = new THREE.Mesh(new THREE.PlaneGeometry(0.015, 0.11), this.mat({ color: "#e0457b", lit: false }));
+      needle.position.set(0.16, 0.34, 0.173);
+      const knobMat = this.mat({ color: "#f6c453" });
+      for (const x of [0.12, 0.28]) {
+        const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.05, 8), knobMat);
+        knob.rotation.x = Math.PI / 2;
+        knob.position.set(x, 0.15, 0.19);
+        radio.add(knob);
+      }
+      const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.7, 5), this.mat({ color: "#c9ccd6" }));
+      antenna.position.set(0.3, 0.75, -0.06);
+      antenna.rotation.z = -0.45;
+      const tipBall = new THREE.Mesh(new THREE.SphereGeometry(0.03, 5, 4), this.mat({ color: "#c9ccd6" }));
+      tipBall.position.set(0.46, 1.06, -0.06);
+      const feet = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.03, 0.26), this.mat({ color: "#5e8f84" }));
+      feet.position.y = 0.0;
+      radio.add(shell, grille, dial, needle, antenna, tipBall, feet);
+      radio.rotation.y = -0.4;
+      radio.position.set(2.45, 0, -0.75);
+      spot("radio", radio, [2.45, 0.35, -0.75]);
+      this.radioParts = { dial: dial.material as THREE.ShaderMaterial, needle };
+      this.setRadio(false, 0);
 
       // her call: the wall pieces 15% bigger, the desk things a touch bigger
       for (const g of [diploma, resume, socials]) g.scale.setScalar(1.15);
-      for (const g of [laptop, book, flute, letter, plate, brush]) g.scale.setScalar(1.08);
-      group.add(wall, desk, diploma, resume, socials, laptop, book, flute, letter, plate);
+      for (const g of [laptop, book, flute, letter, radio, brush]) g.scale.setScalar(1.08);
+      group.add(wall, desk, diploma, resume, socials, laptop, book, flute, letter, radio);
       group.add(...extras);
       // Inspecting the laptop flies right up to its screen, square on, so the
       // page can show the projects on the laptop itself.

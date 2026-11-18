@@ -13,9 +13,11 @@
 
 .rd-game__staff{width:100%}
 .rd-game__staff .engraved-row{height:clamp(200px,32vh,290px)}
-.rd-game__result{margin:0;min-height:48px;text-align:center;font-size:16px;line-height:1.4;color:#45464f}
+.rd-game__result{margin:0;min-height:76px;text-align:center;font-size:16px;line-height:1.4;color:#45464f}
 .rd-game__result.is-clean{color:#46633d;font-weight:600}
 .rd-game__result.is-off{color:#a35432}
+.rd-game__score{display:block;font-size:22px;font-weight:600;color:#292a33;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.rd-game__result.is-clean .rd-game__score{color:inherit}
 .rd-game__source{display:block;font-size:14px;font-weight:400;color:#71747e}
 .rd-game__count{display:flex;justify-content:center;min-height:16px}
 .rd-game__pad{height:120px;cursor:default}

@@ -76,6 +76,7 @@ export const ZH = {
     },
     cookies: { name: "饼干", react: "", body: "" },
     brush: { name: "画笔", react: "", body: "" },
+    radio: { name: "收音机", react: "", body: "" },
     jar: { name: "饼干罐", react: "", body: "" },
     closet: { name: "衣柜", react: "", body: "" },
     cushion: { name: "坐垫", react: "", body: "再睡五分钟。" },
@@ -151,6 +152,14 @@ export const ZH = {
     20: ["二十块？！", "你真是个坏榜样。", "谢谢你。"],
   } as Record<number, string[]>,
 
+  /** The radio's lines, like RADIO_LINES in studio.ts. */
+  radio: {
+    on: (song: string) => `练琴配 lo-fi。这首是《${song}》。`,
+    next: (song: string) => `下一首：《${song}》。`,
+    off: "安静下来了。正好练长音。",
+    empty: "收音机里还没有歌。快了！",
+  },
+
   /** The paintbrush's lines, in the same order as ROOM_PAINTS in studio.ts. */
   paints: [
     "又是蓝色条纹。这个我最喜欢。",
@@ -199,6 +208,9 @@ export const ZH = {
     allProjects: "查看全部项目",
     anotherLook: "再换一套？",
     paintAgain: "再刷一次？",
+    nextSong: "下一首",
+    radioOff: "关掉收音机",
+    radioOn: "打开收音机",
     emailMe: "给我发邮件",
     seeAll: "查看全部项目 ›",
     next: "下一页",

@@ -37,11 +37,11 @@
 .flute-diagram.is-interactive .flute-key:hover circle,
 .flute-diagram.is-interactive .flute-key:hover ellipse,
 .flute-diagram.is-interactive .flute-key:hover rect,
-.flute-diagram.is-interactive .flute-key:hover path { fill: #dce8d7; }
+.flute-diagram.is-interactive .flute-key:hover path { fill: #e2e8ef; /* Nov 17: slate hover, was green */ }
 .flute-diagram.is-interactive .flute-key:focus-visible { outline: none; }
 .flute-diagram.is-interactive .flute-key:focus-visible circle,
 .flute-diagram.is-interactive .flute-key:focus-visible ellipse,
-.flute-diagram.is-interactive .flute-key:focus-visible rect { stroke: #678956; stroke-width: 4.5; }
+.flute-diagram.is-interactive .flute-key:focus-visible rect { stroke: #6d4585; stroke-width: 4.5; }
 
 @media (prefers-reduced-motion: reduce) {
   .flute-key circle,

@@ -111,7 +111,7 @@ const modeLabels:Record<ArticulationMode,{en:string;zh:string}>={slur:{en:"Slur"
 const rhythmChoices:RhythmChoice[]=["even","dottedLongShort","dottedShortLong","triplet"];
 /** A saved rhythm rotation: a non-empty list of known rhythms. */
 const isRhythmList=(value:unknown):value is RhythmChoice[]=>Array.isArray(value)&&value.length>0&&value.every(v=>rhythmChoices.includes(v));
-const rhythmLabels:Record<RhythmChoice,{en:string;zh:string}>={even:{en:"Even",zh:"均分"},dottedLongShort:{en:"Dotted, long–short",zh:"附点（长–短）"},dottedShortLong:{en:"Dotted, short–long",zh:"附点（短–长）"},triplet:{en:"Triplet",zh:"三连音"}};
+const rhythmLabels:Record<RhythmChoice,{en:string;zh:string}>={even:{en:"Even",zh:"均分"},dottedLongShort:{en:"Dotted, long short",zh:"附点（长短）"},dottedShortLong:{en:"Dotted, short long",zh:"附点（短长）"},triplet:{en:"Triplet",zh:"三连音"}};
 
 // Double/triple tonguing are practice techniques for articulating a fast
 // staccato run, not separate notation — so each is just a preset like any

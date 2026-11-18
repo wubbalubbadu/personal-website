@@ -20,11 +20,16 @@ export type Voice = {
   length: number;
   wave: OscillatorType;
   volume: number;
+  /** Each blip rises a little, then falls: a tiny "mew" instead of a beep. */
+  mew?: boolean;
 };
 
 export const VOICES = {
   cookie: { pitch: 330, formant: 1.15, wobble: 0.05, length: 62, wave: "sawtooth", volume: 0.5 },
-  cat: { pitch: 470, formant: 1.35, wobble: 0.07, length: 52, wave: "sawtooth", volume: 0.42 },
+  // Nov 17, her note "high pitched gibberish": lower, a rounder triangle wave
+  // instead of the buzzy sawtooth, quieter, longer, and each blip a little mew
+  // (the old one: pitch 470, formant 1.35, length 52, sawtooth, volume 0.42)
+  cat: { pitch: 360, formant: 1.15, wobble: 0.08, length: 78, wave: "triangle", volume: 0.34, mew: true },
 } satisfies Record<string, Voice>;
 
 type Vowel = "a" | "e" | "i" | "o" | "u";
@@ -153,7 +158,11 @@ export function playStep(step: Step, voice: Voice = VOICES.cookie) {
     osc.frequency.linearRampToValueAtTime(f0 * 1.05, now + len);
   } else if (step.tone === 4) osc.frequency.linearRampToValueAtTime(f0 * 0.75, now + len);
   else if (step.tone === 1) osc.frequency.setValueAtTime(f0 * 1.08, now);
-  else osc.frequency.linearRampToValueAtTime(f0 * (step.bend > 1.05 ? 1.06 : 0.9), now + len);
+  else if (voice.mew) {
+    osc.frequency.setValueAtTime(f0 * 0.92, now);
+    osc.frequency.linearRampToValueAtTime(f0 * (step.bend > 1.05 ? 1.18 : 1.08), now + len * 0.35);
+    osc.frequency.linearRampToValueAtTime(f0 * (step.bend > 1.05 ? 1.05 : 0.82), now + len);
+  } else osc.frequency.linearRampToValueAtTime(f0 * (step.bend > 1.05 ? 1.06 : 0.9), now + len);
 
   const out = ctx.createGain();
   out.gain.setValueAtTime(0.0001, now);

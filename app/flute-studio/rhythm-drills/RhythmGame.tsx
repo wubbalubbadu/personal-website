@@ -17,7 +17,7 @@ const REAL_BARS=realBarsJson as unknown as DrillPattern[];
 const REAL_SHARE=.35,TIER_KEY='cookie:rhythm-drills-tier';
 const COUNT_Y=248,MARK_Y=278;
 type Phase='ready'|'run'|'result';
-type Result={perfect:boolean;marks:TapMark[];missing:number[]};
+type Result={perfect:boolean;marks:TapMark[];missing:number[];onTime:number;total:number;before?:number};
 
 function readTier():Tier{try{const t=localStorage.getItem(TIER_KEY);if(TIERS.some(x=>x.id===t))return t as Tier}catch{/* No storage: start easy. */}return 'easy'}
 function saveTier(t:Tier){try{localStorage.setItem(TIER_KEY,t)}catch{/* Private mode: the choice is just not kept. */}}
@@ -35,6 +35,8 @@ export default function RhythmGame(){
   const [pattern,setPattern]=useState<DrillPattern|null>(null),[result,setResult]=useState<Result|null>(null);
   const [marks,setMarks]=useState<TapMark[]>([]),[pressed,setPressed]=useState(false);
   const taps=useRef<number[]>([]),used=useRef(new Set<string>()),round=useRef(0),guard=useRef(0);
+  // The last score on this rhythm, so a second try can say whether it went up. Cleared with each new rhythm.
+  const lastScore=useRef<number|null>(null);
   const tierInfo=TIERS.find(t=>t.id===tier)!;
 
   const data=useMemo(()=>pattern?compileRhythm(pattern):null,[pattern]);
@@ -47,7 +49,7 @@ export default function RhythmGame(){
     const real=REAL_BARS.filter(p=>!used.current.has(p.id)&&fitsTier(p.items,p.rank,t)&&barLength(p.meter)<=maxLength(room,shortestOf(p.items)));
     const p=real.length&&Math.random()<REAL_SHARE?real[Math.floor(Math.random()*real.length)]:makeTierRhythm(t,Math.random,room,`r${round.current}`);
     if(p.source)used.current.add(p.id);
-    setPattern(p);setResult(null);setMarks([]);setPhase('ready');guard.current=performance.now()+250;
+    lastScore.current=null;setPattern(p);setResult(null);setMarks([]);setPhase('ready');guard.current=performance.now()+250;
   },[room]);
   // The first rhythm is made after hydration: it is random, and the remembered difficulty lives in this browser.
   useEffect(()=>{const first=()=>{const t=readTier();setTier(t);next(t)};first()},[next]);
@@ -61,7 +63,11 @@ export default function RhythmGame(){
     if(!data||!pattern)return;
     const g=gradeTaps(taps.current,data.onsets,spq);
     setStreak(s=>g.perfect?s+1:0);
-    setMarks(g.marks);setResult({perfect:g.perfect,marks:g.marks,missing:g.missing});
+    // The score: notes tapped on time, out of every note. Early, late and missed notes don't count; extra taps
+    // only show in the summary (and stop a clean round), so one stray tap never wipes out a good run.
+    const onTime=g.marks.filter(m=>m.timing==='on').length,before=lastScore.current??undefined;
+    lastScore.current=onTime;
+    setMarks(g.marks);setResult({perfect:g.perfect,marks:g.marks,missing:g.missing,onTime,total:data.onsets.length,before});
     setPhase('result');guard.current=performance.now()+500;
   }
 
@@ -72,6 +78,8 @@ export default function RhythmGame(){
       onEnd:grade,onError:()=>setPhase('ready')});
   }
   function proceed(){next(tier)}
+  /** The same rhythm again, at the same tempo. */
+  function retry(){audio.stop();play()}
   function hear(){
     if(!data||!pattern)return;
     if(audio.elapsed>=0){audio.stop();return}
@@ -97,9 +105,13 @@ export default function RhythmGame(){
       if(e.repeat||e.metaKey||e.ctrlKey||e.altKey||['Shift','Control','Alt','Meta','Tab','Escape','CapsLock'].includes(e.key))return;
       // A focused button handles its own Enter and Space outside a run.
       if(phase!=='run'&&(e.target as HTMLElement)?.closest?.('button,a,input'))return;
+      // R plays the same rhythm again once it's graded; any other key goes on.
+      if(phase==='result'&&e.key.toLowerCase()==='r'&&performance.now()>=guard.current){e.preventDefault();retry();return}
       e.preventDefault();press(e.timeStamp);
     };
     window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);
+  // retry reads the latest state each render, like play inside press.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   },[phase,press]);
   useEffect(()=>{const hide=()=>{if(document.hidden&&phase==='run'){audio.stop();setPhase('ready')}};document.addEventListener('visibilitychange',hide);return()=>document.removeEventListener('visibilitychange',hide)},[phase,audio]);
 
@@ -123,7 +135,9 @@ export default function RhythmGame(){
     [result.missing.length,tr('1 note missed','漏了 1 个音'),tr('# notes missed','漏了 # 个音')],
     [result.marks.filter(m=>m.timing==='extra').length,tr('1 extra tap','多点了 1 次'),tr('# extra taps','多点了 # 次')],
   ].filter(([k])=>(k as number)>0).map(([k,one,many])=>counts(k as number,one as string,many as string)).join(zh?'，':', ')+(zh?'。':'.'):'';
-  const padLabel=phase==='ready'?tr('Tap here or press any key to start','点这里或按任意键开始'):phase==='run'?(countIn>=0?tr('Count in','预备'):tr('Tap each note','每个音点一下')):tr('Tap or press any key for the next rhythm','点一下或按任意键，下一个节奏');
+  const score=result?tr(`${result.onTime} of ${result.total} on time`,`${result.total} 个音里 ${result.onTime} 个准时`):'';
+  const change=!result||result.before===undefined?null:result.onTime>result.before?tr(`, up from ${result.before}`,`，比上次多 ${result.onTime-result.before} 个`):result.onTime===result.before?tr(', same as last time','，和上次一样'):null;
+  const padLabel=phase==='ready'?tr('Tap here or press any key to start','点这里或按任意键开始'):phase==='run'?(countIn>=0?tr('Count in','预备'):tr('Tap each note','每个音点一下')):tr('Tap or press any key for the next rhythm, R to try again','点一下或按任意键进入下一个节奏，按 R 再试一次');
 
   return <main className="rd-game">
     <header className="rd-game__stats">
@@ -148,6 +162,7 @@ export default function RhythmGame(){
 
     {/* After the round: how it went, and where a real bar comes from. */}
     <p className={`rd-game__result${result?.perfect?' is-clean':result?' is-off':''}`} role="status" aria-live="polite">
+      {result&&<span className="rd-game__score">{score}{change}</span>}
       {result?summary:' '}
       {result&&source&&<span className="rd-game__source">{tr(`From ${source.title} (${source.composer}), bar ${source.bar}`,`出自《${source.zhTitle??source.title}》（${source.composer}），第 ${source.bar} 小节`)}</span>}
     </p>
@@ -162,6 +177,7 @@ export default function RhythmGame(){
       {phase==='ready'&&<button className="rd-button action-button action-button--large" onPointerUp={e=>e.currentTarget.blur()} onClick={play}>{tr('Count me in','数拍开始')}</button>}
       {phase==='run'&&<button className="rd-button action-button action-button--large" onPointerUp={e=>e.currentTarget.blur()} onClick={()=>{audio.stop();setMarks([]);setPhase('ready')}}>{tr('Stop','停止')}</button>}
       {phase==='result'&&<>
+        <button className="rd-button action-button action-button--large" onPointerUp={e=>e.currentTarget.blur()} onClick={retry}>{tr('Try again','再试一次')}</button>
         <button className="rd-button action-button action-button--large" onPointerUp={e=>e.currentTarget.blur()} onClick={proceed}>{tr('Next rhythm','下一个节奏')}</button>
         <button className="rd-button action-button action-button--large" onPointerUp={e=>e.currentTarget.blur()} onClick={hear}>{audio.elapsed>=0?tr('Stop','停止'):tr('Hear it','听一遍')}</button>
       </>}

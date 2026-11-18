@@ -22,7 +22,7 @@
 @media(hover:hover){.trill-row__animate:hover:not(:disabled){background:#e2e8ef}}
 .trill-row button:focus-visible{outline:3px solid rgba(121,88,142,.3);outline-offset:2px}
 
-.trill-row__fingering{width:100%;max-width:560px;min-width:0;--flute-key-ground:#fff;color:#2f3a2c}
+.trill-row__fingering{width:100%;max-width:560px;min-width:0;--flute-key-ground:#fff;color:#292a33}
 .trill-diagram .flute-key.is-moving{color:#b24450}
 .trill-diagram .flute-key{cursor:help}
 .trill-diagram .flute-key:focus-visible{outline:none}

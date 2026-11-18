@@ -486,6 +486,26 @@ export function mountConsole3D(
     leanGoal.set(Math.max(-1.4, Math.min(1.4, x)), Math.max(-1.4, Math.min(1.4, y)));
   };
   const onLeave = () => leanGoal.set(0, 0);
+
+  /* On a phone the console tilts with the phone (Nov 17): turn it left and the
+     console turns left too. Tilt is read against how you are holding it (the
+     rest pose drifts toward your hand), so only a change shows, never a slouch.
+     Android only: iOS would need a "motion access" prompt, and her call was
+     that the tilt isn't worth asking for. */
+  let tilting = false;
+  let rest: { b: number; g: number } | null = null;
+  const onTilt = (e: DeviceOrientationEvent) => {
+    if (e.beta == null || e.gamma == null || reduced) return;
+    // portrait only: in landscape the axes swap and the page isn't built for it
+    if ((window.screen.orientation?.angle ?? 0) !== 0) return;
+    tilting = true;
+    if (!rest) rest = { b: e.beta, g: e.gamma };
+    rest.b += (e.beta - rest.b) * 0.01;
+    rest.g += (e.gamma - rest.g) * 0.01;
+    const clamp = (v: number) => Math.max(-1.4, Math.min(1.4, v));
+    leanGoal.set(clamp((e.gamma - rest.g) / 14), clamp((e.beta - rest.b) / 14));
+  };
+  if (!reduced && matchMedia("(pointer: coarse)").matches) window.addEventListener("deviceorientation", onTilt);
   canvas.addEventListener("pointerdown", onDown);
   canvas.addEventListener("pointerup", onUp);
   canvas.addEventListener("pointercancel", onUp);
@@ -687,8 +707,9 @@ export function mountConsole3D(
     // small tilt only, and very little up and down)
     lean.lerp(leanGoal, reduced ? 1 : 1 - Math.pow(0.02, dt));
     const t = now / 1000;
-    device.rotation.y = lean.x * 0.03 + (reduced ? 0 : Math.sin(t * 0.6) * 0.006);
-    device.rotation.x = (desk ? -LEAN_BACK : 0) + lean.y * 0.01 + (reduced ? 0 : Math.sin(t * 0.8) * 0.004);
+    // the phone's tilt reads a little stronger than the mouse lean, still small
+    device.rotation.y = lean.x * (tilting ? 0.08 : 0.03) + (reduced ? 0 : Math.sin(t * 0.6) * 0.006);
+    device.rotation.x = (desk ? -LEAN_BACK : 0) + lean.y * (tilting ? 0.04 : 0.01) +(reduced ? 0 : Math.sin(t * 0.8) * 0.004);
     lensLevel = THREE.MathUtils.damp(lensLevel, lensGoal, 10, dt);
     lensMat.emissiveIntensity = lensLevel * (0.8 + 0.25 * Math.sin(t * 9) * Math.sin(t * 2.3));
 
@@ -753,6 +774,7 @@ export function mountConsole3D(
       cancelAnimationFrame(raf);
       ro.disconnect();
       window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("deviceorientation", onTilt);
       document.removeEventListener("pointerleave", onLeave);
       canvas.removeEventListener("pointerdown", onDown);
       canvas.removeEventListener("pointerup", onUp);

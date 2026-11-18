@@ -204,3 +204,22 @@ html body .reader-workspace .pitch-row .divider{flex:0 0 8px;height:0;margin:0;b
 html body .reader-workspace .pitch-row .divider:first-of-type{flex:1 1 8px}
 html body .tone-closeup .tone-graph{border-top:0}
 html body .reader-workspace .pitch-row .pitch-history{padding:0 12px;color:#292a33!important;font-weight:600}
+/* Nov 17: Close-up and Graph are on/off switches, so they are round like every switch (COMPONENTS.md shape rule),
+   not 12px buttons; Clear stays a plain word. And the chosen option of "Compare with" is a white capsule like every
+   view switch: an older .reader-workspace button radius had made it a rounded square inside the round track. */
+/* !important only to beat the Mark up toolbar's own 8px !important (the pitch row reuses .markup-row). */
+html body .reader-workspace .pitch-row button[aria-pressed]:not(.markup-close):not(.pitch-start){border-radius:999px!important;padding:0 14px!important}
+html body .reader-workspace .tone-compare .view-switch>button{border-radius:999px!important;height:30px!important;min-height:0!important}
+
+/* Nov 17, phone: the pitch row borrowed the drawing toolbar's six equal columns, so the status words ("Play from",
+   the mic message) spilled over Close-up and Graph. Here it is one line of buttons, Mic, Close-up, Graph, then
+   Clear and × at the end, with the words on their own short line under them. */
+@media(max-width:760px){
+  html:root body .pitch-row .pitch-row-surface.annotation-toolbar{display:flex!important;flex-wrap:wrap!important;align-items:center;gap:4px 6px!important;height:auto!important;padding:4px 6px!important}
+  html:root body .pitch-row .pitch-row-surface.annotation-toolbar>button{flex:0 0 auto!important;width:auto!important;min-width:0!important;height:34px!important}
+  html:root body .pitch-row .pitch-row-surface>.pitch-clear{margin-left:auto!important}
+  html:root body .pitch-row .pitch-row-surface>.markup-close{width:34px!important;padding:0!important}
+  html:root body .pitch-row .pitch-row-surface>.pitch-readout{order:99;flex:1 0 100%!important;width:auto!important;min-width:0;height:auto!important;padding:0 4px 2px!important;font-size:13px!important;line-height:1.35;color:#6f7178;white-space:normal}
+  html:root body .pitch-row .pitch-row-surface>.pitch-readout:empty{display:none}
+  html:root body .pitch-row{height:auto!important}
+}

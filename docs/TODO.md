@@ -6,6 +6,16 @@ Source triaged October 19, 2026. Open work, local implementations awaiting accep
 
 This audit does not establish deployment status. Project policy is local edits and local testing only; the user handles Cloudflare Pages deployment. Source presence and passing automated tests do not complete iPhone, iPad, Pencil or real-flute checks.
 
+## Home page room, November 17 (local, uncommitted)
+
+- [x] "What have you built?" opens the laptop, same as tapping it.
+- [x] Phone tilt turns the console (Android only; no iPhone motion prompt, her call).
+- [x] Desk: cookie plate gone (living room jar stays), mint radio back right, paintbrush moved into view and away from the flute.
+- [x] Radio: first tap anywhere turns it on; tapping it offers Next song / Turn it off; the laptop pauses it and plays each project's own song, then hands back. The sound switch mutes it.
+- [ ] **Your songs:** 3 lo-fi tracks + one per project, as files in `public/audio/room/`, listed in `app/lab/_kit/radio.ts`. Must be licensed for reuse (the Helynt "Lofi Video Game Beats" mix is remixes of Nintendo themes, so not usable).
+- [ ] Check with real songs: fades, the laptop handoff, and loudness under the cat's voice on an iPhone.
+- [ ] Radio lines are drafts (`RADIO_LINES` in studio.ts, `radio` in zh.ts).
+
 ## Session maintenance result (October 19, local)
 
 - Lint reduced from **7 errors / 34 warnings** to **0 errors / 25 warnings**. Remaining effect-dependency debt is open, not “cleanup complete.”
@@ -36,6 +46,28 @@ Done and checked in the browser at laptop, iPad and phone widths unless noted. R
 7. [x] **Lint:** (cleared Nov 17, see below) studio was down to 5 errors, all older: `practice/mock/page.tsx` (two set-state-in-effect, two `Date.now` in render) and `ticket-check/page.tsx` (a link with no address). The rest are lab pages and `app/projects`.
 8. [x] **DESIGN.md** rewritten to hold only current values; COMPONENTS.md keeps the rules.
 9. [x] **Leftover rounded and green bits:** the rhythm tap pad is a slate fill with no outline (lilac while live), in drills and close-up; close-up Start is the slate button; Sync devices trash sits beside the words. Left alone on purpose: Cookie's speech bubble in lessons (a character, not a container) and the trill chart's Animate button (already the slate button).
+
+### Your Nov 17 notes (local, uncommitted)
+
+- [x] **Phone reader, one row:** back, tempo pill, tools, Drone, View, dots; no piece name, no divider lines, one 38px height, no square hover in the pill. Status, save + and Download PDF moved into the dots. Books and excerpts keep two rows.
+- [x] **Drone mode** is a studio-wide setting in Settings (and the Drone ▾ on wider screens), not in View.
+- [x] **Settings rewritten:** language and drone as switches, a round switch for Apple Pencil only, no rules, one about line.
+- [x] **Phone sheets:** fit their content (no cut-off last rows), start right under the grip, softer slide; View puts Show on the page under the key; Scales sheet tighter; More rows 44px.
+- [x] **Bar selection:** white pill with depth, small solid handles (no white ring).
+- [x] **Drone taps** near a note drone it instead of selecting the bar.
+- [x] **Long tones pitch row** no longer overlaps on phone (words on their own line).
+- [x] **Decided Nov 17:** Scale Studio's + stays in the dots on phone (no room on the one row).
+- [ ] **Check on your phone:** the sheet slide, the one row on a real iPhone, a drone tap near a note.
+
+- [x] **Dotted scale rhythms are beamed** (eighth plus a sixteenth hook). 5 tests in `tests/scale-beams.test.mjs`.
+- [x] **Pick-one menus are switches:** metronome, drone, page width, octave, accompaniment and the rest of the reader menus. Subdivide draws real notes (the triplet has three). Tighter metronome menu. Checked at desktop and 375px.
+- [x] **Scales panel:** one label size, sentence case, "All keys / Clear" on the Keys line.
+- [x] **Fingering chart** is ink, not green; the over-the-music tip is one compact line.
+- [x] **Long tones:** Close-up / Graph are round and stay purple on hover; Compare with is a round switch.
+- [x] **Library row** no longer shifts right when pressed; it dims briefly instead.
+- [x] **Rhythm drills:** Try again (or R) replays the same rhythm; a score line ("7 of 9 on time", "up from 5").
+- [ ] **Your call:** Scale Studio Pattern and Range are pick-one but stay tiles (labels too long for a capsule). Switch them anyway?
+- [ ] **Your call:** the score counts early or late taps as not on time and ignores extra taps (they still stop a clean round). Stricter or looser?
 
 ### Late night, Nov 16 to 17 (local, uncommitted)
 

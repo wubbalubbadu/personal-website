@@ -12,6 +12,10 @@ import {ReaderPopover} from "./ReaderPopover";
  */
 // A selector, and a short name where the button's own name is a sentence ("Time Leonore Overture No. 3").
 const TARGETS:[selector:string,en?:string,zh?:string][]=[
+  // Moved off the phone's one practice row (Nov 17): the piece's list, Scale Studio's save, the PDF.
+  [".topbar .status-button__trigger"],
+  [".topbar .reader-set-save"],
+  ['.topbar :is(a,button):has(svg[data-icon="download"])',"Download PDF","下载 PDF"],
   ['.tool-group>button:has(svg[data-icon="markup"])'],
   [".record-button"],
   ['.reader-view button:has(svg[data-icon="tempo"])'],
@@ -33,7 +37,7 @@ export function PhoneMore({zh}:{zh:boolean}){
         if(!target)return [];
         // The button's own short word when it shows one (Draw, Record, Tempos), else its accessible name.
         const label=(zh?zhName:en)||target.textContent?.trim()||target.getAttribute("aria-label")||"";
-        return [{target,label,icon:target.querySelector("svg")?.outerHTML??""}];
+        return [{target,label,icon:(target.querySelector("svg")??target.querySelector(".status-dot"))?.outerHTML??""}];
       }));
     }
     setOpen(next);

@@ -543,10 +543,12 @@ export function scaleMusicXML(key:MajorKey,range:ScaleRange,articulationSelectio
     const measureBeats=beats.slice(m*2,m*2+2);
     const attributes=m===0?`<attributes><divisions>${perQuarter}</divisions><key><fifths>${spelled.fifths}</fifths><mode>${type.mode}</mode></key><time print-object="no"><beats>2</beats><beat-type>4</beat-type></time><clef><sign>G</sign><line>2</line></clef></attributes>`:"";
     const written=measureBeats.map(beat=>{
-      const uniformType=beat.every(index=>durations[index].type===durations[beat[0]].type);
+      // Every note in a beat shares the main beam, a dotted pair (eighth and sixteenth) included: it used to be beamed
+      // only when all its notes had one type, so dotted rhythms came out as flagged single notes (Nov 17).
+      const sixteenth=(i:number)=>i>=0&&i<beat.length&&durations[beat[i]].type==="16th";
       return beat.map((noteIndex,posInBeat)=>{
         const n=notes[noteIndex],d=durations[noteIndex];
-        const beam=uniformType&&beat.length>1?(posInBeat===0?"begin":posInBeat===beat.length-1?"end":"continue"):"";
+        const beam=beat.length>1?(posInBeat===0?"begin":posInBeat===beat.length-1?"end":"continue"):"";
         const {mode,positionInGroup,groupSize}=resolveArticulation(pattern,noteIndex);
         const notations:string[]=[];
         if(mode==="slur"&&positionInGroup===0)notations.push('<slur type="start" number="1"/>');
@@ -564,8 +566,14 @@ export function scaleMusicXML(key:MajorKey,range:ScaleRange,articulationSelectio
         // earlier version of this did, copying the old fixed 16th-only
         // code) is what made VexFlow throw "Invalid note initialization
         // object" on triplet/dotted rhythms.
-        const beamLevels=d.type==="16th"?2:1;
-        const beamXml=beam?Array.from({length:beamLevels},(_,level)=>`<beam number="${level+1}">${beam}</beam>`).join(""):"";
+        // The second beam joins only neighbouring sixteenths; a sixteenth beside an eighth gets a short hook pointing
+        // at it (the dotted pair's sixteenth hooks back, the snap's hooks forward). Eighths never get a level 2.
+        let second="";
+        if(beam&&d.type==="16th"){
+          const before=sixteenth(posInBeat-1),after=sixteenth(posInBeat+1);
+          second=before&&after?"continue":before?"end":after?"begin":posInBeat===0?"forward hook":"backward hook";
+        }
+        const beamXml=beam?`<beam number="1">${beam}</beam>${second?`<beam number="2">${second}</beam>`:""}`:"";
         return `<note><pitch><step>${n.step}</step><alter>${n.alter}</alter><octave>${n.octave}</octave></pitch><duration>${d.divisions}</duration>${"<dot/>".repeat(d.dots)}<type>${d.type}</type>${statedAccidental[noteIndex]?`<accidental>${statedAccidental[noteIndex]}</accidental>`:""}${timeMod}${beamXml}${notations.length?`<notations>${notations.join("")}</notations>`:""}</note>`;
       }).join("");
     }).join("");

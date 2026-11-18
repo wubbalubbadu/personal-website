@@ -78,3 +78,30 @@ html body .account-menu .account-menu__item.is-on:hover{background-color:#f4f6f9
 .account-menu__trigger{position:relative}
 .account-menu__dot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:#d9822b;box-shadow:0 0 0 2px #fff}
 .account-menu__backup.is-due{color:#a8621c}
+
+/* Nov 17 rewrite: compact groups with space between them and no rules; switches for pick-one; a round on/off
+   switch for Apple Pencil only; the about line is one grey line at the end. Desktop dropdown and phone sheet alike. */
+.account-menu__panel{display:grid;gap:14px}
+.account-menu__section{display:grid;gap:6px}
+.account-menu__group{margin:0!important;padding:0 2px!important;font-size:13px!important;font-weight:600!important;color:#292a33!important}
+html body .account-menu .account-menu__switch{display:flex;width:100%;box-sizing:border-box;gap:2px;padding:3px;border-radius:999px;background:#edf1f5}
+html body .account-menu .account-menu__switch>button{flex:1 1 0;min-width:0;height:30px;padding:0 8px;border:0;border-radius:999px;background:transparent!important;color:#6f7178;font:inherit;font-size:13px;font-weight:500;white-space:nowrap;cursor:default}
+html body .account-menu .account-menu__switch>button[aria-pressed="true"]{background:#fff!important;color:#292a33;box-shadow:0 1px 3px rgba(41,42,51,.12)}
+html body .account-menu .account-menu__item{padding:8px 2px;min-height:36px}
+html body .account-menu .account-menu__item:hover{background-color:transparent!important}
+.account-menu__footnote{margin:0!important;padding:0 2px;font-size:12px;line-height:1.4}
+.account-menu__about{margin:0;padding:0 2px;display:block;font-size:12px;color:#9a9ca3}
+.account-menu__toggle-row{cursor:default}
+.account-menu__toggle{position:relative;flex:none;width:40px;height:24px;border-radius:999px;background:#dfe3e8;transition:background-color .2s ease}
+.account-menu__toggle::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(41,42,51,.25);transition:transform .2s cubic-bezier(.32,.72,0,1)}
+.account-menu__toggle-row[aria-checked="true"] .account-menu__toggle{background:#6d4585}
+.account-menu__toggle-row[aria-checked="true"] .account-menu__toggle::after{transform:translateX(16px)}
+html body .account-menu .account-menu__private{padding:0}
+@media(max-width:760px){
+  html:root body .account-menu__panel{padding:24px 16px calc(14px + env(safe-area-inset-bottom))!important;gap:16px!important}
+  html body .account-menu .account-menu__switch>button{height:34px;font-size:14px}
+  html body .account-menu .account-menu__item{font-size:15px}
+}
+html body .account-menu .account-menu__panel .account-menu__item{padding-left:2px!important;padding-right:2px!important}
+/* Wide enough for "Follows the music" in the switch. */
+@media(min-width:761px){.account-menu__panel{width:288px}}

@@ -9,6 +9,7 @@ import {useLanguage} from "./i18n/LanguageContext";
 import {setPencilOnly,usePencilOnly,useTouchScreen} from "./lib/pencilMode";
 import {GearIcon} from "./components/HeaderIcons";
 import {backupStatus,requestPersistentStorage} from "./lib/transfer";
+import {useDroneMode} from "./lib/droneMode";
 import "./account-menu.css";
 
 /**
@@ -28,7 +29,8 @@ export default function AccountMenu(){
   const {t,lang,setLang}=useLanguage();
   const privateMusic=usePrivateMusic();
   const [code,setCode]=useState("");
-  const pencil=usePencilOnly(),touchScreen=useTouchScreen();
+  const pencil=usePencilOnly(),touchScreen=useTouchScreen(),zh=lang==="zh";
+  const [droneMode,setDroneMode]=useDroneMode();
   const [open,setOpen]=useState(false);
   // Read after hydration (localStorage), and again each time the menu opens.
   const [backup,setBackup]=useState<{days:number|null;due:boolean}>({days:null,due:false});
@@ -65,66 +67,54 @@ export default function AccountMenu(){
     };
   },[open]);
 
+  // Nov 17 rewrite, "too spaced out": no rules between groups, a pick-one is a View switch (language, drone), an
+  // on/off is a round switch at the end of its row, and the notes under a row are one short grey line.
   const panel=<div className="account-menu__panel" role="menu" style={sheet?undefined:{top:position.top,right:position.right}}>
-      <p className="account-menu__group">{t.settings.language}</p>
-      <div className="account-menu__choices">
-        {([["en",t.settings.english],["zh",t.settings.chinese]] as const).map(([value,label])=>
-          <button
-            key={value}
-            type="button"
-            role="menuitemradio"
-            aria-checked={lang===value}
-            className={lang===value?"account-menu__item is-on":"account-menu__item"}
-            onClick={()=>setLang(value)}
-          >
-            <span>{label}</span>
+      <section className="account-menu__section">
+        <p className="account-menu__group">{t.settings.language}</p>
+        <div className="view-switch account-menu__switch" role="group" aria-label={t.settings.language}>
+          {([["en",t.settings.english],["zh",t.settings.chinese]] as const).map(([value,label])=>
+            <button key={value} type="button" aria-pressed={lang===value} onClick={()=>setLang(value)}>{label}</button>)}
+        </div>
+      </section>
 
-          </button>)}
-      </div>
+      <section className="account-menu__section">
+        <p className="account-menu__group">{zh?"持续音":"Drone"}</p>
+        <div className="view-switch account-menu__switch" role="group" aria-label={zh?"持续音":"Drone"}>
+          <button type="button" aria-pressed={droneMode==="tap"} onClick={()=>setDroneMode("tap")}>{zh?"点击音符":"Tap a note"}</button>
+          <button type="button" aria-pressed={droneMode==="auto"} onClick={()=>setDroneMode("auto")}>{zh?"跟随乐谱":"Follows the music"}</button>
+        </div>
+      </section>
 
       {/* Only a touch screen has fingers to tell apart from a pencil. */}
-      {touchScreen&&<><hr className="account-menu__rule"/>
-      <p className="account-menu__group">{t.settings.drawing}</p>
-      <div className="account-menu__choices">
-        <button
-          type="button"
-          role="menuitemcheckbox"
-          aria-checked={pencil}
-          className={pencil?"account-menu__item is-on":"account-menu__item"}
-          onClick={()=>setPencilOnly(!pencil)}
-        >
-          <span>{t.settings.pencilOnly}</span>
-
+      {touchScreen&&<section className="account-menu__section">
+        <button type="button" role="menuitemcheckbox" aria-checked={pencil} className="account-menu__item account-menu__toggle-row" onClick={()=>setPencilOnly(!pencil)}>
+          <span>{t.settings.pencilOnly}</span><span className="account-menu__toggle" aria-hidden="true"/>
         </button>
-      </div>
-      <p className="account-menu__footnote">{t.settings.pencilOnlyNote}</p></>}
+        <p className="account-menu__footnote">{t.settings.pencilOnlyNote}</p>
+      </section>}
 
-      <hr className="account-menu__rule"/>
-      <p className="account-menu__group">{lang==="zh"?"数据":"Your data"}</p>
-      <div className="account-menu__choices">
+      <section className="account-menu__section">
         <Link className="account-menu__item" role="menuitem" href="/flute-studio/transfer" onClick={()=>setOpen(false)}>
-          <span>{lang==="zh"?"设备同步":"Sync devices"}</span><PracticeIcon name="next"/>
+          <span>{zh?"设备同步":"Sync devices"}</span><PracticeIcon name="next"/>
         </Link>
-      </div>
-      {/* A reminder, not a warning: the browser can clear this site's data (Safari after a week or so unused). */}
-      <p className={backup.due?"account-menu__footnote account-menu__backup is-due":"account-menu__footnote account-menu__backup"}>{backup.days===null
-        ?(lang==="zh"?"还没有备份过。生成一次代码或文件，就有了一份备份。":"Not backed up yet. Making a code or file once gives you a copy.")
-        :backup.days===0?(lang==="zh"?"今天已备份":"Backed up today")
-        :(lang==="zh"?`上次备份：${backup.days} 天前`:`Last backup: ${backup.days} ${backup.days===1?"day":"days"} ago`)}</p>
+        {/* A reminder, not a warning: the browser can clear this site's data (Safari after a week or so unused). */}
+        <p className={backup.due?"account-menu__footnote account-menu__backup is-due":"account-menu__footnote account-menu__backup"}>{backup.days===null
+          ?(zh?"还没有备份过。生成一次代码或文件，就有了一份备份。":"Not backed up yet. Making a code or file once gives you a copy.")
+          :backup.days===0?(zh?"今天已备份":"Backed up today")
+          :(zh?`上次备份：${backup.days} 天前`:`Last backup: ${backup.days} ${backup.days===1?"day":"days"} ago`)}</p>
+      </section>
 
-      <hr className="account-menu__rule"/>
-      <p className="account-menu__group">{lang==="zh"?"私人曲库":"Private music"}</p>
-      {privateMusic.unlocked?<div className="account-menu__choices"><Link role="menuitem" className="account-menu__item" href="/flute-studio/music" onClick={()=>setOpen(false)}>{lang==="zh"?`已解锁 ${privateMusic.items.length} 首`:`${privateMusic.items.length} pieces unlocked`}</Link><button role="menuitem" className="account-menu__item" onClick={lockPrivateMusic}>{lang==="zh"?"锁定私人曲库":"Lock private music"}</button></div>:<form className="account-menu__private" onSubmit={event=>{event.preventDefault();void unlockPrivateMusic(code).then(ok=>{if(ok)setCode("")})}}>
-        <label><span>{lang==="zh"?"访问码":"Access code"}</span><input type="password" autoComplete="off" value={code} onChange={event=>setCode(event.target.value)} /></label>
-        <button disabled={privateMusic.loading} type="submit">{lang==="zh"?(privateMusic.loading?"正在解锁…":"解锁"):(privateMusic.loading?"Unlocking…":"Unlock")}</button>
-        {privateMusic.error&&<p role="status">{lang==="zh"?"无法解锁，请检查访问码。":"Could not unlock. Check the code."}</p>}
-      </form>}
-      <hr className="account-menu__rule"/>
-      <p className="account-menu__group">{t.settings.about}</p>
-      <p className="account-menu__about">
-        <span>{t.settings.aboutApp}</span>
-        <small>{t.settings.aboutVersion}</small>
-      </p>
+      <section className="account-menu__section">
+        <p className="account-menu__group">{zh?"私人曲库":"Private music"}</p>
+        {privateMusic.unlocked?<div className="account-menu__choices"><Link role="menuitem" className="account-menu__item" href="/flute-studio/music" onClick={()=>setOpen(false)}>{zh?`已解锁 ${privateMusic.items.length} 首`:`${privateMusic.items.length} pieces unlocked`}</Link><button role="menuitem" className="account-menu__item" onClick={lockPrivateMusic}>{zh?"锁定私人曲库":"Lock private music"}</button></div>:<form className="account-menu__private" onSubmit={event=>{event.preventDefault();void unlockPrivateMusic(code).then(ok=>{if(ok)setCode("")})}}>
+          <label><span>{zh?"访问码":"Access code"}</span><input type="password" autoComplete="off" value={code} onChange={event=>setCode(event.target.value)} /></label>
+          <button disabled={privateMusic.loading} type="submit">{zh?(privateMusic.loading?"正在解锁…":"解锁"):(privateMusic.loading?"Unlocking…":"Unlock")}</button>
+          {privateMusic.error&&<p role="status">{zh?"无法解锁，请检查访问码。":"Could not unlock. Check the code."}</p>}
+        </form>}
+      </section>
+
+      <p className="account-menu__about">{t.settings.aboutApp} · {t.settings.aboutVersion}</p>
     </div>;
 
   return <div className="account-menu" ref={wrap}>

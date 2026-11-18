@@ -18,6 +18,12 @@ picking the wrong component. Older measurement tables and audits were removed; t
 | Choose one of a few, or a status | **Round capsule** | View switch, list status pills, tag filter chips |
 | Floats over the music | **Round** soft pill | Bar selection pill, tempo and rep pills |
 
+**Pick one vs pick several (Nov 17).** A pick-one setting with short labels is a View switch (in reader menus,
+`.panel-switch`: the label on its own line, the capsule full width under it). Pick several stays tiles. Pick-one
+groups with long labels (Scale Studio Pattern, Range) stay tiles for now because the words don't fit a capsule. A
+rhythm choice draws the real notes (`SubdivisionIcon`): a triplet shows three beamed eighths with a 3, never a 3
+over two eighths.
+
 Do not square everything. Squaring buttons and steppers was tried on November 16 and rejected the same day ("this
 Start button is even a square, that's just really weird").
 
@@ -121,7 +127,7 @@ DetailHeader (small back line above the title, one grey meta line under it).
 | A View-panel shortcut that opens another page (Scales in this piece) | **Practice tools tile** | `.reader-display-options .tool` in ScoreViewer's View panel, under "Practice tools" | Same tile as "Show on the page" (icon over word), never shows "on". Not a green text link: a lone link line looked unfinished. |
 | A practice exercise in the close-up (Technique) | **Exercise card** | `.passage-guide__card` in `components/passage-guide.css` | White bordered card, as wide as its music, wrapping with the others and stretching to fill the row. Music centred on top; name (plus Scale Studio › or Shuffle) and Listen under it. No section headings. |
 | Tap results under close-up notes (Rhythm) | **RhythmMarks** | `components/RhythmTap.tsx` | The theory lessons' tap line (dots-and-ties .dt-*): counts on one line under the lowest dynamic, grey ruler + grey dot per note start, green/red taps, dashed link early/late to its note. Purple `.practice-position` line while tapping. |
-| A practice game screen (rhythm drills) | **RhythmGame layout** | `rhythm-drills/RhythmGame.tsx` + `rhythm-drills.css`; card demo `RhythmDrillsPreview.tsx` | Reuses lesson 7's staff and tap marks (EngravedRow, `dots-and-ties.css`) and the close-up's RhythmTap pad; this file only lays them out: one quiet stats row (difficulty, streak, tempo), the staff, the pad, plain grey actions. No start screen: the drill opens straight away, with Easy / Medium / Hard as a View switch in the stats row and one grey line under it saying what that difficulty includes. Copy this layout for the next game rather than a new skin. |
+| A practice game screen (rhythm drills) | **RhythmGame layout** | `rhythm-drills/RhythmGame.tsx` + `rhythm-drills.css`; card demo `RhythmDrillsPreview.tsx` | Reuses lesson 7's staff and tap marks (EngravedRow, `dots-and-ties.css`) and the close-up's RhythmTap pad; this file only lays them out: one quiet stats row (difficulty, streak, tempo), the staff, the pad, plain grey actions. No start screen: the drill opens straight away, with Easy / Medium / Hard as a View switch in the stats row and one grey line under it saying what that difficulty includes. After a round: a score line ("7 of 9 on time", "up from 5" on a second try), the mistakes under it, then Try again (also the R key), Next rhythm, Hear it. Copy this layout for the next game rather than a new skin. |
 | An interactive theory lesson | **LessonFrame** | `theory/LessonFrame.tsx` | Shared timeline, narration, Cookie, progress and fixed Next. Reuse lesson control styles. |
 | Engraved lesson music, including rests | **EngravedRow / RowGraphics** | `theory/EngravedRow.tsx` | `proportional` spaces notes exactly by time so each sits on its count (lesson 7 only; printed music is not spaced this way). `RowNote.rest` preserves elapsed duration; `measureRest` centers a full-measure rest. RestGlyph uses the same VexFlow font as RhythmNote. |
 | Match note and rest lengths by drawing or tapping | **RestMatch** | `theory/rests/RestMatch.tsx` | Two rows from RowGraphics; pointer and keyboard alternatives; shared lesson typography. |
@@ -212,3 +218,17 @@ The tools-panel tempo uses `Stepper` with `editable`, `liveValue={liveTempo}`, a
 The tools-panel tuner starts listening when its main view opens and releases the microphone when closed or switched to fingering. Keep Retry only for microphone errors; no separate Listen control. The compact view omits instructional paragraphs.
 
 Tools-panel: each tool has one Options button (see the table) instead of a More word; metronome dots sit under its controls. Active drones appear below the note grid as purple chips, each removable by pitch and octave, with Stop all in the footer.
+
+## Added Nov 17
+
+| Job | Use | Where | Notes |
+|---|---|---|---|
+| Pick one in a reader menu (accompaniment, octave, page width, drone mode, metronome) | **Panel switch** | `.view-switch.panel-switch` in ScoreViewer / FixedScoreViewer, styles at the end of `reader-workspace.css` | Slate track, white selected segment, 30px, 13 / 500. The label sits above at 13 / 600 `#45464f`, sentence case. `--glyphs` for note pictures (Subdivide). |
+| A fingering over the music (Show fingering) | **Fingering tip** | `.flute-tip.finger-chart` in `reader-workspace.css`, sized by `clampTip` in ScoreViewer | One line: note name 14 / 600 beside the ink diagram, padding 8 / 12, radius 12, hairline `#ececef`, soft shadow. No title row, no green. |
+| An on/off mode in the pitch row (Close-up, Graph) | **Round toggle** | `.pitch-row button[aria-pressed]` in `tone-trace.css` | Capsule, purple when on, keeps purple on hover. |
+| The phone reader's bar (760px and down) | **One practice row** | last blocks of `studio-shell.css` | Back, tempo pill (38 high), the page's tools, Drone (no ▾), View, dots, evenly spread; every box 38 high, radius 12; no divider lines; no piece name (it's printed on the music). List status, Scale Studio's save + and Download PDF are in the dots (`PhoneMore`). Books and excerpts keep two rows for the stepper and PDF / XML. |
+| A studio-wide setting someone flips on or off (Apple Pencil only) | **Round switch** | `.account-menu__toggle` in `account-menu.css` | Slate track, white knob, purple when on, at the end of its row; the row is the button. |
+| How the Drone button works (Tap a note / Follows the music) | **droneMode** | `lib/droneMode.ts`, shown in Settings and the drone ▾ (wider screens) | One setting for the whole studio; ScoreViewer follows changes live. |
+| A phone sheet's height | **Sheet sizing** | `.reader-settings-panel` phone rules in `studio-shell.css` | Grows to fit, up to 84% of the screen; first item right under the grip; slides in on the iOS curve (.46s). |
+| Ends of a bar selection | **Range handle** | `.range-handle` in `passage-guide.css` | 12px solid purple dot, no white ring, 36px invisible grab area. The pill above it is white with a soft two-layer shadow. |
+

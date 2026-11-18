@@ -7,7 +7,7 @@ import type { MascotMood, Outfit } from "../../components/ps1-mascot";
 /* ---- what's in the room ---- */
 
 export type ItemId =
-  | "diploma" | "resume" | "socials" | "laptop" | "book" | "letter" | "flute" | "ipad" | "cookies" | "brush"
+  | "diploma" | "resume" | "socials" | "laptop" | "book" | "letter" | "flute" | "ipad" | "cookies" | "brush" | "radio"
   // the living room
   | "closet" | "stand" | "window" | "jar" | "cushion";
 
@@ -31,6 +31,8 @@ export type Item = {
   closet?: boolean;
   /** The paintbrush: each inspect repaints the studio in the next of ROOM_PAINTS. */
   paint?: boolean;
+  /** The desk radio: inspecting turns it on; its choices are the next song or off. */
+  radio?: boolean;
   /** Inspecting runs this whole conversation from app/lib/answers.ts instead of `body`. */
   topic?: "flute" | "background" | "projects";
 };
@@ -89,7 +91,10 @@ export const ITEMS: Record<ItemId, Item> = {
     open: { label: "Open Cookie Flute Studio", href: "/flute-studio" },
   },
   // The fun things: no links, the cat just does something. Drafts for Haylie.
+  // (Cookies are no longer on the desk, Nov 17: the radio took their spot and
+  // the living room's jar is the snack. Kept so the old lab pages still build.)
   cookies: { name: "Cookies", react: "", body: "", snack: true, mood: "eat" },
+  radio: { name: "Radio", react: "", body: "", radio: true },
   brush: { name: "Paintbrush", react: "", body: "", paint: true },
   jar: { name: "Cookie jar", react: "", body: "", snack: true, mood: "eat" },
   closet: { name: "Closet", react: "", body: "", closet: true },
@@ -242,9 +247,17 @@ export const LOOKS: { wear: Outfit[]; line: string }[] = [
  *  and right move along a row and stop at its ends. The desk is one row, left
  *  to right as it reads on screen (her call: two rows with up and down between
  *  them was too hard to guess): laptop, letter, Learning Log, then the cat,
- *  then the flute and the cookies. */
+ *  then the flute, the paintbrush and the radio. */
 export const WALL: ItemId[] = ["diploma", "resume", "socials"];
-export const DESK: ItemId[] = ["laptop", "letter", "book", "flute", "cookies", "brush"];
+export const DESK: ItemId[] = ["laptop", "letter", "book", "flute", "brush", "radio"];
+
+/** What the cat says at the radio. Drafts for Haylie. `song` is the title. */
+export const RADIO_LINES = {
+  on: (song: string) => `Lo-fi for practising. This one's ${song}.`,
+  next: (song: string) => `Next up: ${song}.`,
+  off: "Quiet again. Good for long tones.",
+  empty: "No songs on the radio yet. Soon!",
+};
 /** The living room, one row, left to right. */
 export const ROOM: ItemId[] = ["closet", "stand", "window", "cushion", "jar"];
 

@@ -179,9 +179,11 @@ html body .reader-settings-panel .scale-book__set.is-active .scale-book__set-ope
    The Scales sheet keeps one height while you switch tabs. */
 .reader-sheet-grip{display:none}
 @media(max-width:760px){
-  body .reader-settings-panel{animation:reader-sheet-in .24s cubic-bezier(.2,.8,.2,1);transition:transform .22s cubic-bezier(.4,0,.2,1)}
+  /* Nov 17, "stiff": the iOS sheet curve, a fast start that settles softly, a little longer on the way in; it
+     leaves quicker than it arrives. A drag that's let go eases back on the same curve. */
+  body .reader-settings-panel{animation:reader-sheet-in .46s cubic-bezier(.32,.72,0,1);transition:transform .34s cubic-bezier(.32,.72,0,1)}
   body .reader-settings-panel.is-dragging{transition:none}
-  body .reader-settings-panel.is-closing{transform:translateY(100%)!important}
+  body .reader-settings-panel.is-closing{transform:translateY(100%)!important;transition:transform .28s cubic-bezier(.4,0,.9,.6)}
   .reader-sheet-grip{display:grid;place-items:center;flex:0 0 auto;height:26px;margin:0 -14px 4px;cursor:grab;touch-action:none}
   .reader-sheet-grip>span{width:34px;height:4px;border-radius:2px;background:#d6d8dc}
   body .reader-settings-panel:has(.scale-book__phone-tabs){height:min(360px,44dvh)!important;max-height:none!important}
@@ -1125,4 +1127,93 @@ html:root body .format-switch.format-switch>button[aria-pressed="true"],html:roo
   html:root body .phone-more__panel .phone-more__list span{display:grid;place-items:center;width:24px;height:24px;color:#5f6169}
   html:root body .phone-more__panel .phone-more__list svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
   html:root body .phone-more__panel .phone-more__list svg[data-icon="record"]{fill:#d9584a;stroke:none}
+}
+
+/* ---------- Tempo pill hover, every size (Nov 17) ----------
+   The metronome used to get a grey box on hover with only its left corners rounded ("this weird shape"). Inside the
+   pill nothing gets a box of its own: hover only darkens the icon (rule above at line 850). A tool that is on keeps
+   its purple. Two :not(#_) because the hover rules above carry one and many :not()s. */
+html:root body .restored-reader .practice-bar .transport-pill :is(.tool,button):not(.on):not([aria-pressed="true"]):not(#_):not(#_):is(:hover,:active,:focus,:focus-visible,[aria-expanded="true"]){background:transparent!important;background-color:transparent!important;background-image:none!important;box-shadow:none!important}
+
+/* ---------- Phone reader, one row (Nov 17, her direction) ----------
+   The piece name is printed on the music, so the phone drops it and the back arrow joins the practice row:
+   back, the tempo pill, the page's tools, Drone, View, dots, spread evenly. No divider lines. Drone's Tap / Follows
+   the music moved into View (ScoreViewer droneModeRow), so Drone has no ▾ here. The list status, Scale Studio's
+   save + and the PDF download are pressed from the dots (PhoneMore). The status button stays laid out, invisible,
+   in the top right corner so its list menu still opens under the dots.
+   Books (number stepper) and excerpts (PDF / XML switch) keep the two rows: those controls need the room. */
+@media(max-width:760px){
+  html:root body .restored-reader :is(.topbar,.practice-bar){-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  html:root body .restored-reader :is(.topbar,.practice-bar) input{-webkit-user-select:text;user-select:text}
+  html:root body .restored-reader .topbar.topbar:not(#_):not(#_),html:root body .restored-reader .practice-bar.practice-bar:not(#_):not(#_){border-bottom:0!important;box-shadow:none!important}
+  html:root body .restored-reader .practice-bar:not(#_):not(#_) .drone-options{display:none!important}
+
+  /* A smaller tempo pill: 38 high, less air at its ends. */
+  html:root body .restored-reader .practice-bar:not(#_):not(#_) .transport-pill{height:38px!important;min-height:38px!important;padding:0 2px!important;border-radius:12px!important}
+  html:root body .restored-reader .practice-bar:not(#_):not(#_) .transport-pill :is(.tool,.tempo-step,input){height:36px!important;min-height:36px!important}
+  html:root body .restored-reader .practice-bar:not(#_):not(#_) .transport-pill>.tool,html:root body .restored-reader .practice-bar:not(#_):not(#_) .tempo-group>.tool{width:34px!important;min-width:34px!important}
+
+  /* Even spacing: every visible group shares the spare room alike. */
+  html:root body .restored-reader .practice-bar.practice-bar:not(#_):not(#_){justify-content:space-between!important;gap:0!important}
+  html:root body .restored-reader .practice-bar.practice-bar:not(#_):not(#_) :is(.transport-pill,.drone-group,.reader-view>.reader-popover-anchor,.reader-view>*,.transport>*,.phone-more){margin-left:0!important;margin-right:0!important}
+
+  /* One row. */
+  html:root body .restored-reader .workspace:not(:has(.topbar :is(.book-stepper,.format-switch))){grid-template-areas:"header" "markup" "score"!important;grid-template-rows:auto auto minmax(0,1fr)!important}
+  html:root body .restored-reader .workspace:not(:has(.topbar :is(.book-stepper,.format-switch)))>.topbar:not(#_):not(#_){grid-area:header!important;justify-self:start;align-self:center;width:auto!important;height:44px!important;padding:0 0 0 6px!important;background:transparent!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;z-index:5}
+  html:root body .restored-reader .workspace:not(:has(.topbar :is(.book-stepper,.format-switch)))>.topbar:not(#_):not(#_) :is(.back__name,strong){display:none!important}
+  html:root body .restored-reader .workspace:not(:has(.topbar :is(.book-stepper,.format-switch)))>.topbar:not(#_):not(#_)>div:last-child{position:fixed!important;top:4px;right:10px;width:36px!important;height:40px!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important}
+  html:root body .restored-reader .workspace:not(:has(.topbar :is(.book-stepper,.format-switch)))>.practice-bar.practice-bar:not(#_):not(#_){padding:4px 10px 4px 46px!important}
+}
+
+/* Nov 17: one height on the phone row. The tempo pill, every tool's pressed or open box (Customize, Drone, View,
+   dots) and the back arrow are all 38 high with the pill's 12px corners, so a lit box never sticks out past it. */
+@media(max-width:760px){
+  html:root body .restored-reader .practice-bar:not(#_):not(#_) :is(.tool,.phone-more__trigger,.scale-book__customize):not(.transport-pill *){height:38px!important;min-height:38px!important;max-height:38px!important;border-radius:12px!important;align-self:center!important}
+  html:root body .restored-reader .practice-bar:not(#_):not(#_) .transport-pill{margin-right:6px!important}
+  html:root body .restored-reader .topbar:not(#_):not(#_) .back{height:38px!important}
+}
+/* Room for the one row at 375px: narrower steps inside the pill and 34px tool boxes, so the pill can keep a gap. */
+@media(max-width:760px){
+  html:root body .restored-reader .practice-bar:not(#_):not(#_) .transport-pill .tempo-step{width:22px!important;min-width:22px!important}
+  html:root body .restored-reader .practice-bar:not(#_):not(#_) .transport-pill :is(.tempo-field,input){width:32px!important;min-width:32px!important}
+  html:root body .restored-reader .practice-bar:not(#_):not(#_) .transport-pill .metronome-options{width:18px!important;min-width:18px!important}
+  html:root body .restored-reader .practice-bar:not(#_):not(#_) :is(.tool,.phone-more__trigger):not(.transport-pill *){width:34px!important;min-width:34px!important}
+  html:root body .restored-reader .workspace:not(:has(.topbar :is(.book-stepper,.format-switch)))>.practice-bar.practice-bar:not(#_):not(#_){padding-left:44px!important}
+}
+@media(max-width:760px){
+  html:root body .restored-reader .practice-bar:not(#_):not(#_):not(#_) :is(.tool,.phone-more__trigger):not(.transport-pill *){width:34px!important;min-width:34px!important}
+}
+
+/* Nov 17, phone sheets.
+   - Customize scales hovers and opens like every other tool (slate, not its old grey-green).
+   - The Scales sheet was a fixed 360px with more inside, so its last rows were cut off: now up to 74% of the
+     screen, and its groups sit closer (Others to Keys was 40px of air).
+   - The More sheet: 44px rows and no empty heading space, so Settings is never cut off at the bottom.
+   - Every sheet: the first item starts right under the grip. */
+@media(max-width:760px){
+  html:root body .restored-reader .practice-bar:not(#_):not(#_) .scale-book__customize:is(:hover,:active,[aria-expanded="true"]),
+  html:root body .restored-reader .practice-bar:not(#_):not(#_) .reader-popover-anchor>.tool:is(:hover,:active,[aria-expanded="true"]):not(.on){background:#edf1f5!important;background-color:#edf1f5!important;box-shadow:none!important}
+  html:root body .reader-settings-panel.reader-settings-panel:has(.scale-book__phone-tabs){height:auto!important;max-height:74dvh!important}
+  html:root body .reader-settings-panel .scale-panel .scale-book__section-body{gap:10px!important;padding-bottom:6px!important}
+  html:root body .reader-settings-panel .scale-panel .scale-book__others-toggle{padding:2px!important}
+  html:root body .reader-settings-panel.reader-settings-panel{gap:10px!important;padding-bottom:calc(12px + env(safe-area-inset-bottom))!important}
+  html:root body .reader-settings-panel.phone-more__panel{max-height:86dvh!important}
+  html:root body .phone-more__panel .phone-more__list button{height:44px!important}
+  html:root body .phone-more__panel .reader-panel-heading{display:none!important}
+}
+/* Nov 17: phone sheets grow to fit what's in them (up to 84% of the screen) instead of stopping at 56% and
+   hiding the last rows behind a scroll ("cropping out that 20%"). */
+@media(max-width:760px){html:root body .reader-settings-panel.reader-settings-panel{max-height:84dvh!important}}
+/* No focus ring on the practice row (her no-rings rule): focus comes back to View or the dots when a sheet closes. */
+html:root body .restored-reader .practice-bar :is(.tool,button):focus{outline:none!important}
+/* A page with its own tool in front (Long tones' Pitch) has seven items on the one row: 32px tools, a slimmer pill. */
+@media(max-width:760px){
+  html:root body .restored-reader .practice-bar.practice-bar:not(#_):not(#_):not(#_):has(.transport>.tool){padding-left:40px!important;padding-right:6px!important}
+  html:root body .restored-reader .practice-bar:not(#_):not(#_):not(#_):not(#_):has(.transport>.tool) :is(.tool,.phone-more__trigger):not(.transport-pill *),
+  html:root body .restored-reader .practice-bar:not(#_):not(#_):not(#_):not(#_):has(.transport>.tool) .transport-pill>.tool,
+  html:root body .restored-reader .practice-bar:not(#_):not(#_):not(#_):not(#_):has(.transport>.tool) .tempo-group>.tool{width:32px!important;min-width:32px!important;flex:0 0 32px!important}
+  html:root body .restored-reader .practice-bar:not(#_):not(#_):not(#_):not(#_):has(.transport>.tool) .transport-pill :is(.tempo-field,input){width:30px!important;min-width:30px!important}
+}
+@media(max-width:760px){
+  html:root body .restored-reader .practice-bar:not(#_):not(#_):not(#_):not(:has(.transport>.tool)) :is(.tool,.phone-more__trigger):not(.transport-pill *){flex:0 0 34px!important;max-width:34px!important}
 }

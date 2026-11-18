@@ -15,6 +15,8 @@ import { playStep, timeline, unlockAudio, VOICES, type MascotEngine, type Mascot
 import { Console, type Device, type Pad } from "./Handheld";
 import { paintPaper, paintProjectScreen } from "./ItemArt";
 import { DESK, ROOM, TUNE, WALL, type ItemId, type Question } from "../_kit/studio";
+import { createRoomMusic, type RoomMusic } from "./roomMusic";
+import { RADIO_TRACKS } from "../_kit/radio";
 
 /*
  * Cat host: the page is the handheld, and its screen is the cat's studio.
@@ -219,20 +221,46 @@ function CatHostInner({ device }: { device: Device }) {
   /* ---- sound: on by default, heard from the first tap or key (browsers need one) ---- */
   const [sound, setSound] = useState(true);
   const soundRef = useRef(true);
+  /* The room's music: the desk radio and each laptop project's song. Her call
+     (Nov 17): the radio comes on with the first tap anywhere. */
+  const musicRef = useRef<RoomMusic | null>(null);
+  const [radioOn, setRadioOn] = useState(false);
+  /** After any change to the radio: its dial light, and the on/off choices. */
+  const radioLight = useCallback(() => {
+    const m = musicRef.current;
+    if (!m) return;
+    engineRef.current?.setRadio(m.isOn(), m.index());
+    setRadioOn(m.isOn());
+  }, []);
   useEffect(() => {
-    const first = () => unlockAudio();
+    const m = createRoomMusic();
+    musicRef.current = m;
+    return () => m.dispose();
+  }, []);
+  useEffect(() => {
+    // pointerdown and keydown both listen once; only the first of them counts,
+    // so a later key press never turns back on a radio you switched off
+    let started = false;
+    const first = () => {
+      unlockAudio();
+      if (started) return;
+      started = true;
+      if (soundRef.current) musicRef.current?.on();
+      radioLight();
+    };
     document.addEventListener("pointerdown", first, { once: true, capture: true });
     document.addEventListener("keydown", first, { once: true, capture: true });
     return () => {
       document.removeEventListener("pointerdown", first, { capture: true });
       document.removeEventListener("keydown", first, { capture: true });
     };
-  }, []);
+  }, [radioLight]);
   const toggleSound = useCallback(() => {
     const next = !soundRef.current;
     if (next) unlockAudio();
     soundRef.current = next;
     setSound(next);
+    musicRef.current?.setMuted(!next);
   }, []);
 
   /* ---- state ---- */
@@ -349,10 +377,22 @@ function CatHostInner({ device }: { device: Device }) {
         return;
       }
       setN(0);
-      timers.current = timeline(value, 1.7).map((st) =>
+      const steps = timeline(value, 1.7);
+      // Her note (Nov 17): the voice was a stream of blips, one per letter.
+      // Now it says only the first sentence, at most one blip per 130ms
+      // (about the pace of syllables); the rest of the page types in silence.
+      const voiced = new Set<number>();
+      const firstEnd = value.search(/[.!?。！？]/);
+      let lastBlip = -Infinity;
+      for (const st of steps) {
+        if (!st.vowel || (firstEnd >= 0 && st.index > firstEnd) || st.at - lastBlip < 130) continue;
+        voiced.add(st.index);
+        lastBlip = st.at;
+      }
+      timers.current = steps.map((st) =>
         window.setTimeout(() => {
           setN(st.index + 1);
-          if (soundRef.current && !quiet) playStep(st, VOICES.cat);
+          if (soundRef.current && !quiet && voiced.has(st.index)) playStep(st, VOICES.cat);
           // her mouth moves with each letter she says, sound on or off
           if (st.vowel) engineRef.current?.speak();
         }, 60 + st.at),
@@ -473,6 +513,17 @@ function CatHostInner({ device }: { device: Device }) {
         engineRef.current?.setStudioStyle(next);
         line = C.paints[next];
       }
+      if (it.radio) {
+        const m = musicRef.current;
+        if (!m?.hasSongs()) line = C.radio.empty;
+        else {
+          // a tap on the radio is a yes to music, even with the voice muted
+          if (!soundRef.current) toggleSound();
+          m.on();
+          line = C.radio.on(m.current().title);
+        }
+        radioLight();
+      }
       if (it.closet) {
         const next = (lookRef.current + 1) % C.looks.length;
         lookRef.current = next;
@@ -483,7 +534,7 @@ function CatHostInner({ device }: { device: Device }) {
       // Let the camera arrive, then show the graphic (or the laptop's desktop).
       cardTimer.current = window.setTimeout(() => setCardShown(true), reduced ? 0 : ZOOM_MS);
     },
-    [typeOut, reduced, hideCard, APPS, C],
+    [typeOut, reduced, hideCard, APPS, C, radioLight, toggleSound],
   );
 
   const ask = useCallback(
@@ -568,8 +619,15 @@ function CatHostInner({ device }: { device: Device }) {
   const dressing = mode === "item" && selected === "closet";
   /* At the paintbrush the one choice is the next colour. */
   const painting = mode === "item" && selected === "brush";
+  /* At the radio: the next song or off (or back on). Nothing to choose before
+     it has songs. */
+  const tuning = mode === "item" && selected === "radio" && RADIO_TRACKS.length > 0;
   /* Looking at a project on the laptop: its actions are your choices. */
   const atProject = mode === "app";
+  /* The laptop plays the project on screen's own song; the radio waits. */
+  useEffect(() => {
+    musicRef.current?.showProject(atProject ? APPS[appIndex]?.slug ?? null : null);
+  }, [atProject, appIndex, APPS]);
   /* The thing's own links (open the résumé, write to me, the socials, a
      question's video) are your choices too, not buttons in her bubble. */
   const extras = question ?? (mode === "item" ? item : null);
@@ -588,6 +646,10 @@ function CatHostInner({ device }: { device: Device }) {
       ];
     if (dressing) return [{ key: "look", label: C.ui.anotherLook }];
     if (painting) return [{ key: "paint", label: C.ui.paintAgain }];
+    if (tuning)
+      return radioOn
+        ? [{ key: "nextSong", label: C.ui.nextSong, main: true }, { key: "radioOff", label: C.ui.radioOff }]
+        : [{ key: "radioOn", label: C.ui.radioOn, main: true }];
     const go: Option[] = [
       ...(extras?.open ? [{ key: "open", label: extras.open.label, href: extras.open.href, main: true }] : []),
       ...(extras?.links ?? []).map((l, i) => {
@@ -609,9 +671,9 @@ function CatHostInner({ device }: { device: Device }) {
       ];
     if (mode === "item") return go;
     return TOPICS.filter((t) => !(mode === "topic" && t === topic)).map((t) => ({ key: t, label: C.topicAsk[t], topic: t }));
-  }, [atProject, app, dressing, painting, extras, holding, questions, asked, mode, topic, C]);
+  }, [atProject, app, dressing, painting, tuning, radioOn, extras, holding, questions, asked, mode, topic, C]);
   const showChoices =
-    done && last && (mode === "intro" || mode === "topic" || holding || dressing || painting || atProject || (mode === "item" && options.length > 0));
+    done && last && (mode === "intro" || mode === "topic" || holding || dressing || painting || tuning || atProject || (mode === "item" && options.length > 0));
   const choose = useCallback(
     (o: Option) => {
       if (atProject) {
@@ -621,10 +683,20 @@ function CatHostInner({ device }: { device: Device }) {
       } else if (o.href) goTo(o.href);
       else if (o.key === "look" && dressing) inspect("closet");
       else if (o.key === "paint" && painting) inspect("brush");
+      else if (tuning && musicRef.current) {
+        const m = musicRef.current;
+        if (o.key === "nextSong") m.next();
+        else if (o.key === "radioOff") m.off();
+        else m.on();
+        radioLight();
+        typeOut(o.key === "radioOff" ? C.radio.off : C.radio[o.key === "nextSong" ? "next" : "on"](m.current().title));
+      }
+      // "What have you built?" is the laptop: the same zoom and desktop as tapping it.
+      else if (o.topic === "projects") inspect("laptop");
       else if (o.topic) ask(o.topic);
       else if (questions?.[o.key]) askAbout(o.key, questions[o.key]);
     },
-    [ask, askAbout, questions, dressing, painting, inspect, atProject, app, dive, goTo, showApp, APPS.length],
+    [ask, askAbout, questions, dressing, painting, tuning, radioLight, typeOut, C, inspect, atProject, app, dive, goTo, showApp, APPS.length],
   );
   const [choice, setChoice] = useState(0);
   const cursor = Math.min(choice, options.length - 1);

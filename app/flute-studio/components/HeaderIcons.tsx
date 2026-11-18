@@ -12,7 +12,7 @@ export function GearIcon(){
 
 /** Download: an arrow landing on a line. */
 export function DownloadIcon(){
-  return <svg {...base}><path d="M10 3.5v9M6 9l4 4 4-4M4.5 16.5h11"/></svg>;
+  return <svg {...base} data-icon="download"><path d="M10 3.5v9M6 9l4 4 4-4M4.5 16.5h11"/></svg>;
 }
 
 export function PlusIcon(){
