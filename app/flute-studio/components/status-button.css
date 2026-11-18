@@ -73,3 +73,7 @@ html body .status-button__menu .status-button__remove::before{content:"";positio
 /* Squared to match the tags and filter chips beside it (Nov 14): radius 3 on My Studio cards. Library rows use a
    round dot (music-row.css); a page header uses a round pill (detail-header.css). The reader's top bar keeps its own shape. */
 .working-card__list .status-button__trigger { border-radius: 3px; }
+
+/* Nov 18: the chosen list shows as a lilac row, like every picked key and row in the studio. No tick (the studio
+   never uses checkmarks for a choice). It stays lilac on hover. */
+html body .status-button__menu button.is-on,html body .status-button__menu button.is-on:hover{background-color:#f1e5f5!important;color:#292a33!important;font-weight:400!important}

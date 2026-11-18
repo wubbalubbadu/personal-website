@@ -44,7 +44,7 @@ export function NotePicker({
           </button>
         ))}
       </div>
-      <div className="note-picker__notes" role="group" aria-label={zh ? "音" : "Notes"}>
+      <div className="note-picker__notes key-grid" role="group" aria-label={zh ? "音" : "Notes"}>
         {notes.map(n => (
           <button key={n.pitch} type="button" aria-pressed={n.pitch === selected} onClick={() => onSelect(n.pitch)}>
             {n.label}

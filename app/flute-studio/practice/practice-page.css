@@ -837,3 +837,81 @@ body .studio-route .practice-page .passages__list li{background:transparent}
 body .studio-route .practice-page .passages__list li:hover{background:transparent}
 body .studio-route .practice-page .passages__list .passages__main{flex:0 1 auto}
 body .studio-route .practice-page .passages__list .routine-delete{margin-left:4px;margin-right:auto}
+
+/* Nov 18, "too many font sizes": the Today and routine tiles use three sizes only. Headings 15/600, every other line
+   14 (400 for text, 500 for actions), the clock 26/600. Start never underlines; hover darkens nothing it doesn't need to. */
+html body .practice-page .practice-today :is(.practice-today__now,.practice-today__now *,.routine-count,.routine-list li,.routine-list__text,.routine-list span){font-size:14px!important}
+html body .practice-page .practice-today :is(.practice-today__now,.practice-today__now *,.routine-count){font-weight:400!important}
+html body .practice-page .practice-today :is(.practice-today__actions button,.practice-today__actions button *,.routine-adder__button,.routine-list__open){font-size:14px!important;font-weight:500!important}
+html body .practice-page .practice-today__actions button:hover,html body .practice-page .practice-today__actions button:hover *{text-decoration:none!important}
+/* Working-on cards: the list button is round (it's a control, not information). Tags are the shared dot tag (tag-pill.css). */
+html body .practice-page .working-card__list .status-button__trigger{border-radius:999px!important}
+/* Nov 18, "begin can be a white pill, next step can be grey, too many text styles": the two tiles use the Library's
+   text set. Title 15/600 ink. Secondary (the next-step line, 0 / 1, step numbers, Open) 14/400 in the Library's
+   grey #85868e. A step's name 14/500 ink (the current one too: the tile marks it, not bold). Start is a white pill,
+   like the chosen segment of a switch. The clock stays the one big number. */
+html body .practice-page .practice-today :is(.practice-today__now,.practice-today__now *,.routine-count,.routine-list__check span,.routine-list__open){color:#85868e!important;font-weight:400!important}
+html body .practice-page .practice-today .routine-list :is(li,li.is-current) .routine-list__text{font-size:14px!important;font-weight:500!important;color:#292a33!important}
+html body .practice-page .practice-today .practice-today__actions button{height:32px!important;padding:0 14px!important;border-radius:999px!important;background:#fff!important;color:#292a33!important;box-shadow:0 1px 3px rgba(41,42,51,.12)!important}
+html body .practice-page .practice-today .practice-today__actions button:hover{background:#fff!important;color:#000!important}
+/* Nov 18: the next-step line reads like a composer line (12.5px, 400, grey), as on the piece cards below. */
+html body .practice-page .practice-today :is(.practice-today__now.practice-today__now,.practice-today__now.practice-today__now *){font-size:12.5px!important;font-weight:400!important;color:#85868e!important}
+/* Audition dialog: the piece list sits in the flow under its field, so the dialog grows and scrolls instead of
+   cropping it. Fields are slate fills with no outline, like every other field in the studio. */
+html body .deadline-dialog :is(.deadline-dialog__row input,.routine-add){height:40px;border:0!important;border-radius:12px;background:#edf1f5!important;box-shadow:none!important}
+html body .deadline-dialog .routine-add{padding:0 6px 0 12px}
+html body .deadline-dialog .routine-add input{font-size:15px;color:#292a33}
+html body .deadline-dialog .suggest-field .routine-suggestions{position:static!important;max-height:220px;max-width:none!important;margin:4px 0 0;padding:4px;border-radius:12px;background:#fff;box-shadow:none!important}
+html body .deadline-dialog .routine-suggestions button{padding:8px 10px;border-radius:9px;font-size:14px;color:#292a33}
+html body .deadline-dialog .routine-suggestions button span{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+html body .deadline-dialog .routine-suggestions small{display:inline;margin:0;font-size:12.5px;font-weight:400;color:#85868e;opacity:1}
+html body .deadline-dialog .routine-suggestions button:is(:hover,.is-active){background:#f2eef8}
+html body .deadline-dialog__pieces li{background:#edf1f5}
+/* Nov 18: the list stacks are tiles too. The sheets behind the top card are paler slate; an open stack turns lilac. */
+html body .practice-page .list-stack__card.list-stack__card{background:#edf1f5!important;box-shadow:none!important;border-radius:3px}
+html body .practice-page .list-stack__pile.has-more:is(::before,::after){box-shadow:none;border-radius:3px}
+html body .practice-page .list-stack__pile.has-more::after{background:#f3f5f8}
+html body .practice-page .list-stack__pile.has-more::before{background:#f8f9fb}
+html body .practice-page .list-stack__pile:hover .list-stack__card.list-stack__card{background:#e2e8ef!important}
+html body .practice-page .list-stack.is-open .list-stack__card.list-stack__card{background:#f1e5f5!important}
+/* Nov 18: Tricky bits are tiles in the Working on grid, not a ruled checklist. The tick circle became a small
+   "Done" pill at the tile's bottom left (darker slate, soft rounded = a button); trash shows on hover, top right. */
+html body .practice-page .passages__tile{display:flex;flex-direction:column}
+html body .practice-page .passages__tile>.item-card__body{flex:1;padding-right:40px}
+html body .practice-page .passages__tile .item-card__body small{font-variant-numeric:tabular-nums}
+html body .practice-page .passages__tile .passages__trend{margin-top:6px}
+html body .practice-page .passages__done-pill{align-self:flex-start;height:26px;margin:0 0 12px 14px;padding:0 11px;border:0;border-radius:999px;background:#dfe5ec;color:#292a33;font:inherit;font-size:12.5px;font-weight:500}
+html body .practice-page .passages__done-pill:hover{background:#d3dbe4}
+html body .practice-page .passages__trash{position:absolute;top:6px;right:4px;width:28px;height:28px;margin:0!important;opacity:0}
+html body .practice-page .passages__tile:hover .passages__trash,html body .practice-page .passages__trash:focus-visible,html body .practice-page .passages__trash.is-armed{opacity:1}
+@media(hover:none){html body .practice-page .passages__trash{opacity:1}}
+html body .practice-page .passages__tile.is-done b{color:#85868e}
+html body .practice-page .passages__grid{margin:0;padding:0}
+/* Nov 18: a stack's top card wears its piece's tag tint too (an open stack stays lilac). */
+html body .practice-page .list-stack:not(.is-open) .list-stack__card.list-stack__card[data-tone="lilac"]{background:#f2eef8!important}
+html body .practice-page .list-stack:not(.is-open) .list-stack__card.list-stack__card[data-tone="pink"]{background:#faf0f6!important}
+html body .practice-page .list-stack:not(.is-open) .list-stack__card.list-stack__card[data-tone="sage"]{background:#eef4ec!important}
+html body .practice-page .list-stack:not(.is-open) .list-stack__card.list-stack__card[data-tone="blue"]{background:#edf1f7!important}
+html body .practice-page .list-stack:not(.is-open) .list-stack__card.list-stack__card[data-tone="peach"]{background:#fcf0ea!important}
+html body .practice-page .list-stack:not(.is-open) .list-stack__card.list-stack__card[data-tone="teal"]{background:#e9f5f4!important}
+html body .practice-page .list-stack:not(.is-open) .list-stack__card.list-stack__card[data-tone="butter"]{background:#f9f3e1!important}
+html body .practice-page .list-stack:not(.is-open) .list-stack__card.list-stack__card[data-tone="periwinkle"]{background:#eff0fb!important}
+html body .practice-page .list-stack:not(.is-open) .list-stack__pile:hover .list-stack__card[data-tone]{filter:brightness(.97)}
+/* The Done pill shades whatever tint its tile wears, instead of a fixed slate. */
+html body .practice-page .passages__done-pill{background:rgba(41,42,51,.07)}
+html body .practice-page .passages__done-pill:hover{background:rgba(41,42,51,.12)}
+/* Nov 18 deadline dialog pass: no green primary (rejected list). Save is the shared grey action button, Cancel a quiet
+   word, Delete a red word at the left. Labels 13 / 500 grey, field text 15 / 400 like every other field. */
+html body .deadline-dialog :is(.deadline-dialog__row label,.deadline-dialog__label){font-size:13px;font-weight:500;color:#6f717a}
+html body .deadline-dialog .deadline-dialog__row input{font-size:15px;font-weight:400;color:#292a33}
+html body .deadline-dialog .deadline-dialog__row input[type="date"].is-empty:not(:focus){color:#85868e}
+html body .deadline-dialog .deadline-dialog__actions{align-items:center;gap:4px}
+html body .deadline-dialog .deadline-dialog__actions button{height:38px;padding:0 16px;border-radius:12px;font-size:14px;font-weight:500}
+html body .deadline-dialog .deadline-dialog__actions .deadline-dialog__save{background:#edf1f5;color:#292a33}
+html body .deadline-dialog .deadline-dialog__actions .deadline-dialog__save:hover{background:#e2e8ef}
+html body .deadline-dialog .deadline-dialog__actions .deadline-dialog__cancel{background:none;color:#6f717a}
+html body .deadline-dialog .deadline-dialog__actions .deadline-dialog__cancel:hover{color:#292a33}
+html body .deadline-dialog .deadline-dialog__actions .deadline-dialog__delete{padding-left:0}
+/* Nov 18: the clock and Start share one 32px line, centred on each other (the clock sat lower than the pill). */
+html body .practice-page .practice-today__clock>.practice-today__time{display:flex;align-items:center;align-self:end;height:32px;line-height:1}
+html body .practice-page .practice-today__clock>.practice-today__actions{align-self:end;align-items:center;height:32px;padding:0!important}

@@ -829,7 +829,7 @@ export default function ScaleStudio(){
                       {SCALE_OCTAVES.map(octave=><option key={octave} value={octave}>{octave}</option>)}
                     </select>
                   </label>
-                  <div className="scale-book__note-grid" role="group" aria-label={label}>
+                  <div className="scale-book__note-grid key-grid" role="group" aria-label={label}>
                     {SCALE_PITCH_CLASSES.map(({pc,label:name})=>{
                       const midi=midiForNote(octaveOfMidi(value),pc);
                       const reachable=midi>=SCALE_LOWEST_MIDI&&midi<=SCALE_HIGHEST_MIDI;

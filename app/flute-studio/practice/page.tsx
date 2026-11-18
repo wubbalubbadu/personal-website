@@ -14,7 +14,7 @@ import {useStatusEntries,STATUS_LABELS,STATUS_TONES} from "../lib/musicStatus";
 import {readScaleSets,scaleSetsEvent,type ScaleSet} from "../exercises/scales/saved-sets";
 import {daysUntil,useDeadlines,type Deadline} from "../lib/deadlines";
 import {mockPool} from "../lib/mockAuditions";
-import {hasTag,pieceTitle} from "../../../content/music-library";
+import {composerName,hasTag,pieceTitle,tagName} from "../../../content/music-library";
 import {tagTone} from "../lib/tagTone";
 import {DeadlineDialog} from "./DeadlineDialog";
 import {repDay,repTotals,repsOnDay,useRepLog} from "../lib/repLog";
@@ -195,7 +195,7 @@ export default function PracticePage(){
   // A deadline's piece shows which list it is on, with the same dot as everywhere else (no dot: on no list).
   const statusOf=new Map(listEntries.map(entry=>[entry.id,entry.status]));
   const statusDot=(id:string)=>{const status=statusOf.get(id);return status?<i className="status-dot" data-tone={STATUS_TONES[status]} aria-label={statusLabel(status)}/>:<i className="status-dot status-dot--none" aria-hidden="true"/>};
-  const deadlinePieces:SuggestItem[]=musicLibrary.filter(item=>!hasTag(item,"exercise")).map(item=>({id:item.id,title:item.title,composer:item.composer}));
+  const deadlinePieces:SuggestItem[]=musicLibrary.filter(item=>!hasTag(item,"exercise")).map(item=>({id:item.id,title:item.title,composer:composerName(item.composer,zh)}));
   const deadlineCard=(deadline:Deadline)=><article className="deadline-card" key={deadline.id}>
     <div className="deadline-card__head">
       <button type="button" className="deadline-card__name" onClick={()=>setEditing(deadline)} aria-label={zh?`编辑 ${deadline.name}`:`Edit ${deadline.name}`}>{deadline.name}</button>
@@ -217,16 +217,24 @@ export default function PracticePage(){
     const entry=[...musicLibrary,...libraryShelf].find(candidate=>candidate.id===id);
     return entry?(["exercise","etude","excerpt"] as const).find(kind=>hasTag(entry,kind))??null:null;
   };
-  const KIND_LABELS={exercise:{en:"Exercise",zh:"练习"},etude:{en:"Etude",zh:"练习曲"},excerpt:{en:"Excerpt",zh:"乐队选段"}};
+  // The tag a Working on tile wears and takes its tint from: its kind if it has one, else the piece's first Library
+  // tag (Classical, Folk, Pop...), so a piece without a kind still gets its colour (Nov 18).
+  const tagOf=(id:string)=>{
+    const kind=kindOf(id);if(kind)return kind;
+    const entry=[...musicLibrary,...libraryShelf].find(candidate=>candidate.id===id);
+    return entry?.tags.find(tag=>tag.trim())??null;
+  };
+  /** The tint a piece's tiles wear anywhere on this page (Working on, the list stacks, Tricky bits). */
+  const toneFor=(id:string)=>{const tag=tagOf(id);return tag?tagTone(tag):undefined};
   const workingCard=(item:StudioListItem)=>{
-    const forDeadline=upcoming.find(deadline=>deadline.pieces.includes(item.id)),kind=kindOf(item.id);
+    const forDeadline=upcoming.find(deadline=>deadline.pieces.includes(item.id)),kind=tagOf(item.id);
     const meta=lastPractised(item.id)??"";
-    const body=<><b>{item.title}</b><small>{item.composer}</small>{meta&&<small className="working-card__meta">{meta}</small>}
+    const body=<><b>{item.title}</b><small>{composerName(item.composer,zh)}</small>{meta&&<small className="working-card__meta">{meta}</small>}
       {(kind||forDeadline)&&<span className="working-card__pills">
-        {kind&&<span className="tag-pill" data-tone={tagTone(kind)}>{zh?KIND_LABELS[kind].zh:KIND_LABELS[kind].en}</span>}
-        {forDeadline&&<span className="tag-pill" data-tone="sand">{forDeadline.name}</span>}
+        {kind&&<span className="tag-pill" data-tone={tagTone(kind)}>{tagName(kind[0].toUpperCase()+kind.slice(1),zh)}</span>}
+        {forDeadline&&<span className="tag-pill" data-tone="lilac">{forDeadline.name}</span>}
       </span>}</>;
-    return <ItemCard as="li" key={item.id} className="working-card">
+    return <ItemCard as="li" key={item.id} className="working-card" data-tone={toneFor(item.id)}>
       {item.viewerPath?<Link className="item-card__body" href={item.viewerPath}>{body}</Link>:<span className="item-card__body is-disabled">{body}</span>}
       {/* The Library's list button, not a trash can: taking a piece off a list deletes nothing, and the same menu
           can move it to Learned. */}
@@ -282,15 +290,9 @@ export default function PracticePage(){
         statuses={Object.fromEntries(listEntries.map(entry=>[entry.id,entry.status]))} onClose={()=>setEditing(null)}/>}
       {/* Working on: what is on your plate, as cards. Only there when something is; Edit takes things off. */}
       {workingRows.length>0&&<section id="working-on" className="working" aria-labelledby="working-title">
-        <div className="section-head">{shelfHeading(statusLabel("working"),workingRows.length,"working-title")}<span className="section-head__actions">{moreToggle("working",workingRows.length)}{!upcoming.length&&addDeadline}{sectionLink("/flute-studio/music?list=working",zh?"在曲库中查看":"See in Library")}</span></div>
-        <ul className="working__grid">{firstRow("working",workingRows).map(({item})=>workingCard(item))}</ul>
+        <div className="section-head">{shelfHeading(statusLabel("working"),workingRows.length,"working-title")}<span className="section-head__actions">{!upcoming.length&&addDeadline}{sectionLink("/flute-studio/music?list=working",zh?"在曲库中查看":"See in Library")}</span></div>
+        <ul className="working__grid">{workingRows.map(({item})=>workingCard(item))}</ul>
       </section>}
-      {restoring&&<p className="practice-card__empty">{zh?"正在恢复曲目…":"Restoring your music…"}</p>}
-      {/* Tricky bits stay open (they are practice); the lists fold, each only there when it has something in it. */}
-      {/* Tricky bits: the hard passages you are working on, one list across your pieces, done ones folded away. */}
-      <PassagesList bits={trickyBits} titleOf={passageTitle} zh={zh} labels={{bars:t.trickyBits.bars}}
-        heading={shelfHeading(t.trickyBits.title,activeTricky.length)} firstRow={rows=>firstRow("tricky",rows)}
-        actions={<>{moreToggle("tricky",activeTricky.length)}{activeTricky.length>0&&sectionLink("/flute-studio/tricky-bits",zh?"一段段练":"Practise them in turn")}</>}/>
       {/* The lists you look things up in, as three stacks in one row (like Dock stacks): the top card shows, the
           title opens the full list, and tapping the stack fans its cards out below. */}
       {stackLists.some(list=>list.items.length)&&<>
@@ -300,16 +302,22 @@ export default function PracticePage(){
             <h2 className="list-stack__title">{list.href?<Link href={list.href}>{list.label}</Link>:list.label}<small>{list.items.length}</small></h2>
             <button type="button" className={list.items.length>1?"list-stack__pile has-more":"list-stack__pile"} aria-expanded={open} aria-controls="list-stack-open"
               aria-label={open?(zh?`收起${list.label}`:`Close ${list.label}`):(zh?`展开${list.label}`:`Open ${list.label}`)} onClick={()=>toggleStack(list.key)}>
-              <span className="list-stack__card" style={open?undefined:{viewTransitionName:cardName(list.key,top.id)}}><b>{top.title}</b><small>{top.composer}</small></span>
+              <span className="list-stack__card" data-tone={toneFor(top.id)} style={open?undefined:{viewTransitionName:cardName(list.key,top.id)}}><b>{top.title}</b><small>{composerName(top.composer,zh)}</small></span>
             </button>
           </section>;
         })}</div>
-        {openStackList&&<ul className="working__grid list-stack__open" id="list-stack-open">{openStackList.items.map(item=><ItemCard as="li" key={item.id} className="working-card" style={{viewTransitionName:cardName(openStackList.key,item.id)}}>
-          {item.viewerPath?<Link className="item-card__body" href={item.viewerPath}><b>{item.title}</b><small>{item.composer}</small></Link>:<span className="item-card__body is-disabled"><b>{item.title}</b><small>{item.composer}</small></span>}
+        {openStackList&&<ul className="working__grid list-stack__open" id="list-stack-open">{openStackList.items.map(item=><ItemCard as="li" key={item.id} className="working-card" data-tone={toneFor(item.id)} style={{viewTransitionName:cardName(openStackList.key,item.id)}}>
+          {item.viewerPath?<Link className="item-card__body" href={item.viewerPath}><b>{item.title}</b><small>{composerName(item.composer,zh)}</small></Link>:<span className="item-card__body is-disabled"><b>{item.title}</b><small>{composerName(item.composer,zh)}</small></span>}
         </ItemCard>)}</ul>}
       </>}
+      {restoring&&<p className="practice-card__empty">{zh?"正在恢复曲目…":"Restoring your music…"}</p>}
+      {/* Tricky bits stay open (they are practice); the lists fold, each only there when it has something in it. */}
+      {/* Tricky bits: the hard passages you are working on, one list across your pieces, done ones folded away. */}
+      <PassagesList bits={trickyBits} toneOf={bit=>toneFor(bit.pieceId)} titleOf={passageTitle} zh={zh} labels={{bars:t.trickyBits.bars}}
+        heading={shelfHeading(t.trickyBits.title,activeTricky.length)} firstRow={rows=>firstRow("tricky",rows)}
+        actions={<>{moreToggle("tricky",activeTricky.length)}{activeTricky.length>0&&sectionLink("/flute-studio/tricky-bits",zh?"一段段练":"Practise them in turn")}</>}/>
 
-      <h2 className="home-preview__group" id="insights">{zh?"练习洞察":"Practice insights"}</h2>
+      <h2 className="home-preview__group" id="insights">{zh?"练习数据":"Practice insights"}</h2>
       {/* The month, coloured by minutes practised; pick a day to see what you played. This replaces the long history list. */}
       <section className="studio-month" aria-label={zh?"练习日历":"Practice calendar"}>
         <PracticeCalendar sessions={sessions} selected={shownDay} onSelect={setDay} legend>

@@ -74,7 +74,7 @@ function Embouchure(){
   panel={<>
    <section className="emb-block" aria-labelledby="emb-register-label">
     <span className="emb-label" id="emb-register-label">{zh?"音区":"Register"}</span>
-    <div className="emb-registers">
+    <div className="emb-registers view-switch view-switch--fill view-switch--two-line" role="group" aria-labelledby="emb-register-label">
      {REGISTERS.map(r=><button key={r.id} type="button" aria-pressed={register===r.id} onClick={()=>choose(r.home)}>
       {REGISTER_COPY[r.id].name[l]}<small>{noteName(r.from)}{zh?" 至 ":" to "}{noteName(r.to)}</small>
      </button>)}

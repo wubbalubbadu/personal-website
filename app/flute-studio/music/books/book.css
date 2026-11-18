@@ -32,4 +32,4 @@ body .book-page__list .book-row .tag-pill[data-tone]{height:auto;padding:0;backg
 /* The page arrows sat right after the title, so they jumped sideways from one exercise to the next as the titles
    changed length. On the right, just before the clock and tools, they stay in one place. */
 .topbar .book-stepper{order:2}
-.topbar :is(.practice-clock-button,.topbar-tools-slot,.account-menu){order:3}
+.topbar :is(.practice-clock-button,.practice-clock-running,.topbar-tools-slot,.account-menu){order:3}

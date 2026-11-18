@@ -3,7 +3,7 @@
 import DetailHeader from "../../../components/DetailHeader";
 import {StatusButton} from "../../../components/StatusButton";
 import {useParams} from "next/navigation";
-import {bookPieces,musicBooks} from "../../../../../content/music-library";
+import {bookPieces,composerName,musicBooks,pieceTitle} from "../../../../../content/music-library";
 import {ExerciseBook,useBookDoneText} from "../../../components/ExerciseBook";
 import {useLanguage} from "../../../i18n/LanguageContext";
 import "../../../exercises/exercises.css";
@@ -23,9 +23,9 @@ export default function BookPage(){
 
   return <main className="exercise-hub">
     <div className="exercise-hub__content">
-      <DetailHeader backHref="/flute-studio/music" backLabel={t.library.title} title={book.title}
+      <DetailHeader backHref="/flute-studio/music" backLabel={t.library.title} title={pieceTitle(book,zh)}
         status={<StatusButton id={book.id} zh={zh}/>}
-        meta={<>{book.composer}{book.year?` · ${book.year}`:""} · {doneText}</>}>
+        meta={<>{composerName(book.composer,zh)}{book.year?` · ${book.year}`:""} · {doneText}</>}>
         {book.about&&<p className="detail-header__about">{book.about}</p>}
       </DetailHeader>
 

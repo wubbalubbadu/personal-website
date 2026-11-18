@@ -43,7 +43,7 @@ export const musicLibrary=catalog as MusicItem[];
  * them like any score; the book itself is one row in the Library and a page
  * listing its numbers.
  */
-export type MusicBook={id:string;title:string;composer:string;tags:string[];year?:number;about?:string};
+export type MusicBook={id:string;title:string;zhTitle?:string;composer:string;tags:string[];year?:number;about?:string};
 export const musicBooks=books as MusicBook[];
 export const bookPath=(id:string)=>`/flute-studio/music/books/${id}`;
 /** A book's pieces, in order. */
@@ -57,23 +57,29 @@ export const bookPieces=(bookId:string)=>orderedBookPieces(musicLibrary,bookId) 
  * an "Exercise" tag. Exercises that are not a score (Breathing Lab) stay in
  * the Exercises tab only.
  */
-export const libraryShelf:MusicItem[]=[
+// Nov 18: the studio's own exercise tools (Scale Studio, Long tones) are credited as "Labs": they draw on Moyse and
+// others, so they aren't Cookie's compositions. Nothing without a page to open is listed (no "Coming soon" rows).
+export const libraryShelf:MusicItem[]=([
   {id:"cookie-scales",title:"Cookie’s Scale Routine",zhTitle:"Cookie 的音阶练习",composer:"Cookie",tags:["Exercise"],status:"published",scorePath:null,viewerPath:"/flute-studio/music/cookie-scales"},
   ...musicLibrary.filter(item=>!item.book),
   ...musicBooks.map((book):MusicItem=>({
-    id:book.id,title:book.title,composer:book.composer,tags:book.tags,year:book.year,about:book.about,
+    id:book.id,title:book.title,zhTitle:book.zhTitle,composer:book.composer,tags:book.tags,year:book.year,about:book.about,
     status:"published",scorePath:null,viewerPath:bookPath(book.id),bookCount:bookPieces(book.id).length,
   })),
   ...exerciseCatalog.filter(entry=>entry.scorePath!==null).map((entry):MusicItem=>({
-    id:entry.id,title:entry.title,composer:"",tags:["Exercise"],
+    id:entry.id,title:entry.title,composer:"Labs",tags:["Exercise"],
     status:entry.href?"published":"coming-soon",scorePath:null,viewerPath:entry.href,
     exercise:{focus:entry.focus,detail:entry.detail,zhDetail:entry.zhDetail,zhTitle:entry.zhTitle},
   })),
-];
+] as MusicItem[]).filter(item=>!!item.viewerPath);
 
 export const tagKey=(tag:string)=>tag.trim().toLowerCase();
 /** The title to show: always the English name; reading in Chinese, the Chinese one follows in brackets when it has one. */
-export const pieceTitle=(item:Pick<MusicItem,"title"|"zhTitle">,zh:boolean)=>zh&&item.zhTitle?`${item.title} (${item.zhTitle})`:item.title;
+export const pieceTitle=(item:Pick<MusicItem,"title"|"zhTitle">,zh:boolean)=>zh&&item.zhTitle&&item.zhTitle!==item.title?`${item.title} (${item.zhTitle})`:item.title;
+/** Composer names the same way (Nov 18): reading in Chinese, the Chinese name follows in brackets when there is one.
+ *  Classical and traditional only: pop titles and artists, and opus or book numbers, stay as written (her call). */
+const ZH_COMPOSERS:Record<string,string>={"Ludwig van Beethoven":"贝多芬","Gabriel Fauré":"福雷","Claude Debussy":"德彪西","Christian Petzold":"佩措尔德","Johann Sebastian Bach":"巴赫","Christoph Willibald Gluck":"格鲁克","Nikolai Rimsky-Korsakov":"里姆斯基-科萨科夫","Maurice Ravel":"拉威尔","Felix Mendelssohn":"门德尔松","Camille Saint-Saëns":"圣-桑","Ernesto Köhler":"克勒","Mathieu-André Reichert":"赖歇特","Traditional":"传统民歌","Labs":"练习室"};
+export const composerName=(name:string,zh:boolean)=>zh&&ZH_COMPOSERS[name]?`${name} (${ZH_COMPOSERS[name]})`:name;
 /** Tag names in Chinese, one list for every page (a tag not listed shows as typed). */
 const ZH_TAGS:Record<string,string>={pop:"流行",folk:"民谣",classical:"古典","k-pop":"韩流","j-pop":"日本流行",film:"电影",excerpt:"管弦乐片段",etude:"练习曲",exercise:"练习",accompaniment:"伴奏"};
 export const tagName=(tag:string,zh:boolean)=>zh?ZH_TAGS[tagKey(tag)]??tag:tagKey(tag)==="excerpt"?"Orchestral excerpts":tag;

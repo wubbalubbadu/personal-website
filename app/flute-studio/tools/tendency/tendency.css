@@ -15,10 +15,10 @@
 .tendency__step .stepper__value{width:58px;flex:none}
 /* Steady controls: no hover lift or press shrink on this page's buttons. */
 .tendency button,.tendency a{transform:none!important}
-.tendency__presets,.tendency__switch{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
-.tendency__presets button,.tendency__switch button{height:32px;padding:0 14px;border:0;border-radius:999px;background:#edf1f5;color:#45464f;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
-.tendency__presets button[aria-pressed="true"],.tendency__switch button[aria-pressed="true"]{background:#292a33;color:#fff}
-.tendency__switch{justify-content:flex-start}
+.tendency__presets{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.tendency__presets button{height:32px;padding:0 14px;border:0;border-radius:999px;background:#edf1f5;color:#45464f;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.tendency__presets button[aria-pressed="true"]{background:#292a33;color:#fff}
+/* .tendency__switch is a View switch now (studio-shared.css), Nov 18. */
 
 .tendency__actions{display:flex;gap:8px;justify-content:center;margin-top:4px}
 .tendency__primary,.tendency__secondary{height:42px;padding:0 22px;border:0;border-radius:12px;font:inherit;font-size:15px;font-weight:650;cursor:pointer;display:inline-flex;align-items:center;text-decoration:none}

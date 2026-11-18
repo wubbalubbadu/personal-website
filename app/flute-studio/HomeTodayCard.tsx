@@ -74,7 +74,7 @@ export function HomeTodayCard({zh,now,library,recentIds,statuses,deadlines,routi
         {working.length>2&&<Link className="today-card__more" href="/flute-studio/practice#working-on">{zh?`还有 ${working.length-2} 首`:`${working.length-2} more`}</Link>}</span></li>,
     next&&<li key="coming"><span className="card-label">{label.coming}</span>
       <Link className="today-card__main" href="/flute-studio/practice#coming-up"><b>{next.name}</b><small>{zh?`${next.pieces.length} 首曲子`:`${next.pieces.length} ${next.pieces.length===1?"piece":"pieces"}`}</small></Link>
-      <span className="tag-pill" data-tone="sand">{when(next.date)}</span></li>,
+      <span className="tag-pill" data-tone="lilac">{when(next.date)}</span></li>,
     warmUp&&<li key="warm-up"><span className="card-label">{label.warmUp}</span>
       <Link className="today-card__main" href={`/flute-studio/exercises/scales?set=${encodeURIComponent(warmUp.id)}`}><b>{warmUp.name}</b><small>{describeSet(warmUp.config,zh)}</small></Link>
       <Link className="today-card__action" href={`/flute-studio/exercises/scales?set=${encodeURIComponent(warmUp.id)}`} tabIndex={-1} aria-hidden="true">{zh?"开始":"Start"}</Link></li>,

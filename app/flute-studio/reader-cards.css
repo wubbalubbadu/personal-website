@@ -89,3 +89,46 @@ html:root body .reader-settings-panel .has-tip:focus-visible::after{
    beside them (●○ and 𝑓, about 20px of ink): optical size, not box size. */
 html:root body .reader-settings-panel .reader-display-options .tool>span svg{width:26px!important;height:26px!important}
 html body .passage-guide .passage-guide__icon svg{width:24px;height:24px}
+
+/* Nov 18, her pick "B": Show on the page (and Practice tools) as compact rows, two across, the icon beside its
+   label. About half the height of the old tall tiles. Slate fill, lilac with dark ink when on, like the key grid
+   (key-grid.css). Tooltips anchor to the row's own side, now that there are two columns, not three. */
+html:root body .reader-settings-panel .reader-display-options.reader-display-options{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px!important;margin:0!important}
+html:root body .reader-settings-panel .reader-display-options.reader-display-options .tool{
+  flex-direction:row!important;justify-content:flex-start!important;align-items:center!important;gap:8px!important;
+  height:36px!important;min-height:0!important;padding:0 10px!important;border-radius:10px!important;box-shadow:none!important;
+  background:#edf1f5!important;color:#45464f!important;font-size:13px!important;font-weight:500!important;line-height:1.2!important;
+  text-align:left!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html:root body .reader-settings-panel .reader-display-options.reader-display-options .tool>span{display:grid;place-items:center;flex:0 0 18px;font-size:16px!important;line-height:1!important}
+html:root body .reader-settings-panel .reader-display-options.reader-display-options .tool>span svg{width:18px!important;height:18px!important}
+html:root body .reader-settings-panel .reader-display-options.reader-display-options .tool.on{background:#f1e5f5!important;color:#292a33!important;font-weight:500!important}
+@media(hover:hover){
+  html:root body .reader-settings-panel .reader-display-options.reader-display-options .tool:not(.on):hover{background:#e2e8ef!important;color:#292a33!important}
+  html:root body .reader-settings-panel .reader-display-options.reader-display-options .tool.on:hover{background:#f1e5f5!important;color:#292a33!important}
+}
+html:root body .reader-settings-panel .reader-display-options.reader-display-options .has-tip:nth-child(odd)::after{left:0!important;right:auto!important;transform:none!important}
+html:root body .reader-settings-panel .reader-display-options.reader-display-options .has-tip:nth-child(even)::after{left:auto!important;right:0!important;transform:none!important}
+
+/* Nov 18, "unify the text thickness": in the reader panels every control label (switch, display row, key) is 13px 500
+   and picking it changes only its colour; headings are 14px 600; small grey actions and notes are 12.5px 500. */
+html:root body .reader-settings-panel .reader-key small{font-weight:500!important}
+
+/* Nov 18, Tempos lists "too much padding, looking dull": 30px rows, 2px apart (they were 46px), labels 13px 600 like
+   other row names, the slate control pill 30px, every row the same distance apart (grouping majors with their relative minors read as
+   uneven spacing, removed). Scale Tempos shares it. */
+html:root body .reader-settings-panel .scale-book__tempo-list.scale-book__tempo-list{gap:2px!important}
+html:root body .reader-settings-panel .scale-book__tempo-list.scale-book__tempo-list>*{min-height:0!important;padding:0!important}
+html:root body .reader-settings-panel .scale-book__tempo-list.scale-book__tempo-list :is(.scale-book__tempo-label,.scale-book__tempo-label b){font-size:13px!important;font-weight:600!important}
+html:root body .reader-settings-panel .scale-book__tempo-list.scale-book__tempo-list .scale-book__metronome{height:30px!important;min-height:0!important;border-radius:9px!important}
+html:root body .reader-settings-panel .scale-book__tempo-list.scale-book__tempo-list .scale-book__row-tool{width:30px!important;height:30px!important;min-height:0!important}
+html:root body .reader-settings-panel .scale-book__tempo-list.scale-book__tempo-list .scale-book__row-tool svg{width:18px!important;height:18px!important}
+/* The tempo is the reader toolbar's own box (ToolbarTempo): − 60 + with no tile of its own. Inside the slate pill
+   nothing gets a hover square; hover only darkens the sign or icon, as in the toolbar (the Stepper's hover tile
+   spilled past the 30px row, Nov 18). The metronome, when on, keeps its lilac. */
+html:root body .reader-settings-panel .scale-book__tempo-list.scale-book__tempo-list .tempo{display:flex;align-items:center;height:30px;margin:0;padding:0;background:transparent!important;border-radius:0;box-shadow:none!important}
+html:root body .reader-settings-panel .scale-book__tempo-list.scale-book__tempo-list .tempo .tempo-step.tempo-step{width:26px!important;min-width:26px!important;flex:0 0 26px!important;height:30px!important;min-height:0!important;padding:0!important;margin:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:#85868e!important;font-size:16px!important;line-height:1}
+html:root body .reader-settings-panel .scale-book__tempo-list.scale-book__tempo-list .tempo-field{display:grid;place-items:center;margin:0;padding:0}
+html:root body .reader-settings-panel .scale-book__tempo-list.scale-book__tempo-list .tempo input{width:34px!important;height:30px!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;text-align:center;color:#292a33!important;font:inherit;font-size:14px!important;font-weight:600!important;-moz-appearance:textfield}
+html:root body .reader-settings-panel .scale-book__tempo-list.scale-book__tempo-list .tempo input::-webkit-inner-spin-button,html:root body .reader-settings-panel .scale-book__tempo-list.scale-book__tempo-list .tempo input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+html:root body .reader-settings-panel .scale-book__tempo-list.scale-book__tempo-list .scale-book__row-tool:not(.on):not([aria-pressed="true"]){background:transparent!important;box-shadow:none!important;color:#55575f!important}
+html:root body .reader-settings-panel .scale-book__tempo-list.scale-book__tempo-list :is(.tempo-step,.scale-book__row-tool:not(.on):not([aria-pressed="true"])):is(:hover,:focus-visible):not(:disabled){background:transparent!important;box-shadow:none!important;color:#292a33!important}

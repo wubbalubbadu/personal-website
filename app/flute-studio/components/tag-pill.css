@@ -15,3 +15,33 @@
   .tag-pills{justify-content:flex-start}
   .tag-pill{height:22px;padding:0 8px;font-size:11.5px}
 }
+
+/* Nov 18, "see how the tags are different": one tag look everywhere, the Library's. A small coloured dot and the word,
+   no fill, no box. Tone picks the dot colour (lib/tagTone). Repeated class and !important only outrank the older
+   per-page pill rules (Practice cards, Home). */
+html body .tag-pill.tag-pill{height:auto!important;min-height:0!important;padding:0!important;gap:6px;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:#5f6169!important;font-size:12px!important;font-weight:500!important}
+html body .tag-pill.tag-pill::before{content:"";width:7px;height:7px;border-radius:50%;background:#b9bac0;flex:none}
+html body .tag-pill.tag-pill[data-tone="sage"]::before{background:#6c8f5f}
+html body .tag-pill.tag-pill[data-tone="sand"]::before{background:#b08a45}
+html body .tag-pill.tag-pill[data-tone="blue"]::before{background:#6f8aa3}
+html body .tag-pill.tag-pill[data-tone="pink"]::before{background:#a9739f}
+html body .tag-pill.tag-pill[data-tone="lavender"]::before{background:#8a7aa8}
+html body .tag-pill.tag-pill[data-tone="coral"]::before{background:#b47a63}
+html body .tag-pill.tag-pill[data-tone="soon"]{color:#9a9ba2!important}
+html body .tag-pill.tag-pill[data-tone="soon"]::before{display:none}
+html body .tag-pills{column-gap:14px}
+/* Nov 18: tags use the four Learn and Home tile tints (lib/tagTone): lilac, pink, sage, slate. The dot is a deeper
+   step of the tile tint, so a tag, its Library chip and a tile it colours read as one family. */
+html body .tag-pill.tag-pill[data-tone="lilac"]::before{background:#9277c9}
+html body .tag-pill.tag-pill[data-tone="pink"]::before{background:#d27aa8}
+html body .tag-pill.tag-pill.tag-pill[data-tone="sage"]::before{background:#6da15c}
+html body .tag-pill.tag-pill[data-tone="slate"]::before{background:#6b93c4}
+/* Nov 18 (second pass): each tag its own tone (lib/tagTone), Learn tile tints plus neighbours. Replaces the four-tone block above. */
+html body .tag-pill.tag-pill.tag-pill[data-tone="lilac"]::before{background:#9070d0}
+html body .tag-pill.tag-pill.tag-pill[data-tone="pink"]::before{background:#dc6fa6}
+html body .tag-pill.tag-pill.tag-pill[data-tone="sage"]::before{background:#62a650}
+html body .tag-pill.tag-pill.tag-pill[data-tone="blue"]::before{background:#5a8fd0}
+html body .tag-pill.tag-pill.tag-pill[data-tone="peach"]::before{background:#e5845f}
+html body .tag-pill.tag-pill.tag-pill[data-tone="teal"]::before{background:#3fa5a0}
+html body .tag-pill.tag-pill.tag-pill[data-tone="butter"]::before{background:#d6a52e}
+html body .tag-pill.tag-pill.tag-pill[data-tone="periwinkle"]::before{background:#7b83dc}

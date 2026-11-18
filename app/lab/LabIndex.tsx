@@ -7,10 +7,10 @@ const DIRECTIONS = [
   { href: "/lab/home-1", name: "Cat host, wide handheld", line: "The cat lives on a PSP style handheld beside the intro and links." },
   { href: "/lab/handheld-3d", name: "3D handheld study", line: "The handheld as a real 3D object: rocking D-pad, domed buttons that sink and click, the cat live on its screen." },
   { href: "/lab/landing-texture", name: "Cat host, craft passes", line: "Three looks on the live handheld: retouched plastic, resting on a desk, and powering on by tuning to A." },
-  { href: "/lab/home-1b", name: "Cat host, portrait handheld", line: "The same page with a Game Boy style handheld." },
-  { href: "/lab/home-2", name: "Memory card", line: "A PS1 memory card screen. Each save block is one thing I make." },
-  { href: "/lab/home-3", name: "Staff of notes", line: "One line of music. Each note is a link, and it plays." },
-  { href: "/lab/spa", name: "Soak, a shared bathhouse", line: "Not a landing page. A small bathhouse to wander as a little figurine: sauna, hot spring, cold plunge, a warm floor to lie on, with other people in it." },
+];
+
+const TOYS = [
+  { href: "/lab/ny-trip", name: "NY trip, Nov 28 to 29", line: "Boston to Manhattan for two days: a little 3D map, the plan for each day, and a list of places to eat in SoHo." },
 ];
 
 export default function LabIndex() {
@@ -21,6 +21,17 @@ export default function LabIndex() {
       <p className="lab-index__note">Prototypes only. The live home page is unchanged.</p>
       <ol>
         {DIRECTIONS.map((d) => (
+          <li key={d.href}>
+            <a href={d.href}>
+              <b>{d.name} ›</b>
+              <span>{d.line}</span>
+            </a>
+          </li>
+        ))}
+      </ol>
+      <p className="lab-index__eyebrow lab-index__eyebrow--gap">Just for fun</p>
+      <ol>
+        {TOYS.map((d) => (
           <li key={d.href}>
             <a href={d.href}>
               <b>{d.name} ›</b>

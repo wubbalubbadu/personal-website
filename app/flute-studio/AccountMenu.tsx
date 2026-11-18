@@ -78,13 +78,14 @@ export default function AccountMenu(){
         </div>
       </section>
 
-      <section className="account-menu__section">
+      {/* Touch screens only: on a laptop the toolbar's Drone ▾ already holds this choice, right where it's used. */}
+      {touchScreen&&<section className="account-menu__section">
         <p className="account-menu__group">{zh?"持续音":"Drone"}</p>
         <div className="view-switch account-menu__switch" role="group" aria-label={zh?"持续音":"Drone"}>
           <button type="button" aria-pressed={droneMode==="tap"} onClick={()=>setDroneMode("tap")}>{zh?"点击音符":"Tap a note"}</button>
           <button type="button" aria-pressed={droneMode==="auto"} onClick={()=>setDroneMode("auto")}>{zh?"跟随乐谱":"Follows the music"}</button>
         </div>
-      </section>
+      </section>}
 
       {/* Only a touch screen has fingers to tell apart from a pencil. */}
       {touchScreen&&<section className="account-menu__section">

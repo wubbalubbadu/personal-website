@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import {useEffect,useLayoutEffect,useRef,useState} from "react";
-import {pieceTitle,type MusicItem} from "../../../content/music-library";
+import {composerName,pieceTitle,type MusicItem} from "../../../content/music-library";
 import {StatusButton} from "../components/StatusButton";
 import {STATUSES,STATUS_LABELS,STATUS_TONES,setStatus,useStatusEntries,type MusicStatus} from "../lib/musicStatus";
 import {useBookProgress} from "../lib/bookProgress";
@@ -87,12 +87,11 @@ export default function MusicShelf({items,zh,focus,filtered}:{items:MusicItem[];
 function ShelfCard({item,zh,arrived,dragging,onDrag}:{item:MusicItem;zh:boolean;arrived?:MusicStatus;dragging:boolean;onDrag:(id:string|null)=>void}){
   const exercise=item.exercise;
   const title=exercise&&zh?exercise.zhTitle:pieceTitle(item,zh);
-  const detail=exercise?undefined:item.composer;
+  const detail=composerName(item.composer,zh);
   const className=`music-shelf__card${arrived?" is-arrived":""}${arrived==="learned"?" is-learned-now":""}${dragging?" is-dragging":""}`;
   // A printed cover: title, a short rule, the composer. The List view carries the tags.
   const body=<>
     <b>{title}</b>
-    <i className="music-shelf__rule" aria-hidden="true"/>
     {detail&&<small>{detail}</small>}
     {item.bookCount?<BookProgress id={item.id} count={item.bookCount} zh={zh}/>:null}
   </>;

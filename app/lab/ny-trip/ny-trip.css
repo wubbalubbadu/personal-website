@@ -1,0 +1,534 @@
+@import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&display=swap");
+
+/* A cartoon sticker look: cream paper, ink outlines, little offset shadows. */
+.nyt {
+  --ink: #2b1d2e;
+  --ink-70: rgba(43, 29, 46, 0.72);
+  --paper: #fffaf2;
+  --cream: #fff1dc;
+  --pink: #ff7eb6;
+  --pink-wash: #ffe3ef;
+  --blue: #6fb6ff;
+  --sky-top: #ffe9f2;
+  --sky-bottom: #d9efff;
+  --shadow: 2px 3px 0 var(--ink);
+
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-rows: minmax(300px, 52svh) 1fr;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Fredoka", "Space Grotesk", system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.35;
+  -webkit-tap-highlight-color: transparent;
+}
+.nyt button,
+.nyt input,
+.nyt select {
+  font: inherit;
+  color: inherit;
+}
+.nyt button {
+  cursor: default;
+}
+.nyt a {
+  color: inherit;
+  text-decoration: none;
+}
+.nyt-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+/* ---------------------------------------------------------------- map */
+
+.nyt-map {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(var(--sky-top), var(--sky-bottom));
+  touch-action: none;
+}
+.nyt-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.nyt-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.nyt-pin {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  margin-top: -4px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  font-size: 15px;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: auto;
+  will-change: transform;
+}
+.nyt-pin b {
+  font-weight: 600;
+  font-size: 13px;
+}
+.nyt-pin.is-small {
+  padding: 2px 4px;
+  font-size: 12px;
+}
+.nyt-pin.is-on {
+  background: var(--pin);
+  z-index: 2;
+}
+.nyt-pin.is-you {
+  background: #3d8bff;
+  color: #fff;
+  pointer-events: none;
+}
+
+.nyt-top {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  pointer-events: none;
+}
+.nyt-title {
+  display: grid;
+  padding: 6px 14px 7px;
+  border: 2px solid var(--ink);
+  border-radius: 16px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  font-size: 13px;
+  transform: rotate(-2deg);
+}
+.nyt-title__big {
+  font-size: 20px;
+  font-weight: 600;
+}
+.nyt-tools {
+  display: flex;
+  gap: 8px;
+  pointer-events: auto;
+}
+.nyt-round {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  font-size: 18px;
+}
+.nyt-round[aria-pressed="true"] {
+  background: var(--sky-bottom);
+}
+.nyt-round:active,
+.nyt-btn:active {
+  transform: translate(1px, 2px);
+  box-shadow: 0 0 0 var(--ink);
+}
+
+/* the card for a tapped place, floating over the bottom of the map */
+.nyt-card {
+  position: relative;
+  margin-bottom: 14px;
+  padding: 14px 16px 12px;
+  border: 2px solid var(--ink);
+  border-radius: 20px;
+  background: var(--paper);
+  box-shadow: 3px 4px 0 var(--ink);
+  animation: nyt-pop 0.22s ease-out;
+}
+.nyt-card h2 {
+  margin: 0 32px 2px 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+.nyt-card p {
+  margin: 0 0 10px;
+  font-size: 15px;
+}
+.nyt-card .nyt-card__meta {
+  color: var(--ink-70);
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+.nyt-card__x {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  background: none;
+  font-size: 26px;
+  line-height: 1;
+}
+.nyt-card .nyt-card__near {
+  margin: 10px 0 0;
+  font-size: 14px;
+  color: var(--ink-70);
+}
+@keyframes nyt-pop {
+  from {
+    transform: translateY(12px) scale(0.97);
+    opacity: 0;
+  }
+}
+
+/* ---------------------------------------------------------------- sheet */
+
+.nyt-sheet {
+  position: relative;
+  z-index: 3;
+  margin-top: -20px;
+  overflow-y: auto;
+  padding: 14px 16px calc(28px + env(safe-area-inset-bottom));
+  border-top: 2px solid var(--ink);
+  border-radius: 24px 24px 0 0;
+  background: var(--paper);
+  overscroll-behavior: contain;
+}
+
+.nyt-buddy {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.nyt-buddies {
+  flex: none;
+  width: 58px;
+  height: 56px;
+  animation: nyt-bob 2.4s ease-in-out infinite;
+}
+@keyframes nyt-bob {
+  50% {
+    transform: translateY(-3px);
+  }
+}
+.nyt-bubble {
+  position: relative;
+  flex: 1;
+  margin: 0 0 8px;
+  padding: 9px 13px;
+  border: 2px solid var(--ink);
+  border-radius: 16px 16px 16px 4px;
+  background: var(--pink-wash);
+  font-size: 15px;
+}
+
+.nyt-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 4px;
+  margin-bottom: 14px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--cream);
+}
+.nyt-tabs button {
+  padding: 8px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  font-weight: 500;
+}
+.nyt-tabs button[aria-selected="true"] {
+  background: var(--paper);
+  box-shadow: inset 0 0 0 2px var(--ink);
+  font-weight: 600;
+}
+
+.nyt-days,
+.nyt-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.nyt-days button,
+.nyt-chips button {
+  padding: 6px 12px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--paper);
+  font-size: 15px;
+}
+.nyt-days button[aria-pressed="true"],
+.nyt-chips button[aria-pressed="true"] {
+  background: var(--pink);
+  box-shadow: var(--shadow);
+}
+
+/* ---- schedule */
+
+.nyt-stops {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+}
+.nyt-leg {
+  margin: 0;
+  padding: 4px 0 4px 44px;
+  font-size: 13px;
+  color: var(--ink-70);
+  border-left: 2px dashed rgba(43, 29, 46, 0.35);
+  margin-left: 15px;
+}
+.nyt-stop {
+  display: grid;
+  grid-template-columns: 32px auto 1fr 32px;
+  align-items: start;
+  gap: 8px;
+  padding: 8px 4px 8px 0;
+  border-radius: 14px;
+}
+.nyt-stop.is-next {
+  background: #fff3b8;
+  box-shadow: inset 0 0 0 2px var(--ink);
+  padding-left: 0;
+}
+.nyt-check {
+  width: 30px;
+  height: 30px;
+  margin-left: 1px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--paper);
+  font-weight: 700;
+}
+.nyt-check[aria-pressed="true"] {
+  background: #7fd58f;
+}
+.nyt-time {
+  width: 7.4em;
+  min-height: 30px;
+  padding: 2px 6px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--cream);
+  font-size: 14px !important;
+  font-variant-numeric: tabular-nums;
+}
+.nyt-stop__main {
+  display: grid;
+  gap: 2px;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  text-align: left;
+}
+.nyt-stop__main b {
+  font-weight: 600;
+}
+.nyt-stop__main span {
+  font-size: 14px;
+  color: var(--ink-70);
+}
+.nyt-stop__main:disabled {
+  opacity: 1;
+}
+.is-done .nyt-stop__main b {
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+.nyt-trash {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-70);
+}
+
+/* ---- buttons and forms */
+
+.nyt-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--pink);
+  box-shadow: var(--shadow);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.nyt-btn--small {
+  padding: 6px 12px;
+  font-size: 14px;
+}
+.nyt-btn--soft {
+  background: var(--cream);
+}
+.nyt-btn--wide {
+  width: 100%;
+  background: var(--cream);
+  margin-bottom: 14px;
+}
+.nyt-link {
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  font-weight: 600;
+  color: var(--ink);
+}
+.nyt-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.nyt-add {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  margin-bottom: 14px;
+  border: 2px solid var(--ink);
+  border-radius: 18px;
+  background: var(--cream);
+}
+.nyt-input {
+  min-height: 40px;
+  padding: 6px 12px;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  background: var(--paper);
+  font-size: 16px !important;
+  min-width: 0;
+  flex: 1;
+}
+.nyt-input--time {
+  flex: none;
+  width: 7.5em;
+}
+
+/* ---- around us */
+
+.nyt-from {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.nyt-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.nyt-list button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px;
+  border: 0;
+  border-radius: 14px;
+  background: none;
+  text-align: left;
+}
+.nyt-list button.is-on {
+  background: var(--pink-wash);
+}
+.nyt-list__emoji {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  font-size: 20px;
+}
+.nyt-list__text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.nyt-list__text b {
+  font-weight: 600;
+}
+.nyt-list__text span {
+  font-size: 14px;
+  color: var(--ink-70);
+}
+.nyt-fine {
+  margin: 14px 0 0;
+  font-size: 13px;
+  color: var(--ink-70);
+}
+
+.nyt-toast {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 10;
+  margin: 0 auto;
+  max-width: 420px;
+  padding: 10px 14px;
+  border: 2px solid var(--ink);
+  border-radius: 16px;
+  background: #fff3b8;
+  box-shadow: var(--shadow);
+  font-size: 15px;
+  animation: nyt-pop 0.2s ease-out;
+}
+
+/* ---------------------------------------------------------------- wide screens */
+
+@media (min-width: 900px) {
+  .nyt {
+    grid-template-rows: 1fr;
+    grid-template-columns: 1fr 440px;
+  }
+  .nyt-sheet {
+    margin-top: 0;
+    border-top: 0;
+    border-left: 2px solid var(--ink);
+    border-radius: 0;
+    padding: 20px 22px 32px;
+  }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nyt-buddies,
+  .nyt-card,
+  .nyt-toast {
+    animation: none;
+  }
+}

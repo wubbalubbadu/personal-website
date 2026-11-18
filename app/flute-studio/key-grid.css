@@ -1,0 +1,33 @@
+/* Key grid: the one look for every "pick a key or note" grid in the studio (Nov 18, her pick "1, slate keys").
+   Used by the tools panel drone and fingering lookup (.tp-notes), the fingering and trill charts (.note-picker__notes),
+   KeySelection (Customize scales, Scale Studio, exercise books) and Scale Studio's start/end note grid.
+   Six across, 32px soft rounded keys, slate fill, lilac with dark ink when picked, 13px 500 in both states (picking changes colour, never weight). Pick one and pick several look the
+   same; the caller sets aria-pressed. The repeated class and !important only outrank the four older per-grid rules. */
+html:root body .key-grid.key-grid.key-grid{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:4px!important;margin-inline:0!important}
+html:root body .key-grid.key-grid.key-grid>button{
+  display:flex!important;align-items:center;justify-content:center;gap:1px;width:auto!important;min-width:0!important;height:32px!important;min-height:0!important;
+  margin:0!important;padding:0 2px!important;border:0!important;border-radius:9px!important;box-shadow:none!important;
+  background:#edf1f5!important;color:#45464f!important;font:inherit;font-size:13px!important;font-weight:500!important;line-height:1!important;
+  text-align:center;white-space:nowrap;transition:background-color .14s ease,color .14s ease}
+@media(hover:hover){html:root body .key-grid.key-grid.key-grid>button:not(:disabled):not([aria-pressed="true"]):hover{background:#e2e8ef!important;color:#292a33!important}}
+/* Picked: lilac fill, normal dark ink (purple text on lilac "looked weird", Nov 18). No hover change on a picked key. */
+html:root body .key-grid.key-grid.key-grid.key-grid>button[aria-pressed="true"],html:root body .key-grid.key-grid.key-grid.key-grid>button[aria-pressed="true"]:hover{background:#f1e5f5!important;color:#292a33!important;font-weight:500!important}
+html:root body .key-grid.key-grid.key-grid>button:disabled{opacity:.3}
+html:root body .key-grid.key-grid.key-grid>button:focus-visible{outline:3px solid rgba(121,88,142,.3)!important;outline-offset:1px}
+html:root body .key-grid.key-grid.key-grid>button sub{position:static;font-size:10px;line-height:1;align-self:flex-end;margin-bottom:9px;color:inherit;opacity:.7}
+/* The fingering and trill charts centre the picker, so it shrank to its content: give it a real width. */
+html:root body .note-picker__notes.key-grid.key-grid.key-grid{width:min(100%,420px);justify-self:center;margin-inline:auto!important}
+/* The tuner hears a note: the drone key it matches turns green (in tune) or amber (off), unless it's playing. */
+html:root body .key-grid.key-grid.key-grid>button.is-heard:not([aria-pressed="true"]){background:#dfead9!important;color:#40553d!important}
+html:root body .key-grid.key-grid.key-grid>button.is-heard:is(.is-flat,.is-sharp):not([aria-pressed="true"]){background:#f1e7d3!important;color:#765621!important}
+/* A small grey label over a row of keys (Major / Minor in KeySelection). */
+html:root body .key-grid__label{margin:6px 0 4px;font-size:12.5px;font-weight:500;color:#71747e}
+@media(prefers-reduced-motion:reduce){html:root body .key-grid.key-grid.key-grid>button{transition:none}}
+/* Keys heading with All keys / Clear at the right of the same line, as in Scale Studio (scale-book.css, keys group).
+   Wrap the heading and KeySelection in .key-select. */
+html:root body .key-select{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:8px}
+html:root body .key-select>:not(.scale-book__field-label):not(.scale-book__key-actions){grid-column:1/-1}
+html:root body .key-select>.scale-book__field-label{margin:0!important}
+html:root body .reader-settings-panel .key-select>.scale-book__key-actions{display:flex;margin:0!important;gap:2px}
+html:root body .reader-settings-panel .key-select>.scale-book__key-actions button{height:24px!important;min-height:0!important;padding:0 6px!important;margin:0!important;border:0!important;background:transparent!important;font-size:13px!important;font-weight:500!important;color:#6f717a!important}
+html:root body .reader-settings-panel .key-select>.scale-book__key-actions button:hover{color:#292a33!important}

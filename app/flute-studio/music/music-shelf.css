@@ -16,8 +16,7 @@
 .music-shelf__card{position:relative;flex:0 0 132px;height:176px;border-radius:0;background:var(--paper);box-shadow:0 0 0 1px rgba(28,28,34,.55);transition:transform .15s,opacity .15s}
 @media (hover:hover){.music-shelf__card:has(.music-shelf__main:hover){transform:translateY(-4px)}}
 .music-shelf__main{position:absolute;inset:7px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px 8px;border:1px solid rgba(28,28,34,.5);text-align:center;color:var(--ink);text-decoration:none;overflow:hidden}
-.music-shelf__main b{font:italic 400 17px/1.15 "Times New Roman",Times,serif;color:var(--ink);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
-.music-shelf__rule{display:block;width:22px;height:1px;background:var(--ink);opacity:.6}
+.music-shelf__main b{font:italic 400 17px/1.15 "Times New Roman",Times,serif;color:var(--ink);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;text-wrap:balance}
 .music-shelf__main small{font:400 10.5px/1.25 "Times New Roman",Times,serif;letter-spacing:.08em;text-transform:uppercase;color:#4d4e56;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 /* The list button is its dot alone, inside the cover's frame at the top right: no grey disc on the paper. */
 .music-shelf__card>.status-button{position:absolute;top:9px;right:9px;z-index:1}
@@ -71,3 +70,8 @@
   .music-shelf__card{flex-basis:112px;height:150px}
   .music-shelf__main b{font-size:15px}
 }
+
+/* Nov 18, "a little nicer": no rule between title and composer, a touch more air between them instead, and titles
+   wrap balanced so "Op. 5" or "No. 3" doesn't leave the number alone on the last line. */
+.music-shelf__main{gap:9px}
+.music-shelf__main small{text-wrap:balance}

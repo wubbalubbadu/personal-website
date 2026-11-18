@@ -176,7 +176,7 @@ export default function TendencyTest(){
 
       {step==="results"&&result&&<section className="tendency__stage tendency__stage--results">
         <div className="tendency__summary">{summary(result,zh).map(line=><p key={line}>{line}</p>)}</div>
-        <div className="tendency__switch" role="group">
+        <div className="tendency__switch view-switch" role="group">
           <button type="button" aria-pressed={relative} onClick={()=>setRelative(true)}>{zh?"相对你的调音":"Relative to your tuning"}</button>
           <button type="button" aria-pressed={!relative} onClick={()=>setRelative(false)}>{zh?`相对 A = ${result.a4??440}`:`Against A = ${result.a4??440}`}</button>
         </div>

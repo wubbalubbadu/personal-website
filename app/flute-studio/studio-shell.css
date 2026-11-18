@@ -877,6 +877,8 @@ html:root body .restored-reader .practice-bar .drone-tool small{display:none!imp
    their grab cursors (excluded below). */
 html:root body :is(button,[role="button"],[role="tab"],[role="switch"],summary,select,label,input[type="checkbox"],input[type="radio"],input[type="range"]):not(:disabled):not([class*="handle"]):not([class*="grip"]):not([class*="drag"]):not(.sequence-note):not(.cookie-pet):not(.rhythm-note.is-draggable [role="button"]){cursor:default!important}
 html:root body a[href]{cursor:pointer!important}
+/* The book stepper's ‹ › and the reader's back arrow are links under the hood but act as buttons, so they keep the arrow. */
+html:root body :is(a[href].book-stepper__arrow,a[href].back,a[href].detail-header__back){cursor:default!important}
 /* The metronome's options chevron is part of the grey tempo box: same grey, no gap, no rounding, no fill of its own
    on hover (only the chevron darkens), so the box stays one piece [ metronome ⌄ − 63 + Tap ].
    !important only to override the toolbar's popover-button rules above. */
@@ -932,10 +934,6 @@ html body .reader-settings-panel .scale-book__set .scale-book__set-delete.scale-
 @media(hover:none){html body .reader-settings-panel .scale-book__set .scale-book__set-delete.scale-book__set-delete:hover{color:#a5a7ad}}
 /* PDF / XML: pick one, so the Library's filter chips (DESIGN.md "Which shape for which job"): grey capsule, dark when
    chosen. Never the status pill's look (Working on stays light, with its dot), so the two can't be mistaken. */
-html:root body .format-switch.format-switch{display:inline-flex;gap:6px;background:transparent!important;padding:0!important}
-html:root body .format-switch.format-switch>button{height:32px!important;min-height:0!important;padding:0 13px!important;border:0!important;border-radius:999px!important;background:#edf1f5!important;color:#5f6169!important;font-size:13px!important;font-weight:560!important;box-shadow:none!important}
-html:root body .format-switch.format-switch>button:hover{background:#e2e8ef!important}
-html:root body .format-switch.format-switch>button[aria-pressed="true"],html:root body .format-switch.format-switch>button[aria-pressed="true"]:hover{background:#292a33!important;color:#fff!important}
 /* The metronome ▾ sits at the far end of the tempo pill, after Tap, with a wider target: beside − it was too easy to
    miss, even with a Pencil. Phones keep their own order (the max-width:760px block above). */
 @media(min-width:761px){
@@ -1134,6 +1132,9 @@ html:root body .format-switch.format-switch>button[aria-pressed="true"],html:roo
    pill nothing gets a box of its own: hover only darkens the icon (rule above at line 850). A tool that is on keeps
    its purple. Two :not(#_) because the hover rules above carry one and many :not()s. */
 html:root body .restored-reader .practice-bar .transport-pill :is(.tool,button):not(.on):not([aria-pressed="true"]):not(#_):not(#_):is(:hover,:active,:focus,:focus-visible,[aria-expanded="true"]){background:transparent!important;background-color:transparent!important;background-image:none!important;box-shadow:none!important}
+/* ...except the segments that paint the pill's grey themselves (metronome, its ⌄, Tap): clearing those punched a
+   white hole in the pill on hover (Nov 18). They keep the same grey; only the icon darkens. */
+@media(min-width:761px){html:root body .restored-reader .practice-bar .transport-pill :is(.tempo-group>.tool,.metronome-options,.reader-tap):not(.on):not([aria-pressed="true"]):not(#_):not(#_):not(#_):is(:hover,:active,:focus,:focus-visible,[aria-expanded="true"]){background:rgba(41,42,51,.05)!important;background-color:rgba(41,42,51,.05)!important}}
 
 /* ---------- Phone reader, one row (Nov 17, her direction) ----------
    The piece name is printed on the music, so the phone drops it and the back arrow joins the practice row:

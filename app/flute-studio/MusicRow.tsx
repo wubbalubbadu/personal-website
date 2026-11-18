@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {pieceTitle,type MusicItem} from "../../content/music-library";
+import {composerName,pieceTitle,type MusicItem} from "../../content/music-library";
 import type {ExerciseFocus} from "../../content/exercise-catalog";
 import {StatusButton} from "./components/StatusButton";
 import {OfflineBadge} from "./components/OfflineButton";
@@ -29,8 +29,8 @@ export default function MusicRow({item,tagLabel}:{item:MusicItem;tagLabel:(tag:s
   };
   const exercise=item.exercise;
   const title=exercise&&zh?exercise.zhTitle:pieceTitle(item,zh);
-  // Exercises show no description line (Nov 14): the tags already say what kind it is.
-  const detail=exercise?undefined:item.excerpt?`${item.composer} · ${zh?item.excerpt.zhPassage??item.excerpt.passage:item.excerpt.passage}`:item.composer;
+  // Every row has its credit line; the studio's exercise tools say Labs (Nov 18).
+  const detail=item.excerpt?`${composerName(item.composer,zh)} · ${zh?item.excerpt.zhPassage??item.excerpt.passage:item.excerpt.passage}`:composerName(item.composer,zh);
   // Tags wear a tint each (lib/tagTone); focus and count pills stay grey.
   // Your list is not a tag: it is the button at the row's end.
   const pills:{label:string;tone?:TagTone|"soon"}[]=[

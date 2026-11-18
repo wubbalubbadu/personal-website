@@ -656,7 +656,7 @@ export default function PracticeToolDock() {
                   <Options open={droneMore} onToggle={toggleDroneMore} label={zh?"持续音选项":"Drone options"}/>
                 </span>
               </div>
-              <div className="tp-notes">
+              <div className="tp-notes key-grid">
                 {pitches.map(pitch=>{
                   const on=drones.includes(`${pitch}${octave}`),heard=signalActive&&reading.name===pitch;
                   return <button key={pitch} type="button" aria-pressed={on} className={`${on?"is-on ":""}${heard?`is-heard is-${tunerTone}`:""}`} onClick={()=>toggleSharedDrone(pitch,octave)}>{pitch}</button>;
@@ -714,7 +714,7 @@ export default function PracticeToolDock() {
                 <StaffNote midi={midiForPitch(lookupNote.pitch)} spelling={lookupNote.names[0]} width={116} />
                 <FluteDiagram pressed={lookupNote.fingerings[0].keys} className="dock-fingering-diagram" />
               </div>
-              <div className="tp-notes">
+              <div className="tp-notes key-grid">
                 {lookupNames.map(name=><button key={name} type="button" className={name===lookupName?"is-on":""} aria-pressed={name===lookupName} onClick={()=>setLookupName(name)}>{name}</button>)}
               </div>
               <div className="tp-row tp-row--center">

@@ -29,7 +29,7 @@ export function DeadlineDialog({deadline,pieces,statuses,zh,onClose}:{
   return <Dialog label={text.title} closeLabel={text.cancel} onClose={onClose} panelClassName="deadline-dialog" title={<h2>{text.title}</h2>}>
       <div className="deadline-dialog__row">
         <label>{text.name}<input value={name} onChange={event=>{setName(event.target.value);setError("")}} placeholder={text.namePlaceholder}/></label>
-        <label className="deadline-dialog__date">{text.date}<input type="date" value={date} min={deadline?undefined:localDay()} onChange={event=>{setDate(event.target.value);setError("")}}/></label>
+        <label className="deadline-dialog__date">{text.date}<input type="date" className={date?undefined:"is-empty"} value={date} min={deadline?undefined:localDay()} onChange={event=>{setDate(event.target.value);setError("")}}/></label>
       </div>
       <p className="deadline-dialog__label">{text.pieces}</p>
       {chosen.length>0&&<ul className="deadline-dialog__pieces">
@@ -43,8 +43,8 @@ export function DeadlineDialog({deadline,pieces,statuses,zh,onClose}:{
       {error&&<p className="deadline-dialog__error" role="alert">{error}</p>}
       <div className="deadline-dialog__actions">
         {deadline&&<button type="button" className="deadline-dialog__delete" onClick={()=>{deleteDeadline(deadline.id);onClose()}}>{text.delete}</button>}
-        <button type="button" onClick={onClose}>{text.cancel}</button>
-        <button type="button" className="deadline-dialog__save" onClick={save}>{text.save}</button>
+        <button type="button" className="deadline-dialog__cancel" onClick={onClose}>{text.cancel}</button>
+        <button type="button" className="action-button deadline-dialog__save" onClick={save}>{text.save}</button>
       </div>
   </Dialog>;
 }

@@ -14,13 +14,14 @@
 }
 
 /* Grip row: a short bar to drag by, and (desktop only) a small ×. */
-.tools-panel__grip{position:relative;height:22px;flex:0 0 auto;display:flex;align-items:center;justify-content:center}
-.tools-panel__handle{width:100%;height:22px;border:0;background:transparent;cursor:grab;touch-action:none;display:grid;place-items:center}
+.tools-panel__grip{position:relative;height:40px;flex:0 0 auto;display:flex;align-items:center;justify-content:center}
+.tools-panel__handle{width:100%;height:40px;border:0;background:transparent;cursor:grab;touch-action:none;display:grid;place-items:center}
 .tools-panel__handle:active{cursor:grabbing}
 .tools-panel__handle>span{width:34px;height:4px;border-radius:2px;background:#d6d8dc}
-.tools-panel__close{position:absolute;right:2px;top:0}
+/* Centred in the 40px grip row by a fixed top (the 36px button), not a transform: hover rules reset transform, which made it jump (Nov 18). */
+.tools-panel__close{position:absolute;right:6px;top:2px}
 
-.tools-panel__body{overflow-y:auto;padding:2px 14px 14px;display:grid;gap:12px}
+.tools-panel__body{overflow-y:auto;padding:4px 14px 14px;display:grid;gap:12px}
 .tools-panel__body>section{outline:0}
 .tp-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .tp-row--center{justify-content:center}
@@ -63,6 +64,9 @@
 .tp-meter-step .stepper__value{min-width:30px}
 .tp-tempo{width:102px;flex:0 0 102px}
 .tp-tempo .stepper__value{min-width:28px}
+/* Three-digit tempos (140) were cropped: the row has no spare width, so the − and + give up 3px each (Nov 18). */
+.tools-panel .tp-tempo .stepper__button{width:27px!important;min-width:27px!important;flex:0 0 27px!important}
+.tools-panel .tp-tempo .stepper__value{flex:1 1 auto;min-width:0}
 
 .tp-metro{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding-top:12px;border-top:1px solid #efefef}
 .tp-play{width:36px;height:36px;border:0;border-radius:50%;background:#edf1f5;color:#292a33;display:grid;place-items:center;cursor:pointer;flex:0 0 auto}

@@ -60,7 +60,7 @@ export function StatusButton({id,zh,compact=false,ensureId}:{id:string;zh:boolea
     {open&&createPortal(<span ref={menu} className="status-button__menu" role="menu" style={{left:position.left,top:position.top,visibility:position.placed?"visible":"hidden"}}>
       {STATUSES.map(value=><button key={value} type="button" role="menuitemradio" aria-checked={status===value} className={status===value?"is-on":""}
         onClick={event=>{own(event);choose(value);setOpen(false)}}>
-        <i className="status-dot" data-tone={STATUS_TONES[value]} aria-hidden="true"/><span>{STATUS_LABELS[value][zh?"zh":"en"]}</span>{status===value&&<b aria-hidden="true">✓</b>}
+        <i className="status-dot" data-tone={STATUS_TONES[value]} aria-hidden="true"/><span>{STATUS_LABELS[value][zh?"zh":"en"]}</span>
       </button>)}
       {status&&<button type="button" role="menuitem" className="status-button__remove" onClick={event=>{own(event);setStatus(id,null);setOpen(false)}}>{zh?"从列表中移除":"Remove from lists"}</button>}
     </span>,document.body)}

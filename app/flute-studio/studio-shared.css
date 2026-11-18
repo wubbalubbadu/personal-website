@@ -24,6 +24,16 @@
 :is(.studio-route,.reader-settings-panel,.tools-panel) .view-switch button{height:30px;padding:0 14px;border:0;border-radius:999px;background:transparent;font:inherit;font-size:13px;font-weight:500;color:#6f7178;cursor:pointer}
 :is(.studio-route,.reader-settings-panel,.tools-panel) .view-switch button:hover{color:#292a33}
 :is(.studio-route,.reader-settings-panel,.tools-panel) .view-switch button[aria-pressed="true"]{background:#fff;color:#292a33;box-shadow:0 0 0 1px #e1e1e5,0 1px 3px rgba(41,42,51,.06)}
+/* Nov 18, "unify toggle anywhere": every pick-one control is this switch. --fill stretches it across its box with equal
+   segments; --two-line holds a name over a small grey line (embouchure Register: Low / B3 to D#5), centred both ways.
+   The repeated class only outranks the old per-page button rules these replaced. */
+:is(.studio-route,.reader-settings-panel,.tools-panel) .view-switch.view-switch--fill{display:flex;width:100%;box-sizing:border-box}
+:is(.studio-route,.reader-settings-panel,.tools-panel) .view-switch.view-switch--fill>button{flex:1 1 0;min-width:0}
+:is(.studio-route,.reader-settings-panel,.tools-panel) .view-switch.view-switch--two-line{border-radius:16px}
+html body :is(.studio-route,.reader-settings-panel,.tools-panel) .view-switch.view-switch.view-switch--two-line>button{height:auto;min-height:46px;padding:5px 8px;border-radius:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1.2;background:transparent;font-size:14px;font-weight:500;color:#6f7178}
+html body :is(.studio-route,.reader-settings-panel,.tools-panel) .view-switch.view-switch.view-switch--two-line>button small{font-size:11.5px;font-weight:500;color:#8a8c93;white-space:nowrap}
+html body :is(.studio-route,.reader-settings-panel,.tools-panel) .view-switch.view-switch.view-switch--two-line>button[aria-pressed="true"]{background:#fff;color:#292a33;box-shadow:0 0 0 1px #e1e1e5,0 1px 3px rgba(41,42,51,.06)}
+html body :is(.studio-route,.reader-settings-panel,.tools-panel) .view-switch.view-switch.view-switch--two-line>button:not([aria-pressed="true"]):hover{background:transparent;color:#292a33}
 
 /* Words for screen readers only (a label whose visible form is an icon). */
 .sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
@@ -87,7 +97,14 @@ html body .studio-route :is(.exercise-hub__header, .studio-page__head, .theory-h
    does not exist). While a row is held its words drop to 55%, then ease back on release. No fill, so the list's
    left edge and hairlines never move. */
 body .studio-route :is(.music-row__main, .book-row__main, .exercise-hub__row-main)[href] { transition: opacity .28s ease; -webkit-tap-highlight-color: transparent; }
-body .studio-route :is(.music-row__main, .book-row__main, .exercise-hub__row-main)[href]:active { opacity: .55; transition-duration: 0s; }
+/* Nov 18: list rows don't fade on press (the 55% opacity read as the row "turning grey"). Hover instead darkens the
+   text a little: the title to black, the grey line under it a shade darker. No fill, no ring. */
+body .studio-route :is(.music-row__main, .book-row__main, .exercise-hub__row-main)[href]:active { opacity: 1; }
+body .studio-route :is(.music-row__main, .book-row__main, .exercise-hub__row-main) :is(strong, small) { transition: color .12s ease; }
+@media (hover: hover) and (pointer: fine) {
+  body .studio-route :is(.music-row__main, .book-row__main, .exercise-hub__row-main)[href]:hover strong { color: #000 !important; }
+  body .studio-route :is(.music-row__main, .book-row__main, .exercise-hub__row-main)[href]:hover small { color: #5f6168 !important; }
+}
 /* Nov 17: list rows never shrink on press. The global `.studio-route a:active{transform:scale(.98)}` scaled a
    full-width row toward its centre, so its words jumped about 10px right when tapped. Rows only dim. */
 body .studio-route :is(.music-row__main, .book-row__main, .exercise-hub__row-main, .music-row, .book-row):active { transform: none !important; }

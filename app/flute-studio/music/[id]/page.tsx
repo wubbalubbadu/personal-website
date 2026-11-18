@@ -83,5 +83,5 @@ export default function UploadedMusicPage(){
   if(item.keySections)return <KeyExerciseViewer key={item.id} config={config} sections={item.keySections} stepper={stepper}/>;
   const passageLabel=zh?xmlPassage?.zhLabel??xmlPassage?.label??item.excerpt?.zhPassage??item.excerpt?.passage:xmlPassage?.label??item.excerpt?.passage;
   const excerptTempo=item.excerpt&&interactive?{practiceTempo:{value:showTempo,onChange:setShowTempo},paperTop:showTempo?<ExcerptTempoMark itemId={item.id} passageId={interactive} title={[item.title,passageLabel].filter(Boolean).join(' · ')} tempo={bpm} onChange={setBpm} sounding={metro} onSound={toggleMetro} zh={zh}/>:undefined}:{};
-  return <ScoreViewer key={xmlId} config={config} {...excerptTempo} headerActions={()=> <>{stepper}{item.excerpt&&<div className="reader-choice format-switch" role="group" aria-label={zh?"乐谱格式":"Score format"}><button aria-pressed={false} onClick={()=>setInteractive(null)}>PDF</button><button aria-pressed={true}>XML</button></div>}</>}/>;
+  return <ScoreViewer key={xmlId} config={config} {...excerptTempo} headerActions={()=> <>{stepper}{item.excerpt&&<div className="view-switch format-switch" role="group" aria-label={zh?"乐谱格式":"Score format"}><button aria-pressed={false} onClick={()=>setInteractive(null)}>PDF</button><button aria-pressed={true}>XML</button></div>}</>}/>;
 }

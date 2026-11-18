@@ -105,3 +105,9 @@ html body .account-menu .account-menu__private{padding:0}
 html body .account-menu .account-menu__panel .account-menu__item{padding-left:2px!important;padding-right:2px!important}
 /* Wide enough for "Follows the music" in the switch. */
 @media(min-width:761px){.account-menu__panel{width:288px}}
+/* Nov 18, "fix indent and paddings": every heading, row, note and the about line start on the same left edge
+   (the panel's padding, no extra inset), and every row has one weight. The -8px pull on the private music rows
+   (reader-cards.css) was left from the old tinted-row design. */
+html:root body .account-menu .account-menu__choices{margin-inline:0;gap:0}
+html:root body .account-menu .account-menu__panel :is(.account-menu__group,.account-menu__footnote,.account-menu__about){padding-left:0!important;padding-right:0!important}
+html:root body .account-menu .account-menu__panel .account-menu__item{padding-left:0!important;padding-right:0!important;font-weight:400!important}

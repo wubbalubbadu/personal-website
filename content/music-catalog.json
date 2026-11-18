@@ -33,7 +33,8 @@
     "tags": [
       "Classical"
     ],
-    "defaultTempo": 120
+    "defaultTempo": 120,
+    "zhTitle": "诙谐曲"
   },
   {
     "id": "christoph-willibald-gluck-dance-of-the-blessed-spirits",
@@ -52,7 +53,8 @@
       "Accompaniment"
     ],
     "defaultTempo": 76,
-    "accompanimentKind": "piano"
+    "accompanimentKind": "piano",
+    "zhTitle": "幸福精灵之舞"
   },
   {
     "id": "english-traditional-danny-boy",
@@ -196,7 +198,8 @@
         "pitch": null
       }
     ],
-    "defaultTempo": 33
+    "defaultTempo": 33,
+    "zhTitle": "达夫尼与克洛埃"
   },
   {
     "id": "txt-deja-vu",
@@ -255,7 +258,8 @@
     "tags": [
       "Classical"
     ],
-    "defaultTempo": 184
+    "defaultTempo": 184,
+    "zhTitle": "野蜂飞舞"
   },
   {
     "id": "hwang-jin-yi-flower-day",
@@ -324,7 +328,8 @@
       "Accompaniment"
     ],
     "defaultTempo": 70,
-    "accompanimentKind": "piano"
+    "accompanimentKind": "piano",
+    "zhTitle": "天鹅"
   },
   {
     "id": "beethoven-leonore-3",
@@ -381,7 +386,8 @@
       ]
     },
     "year": 1806,
-    "about": "Beethoven's third try at an overture for his only opera, then called Leonore and later Fidelio. Leonore disguises herself as a guard to free her husband Florestan from a political prison. The offstage trumpet call is the moment the minister arrives and Florestan is saved, so the flute's run after Tempo I sounds like pure relief. Beethoven found the overture too big for the opera and replaced it, and it now lives on as a concert piece."
+    "about": "Beethoven's third try at an overture for his only opera, then called Leonore and later Fidelio. Leonore disguises herself as a guard to free her husband Florestan from a political prison. The offstage trumpet call is the moment the minister arrives and Florestan is saved, so the flute's run after Tempo I sounds like pure relief. Beethoven found the overture too big for the opera and replaced it, and it now lives on as a concert piece.",
+    "zhTitle": "莱奥诺拉序曲第三号"
   },
   {
     "id": "christian-petzold-minuet-in-g-major",
@@ -400,7 +406,8 @@
     "partCount": 1,
     "viewerPath": "/flute-studio/music/christian-petzold-minuet-in-g-major",
     "defaultTempo": 120,
-    "accompanimentKind": "chords"
+    "accompanimentKind": "chords",
+    "zhTitle": "G 大调小步舞曲"
   },
   {
     "id": "mystery-of-love",
@@ -1519,7 +1526,8 @@
     "status": "published",
     "scorePath": "/music/beethoven-ode-to-joy/score.musicxml",
     "viewerPath": "/flute-studio/music/beethoven-ode-to-joy",
-    "defaultTempo": 72
+    "defaultTempo": 72,
+    "zhTitle": "欢乐颂"
   },
   {
     "id": "faure-pavane",
@@ -1538,7 +1546,8 @@
       "Accompaniment"
     ],
     "defaultTempo": 84,
-    "accompanimentKind": "piano"
+    "accompanimentKind": "piano",
+    "zhTitle": "帕凡舞曲"
   },
   {
     "id": "traditional-scarborough-fair",
@@ -1602,7 +1611,8 @@
         "performer": "Demarre McGill · Kaori Fujii",
         "youtubeId": "hxjMKNCvbEE"
       }
-    ]
+    ],
+    "zhTitle": "谐谑曲"
   },
   {
     "id": "claude-debussy-syrinx",
@@ -1619,7 +1629,8 @@
     "tags": [
       "Classical"
     ],
-    "defaultTempo": 50
+    "defaultTempo": 50,
+    "zhTitle": "排箫"
   },
   {
     "id": "mj-apanay-ft-aren-park-time-machine",
@@ -1671,7 +1682,6 @@
   {
     "id": "karen-mok-yin-tian",
     "title": "阴天",
-    "zhTitle": "阴天",
     "composer": "莫文蔚",
     "status": "published",
     "scorePath": "/music/karen-mok-yin-tian/score.musicxml",

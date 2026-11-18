@@ -49,7 +49,7 @@ body .library-content .category-tabs.library-chips button.is-mine { border-radiu
 /* One left edge (Nov 14): the heading, the chips, the hairlines and the titles all start at the same x, and the
    hairlines end where the dot ends. So there is no grey hover band: a band needs room around the text, which either
    sticks out past the lines or pushes the text in off the edge, and both were tried and looked wrong. Green title hover was tried and rejected (Nov 14);
-   hover design pending her pick. Keyboard focus keeps a visible ring. */
+   Nov 18 her pick: a slight text darken on hover (studio-shared.css). Keyboard focus keeps a visible ring. */
 @media (hover: hover) and (pointer: fine) {
   body .library-list .music-row:has(.music-row__main:hover) { background: transparent; box-shadow: none; }
 }
@@ -134,3 +134,31 @@ html:root body :is(.music-row__main, .book-row__main)[href] { cursor: default !i
 
 /* Row hover (Nov 16): darkening the hairlines above and below the row was tried and rejected ("not a valid hover").
    Rejected so far: grey band, green title, darker hairlines. Rows show nothing on hover until she picks one. */
+
+/* Nov 18: the four tag tones (lib/tagTone), same dots as tag-pill.css; an active chip fills with the tile tint. */
+body .library-list .tag-pill[data-tone="lilac"]::before,body .library-content .category-tabs.library-chips button[data-tone="lilac"]::before{background:#9277c9}
+body .library-list .tag-pill[data-tone="pink"]::before,body .library-content .category-tabs.library-chips button[data-tone="pink"]::before{background:#d27aa8}
+body .library-list .tag-pill.tag-pill[data-tone="sage"]::before,body .library-content .category-tabs.library-chips button.library-chips[data-tone="sage"]::before,body .library-content .category-tabs.library-chips button[data-tone="sage"]:not(#_)::before{background:#6da15c}
+body .library-list .tag-pill[data-tone="slate"]::before,body .library-content .category-tabs.library-chips button[data-tone="slate"]::before{background:#6b93c4}
+body .library-content .category-tabs.library-chips button.active[data-tone="lilac"]{background:#f2eef8!important;color:#5f527a!important}
+body .library-content .category-tabs.library-chips button.active[data-tone="pink"]{background:#faf0f6!important;color:#7c4f6e!important}
+body .library-content .category-tabs.library-chips button.active[data-tone="sage"]:not(#_){background:#eef4ec!important;color:#46633d!important}
+body .library-content .category-tabs.library-chips button.active[data-tone="slate"]{background:#edf1f5!important;color:#4b5a6b!important}
+
+/* Nov 18 (second pass): each tag its own tone (lib/tagTone), Learn tile tints plus neighbours. Replaces the four-tone block above. */
+body .library-list .tag-pill.tag-pill.tag-pill[data-tone="lilac"]::before,body .library-content .category-tabs.library-chips button[data-tone="lilac"]:not(#_):not(#_)::before{background:#9070d0}
+body .library-content .category-tabs.library-chips button.active[data-tone="lilac"]:not(#_):not(#_){background:#f2eef8!important;color:#5f4f86!important}
+body .library-list .tag-pill.tag-pill.tag-pill[data-tone="pink"]::before,body .library-content .category-tabs.library-chips button[data-tone="pink"]:not(#_):not(#_)::before{background:#dc6fa6}
+body .library-content .category-tabs.library-chips button.active[data-tone="pink"]:not(#_):not(#_){background:#faf0f6!important;color:#7f4767!important}
+body .library-list .tag-pill.tag-pill.tag-pill[data-tone="sage"]::before,body .library-content .category-tabs.library-chips button[data-tone="sage"]:not(#_):not(#_)::before{background:#62a650}
+body .library-content .category-tabs.library-chips button.active[data-tone="sage"]:not(#_):not(#_){background:#eef4ec!important;color:#41622f!important}
+body .library-list .tag-pill.tag-pill.tag-pill[data-tone="blue"]::before,body .library-content .category-tabs.library-chips button[data-tone="blue"]:not(#_):not(#_)::before{background:#5a8fd0}
+body .library-content .category-tabs.library-chips button.active[data-tone="blue"]:not(#_):not(#_){background:#edf1f7!important;color:#3e5f88!important}
+body .library-list .tag-pill.tag-pill.tag-pill[data-tone="peach"]::before,body .library-content .category-tabs.library-chips button[data-tone="peach"]:not(#_):not(#_)::before{background:#e5845f}
+body .library-content .category-tabs.library-chips button.active[data-tone="peach"]:not(#_):not(#_){background:#fcf0ea!important;color:#83503b!important}
+body .library-list .tag-pill.tag-pill.tag-pill[data-tone="teal"]::before,body .library-content .category-tabs.library-chips button[data-tone="teal"]:not(#_):not(#_)::before{background:#3fa5a0}
+body .library-content .category-tabs.library-chips button.active[data-tone="teal"]:not(#_):not(#_){background:#e9f5f4!important;color:#2f6664!important}
+body .library-list .tag-pill.tag-pill.tag-pill[data-tone="butter"]::before,body .library-content .category-tabs.library-chips button[data-tone="butter"]:not(#_):not(#_)::before{background:#d6a52e}
+body .library-content .category-tabs.library-chips button.active[data-tone="butter"]:not(#_):not(#_){background:#f9f3e1!important;color:#7a5d17!important}
+body .library-list .tag-pill.tag-pill.tag-pill[data-tone="periwinkle"]::before,body .library-content .category-tabs.library-chips button[data-tone="periwinkle"]:not(#_):not(#_)::before{background:#7b83dc}
+body .library-content .category-tabs.library-chips button.active[data-tone="periwinkle"]:not(#_):not(#_){background:#eff0fb!important;color:#4c5294!important}

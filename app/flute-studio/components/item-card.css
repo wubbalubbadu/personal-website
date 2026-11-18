@@ -5,3 +5,18 @@
 .item-card__body b{font-size:15px;font-weight:600;line-height:1.3;color:#292a33}
 .item-card__body small{font-size:12.5px;color:#85868e}
 @media(max-width:600px){.item-card{box-shadow:none}}
+/* Nov 18, her call ("dont like the bordered boxes, try tiles"): an item card is a flat slate tile, like the Home
+   tiles. No hairline, no shadow; hover darkens the tint a step. Content sits straight on the tint. */
+html body .item-card.item-card{background:#edf1f5;border:0;box-shadow:none!important;border-radius:3px}
+html body .item-card.item-card:not([data-tone]):is(:has(>a:hover),:has(>a:focus-visible),:has(>button:hover)){background:#e2e8ef}
+/* A tile takes its tag's tint (lib/tagTone, Nov 18): the Learn tile tints plus neighbours at the same lightness.
+   Untagged is slate. Hover darkens any tint a small step. */
+html body .item-card.item-card[data-tone="lilac"]{background:#f2eef8}
+html body .item-card.item-card[data-tone="pink"]{background:#faf0f6}
+html body .item-card.item-card[data-tone="sage"]{background:#eef4ec}
+html body .item-card.item-card[data-tone="blue"]{background:#edf1f7}
+html body .item-card.item-card[data-tone="peach"]{background:#fcf0ea}
+html body .item-card.item-card[data-tone="teal"]{background:#e9f5f4}
+html body .item-card.item-card[data-tone="butter"]{background:#f9f3e1}
+html body .item-card.item-card[data-tone="periwinkle"]{background:#eff0fb}
+html body .item-card.item-card[data-tone]:is(:has(>a:hover),:has(>a:focus-visible),:has(>button:hover)){filter:brightness(.97)}

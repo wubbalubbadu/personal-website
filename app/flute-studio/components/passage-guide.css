@@ -319,10 +319,10 @@ html body .passage-guide .passage-guide__card .practice-notation__music>div{widt
 html body .passage-guide .pitch-practice .tone-graph{border-top:0;margin-top:0}
 
 /* Nov 17: "so flat", "ugly with that big white border". The bar pill is white with a soft two-layer shadow so it
-   lifts off the page, purple icons, 38px round buttons; a lit button is the lilac fill. The handles are small
+   lifts off the page, purple icons, 32px round buttons (Nov 18: tighter, was 38px); a lit button is the lilac fill. The handles are small
    solid purple dots with no white ring; an invisible 36px circle around each keeps them easy to grab. */
-html:root body .range-bar.range-bar.range-bar{padding:3px!important;gap:2px;background:#fff!important;box-shadow:0 1px 2px rgba(41,42,51,.08),0 6px 18px rgba(41,42,51,.12)!important}
-html:root body .range-bar.range-bar.range-bar button{width:38px!important;height:38px!important;color:#6d4585!important}
+html:root body .range-bar.range-bar.range-bar{padding:2px!important;gap:0;background:#fff!important;box-shadow:0 1px 2px rgba(41,42,51,.08),0 6px 18px rgba(41,42,51,.12)!important}
+html:root body .range-bar.range-bar.range-bar button{width:32px!important;height:32px!important;color:#6d4585!important}
 html:root body .range-bar.range-bar.range-bar button:hover:not(:disabled),html:root body .range-bar.range-bar.range-bar button.on{background:#f1e5f5!important}
 html:root body .range-handle.range-handle,html:root body .range-handle.range-handle[data-side="end"]{width:12px;height:12px;margin:2px 0 0 -6px;border:0;background:#6d4585;box-shadow:0 1px 3px rgba(41,42,51,.25)}
 html:root body .range-handle.range-handle::after{content:"";position:absolute;inset:-12px;border-radius:50%}

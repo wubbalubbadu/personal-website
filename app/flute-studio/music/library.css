@@ -199,3 +199,17 @@
   .library-chips{flex-direction:column;align-items:flex-start}
   .library-chips .library-chips__row{display:flex!important;flex-wrap:wrap;gap:8px}
 }
+/* Nov 18: the four tag tones (lib/tagTone). */
+.library-content .category-tabs.library-chips button[data-tone="lilac"]{background:#f2eef8;color:#5f527a!important}
+.library-content .category-tabs.library-chips button[data-tone="pink"]{background:#faf0f6;color:#7c4f6e!important}
+.library-content .category-tabs.library-chips button[data-tone="sage"]:not(#_){background:#eef4ec;color:#46633d!important}
+.library-content .category-tabs.library-chips button[data-tone="slate"]{background:#edf1f5;color:#4b5a6b!important}
+/* Nov 18 (second pass): each tag its own tone (lib/tagTone), Learn tile tints plus neighbours. Replaces the four-tone block above. */
+.library-content .category-tabs.library-chips button[data-tone="lilac"]:not(#_):not(#_){background:#f2eef8;color:#5f4f86!important}
+.library-content .category-tabs.library-chips button[data-tone="pink"]:not(#_):not(#_){background:#faf0f6;color:#7f4767!important}
+.library-content .category-tabs.library-chips button[data-tone="sage"]:not(#_):not(#_){background:#eef4ec;color:#41622f!important}
+.library-content .category-tabs.library-chips button[data-tone="blue"]:not(#_):not(#_){background:#edf1f7;color:#3e5f88!important}
+.library-content .category-tabs.library-chips button[data-tone="peach"]:not(#_):not(#_){background:#fcf0ea;color:#83503b!important}
+.library-content .category-tabs.library-chips button[data-tone="teal"]:not(#_):not(#_){background:#e9f5f4;color:#2f6664!important}
+.library-content .category-tabs.library-chips button[data-tone="butter"]:not(#_):not(#_){background:#f9f3e1;color:#7a5d17!important}
+.library-content .category-tabs.library-chips button[data-tone="periwinkle"]:not(#_):not(#_){background:#eff0fb;color:#4c5294!important}
